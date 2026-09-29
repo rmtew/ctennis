@@ -55,6 +55,10 @@ def main():
          "--report-output", str(OUT / "report.json"),
          "build/analysis/champion-tennis-classified.asm"])
     generated = source.read_text(encoding="utf-8")
+    tail_match = re.search(r"(?ms)^irq_counter_update:\n(.*?)^\s*bne\s+\.lb_13\s+; \[call z,audio_tick_three_channels\]", generated)
+    if not tail_match or "ERROR" in tail_match.group(1):
+        raise AssertionError("Generated IRQ counter prefix is unavailable")
+    irq_prefix = "irq_counter_prefix:\n" + tail_match.group(1) + "\trts\n"
     scoreboard = extract(generated, "scoreboard_update", "input_update")
     for label in ("scoreboard_status_tiles", "mode_tile_strings", "game_tally_tiles", "point_value_tiles"):
         scoreboard, count = re.subn(rf"(?m)^{label}:\n(?:dc\.b [^\n]*\n)+", "", scoreboard)
@@ -84,7 +88,7 @@ def main():
     helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
     sound = extract(generated, "assign_sound_stream_4", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
-    routines = (scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
+    routines = (irq_prefix + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
     defined = set(re.findall(r"(?m)^([A-Za-z_]\w*):", routines))
@@ -114,6 +118,7 @@ def main():
     two_group_input_updates = 0
     total_vram_writes = 0
     updates_with_vram_writes = 0
+    counter_offsets = (*range(0x6B, 0x72), 0x83)
     for frame in range(1300, 1340):
         before = bytes(ram)
         writes = scoreboard_update_06eb(ram, vram)
@@ -146,6 +151,9 @@ def main():
         if ram != captured_after:
             differences = [offset for offset in range(256) if ram[offset] != captured_after[offset]]
             raise AssertionError(f"Full source replay mismatch at frame {frame}: {differences[:12]}")
+        # The audio tick immediately reloads C083; compare its pre-audio decrement.
+        cases.extend(ram[offset] for offset in counter_offsets[:-1])
+        cases.append((expected[0x83] - 1) & 255)
     with SERVE_CAPTURE.open(newline="", encoding="utf-8") as handle:
         serve_rows = list(csv.DictReader(handle, delimiter="\t"))
     if len(serve_rows) != 201 or [int(row["frame"]) for row in serve_rows] != list(range(1299, 1500)):
@@ -181,6 +189,8 @@ def main():
         total_vram_writes += len(writes)
         updates_with_vram_writes += bool(writes)
         irq_tail_06b1(ram, rom=cartridge)
+        cases.extend(ram[offset] for offset in counter_offsets[:-1])
+        cases.append((expected[0x83] - 1) & 255)
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
@@ -199,8 +209,9 @@ def main():
               "score_paths": score_paths,
               "two_group_input_updates": two_group_input_updates,
               "scoreboard_vram_writes_compared": total_vram_writes,
+              "native_irq_counter_bytes_compared": COUNT * len(counter_offsets),
               "updates_with_scoreboard_vram_writes": updates_with_vram_writes,
-              "result": "joined scoreboard, input, score, player-state, ball and sprite RAM plus scoreboard VRAM writes match source captures",
+              "result": "joined scoreboard-to-sprite RAM, scoreboard VRAM writes, and IRQ counter prefix match source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

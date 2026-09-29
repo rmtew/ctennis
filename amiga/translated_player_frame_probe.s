@@ -51,6 +51,17 @@ compare_writes:
         bne.s   failed
         dbra    d7,compare_writes
 writes_done:
+        bsr     irq_counter_prefix
+        lea     $6b(a5),a1
+        move.w  #6,d7
+compare_irq_counters:
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne     failed
+        dbra    d7,compare_irq_counters
+        move.b  (a4)+,d0
+        cmp.b   $83(a5),d0
+        bne     failed
         addq.w  #1,case_index
         cmpi.w  #240,case_index
         bne     next_case
