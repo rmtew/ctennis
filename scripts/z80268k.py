@@ -2298,11 +2298,11 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     if repaired != 1:
         raise ValueError(f"Expected one input-side preserved bit test, found {repaired}")
     generated, repaired = re.subn(
-        r"(?m)^\tbtst\.b\t#4,d0(.*; \[bit 4,a\])$",
-        r"\tbtst.l\t#4,d0\1", generated,
+        r"(?m)^\tbtst\.b(\t#[0-7],d[0-7].*; \[bit [0-7],[a-z]\])$",
+        r"\tbtst.l\1", generated,
     )
     if repaired < 1:
-        raise ValueError("Expected input-side BTST register operation")
+        raise ValueError("Expected data-register BTST operations")
     nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:
