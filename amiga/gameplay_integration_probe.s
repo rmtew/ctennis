@@ -1,6 +1,7 @@
         section code,code
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1
+DOUBLE_BUFFER_DISPLAY equ 1
         include "build/translation/player-frame-symbols.i"
         include "amiga/translated_z80_macros.i"
 
@@ -25,6 +26,21 @@ patch_pointers:
         move.w  d0,4(a2)
         dbra    d7,patch_pointers
         bsr     patch_score_pointers
+        lea     copperlist,a0
+        lea     copperlist_back,a1
+        move.w  #(copperlist_end-copperlist)/2-1,d7
+copy_back_copper:
+        move.w  (a0)+,(a1)+
+        dbra    d7,copy_back_copper
+        move.l  #copperlist,front_copper
+        move.l  #copperlist_back,back_copper
+        move.l  #copperlist_back,d0
+        sub.l   #copperlist,d0
+        move.l  d0,copper_write_delta
+        move.l  #sprite_back,d0
+        sub.l   #sprite0,d0
+        move.l  d0,sprite_write_delta
+        bsr     patch_back_sprite_pointers
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
         move.w  #$7fff,$096(a0)
@@ -32,36 +48,119 @@ patch_pointers:
         move.w  #0,$088(a0)
         move.w  #$83a0,$096(a0)
         bsr     paula_tone_init
-        bsr     upload_sprite_attributes
-
-wait_frame:
-        move.w  $dff006,d0
-        andi.w  #$ff00,d0
-        cmpi.w  #$f000,d0
-        bne.s   wait_frame
+        move.b  #0,$bfdf00
+        move.b  #$ff,$bfd600
+        move.b  #$ff,$bfd700
+        move.b  #$10,$bfdf00
+        move.b  #$01,$bfdf00
+        bsr     read_sim_timer
+        move.w  d0,last_timer_count
+main_loop:
+        bsr     poll_presentation
+        bsr     read_sim_timer
+        move.w  last_timer_count,d1
+        move.w  d0,last_timer_count
+        sub.w   d0,d1
+        andi.l  #$ffff,d1
+        add.l   d1,simulation_phase
         move.l  simulation_phase,d0
-        addi.l  #59922738,d0
-        move.l  d0,simulation_phase
-next_update:
-        move.l  simulation_phase,d0
-        cmpi.l  #50000000,d0
-        bcs.s   updates_done
-        subi.l  #50000000,d0
+        cmpi.l  #11838,d0
+        bcs.s   main_loop
+        subi.l  #11838,d0
         move.l  d0,simulation_phase
         bsr     simulation_update
-        bra.s   next_update
-updates_done:
-        addq.w  #1,presentation_frames
-        subq.w  #1,log_timer
-        bne.s   wait_blanking_end
-        move.w  #50,log_timer
-        bsr     log_state
-wait_blanking_end:
+        bra     main_loop
+
+; CIA-B timer B free-runs at the PAL E-clock, independent of display vblank.
+; Its elapsed ticks drive the 59.922738 Hz source simulation cadence.
+read_sim_timer:
+read_sim_timer_again:
+        moveq   #0,d0
+        move.b  $bfd700,d0
+        lsl.w   #8,d0
+        move.b  $bfd600,d0
+        move.b  $bfd700,d2
+        move.w  d0,d1
+        lsr.w   #8,d1
+        cmp.b   d1,d2
+        bne.s   read_sim_timer_again
+        rts
+
+; Simulation prepares an inactive Copper list and sprite bank. The display
+; commit changes only COP1LC; preparation of the next back list can run later.
+poll_presentation:
         move.w  $dff006,d0
         andi.w  #$ff00,d0
-        cmpi.w  #$f000,d0
-        beq.s   wait_blanking_end
-        bra     wait_frame
+        cmpi.w  #$ec00,d0
+        bcc.s   presentation_blank
+        cmpi.w  #$2c00,d0
+        bcs.s   presentation_blank
+        bra     presentation_not_blank
+presentation_blank:
+        tst.b   blank_seen
+        bne     presentation_poll_done
+        move.b  #1,blank_seen
+        addq.w  #1,presentation_frames
+        tst.b   display_ready
+        beq.s   presentation_log
+        move.l  back_copper,d0
+        move.l  front_copper,back_copper
+        move.l  d0,front_copper
+        move.l  d0,$dff080
+        move.w  $dff006,d0
+        andi.w  #$ff00,d0
+        cmpi.w  #$2c00,d0
+        bcs.s   presentation_commit_in_blank
+        cmpi.w  #$ec00,d0
+        bcc.s   presentation_commit_in_blank
+        addq.w  #1,missed_presentation_deadlines
+presentation_commit_in_blank:
+        clr.b   display_ready
+        move.l  back_copper,d0
+        sub.l   #copperlist,d0
+        move.l  d0,copper_write_delta
+        tst.l   d0
+        beq.s   write_original_sprites
+        move.l  #sprite_back,d0
+        sub.l   #sprite0,d0
+        move.l  d0,sprite_write_delta
+        bra.s   back_list_prepared
+write_original_sprites:
+        clr.l   sprite_write_delta
+back_list_prepared:
+        bsr     patch_back_sprite_pointers
+        bsr     patch_score_pointers
+presentation_log:
+        subq.w  #1,log_timer
+        bne.s   presentation_poll_done
+        move.w  #50,log_timer
+        bsr     log_state
+presentation_poll_done:
+        rts
+presentation_not_blank:
+        cmpi.w  #$6000,d0
+        bcs.s   presentation_poll_done
+        clr.b   blank_seen
+        rts
+
+patch_back_sprite_pointers:
+        movem.l d0-d2/d7/a0-a2,-(sp)
+        lea     sprite_targets(pc),a0
+        lea     pointer_targets+16(pc),a1
+        moveq   #7,d7
+next_back_sprite_pointer:
+        move.l  (a0)+,d0
+        add.l   sprite_write_delta,d0
+        move.l  (a1)+,d1
+        add.l   copper_write_delta,d1
+        move.l  d1,a2
+        move.l  d0,d2
+        swap    d2
+        move.w  d2,(a2)
+        move.w  d0,4(a2)
+        dbra    d7,next_back_sprite_pointer
+        movem.l (sp)+,d0-d2/d7/a0-a2
+        rts
 
 simulation_update:
         bsr     sample_amiga_joystick
@@ -87,14 +186,7 @@ simulation_update:
         move.l  #vdp_log,vdp_ptr
         clr.b   vdp_count
         bsr     irq_vdp_tail
-        move.w  $dff006,d0
-        andi.w  #$ff00,d0
-        cmpi.w  #$2c00,d0
-        bcs.s   update_before_visible
-        cmpi.w  #$ec00,d0
-        bcc.s   update_before_visible
-        addq.w  #1,missed_presentation_deadlines
-update_before_visible:
+        move.b  #1,display_ready
         addq.w  #1,simulation_updates
         ifd LONG_GAME_REPLAY
         bsr     log_replay_transition
@@ -341,6 +433,7 @@ sprite_palette_ready:
         ori.b   #4,sprite_bridge_error
 sprite_colour_known:
         move.l  (a1)+,a2
+        adda.l  sprite_write_delta,a2
         addi.w  #$2d,d3
         move.w  d3,d2
         addi.w  #16,d2
@@ -405,6 +498,7 @@ next_sprite_colour:
         lea     sg_sprite_palette(pc),a2
         move.w  0(a2,d0.w),d0
         move.l  (a1)+,a3
+        adda.l  copper_write_delta,a3
         move.w  d0,(a3)
         dbra    d7,next_sprite_colour
         movem.l (sp)+,d0-d7/a0-a4
@@ -582,7 +676,15 @@ hex_byte:
         include "build/translation/player-frame-routines.s"
 
         even
-simulation_phase:   dc.l 0
+simulation_phase:   dc.l 11838
+last_timer_count:  dc.w 0
+blank_seen:        dc.b 0
+display_ready:     dc.b 0
+        even
+front_copper:      dc.l 0
+back_copper:       dc.l 0
+copper_write_delta: dc.l 0
+sprite_write_delta: dc.l 0
 simulation_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
@@ -672,6 +774,9 @@ shadow_vram: dcb.b 16384,0
         include "build/amiga/score-copper-probe/score-bank-data.i"
         even
 paula_square: dc.b $7f,$7f,$81,$81
+        even
+copperlist_back: dcb.b copperlist_end-copperlist,0
+sprite_back: dcb.b 8*72,0
         ifd LONG_GAME_REPLAY
         include "build/amiga/long-game/refresh-signs.i"
         endif

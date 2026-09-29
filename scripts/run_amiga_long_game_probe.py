@@ -146,6 +146,10 @@ def main():
                                "native_hash_count": [psg_hash, psg_total],
                                "source_hash_count": audio_checks[update]})
     last_compared_update = compared[-1]["source_update"]
+    if compared[-1]["deadline_misses"]:
+        mismatches.append({"update": last_compared_update,
+                           "error": "Copper-list commit reached visible lines",
+                           "commits": compared[-1]["deadline_misses"]})
     expected_audio_events = {update: bytes(values)
                              for update, values in enumerate(audio_events[:last_compared_update + 1])
                              if values}
@@ -188,7 +192,7 @@ def main():
               "score_transition_updates_checked": list(transition_updates),
               "ordered_psg_events_through_last_compared_update": audio_checks[compared[-1]["source_update"]][1],
               "source_native_psg_event_updates_compared": len(expected_audio_events),
-              "visible_line_update_completions": compared[-1]["deadline_misses"],
+              "presentation_commits_finishing_in_visible_lines": compared[-1]["deadline_misses"],
               "visible_awarded_game_tally_pixels": yellow_pixels,
               "native_checkpoints": len(records), "compared": compared,
               "mismatches": mismatches[:20], "screenshot": str(png), "gif": str(gif),
@@ -210,13 +214,17 @@ def main():
         report["ordinary_run"] = {"screenshot": str(ordinary_png),
                                   "last_score_sample": ordinary_scores[-1],
                                   "awarded_game_seen": any(a or b for _, _, _, a, b in ordinary_scores),
-                                  "visible_line_update_completions": int(re.findall(r"DL=([0-9A-F]{4})", ordinary_log)[-1], 16),
+                                  "presentation_commits_finishing_in_visible_lines": int(re.findall(r"DL=([0-9A-F]{4})", ordinary_log)[-1], 16),
                                   "source_refresh_fixture": False}
+        if report["ordinary_run"]["presentation_commits_finishing_in_visible_lines"]:
+            mismatches.append({"update": ordinary_scores[-1][0],
+                               "error": "ordinary Copper-list commit reached visible lines"})
+    report["mismatches"] = mismatches[:20]
     (OUT / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: report[key] for key in
                       ("source_sha256", "replay_executable_sha256", "native_checkpoints",
                        "score_transition_updates_checked", "ordered_psg_events_through_last_compared_update",
-                       "visible_awarded_game_tally_pixels", "visible_line_update_completions",
+                       "visible_awarded_game_tally_pixels", "presentation_commits_finishing_in_visible_lines",
                        "mismatches", "screenshot", "gif", "wav")},
                      indent=2))
     if args.ordinary:

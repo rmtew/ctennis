@@ -2,7 +2,7 @@
 
 This document defines the target and phase gates. [WORKLOG.md](WORKLOG.md) is the authoritative current status, evidence, decision record, and next action. Update it whenever a gate changes or an experiment changes an assumption.
 
-Current phase boundary (2026-09-30): translated gameplay and native Amiga input, Copper/bitplane/sprite display, and Paula tone output run through one game award. The long-game replay checks score and ordered sound events, while presentation timing remains open and the between-game callback is not yet translated. See [the current worklog](WORKLOG.md) and [long-game replay evidence](analysis/long-game-replay.md) for measured results and the next action. No Phase 4 or Phase 5 gate is claimed.
+Current phase boundary (2026-09-30): translated gameplay and native Amiga input, Copper/bitplane/sprite display, and Paula tone output run through one game award. Simulation is now paced independently of PAL presentation; the inactive Copper-list address is switched in blanking, with zero visible-line commits measured in the long replay and ordinary run. The between-game callback, complete-match presentation/audio checks, and independent hardware verification remain open. See [the current worklog](WORKLOG.md) and [long-game replay evidence](analysis/long-game-replay.md) for measured results and the next action. No Phase 4 or Phase 5 gate is claimed.
 
 ## Goal
 

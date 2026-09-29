@@ -1,3 +1,11 @@
+## Latest checkpoint (2026-09-30, independent simulation and blanking commit)
+
+The live loop now samples player input and runs each due source update from CIA-B timer B at approximately 59.922738 Hz, independent of PAL frame presentation. Sound events still reach Paula in their simulation update. Sprite DMA data and palette/score Copper commands are prepared in inactive banks; the vertical-blank commit writes only COP1LC, then prepares the other bank outside blanking. See analysis/native-gameplay-integration.md and analysis/long-game-replay.md. The PAL-frame number at a given source update can vary by about a tick between launches because the clocks are independent; source-update state is checked against the corresponding source checkpoint.
+
+Run python scripts/run_amiga_live_serve_probe.py and python scripts/run_amiga_long_game_probe.py --ordinary. Both passed on the unexpanded PAL A500 Copperline profile. The long replay has 34 matching state/score checkpoints, four matching score transitions, 250 ordered PSG bytes, a visible B game tally, and zero Copper-list commits finishing on visible lines; the ordinary run also awards B a game and measured zero late commits. Earlier trials with a CIA-A timer, a beam-wrap clock, and too much work inside blanking failed cadence or display checks and were replaced. The source after-game callback $06B1 remains unported. Next: translate that callback, then measure display and sound on a complete match and verify on WinUAE.
+
+The entries below record earlier checkpoints and may describe superseded implementation states.
+
 ## Latest checkpoint (2026-09-30, long game replay)
 
 Run python scripts/run_amiga_long_game_probe.py --ordinary. The source capture spans 2202 callbacks and B point awards at updates 134, 469, 807, then a game award at 1204. The native replay uses private source Z80-refresh sign choices and matches 34 sampled state/score/scoreboard checkpoints through update 1318 with no mismatches, including 250 ordered PSG bytes across 155 event updates. A screenshot confirms the awarded game tally. The ordinary executable, without the source refresh fixture, also awards B a game. See analysis/long-game-replay.md and ignored build/amiga/long-game/report.json, GIF, WAV and PNGs.

@@ -1,5 +1,5 @@
 ; Select pre-rendered native bitplane banks for the six scoreboard fields.
-; Call only in vertical blank after field_values changes.
+; Patch the inactive Copper list after a changed scoreboard selection.
 patch_score_pointers:
         movem.l d0-d2/d7/a0-a4,-(sp)
         lea     score_patch_descriptors(pc),a0
@@ -8,6 +8,10 @@ patch_score_pointers:
 patch_next_score_pointer:
         move.l  (a0)+,a1
         move.l  (a0)+,a2
+        ifd DOUBLE_BUFFER_DISPLAY
+        adda.l  copper_write_delta,a1
+        adda.l  copper_write_delta,a2
+        endif
         move.l  (a0)+,a3
         move.w  (a0)+,d1
         cmpi.w  #$ffff,d1

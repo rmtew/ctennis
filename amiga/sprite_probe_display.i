@@ -53,6 +53,7 @@ score_cop_commands:
         include "build/amiga/score-copper-probe/score-cop-commands.i"
         endif
         dc.w $ffff,$fffe
+copperlist_end:
 
         ifd SCORE_COPPER_DISPLAY
 plane0: incbin "build/amiga/score-copper-probe/plane0.bin"

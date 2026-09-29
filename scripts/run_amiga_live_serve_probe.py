@@ -152,6 +152,9 @@ def main():
     pixel_changes = {}
     for field in FIELDS:
         box = output_rectangle(field)
+        if field.name == "status":
+            # The field helper adds a five-pixel guard that can catch the moving ball.
+            box = (box[0] + 5, box[1], box[2] - 5, box[3])
         pixel_changes[field.name] = ImageChops.difference(earlier.crop(box), scored.crop(box)).getbbox() is not None
     if not pixel_changes["point_b"] or any(pixel_changes[name] for name in
                                             ("point_a", "games_a", "games_b", "status", "mode")):

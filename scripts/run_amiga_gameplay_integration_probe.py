@@ -65,7 +65,9 @@ def main():
               for match in re.findall(
                   r"DBG: LIVE F=([0-9A-F]{2}) U=([0-9A-F]{2}) I=([0-9A-F]{2}) "
                   r"X=([0-9A-F]{2}) SX=([0-9A-F]{2}) E=([0-9A-F]{2}) B=([0-9A-F]{2})", log)]
-    if len(states) < 3 or [(frame, updates) for frame, updates, *_ in states[:2]] != [(50, 59), (100, 119)]:
+    if (len(states) < 3 or [state[0] for state in states[:2]] != [50, 100]
+            or not 58 <= states[0][1] <= 61
+            or not 59 <= states[1][1] - states[0][1] <= 61):
         raise AssertionError(f"PAL/source update cadence is wrong: {states[:3]}")
     if states[-1][3] >= 0xC0 or not any(state[3] < 0xC0 for state in states):
         raise AssertionError(f"Scripted left input did not move source player state: {states}")
