@@ -1,5 +1,6 @@
         section code,code
 SCORE_COPPER_DISPLAY equ 1
+LIVE_REFRESH_ADAPTER equ 1
         include "build/translation/player-frame-symbols.i"
         include "amiga/translated_z80_macros.i"
 
@@ -60,7 +61,7 @@ wait_blanking_end:
         andi.w  #$ff00,d0
         cmpi.w  #$f000,d0
         beq.s   wait_blanking_end
-        bra.s   wait_frame
+        bra     wait_frame
 
 simulation_update:
         bsr     sample_amiga_joystick
@@ -79,12 +80,90 @@ simulation_update:
         move.l  #psg_log,psg_ptr
         clr.b   psg_count
         bsr     audio_tick_adapter
+        ifd LONG_GAME_REPLAY
+        bsr     log_replay_psg
+        endif
         bsr     paula_apply_psg_events
         move.l  #vdp_log,vdp_ptr
         clr.b   vdp_count
         bsr     irq_vdp_tail
+        move.w  $dff006,d0
+        andi.w  #$ff00,d0
+        cmpi.w  #$2c00,d0
+        bcs.s   update_before_visible
+        cmpi.w  #$ec00,d0
+        bcc.s   update_before_visible
+        addq.w  #1,missed_presentation_deadlines
+update_before_visible:
         addq.w  #1,simulation_updates
+        ifd LONG_GAME_REPLAY
+        bsr     log_replay_transition
+        endif
         rts
+
+        ifd LONG_GAME_REPLAY
+; Log only source score changes and actual native display-bank changes.
+log_replay_psg:
+        tst.b   psg_count
+        beq.s   replay_psg_no_log
+        movem.l d0-d2/d7/a0-a2,-(sp)
+        move.w  simulation_updates,d2
+        addq.w  #1,d2
+        lea     psg_trace_update(pc),a0
+        move.w  d2,d0
+        lsr.w   #8,d0
+        bsr     hex_byte
+        moveq   #0,d0
+        move.b  d2,d0
+        bsr     hex_byte
+        lea     psg_trace_count(pc),a0
+        moveq   #0,d0
+        move.b  psg_count,d0
+        bsr     hex_byte
+        lea     psg_trace_bytes(pc),a0
+        lea     psg_log(pc),a2
+        moveq   #0,d7
+        move.b  psg_count,d7
+        subq.w  #1,d7
+replay_psg_next:
+        moveq   #0,d0
+        move.b  (a2)+,d0
+        bsr     hex_byte
+        dbra    d7,replay_psg_next
+        clr.b   (a0)
+        move.l  #psg_trace_text,-(sp)
+        move.l  #86,-(sp)
+        jsr     $f0ff60
+        addq.l  #8,sp
+        movem.l (sp)+,d0-d2/d7/a0-a2
+replay_psg_no_log:
+        rts
+
+log_replay_transition:
+        movem.l d0-d2/a0-a1,-(sp)
+        moveq   #0,d2
+        lea     $3e(a5),a0
+        lea     last_replay_score(pc),a1
+        moveq   #3,d1
+replay_compare_score:
+        move.b  (a0)+,d0
+        cmp.b   (a1),d0
+        beq.s   replay_score_same
+        move.b  d0,(a1)
+        moveq   #1,d2
+replay_score_same:
+        addq.l  #1,a1
+        dbra    d1,replay_compare_score
+        tst.b   score_dirty
+        bne.s   replay_log_changed
+        tst.b   d2
+        beq.s   replay_no_log
+replay_log_changed:
+        bsr     log_state
+replay_no_log:
+        movem.l (sp)+,d0-d2/a0-a1
+        rts
+        endif
 
 ; Match the source scoreboard routine's two draw events. Point/game/mode RAM
 ; may change earlier in the score gate, but the source draws them only when
@@ -137,6 +216,36 @@ scoreboard_selection_done:
         rts
 
         include "amiga/score_copper_patch.i"
+
+; The cartridge uses bit 0 of Z80 R as one AI target-sign choice. The normal
+; port samples a changing native timer bit, mixed with the existing game PRNG.
+; A replay build can instead supply the source's recorded sign at each update.
+read_refresh_adapter:
+        ifd LONG_GAME_REPLAY
+        movem.l d1/a0,-(sp)
+        moveq   #0,d1
+        move.w  simulation_updates,d1
+        cmpi.w  #REFRESH_SIGN_COUNT,d1
+        bcc.s   refresh_replay_default
+        lea     refresh_signs,a0
+        moveq   #0,d0
+        move.b  0(a0,d1.w),d0
+        bra.s   refresh_replay_done
+refresh_replay_default:
+        moveq   #0,d0
+refresh_replay_done:
+        movem.l (sp)+,d1/a0
+        rts
+        else
+        move.l  d1,-(sp)
+        moveq   #0,d0
+        move.b  $bfe401,d0
+        move.b  $72(a5),d1
+        eor.b   d1,d0
+        andi.b  #1,d0
+        move.l  (sp)+,d1
+        rts
+        endif
 
 sample_amiga_joystick:
         clr.b   game_input_bits
@@ -395,6 +504,64 @@ log_state:
         moveq   #0,d0
         move.b  field_values+4,d0
         bsr     hex_byte
+        lea     log_updates_full(pc),a0
+        moveq   #0,d0
+        move.b  simulation_updates,d0
+        bsr     hex_byte
+        moveq   #0,d0
+        move.b  simulation_updates+1,d0
+        bsr     hex_byte
+        lea     log_point_a(pc),a0
+        moveq   #0,d0
+        move.b  $3e(a5),d0
+        bsr     hex_byte
+        lea     log_point_b(pc),a0
+        moveq   #0,d0
+        move.b  $3f(a5),d0
+        bsr     hex_byte
+        lea     log_games_a(pc),a0
+        moveq   #0,d0
+        move.b  $40(a5),d0
+        bsr     hex_byte
+        lea     log_games_b(pc),a0
+        moveq   #0,d0
+        move.b  $41(a5),d0
+        bsr     hex_byte
+        lea     log_score_flags(pc),a0
+        moveq   #0,d0
+        move.b  $42(a5),d0
+        bsr     hex_byte
+        lea     log_mode(pc),a0
+        moveq   #0,d0
+        move.b  $3d(a5),d0
+        bsr     hex_byte
+        lea     log_display_game_b(pc),a0
+        moveq   #0,d0
+        move.b  field_values+3,d0
+        bsr     hex_byte
+        lea     log_deadlines(pc),a0
+        moveq   #0,d0
+        move.b  missed_presentation_deadlines,d0
+        bsr     hex_byte
+        moveq   #0,d0
+        move.b  missed_presentation_deadlines+1,d0
+        bsr     hex_byte
+        ifd LONG_GAME_REPLAY
+        lea     log_psg_hash(pc),a0
+        moveq   #0,d0
+        move.b  replay_psg_hash,d0
+        bsr     hex_byte
+        moveq   #0,d0
+        move.b  replay_psg_hash+1,d0
+        bsr     hex_byte
+        lea     log_psg_total(pc),a0
+        moveq   #0,d0
+        move.b  replay_psg_total,d0
+        bsr     hex_byte
+        moveq   #0,d0
+        move.b  replay_psg_total+1,d0
+        bsr     hex_byte
+        endif
         move.l  #log_text,-(sp)
         move.l  #86,-(sp)
         jsr     $f0ff60
@@ -418,12 +585,16 @@ hex_byte:
 simulation_phase:   dc.l 0
 simulation_updates: dc.w 0
 presentation_frames: dc.w 0
+missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
 game_input_bits:   dc.b 0
 score_flags_before: dc.b 0
 status_timer_before: dc.b 0
 score_dirty: dc.b 0
 field_values: dc.b 0,0,0,0,0,1
+        ifd LONG_GAME_REPLAY
+last_replay_score: dcb.b 4,0
+        endif
         even
 vdp_count:         dc.b 0
         even
@@ -456,7 +627,28 @@ log_ball_x:         dc.b "00 LP="
 log_lower_phase:    dc.b "00 UP="
 log_upper_phase:    dc.b "00 SB="
 log_score_b:      dc.b "00 ST="
-log_status:       dc.b "00",0
+log_status:       dc.b "00 UC="
+log_updates_full: dc.b "0000 PA="
+log_point_a:      dc.b "00 PB="
+log_point_b:      dc.b "00 GA="
+log_games_a:      dc.b "00 GB="
+log_games_b:      dc.b "00 SF="
+log_score_flags:  dc.b "00 M="
+log_mode:         dc.b "00 DG="
+log_display_game_b: dc.b "00 DL="
+log_deadlines: dc.b "0000"
+        ifd LONG_GAME_REPLAY
+                  dc.b " PH="
+log_psg_hash:     dc.b "0000 PT="
+log_psg_total:    dc.b "0000"
+        endif
+                  dc.b 0
+        ifd LONG_GAME_REPLAY
+psg_trace_text:   dc.b "PSG U="
+psg_trace_update: dc.b "0000 N="
+psg_trace_count:  dc.b "00 D="
+psg_trace_bytes:  dcb.b 129,0
+        endif
 hex_digits:        dc.b "0123456789ABCDEF"
         even
 pointer_sources:
@@ -480,3 +672,6 @@ shadow_vram: dcb.b 16384,0
         include "build/amiga/score-copper-probe/score-bank-data.i"
         even
 paula_square: dc.b $7f,$7f,$81,$81
+        ifd LONG_GAME_REPLAY
+        include "build/amiga/long-game/refresh-signs.i"
+        endif

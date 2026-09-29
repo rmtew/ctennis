@@ -38,6 +38,13 @@ paula_apply_psg_events:
 paula_next_event:
         moveq   #0,d0
         move.b  (a0)+,d0
+        ifd LONG_GAME_REPLAY
+        move.w  replay_psg_hash,d6
+        mulu.w  #33,d6
+        add.w   d0,d6
+        move.w  d6,replay_psg_hash
+        addq.w  #1,replay_psg_total
+        endif
         btst    #7,d0
         beq.s   paula_tone_data
         move.w  d0,d1
@@ -110,3 +117,7 @@ paula_volume_table: dc.b 64,51,40,32,25,20,16,13,10,8,6,5,4,3,2,0
         even
 paula_tone_periods: dc.w 0,0,0
 paula_register_offsets: dc.w $0a0,$0b0,$0d0
+        ifd LONG_GAME_REPLAY
+replay_psg_hash: dc.w 0
+replay_psg_total: dc.w 0
+        endif

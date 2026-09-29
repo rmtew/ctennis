@@ -100,7 +100,11 @@ POP_SR: MACRO
         move.w  (sp)+,ccr
         ENDM
 READ_Z80_REFRESH: MACRO
+        ifd LIVE_REFRESH_ADAPTER
+        jsr     read_refresh_adapter
+        else
         clr.b   d0
+        endif
         ENDM
 CLR_XC_FLAGS: MACRO
         andi.b  #$ee,ccr

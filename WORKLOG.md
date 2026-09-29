@@ -1,3 +1,11 @@
+## Latest checkpoint (2026-09-30, long game replay)
+
+Run python scripts/run_amiga_long_game_probe.py --ordinary. The source capture spans 2202 callbacks and B point awards at updates 134, 469, 807, then a game award at 1204. The native replay uses private source Z80-refresh sign choices and matches 34 sampled state/score/scoreboard checkpoints through update 1318 with no mismatches, including 250 ordered PSG bytes across 155 event updates. A screenshot confirms the awarded game tally. The ordinary executable, without the source refresh fixture, also awards B a game. See analysis/long-game-replay.md and ignored build/amiga/long-game/report.json, GIF, WAV and PNGs.
+
+Timing remains open: 113 replay source updates through 1318 and 103 ordinary updates through the last sampled update 1617 completed during visible scanlines. A once-per-PAL-frame presentation commit made the count worse and was reverted. The source switches callback $0699 to $06B1 after the game at frame 2631; the live executable still lacks that between-game transition. Next: translate the $06B1 callback, then buffer/schedule presentation so visible-line work is eliminated, and remeasure audio continuity.
+
+The entries below record earlier checkpoints and may describe superseded implementation states.
+
 ## Latest checkpoint (2026-09-30, Paula tones)
 
 The live game now sends the three ordered source PSG tone/volume streams to native Paula DMA channels through a looping four-sample square wave and per-channel period/volume registers. Run python scripts/run_amiga_live_serve_probe.py on the exact PAL A500 profile. It captures build/amiga/gameplay-integration/serve-audio.wav and verifies that source serve note PSG period $0D5 (525.17 Hz) is present strongly in the native WAV. The same run preserves sampled gameplay, score selection, and 59/119 update cadence. Native executable: 213188 bytes, SHA-256 24d1d6fa499b4aa55a5dc47e004336fc6d55577f672c3b8aa2ab3c916f650e30. See analysis/paula-tone-output.md for hardware mapping, proof and limitations. Next: longer rallies and scoring/game transitions, then sustained frame/audio continuity and full-match measurements.
