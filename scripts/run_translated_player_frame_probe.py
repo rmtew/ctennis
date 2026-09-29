@@ -119,6 +119,7 @@ def main():
     total_vram_writes = 0
     updates_with_vram_writes = 0
     counter_offsets = (*range(0x6B, 0x72), 0x83)
+    psg_bytes = 0
     for frame in range(1300, 1340):
         before = bytes(ram)
         writes = scoreboard_update_06eb(ram, vram)
@@ -145,7 +146,7 @@ def main():
             cases.extend((address >> 8, address & 255, value))
         total_vram_writes += len(writes)
         updates_with_vram_writes += bool(writes)
-        irq_tail_06b1(ram, rom=cartridge)
+        _, vdp_bytes, emitted_psg = irq_tail_06b1(ram, rom=cartridge)
         captured_after = bytearray(expected)
         captured_after[0x6B] = (captured_after[0x6B] + 1) & 255
         if ram != captured_after:
@@ -154,6 +155,12 @@ def main():
         # The audio tick immediately reloads C083; compare its pre-audio decrement.
         cases.extend(ram[offset] for offset in counter_offsets[:-1])
         cases.append((expected[0x83] - 1) & 255)
+        if vdp_bytes:
+            raise AssertionError("Unexpected pending VDP write in retained movement capture")
+        cases.extend(ram)
+        cases.append(len(emitted_psg))
+        cases.extend(emitted_psg)
+        psg_bytes += len(emitted_psg)
     with SERVE_CAPTURE.open(newline="", encoding="utf-8") as handle:
         serve_rows = list(csv.DictReader(handle, delimiter="\t"))
     if len(serve_rows) != 201 or [int(row["frame"]) for row in serve_rows] != list(range(1299, 1500)):
@@ -188,9 +195,15 @@ def main():
             cases.extend((address >> 8, address & 255, value))
         total_vram_writes += len(writes)
         updates_with_vram_writes += bool(writes)
-        irq_tail_06b1(ram, rom=cartridge)
+        _, vdp_bytes, emitted_psg = irq_tail_06b1(ram, rom=cartridge)
         cases.extend(ram[offset] for offset in counter_offsets[:-1])
         cases.append((expected[0x83] - 1) & 255)
+        if vdp_bytes:
+            raise AssertionError("Unexpected pending VDP write in retained serve capture")
+        cases.extend(ram)
+        cases.append(len(emitted_psg))
+        cases.extend(emitted_psg)
+        psg_bytes += len(emitted_psg)
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
@@ -210,8 +223,10 @@ def main():
               "two_group_input_updates": two_group_input_updates,
               "scoreboard_vram_writes_compared": total_vram_writes,
               "native_irq_counter_bytes_compared": COUNT * len(counter_offsets),
+              "native_post_audio_ram_bytes_compared": COUNT * 256,
+              "native_audio_psg_bytes_compared": psg_bytes,
               "updates_with_scoreboard_vram_writes": updates_with_vram_writes,
-              "result": "joined scoreboard-to-sprite RAM, scoreboard VRAM writes, and IRQ counter prefix match source captures",
+              "result": "joined scoreboard-to-sprite RAM, IRQ counter prefix, post-audio RAM, and ordered scoreboard VRAM and PSG writes match source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

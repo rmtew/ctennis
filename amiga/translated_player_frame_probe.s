@@ -29,12 +29,12 @@ copy_ram:
 compare_ram:
         move.b  (a4)+,d0
         cmp.b   (a1)+,d0
-        bne.s   failed
+        bne     failed
         dbra    d7,compare_ram
         moveq   #0,d7
         move.b  (a4)+,d7
         cmp.b   write_count,d7
-        bne.s   failed
+        bne     failed
         tst.w   d7
         beq.s   writes_done
         subq.w  #1,d7
@@ -42,13 +42,13 @@ compare_ram:
 compare_writes:
         move.b  (a4)+,d0
         cmp.b   (a1)+,d0
-        bne.s   failed
+        bne     failed
         move.b  (a4)+,d0
         cmp.b   (a1)+,d0
-        bne.s   failed
+        bne     failed
         move.b  (a4)+,d0
         cmp.b   (a1)+,d0
-        bne.s   failed
+        bne     failed
         dbra    d7,compare_writes
 writes_done:
         bsr     irq_counter_prefix
@@ -62,6 +62,30 @@ compare_irq_counters:
         move.b  (a4)+,d0
         cmp.b   $83(a5),d0
         bne     failed
+        clr.b   psg_count
+        move.l  #psg_log,psg_ptr
+        bsr     audio_tick_adapter
+        move.l  a5,a1
+        move.w  #255,d7
+compare_post_audio_ram:
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne     failed
+        dbra    d7,compare_post_audio_ram
+        moveq   #0,d7
+        move.b  (a4)+,d7
+        cmp.b   psg_count,d7
+        bne     failed
+        tst.w   d7
+        beq.s   psg_done
+        subq.w  #1,d7
+        lea     psg_log,a1
+compare_psg:
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne     failed
+        dbra    d7,compare_psg
+psg_done:
         addq.w  #1,case_index
         cmpi.w  #240,case_index
         bne     next_case
@@ -243,6 +267,7 @@ log_vram_write:
         move.l  a1,write_ptr
         addq.b  #1,write_count
         rts
+        include "amiga/translated_audio_tick.s"
         include "build/translation/player-frame-routines.s"
         even
 case_index:
