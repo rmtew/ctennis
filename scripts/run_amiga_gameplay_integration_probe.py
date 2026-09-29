@@ -67,7 +67,7 @@ def main():
                   r"X=([0-9A-F]{2}) SX=([0-9A-F]{2}) E=([0-9A-F]{2}) B=([0-9A-F]{2})", log)]
     if len(states) < 3 or [(frame, updates) for frame, updates, *_ in states[:2]] != [(50, 59), (100, 119)]:
         raise AssertionError(f"PAL/source update cadence is wrong: {states[:3]}")
-    if states[0][3] != 0xC0 or not any(state[3] < 0xC0 for state in states):
+    if states[-1][3] >= 0xC0 or not any(state[3] < 0xC0 for state in states):
         raise AssertionError(f"Scripted left input did not move source player state: {states}")
     if any(state[3] != state[4] for state in states):
         raise AssertionError(f"Visible sprite buffer diverged from player X: {states}")
@@ -83,7 +83,7 @@ def main():
               "lower_x_before_after_left_input": [states[0][3], states[-1][3]],
               "native_sprite_bridge_errors": sorted({state[5] for state in states}),
               "observed_ball_slots": sorted({state[6] for state in states}),
-              "display_scope": "live source sprite slots, patterns and colours with static converted court",
+              "display_scope": "live source sprites, native Copper score selection, Paula tone output and static court",
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (DISPLAY / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))

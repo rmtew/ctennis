@@ -30,6 +30,7 @@ patch_pointers:
         move.l  #copperlist,$080(a0)
         move.w  #0,$088(a0)
         move.w  #$83a0,$096(a0)
+        bsr     paula_tone_init
         bsr     upload_sprite_attributes
 
 wait_frame:
@@ -78,6 +79,7 @@ simulation_update:
         move.l  #psg_log,psg_ptr
         clr.b   psg_count
         bsr     audio_tick_adapter
+        bsr     paula_apply_psg_events
         move.l  #vdp_log,vdp_ptr
         clr.b   vdp_count
         bsr     irq_vdp_tail
@@ -409,6 +411,7 @@ hex_byte:
         rts
 
         include "amiga/translated_audio_tick.s"
+        include "amiga/paula_tone_output.s"
         include "build/translation/player-frame-routines.s"
 
         even
@@ -475,3 +478,5 @@ shadow_vram: dcb.b 16384,0
         include "amiga/sprite_probe_display.i"
         even
         include "build/amiga/score-copper-probe/score-bank-data.i"
+        even
+paula_square: dc.b $7f,$7f,$81,$81

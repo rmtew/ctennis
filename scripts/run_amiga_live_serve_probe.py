@@ -4,13 +4,16 @@ import configparser
 import csv
 import hashlib
 import json
+import math
 import re
+import struct
 import sys
 from pathlib import Path
 from PIL import Image, ImageChops
 
 from run_translated_prng_probe import ROOT, run
 from run_amiga_score_copper_probe import FIELDS, output_rectangle
+from source_irq_tail import irq_tail_06b1
 
 
 DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
@@ -31,6 +34,61 @@ def source_ball_slot(ram):
     return slots[0]
 
 
+def check_serve_tone(wav, source, cartridge):
+    # The source sound stream's first serve note sets PSG channel 2 to $0D5.
+    _, _, emitted = irq_tail_06b1(bytearray(source[1316][:256]), rom=cartridge)
+    if emitted[:2] != (0xC5, 0x0D):
+        raise AssertionError(f"Unexpected source serve PSG pitch: {emitted}")
+    payload = wav.read_bytes()
+    if payload[:4] != b"RIFF" or payload[8:12] != b"WAVE":
+        raise AssertionError("Copperline did not produce a RIFF WAV")
+    offset, fmt, samples = 12, None, None
+    while offset + 8 <= len(payload):
+        kind, size = struct.unpack_from("<4sI", payload, offset)
+        offset += 8
+        if kind == b"fmt ":
+            fmt = payload[offset:offset + size]
+        if kind == b"data":
+            samples = offset
+            break
+        offset += size + (size & 1)
+    if fmt is None or samples is None:
+        raise AssertionError("WAV format or data chunk missing")
+    tag, channels, rate, _, alignment, bits = struct.unpack_from("<HHIIHH", fmt)
+    if tag not in (3, 0xFFFE) or channels != 2 or bits != 32 or alignment != 8:
+        raise AssertionError(f"Unexpected Copperline WAV format: {(tag, channels, bits, alignment)}")
+    expected_hz = 3_579_545 / (32 * 0x0D5)
+
+    def strength(values, frequency):
+        step = 2 * math.pi * frequency / rate
+        cosine, sine = math.cos(step), math.sin(step)
+        real = imag = s = 0.0
+        c = 1.0
+        for value in values:
+            real += value * c
+            imag += value * s
+            c, s = c * cosine - s * sine, s * cosine + c * sine
+        return math.hypot(real, imag)
+
+    window = 8192
+    best = (0.0, 0.0)
+    for frame in range(5 * rate, 8 * rate, rate // 4):
+        start = samples + frame * alignment
+        if start + window * alignment > len(payload):
+            break
+        stereo = struct.unpack_from(f"<{window * 2}f", payload, start)
+        left = stereo[::2]  # PSG channel 2 is on Paula channel 3 (left).
+        fundamental = strength(left, expected_hz)
+        adjacent = max(strength(left, 450), strength(left, 600))
+        if fundamental > best[0]:
+            best = (fundamental, adjacent)
+    if best[0] < 10 or best[0] < 10 * best[1]:
+        raise AssertionError(f"Serve tone absent or wrong pitch: expected {expected_hz:.1f} Hz, {best}")
+    return {"source_psg_period": 0x0D5, "expected_hz": round(expected_hz, 2),
+            "measured_tone_strength": round(best[0], 2),
+            "adjacent_strength": round(best[1], 2), "wav_sample_rate": rate}
+
+
 def main():
     # Also builds the exact executable and checks the existing left-movement run.
     run([sys.executable, "scripts/run_amiga_gameplay_integration_probe.py"], timeout=120)
@@ -42,10 +100,11 @@ def main():
     executable = DISPLAY / "gameplay-integration"
     png = DISPLAY / "serve.png"
     gif = DISPLAY / "serve.gif"
+    wav = DISPLAY / "serve-audio.wav"
     scored_png = DISPLAY / "serve-scored.png"
     log = run([str(copperline), "--factory", "--model", "A500", "--chipset", "OCS",
                "--video", "PAL", "--cpu", "68000", "--chip", "512K", "--slow", "0",
-               "--fast", "0", "--noaudio", "--run", str(executable),
+               "--fast", "0", "--noaudio", "--audio-wav", str(wav), "--run", str(executable),
                "--joy-after", "5", "fire", "2500", "2",
                "--screenshot-after", "7", str(png), "--gif-after", "4", str(gif),
                "--gif-seconds", "10", str(amiga_rom)], timeout=120)
@@ -64,6 +123,7 @@ def main():
     with SOURCE.open(newline="", encoding="utf-8") as handle:
         source = {int(row["frame"]): bytes.fromhex(row["ram"])
                   for row in csv.DictReader(handle, delimiter="\t")}
+    tone_proof = check_serve_tone(wav, source, Path(config["inputs"]["cartridge"]).read_bytes())
     checked = []
     for frame, updates, input_bits, lower_x, sprite_x, error, ball_slot, ball_y, ball_x, lower_phase, upper_phase, score_b, status in records[:3]:
         source_frame = 1299 + updates
@@ -98,8 +158,9 @@ def main():
         raise AssertionError(f"Scored point pixels differ from expected fields: {pixel_changes}")
     report = {"executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "source_state_matches": checked, "native_log_checkpoints": len(records),
-              "screenshot": str(png), "gif": str(gif),
+              "screenshot": str(png), "gif": str(gif), "audio_wav": str(wav),
               "scored_screenshot": str(scored_png), "score_field_pixel_changes": pixel_changes,
+              "serve_audio": tone_proof,
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (DISPLAY / "serve-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
