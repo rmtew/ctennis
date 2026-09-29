@@ -1,5 +1,8 @@
 # 68000 simulation regression suite
 
+[Original-game reference specification](reference-spec.md) defines the two
+primary continuous replays, required observations and remaining coverage gaps.
+
 Run from the repository root:
 
 ```powershell

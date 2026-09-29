@@ -6,6 +6,12 @@ Current phase boundary (2026-09-30): translated gameplay and native Amiga input,
 
 ## Maintained source and regression suite (agreed 2026-09-30)
 
+[The original-game reference specification](tests/reference-spec.md) defines
+two complementary continuous match replays, meaningful observed coverage,
+focused gap cases, fixture capture requirements and acceptance criteria.
+Full-match captures and comparisons remain open; the passing serve case is the
+initial foundation.
+
 Keep the reproducible translation as a reference baseline, then iterate on an editable, maintained 68000 port source. Native scheduling and direct Amiga hardware changes belong in that source rather than repeated generator patches. Preserve arithmetic widths, update order, rules and source cadence. Regeneration must not overwrite maintained code. Review the existing public-source policy before checking in ROM-derived translated source; private ROMs and extracted assets remain excluded.
 
 The suite executes the actual assembled game routines, not a Python analogue. Capture reference cases explicitly in MAME, then use saved fixtures and Copperline for ordinary regression runs. Replay supplied inputs and initial state without real-time presentation waits. Compare named simulation fields and ordered sound events at each source callback. Gameplay versus tail-only dispatch remains future coverage. Control random inputs and identify nonportable state explicitly. Report the first differing callback, field, expected and actual values, and return a failing exit status.
