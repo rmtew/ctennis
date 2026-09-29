@@ -10,16 +10,15 @@ from pathlib import Path
 
 from run_translated_prng_probe import ROOT, OUT, ASSEMBLER, run
 from source_gameplay_slice import run_gameplay_slice
-from source_input_movement import input_update_0832, move_player_1404_145d, animate_player_14a7_14b3, build_player_sprites_10e9
+from source_input_movement import input_update_0832, movement_and_sprites_13b9
 from source_score_display import scoreboard_update_06eb
 from source_irq_tail import irq_tail_06b1
 
 
 ROM_SHA256 = "19bb6647f14ef50f976e8d0a06d389f06b2e700d54a54fb1734d3140f9745ad1"
 CAPTURE = ROOT / "build" / "reference" / "source-timing" / "run_a.tsv"
-COUNT = 40
-OBSERVED = tuple([0x43, 0x44, 0x45, 0x46, 0x47, 0x49, 0x4A, 0x4B, 0x6D, 0x6E] +
-                 list(range(0x14, 0x20)) + list(range(0x24, 0x30)))
+SERVE_CAPTURE = ROOT / "build" / "reference" / "source-serve" / "run_a.tsv"
+COUNT = 240
 
 
 def extract(generated, first, next_label, data_label=None):
@@ -45,7 +44,7 @@ def main():
     cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
     if hashlib.sha256(cartridge).hexdigest() != ROM_SHA256:
         raise AssertionError("Unexpected source cartridge")
-    for path in (ASSEMBLER, copperline, amiga_rom, CAPTURE):
+    for path in (ASSEMBLER, copperline, amiga_rom, CAPTURE, SERVE_CAPTURE):
         if not path.is_file():
             raise FileNotFoundError(path)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -63,8 +62,12 @@ def main():
     animation = extract(generated, "animate_lower_player", "unsigned_multiply_byte", "animation_records")
     sprites = extract(generated, "build_player_sprites", "ball_flight_update", "player_sprite_descriptors")
     threshold = extract(generated, "threshold_table_lookup", "direction_ai")
+    ball_slots = extract(generated, "player_movement_and_sprites", "lower_player_motion_update")
+    hide_ball = extract(generated, "hide_ball_court_and_sprite_y", "arm_ball_flight_from_launch_vector")
+    ldir = extract(generated, "ldir", "exx")
     (OUT / "player-frame-routines.s").write_text(
-        motion + animation + sprites + threshold, encoding="utf-8")
+        ball_slots + hide_ball + motion + animation + sprites + threshold + ldir,
+        encoding="utf-8")
     memory = bytearray(65536)
     memory[:len(cartridge)] = cartridge
     (OUT / "player-frame-memory.bin").write_bytes(memory)
@@ -84,35 +87,42 @@ def main():
         input_update_0832(ram, game_bits=4 if frame < 1320 else 0)
         run_gameplay_slice(ram, lower_refresh_bit=0, upper_refresh_bit=0)
         before = bytes(ram)
-        move_player_1404_145d(ram, upper=False)
-        move_player_1404_145d(ram, upper=True)
-        animate_player_14a7_14b3(ram, upper=False)
-        animate_player_14a7_14b3(ram, upper=True)
-        build_player_sprites_10e9(ram)
+        movement_and_sprites_13b9(ram)
         expected = checkpoints[frame][:256]
-        differences = [offset for offset in OBSERVED if ram[offset] != expected[offset]]
+        differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
         if differences:
             raise AssertionError(f"Source-model/capture mismatch at frame {frame}: {differences[:12]}")
         cases.extend(before)
-        cases.extend(ram)
-        # The captured checkpoint follows ball-sprite placement. Complete
-        # that source-model phase before advancing to the next frame.
-        for slot in (0x10, 0x20, 0x30):
-            ram[slot] = 0xC2
-        ball_y = ram[0x34]
-        slot = 0x30 if (ram[0x45] + 0x20) & 255 >= ball_y else (
-            0x20 if (ram[0x49] + 0x24) & 255 >= ball_y else 0x10)
-        ram[slot:slot + 4] = ram[0x4D:0x51]
-        if ram[0x4D] >= 0xC0:
-            ram[0x34] = 0xC2
-            for ball_slot in (0x10, 0x20, 0x30):
-                ram[ball_slot] = 0xC2
+        cases.extend(expected)
         irq_tail_06b1(ram, rom=cartridge)
         captured_after = bytearray(expected)
         captured_after[0x6B] = (captured_after[0x6B] + 1) & 255
         if ram != captured_after:
             differences = [offset for offset in range(256) if ram[offset] != captured_after[offset]]
             raise AssertionError(f"Full source replay mismatch at frame {frame}: {differences[:12]}")
+    with SERVE_CAPTURE.open(newline="", encoding="utf-8") as handle:
+        serve_rows = list(csv.DictReader(handle, delimiter="\t"))
+    if len(serve_rows) != 201 or [int(row["frame"]) for row in serve_rows] != list(range(1299, 1500)):
+        raise AssertionError("Missing or reordered source serve checkpoints")
+    ram = bytearray(bytes.fromhex(serve_rows[0]["ram"]))
+    irq_tail_06b1(ram, rom=cartridge)
+    vram = bytearray(16384)
+    for row in serve_rows[1:]:
+        frame = int(row["frame"])
+        scoreboard_update_06eb(ram, vram)
+        input_update_0832(ram, game_bits=0x10 if frame < 1450 else 0)
+        run_gameplay_slice(ram, lower_refresh_bit=0, upper_refresh_bit=0)
+        before = bytes(ram)
+        movement_and_sprites_13b9(ram)
+        expected = bytes.fromhex(row["ram"])
+        differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
+        if differences:
+            raise AssertionError(f"Serve source-model/capture mismatch at frame {frame}: {differences[:12]}")
+        cases.extend(before)
+        cases.extend(expected)
+        irq_tail_06b1(ram, rom=cartridge)
+    if len(cases) != COUNT * 512:
+        raise AssertionError("Unexpected native case-table size")
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
@@ -126,9 +136,9 @@ def main():
                      "chipset=Ocs", "video=Pal", "Kickstart 1.3", "program returned 0"):
         if expected not in log:
             raise AssertionError(f"Native player-frame proof missing {expected}: {log[-500:]}")
-    report = {"updates_checked": COUNT, "native_bytes_compared_per_update": 256,
-              "source_capture_offsets_checked": len(OBSERVED),
-              "result": "joined player motion, animation, sprite RAM matches source captures",
+    report = {"movement_updates_checked": 40, "serve_updates_checked": 200,
+              "native_bytes_compared_per_update": 256,
+              "result": "joined player and ball-sprite placement RAM matches source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

@@ -2475,7 +2475,8 @@ ldir:
 """)
         if cli_args.output_mode == "mit":
             f.write(f"""0:
-    move.b    ({AW})+,({AW1})+
+    move.b    ({AW})+,{DW}
+    move.b    {DW},({AW1})+
     dbf        {C},0b
     moveq\t#0,{C}
     moveq\t#0,{B}
@@ -2483,7 +2484,8 @@ ldir:
 """)
         else:
             f.write(f""".loop:
-    move.b    ({AW})+,({AW1})+
+    move.b    ({AW})+,{DW}
+    move.b    {DW},({AW1})+
     dbf        {C},.loop
     moveq\t#0,{C}
     moveq\t#0,{B}
