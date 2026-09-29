@@ -56,7 +56,7 @@
 # and hl is just used to skip the caller, you can tag the pop instruction with "; [pop_address]"
 # it won't set hl but it's not needed, it will replace by a add #4,sp
 
-import re,itertools,os,collections,glob,io,pathlib,sys
+import re,itertools,os,collections,glob,io,pathlib,sys,json,hashlib
 import argparse
 #import simpleeval # get it on pypi (pip install simpleeval)
 
@@ -277,6 +277,10 @@ parser.add_argument("-d","--date-check",help="convert only if input file is more
 parser.add_argument("-O","--optimize",help="remove redundant address loads",action="store_true")
 parser.add_argument("-I","--include-output",help="include output file",required=True)
 parser.add_argument("-a","--aligned-memory",help="consider memory aligned on 0xmmmm0000",action="store_true")
+parser.add_argument("--champion-source",action="store_true",
+                    help="accept the annotated z80dasm/z80asm listing used by Champion Tennis")
+parser.add_argument("--report-output",type=pathlib.Path,
+                    help="write conversion counts and unresolved markers as JSON")
 parser.add_argument("input_file")
 
 
@@ -284,6 +288,11 @@ OPENING_BRACKET = ('(','[')
 BRACKETS = "[]()"
 
 cli_args = parser.parse_args()
+
+if cli_args.champion_source and not cli_args.no_mame_prefixes:
+    parser.error("--champion-source requires --no-mame-prefixes")
+if cli_args.champion_source and cli_args.no_review:
+    parser.error("--no-review would hide unresolved Champion Tennis translation errors")
 
 lab_prefix = cli_args.label_prefix
 
@@ -398,6 +407,7 @@ addresses_to_reference = set()
 
 address_lines = {}
 lines = []
+champion_data_lines = 0
 input_files = glob.glob(str(cli_args.input_file))
 if not input_files:
     raise Exception(f"{cli_args.input_file}: no match")
@@ -415,6 +425,19 @@ for input_file in input_files:
             address = None
 
             line = line.decode(errors="ignore")
+            if cli_args.champion_source:
+                # Keep the reviewed listing byte-exact and adapt syntax only
+                # in memory. The transcode is a separate generated artifact.
+                line = re.sub(r"(?<![\w])0([0-9a-fA-F]+)h\b",
+                              lambda m: "$" + m.group(1), line, flags=re.I)
+                line = re.sub(r"\b0x([0-9a-fA-F]+)\b",
+                              lambda m: "$" + m.group(1), line, flags=re.I)
+                line = re.sub(r"^(\w+):\s*equ\s+", r"\1 equ ", line, flags=re.I)
+                if re.match(r"^\s*def[bhw]\s+", line, flags=re.I):
+                    champion_data_lines += 1
+                line = re.sub(r"^(\s*)defb\s+", r"\1.byte ", line, flags=re.I)
+                line = re.sub(r"^(\s*)defw\s+", r"\1.word ", line, flags=re.I)
+                line = re.sub(r"^\s*org\s+.*$", "; source origin handled by translated memory map\n", line, flags=re.I)
             if line.lstrip().startswith((in_start_line_comment,in_comment)):
                 ls = line.lstrip()
                 nb_spaces = len(line)-len(ls)
@@ -459,7 +482,8 @@ for input_file in input_files:
 
 
 def issue_warning(msg,newline=False):
-    rval =  f'\t{error}\t"at 0x{current_address:04x}: review {msg}"'
+    location = "" if cli_args.champion_source else f"at 0x{current_address:04x}: "
+    rval =  f'\t{error}\t"{location}review {msg}"'
     if newline:
         rval += "\n"
     return rval
@@ -746,6 +770,8 @@ def f_djnz(args,comment):
 
 
 def f_ld(args,comment):
+    if cli_args.champion_source and args[0] == "a7":
+        return issue_warning("Z80 SP assignment needs a separate source stack mapping") + comment
     return generic_load('move',args,comment)
 
 def f_dec(args,comment):
@@ -2011,7 +2037,7 @@ okay\\@:
         f.write(f"""SBC_X:MACRO
 \tINVERT_XC_FLAGS
 \tGET_ADDRESS\t\\1
-\tmove.b\t({awork0},{X}.w),{DW}
+\tmove.b\t({AW},{IX}.w),{DW}
 \tsubx.b\t{DW},{A}
 \tINVERT_XC_FLAGS
 \tENDM
@@ -2019,7 +2045,7 @@ okay\\@:
 SBC_Y:MACRO
 \tINVERT_XC_FLAGS
 \tGET_ADDRESS\t\\1
-\tmove.b\t({AW},{Y}.w),{DW}
+\tmove.b\t({AW},{IY}.w),{DW}
 \tsubx.b\t{DW},{A}
 \tINVERT_XC_FLAGS
 \tENDM
@@ -2049,8 +2075,8 @@ CLR_XC_FLAGS:MACRO
 \tENDM
 
 CLR_V_FLAG:MACRO
-\tmoveq\t#0,{V}
-\tadd.b\t{V},{V}
+\tmoveq\t#0,{DW}
+\tadd.b\t{DW},{DW}
 \tENDM
 
 POP_SR:MACRO
@@ -2154,7 +2180,7 @@ ldir_unchecked:
 
 """)
 
-if os.path.exists(cli_args.include_output):
+if os.path.exists(cli_args.include_output) and not cli_args.champion_source:
     print(f"Skipping already created file {cli_args.include_output}")
 else:
     print(f"Generating file {cli_args.include_output}")
@@ -2166,7 +2192,8 @@ else:
         fw.write(f"""
 """)
 
-buffer = f"""\t.include "{cli_args.include_output}"
+include_directive = "include" if cli_args.champion_source and cli_args.output_mode == "mot" else ".include"
+buffer = f"""\t{include_directive} "{cli_args.include_output}"
 
 """+"".join(nout_lines)
 
@@ -2214,6 +2241,12 @@ if cli_args.output_mode and cli_args.optimize:
     # can optimize
     print("Optimization phase")
     nout_lines = optimize(nout_lines)
+
+if cli_args.champion_source and cli_args.output_mode == "mot":
+    nout_lines = [re.sub(r"^(\s*)\.byte\b", r"\1dc.b", line)
+                  for line in nout_lines]
+    nout_lines = [re.sub(r"^(\s*)\.word\b", r"\1dc.w", line)
+                  for line in nout_lines]
 
 with open(cli_args.code_output,"w",errors="ignore") as f:
     f.writelines(nout_lines)
@@ -2525,8 +2558,12 @@ cpdr:
 """)
 
 
-print(f"Converted {converted} lines on {len(lines)} total, {instructions} instruction lines")
-print(f"Converted instruction ratio {converted}/{instructions} {int(100*converted/instructions)}%")
+if cli_args.champion_source:
+    print(f"Parsed {instructions-champion_data_lines} code lines and {champion_data_lines} data directives")
+    print("Generated code still requires review; parsed is not a correctness claim")
+else:
+    print(f"Converted {converted} lines on {len(lines)} total, {instructions} instruction lines")
+    print(f"Converted instruction ratio {converted}/{instructions} {int(100*converted/instructions)}%")
 if unknown_instructions:
     print(f"Unknown/fully or partially unsupported instructions: ")
     for s in sorted(unknown_instructions):
@@ -2540,6 +2577,26 @@ else:
 print("\nPLEASE REVIEW THE CONVERTED CODE CAREFULLY AS IT MAY CONTAIN ERRORS!\n")
 print("(some TODO: review lines may have been added, and the code won't build on purpose)")
 
+if cli_args.report_output:
+    generated = cli_args.code_output.read_text(errors="replace")
+    markers = re.findall(r'^\s*ERROR\s+"([^"]+)"', generated, flags=re.M)
+    report = {
+        "upstream": "https://github.com/jotd666/amiga68ktools/blob/abc03aabb57ff19c41a9d32317669768c1caf4a4/tools/z80268k.py",
+        "tool_version": tool_version,
+        "input_sha256": hashlib.sha256(cli_args.input_file.read_bytes()).hexdigest(),
+        "instruction_lines": instructions,
+        "source_data_lines": champion_data_lines,
+        "source_code_lines": instructions - champion_data_lines,
+        "converted_lines": converted,
+        "unknown_instructions": sorted(unknown_instructions),
+        "review_markers": markers,
+        "review_marker_count": len(markers),
+        "generated_code_bytes": cli_args.code_output.stat().st_size,
+        "generated_code_sha256": hashlib.sha256(cli_args.code_output.read_bytes()).hexdigest(),
+    }
+    cli_args.report_output.parent.mkdir(parents=True, exist_ok=True)
+    cli_args.report_output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(f"Review/error markers: {len(markers)}")
 
 
 

@@ -14,7 +14,7 @@ The [sprite hardware-fit test](analysis/sprite-rendering.md) checks 111 retained
 
 ## Next action
 
-Pilot JOTD's Z80-to-68000 translator against the complete annotated listing before extending the hand-written native gameplay slice. Keep the upstream import and project adaptations in separate commits; require explicit diagnostics for unsupported instructions, data directives, indirect control flow and SG/SC hardware calls. Compare generated code with the 40-update movement and 200-update serve/point source checkpoints, then measure A500 speed and memory before adopting the generated core.
+Continue the [JOTD translator pilot](analysis/z80-translator-pilot.md): repair or replace the Motorola support macros, keep every unsupported instruction and unresolved control-flow case visible, then assemble and run a bounded generated gameplay slice. Compare its RAM with the 40-update movement and 200-update serve/point source checkpoints before measuring A500 speed and memory. The native hand-written movement/serve-wait probe remains a diagnostic reference, not the main port route.
 
 ## Repository boundary
 
