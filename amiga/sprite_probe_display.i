@@ -36,10 +36,18 @@ cop_spr7h: dc.w $013c,0
         dc.w $0190,$000,$0192,$f77,$0194,$dc5,$0196,$000
         dc.w $0198,$000,$019a,$c5b,$019c,$ccc,$019e,$fff
         ; Sprite pairs 0/1, 2/3, 4/5, 6/7. Colour zero is transparent.
-        dc.w $01a2,$fff,$01a4,$55e,$01a6,$000
-        dc.w $01aa,$55e,$01ac,$fff,$01ae,$000
-        dc.w $01b2,$fff,$01b4,$c5b,$01b6,$000
-        dc.w $01ba,$c5b,$01bc,$000,$01be,$000
+cop_spr_pair0_c1: dc.w $01a2,$fff
+cop_spr_pair0_c2: dc.w $01a4,$55e
+        dc.w $01a6,$000
+cop_spr_pair1_c1: dc.w $01aa,$55e
+cop_spr_pair1_c2: dc.w $01ac,$fff
+        dc.w $01ae,$000
+cop_spr_pair2_c1: dc.w $01b2,$fff
+cop_spr_pair2_c2: dc.w $01b4,$c5b
+        dc.w $01b6,$000
+cop_spr_pair3_c1: dc.w $01ba,$c5b
+cop_spr_pair3_c2: dc.w $01bc,$000
+        dc.w $01be,$000
         dc.w $ffff,$fffe
 
 plane0: incbin "build/amiga/sprite-probe/plane0.bin"

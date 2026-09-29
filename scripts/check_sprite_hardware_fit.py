@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CAPTURES = ROOT / "build" / "mame" / "captures"
 TIMING = ROOT / "build" / "reference" / "source-timing"
+SERVE = ROOT / "build" / "reference" / "source-serve"
 
 
 def snapshots():
@@ -22,6 +23,9 @@ def snapshots():
         for row in csv.DictReader(handle, delimiter="\t"):
             if row["event"] == "checkpoint":
                 yield f"timing-{row['frame']}", bytes.fromhex(row["ram"])
+    with (SERVE / "run_a.tsv").open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle, delimiter="\t"):
+            yield f"serve-{row['frame']}", bytes.fromhex(row["ram"])
 
 
 def main():
@@ -29,6 +33,8 @@ def main():
     colours = Counter()
     slots = Counter()
     pair_colours = Counter()
+    ball_slots = Counter()
+    patterns = set()
     maximum_scanline = 0
     total = 0
     for name, ram in snapshots():
@@ -41,12 +47,14 @@ def main():
         counts[len(active)] += 1
         colours.update(record[3] & 15 for _, record in active)
         slots.update(i for i, _ in active)
+        ball_slots.update(i for i, _ in active if i in (0, 4, 8))
+        patterns.update(record[2] & 0xFC for _, record in active)
         if len(active) > 8:
             raise AssertionError(f"More than eight visible sprite records in {name}")
         for offset in range(0, len(active), 2):
             distinct = len({record[3] & 15 for _, record in active[offset:offset + 2]})
             pair_colours[distinct] += 1
-            if distinct > 3:
+            if distinct > 2:
                 raise AssertionError(f"Sprite-pair palette overflow in {name}")
         maximum_scanline = max(maximum_scanline, max(
             (sum(y < line <= y + 16 for _, (y, _, _, _) in active)
@@ -60,6 +68,18 @@ def main():
         raise AssertionError("Controlled frame sprite attributes differ from RAM")
     if vram[0x1800:0x1820] != bytes((0xC0, 0xC0)) + bytes(30):
         raise AssertionError("Sprite pattern zero is not the observed 2x2 mark")
+    atlas_path = ROOT / "build" / "amiga" / "sprite-probe" / "sprite-pattern-rows.bin"
+    if atlas_path.exists():
+        atlas = atlas_path.read_bytes()
+        if len(atlas) != 2048:
+            raise AssertionError("Converted 16x16 sprite atlas has unexpected length")
+        for pattern in patterns:
+            for row in range(16):
+                base = 0x1800 + pattern * 8 + row % 8 + (8 if row >= 8 else 0)
+                expected = bytes((vram[base], vram[base + 16]))
+                actual = atlas[pattern * 8 + row * 2:pattern * 8 + row * 2 + 2]
+                if actual != expected:
+                    raise AssertionError(f"Converted pattern {pattern} row {row} differs")
     report = {
         "sampled_ram_snapshots": total,
         "visible_record_counts": dict(sorted(counts.items())),
@@ -68,6 +88,8 @@ def main():
         "observed_sprite_colours": sorted(colours),
         "maximum_distinct_colours_per_amiga_channel_pair": max(pair_colours),
         "observed_populated_source_slots": sorted(slots),
+        "observed_ball_slots": dict(sorted(ball_slots.items())),
+        "observed_active_patterns": sorted(patterns),
         "controlled_frame": 1310,
         "controlled_vram_sha256": hashlib.sha256(vram).hexdigest(),
         "attribute_bytes_match_ram": True,

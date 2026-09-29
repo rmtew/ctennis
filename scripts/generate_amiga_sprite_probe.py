@@ -53,6 +53,13 @@ def main():
     for plane, data in enumerate(planes):
         (OUTPUT / f"plane{plane}.bin").write_bytes(data)
 
+    sprite_pattern_rows = bytearray(2048)
+    for pattern in range(0, 256, 4):
+        for row in range(16):
+            offset = pattern * 8 + row * 2
+            sprite_pattern_rows[offset:offset + 2] = word(pattern_row(vram, pattern, row))
+    (OUTPUT / "sprite-pattern-rows.bin").write_bytes(sprite_pattern_rows)
+
     records = [(i, tuple(ram[0x10 + 4 * i:0x14 + 4 * i])) for i in range(10)]
     active = [(i, record) for i, record in records if record[0] < 0xC0 and record[3] & 15]
     if [i for i, _ in active] != [1, 2, 3, 4, 5, 6, 7, 9]:
@@ -89,6 +96,7 @@ def main():
         "source_sprite_slots": [i for i, _ in active],
         "pair_source_colours": pair_palettes,
         "sprite_bytes": 8 * 72,
+        "sprite_pattern_rows_sha256": hashlib.sha256(sprite_pattern_rows).hexdigest(),
         "output": str(OUTPUT),
     }
     (OUTPUT / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
