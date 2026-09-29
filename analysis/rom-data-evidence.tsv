@@ -1,0 +1,43 @@
+start	end	evidence
+01c3	01d3	Code at 0094-00ac reads 15 run bytes plus a zero terminator; each byte high nibble is repeated (low nibble times 8) through VDP writer 02e4 into color VRAM 0000-034f, then copied to 0800 and 1000. Frame-120 VRAM matches all three expanded copies.
+02dc	02e4	Eight initial VDP register values read by the reset loop at 006f-0076 and sent to control port BF.
+0376	039f	Packed title-name-table bitmaps read by 05da through calls at 02fd, 030b, 0325, and 0347. The first three groups and start of the fourth are here; trace replay verifies ordered set-bit tile writes.
+039f	03ba	Remainder of the fourth packed title mask, read through 05da from 039c-03b9 and expanded into tile 64 writes in title name-table VRAM. Ordered VDP writes match all set bits.
+03ba	0401	Literal tile-index strings read by the title builder at 0357-0373 and copied to title name-table VRAM 3e03, 3e64, and 3ea4; all three direct copies match frame-120 VRAM.
+0404	0407	Tail of the third literal title string, copied to VRAM 3ea4-3ebc by the call at 0373; matches frame-120 VRAM.
+047a	0542	Eight-byte RAM configuration template at 047a-0481 copied by 0461-046a; seven row groups at 0482-0541 copied by 040d-045e through 0542 to name-table VRAM 3800-3aff. Trace replay verifies all 60 row write sequences (232 bytes); the copied positions still match title VRAM at frame 120.
+0553	055f	Twelve literal tile indices copied by 030e-0317 through 0542 to title name-table VRAM 3c6e, 3c8e, and 3cae.
+17b9	17c5	1787-17b8 copies these 12 ROM bytes with LDIR into each of three audio channel records.
+185b	186b	Eight little-endian 16-bit sound-command handler addresses; 1840-185a selects one by command high nibble and jumps through the pair. First audible CPU trace executes this dispatch.
+18da	18f2	Twelve big-endian 16-bit pitch-table words indexed by 1944-195a; first audible no-input note reads word 2a70 at 18e2, shifts it right three and sends PSG tone channel 2 period 054.
+19bd	19be	Court CPU trace reads this ROM byte at 182a using a record-held stream pointer.
+19c0	19c1	Court CPU trace reads this ROM byte at 182a using a record-held stream pointer.
+1f05	1f0e	Nine consecutive sound-command bytes read by 19b8 through audio record C085 in the button-1 frame-427 to 432 CPU window. First note produces PSG channel-0 period 07f. This span also lies in the observed background-pattern VDP copy: the ROM bytes have both uses.
+1f53	1f5b	Eight consecutive sound-command bytes read by 19b8 through audio record C093 in the button-1 frame-427 to 432 CPU window. First note produces PSG channel-1 period 0d5. This span also lies in the observed background-pattern VDP copy: the ROM bytes have both uses.
+1f52	1f53	Byte 00 is read by 19b8 through audio record C085 in button-1 frame 920; the command handler mutes PSG channel 0. This byte also lies in the observed background-pattern VDP copy.
+1f96	1f97	Byte 00 is read by 19b8 through audio record C093 in button-1 frames 926-949; the command handler mutes PSG channel 1. This byte falls just beyond the verified background-pattern copy.
+1fdd	1ff3	22 consecutive sound-command bytes read from ROM by 19b8 through the C0A1 audio record across the seven-pulse no-input sound; the final 00 dispatches the rest/mute path. CPU and PSG traces verify the volume alternation and pitch. The record deactivation rule remains open.
+19cc	1dcc	Reset code at 00ad-00b6 passes this 1024-byte ROM span to the 029d VDP copier for VRAM 1800-1bff; frame-120 VRAM confirms byte equality while VDP R6=03 selects sprite-pattern base 1800. ROM 1c4c-1dcb also serves as background-pattern source.
+1dcc	1f94	Uncovered tail of ROM 1c4c-1f93: code at 0088-0091 copies 72 bytes from 1c4c and 768 from 1c94 through 029d; frame-120 VRAM has the full 840-byte stream at 2098, 2898, and 3098, with R4=07 selecting Graphics II background-pattern base 2000.
+0e39	0e42	Static pointers at 0dde and helper 0e2b/161c read a four-threshold plus five-output launch table to set C05F.
+0e42	0e4b	Static pointers at 0de7 and helper 0e2b/161c read a four-threshold plus five-output launch table to set C05D.
+0e4b	0e54	Static pointers at 0df0 and helper 0e2b/161c read a four-threshold plus five-output launch table to set C05E.
+0401	0404	The third title tile string begins at 03ee and the call at 0373 copies 25 bytes through 0406; these three bytes fill the prior evidence gap.
+0645	0669	The court-layout writer at 060c loops C=18 rows. Each row reads one source byte six times, increments DE, reads the next byte six times, and increments DE again; it consumes 36 bytes through 0668.
+0725	073a	The scoreboard-status writer at 0706 indexes three-byte records at 0725 and copies them through 0294; this is the seven-record table before code resumes at 073a. Reachability of every index is not yet established.
+07a2	07b1	The mode/status drawing path at 0754 selects one of three five-byte strings by offsets 0, 5, or 10 and copies it to the name table.
+07b1	0805	The score-display routine at 0781 computes a 12-byte record offset and 0792 reads the selected record; seven records occupy this interval.
+0816	0832	The point-display routine at 0805 computes a four-byte record offset and branches into the shared reader at 0792; seven records occupy this interval.
+0b73	0b7a	The serve setup at 0b5e loads 0b73 and calls 1760, which copies seven bytes to the ball-flight trajectory at C060.
+0ea0	0ea7	The upper-side serve setup at 0e89 loads 0ea0 and calls 1760, which copies seven bytes to the ball-flight trajectory at C060.
+10d7	10e0	Launch code at 1094 passes this four-threshold plus five-output table through 0e2b/161c to choose C05D.
+10e0	10e9	Launch code at 109d passes this four-threshold plus five-output table through 0e2b/161c to choose C05E.
+115a	11a0	The player-sprite builder at 114e computes index times five from 115a; 10fC reads five descriptor bytes to fill the sprite records. The interval contains 14 records; exact reachable indices are not yet established.
+144d	145d	The lower-player movement code at 1410 indexes one of four four-byte boundary records after its input-mode transform at 1443.
+147c	148c	The upper-player movement code at 1469 indexes one of four four-byte boundary records after its input-mode transform at 1443.
+14fa	151e	The animation update at 14cd computes index times nine from 14fa and calls table selector 161c. These are the first four complete nine-byte records; index bounds and possible reads into following arithmetic code require proof.
+19bc	19cc	Audio initialization at 1787 stores 19bc as the table base in C080; handler 1911 selects an eight-byte record, supporting the two volume/envelope records before graphics source 19cc.
+1f94	1f97	The stream setup at 0579 selects 1f53 with A=44; the record fetch at 199c reads through 1f96 before its length wraps. These are its final three bytes.
+1f97	1fb8	The stream setup at 0580 selects 1f97 with A=21; the record fetch at 199c reads 33 bytes from 1f97 through 1fb7. Runtime use is not yet confirmed.
+1fb8	1fdd	The stream setup at 0588 selects 1fb8 with A=25; the record fetch at 199c reads 37 bytes from 1fb8 through 1fdc. Runtime use is not yet confirmed.
+1ff3	1ffb	The stream setup at 0596 selects 1ff3 with A=08; the record fetch at 199c reads eight bytes through 1ffa. The following 00 at 1ffb is outside the declared stream length.

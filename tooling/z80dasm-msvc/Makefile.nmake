@@ -1,0 +1,11 @@
+# Build from the pinned upstream checkout without editing its files.
+SRC=.tools\source\z80dasm\src
+OUT=build\tools\z80dasm.exe
+COMPAT=tooling\z80dasm-msvc
+
+SOURCES=$(SRC)\dz80.c $(SRC)\dz80dat.c $(SRC)\dz180dat.c $(SRC)\table.c $(SRC)\cmdline.c $(SRC)\symtab.c $(SRC)\symload.c $(SRC)\blocks.c $(SRC)\utils.c $(SRC)\col.c
+
+all: $(OUT)
+
+$(OUT): $(SOURCES) $(COMPAT)\getopt.h $(COMPAT)\unistd.h $(COMPAT)\compat.h
+	cl /nologo /O2 /W3 /I$(COMPAT) /FIcompat.h $(SOURCES) /Fobuild\tools\ /Fe:$(OUT)

@@ -1,0 +1,148 @@
+# Address (hex, instruction start), tab, source-level annotation. Applied after disassembly.
+0000	Boot into the game: establish the stack and interrupt mode before initializing the display.
+000E	Unused zero-filled gap between fixed interrupt entry points; no cartridge reader is known.
+0016	Unused zero-filled gap between fixed interrupt entry points; no cartridge reader is known.
+001B	Choose the normal interrupt handler by storing its address in RAM for the interrupt vector to call.
+0027	Unused zero-filled gap between fixed interrupt entry points; no cartridge reader is known.
+002E	Unused zero-filled gap between fixed interrupt entry points; no cartridge reader is known.
+0036	Unused zero-filled gap before the interrupt vector; no cartridge reader is known.
+0038	Service a video interrupt while preserving the game's alternate Z80 register set.
+003D	Acknowledge the video interrupt, then run the current RAM-selected callback.
+004A	Run a startup delay before installing the regular interrupt work and configuring video; its hardware purpose is unproven.
+006F	Program the VDP's initial display layout and mode registers.
+009A	Expand run-length encoded colour bytes into the initial background colour table.
+00AD	Load sprite graphics into video memory before building the title display.
+00D1	Convert staged sprite graphics to the bit order expected by the later upload.
+0109	Prepare the title/menu state and make the gameplay update the active interrupt callback.
+012E	Advance the title/menu state according to mode flags; the displayed phase can outlive active play.
+0168	Read selection controls only when the current mode accepts them, then test for a selection action.
+0188	Debounce menu selection: wait for a minimum delay and for the held input to be released.
+01AD	Clear the title area and wait through the display transition before continuing.
+01D3	Clear display and sprite work RAM, detect the SC keyboard path, then initialize players and sound.
+0211	Place both players at their starting positions and set the sprite orientation for the selected side.
+0242	Translate the chosen mode into the player-control flags used during gameplay.
+025D	Advance the menu mode while retaining the status flags that must survive the choice.
+0277	Write one byte at a chosen video-memory address.
+027F	Read one byte from a chosen video-memory address.
+0287	Mark the selected video-memory address as a write destination.
+0289	Send the selected address to the VDP, leaving the data port ready for transfer.
+029D	Transfer a block of CPU-memory bytes to video memory without interrupt interference.
+0699	Run one gameplay update: present prepared sprites and scores, read input, settle scoring, update players and ball, prepare new sprites, then service timers and sound.
+06B8	Advance the shared phase clocks, saturating the auxiliary counters while the primary tick wraps.
+06BF	Run the sound engine when its tick countdown expires.
+06C6	Apply a deferred VDP register change requested by the game state.
+06F1	Show a pending status message once, then age it out on later updates.
+06B1	Finish the interrupt update by advancing clocks, scheduling audio, and applying pending video changes.
+06EB	Update pending status, mode, game and point tiles on the scoreboard.
+0832	Map the active controller or keyboard inputs into the two player-control states for this update.
+0835	Ignore live player input while the current mode suppresses controls.
+0841	In the shared-input mode, split one combined scan into the two player-control fields.
+0859	In the separate-input mode, scan and normalize each player's controls independently.
+087E	Combine controller input with any enabled keyboard keys for the first input group.
+0887	Combine controller input with any enabled keyboard keys for the second input group.
+0890	Extract menu-selection actions from both input groups.
+08A0	Poll the first controller/input group; active-low signals become pressed-action bits.
+08C0	Poll the second controller/input group; active-low signals become pressed-action bits.
+08E2	When an SC keyboard is present, add its first player's key rows to the input state.
+0909	When an SC keyboard is present, add its second player's key rows to the input state.
+0931	Select a keyboard row and gather its active-low key states from the first keyboard port.
+0942	Select a keyboard row and gather its active-low key states from the second keyboard port.
+094E	Resolve score and round transitions before moving the players or ball; the first active phase wins.
+096D	Hold the round reset until two state counters agree, then start the next round.
+0989	Only a completed ball outcome may change the point score.
+098F	Classify the completed ball outcome for the status display and score decision.
+09A2	Queue the outcome message for the scoreboard.
+09CE	Choose which player's point cell receives the outcome, accounting for side and mode swaps.
+09F5	Apply the next point, advantage, deuce-like or game-award transition from the selected score state.
+0A09	Move both point cells into the shared deuce-like state after the relevant tied-score transition.
+0A15	Freeze the ball, queue the score display, and begin the pause before the next serve.
+0A30	Advance the selected player's ordinary point count.
+0A33	At this score boundary, enter the shared deuce-like state if the opponent is already at the higher point code.
+0A3A	Reverse the opponent's advantage by moving the two point codes in opposite directions.
+0A3F	Award a game to the selected player; reaching the six-game threshold also marks a higher-level completion state.
+0A54	After a game award, clear both point scores and ball flight, then start the player-reset transition.
+0A79	During the post-point pause, restore starting positions and later arm the next serve.
+0A92	Wait through the post-game pause, then mark the mode transition complete and clear the old phase.
+0AA2	Prepare the next round: choose the starting side and clear the previous ball state.
+0AD4	Prepare the game-count values that the round display will show for each side.
+0AF4	Move both players to their start positions and upload the reset sprites immediately.
+0B29	Update the lower player according to its current serve, contact, animation or AI phase.
+0B2D	If several lower-player phase flags are set, handle only the highest-priority one this update.
+0B5E	Attach the serve trajectory to the lower player's position and start the held-ball phase.
+0B7A	Keep the unlaunched ball beside the lower player until an action or automatic-serve delay starts the wind-up.
+0B9B	For automatic service, wait for the serve delay before starting the wind-up.
+0BA1	Begin the lower player's serve wind-up: restart the timer and enter the timed phase that launches the ball, then prepares the upper player.
+0BBC	Stage the lower serve: launch after the wind-up, activate the receiving side, then release the serve animation.
+0BF3	Test whether the lower player can return the ball: outcome, court proximity and ball height must all permit contact.
+0C14	Require the ball to pass close to the player's contact point in both court-plane axes.
+0C1A	Reject a lower-player hit when the ball is too far above the playable contact height.
+0CDA	Build a return trajectory from the relative ball/player position and remember its horizontal side.
+0D47	Wait for the lower player's animation interval to finish before allowing normal movement again.
+0D61	Predict two possible ball intercepts for the lower AI, then randomly choose their order.
+0D86	Steer the computer-controlled lower player toward its selected intercept target.
+0DB1	Add a random signed offset to the AI target; the sign depends on the Z80 refresh register, which matters for exact port behaviour.
+0DC2	Add a smaller random signed offset to the AI target.
+0DCE	Vary the lower player's automatic serve using three launch-parameter tables.
+0DF9	Prepare launch; a rare random choice substitutes a special trajectory and marks it for flight handling.
+0E2B	Choose a table output from a random threshold test, then add a smaller random variation.
+0E39	Launch-parameter table: random thresholds select one of five possible values.
+0E54	Update the upper player through the mirrored serve, contact, animation and AI phases.
+0E58	If several upper-player phase flags are set, handle only the highest-priority one this update.
+0E89	Attach the upper serve trajectory to that player's position and start the held-ball phase.
+0EA7	Keep the unlaunched ball beside the upper player until an action or automatic-serve delay starts the wind-up.
+0EC8	For automatic upper service, wait for the serve delay, then select the upper serve animation.
+0EEA	Stage the upper serve: launch after the wind-up, activate the receiving side, then release the serve animation.
+0F21	Test whether the upper player can return the ball using the mirrored proximity and height rules.
+102A	Predict two possible ball intercepts and choose a target for the upper AI player.
+1050	Steer the computer-controlled upper player toward its selected intercept target.
+107B	Vary the upper player's automatic serve and derive its launch trajectory.
+11A0	Update the ball according to whether it is held for service, flying, bouncing, stopped, or awaiting a point decision.
+11C5	Start flight from the prepared launch trajectory and reset its elapsed step.
+11E0	Move the flying ball, then test court limits, net vicinity and flight termination.
+120E	End flight outside the playable area and queue the resulting point decision.
+121C	Reflect the ball after court contact, restart its trajectory step and trigger player animation.
+1298	Track court contact using the ball's court-plane position rather than its drawn height.
+12CE	Advance the trajectory and calculate both logical court position and displayed sprite position.
+136B	Scale a signed trajectory component by elapsed flight progress using the source's byte arithmetic.
+1383	Near the net plane, allow one change in vertical flight direction and record the encounter.
+161C	Select a value from a threshold table using a random sample.
+162D	Turn an AI target position into directional player input.
+167C	Predict candidate ball positions that a player might intercept.
+1754	Advance the game's deterministic random seed; exact arithmetic is seed = 5*seed + 1 modulo 256.
+13B9	Rebuild the ball sprite after player movement so its drawing order reflects the new positions.
+17C5	Advance the three PSG sound channels, interpreting each active sound stream for this audio tick.
+1787	Set up the shared sound timing and three independent channel records.
+179F	Give each sound channel its own stream buffer and starting playback state.
+17B9	Initial channel playback state: stream bounds and index, note duration, volume, pitch and envelope progress.
+17C7	Process the three tone channels in descending channel order.
+17CD	Count down the current note and silence its channel when the note ends.
+17DB	Consume sound setup commands until the stream produces a note/rest or reaches its stop point.
+17E5	Continue the selected volume envelope, or count down the release when no envelope is active.
+1800	Schedule the next audio tick after all three channels have been serviced.
+1807	Advance the volume envelope and send its next attenuation value to the PSG.
+183A	Decode the next stream command and choose its sound-operation handler.
+184F	Jump to the selected sound-operation handler.
+185B	Sound operations cover notes/rests, pitch, volume, envelopes and playback timing.
+186B	Play a table-selected note, or silence the channel for a rest command.
+1883	Read an extended note command and derive its pitch and octave.
+1899	Apply note volume and calculate how long its sound and envelope should run.
+18DA	Pitch values used to program PSG tone periods at different octaves.
+18F2	Change pitch for this channel or the shared pitch offset for later notes.
+1905	Set this channel's attenuation from the stream command.
+1911	Select a volume envelope for this channel, or switch envelope processing off.
+192C	Change the channel's note-duration scale.
+1934	Set the channel's default note duration from the next stream byte.
+193C	Set the shared delay between audio-engine updates from the next stream byte.
+1944	Calculate the PSG tone period for the requested pitch and send both pitch bytes.
+1974	Silence the three tone channels by sending maximum attenuation.
+197D	Send a volume change to the selected PSG channel.
+198D	Find the playback state for the selected sound channel.
+199C	Fetch the next stream command with index wrapping, or signal that playback reached its stop point.
+19BC	Volume-envelope patterns used by the sound commands; sprite graphics begin after them.
+1F05	First embedded sound sequence; some of its bytes also serve as background graphics.
+1F53	Second embedded sound sequence; playback length comes from its setup command.
+1F97	Third embedded sound sequence; playback length comes from its setup command.
+1FB8	Fourth embedded sound sequence; playback length comes from its setup command.
+1FDD	Fifth embedded sound sequence, used for the observed repeating tone pulses.
+1FF3	Sixth short embedded sound sequence; its declared length ends before the cartridge tail.
+1FFB	Unreferenced cartridge tail beyond the final declared sound sequence; keep its bytes for the exact rebuild.
