@@ -141,8 +141,8 @@ def advance_ball_12ce(ram: bytearray) -> None:
 
     if 0x5E <= ram[0x34] < 0x6E:
         ram[0x37] = 0
-    if 0x5E <= ram[0x4D] < 0x6E:
-        ram[0x50] = 0
+        if 0x5E <= ram[0x4D] < 0x6E:
+            ram[0x50] = 0
 
 
 def court_contact_1298(ram: bytearray) -> None:

@@ -51,6 +51,7 @@ def run_translated_frame_body(
     upper_refresh_bit: int | None = None,
     rom: bytes | None = None,
     audio_tick: Callable[[bytearray], tuple[int, ...]] | None = None,
+    checkpoint: Callable[[bytearray], None] | None = None,
 ) -> FrameBodyResult:
     """Model 046F, 06EB, 0832, 094E, 0B29, 0E54, 11A0, 13B9, 06B1.
 
@@ -67,6 +68,8 @@ def run_translated_frame_body(
         ram, lower_refresh_bit=lower_refresh_bit, upper_refresh_bit=upper_refresh_bit
     )
     ball_slot = movement_and_sprites_13b9(ram)
+    if checkpoint is not None:
+        checkpoint(ram)
     audio_due, vdp_bytes, psg_bytes = irq_tail_06b1(ram, rom=rom, audio_tick=audio_tick)
     return FrameBodyResult(
         prior_sprite_buffer,

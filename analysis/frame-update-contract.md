@@ -1,12 +1,12 @@
-# Source frame-update contract (static, provisional)
+# Source frame-update contract
 
-This document specifies the source cartridge's update order and RAM effects for a gameplay interrupt. It is derived from the reconstructed Z80 source, not a new emulator run. Addresses are CPU addresses. It is an implementation contract for the Amiga port where effects are settled; conditional paths and timing still needing verification are marked explicitly. See [static-rom-review.md](static-rom-review.md) for the whole-image partition and byte classification.
+This document specifies the source cartridge's update order and RAM effects for a gameplay interrupt. The phase order is derived from the reconstructed Z80 source. A bounded active-play cadence and input observation is recorded in [source-timing-baseline.md](source-timing-baseline.md). Addresses are CPU addresses. It is an implementation contract for the Amiga port where effects are settled; conditional paths still needing verification are marked explicitly. See [static-rom-review.md](static-rom-review.md) for the whole-image partition and byte classification.
 
 The translated body is executable in [source_gameplay_slice.py](../scripts/source_gameplay_slice.py): snapshot of the prior sprite buffer, scoreboard VRAM writes, input selection, score gate, lower player, upper player, ball dispatcher, player movement/sprite construction, IRQ counters, audio tick and pending VDP-register writes, in that order. [source_input_movement.py](../scripts/source_input_movement.py) takes the bytes returned by the ROM's input readers `$087E/$0887` as explicit inputs; raw SG/SC port scanning and actual VDP/PSG devices are outside this model. [source_audio.py](../scripts/source_audio.py) interprets ROM sound commands and returns ordered PSG bytes.
 
 ## Interrupt entry and phase order
 
-The IM 1 vector at `$0038` reads VDP status from port `$BF`, loads a callback pointer from `$C000-$C001`, and calls it via `$0049`. Setup installs `$0699` as that callback through `$001B`. The Z80 swaps its primary/alternate register sets around the callback. A VDP interrupt is therefore the gameplay update trigger; a measured frame cadence is still needed before equating every VDP interrupt with exactly one visible PAL frame.
+The IM 1 vector at `$0038` reads VDP status from port `$BF`, loads a callback pointer from `$C000-$C001`, and calls it via `$0049`. Setup installs `$0699` as that callback through `$001B`. The Z80 swaps its primary/alternate register sets around the callback. A VDP interrupt is therefore the gameplay update trigger. A controlled SC-3000 run measured one update in each of 60 consecutive video intervals at 59.922738 Hz; this does not establish every mode or a PAL frame cadence.
 
 | Order | Entry | Source-visible contract |
 | ---: | --- | --- |
@@ -67,4 +67,4 @@ The three 14-byte audio records start at `$C085`, `$C093`, `$C0A1`, with stream 
 
 ## Remaining checks before calling the port equivalent
 
-No emulator was used to produce this contract. The later [annotation audit](annotation-audit.md) records the completed instruction-level label and comment pass. The court-layout reader is proved for `$0645-$0668`; only 14 byte-emitted positions lack direct consumer evidence (`$1FFB-$1FFF` and nine inter-vector padding bytes). The next reference checks must measure interrupt/update cadence, confirm mode/side labels and ambiguous flag semantics, and compare reachable state snapshots and presentation timing against the Amiga implementation. Do not substitute branch coverage for source analysis.
+The phase contract originated in static analysis; the separate [source timing capture](source-timing-baseline.md) now establishes a bounded active-play cadence and same-interval input response. The later [annotation audit](annotation-audit.md) records the completed instruction-level label and comment pass. The court-layout reader is proved for `$0645-$0668`; only 14 byte-emitted positions lack direct consumer evidence (`$1FFB-$1FFF` and nine inter-vector padding bytes). Remaining checks include mode/side labels and ambiguous flag semantics, other update regimes, and reachable state snapshots and presentation timing against the Amiga implementation. Do not substitute branch coverage for source analysis.
