@@ -12,6 +12,14 @@ focused gap cases, fixture capture requirements and acceptance criteria.
 Full-match captures and comparisons remain open; the passing serve case is the
 initial foundation.
 
+The exact one-player prefix reference is now captured twice identically through
+the first game award, 136 tail-only callbacks and resumed serve flight (1,566
+updates, 285 PSG bytes and eight recorded refresh decisions). The regression
+runner consumes it with `--case round-transition`, matches 1,332 updates and
+250 PSG bytes, then fails at the known unimplemented main-thread transition
+before callback 1333. Source capture readiness and port parity are separate;
+this is not a passing complete match. See [test instructions](tests/README.md).
+
 Keep the reproducible translation as a reference baseline, then iterate on an editable, maintained 68000 port source. Native scheduling and direct Amiga hardware changes belong in that source rather than repeated generator patches. Preserve arithmetic widths, update order, rules and source cadence. Regeneration must not overwrite maintained code. Review the existing public-source policy before checking in ROM-derived translated source; private ROMs and extracted assets remain excluded.
 
 The suite executes the actual assembled game routines, not a Python analogue. Capture reference cases explicitly in MAME, then use saved fixtures and Copperline for ordinary regression runs. Replay supplied inputs and initial state without real-time presentation waits. Compare named simulation fields and ordered sound events at each source callback. Gameplay versus tail-only dispatch remains future coverage. Control random inputs and identify nonportable state explicitly. Report the first differing callback, field, expected and actual values, and return a failing exit status.
@@ -31,7 +39,7 @@ Implemented foundation files:
 
 The first case now passes `python scripts/run_regression_tests.py`: 200 continuous serve/flight/return/point callbacks, 254 RAM bytes at both post-gameplay and post-tail boundaries, and 40 ordered PSG bytes match an independent twice-identical MAME capture. `--self-test` detects a temporary ball-position mutation at callback 1. An independent negative run also returned exit 1 with the named difference; mutations were removed. The existing joined probe still passes after extracting shared build and test-I/O helpers. See [suite instructions and limits](tests/README.md). This does not establish complete-game correctness or change the phase gates.
 
-Next extend coverage to the first-game award and between-game pause/resumed serve, and connect the harness to the maintained 68000 source when that source is established. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Routine entry-point cases are future extensions. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
+Next use the frozen round-transition reference to implement native round setup and gameplay/tail-only dispatch, and connect the harness to the maintained 68000 source when that source is established. Extend source coverage to match completion/restart and complementary two-player play. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Routine entry-point cases are future extensions. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
 
 ## Goal
 

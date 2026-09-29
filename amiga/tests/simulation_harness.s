@@ -1,5 +1,9 @@
 ; Continuous replay: RAM is initialized once and carried across all callbacks.
         section code,code
+        include "build/tests/harness-config.i"
+        ifne CASE_CAPTURE_REFRESH
+LIVE_REFRESH_ADAPTER equ 1
+        endif
         include "build/translation/player-frame-symbols.i"
         include "amiga/translated_z80_macros.i"
 start:
@@ -23,8 +27,16 @@ copy_initial:
 next_update:
         moveq   #0,d0
         move.w  update_index,d0
+        add.w   d0,d0
         lea     inputs,a0
         move.b  (a0,d0.w),case_game_bits
+        move.b  1(a0,d0.w),case_keyboard_bits
+        ifne CASE_CAPTURE_REFRESH
+        clr.b   refresh_count
+        move.l  a5,a0
+        move.w  #256,d0
+        bsr     emit_hex
+        endif
         clr.b   write_count
         move.l  #write_log,write_ptr
         bsr     scoreboard_update
@@ -45,11 +57,41 @@ next_update:
         moveq   #0,d0
         move.b  psg_count,d0
         bsr     emit_hex
+        ifne CASE_CAPTURE_REFRESH
+        lea     refresh_seen,a0
+        moveq   #0,d0
+        move.b  refresh_count,d0
+        bsr     emit_hex
+        endif
         addq.w  #1,update_index
-        cmpi.w  #200,update_index
+        cmpi.w  #CASE_UPDATE_COUNT,update_index
         bne     next_update
         moveq   #0,d0
         rts
+        ifne CASE_CAPTURE_REFRESH
+; Supply recorded source entropy only. Main-thread writes are not injected.
+read_refresh_adapter:
+        movem.l d7/a0-a1,-(sp)
+        move.l  refresh_ptr,a0
+        cmpa.l  #refresh_end,a0
+        bcc.s   refresh_exhausted
+        move.b  (a0)+,d0
+        move.l  a0,refresh_ptr
+        bra.s   record_refresh
+refresh_exhausted:
+        move.b  #$ff,d0
+record_refresh:
+        cmpi.b  #64,refresh_count
+        bcc.s   refresh_return
+        lea     refresh_seen,a0
+        moveq   #0,d7
+        move.b  refresh_count,d7
+        move.b  d0,(a0,d7.w)
+        addq.b  #1,refresh_count
+refresh_return:
+        movem.l (sp)+,d7/a0-a1
+        rts
+        endif
 run_tail:
         bsr     irq_counter_prefix
         clr.b   psg_count
@@ -112,3 +154,12 @@ initial_ram:
         incbin "build/tests/initial-ram.bin"
 inputs:
         incbin "build/tests/inputs.bin"
+        ifne CASE_CAPTURE_REFRESH
+        even
+refresh_ptr: dc.l refresh_values
+refresh_count: dc.b 0
+refresh_seen: dcb.b 64,0
+refresh_values:
+        incbin "build/tests/refresh-values.bin"
+refresh_end:
+        endif

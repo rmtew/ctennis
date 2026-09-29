@@ -4,7 +4,7 @@
   "bytes": {
     "0": "source RAM byte C000 (unassigned)",
     "1": "source RAM byte C001 (unassigned)",
-    "2": "source RAM byte C002 (unassigned)",
+    "2": "deferred display setup request",
     "3": "source RAM byte C003 (unassigned)",
     "4": "source RAM byte C004 (unassigned)",
     "5": "source RAM byte C005 (unassigned)",

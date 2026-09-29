@@ -24,7 +24,7 @@ the cartridge and annotated source, not assumed standard tennis rules.
 
 | ID | Required sequence | Purpose | Current evidence |
 |---|---|---|---|
-| R1: one-player match | Reset, select one-player mode, play a complete match, finish the result sequence and start another game. Include successive game transitions and the first resumed serve after each. | AI/random decisions, accumulated ball/player/score state, clocks, sound, round resets and match/restart behaviour. | Partial source capture: 2202 callbacks in the existing long-game evidence. Existing port probe checks sampled state through the first game award, not the complete replay. Full-match capture and per-callback comparison remain required. |
+| R1: one-player match | Reset, select one-player mode, play a complete match, finish the result sequence and start another game. Include successive game transitions and the first resumed serve after each. | AI/random decisions, accumulated ball/player/score state, clocks, sound, round resets and match/restart behaviour. | Exact prefix fixture now covers 1,566 updates through first game, tail-only pause and resumed serve flight; port matches 1,332 and fails at the known round transition. The older 2202-callback capture remains partial evidence. Full-match capture/comparison remain required. |
 | R2: two-player varied match | Reset, select two-player mode, use both controls, play a complete match and restart. Deliberately vary movement and action timing, rally length, point winners and scoring sequences. | Complement AI play with both human input paths and varied consecutive state transitions. | Required; no complete reference fixture or port comparison established. |
 
 Choose scripts based on observed source behaviour. Seek serving from both ends,
@@ -136,12 +136,15 @@ comparison). A partial capture or sampled match does not promote the entire
 case to passing.
 
 S1 is captured and passing at every retained boundary: 200 callbacks, 254 RAM
-bytes at two boundaries, and 40 ordered PSG bytes. R1 has partial existing
-source evidence and sampled port evidence only; R2 remains required.
+bytes at two boundaries, and 40 ordered PSG bytes. R1 now has a twice-identical
+exact prefix through first game, 136 tail-only callbacks and resumed serve
+flight: 1,566 updates, 285 PSG bytes, eight refresh decisions and all intervening
+RAM writes. The actual runner matches 1,332 updates and 250 PSG bytes, then fails
+at callback 1333 before the native round transition is implemented. R1 is not
+a complete captured or passing match. R2 remains required.
 
-Next extend the R1 source reference through the first tail-only interval and
-resumed serve, with exact main-thread/callback ordering and random inputs.
-Then continue it to match completion/restart. Obtain R2 with complementary
+Next implement the native round transition against that frozen R1 prefix,
+and extend the source recording to match completion/restart. Obtain R2 with complementary
 input/scoring variety, assess the inventory above, and add only the focused
 cases justified by remaining gaps. Reuse the current suite and capture helpers;
 this specification does not require a new test framework.

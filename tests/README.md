@@ -72,3 +72,58 @@ between-game transitions, match completion or arbitrary starting states.
 record layouts. Unassigned bytes retain explicit address-based names rather
 than invented meanings. Wider trajectory values retain their byte positions
 to preserve exact arithmetic evidence.
+
+## First game, pause and resumed serve reference
+
+Capture or validate the longer independent source record:
+
+```powershell
+python scripts/capture_test_reference.py --case round-transition
+python scripts/capture_test_reference.py --case round-transition --verify-only
+python scripts/run_regression_tests.py --case round-transition --reference-only
+```
+
+Capture runs MAME twice from reset and requires identical raw event streams.
+The frozen local fixture is `tests/reference/round-transition.json`; raw streams,
+logs and capture report are under `build/tests/round-reference-capture/`.
+`--reference-only` loads and validates that fixture and materializes input,
+initial RAM, refresh values and harness configuration. It does not run the port
+or claim a passing comparison.
+
+This fixture contains 1,566 updates after the initial callback: 1,430 gameplay
+and 136 tail-only callbacks, 285 PSG bytes, eight consumed refresh decisions,
+and 50 between-callback RAM writes. The first game award is update 1204; the
+pause begins at 1333; gameplay resumes at 1469; the resumed serve first advances
+in flight at 1566. Source frame 2631 contains two callbacks. State is observed
+at exact callback entry, common-tail entry and return, not at frame end.
+
+The capture uses [MAME debugger actions](https://docs.mamedev.org/luascript/ref-debugger.html)
+that print observations and immediately resume, with `-debugger none` and no
+interactive window. It neither steps the CPU nor changes source inputs/random
+state beyond the documented physical input script. The whole retained pre-tail
+RAM prefix, including the initial callback, matches all 1,567 checkpoints in the
+older non-debugger source capture.
+
+Schema version 2 retains `initial_callback`, per-update entry/pre-tail/post-tail
+RAM, callback kind and source frames, input-reader return values, consumed
+refresh values, ordered PSG events, and an ordered `timeline`. Each update's
+`before_events` records intervening routine-entry markers, RAM writes (old/new
+value and source PC), and sound events. Validation reconstructs source entry
+RAM solely to verify capture continuity; **these writes are never injected
+into the port**. The native harness receives initial state, input and recorded
+entropy, then carries its own state forward.
+
+Run the actual comparison:
+
+```powershell
+python scripts/run_regression_tests.py --case round-transition
+```
+
+The present port matches 1,332 updates, including 250 PSG bytes, then returns
+exit 1 at callback 1333: the original main thread has requested display/round
+setup before the first tail-only callback, and the port has not. The full first
+difference and preceding source actions are in
+`build/tests/round-transition-report.json`. This is the known unimplemented
+boundary, not a weakened or passing reference. The default short serve test
+continues to pass. A complete match/restart, the complementary two-player
+record, and source presentation snapshots remain future reference work.
