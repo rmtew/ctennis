@@ -1,3 +1,9 @@
+## Current reference completion plan (2026-09-30)
+
+Expanded tests/reference-spec.md into an executable work backlog: artifact destinations per case, the existing R1 input sequence and result/restart discovery task, a calibrated two-player R2 input recipe with explicit durations/outcome guards, five focused gap-case families, named graphics/audio/timing capture checkpoints, comparison criteria and separate source-data/port completion checklists. Future case filenames are explicitly proposed, not implemented commands. Exact control mappings and restart actions are bounded source discovery tasks; no unverified physical input bits or tennis outcomes are asserted. Continuous captures use frozen input schedules and finite diagnostic watchdogs, not injected gameplay state.
+
+Next source work: generalize the exact callback capture to full match/result regimes, establish R1 restart inputs, and collect the complete R1 while preserving the accepted prefix. Then calibrate/capture R2, fill only meaningful gaps and collect presentation references. Existing source-record and port evidence below is unchanged; this documentation pass adds no runtime coverage.
+
 ## Latest checkpoint (2026-09-30, exact first-round source record)
 
 The independent source record is ready for the regression runner: tests/reference/round-transition.json (ignored/private). Run python scripts/capture_test_reference.py --case round-transition to capture twice, or add --verify-only to validate the saved record. The fixture contains 1,566 consecutive updates after the initial callback: 1,430 gameplay and 136 tail-only callbacks, 285 ordered PSG bytes, eight actual consumed refresh-register decisions, and 50 between-callback RAM writes. Exact callback entry, common-tail entry and return snapshots preserve the main-thread actions and both callbacks in source frame 2631. Initial PRNG state and actual input-reader returns are supplied; no Python gameplay model produces the expected state.

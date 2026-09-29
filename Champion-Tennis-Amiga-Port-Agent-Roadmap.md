@@ -9,6 +9,9 @@ Current phase boundary (2026-09-30): translated gameplay and native Amiga input,
 [The original-game reference specification](tests/reference-spec.md) defines
 two complementary continuous match replays, meaningful observed coverage,
 focused gap cases, fixture capture requirements and acceptance criteria.
+Its execution plan specifies artifact destinations, R1 continuation/restart
+discovery, two-player input calibration and R2 recipe, focused gap cases,
+named presentation captures and separate data/port completion checklists.
 Full-match captures and comparisons remain open; the passing serve case is the
 initial foundation.
 
