@@ -10,6 +10,7 @@ from pathlib import Path
 
 from run_translated_prng_probe import ROOT, OUT, ASSEMBLER, run
 from source_irq_tail import irq_tail_06b1
+from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
 
 
 DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
@@ -27,6 +28,11 @@ def main():
             raise FileNotFoundError(path)
     run([sys.executable, "scripts/run_translated_player_frame_probe.py"], timeout=120)
     run([sys.executable, "scripts/generate_amiga_sprite_probe.py"], timeout=120)
+    score_vram = (ROOT / "build" / "reference" / "source-timing" / "sprite-f1310.vram").read_bytes()
+    score_output = ROOT / "build" / "amiga" / "score-copper-probe"
+    score_output.mkdir(parents=True, exist_ok=True)
+    make_banks(score_vram)
+    make_copper_and_patch_tables()
     capture = ROOT / "build" / "reference" / "source-timing" / "run_a.tsv"
     with capture.open(newline="", encoding="utf-8") as handle:
         initial = next(bytes.fromhex(row["ram"])[:256]

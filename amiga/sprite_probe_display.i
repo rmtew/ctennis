@@ -48,18 +48,18 @@ cop_spr_pair2_c2: dc.w $01b4,$c5b
 cop_spr_pair3_c1: dc.w $01ba,$c5b
 cop_spr_pair3_c2: dc.w $01bc,$000
         dc.w $01be,$000
-        ifd SCORE_COPPER_PROBE
+        ifd SCORE_COPPER_DISPLAY
 score_cop_commands:
         include "build/amiga/score-copper-probe/score-cop-commands.i"
         endif
         dc.w $ffff,$fffe
 
-        ifd SCORE_COPPER_PROBE
+        ifd SCORE_COPPER_DISPLAY
 plane0: incbin "build/amiga/score-copper-probe/plane0.bin"
         else
 plane0: incbin "build/amiga/sprite-probe/plane0.bin"
         endif
-        ifd SCORE_COPPER_PROBE
+        ifd SCORE_COPPER_DISPLAY
 plane1: incbin "build/amiga/score-copper-probe/plane1.bin"
 plane2: incbin "build/amiga/score-copper-probe/plane2.bin"
 plane3: incbin "build/amiga/score-copper-probe/plane3.bin"

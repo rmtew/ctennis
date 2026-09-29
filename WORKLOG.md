@@ -1,3 +1,9 @@
+## Latest checkpoint (2026-09-30)
+
+The native live game now selects all six scoreboard graphics fields through prepared Amiga bitplane banks and Copper pointer patches. The display selection follows the source scoreboard draw events: point/game/mode updates consume the pending redraw flag, status text appears on its pending event, and expiry restores blank text despite retained low status bits. Shadow VDP writes remain verification data, not display input. The scripted serve changes B point from 0 to 1 at the source draw boundary; captured screenshots show only that score cell changed among the six fields after the status message has expired. PAL/source cadence and sprite state still match sampled source checkpoints. Run python scripts/run_amiga_live_serve_probe.py and python scripts/run_amiga_score_copper_probe.py; details and limits are in nalysis/native-gameplay-integration.md. The live executable is 212404 bytes, SHA-256 49332452784e71c2283f4914d40e29103cac1027a5382baef0e6245e2250f643. Next: native Paula audio from ordered PSG events, then longer rallies and score/game coverage.
+
+The entries below record earlier checkpoints and may describe a superseded implementation state.
+
 # Champion Tennis Amiga port worklog
 
 Current status and next action, 2026-09-29. The full investigation history is preserved in [the pre-cleanup worklog](analysis/history/WORKLOG-pre-port-cleanup-2026-09-29.md); its older progress figures and next-action notes are historical.

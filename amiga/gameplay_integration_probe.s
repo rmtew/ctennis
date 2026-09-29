@@ -1,4 +1,5 @@
         section code,code
+SCORE_COPPER_DISPLAY equ 1
         include "build/translation/player-frame-symbols.i"
         include "amiga/translated_z80_macros.i"
 
@@ -22,6 +23,7 @@ patch_pointers:
         move.w  d1,(a2)
         move.w  d0,4(a2)
         dbra    d7,patch_pointers
+        bsr     patch_score_pointers
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
         move.w  #$7fff,$096(a0)
@@ -62,7 +64,10 @@ wait_blanking_end:
 simulation_update:
         bsr     sample_amiga_joystick
         bsr     upload_sprite_attributes
+        move.b  $42(a5),score_flags_before
+        move.b  $71(a5),status_timer_before
         bsr     scoreboard_update
+        bsr     update_native_scoreboard
         bsr     input_update
         bsr     score_gate
         bsr     lower_player_state
@@ -78,6 +83,58 @@ simulation_update:
         bsr     irq_vdp_tail
         addq.w  #1,simulation_updates
         rts
+
+; Match the source scoreboard routine's two draw events. Point/game/mode RAM
+; may change earlier in the score gate, but the source draws them only when
+; status bit 5 is consumed on the following update. Status text remains shown
+; until the source timer expires, even if other RAM state changes meanwhile.
+update_native_scoreboard:
+        movem.l d0-d2/a0,-(sp)
+        clr.b   score_dirty
+        move.b  score_flags_before,d0
+        btst    #7,d0
+        beq.s   check_score_redraw
+        btst    #6,d0
+        beq.s   set_status_selection
+        cmpi.b  #$ff,status_timer_before
+        bne.s   check_score_redraw
+        clr.b   field_values+4
+        move.b  #1,score_dirty
+        bra.s   check_score_redraw
+set_status_selection:
+        move.b  $42(a5),d1
+        andi.b  #7,d1
+        move.b  d1,field_values+4
+        move.b  #1,score_dirty
+check_score_redraw:
+        btst    #5,d0
+        beq.s   commit_score_selection
+        lea     field_values(pc),a0
+        move.b  $3e(a5),(a0)+
+        move.b  $3f(a5),(a0)+
+        move.b  $40(a5),(a0)+
+        move.b  $41(a5),(a0)+
+        addq.l  #1,a0
+        moveq   #0,d1
+        move.b  $3d(a5),d2
+        btst    #2,d2
+        bne.s   store_mode_selection
+        moveq   #1,d1
+        btst    #7,d2
+        beq.s   store_mode_selection
+        moveq   #2,d1
+store_mode_selection:
+        move.b  d1,(a0)
+        move.b  #1,score_dirty
+commit_score_selection:
+        tst.b   score_dirty
+        beq.s   scoreboard_selection_done
+        bsr     patch_score_pointers
+scoreboard_selection_done:
+        movem.l (sp)+,d0-d2/a0
+        rts
+
+        include "amiga/score_copper_patch.i"
 
 sample_amiga_joystick:
         clr.b   game_input_bits
@@ -242,7 +299,7 @@ next_sprite_colour:
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
-; Deferred SG scoreboard/VDP writes are collected for later bitmap rendering.
+; Source writes are retained for verification; display selection uses game state.
 copy_cpu_bytes_to_vram_b_count:
         MAKE_HL_NO_AR
         MAKE_DE_NO_AR
@@ -328,6 +385,14 @@ log_state:
         moveq   #0,d0
         move.b  $45(a5),d0
         bsr     hex_byte
+        lea     log_score_b(pc),a0
+        moveq   #0,d0
+        move.b  field_values+1,d0
+        bsr     hex_byte
+        lea     log_status(pc),a0
+        moveq   #0,d0
+        move.b  field_values+4,d0
+        bsr     hex_byte
         move.l  #log_text,-(sp)
         move.l  #86,-(sp)
         jsr     $f0ff60
@@ -352,6 +417,10 @@ simulation_updates: dc.w 0
 presentation_frames: dc.w 0
 log_timer:         dc.w 50
 game_input_bits:   dc.b 0
+score_flags_before: dc.b 0
+status_timer_before: dc.b 0
+score_dirty: dc.b 0
+field_values: dc.b 0,0,0,0,0,1
         even
 vdp_count:         dc.b 0
         even
@@ -382,7 +451,9 @@ log_ball_slot:      dc.b "00 BY="
 log_ball_y:         dc.b "00 BX="
 log_ball_x:         dc.b "00 LP="
 log_lower_phase:    dc.b "00 UP="
-log_upper_phase:    dc.b "00",0
+log_upper_phase:    dc.b "00 SB="
+log_score_b:      dc.b "00 ST="
+log_status:       dc.b "00",0
 hex_digits:        dc.b "0123456789ABCDEF"
         even
 pointer_sources:
@@ -392,6 +463,7 @@ pointer_targets:
         dc.l cop_bpl0h+2,cop_bpl1h+2,cop_bpl2h+2,cop_bpl3h+2
         dc.l cop_spr0h+2,cop_spr1h+2,cop_spr2h+2,cop_spr3h+2
         dc.l cop_spr4h+2,cop_spr5h+2,cop_spr6h+2,cop_spr7h+2
+        include "build/amiga/score-copper-probe/score-patch-tables.i"
         even
 initial_ram: incbin "build/translation/live-initial-ram.bin"
         even
@@ -401,3 +473,5 @@ sprite_pattern_rows: incbin "build/amiga/sprite-probe/sprite-pattern-rows.bin"
 shadow_vram: dcb.b 16384,0
 
         include "amiga/sprite_probe_display.i"
+        even
+        include "build/amiga/score-copper-probe/score-bank-data.i"
