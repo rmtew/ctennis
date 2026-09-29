@@ -765,6 +765,13 @@ def f_djnz(args,comment):
 
     # a dbf wouldn't work as d1 loaded as byte and with 1 more iteration
     # adapt manually if needed
+    if cli_args.champion_source and cli_args.output_mode == "mot":
+        # Z80 DJNZ leaves flags untouched; 68000 SUBQ does not. Preserve C/X
+        # for routines such as the restoring divider's subsequent RL.
+        done = get_mot_local_label()
+        return (f"\tPUSH_SR{comment}\n\tsubq.b\t#1,d1{comment}\n"
+                f"\tbeq\t{done}{comment}\n\tPOP_SR{comment}\n"
+                f"\tbra\t{target_address}{comment}\n{done}:\n\tPOP_SR{comment}")
     branch = "bne" if cli_args.output_mode == "mot" else "jne"
     return f"\tsubq.b\t#1,d1\t{comment}\n\t{branch}\t{target_address}\t{comment}"
 
@@ -1831,7 +1838,8 @@ if True:
 
 
 \t.macro INVERT_XC_FLAGS
-\teor.b\t#0x11,ccr
+\teor.b\t#0x01,ccr
+\tSET_X_FROM_C
 \t.endm
 
 {out_start_line_comment} useful to recall C from X (add then move then bcx)
@@ -2070,9 +2078,14 @@ CLR_XC_FLAGS:MACRO
 \tmoveq\t#0,{C}
 \troxl.b\t#1,{C}
 \tENDM
-\tSET_XC_FLAGS:MACRO
+SET_XC_FLAGS:MACRO
 \tst.b\t{C}
 \troxl.b\t#1,{C}
+\tENDM
+
+INVERT_XC_FLAGS:MACRO
+\teori.b\t#$01,ccr
+\tSET_X_FROM_C
 \tENDM
 
 CLR_V_FLAG:MACRO
@@ -2248,6 +2261,33 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
                   for line in nout_lines]
     nout_lines = [re.sub(r"^(\s*)\.word\b", r"\1dc.w", line)
                   for line in nout_lines]
+    # Z80 LD A,H preserves carry. In the divider the immediately following
+    # branch consumes carry from ADC HL,HL; 68000 MOVE.B would destroy it.
+    generated = "".join(nout_lines)
+    carry_load = re.compile(
+        r"(?m)^(\tmove\.b\td5,d0[^\n]*\n)(\tbcs\tdivide_subtract_divisor[^\n]*\n)"
+        r'\tERROR\t"review stray bcs test after move\.b"\n'
+    )
+    generated, repaired = carry_load.subn(r"\tPUSH_SR\n\1\tPOP_SR\n\2", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one flagged divider carry load, found {repaired}")
+    restored_carry = re.compile(
+        r'(?m)^(\tSET_X_FROM_C[^\n]*; \[rl l\]\n)'
+        r'\tERROR\t"review stray SET_X_FROM_C \(carry clobbered\) after POP_SR"\n'
+    )
+    generated, repaired = restored_carry.subn(r"\1", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one restored divider carry warning, found {repaired}")
+    # Register-packing macros rotate words and therefore change 68000 X.
+    # ADC HL,HL must consume the source X from the previous Z80 operation.
+    carry_pack = re.compile(
+        r"(?m)^(\tMAKE_HL_NO_AR[^\n]*; \[adc hl,hl\]\n)"
+        r"(\taddx\.w\td6,d6[^\n]*\n)"
+    )
+    generated, repaired = carry_pack.subn(r"\tPUSH_SR\n\1\tPOP_SR\n\2", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one divider ADC register pack, found {repaired}")
+    nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:
     f.writelines(nout_lines)
