@@ -19,7 +19,7 @@ from source_irq_tail import irq_tail_06b1
 ROM_SHA256 = "19bb6647f14ef50f976e8d0a06d389f06b2e700d54a54fb1734d3140f9745ad1"
 CAPTURE = ROOT / "build" / "reference" / "source-timing" / "run_a.tsv"
 SERVE_CAPTURE = ROOT / "build" / "reference" / "source-serve" / "run_a.tsv"
-COUNT = 240
+COUNT = 244
 
 
 def extract(generated, first, next_label, data_label=None):
@@ -59,6 +59,15 @@ def main():
     if not tail_match or "ERROR" in tail_match.group(1):
         raise AssertionError("Generated IRQ counter prefix is unavailable")
     irq_prefix = "irq_counter_prefix:\n" + tail_match.group(1) + "\trts\n"
+    vdp_match = re.search(r"(?ms)^\.lb_13:\n(.*?)^scoreboard_update:", generated)
+    if not vdp_match:
+        raise AssertionError("Generated deferred VDP branch is unavailable")
+    irq_vdp = "irq_vdp_tail:\n" + vdp_match.group(1)
+    irq_vdp, vdp_sites = re.subn(
+        r'(?m)^\s*ERROR\s+"review unknown/unsupported instruction out with args \[\'\(\$bf\),a\'\]"[^\n]*$',
+        "\tjsr\trecord_vdp_byte", irq_vdp)
+    if vdp_sites != 4 or "ERROR" in irq_vdp:
+        raise AssertionError("Deferred VDP output adapters do not cover the generated branch")
     scoreboard = extract(generated, "scoreboard_update", "input_update")
     for label in ("scoreboard_status_tiles", "mode_tile_strings", "game_tally_tiles", "point_value_tiles"):
         scoreboard, count = re.subn(rf"(?m)^{label}:\n(?:dc\.b [^\n]*\n)+", "", scoreboard)
@@ -88,12 +97,13 @@ def main():
     helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
     sound = extract(generated, "assign_sound_stream_4", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
-    routines = (irq_prefix + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
+    routines = (irq_prefix + irq_vdp + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
     defined = set(re.findall(r"(?m)^([A-Za-z_]\w*):", routines))
     defined.update(("read_game_input", "sample_second_input_group",
-                    "upload_sprite_attributes", "copy_cpu_bytes_to_vram_b_count", "l_0008"))
+                    "upload_sprite_attributes", "copy_cpu_bytes_to_vram_b_count", "l_0008",
+                    "record_vdp_byte"))
     symbol_lines = []
     for name, value in re.findall(r"(?m)^([A-Za-z_]\w*): equ 0x([0-9a-fA-F]+)$",
                                   (ROOT / "analysis" / "rom-symbols.def").read_text(encoding="utf-8")):
@@ -120,6 +130,7 @@ def main():
     updates_with_vram_writes = 0
     counter_offsets = (*range(0x6B, 0x72), 0x83)
     psg_bytes = 0
+    vdp_bytes_compared = 0
     for frame in range(1300, 1340):
         before = bytes(ram)
         writes = scoreboard_update_06eb(ram, vram)
@@ -160,7 +171,10 @@ def main():
         cases.extend(ram)
         cases.append(len(emitted_psg))
         cases.extend(emitted_psg)
+        cases.append(len(vdp_bytes))
+        cases.extend(vdp_bytes)
         psg_bytes += len(emitted_psg)
+        vdp_bytes_compared += len(vdp_bytes)
     with SERVE_CAPTURE.open(newline="", encoding="utf-8") as handle:
         serve_rows = list(csv.DictReader(handle, delimiter="\t"))
     if len(serve_rows) != 201 or [int(row["frame"]) for row in serve_rows] != list(range(1299, 1500)):
@@ -203,7 +217,41 @@ def main():
         cases.extend(ram)
         cases.append(len(emitted_psg))
         cases.extend(emitted_psg)
+        cases.append(len(vdp_bytes))
+        cases.extend(vdp_bytes)
         psg_bytes += len(emitted_psg)
+        vdp_bytes_compared += len(vdp_bytes)
+    for mode_bits in range(4):
+        ram = bytearray(checkpoints[1299][:256])
+        ram[0x6B] = (ram[0x6B] + 1) & 255
+        ram[0x02] = 0x80 | mode_bits
+        before = bytes(ram)
+        writes = scoreboard_update_06eb(ram, bytearray(16384))
+        input_update_0832(ram, game_bits=4)
+        score_gate_094e(ram)
+        player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
+        player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
+        ball_dispatch_11a0(ram)
+        movement_and_sprites_13b9(ram)
+        expected = bytes(ram)
+        cases.extend((4, 0))
+        cases.extend(before)
+        cases.extend(expected)
+        cases.append(len(writes))
+        for address, value in writes:
+            cases.extend((address >> 8, address & 255, value))
+        _, vdp_bytes, emitted_psg = irq_tail_06b1(ram, rom=cartridge)
+        if len(vdp_bytes) != 4:
+            raise AssertionError("Controlled VDP flag case emitted no register writes")
+        cases.extend(ram[offset] for offset in counter_offsets[:-1])
+        cases.append((expected[0x83] - 1) & 255)
+        cases.extend(ram)
+        cases.append(len(emitted_psg))
+        cases.extend(emitted_psg)
+        cases.append(len(vdp_bytes))
+        cases.extend(vdp_bytes)
+        psg_bytes += len(emitted_psg)
+        vdp_bytes_compared += len(vdp_bytes)
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
@@ -223,10 +271,12 @@ def main():
               "two_group_input_updates": two_group_input_updates,
               "scoreboard_vram_writes_compared": total_vram_writes,
               "native_irq_counter_bytes_compared": COUNT * len(counter_offsets),
-              "native_post_audio_ram_bytes_compared": COUNT * 256,
+              "native_post_tail_ram_bytes_compared": COUNT * 256,
               "native_audio_psg_bytes_compared": psg_bytes,
+              "native_deferred_vdp_bytes_compared": vdp_bytes_compared,
+              "controlled_deferred_vdp_cases": 4,
               "updates_with_scoreboard_vram_writes": updates_with_vram_writes,
-              "result": "joined scoreboard-to-sprite RAM, IRQ counter prefix, post-audio RAM, and ordered scoreboard VRAM and PSG writes match source captures",
+              "result": "joined gameplay and interrupt tail RAM plus ordered scoreboard VRAM, PSG, and deferred VDP writes match retained and controlled cases",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

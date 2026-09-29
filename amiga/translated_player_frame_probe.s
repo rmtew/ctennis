@@ -65,6 +65,9 @@ compare_irq_counters:
         clr.b   psg_count
         move.l  #psg_log,psg_ptr
         bsr     audio_tick_adapter
+        clr.b   vdp_count
+        move.l  #vdp_log,vdp_ptr
+        bsr     irq_vdp_tail
         move.l  a5,a1
         move.w  #255,d7
 compare_post_audio_ram:
@@ -86,8 +89,22 @@ compare_psg:
         bne     failed
         dbra    d7,compare_psg
 psg_done:
+        moveq   #0,d7
+        move.b  (a4)+,d7
+        cmp.b   vdp_count,d7
+        bne     failed
+        tst.w   d7
+        beq.s   vdp_done
+        subq.w  #1,d7
+        lea     vdp_log,a1
+compare_vdp:
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne     failed
+        dbra    d7,compare_vdp
+vdp_done:
         addq.w  #1,case_index
-        cmpi.w  #240,case_index
+        cmpi.w  #244,case_index
         bne     next_case
         moveq   #0,d0
         rts
@@ -267,6 +284,12 @@ log_vram_write:
         move.l  a1,write_ptr
         addq.b  #1,write_count
         rts
+record_vdp_byte:
+        move.l  vdp_ptr,a1
+        move.b  d0,(a1)+
+        move.l  a1,vdp_ptr
+        addq.b  #1,vdp_count
+        rts
         include "amiga/translated_audio_tick.s"
         include "build/translation/player-frame-routines.s"
         even
@@ -283,6 +306,13 @@ write_ptr:
         dc.l    0
 write_log:
         dcb.b   192,0
+vdp_count:
+        dc.b    0
+        even
+vdp_ptr:
+        dc.l    0
+vdp_log:
+        dcb.b   4,0
 virtual_memory:
         incbin  "build/translation/player-frame-memory.bin"
 cases:
