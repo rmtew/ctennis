@@ -312,6 +312,22 @@ log_state:
         moveq   #0,d0
         move.b  active_ball_slot,d0
         bsr     hex_byte
+        lea     log_ball_y(pc),a0
+        moveq   #0,d0
+        move.b  $34(a5),d0
+        bsr     hex_byte
+        lea     log_ball_x(pc),a0
+        moveq   #0,d0
+        move.b  $35(a5),d0
+        bsr     hex_byte
+        lea     log_lower_phase(pc),a0
+        moveq   #0,d0
+        move.b  $49(a5),d0
+        bsr     hex_byte
+        lea     log_upper_phase(pc),a0
+        moveq   #0,d0
+        move.b  $45(a5),d0
+        bsr     hex_byte
         move.l  #log_text,-(sp)
         move.l  #86,-(sp)
         jsr     $f0ff60
@@ -362,7 +378,11 @@ log_input:         dc.b "00 X="
 log_player_x:      dc.b "00 SX="
 log_sprite_x:      dc.b "00 E="
 log_bridge_error:   dc.b "00 B="
-log_ball_slot:      dc.b "00",0
+log_ball_slot:      dc.b "00 BY="
+log_ball_y:         dc.b "00 BX="
+log_ball_x:         dc.b "00 LP="
+log_lower_phase:    dc.b "00 UP="
+log_upper_phase:    dc.b "00",0
 hex_digits:        dc.b "0123456789ABCDEF"
         even
 pointer_sources:
