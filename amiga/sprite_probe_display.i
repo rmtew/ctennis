@@ -59,9 +59,15 @@ plane0: incbin "build/amiga/score-copper-probe/plane0.bin"
         else
 plane0: incbin "build/amiga/sprite-probe/plane0.bin"
         endif
+        ifd SCORE_COPPER_PROBE
+plane1: incbin "build/amiga/score-copper-probe/plane1.bin"
+plane2: incbin "build/amiga/score-copper-probe/plane2.bin"
+plane3: incbin "build/amiga/score-copper-probe/plane3.bin"
+        else
 plane1: incbin "build/amiga/sprite-probe/plane1.bin"
 plane2: incbin "build/amiga/sprite-probe/plane2.bin"
 plane3: incbin "build/amiga/sprite-probe/plane3.bin"
+        endif
 sprite0: incbin "build/amiga/sprite-probe/sprite0.bin"
 sprite1: incbin "build/amiga/sprite-probe/sprite1.bin"
 sprite2: incbin "build/amiga/sprite-probe/sprite2.bin"
