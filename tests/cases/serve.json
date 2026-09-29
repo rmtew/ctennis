@@ -1,0 +1,11 @@
+{
+  "name": "serve",
+  "reference": "tests/reference/serve.json",
+  "first_frame": 1300,
+  "updates": 200,
+  "input": [{"from": 1, "through": 150, "game_bits": 16}, {"from": 151, "through": 200, "game_bits": 0}],
+  "refresh_bit": 0,
+  "excluded_ram_offsets": [0, 1],
+  "checkpoint": "post-gameplay, before IRQ counter write",
+  "sound_checkpoint": "ordered PSG writes during the following IRQ tail"
+}

@@ -4,6 +4,29 @@ This document defines the target and phase gates. [WORKLOG.md](WORKLOG.md) is th
 
 Current phase boundary (2026-09-30): translated gameplay and native Amiga input, Copper/bitplane/sprite display, and Paula tone output run through one game award. Simulation is now paced independently of PAL presentation; the inactive Copper-list address is switched in blanking, with zero visible-line commits measured in the long replay and ordinary run. After a game, the source temporarily selects the existing counter/audio interrupt tail alone while its main-thread round transition runs; this callback routing and round transition, complete-match presentation/audio checks, and independent hardware verification remain open. See [the current worklog](WORKLOG.md) and [long-game replay evidence](analysis/long-game-replay.md) for measured results and the next action. No Phase 4 or Phase 5 gate is claimed.
 
+## Maintained source and regression suite (agreed 2026-09-30)
+
+Keep the reproducible translation as a reference baseline, then iterate on an editable, maintained 68000 port source. Native scheduling and direct Amiga hardware changes belong in that source rather than repeated generator patches. Preserve arithmetic widths, update order, rules and source cadence. Regeneration must not overwrite maintained code. Review the existing public-source policy before checking in ROM-derived translated source; private ROMs and extracted assets remain excluded.
+
+The suite executes the actual assembled game routines, not a Python analogue. Capture reference cases explicitly in MAME, then use saved fixtures and Copperline for ordinary regression runs. Replay supplied inputs and initial state without real-time presentation waits. Compare named simulation fields and ordered sound events at each source callback. Gameplay versus tail-only dispatch remains future coverage. Control random inputs and identify nonportable state explicitly. Report the first differing callback, field, expected and actual values, and return a failing exit status.
+
+Implemented foundation files:
+
+| Location | Responsibility |
+|---|---|
+| `tests/README.md` | Run instructions, established coverage and gaps. |
+| `tests/cases/*.json` | Initial-state fixture, input sequence, entry point, callback count and comparison fields. |
+| `tests/reference/` | Saved source state and sound events; private ROM-derived fixtures stay local and ignored where required. |
+| `tests/state-fields.json` | Field names, widths and locations for readable differences. |
+| `amiga/tests/simulation_harness.s` | Call the same routines linked into the game, supply state/inputs and capture results without presentation waits. |
+| `scripts/run_regression_tests.py` | Build, run Copperline and compare saved reference results. |
+| `scripts/capture_test_reference.py` | Explicit MAME reference capture or extension, outside ordinary regression runs. |
+| `build/tests/` | Ignored executables, captures and reports. |
+
+The first case now passes `python scripts/run_regression_tests.py`: 200 continuous serve/flight/return/point callbacks, 254 RAM bytes at both post-gameplay and post-tail boundaries, and 40 ordered PSG bytes match an independent twice-identical MAME capture. `--self-test` detects a temporary ball-position mutation at callback 1. An independent negative run also returned exit 1 with the named difference; mutations were removed. The existing joined probe still passes after extracting shared build and test-I/O helpers. See [suite instructions and limits](tests/README.md). This does not establish complete-game correctness or change the phase gates.
+
+Next extend coverage to the first-game award and between-game pause/resumed serve, and connect the harness to the maintained 68000 source when that source is established. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Routine entry-point cases are future extensions. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
+
 ## Goal
 
 Produce a playable, native Amiga 500 port of the SG-1000/SC-3000 **Champion Tennis** cartridge. Preserve the original game rules and feel by translating its Z80 game logic to 68000 and replacing its video, sound, and input interfaces with Amiga implementations. Deliver a reproducible build, a bootable ADF, and evidence from automated comparisons against the original cartridge. The delivered Amiga game should not require the original cartridge at runtime.

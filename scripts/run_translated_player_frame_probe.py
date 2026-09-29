@@ -36,7 +36,8 @@ def extract(generated, first, next_label, data_label=None):
     return routine
 
 
-def main():
+def prepare_gameplay():
+    """Generate the shared routines used by the live game and regression harness."""
     config = configparser.ConfigParser(interpolation=None)
     if not config.read(ROOT / "config.local.ini", encoding="utf-8"):
         raise FileNotFoundError("config.local.ini")
@@ -45,7 +46,7 @@ def main():
     cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
     if hashlib.sha256(cartridge).hexdigest() != ROM_SHA256:
         raise AssertionError("Unexpected source cartridge")
-    for path in (ASSEMBLER, copperline, amiga_rom, CAPTURE, SERVE_CAPTURE):
+    for path in (ASSEMBLER, copperline, amiga_rom):
         if not path.is_file():
             raise FileNotFoundError(path)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -114,6 +115,15 @@ def main():
     memory[:len(cartridge)] = cartridge
     (OUT / "player-frame-memory.bin").write_bytes(memory)
 
+    return cartridge
+
+
+def main():
+    cartridge = prepare_gameplay()
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(ROOT / "config.local.ini", encoding="utf-8")
+    copperline = Path(config["tools"]["copperline"])
+    amiga_rom = Path(config["inputs"]["amiga_rom"])
     with CAPTURE.open(newline="", encoding="utf-8") as handle:
         checkpoints = {int(row["frame"]): bytes.fromhex(row["ram"])
                        for row in csv.DictReader(handle, delimiter="\t")
