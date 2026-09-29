@@ -14,7 +14,7 @@ The [sprite hardware-fit test](analysis/sprite-rendering.md) checks 111 retained
 
 ## Next action
 
-Continue the [JOTD translator pilot](analysis/z80-translator-pilot.md): repair or replace the Motorola support macros, keep every unsupported instruction and unresolved control-flow case visible, then assemble and run a bounded generated gameplay slice. Compare its RAM with the 40-update movement and 200-update serve/point source checkpoints before measuring A500 speed and memory. The native hand-written movement/serve-wait probe remains a diagnostic reference, not the main port route.
+Continue the [JOTD translator pilot](analysis/z80-translator-pilot.md): the first generated PRNG routine now passes all 256 seed values on the exact PAL A500 profile. Next repair or replace the Motorola support macros, keep every unsupported instruction and unresolved control-flow case visible, then assemble and run a larger generated gameplay slice. Compare its RAM with the 40-update movement and 200-update serve/point source checkpoints before measuring A500 speed and memory. The native hand-written movement/serve-wait probe remains a diagnostic reference, not the main port route.
 
 ## Repository boundary
 
