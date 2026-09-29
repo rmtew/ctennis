@@ -1,4 +1,4 @@
-ï»¿# Champion Tennis Amiga port worklog
+# Champion Tennis Amiga port worklog
 
 Current status and next action, 2026-09-29. The full investigation history is preserved in [the pre-cleanup worklog](analysis/history/WORKLOG-pre-port-cleanup-2026-09-29.md); its older progress figures and next-action notes are historical.
 
@@ -14,7 +14,7 @@ The [sprite hardware-fit test](analysis/sprite-rendering.md) checks 111 retained
 
 ## Next action
 
-Continue the [JOTD translator pilot](analysis/z80-translator-pilot.md): generated PRNG, unsigned multiply, restoring divider, input-side normalization, bounded two-player motion, animation, and player sprite construction pass isolated native probes on the exact PAL A500 profile. The joined generated input, score, lower/upper player-state, ball-dispatch and player/sprite path now matches all 256 RAM bytes at every checkpoint in both retained captures: 40 active-play movement updates and 200 serve/flight/point updates. Those include one point award, 65 point-pause updates and one position reset. A separate generated input-selection probe matches 16,896 decoded-input cases, including 16,384 two-group cases absent from the captures. The replay fixture supplies zero for the explicit Z80 refresh-register adapter, whose live fidelity rule remains open. Next bring scoreboard RAM/VRAM work and the interrupt tail into native execution, then connect hardware adapters and complete the interrupt. Repair the broader Motorola support macros and measure speed and memory only after that larger update runs. The native hand-written movement/serve-wait probe remains a diagnostic reference, not the main port route.
+Continue the [JOTD translator pilot](analysis/z80-translator-pilot.md): generated scoreboard, input, score, lower/upper player-state, ball-dispatch and player/sprite routines now match all 256 source RAM bytes at every checkpoint in both retained captures: 40 active-play movement updates and 200 serve/flight/point updates. The native scoreboard adapters also match all 43 ordered VRAM writes across the two updates that write. The extended executable SHA-256 is `d936c10c9c98ca9a4cff9213ac756553e476cc4811ec07e83a4913b74df1a388` on the exact PAL A500 profile. The case-174 stall came from writing a 16-bit VRAM address to an odd address in the probe's packed three-byte write log; byte stores fix the 68000 address error. A separate generated input-selection probe matches 16,896 decoded-input cases. The replay fixture supplies zero for the explicit Z80 refresh-register adapter, whose live fidelity rule remains open. Next bring the interrupt tail into native execution, then connect hardware adapters and complete the interrupt. Repair broader Motorola support macros and measure speed and memory after that larger update runs.
 
 ## Repository boundary
 
@@ -26,10 +26,10 @@ The preliminary Ghidra import/export path, label-audit prototype, and block-sugg
 
 ## Recheck
 
-- `python scripts/roundtrip_rom.py` â€” exact cartridge rebuild and label/comment input validation.
-- `python scripts/check_source_ball_update.py` â€” static translated-source checks.
-- `python scripts/source_timing_baseline.py` â€” repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
-- `python scripts/smoke_amiga_run.py` â€” copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
-- `python scripts/check_sprite_hardware_fit.py` â€” check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
-- `python scripts/run_amiga_sprite_probe.py` â€” regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
-- `git status --short` â€” review only intended source and documentation before a first commit.
+- `python scripts/roundtrip_rom.py` — exact cartridge rebuild and label/comment input validation.
+- `python scripts/check_source_ball_update.py` — static translated-source checks.
+- `python scripts/source_timing_baseline.py` — repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
+- `python scripts/smoke_amiga_run.py` — copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
+- `python scripts/check_sprite_hardware_fit.py` — check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
+- `python scripts/run_amiga_sprite_probe.py` — regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
+- `git status --short` — review only intended source and documentation before a first commit.

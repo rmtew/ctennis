@@ -55,6 +55,11 @@ def main():
          "--report-output", str(OUT / "report.json"),
          "build/analysis/champion-tennis-classified.asm"])
     generated = source.read_text(encoding="utf-8")
+    scoreboard = extract(generated, "scoreboard_update", "input_update")
+    for label in ("scoreboard_status_tiles", "mode_tile_strings", "game_tally_tiles", "point_value_tiles"):
+        scoreboard, count = re.subn(rf"(?m)^{label}:\n(?:dc\.b [^\n]*\n)+", "", scoreboard)
+        if count != 1:
+            raise AssertionError(f"Expected one {label} table")
     input_selection = extract(generated, "input_update", "read_game_input")
     score = extract(generated, "score_gate", "lower_player_state")
     motion = extract(generated, "lower_player_motion_update", "animate_lower_player")
@@ -79,12 +84,12 @@ def main():
     helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
     sound = extract(generated, "assign_sound_stream_4", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
-    routines = (input_selection + score + player_state + ball + ball_slots + motion + animation +
+    routines = (scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
     defined = set(re.findall(r"(?m)^([A-Za-z_]\w*):", routines))
     defined.update(("read_game_input", "sample_second_input_group",
-                    "upload_sprite_attributes"))
+                    "upload_sprite_attributes", "copy_cpu_bytes_to_vram_b_count", "l_0008"))
     symbol_lines = []
     for name, value in re.findall(r"(?m)^([A-Za-z_]\w*): equ 0x([0-9a-fA-F]+)$",
                                   (ROOT / "analysis" / "rom-symbols.def").read_text(encoding="utf-8")):
@@ -107,10 +112,12 @@ def main():
     cases = bytearray()
     score_paths = {}
     two_group_input_updates = 0
+    total_vram_writes = 0
+    updates_with_vram_writes = 0
     for frame in range(1300, 1340):
-        scoreboard_update_06eb(ram, vram)
-        game_bits = 4 if frame < 1320 else 0
         before = bytes(ram)
+        writes = scoreboard_update_06eb(ram, vram)
+        game_bits = 4 if frame < 1320 else 0
         two_group_input_updates += bool(ram[0x3D] & 0x80 and not ram[0x3D] & 0x04)
         input_update_0832(ram, game_bits=game_bits)
         score = score_gate_094e(ram)
@@ -126,6 +133,13 @@ def main():
         cases.extend((game_bits, 0))
         cases.extend(before)
         cases.extend(expected)
+        if len(writes) > 64:
+            raise AssertionError("Scoreboard write log exceeds native buffer")
+        cases.append(len(writes))
+        for address, value in writes:
+            cases.extend((address >> 8, address & 255, value))
+        total_vram_writes += len(writes)
+        updates_with_vram_writes += bool(writes)
         irq_tail_06b1(ram, rom=cartridge)
         captured_after = bytearray(expected)
         captured_after[0x6B] = (captured_after[0x6B] + 1) & 255
@@ -141,9 +155,9 @@ def main():
     vram = bytearray(16384)
     for row in serve_rows[1:]:
         frame = int(row["frame"])
-        scoreboard_update_06eb(ram, vram)
-        game_bits = 0x10 if frame < 1450 else 0
         before = bytes(ram)
+        writes = scoreboard_update_06eb(ram, vram)
+        game_bits = 0x10 if frame < 1450 else 0
         two_group_input_updates += bool(ram[0x3D] & 0x80 and not ram[0x3D] & 0x04)
         input_update_0832(ram, game_bits=game_bits)
         score = score_gate_094e(ram)
@@ -159,9 +173,14 @@ def main():
         cases.extend((game_bits, 0))
         cases.extend(before)
         cases.extend(expected)
+        if len(writes) > 64:
+            raise AssertionError("Scoreboard write log exceeds native buffer")
+        cases.append(len(writes))
+        for address, value in writes:
+            cases.extend((address >> 8, address & 255, value))
+        total_vram_writes += len(writes)
+        updates_with_vram_writes += bool(writes)
         irq_tail_06b1(ram, rom=cartridge)
-    if len(cases) != COUNT * 514:
-        raise AssertionError("Unexpected native case-table size")
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
@@ -179,7 +198,9 @@ def main():
               "native_bytes_compared_per_update": 256,
               "score_paths": score_paths,
               "two_group_input_updates": two_group_input_updates,
-              "result": "joined input, score, player-state, ball and sprite RAM matches source captures",
+              "scoreboard_vram_writes_compared": total_vram_writes,
+              "updates_with_scoreboard_vram_writes": updates_with_vram_writes,
+              "result": "joined scoreboard, input, score, player-state, ball and sprite RAM plus scoreboard VRAM writes match source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

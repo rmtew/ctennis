@@ -15,6 +15,9 @@ copy_ram:
         move.b  (a4)+,d0
         move.b  d0,(a1)+
         dbra    d7,copy_ram
+        clr.b   write_count
+        move.l  #write_log,write_ptr
+        bsr     scoreboard_update
         bsr     input_update
         bsr     score_gate
         bsr     lower_player_state
@@ -28,9 +31,29 @@ compare_ram:
         cmp.b   (a1)+,d0
         bne.s   failed
         dbra    d7,compare_ram
+        moveq   #0,d7
+        move.b  (a4)+,d7
+        cmp.b   write_count,d7
+        bne.s   failed
+        tst.w   d7
+        beq.s   writes_done
+        subq.w  #1,d7
+        lea     write_log,a1
+compare_writes:
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne.s   failed
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne.s   failed
+        move.b  (a4)+,d0
+        cmp.b   (a1)+,d0
+        bne.s   failed
+        dbra    d7,compare_writes
+writes_done:
         addq.w  #1,case_index
         cmpi.w  #240,case_index
-        bne.s   next_case
+        bne     next_case
         moveq   #0,d0
         rts
 failed:
@@ -171,6 +194,44 @@ carry_set\@:
         move.w  (sp)+,ccr
         ENDM
 
+copy_cpu_bytes_to_vram_b_count:
+        MAKE_HL_NO_AR
+        MAKE_DE_NO_AR
+        tst.b   d1
+        beq.s   copy_vram_done
+copy_vram_byte:
+        lea     virtual_memory,a0
+        moveq   #0,d0
+        move.w  d6,d0
+        adda.l  d0,a0
+        move.b  (a0),d0
+        bsr     log_vram_write
+        addq.w  #1,d6
+        addq.w  #1,d4
+        subq.b  #1,d1
+        bne.s   copy_vram_byte
+copy_vram_done:
+        MAKE_H
+        MAKE_D
+        clr.b   d0
+        rts
+l_0008:
+        movem.l d4/d6-d7,-(sp)
+        MAKE_HL_NO_AR
+        move.w  d6,d4
+        bsr     log_vram_write
+        movem.l (sp)+,d4/d6-d7
+        rts
+log_vram_write:
+        move.l  write_ptr,a1
+        move.w  d4,d7
+        lsr.w   #8,d7
+        move.b  d7,(a1)+
+        move.b  d4,(a1)+
+        move.b  d0,(a1)+
+        move.l  a1,write_ptr
+        addq.b  #1,write_count
+        rts
         include "build/translation/player-frame-routines.s"
         even
 case_index:
@@ -179,6 +240,13 @@ case_game_bits:
         dc.b    0
 case_keyboard_bits:
         dc.b    0
+write_count:
+        dc.b    0
+        even
+write_ptr:
+        dc.l    0
+write_log:
+        dcb.b   192,0
 virtual_memory:
         incbin  "build/translation/player-frame-memory.bin"
 cases:
