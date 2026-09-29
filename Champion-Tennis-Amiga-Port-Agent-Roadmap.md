@@ -42,7 +42,110 @@ Implemented foundation files:
 
 The first case now passes `python scripts/run_regression_tests.py`: 200 continuous serve/flight/return/point callbacks, 254 RAM bytes at both post-gameplay and post-tail boundaries, and 40 ordered PSG bytes match an independent twice-identical MAME capture. `--self-test` detects a temporary ball-position mutation at callback 1. An independent negative run also returned exit 1 with the named difference; mutations were removed. The existing joined probe still passes after extracting shared build and test-I/O helpers. See [suite instructions and limits](tests/README.md). This does not establish complete-game correctness or change the phase gates.
 
-Next use the frozen round-transition reference to implement native round setup and gameplay/tail-only dispatch, and connect the harness to the maintained 68000 source when that source is established. Extend source coverage to match completion/restart and complementary two-player play. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Routine entry-point cases are future extensions. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
+The next work follows the suite-first goal below. Establish reference-backed cases and explicit known failures before broad port cleanup or implementing missing gameplay regimes. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
+
+## Next goal: complete the reference-backed red/green suite
+
+**Goal statement:** Build one-command regression coverage for every required
+case in `tests/reference-spec.md` against the actual assembled Amiga port,
+with independently captured source expectations, explicit known failures and
+visible missing coverage. Establish the suite before broad port cleanup and
+maintained-source conversion, so subsequent work preserves passing behaviour
+and deliberately resolves recorded failures.
+
+This goal establishes a diagnostic baseline; it does not require fixing all
+port failures. The implementation goal that follows is distinct.
+
+### Work sequence
+
+1. Extend the independent source capture to full R1 match/result/restart, then
+   calibrate and capture R2. Preserve the accepted first-round prefix. Follow
+   the reference specification's input recipes, stop guards, repeatability
+   checks and artifact policy.
+2. Index actual observed behaviours in a coverage manifest. Capture F1-F5 only
+   where meaningful gaps remain. Collect the required P1-P3 original-game
+   presentation/input/timing evidence. Never treat intended coverage as observed.
+3. Generalize the existing runner to enumerate all registered cases in one
+   invocation and execute the actual routines linked into the game. Ordinary
+   runs use frozen source fixtures; reference capture remains explicit. Extend
+   the harness for supported callback regimes and input/entropy streams, not
+   by injecting expected source writes into port state.
+4. Retain continuous R1/R2 replays for accumulated-state drift. Add source-derived
+   phase cases starting before resumed serves, match completion and restart,
+   where an earlier red boundary prevents independently diagnosing later code.
+   Record starting-state provenance and required native entry point. A phase
+   case does not replace the continuous replay or claim upstream parity.
+5. Run every case and record the first divergence for each red result. Separate
+   simulation comparisons from executable hardware/presentation checks. A
+   missing entry point, unsupported adapter, absent reference or unimplemented
+   comparison is missing coverage, not a gameplay mismatch and not a pass.
+6. Register known failures and verify the suite's policy with deliberate
+   gameplay mutations and altered failure signatures. Remove mutations and
+   preserve the existing passing serve test. Update reports, instructions,
+   coverage manifest, worklog and case status from the actual final run.
+
+### Status and known-failure policy
+
+| Status | Meaning | Effect on the goal |
+|---|---|---|
+| Green | A valid original-game reference exists and the port passes its checks. | Preserve on every subsequent change. |
+| Red, known | A runnable reference-backed comparison fails with a recorded, understood first-divergence signature. | Valid baseline evidence, but remains visibly red. |
+| Red, unexpected | A previous green case fails, or a known failure changes signature without an explained implementation change. | Investigate; baseline is not accepted. |
+| Missing | Capture, adapter, entry point or comparison is absent/invalid/unsupported. | Goal remains incomplete for that required case. |
+
+Plan to add `tests/known-failures.json` containing case ID, reason, relevant
+implementation boundary, exact first-divergence signature (callback, boundary,
+field/event and expected/actual values), and fixture/build provenance. Keep
+transient tool/build/capture errors outside this register. Do not bless any
+failure merely because it is reproducible. For presentation tests use a named
+checkpoint and violated criterion instead of a simulation callback signature.
+
+The all-case runner must show actual green/red/missing results and fail strict
+validation while any required case is red or missing. A separate, explicitly
+named baseline-check mode may succeed when all green cases stay green and all
+known red signatures reproduce; its output must still show those cases red.
+It must fail for unexpected differences, missing required cases and unexpected
+passes. A formerly red case becoming green requires review of the passing
+evidence and removal of its known-failure entry, not silent acceptance or a
+stale exception. Never ignore exit codes or blanket-mark a whole family of
+cases as expected failures.
+
+### Deliverables and completion evidence
+
+- All required source records, coverage intervals and media/checkpoint manifests
+  from the reference specification, with duplicate-capture proof and reproducible
+  local generation. Private inputs and ROM-derived oracles remain ignored.
+- Tracked case definitions, field mappings, required native entry points, phase
+  fixture provenance and `tests/known-failures.json`.
+- One documented all-case command using existing runner/build helpers, with
+  machine-readable per-case results and a concise coverage/status summary.
+- A strict run exposing every outstanding red result and a baseline-check run
+  that proves the unchanged green results and each known red signature. Missing
+  coverage must be zero; source-data completion and port success stay separate.
+- Demonstrated detection of a deliberate regression in a green case and a
+  changed known-failure signature. No mutations remain in the accepted source.
+
+This goal is achieved only when every required case is runnable and classified
+green or specifically known red, all source-reference completion requirements
+are met, no unexpected failures or missing checks remain, and the final reports
+match the committed code and local frozen fixture hashes. Deferring a case
+requires an explicit user scope change; difficulty is not an exemption. The
+existing round-transition failure at callback 1333 is the first known-red
+candidate, not evidence that this complete-suite goal is already met.
+
+### Following goal: maintain and complete the native port
+
+Once the baseline suite is established, freeze the generated translation as a
+reference and establish editable maintained 68000 product source under the
+existing repository/private-ROM policy. Link both tests and the live game to
+that source; first require identical green results and known-red signatures.
+Then clean up and implement native scheduling, round/match/restart transitions,
+input, direct graphics and sound in reviewable changes. Each change preserves
+all green cases and either preserves or deliberately resolves its related red
+cases with evidence. Do not weaken reference data or broaden exclusions to
+obtain green results. Finish when all required simulation and separate native
+hardware/presentation checks pass; retain the existing ADF and independent
+hardware verification gates.
 
 ## Goal
 
