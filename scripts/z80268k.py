@@ -2330,6 +2330,37 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     generated, repaired = contact_bit.subn(r"\1\2\tbtst.b\t#1,(a0)\n\3", generated)
     if repaired != 1:
         raise ValueError(f"Expected one court-contact preserved bit test, found {repaired}")
+    # Loading the adjacent intercept byte changes Z after BIT 0,(HL).
+    intercept_sign = re.compile(
+        r"(?m)^(\tGET_ADDRESS\t\$c069,a0[^\n]*\n"
+        r"\tmove\.b\t\(a0\),d0[^\n]*; \[ld a,\(\$c069\)\]\n)"
+        r"(\tbeq\tapply_intercept_y_sign[^\n]*\n)"
+        r'\tERROR\t"review stray beq test after move\.b"\n'
+    )
+    generated, repaired = intercept_sign.subn(
+        r"\1\tGET_ADDRESS\t$c068,a0\n\tbtst.b\t#0,(a0)\n\2", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one intercept sign bit test, found {repaired}")
+    # The Z80 store of zero leaves carry from CP 8 intact. 68000 CLR does
+    # not; repeat the comparison on the still-live height byte in D0.
+    contact_height = re.compile(
+        r"(?m)^(\tclr\.b\t\(a0\)[^\n]*; \[ld \(hl\),\$00\]\n)"
+        r"(\tbcc\tupper_contact_set_regular_height[^\n]*\n)"
+        r'\tERROR\t"review stray bcc test after clr\.b"\n'
+    )
+    generated, repaired = contact_height.subn(r"\1\tcmp.b\t#$08,d0\n\2", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one upper-contact height comparison, found {repaired}")
+    refresh_sign = re.compile(
+        r"(?m)^\tmove\.b\t#r,d0[^\n]*; \[ld a,r\]\n"
+        r"(\tbtst\.l\t#0,d0[^\n]*; \[bit 0,a\]\n)"
+        r"(\tmove\.b\td1,d0[^\n]*; \[ld a,b\]\n)"
+        r"(\tbne\.b\t\.lb_38[^\n]*; \[ret z\]\n)"
+    )
+    generated, repaired = refresh_sign.subn(
+        r"\tREAD_Z80_REFRESH\n\1\tPUSH_SR\n\2\tPOP_SR\n\3", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one Z80 refresh-sign read, found {repaired}")
     nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:

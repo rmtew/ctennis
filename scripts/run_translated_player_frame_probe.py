@@ -62,16 +62,31 @@ def main():
             raise AssertionError(f"Expected one {label} table")
     animation = extract(generated, "animate_lower_player", "unsigned_multiply_byte", "animation_records")
     sprites = extract(generated, "build_player_sprites", "ball_flight_update", "player_sprite_descriptors")
-    threshold = extract(generated, "threshold_table_lookup", "direction_ai")
     ball = extract(generated, "ball_flight_update", "player_movement_and_sprites")
     ball_slots = extract(generated, "player_movement_and_sprites", "lower_player_motion_update")
     arithmetic = extract(generated, "unsigned_multiply_byte", "triangular_root_step")
+    player_state = extract(generated, "lower_player_state", "build_player_sprites")
+    for label in ("lower_serve_vector", "lower_trajectory_records",
+                  "lower_trajectory_record_two", "lower_trajectory_record_three",
+                  "upper_serve_vector", "upper_trajectory_records",
+                  "upper_trajectory_record_two"):
+        player_state, count = re.subn(
+            rf"(?m)^{label}:\n(?:;[^\n]*\n)?(?:dc\.b [^\n]*\n)+", "", player_state)
+        if count != 1:
+            raise AssertionError(f"Expected one {label} table")
+    helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
     sound = extract(generated, "assign_sound_stream_5", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
-    (OUT / "player-frame-routines.s").write_text(
-        ball + ball_slots + motion + animation + sprites + threshold +
-        arithmetic + sound + ldir,
-        encoding="utf-8")
+    routines = (player_state + ball + ball_slots + motion + animation +
+                sprites + arithmetic + helpers + sound + ldir)
+    (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
+    defined = set(re.findall(r"(?m)^([A-Za-z_]\w*):", routines))
+    symbol_lines = []
+    for name, value in re.findall(r"(?m)^([A-Za-z_]\w*): equ 0x([0-9a-fA-F]+)$",
+                                  (ROOT / "analysis" / "rom-symbols.def").read_text(encoding="utf-8")):
+        if name not in defined and re.search(rf"\b{re.escape(name)}\b", routines):
+            symbol_lines.append(f"{name} equ ${value}\n")
+    (OUT / "player-frame-symbols.i").write_text("".join(symbol_lines), encoding="utf-8")
     memory = bytearray(65536)
     memory[:len(cartridge)] = cartridge
     (OUT / "player-frame-memory.bin").write_bytes(memory)
@@ -90,9 +105,9 @@ def main():
         scoreboard_update_06eb(ram, vram)
         input_update_0832(ram, game_bits=4 if frame < 1320 else 0)
         score_gate_094e(ram)
+        before = bytes(ram)
         player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
         player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
-        before = bytes(ram)
         ball_dispatch_11a0(ram)
         movement_and_sprites_13b9(ram)
         expected = checkpoints[frame][:256]
@@ -119,9 +134,9 @@ def main():
         scoreboard_update_06eb(ram, vram)
         input_update_0832(ram, game_bits=0x10 if frame < 1450 else 0)
         score_gate_094e(ram)
+        before = bytes(ram)
         player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
         player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
-        before = bytes(ram)
         ball_dispatch_11a0(ram)
         movement_and_sprites_13b9(ram)
         expected = bytes.fromhex(row["ram"])
@@ -148,7 +163,7 @@ def main():
             raise AssertionError(f"Native player-frame proof missing {expected}: {log[-500:]}")
     report = {"movement_updates_checked": 40, "serve_updates_checked": 200,
               "native_bytes_compared_per_update": 256,
-              "result": "joined ball dispatch and player phase RAM matches source captures",
+              "result": "joined player-state, ball dispatch and sprite phase RAM matches source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

@@ -1,25 +1,5 @@
         section code,code
-point_outcome_flags equ $c039
-mode_status_flags equ $c03d
-lower_player_y equ $c049
-upper_player_y equ $c045
-irq_tick_counter equ $c06b
-input_direction_a equ $c053
-lower_movement_bounds equ $144d
-upper_movement_bounds equ $147c
-animation_records equ $14fa
-player_sprite_descriptors equ $115a
-ball_court_y equ $c034
-ball_court_x equ $c035
-ball_sprite_y equ $c04d
-ball_sprite_x equ $c04e
-ball_motion_flags equ $c038
-ball_launch_trajectory equ $c057
-ball_flight_trajectory equ $c060
-ball_flight_step equ $c066
-sound_stream_5 equ $1ff3
-audio_channel_records equ $c085
-score_a_games equ $c040
+        include "build/translation/player-frame-symbols.i"
 
 start:
         lea     virtual_memory,a6
@@ -33,6 +13,8 @@ copy_ram:
         move.b  (a4)+,d0
         move.b  d0,(a1)+
         dbra    d7,copy_ram
+        bsr     lower_player_state
+        bsr     upper_player_state
         bsr     ball_flight_update
         bsr     player_movement_and_sprites
         move.l  a5,a1
@@ -99,6 +81,12 @@ MAKE_BC_NO_AR: MACRO
         move.b  d2,d7
         move.w  d7,d2
         ENDM
+MAKE_B: MACRO
+        move.w  d2,d7
+        lsr.w   #8,d7
+        move.b  d7,d1
+        andi.w  #$00ff,d2
+        ENDM
 MAKE_DE_NO_AR: MACRO
         moveq   #0,d7
         move.b  d3,d7
@@ -145,6 +133,9 @@ PUSH_SR: MACRO
         ENDM
 POP_SR: MACRO
         move.w  (sp)+,ccr
+        ENDM
+READ_Z80_REFRESH: MACRO
+        clr.b   d0
         ENDM
 CLR_XC_FLAGS: MACRO
         andi.b  #$ee,ccr
