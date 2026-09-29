@@ -2287,6 +2287,22 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     generated, repaired = carry_pack.subn(r"\tPUSH_SR\n\1\tPOP_SR\n\2", generated)
     if repaired != 1:
         raise ValueError(f"Expected one divider ADC register pack, found {repaired}")
+    # Z80 LD A,C leaves Z from BIT 4,A intact. MOVE.B changes Z on 68000,
+    # so the following RET Z would select the wrong player's direction.
+    input_bit = re.compile(
+        r"(?m)^(\tbtst\.b\t#4,d0[^\n]*; \[bit 4,a\]\n)"
+        r"(\tmove\.b\td2,d0[^\n]*; \[ld a,c\]\n)"
+        r"(\tbne\.b\t\.lb_71[^\n]*; \[ret z\]\n)"
+    )
+    generated, repaired = input_bit.subn(r"\1\tPUSH_SR\n\2\tPOP_SR\n\3", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one input-side preserved bit test, found {repaired}")
+    generated, repaired = re.subn(
+        r"(?m)^\tbtst\.b\t#4,d0(.*; \[bit 4,a\])$",
+        r"\tbtst.l\t#4,d0\1", generated,
+    )
+    if repaired < 1:
+        raise ValueError("Expected input-side BTST register operation")
     nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:
