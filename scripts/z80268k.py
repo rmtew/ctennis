@@ -2303,6 +2303,16 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     )
     if repaired < 1:
         raise ValueError("Expected data-register BTST operations")
+    # PUSH IX / POP HL copies a 16-bit Z80 address. IX is held as a host
+    # pointer; the upstream 32-bit push/16-bit pop both copies the wrong
+    # value and leaves half a longword on the 68000 stack.
+    ix_to_hl = re.compile(
+        r"(?m)^\tmove\.l\ta2,-\(a7\)[^\n]*; \[push ix\]\n"
+        r"\tmove\.w\t\(a7\)\+,d6[^\n]*; \[pop hl\]\n"
+    )
+    generated, repaired = ix_to_hl.subn("\tmove.l\ta2,d6\n\tsub.l\ta6,d6\n", generated)
+    if repaired != 3:
+        raise ValueError(f"Expected three IX-to-HL address copies, found {repaired}")
     nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:
