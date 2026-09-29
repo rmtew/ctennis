@@ -2303,6 +2303,10 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     )
     if repaired < 1:
         raise ValueError("Expected data-register BTST operations")
+    generated = re.sub(
+        r"(?m)^\t(bset|bclr)\.b(\t#[0-7],d[0-7].*; \[(?:set|res) [0-7],[a-z]\])$",
+        r"\t\1.l\2", generated,
+    )
     # PUSH IX / POP HL copies a 16-bit Z80 address. IX is held as a host
     # pointer; the upstream 32-bit push/16-bit pop both copies the wrong
     # value and leaves half a longword on the 68000 stack.
@@ -2313,6 +2317,19 @@ if cli_args.champion_source and cli_args.output_mode == "mot":
     generated, repaired = ix_to_hl.subn("\tmove.l\ta2,d6\n\tsub.l\ta6,d6\n", generated)
     if repaired != 3:
         raise ValueError(f"Expected three IX-to-HL address copies, found {repaired}")
+    # PUSH HL preserves Z on Z80, but the emitted register pack and MOVE.W
+    # change 68000 Z before this court-contact branch. Re-test the same RAM
+    # bit after saving HL; no writer intervenes.
+    contact_bit = re.compile(
+        r"(?m)^(\tbtst\.b\t#1,\(a0\)[^\n]*; \[bit 1,\(hl\)\]\n)"
+        r"(\tMAKE_HL_NO_AR[^\n]*; \[push hl\]\n"
+        r"\tmove\.w\td6,-\(a7\)[^\n]*; \[push hl\]\n)"
+        r"(\tbne\tadvance_court_contact_flags[^\n]*\n)"
+        r'\tERROR\t"review stray bne test after move\.w"\n'
+    )
+    generated, repaired = contact_bit.subn(r"\1\2\tbtst.b\t#1,(a0)\n\3", generated)
+    if repaired != 1:
+        raise ValueError(f"Expected one court-contact preserved bit test, found {repaired}")
     nout_lines = generated.splitlines(keepends=True)
 
 with open(cli_args.code_output,"w",errors="ignore") as f:

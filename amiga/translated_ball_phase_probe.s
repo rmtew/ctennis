@@ -34,7 +34,6 @@ copy_ram:
         move.b  d0,(a1)+
         dbra    d7,copy_ram
         bsr     ball_flight_update
-        bsr     player_movement_and_sprites
         move.l  a5,a1
         move.w  #255,d7
 compare_ram:
@@ -43,7 +42,7 @@ compare_ram:
         bne.s   failed
         dbra    d7,compare_ram
         addq.w  #1,case_index
-        cmpi.w  #240,case_index
+        cmpi.w  #200,case_index
         bne.s   next_case
         moveq   #0,d0
         rts
@@ -168,11 +167,11 @@ carry_set\@:
         move.w  (sp)+,ccr
         ENDM
 
-        include "build/translation/player-frame-routines.s"
+        include "build/translation/ball-phase-routines.s"
         even
 case_index:
         dc.w    0
 virtual_memory:
-        incbin  "build/translation/player-frame-memory.bin"
+        incbin  "build/translation/ball-phase-memory.bin"
 cases:
-        incbin  "build/translation/player-frame-cases.bin"
+        incbin  "build/translation/ball-phase-cases.bin"

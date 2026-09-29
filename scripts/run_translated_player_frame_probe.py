@@ -9,9 +9,10 @@ import sys
 from pathlib import Path
 
 from run_translated_prng_probe import ROOT, OUT, ASSEMBLER, run
-from source_gameplay_slice import run_gameplay_slice
+from source_ball_update import ball_dispatch_11a0
 from source_input_movement import input_update_0832, movement_and_sprites_13b9
-from source_score_display import scoreboard_update_06eb
+from source_player_update import player_state_0b29_0e54
+from source_score_display import score_gate_094e, scoreboard_update_06eb
 from source_irq_tail import irq_tail_06b1
 
 
@@ -62,11 +63,14 @@ def main():
     animation = extract(generated, "animate_lower_player", "unsigned_multiply_byte", "animation_records")
     sprites = extract(generated, "build_player_sprites", "ball_flight_update", "player_sprite_descriptors")
     threshold = extract(generated, "threshold_table_lookup", "direction_ai")
+    ball = extract(generated, "ball_flight_update", "player_movement_and_sprites")
     ball_slots = extract(generated, "player_movement_and_sprites", "lower_player_motion_update")
-    hide_ball = extract(generated, "hide_ball_court_and_sprite_y", "arm_ball_flight_from_launch_vector")
+    arithmetic = extract(generated, "unsigned_multiply_byte", "triangular_root_step")
+    sound = extract(generated, "assign_sound_stream_5", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
     (OUT / "player-frame-routines.s").write_text(
-        ball_slots + hide_ball + motion + animation + sprites + threshold + ldir,
+        ball + ball_slots + motion + animation + sprites + threshold +
+        arithmetic + sound + ldir,
         encoding="utf-8")
     memory = bytearray(65536)
     memory[:len(cartridge)] = cartridge
@@ -85,8 +89,11 @@ def main():
     for frame in range(1300, 1340):
         scoreboard_update_06eb(ram, vram)
         input_update_0832(ram, game_bits=4 if frame < 1320 else 0)
-        run_gameplay_slice(ram, lower_refresh_bit=0, upper_refresh_bit=0)
+        score_gate_094e(ram)
+        player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
+        player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
         before = bytes(ram)
+        ball_dispatch_11a0(ram)
         movement_and_sprites_13b9(ram)
         expected = checkpoints[frame][:256]
         differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
@@ -111,8 +118,11 @@ def main():
         frame = int(row["frame"])
         scoreboard_update_06eb(ram, vram)
         input_update_0832(ram, game_bits=0x10 if frame < 1450 else 0)
-        run_gameplay_slice(ram, lower_refresh_bit=0, upper_refresh_bit=0)
+        score_gate_094e(ram)
+        player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
+        player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
         before = bytes(ram)
+        ball_dispatch_11a0(ram)
         movement_and_sprites_13b9(ram)
         expected = bytes.fromhex(row["ram"])
         differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
@@ -138,7 +148,7 @@ def main():
             raise AssertionError(f"Native player-frame proof missing {expected}: {log[-500:]}")
     report = {"movement_updates_checked": 40, "serve_updates_checked": 200,
               "native_bytes_compared_per_update": 256,
-              "result": "joined player and ball-sprite placement RAM matches source captures",
+              "result": "joined ball dispatch and player phase RAM matches source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
