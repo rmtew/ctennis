@@ -765,7 +765,8 @@ def f_djnz(args,comment):
 
     # a dbf wouldn't work as d1 loaded as byte and with 1 more iteration
     # adapt manually if needed
-    return f"\tsubq.b\t#1,d1\t{comment}\n\tjne\t{target_address}\t{comment}"
+    branch = "bne" if cli_args.output_mode == "mot" else "jne"
+    return f"\tsubq.b\t#1,d1\t{comment}\n\t{branch}\t{target_address}\t{comment}"
 
 
 
