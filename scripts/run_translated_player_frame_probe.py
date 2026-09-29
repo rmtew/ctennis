@@ -55,6 +55,8 @@ def main():
          "--report-output", str(OUT / "report.json"),
          "build/analysis/champion-tennis-classified.asm"])
     generated = source.read_text(encoding="utf-8")
+    input_selection = extract(generated, "input_update", "read_game_input")
+    score = extract(generated, "score_gate", "lower_player_state")
     motion = extract(generated, "lower_player_motion_update", "animate_lower_player")
     for label in ("lower_movement_bounds", "upper_movement_bounds"):
         motion, count = re.subn(rf"(?m)^{label}:\ndc\.b [^\n]*\n", "", motion)
@@ -75,12 +77,14 @@ def main():
         if count != 1:
             raise AssertionError(f"Expected one {label} table")
     helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
-    sound = extract(generated, "assign_sound_stream_5", "wait_audio_channels_0_1")
+    sound = extract(generated, "assign_sound_stream_4", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
-    routines = (player_state + ball + ball_slots + motion + animation +
+    routines = (input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
     defined = set(re.findall(r"(?m)^([A-Za-z_]\w*):", routines))
+    defined.update(("read_game_input", "sample_second_input_group",
+                    "upload_sprite_attributes"))
     symbol_lines = []
     for name, value in re.findall(r"(?m)^([A-Za-z_]\w*): equ 0x([0-9a-fA-F]+)$",
                                   (ROOT / "analysis" / "rom-symbols.def").read_text(encoding="utf-8")):
@@ -101,11 +105,16 @@ def main():
     ram[0x6B] = (ram[0x6B] + 1) & 255
     vram = bytearray(16384)
     cases = bytearray()
+    score_paths = {}
+    two_group_input_updates = 0
     for frame in range(1300, 1340):
         scoreboard_update_06eb(ram, vram)
-        input_update_0832(ram, game_bits=4 if frame < 1320 else 0)
-        score_gate_094e(ram)
+        game_bits = 4 if frame < 1320 else 0
         before = bytes(ram)
+        two_group_input_updates += bool(ram[0x3D] & 0x80 and not ram[0x3D] & 0x04)
+        input_update_0832(ram, game_bits=game_bits)
+        score = score_gate_094e(ram)
+        score_paths[score.name] = score_paths.get(score.name, 0) + 1
         player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
         player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
         ball_dispatch_11a0(ram)
@@ -114,6 +123,7 @@ def main():
         differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
         if differences:
             raise AssertionError(f"Source-model/capture mismatch at frame {frame}: {differences[:12]}")
+        cases.extend((game_bits, 0))
         cases.extend(before)
         cases.extend(expected)
         irq_tail_06b1(ram, rom=cartridge)
@@ -132,9 +142,12 @@ def main():
     for row in serve_rows[1:]:
         frame = int(row["frame"])
         scoreboard_update_06eb(ram, vram)
-        input_update_0832(ram, game_bits=0x10 if frame < 1450 else 0)
-        score_gate_094e(ram)
+        game_bits = 0x10 if frame < 1450 else 0
         before = bytes(ram)
+        two_group_input_updates += bool(ram[0x3D] & 0x80 and not ram[0x3D] & 0x04)
+        input_update_0832(ram, game_bits=game_bits)
+        score = score_gate_094e(ram)
+        score_paths[score.name] = score_paths.get(score.name, 0) + 1
         player_state_0b29_0e54(ram, upper=False, refresh_bit=0)
         player_state_0b29_0e54(ram, upper=True, refresh_bit=0)
         ball_dispatch_11a0(ram)
@@ -143,10 +156,11 @@ def main():
         differences = [offset for offset in range(256) if ram[offset] != expected[offset]]
         if differences:
             raise AssertionError(f"Serve source-model/capture mismatch at frame {frame}: {differences[:12]}")
+        cases.extend((game_bits, 0))
         cases.extend(before)
         cases.extend(expected)
         irq_tail_06b1(ram, rom=cartridge)
-    if len(cases) != COUNT * 512:
+    if len(cases) != COUNT * 514:
         raise AssertionError("Unexpected native case-table size")
     (OUT / "player-frame-cases.bin").write_bytes(cases)
     executable = OUT / "translated-player-frame-probe"
@@ -163,7 +177,9 @@ def main():
             raise AssertionError(f"Native player-frame proof missing {expected}: {log[-500:]}")
     report = {"movement_updates_checked": 40, "serve_updates_checked": 200,
               "native_bytes_compared_per_update": 256,
-              "result": "joined player-state, ball dispatch and sprite phase RAM matches source captures",
+              "score_paths": score_paths,
+              "two_group_input_updates": two_group_input_updates,
+              "result": "joined input, score, player-state, ball and sprite RAM matches source captures",
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (OUT / "player-frame-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

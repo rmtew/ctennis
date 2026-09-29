@@ -7,12 +7,16 @@ start:
         lea     cases,a4
         clr.w   case_index
 next_case:
+        move.b  (a4)+,case_game_bits
+        move.b  (a4)+,case_keyboard_bits
         move.l  a5,a1
         move.w  #255,d7
 copy_ram:
         move.b  (a4)+,d0
         move.b  d0,(a1)+
         dbra    d7,copy_ram
+        bsr     input_update
+        bsr     score_gate
         bsr     lower_player_state
         bsr     upper_player_state
         bsr     ball_flight_update
@@ -32,6 +36,14 @@ compare_ram:
 failed:
         move.w  case_index,d0
         addq.w  #1,d0
+        rts
+read_game_input:
+        move.b  case_game_bits,d0
+        rts
+sample_second_input_group:
+        move.b  case_keyboard_bits,d0
+        rts
+upload_sprite_attributes:
         rts
 GET_ADDRESS: MACRO
         lea     virtual_memory+\1,\2
@@ -163,6 +175,10 @@ carry_set\@:
         even
 case_index:
         dc.w    0
+case_game_bits:
+        dc.b    0
+case_keyboard_bits:
+        dc.b    0
 virtual_memory:
         incbin  "build/translation/player-frame-memory.bin"
 cases:
