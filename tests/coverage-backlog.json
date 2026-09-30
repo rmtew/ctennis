@@ -4,9 +4,8 @@
   "groups": [
     {
       "id": "F1-F5",
-      "summary": "Focused behaviour inventory: movement limits, input/contact edges, court outcomes and random effects",
+      "summary": "Focused behaviour inventory: input/contact edges, court outcomes and random effects",
       "tasks": [
-        "F1: both service rows and all upper/lower receiver limits established (24 combinations). Later lower limits have green independent phases plus continuous known reds. Obtain the eight row-three limits with exact source snapshots, physical inputs and reachable phase provenance.",
         "F2: capture accepted action onset and adjacent earlier/later callbacks, plus any distinct geometric contact edge.",
         "F3: retain the existing continuous deuce/advantage/game sequence and its five boundary comparisons.",
         "F4: index each distinct bounce/net/out outcome through eventual point attribution, then compare missing outcomes independently.",
@@ -63,6 +62,15 @@
       "accepted_returns": 6,
       "native_classification": "green",
       "original_full_R2_preserved": true
+    },
+    {
+      "id": "F1-movement-bounds",
+      "evidence": "analysis/movement-regression.md; build/tests/coverage-inventory.json",
+      "player_row_direction_combinations": 32,
+      "remaining_combinations": 0,
+      "source_evidence": "Independent original-game captures with complete approach, eight enabled held attempts and four reversals; exact movement snapshots for rows 2/3.",
+      "native_evidence": "Continuous cases green except four later lower receiver parents at the exact upstream failure; four complete source-derived movement phases green.",
+      "original_full_replays_preserved": true
     }
   ]
 }

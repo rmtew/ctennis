@@ -513,3 +513,12 @@ The assembled-code mutation is detected at callback one and removed afterward.
 See [rally provenance and limits](../analysis/two-player-rally-regression.md).
 The R2-rally requirement moves to completed coverage; five open requirement
 groups remain. Historical checkpoints above retain their original counts.
+
+All eight final movement-row bounds have continuous cases:
+`movement-{lower,upper}-rally-{up,down,left,right}-bound` (expand one case ID per
+command). Capture with `python scripts/capture_test_reference.py --case <case-id>`
+and compare with `python scripts/run_regression_tests.py --case <case-id> --self-test`.
+Each preserves a natural full-R2 prefix and verifies the actual row at movement
+entry/return; no source flags, coordinates or intermediate expected writes are
+injected. Their green comparisons complete the 32-combination F1 bounds inventory.
+Other focused behaviours and native hardware acceptance remain open.

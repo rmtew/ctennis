@@ -80,8 +80,7 @@ limits over 742 consecutive callbacks. See
 [movement evidence and remaining rows](../analysis/movement-regression.md).
 The independent `movement-alternate-serve-bounds` case now preserves R2's first
 485 callbacks through a natural point/reset and tests the alternate row over
-1,322 callbacks, including 50 sound writes. Both cases are green. Rows 2–3 for
-each player remain missing; this does not complete F1.
+1,322 callbacks, including 50 sound writes. Both cases are green. Receiver and rally rows are covered below.
 
 The upper receiver row-2 right limit now has a green focused case with direct
 source movement-entry/return observations: `movement-receiver-right-bound`.
@@ -89,16 +88,19 @@ It proves approach to X175, eight stopped attempts and four reversal attempts
 within the actual handoff phase. The inventory tracks all player/row/direction
 combinations separately. Its left/up/down companion cases now complete all
 four upper row-2 limits, with 242 callbacks each and source snapshots showing
-unblocked movement before the bounce. Lower-receiver and row-3 limits need
-their own evidence.
+unblocked movement before the bounce. Lower-receiver and rally evidence follows.
 
 The lower receiver right limit is additionally established by a green
 24-callback source-derived phase. Its independently captured continuous parent
 retains the earlier known round-transition failure; both cases stay registered.
 The lower left/up/down companions now pass as independent 26/30/24-callback
 phases, each with nine PSG bytes and targeted mutation detection. All continuous
-parents remain exact known red at the earlier transition. Twenty-four movement
-combinations are established; eight row-3 combinations remain.
+parents remain exact known red at the earlier transition.
+
+Eight additional `movement-{lower,upper}-rally-{up,down,left,right}-bound`
+continuous cases establish all row-3 limits with exact source movement snapshots,
+eight enabled held attempts and four reversals. All 32 player/row/direction
+combinations are now covered; broader F2/F4/F5 and hardware gates remain open.
 
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.

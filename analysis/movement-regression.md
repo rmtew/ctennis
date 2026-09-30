@@ -161,13 +161,10 @@ Fixture SHA256s are
 `db1a21184f005da1b8f8a970b8ba9d73e4c4794083043857fb9b81b6d0f7bcd2`
 (down). Reproduce with the ordinary capture/test commands and these case IDs.
 
-Rows 2–3 for each player still need approach/hold/reversal evidence. Existing
-R2 post-body observations include all four unblocked animation row selections,
-but that alone does not establish their bounds, movement inputs or the exact
-row used earlier within the callback. Read the phase/reset/trajectory writers
-and index intervals before collecting missing sequences. Preserve the existing
-continuous matches and the new independent case; do not manufacture animation
-flags or substitute the old Python movement model for original-game evidence.
+Exact movement-entry observations below now establish the remaining rows.
+Post-body row selections alone cannot prove the bounds used earlier in a
+callback. Every case retains legitimate physical input and original-game
+state; the original full replays remain preserved.
 
 ## Read-only movement capture
 
@@ -203,8 +200,8 @@ Boundary-escape mutations are detected at local/source callback 12/4865 for
 left (X40 to39), 17/5332 for up (Y128 to127), and 2/4571 for down (Y153 to154).
 Temporary mutated code is removed. Each phase is reconstructed from its exact
 source parent and must include the complete approach, hold and reversal; no
-intermediate source state is injected. Both receiver rows are now complete;
-the remaining eight movement combinations are the two row-three rectangles.
+intermediate source state is injected. Both receiver rows are complete. The final rally-row cases below complete
+the remaining eight movement combinations.
 
 `python scripts/capture_movement_observations.py --case two-player-rally`
 and `--case two-player-match` each record full RAM immediately before and after
@@ -239,3 +236,56 @@ intervals; they do not alone prove the exact row at movement entry. Investigate
 whether distant row-2 limits are actually reachable during that transient
 phase before requiring a hold there or proposing a documented starting-state
 injection. Keep geometric limits separate from phase-blocked movement.
+
+## Complete rally-row bounds
+
+All eight `movement-{lower,upper}-rally-{direction}-bound` cases preserve a
+natural R2 prefix, then hold one physical direction, reverse for four callbacks
+and release. Each has two identical observed source captures and a separate
+observer-free recording that agrees after removing only the snapshots. Both
+players remain in enabled row three throughout the required movement interval.
+All 254 state bytes at entry/pre-tail/return and every PSG write compare green
+in the actual shared assembled gameplay routines, continuously from reset.
+
+| Player/direction | Approach/hold callbacks | Last eight held attempts | Reversal coordinates | Native callbacks / PSG bytes |
+|---|---|---|---|---|
+| lower down | 600..617 (152 to 153) | 610..617 | 152,150,149,147 | 623 / 70 |
+| lower up | 600..645 (152 to 98) | 638..645 | 99,101,102,104 | 651 / 70 |
+| lower left | 600..643 (92 to 40) | 636..643 | 41,43,44,46 | 649 / 70 |
+| lower right | 900..921 (184 to 199) | 914..921 | 198,196,195,193 | 927 / 129 |
+| upper down | 930..977 (8 to 62) | 970..977 | 61,59,58,56 | 983 / 140 |
+| upper up | 617..634 (8 to 7) | 627..634 | 9,10,12,13 | 640 / 70 |
+| upper left | 930..951 (80 to 64) | 944..951 | 65,67,68,70 | 957 / 140 |
+| upper right | 1379..1400 (160 to 175) | 1393..1400 | 173,172,170,169 | 1406 / 210 |
+
+The first attempted upper-down window reached a point award before its boundary
+hold and changed the service-side mode bit. It was not accepted. The final case
+uses the natural later accepted-return window beginning callback930/frame2229,
+with unchanged mode/controller ownership through approach, hold and reversal.
+No source flag or coordinate was injected to lengthen a window.
+
+Targeted mutation guards require the tested row, direction and limit before
+moving one unit beyond it. The full comparison detects the earliest resulting
+state difference, which may be downstream ball/sprite state rather than the
+player coordinate. Exact differences and executable/reference hashes are in
+`build/tests/<case-id>-report.json`. Source validation rejects incorrect row
+selection, movement-blocked holds and falsely recorded boundary holds for all
+eight cases.
+
+This completes all 32 player/row/direction combinations in F1. It does not
+complete contact/action timing, court outcome/entropy effects, later-phase
+comparisons, native graphics/audio or ordinary hardware input/cadence gates.
+Original continuous full matches and their known failures remain registered.
+
+Frozen source fixture SHA256s (regenerate with the case capture command):
+
+| Case suffix | Fixture SHA256 |
+|---|---|
+| `lower-rally-down-bound` | `65ec51afc5bc3a32974f9eed1513479833ac29e62261be119f3ae1aedee78a4d` |
+| `lower-rally-up-bound` | `a5630a9ed59a4c9c446180ac264d9ef5a3f07c734511a11ed1e462295eea1999` |
+| `lower-rally-left-bound` | `779eb44c669b333f5e6a2b5ec999cd2985823eed89c992c1e103312c8cb755b8` |
+| `lower-rally-right-bound` | `c28d5a224302b798bc84bffda116cc7fc074d21592e43f6c07ffa6cb80ffc8c3` |
+| `upper-rally-down-bound` | `1745bd50d7452b6e8ae0fb05a913fc34469d86dc200bf230dbdc618900344c80` |
+| `upper-rally-up-bound` | `1dca2513f2c7572456e8d17d2ed3348d382ea75b8a2e913cf8224154bc12d10f` |
+| `upper-rally-left-bound` | `4b0b987525e073603225f5cab3d320726676723fac757b521c34f5ddb06050c7` |
+| `upper-rally-right-bound` | `31d0005f34def5e1602aae55cdffa64e82546cb3868e49b2457b02be51280fcb` |

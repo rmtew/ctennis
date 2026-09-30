@@ -4,7 +4,8 @@ from collections import Counter
 MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds', 'movement-receiver-right-bound',
                   'movement-receiver-left-bound', 'movement-receiver-up-bound', 'movement-receiver-down-bound',
                   'movement-lower-receiver-right-bound', 'movement-lower-receiver-left-bound',
-                  'movement-lower-receiver-up-bound', 'movement-lower-receiver-down-bound')
+                  'movement-lower-receiver-up-bound', 'movement-lower-receiver-down-bound',
+                  'movement-lower-rally-down-bound', 'movement-lower-rally-up-bound', 'movement-lower-rally-left-bound', 'movement-lower-rally-right-bound', 'movement-upper-rally-up-bound', 'movement-upper-rally-down-bound', 'movement-upper-rally-left-bound', 'movement-upper-rally-right-bound')
 FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',)
 
 

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from phase_reference import CASES as PHASE_CASES
 from round_reference import FOCUSED_CASES
-from movement_reference import RECEIVER_PHASES
+from movement_reference import MOVEMENT_PHASES
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix')
@@ -63,7 +63,7 @@ def main():
         command = [sys.executable, runner, '--case', case]
         if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and case in ('serve',) + FOCUSED_CASES + tuple(RECEIVER_PHASES) + PRESENTATION_CASES + AUDIO_CASES:
+        if args.self_test and case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES:
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
         (out / f'{case}-runner.log').write_text(process.stdout + process.stderr)

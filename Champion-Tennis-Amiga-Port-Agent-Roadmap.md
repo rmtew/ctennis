@@ -16,17 +16,17 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 39 cases: 24 green and fifteen exact known red; five missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 47 cases: 32 green and fifteen exact known red; five missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
-F1 initial and alternate service movement rows now have independent twice-identical physical-input references and green full native comparisons (742 and 1,322 callbacks), with detected temporary movement mutations. The alternate case preserves the natural first-point/reset R2 prefix exactly for 485 callbacks. Both players approach, hold and reverse at all four limits in both service rows; rows two and three remain open. See `analysis/movement-regression.md`. The focused reference adapter preserves the original full-match records exactly; no gameplay fix is included.
+F1 initial and alternate service movement rows now have independent twice-identical physical-input references and green full native comparisons (742 and 1,322 callbacks), with detected temporary movement mutations. The alternate case preserves the natural first-point/reset R2 prefix exactly for 485 callbacks. Both players approach, hold and reverse at all four limits in both service rows; receiver and rally rows are now complete as recorded below. See `analysis/movement-regression.md`. The focused reference adapter preserves the original full-match records exactly; no gameplay fix is included.
 
 The supplementary `two-player-rally` case now captures six alternating accepted returns and a source-awarded point from frozen physical controls, twice identically. All 1,390 callbacks and 290 PSG bytes pass the actual shared native routines, with mutation detection. The full R2 reference and its known transition failure remain unchanged. This closes only the longer-rally requirement; see `analysis/two-player-rally-regression.md` and the five remaining backlog groups.
 
-Read-only movement snapshots now establish exact source row selections before/after movement, twice identically, with the original rally/full R2 raw recordings unchanged after removing only those observations. A green upper receiver row-two right-limit case adds 1,348 continuous callbacks and 190 PSG bytes, with a detected boundary-escape mutation. Movement inventory now tracks each player/row/direction separately: 24 established combinations and eight remaining; all four limits for both receiver rows are now independently green. This does not complete F1; see `analysis/movement-regression.md`.
+Read-only movement snapshots now establish exact source row selections before/after movement, twice identically, with the original rally/full R2 raw recordings unchanged after removing only those observations. A green upper receiver row-two right-limit case adds 1,348 continuous callbacks and 190 PSG bytes, with a detected boundary-escape mutation. Movement inventory now tracks each player/row/direction separately: 32 established combinations and none remaining; both players have all four limits in all four rows covered. Later lower receiver limits retain continuous known reds plus green independent phases; the eight rally-row cases are continuously green. This completes F1 movement bounds; other focused and hardware gates remain open; see `analysis/movement-regression.md`.
 
-The lower receiver right limit now has a green 24-callback native phase (nine PSG bytes), derived from a twice-captured natural source prefix after controller-side exchange. Its continuous 4,593-update parent retains the exact known callback-2536 transition failure and remains registered separately. The phase detects X199-to-X200 boundary escape at source callback4575. Lower left/up/down now also have green source-derived phases of 26/30/24 callbacks, each with nine PSG bytes and a detected boundary-escape mutation. Their continuous parents retain the same exact callback-2536 failure. This exposes later movement without claiming upstream parity; only both row-three rectangles remain open in the bounds inventory.
+The lower receiver right limit now has a green 24-callback native phase (nine PSG bytes), derived from a twice-captured natural source prefix after controller-side exchange. Its continuous 4,593-update parent retains the exact known callback-2536 transition failure and remains registered separately. The phase detects X199-to-X200 boundary escape at source callback4575. Lower left/up/down now also have green source-derived phases of 26/30/24 callbacks, each with nine PSG bytes and a detected boundary-escape mutation. Their continuous parents retain the same exact callback-2536 failure. This exposes later movement without claiming upstream parity; all eight row-three limits now have green continuous cases with direct source snapshots and detected boundary-escape mutations. The bounds inventory is complete.
 
 ## Maintained source and regression suite (agreed 2026-09-30)
 
@@ -113,6 +113,32 @@ lasting suite preserves required coverage, and target hardware/performance
 checks pass. Passing tests alone do not prove optimality or justify keeping
 obsolete architecture. This migration follows the complete-suite baseline;
 it does not narrow the current reference/test completion goal.
+
+## Test work selection and stopping rules
+
+Before adding a test or capture, name the gameplay behaviour to preserve, the
+specific gap in existing comparisons, a plausible implementation mistake the
+test would detect, and a finite stopping condition. Added cases, traces or
+branch coverage alone do not establish useful progress. Prefer a small set of
+behaviourally distinct boundaries and continuous state sequences over exhaustive
+input permutations. Discovery captures become regression evidence only after
+independent repetition, reference validation and an actual native comparison.
+
+F1 movement bounds are complete: all 32 player/row/direction combinations have
+source evidence and native comparisons, including independent phases for later
+lower receiver limits obscured by the known upstream failure. Stop movement
+exploration unless a concrete new behavioural gap appears. The current aggregate
+is 47 cases: 32 green and 15 exact known red, with mutation/signature checks.
+These known-red cases are not 15 independent defects; five broader requirement
+groups remain open.
+
+Next, freeze the small F2 upper-return action-timing set already discovered:
+onset before, at and after contact. Preserve contact acceptance and compare the
+resulting trajectory; do not multiply equivalent onset variants. Then prioritize
+the missing round/reset, result/restart and hardware-output comparisons, retaining
+specific geometric contact edges and court/random outcomes where the inventory
+identifies distinct unprotected behaviour. The full reference specification and
+suite goal remain unchanged.
 
 ## Next goal: complete the reference-backed red/green suite
 
