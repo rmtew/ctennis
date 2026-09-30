@@ -1,7 +1,8 @@
 """Parse exact source callback records and validate the round-transition oracle."""
 from collections import Counter
 
-MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds', 'movement-receiver-right-bound')
+MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds', 'movement-receiver-right-bound',
+                  'movement-receiver-left-bound', 'movement-receiver-up-bound', 'movement-receiver-down-bound')
 FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',)
 
 

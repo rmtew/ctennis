@@ -1,0 +1,98 @@
+{
+  "name": "movement-receiver-left-bound",
+  "requirement": "F1 upper receiver row-two left limit",
+  "reference": "tests/reference/movement-receiver-left-bound.json",
+  "schema_version": 2,
+  "selection": "two",
+  "default_fire": false,
+  "capture_policy": "scripts/capture_movement_receiver_left_bound.lua",
+  "last_begin_frame": 1541,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "control_schedule": [
+    {
+      "frame": 120,
+      "control": "select",
+      "value": 1
+    },
+    {
+      "frame": 420,
+      "control": "select",
+      "value": 0
+    },
+    {
+      "frame": 1320,
+      "control": "p1-up",
+      "value": 1
+    },
+    {
+      "frame": 1344,
+      "control": "p1-up",
+      "value": 0
+    },
+    {
+      "frame": 1360,
+      "control": "p1-down",
+      "value": 1
+    },
+    {
+      "frame": 1384,
+      "control": "p1-down",
+      "value": 0
+    },
+    {
+      "frame": 1400,
+      "control": "p1-left",
+      "value": 1
+    },
+    {
+      "frame": 1424,
+      "control": "p1-left",
+      "value": 0
+    },
+    {
+      "frame": 1440,
+      "control": "p1-right",
+      "value": 1
+    },
+    {
+      "frame": 1464,
+      "control": "p1-right",
+      "value": 0
+    },
+    {
+      "frame": 1480,
+      "control": "p1-button1",
+      "value": 1
+    },
+    {
+      "frame": 1504,
+      "control": "p1-button1",
+      "value": 0
+    },
+    {
+      "frame": 1512,
+      "control": "p2-left",
+      "value": 1
+    },
+    {
+      "frame": 1536,
+      "control": "p2-left",
+      "value": 0
+    },
+    {
+      "frame": 1536,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 1540,
+      "control": "p2-right",
+      "value": 0
+    }
+  ],
+  "movement_observations": true,
+  "purpose": "Preserve natural R2 first-serve setup, approach receiver-row limit, hold eight enabled attempts and reverse four before bounce. Direct source movement observations, no injected state."
+}

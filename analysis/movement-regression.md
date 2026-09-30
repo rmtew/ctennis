@@ -127,10 +127,39 @@ detected at callback 1331, pre-tail sprite record 5 X: expected 175, actual 176.
 Normal source/executable remain unchanged and temporary mutation files are
 removed. This targeted check passed after the full aggregate's mutation run.
 
-The combined inventory tracks each player/row/direction separately: 17 of
-32 combinations have approach/hold/reversal evidence, and 15 remain. Passing
+The combined inventory tracks each player/row/direction separately: 20 of
+32 combinations have approach/hold/reversal evidence, and 12 remain. Passing
 one limit does not close its entire row. This is movement coverage, not a
 percentage of overall source or port correctness.
+
+The other upper-receiver limits now have independent cases in the first R2
+serve. Each preserves the first 212 callbacks exactly, then holds the requested
+direction at frames 1512–1535 and its reverse at 1536–1539. The stop at frame
+1541 precedes the bounce that would change the row. All cases have direct
+movement-entry/return snapshots, twice-identical observed captures, and a
+separate observer-free recording with identical ordinary output.
+
+| Case | Actual approach | Held callbacks | Four reversal coordinates |
+|---|---:|---:|---|
+| `movement-receiver-left-bound` | X88 to X64 | 229–236 | 66, 67, 69, 70 |
+| `movement-receiver-up-bound` | Y8 to Y7 | 229–236 | 9, 10, 12, 13 |
+| `movement-receiver-down-bound` | Y8 to Y31 | 229–236 | 29, 28, 26, 25 |
+
+Each complete native case compares 242 callbacks and 20 PSG bytes, including
+the approach at callbacks 213–236 and reversal at 237–240. Together with the
+alternate-serve right-limit case, these establish all four upper row-2 limits.
+The native mutation tests deliberately escape each tested limit only when
+receiver-row flags are active; exact differences are in the case reports.
+Source validation also rejects an animation-blocked held attempt instead of
+counting its stationary coordinate as a bounds observation.
+
+Fixture SHA256s are
+`0538d1c317b789cba8c36ce1f6286bd355590285e76b22e1b388248e3c9e259e`
+(left),
+`086cb9bd6e8aa341137450a5c011863b6a1d3807fd47459c56307eef419c9640`
+(up), and
+`db1a21184f005da1b8f8a970b8ba9d73e4c4794083043857fb9b81b6d0f7bcd2`
+(down). Reproduce with the ordinary capture/test commands and these case IDs.
 
 Rows 2–3 for each player still need approach/hold/reversal evidence. Existing
 R2 post-body observations include all four unblocked animation row selections,

@@ -459,6 +459,13 @@ For read-only interval discovery, use
 previous raw source stream byte-for-byte without the optional observations.
 This is source evidence, not a fresh native test run or completed F1 claim.
 
+The companion `movement-receiver-left-bound`, `movement-receiver-up-bound` and
+`movement-receiver-down-bound` cases now cover the other upper receiver limits.
+Each uses 242 continuous callbacks, 20 PSG bytes, exact natural-prefix equality,
+direct source movement snapshots and targeted native boundary-escape mutation
+detection. Use the same capture/test commands with these IDs. Upper row two
+is complete; lower row two and both players' row-three limits remain open.
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,

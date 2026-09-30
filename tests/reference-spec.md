@@ -87,8 +87,10 @@ The upper receiver row-2 right limit now has a green focused case with direct
 source movement-entry/return observations: `movement-receiver-right-bound`.
 It proves approach to X175, eight stopped attempts and four reversal attempts
 within the actual handoff phase. The inventory tracks all player/row/direction
-combinations separately: 17 established, 15 still missing. Other row-2 limits
-and all row-3 limits remain open.
+combinations separately. Its left/up/down companion cases now complete all
+four upper row-2 limits, with 242 callbacks each and source snapshots showing
+unblocked movement before the bounce. Twenty combinations are established;
+twelve remain: lower row-2 limits and all row-3 limits.
 
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.

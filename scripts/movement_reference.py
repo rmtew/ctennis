@@ -7,10 +7,20 @@ ROOT = Path(__file__).resolve().parent.parent
 DIRECTIONS = {'down': (8, 0, 1), 'up': (2, 0, -1),
               'right': (1, 1, 1), 'left': (4, 1, -1)}
 OPPOSITE = {'down': 'up', 'up': 'down', 'right': 'left', 'left': 'right'}
+RECEIVER_BOUNDS = {
+    'movement-receiver-right-bound': {'direction': 'right', 'coordinate': 0x46, 'start': 160, 'limit': 175,
+        'prefix_frame': 2619, 'prefix_callbacks': 1320, 'press': 2620, 'reverse': 2642, 'release': 2646, 'mode': 0x88},
+    'movement-receiver-left-bound': {'direction': 'left', 'coordinate': 0x46, 'start': 88, 'limit': 64,
+        'prefix_frame': 1511, 'prefix_callbacks': 212, 'press': 1512, 'reverse': 1536, 'release': 1540, 'mode': 0x80},
+    'movement-receiver-up-bound': {'direction': 'up', 'coordinate': 0x45, 'start': 8, 'limit': 7,
+        'prefix_frame': 1511, 'prefix_callbacks': 212, 'press': 1512, 'reverse': 1536, 'release': 1540, 'mode': 0x80},
+    'movement-receiver-down-bound': {'direction': 'down', 'coordinate': 0x45, 'start': 8, 'limit': 31,
+        'prefix_frame': 1511, 'prefix_callbacks': 212, 'press': 1512, 'reverse': 1536, 'release': 1540, 'mode': 0x80},
+}
 
 
 def validate_movement(fixture, case):
-    if case['name'] == 'movement-receiver-right-bound':
+    if case['name'] in RECEIVER_BOUNDS:
         return validate_receiver_bound(fixture, case)
     if case['name'] not in ('movement-serve-bounds', 'movement-alternate-serve-bounds'):
         raise ValueError('Unsupported movement evidence recipe')
@@ -105,6 +115,10 @@ def validate_movement(fixture, case):
 
 
 def validate_receiver_bound(fixture, case):
+    contract = RECEIVER_BOUNDS[case['name']]
+    coordinate, direction = contract['coordinate'], contract['direction']
+    limit, start = contract['limit'], contract['start']
+    sign = DIRECTIONS[direction][2]
     if not fixture.get('movement_observations') or not fixture.get('ordinary_raw_stream_unchanged'):
         raise ValueError('Receiver bound lacks non-invasive source observation proof')
     from round_reference import validate_fixture
@@ -113,13 +127,13 @@ def validate_receiver_bound(fixture, case):
     parent = json.loads(parent_payload)
     validate_fixture(parent)
     prefix = [{key: value for key, value in row.items() if not key.startswith('movement_')}
-              for row in fixture['updates'] if row['frame'] <= 2619]
-    if (len(prefix) != 1320 or prefix != parent['updates'][:1320]
+              for row in fixture['updates'] if row['frame'] <= contract['prefix_frame']]
+    if (len(prefix) != contract['prefix_callbacks'] or prefix != parent['updates'][:contract['prefix_callbacks']]
             or fixture['initial_post_tail'] != parent['initial_post_tail']):
         raise ValueError('Receiver bound did not preserve natural R2 service setup')
-    held = [row for row in fixture['updates'] if 2620 <= row['frame'] < 2642]
-    reversed_rows = [row for row in fixture['updates'] if 2642 <= row['frame'] < 2646]
-    if len(held) != 22 or len(reversed_rows) != 4:
+    held = [row for row in fixture['updates'] if contract['press'] <= row['frame'] < contract['reverse']]
+    reversed_rows = [row for row in fixture['updates'] if contract['reverse'] <= row['frame'] < contract['release']]
+    if len(held) != contract['reverse'] - contract['press'] or len(reversed_rows) != 4:
         raise ValueError('Missing receiver approach/hold/reversal interval')
     states = []
     for row in held + reversed_rows:
@@ -127,34 +141,35 @@ def validate_receiver_bound(fixture, case):
         after = bytes.fromhex(row['movement_return_ram'])
         if row['callback_kind'] != 'gameplay' or (before[0x44] & 0xE0) != 0x40 or before[0x39] & 4:
             raise ValueError('Receiver movement not enabled in row two')
-        if before[0x3D] != 0x88:
+        if before[0x3D] != contract['mode']:
             raise ValueError('Unexpected physical controller ownership')
         if before[0x44] != after[0x44] or before[0x6B] != after[0x6B]:
             raise ValueError('Movement observations straddle a phase or tick change')
-        expected_direction = 1 if row['frame'] < 2642 else 4
+        expected_direction = DIRECTIONS[direction if row['frame'] < contract['reverse'] else OPPOSITE[direction]][0]
         if (before[0x53] >> 4) != expected_direction:
             raise ValueError('Receiver did not consume held/reversed direction')
-        if bytes.fromhex(row['ram'])[0x46] != after[0x46]:
-            raise ValueError('Later callback work changed observed receiver X')
+        if bytes.fromhex(row['ram'])[coordinate] != after[coordinate]:
+            raise ValueError('Later callback work changed observed receiver coordinate')
         states.append((before, after))
-    if states[0][0][0x46] != 160 or states[len(held) - 1][1][0x46] != 175:
-        raise ValueError('Receiver did not approach the row-two positive X limit')
+    if states[0][0][coordinate] != start or states[len(held) - 1][1][coordinate] != limit:
+        raise ValueError('Receiver did not approach the specified row-two limit')
     for before, after in states[len(held) - 8:len(held)]:
-        if before[0x46] != 175 or after[0x46] != 175:
+        if before[coordinate] != limit or after[coordinate] != limit:
             raise ValueError('Eight enabled attempts did not hold the receiver limit')
     if {before[0x6B] & 1 for before, _ in states[len(held) - 8:len(held)]} != {0, 1}:
         raise ValueError('Receiver hold lacks both step parities')
-    if not all(after[0x46] < 175 for _, after in states[len(held):]):
+    if not all((after[coordinate] - limit) * sign < 0 for _, after in states[len(held):]):
         raise ValueError('Receiver did not respond to reversal')
-    return {'observed_movement_limits': [{'player': 'upper', 'bounds_row': 2, 'direction': 'right',
+    return {'observed_movement_limits': [{'player': 'upper', 'bounds_row': 2, 'direction': direction,
              'source_callback_interval': [held[0]['ordinal'], held[-1]['ordinal']],
-             'start_coordinate': 160, 'stopped_coordinate': 175,
+             'start_coordinate': start, 'stopped_coordinate': limit,
              'held_callback_interval': [held[-8]['ordinal'], held[-1]['ordinal']],
              'reversal_callback_interval': [reversed_rows[0]['ordinal'], reversed_rows[-1]['ordinal']],
-             'reversal_coordinates': [after[0x46] for _, after in states[len(held):]]}],
+             'reversal_coordinates': [after[coordinate] for _, after in states[len(held):]]}],
             'source_movement_entry_observed': True,
             'natural_prefix_evidence': {'parent_reference': 'tests/reference/two-player-match.json',
-                'parent_sha256': hashlib.sha256(parent_payload).hexdigest(), 'identical_source_callbacks': 1320},
+                'parent_sha256': hashlib.sha256(parent_payload).hexdigest(),
+                'identical_source_callbacks': contract['prefix_callbacks']},
             'complete_F1': False}
 
 
