@@ -567,6 +567,30 @@
       "complete_checks_sha256": "99940d8e88fa987ebb2f818fda77a2d7e9bc11f33499a6774aeb1cd1bea2e771",
       "evidence": "analysis/native-complementary-round-scenes.md; build/tests/p1-two-player-upper-round-scenes-report.json",
       "reason": "The native main-thread reset/tail-only route is absent and sprite origin remains shifted. Two-player intervals also retain the omitted second physical reader. Require the entire measured state/pixel/event stream; correct expectations remain the independent original, never the broken native baseline."
+    },
+    "p1-accept-one-player": {
+      "signature": {
+        "update": 0,
+        "boundary": "before-mode-selection",
+        "field": "gameplay started before choice",
+        "expected": false,
+        "actual": true
+      },
+      "complete_checks_sha256": "ba6ccce815ce69434093c326c40e45ff32af4dac9a8fb81a5ab9cabdaa53f737",
+      "reason": "Ordinary application begins gameplay before a physical choice; no title/mode acceptance path. Two-player request additionally retains one-player flags. Complete output observations pinned; timed viewport is diagnostic while acceptance is absent.",
+      "evidence": "analysis/native-mode-selection-regression.md"
+    },
+    "p1-accept-two-player": {
+      "signature": {
+        "update": 0,
+        "boundary": "before-mode-selection",
+        "field": "gameplay started before choice",
+        "expected": false,
+        "actual": true
+      },
+      "complete_checks_sha256": "ba6ccce815ce69434093c326c40e45ff32af4dac9a8fb81a5ab9cabdaa53f737",
+      "reason": "Ordinary application begins gameplay before a physical choice; no title/mode acceptance path. Two-player request additionally retains one-player flags. Complete output observations pinned; timed viewport is diagnostic while acceptance is absent.",
+      "evidence": "analysis/native-mode-selection-regression.md"
     }
   }
 }

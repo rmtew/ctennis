@@ -1,0 +1,10 @@
+{
+  "name": "p1-accept-two-player",
+  "reference": "tests/reference/presentation/manifest.json",
+  "source_case": "two-player-match",
+  "checkpoint": "accepted-mode",
+  "native_source": "amiga/gameplay_integration_probe.s",
+  "rawkey": 66,
+  "expected_mode_flags": 128,
+  "contract": "Fresh ordinary native application: no gameplay before physical selection; Delete chooses one player and Tab (original Func analogue) chooses two. Hold five emulated seconds, release, compare completed accepted-mode screen and mode flags. No selected mode or expected transition states are injected. Timing deadlines are bounded liveness checks, not source-rate equivalence."
+}

@@ -1,3 +1,15 @@
+# Current checkpoint: physical mode-request failures registered (2026-10-01)
+
+Previous goal turn made progress: finite round matrix and stopping rules committed314e648. This turn adds two actual ordinary native physical-key selection tests. Identical R1 startup for both choices; no R2 selected-state injection. Source Del/Ins and Func map to native Delete/Tab. Existing accepted-mode1299 images/RAM verified without new MAME captures.
+
+Both starts complete120 gameplay callbacks before choice; Tab retains one-player flags0 rather than$80. Both normal outputs repeat identically. Four compiled sprite/mode mutations rejected despite the unchanged earlier failure. Eight actual native launches. Final timed viewport is diagnostic; generation-aligned accepted-mode presentation remains open because acceptance is absent. No product fixes.
+
+Current incremental aggregate97:52 green,45 exact known red. Two new cases executed,95 previous reports reused with provenance; no full97-case run claimed. Failure policy and all actual mutant classifications pass. Four groups remain open; goal active.
+
+Next: distinct match/result/menu/restart presentation via existing source generations, then remaining court/contact/random outcomes, audio and ordinary execution requirements. Stop equivalent missing-mode variants. Evidence:analysis/native-mode-selection-regression.md. Worklog historical bytes preserved.
+
+---
+
 # Current checkpoint: complementary round presentation complete (2026-10-01)
 
 Roadmap requires missing observable behaviour, a plausible regression, independent expectations and a finite stop for each task. Equivalent permutations and unchanged full-suite repeats are not progress.

@@ -705,3 +705,6 @@ presentation requirements. Stop equivalent first-round windows.
 
 
 Current round-family coverage: four mode/serving-end contexts,1072 state checks,16 full viewports,96 matching field crops and12 detected compiled mutations. See [evidence](../analysis/native-complementary-round-scenes.md). Current aggregate: **95 cases,52 green,43 exact known red**. Four round runners executed with self-tests;91 unchanged reports reuse prior full92-case evidence, recorded in incremental_execution. Four groups remain open. Stop equivalent round windows; next protect actual accepted mode selections, then distinct result/menu/restart transitions.
+
+
+Physical mode-request coverage: Delete and Tab on the same fresh ordinary application, with no selected-mode injection. Both expose premature gameplay; Tab additionally fails two-player flags. Repeated ordinary outputs and four compiled mutations verified. Final timed viewports are diagnostic; accepted presentation generation remains open. See [evidence](../analysis/native-mode-selection-regression.md). Current incremental aggregate:97 cases,52 green,45 known red;95 previous reports reused. Four groups remain open. Next: distinct result/menu/restart scenes.

@@ -16,7 +16,7 @@
       "id": "P1",
       "summary": "Native graphics beyond the first-game prefix",
       "tasks": [
-        "Compare accepted mode selections, upper serve stages, both returns and distinct bounce/net/out checkpoints.",
+        "Physical Delete/Tab startup selection requests now expose missing choice gating and two-player acceptance; repeatable ordinary captures and compiled mode/sprite mutations are retained. A generation-aligned accepted-mode image is still required when the native acceptance path exists. Complete both returns and distinct bounce/net/out checkpoints; upper serve stages already have their own case.",
         "All six status messages have local game-driven appearance/expiry comparisons. Deuce, advantage and return-to-deuce now have 27 consecutive point request/state observations and 30 completed field crops, with compiled early/frozen-field mutations rejected behind the known second-reader failure. Stop equivalent status and equal/advantage windows. Complete remaining point/game reset and actual mode-transition changes; fixed-mode preservation and renderer-unit selector coverage do not close them.",
         "All four local round contexts (one/two players, lower/upper serving end) now compare tally/reset-pause/final-pause/resume: 1072 consecutive states,16 whole viewports,96 matching field crops and12 compiled late mutations. Stop equivalent round windows. Complete accepted mode changes, match/result/menu and restart sequences with explicit presentation generations; local phase initialization does not establish ordinary full-match continuity."
       ]
@@ -237,6 +237,24 @@
       "supplemental_source_rasters": 40,
       "original_primary_media_preserved": true,
       "source_main_thread_writes_injected": false,
+      "complete_P1": false
+    },
+    {
+      "id": "P1-physical-mode-selection-failures",
+      "cases": [
+        "p1-accept-one-player",
+        "p1-accept-two-player"
+      ],
+      "evidence": "analysis/native-mode-selection-regression.md",
+      "fresh_native_launches": 8,
+      "normal_choice_state_injection": false,
+      "physical_keys": [
+        "Delete",
+        "Tab"
+      ],
+      "repeat_identical_observations": true,
+      "compiled_mutations_detected": 4,
+      "accepted_presentation_generation_established": false,
       "complete_P1": false
     }
   ]
