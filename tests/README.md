@@ -717,3 +717,6 @@ Current priority supersedes the preceding next-scenes instruction: require a dis
 
 
 The existing `p2-first-serve-mute` case now also requires emitted signal before mute and digital silence afterwards at original PCM16 precision. Actual unmuted-volume and zero-waveform executable faults are rejected; the second leaves period/volume/length controls unchanged. Stop equivalent mute windows. Exact onset/decay and later effects remain open. See [evidence](../analysis/native-emitted-mute-regression.md). Current next action: discuss test scope as requested.
+
+
+For scope review, see [TEST-MANIFEST.md](TEST-MANIFEST.md) and the maintained [test-manifest.json](test-manifest.json). They enumerate every registered case by requirement family and every currently identified worthwhile/conditional candidate, including original expectations, faults caught, overlap and stopping rules. Rebuild the document with `python scripts/render_test_manifest.py`; this inspects retained reports and runs no emulator tests. Candidates remain proposals pending scope discussion.

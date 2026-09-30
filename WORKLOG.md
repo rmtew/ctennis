@@ -1,3 +1,9 @@
+## 2026-10-01 ? Enumerated test manifest for scope review
+
+User requested implemented tests and viable candidates to evaluate. Added tests/test-manifest.json, generated tests/TEST-MANIFEST.md and scripts/render_test_manifest.py. All 99 registered cases are assigned exactly once across 20 requirement families; exact recipe links and retained classifications are enumerated. Eighteen candidate rows state missing behaviour, plausible fault, independent original expectation, stop condition, overlap, evidence readiness, relative effort and dependencies: ten worth implementing, six audit first, two skip proposals. Supporting validators/roundtrip/diagnostics are separated from product acceptance tests. All remaining backlog groups map to manifest rows.
+
+Renderer inspected actual retained reports using current strict classifier: 52 green,47 known red. No emulator tests or source captures executed, no product fixes and no candidate implemented. Scope choices are proposals pending discussion, not authorized expansion. Roadmap/README point to the manifest; active full test goal remains incomplete.
+
 ## 2026-10-01 ? Existing mute case completed; stop for scope discussion
 
 Extended p2-first-serve-mute rather than adding a new case. Original WAV establishes a 5ms audible pre-mute window and a 20ms silent post-mute window. Native output matches at source PCM16 precision, per channel. Actual private mute-volume1 fault produces residual peak166; actual zero-waveform fault removes the pre-mute signal while period/volume/length controls stay unchanged. Normal peak332 before mute, zero after. Three successful self-test captures; normal rebuilt last. Initial harness assertion compared all custom registers and rejected expected changed DMA sample data; corrected control comparison and reran all three.

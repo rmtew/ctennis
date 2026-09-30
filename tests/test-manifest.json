@@ -1,0 +1,668 @@
+{
+  "schema_version": 1,
+  "purpose": "Requirement-based review manifest; case count is not a completion metric. Candidates are proposals, not authorized implementation priorities.",
+  "status_semantics": {
+    "green": "Last retained native comparison passed within stated scope",
+    "known-red": "Last retained report matches exact reviewed failure policy; test exists, implementation defect remains",
+    "audit first": "Identify missing protection and independent expectation before implementing",
+    "worth implementing": "Concrete integration/behaviour gap; expectation and stopping rule stated",
+    "skip": "No distinct protection or original requirement established"
+  },
+  "implemented_families": [
+    {
+      "id": "I01",
+      "title": "Continuous core replays",
+      "cases": [
+        "serve",
+        "round-transition",
+        "one-player-match",
+        "two-player-match"
+      ],
+      "behaviour": "Serve and continuous R1/R2 state, event order and transitions",
+      "regression": "Arithmetic, update-order, scoring or dispatch drift",
+      "independent_expectation": "Frozen repeated original callback records",
+      "stopping_condition": "Retain uninterrupted comparisons through their defined endings; known failures remain explicit",
+      "limits": "Baseline runs may stop at first known error; full-match references are not proof of full native parity",
+      "worth": "keep"
+    },
+    {
+      "id": "I02",
+      "title": "Local wait/resume/restart phases",
+      "cases": [
+        "round-tail-phase",
+        "resumed-play-phase",
+        "match-tail-phase",
+        "restart-play-phase"
+      ],
+      "behaviour": "Tail dispatch and independent resumed/restarted gameplay",
+      "regression": "Wrong callback regime or state reset",
+      "independent_expectation": "Slices validated against original continuous parents",
+      "stopping_condition": "One continuous comparison per distinct regime",
+      "limits": "One-time local initialization does not establish upstream continuity",
+      "worth": "keep as diagnostics; review overlap with I06"
+    },
+    {
+      "id": "I03",
+      "title": "Deuce/advantage scoring",
+      "cases": [
+        "deuce-enter-phase",
+        "advantage-enter-phase",
+        "advantage-lost-phase",
+        "advantage-regained-phase",
+        "advantage-game-phase",
+        "deuce-sequence-phase"
+      ],
+      "behaviour": "Deuce, advantage gained/lost/regained and game award",
+      "regression": "Wrong scoring transition or accumulated point state",
+      "independent_expectation": "Original continuous deuce sequence and five boundary records",
+      "stopping_condition": "Existing continuous sequence plus boundary localization",
+      "limits": "Short boundary cases overlap sequence; do not add equivalent variants",
+      "worth": "keep"
+    },
+    {
+      "id": "I04",
+      "title": "Timer saturation",
+      "cases": [
+        "shared-timer-saturation-phase",
+        "status-timer-saturation-phase",
+        "status-timer-observation-phase"
+      ],
+      "behaviour": "Reachable shared/status counter saturation",
+      "regression": "Wrapping instead of saturating or wrong audio cadence",
+      "independent_expectation": "Original reachable timer-boundary snapshots",
+      "stopping_condition": "Retain full-state failure and restricted timer diagnostic separately",
+      "limits": "Restricted counter observation cannot establish full-state parity",
+      "worth": "keep"
+    },
+    {
+      "id": "I05",
+      "title": "Lower receiver local movement",
+      "cases": [
+        "movement-lower-receiver-right-phase",
+        "movement-lower-receiver-left-phase",
+        "movement-lower-receiver-up-phase",
+        "movement-lower-receiver-down-phase"
+      ],
+      "behaviour": "Receiver limits after side exchange behind an earlier failure",
+      "regression": "Wrong bound or movement direction on later receiver",
+      "independent_expectation": "Original natural approach/hold/reversal phase",
+      "stopping_condition": "Existing four directional comparisons",
+      "limits": "Supplement continuous parents; do not replace them",
+      "worth": "keep"
+    },
+    {
+      "id": "I06",
+      "title": "Complete local awards and result regimes",
+      "cases": [
+        "one-player-round-lower-complete-phase",
+        "one-player-round-upper-complete-phase",
+        "one-player-match-complete-phase",
+        "two-player-round-lower-complete-phase",
+        "two-player-round-upper-complete-phase",
+        "two-player-match-complete-phase"
+      ],
+      "behaviour": "Award through wait/reset or result/menu/restart",
+      "regression": "Missing main-thread work, wrong waits, reset or handoff",
+      "independent_expectation": "Validated original uninterrupted award intervals",
+      "stopping_condition": "Both modes and both round ends plus result/restart intervals",
+      "limits": "Local starts; native hardware and ordinary continuity checked separately",
+      "worth": "keep"
+    },
+    {
+      "id": "I07",
+      "title": "Independent later serve handoffs",
+      "cases": [
+        "two-player-resumed-serve-complete-phase",
+        "one-player-upper-resumed-serve-complete-phase",
+        "two-player-upper-resumed-serve-complete-phase",
+        "two-player-restarted-serve-complete-phase",
+        "one-player-ai-launched-serve-complete-phase"
+      ],
+      "behaviour": "Resumed, upper, restarted and AI-launched serve completion",
+      "regression": "Wrong serve timer/phase, flight or handoff",
+      "independent_expectation": "Original later serve phases",
+      "stopping_condition": "Existing distinct serve contexts",
+      "limits": "AI phase begins after launch; does not establish launch correctness",
+      "worth": "keep"
+    },
+    {
+      "id": "I08",
+      "title": "Movement bounds",
+      "cases": [
+        "movement-serve-bounds",
+        "movement-alternate-serve-bounds",
+        "movement-receiver-right-bound",
+        "movement-receiver-left-bound",
+        "movement-receiver-up-bound",
+        "movement-receiver-down-bound",
+        "movement-lower-receiver-right-bound",
+        "movement-lower-receiver-left-bound",
+        "movement-lower-receiver-up-bound",
+        "movement-lower-receiver-down-bound",
+        "movement-lower-rally-down-bound",
+        "movement-lower-rally-up-bound",
+        "movement-lower-rally-left-bound",
+        "movement-lower-rally-right-bound",
+        "movement-upper-rally-up-bound",
+        "movement-upper-rally-down-bound",
+        "movement-upper-rally-left-bound",
+        "movement-upper-rally-right-bound"
+      ],
+      "behaviour": "Both players, four bound rows, four directions with approach/hold/reversal",
+      "regression": "Off-by-one limits, reversed directions, failure to resume",
+      "independent_expectation": "Original direct movement-entry/return snapshots",
+      "stopping_condition": "All 32 player/row/direction combinations already represented",
+      "limits": "Some continuous parents fail earlier; I05 independently exposes lower receiver",
+      "worth": "keep"
+    },
+    {
+      "id": "I09",
+      "title": "Consecutive two-player rally",
+      "cases": [
+        "two-player-rally"
+      ],
+      "behaviour": "Six accepted returns followed by intentional miss/point",
+      "regression": "Contact or trajectory drift accumulated across successive returns",
+      "independent_expectation": "Original legitimate control sequence",
+      "stopping_condition": "Existing consecutive rally including both return paths and point",
+      "limits": "Does not establish physical Amiga input latency or pixels",
+      "worth": "keep"
+    },
+    {
+      "id": "I10",
+      "title": "Upper return action boundary",
+      "cases": [
+        "contact-upper-action-before",
+        "contact-upper-action-at",
+        "contact-upper-action-after"
+      ],
+      "behaviour": "Before/at/after action timing around an accepted upper return",
+      "regression": "Action gate changes completed shot or accepts action at wrong epoch",
+      "independent_expectation": "Repeated original action timing captures",
+      "stopping_condition": "Three variants and targeted action-gate mutation already sufficient",
+      "limits": "Do not generalise to lower player or geometric edges",
+      "worth": "keep"
+    },
+    {
+      "id": "I11",
+      "title": "Continuous restart extensions",
+      "cases": [
+        "one-player-restart-complete",
+        "two-player-restart-complete"
+      ],
+      "behaviour": "Preserve original full match and extend to restarted serve release",
+      "regression": "Restart loses state or chooses wrong serve phase",
+      "independent_expectation": "Prefix-validated original replay extensions",
+      "stopping_condition": "Both modes through restarted handoff",
+      "limits": "Early native error may block continuous comparison; local phases remain separate",
+      "worth": "keep"
+    },
+    {
+      "id": "I12",
+      "title": "Sprite and initial field presentation",
+      "cases": [
+        "p1-title",
+        "p1-upper-player-placement",
+        "p1-moving-prefix",
+        "p1-score-status-prefix",
+        "p1-upper-serve"
+      ],
+      "behaviour": "Title, sprite placement, lower moving prefix, upper serve and score/status prefix",
+      "regression": "Wrong sprite origin, generation, ball placement or field bank",
+      "independent_expectation": "Original completed rasters with callback/hardware association",
+      "stopping_condition": "Named launch/flight/point/expiry checkpoints and distinct upper serve",
+      "limits": "Court outcome images remain conditional; do not duplicate general sprite-origin protection",
+      "worth": "keep"
+    },
+    {
+      "id": "I13",
+      "title": "First-serve Paula output",
+      "cases": [
+        "p2-first-serve-pitch",
+        "p2-first-serve-envelope",
+        "p2-first-serve-mute"
+      ],
+      "behaviour": "Pitch conversion, measured envelope, hardware and emitted mute",
+      "regression": "Wrong period/table, residual sound or disconnected waveform",
+      "independent_expectation": "Frozen original PSG events and measured WAV",
+      "stopping_condition": "Existing pitch/envelope known reds and mute signal/silence controls",
+      "limits": "No exact onset/decay, later effects or complete waveform fidelity claim",
+      "worth": "keep"
+    },
+    {
+      "id": "I14",
+      "title": "Initial physical input decoding",
+      "cases": [
+        "p3-input-p1-up",
+        "p3-input-p1-down",
+        "p3-input-p1-left",
+        "p3-input-p1-right",
+        "p3-input-p1-button1",
+        "p3-input-p1-button2",
+        "p3-input-p2-up",
+        "p3-input-p2-down",
+        "p3-input-p2-left",
+        "p3-input-p2-right",
+        "p3-input-p2-button1",
+        "p3-input-p2-button2",
+        "p3-input-simultaneous"
+      ],
+      "behaviour": "Both ports directions/buttons, simultaneous input, held/released samples",
+      "regression": "Wrong port bit or omitted second reader",
+      "independent_expectation": "Repeated original physical-control calibration",
+      "stopping_condition": "Existing 13 windows with actual executable fault detection",
+      "limits": "Reader/normalisation checks do not establish game response, exchanged sides or latency",
+      "worth": "keep"
+    },
+    {
+      "id": "I15",
+      "title": "Field renderer units",
+      "cases": [
+        "p1-widget-point-a",
+        "p1-widget-point-b",
+        "p1-widget-games-a",
+        "p1-widget-games-b",
+        "p1-widget-status",
+        "p1-widget-mode"
+      ],
+      "behaviour": "Score/game/status/mode selectors, inactive bank and blanking swaps",
+      "regression": "Wrong glyph/selector, corruption outside field or front-bank mutation",
+      "independent_expectation": "Original field rasters; six shared-font contexts explicitly distinguished",
+      "stopping_condition": "Existing selector inventory and zero/adjacent-selector faults",
+      "limits": "No game callbacks; shared-font rows are not captured game scenes",
+      "worth": "keep"
+    },
+    {
+      "id": "I16",
+      "title": "Status lifecycles",
+      "cases": [
+        "p1-status-2-lifecycle",
+        "p1-status-3-lifecycle",
+        "p1-status-4-lifecycle",
+        "p1-status-5-lifecycle",
+        "p1-status-6-lifecycle"
+      ],
+      "behaviour": "Live appearance/expiry for all six messages (first in prefix)",
+      "regression": "Clear early, retain after expiry or wrong requested status",
+      "independent_expectation": "Original point-driven requests and completed crops",
+      "stopping_condition": "Existing distinct status appearances and expiries",
+      "limits": "Local cases; second-reader failure retained independently",
+      "worth": "keep"
+    },
+    {
+      "id": "I17",
+      "title": "Deuce/advantage field transitions",
+      "cases": [
+        "p1-deuce-fields",
+        "p1-advantage-fields",
+        "p1-return-deuce-fields"
+      ],
+      "behaviour": "Actual point requests and completed fields across equal/advantage changes",
+      "regression": "Draw a callback early or freeze one field behind existing error",
+      "independent_expectation": "Original draw-boundary records and completed score pixels",
+      "stopping_condition": "Existing deuce/advantage/return-to-deuce transitions",
+      "limits": "Simulation scoring covered separately by I03",
+      "worth": "keep"
+    },
+    {
+      "id": "I18",
+      "title": "Round hardware scenes",
+      "cases": [
+        "p1-first-round-scenes",
+        "p1-one-player-upper-round-scenes",
+        "p1-two-player-lower-round-scenes",
+        "p1-two-player-upper-round-scenes"
+      ],
+      "behaviour": "Award tally, reset pause, final pause and resumed display in four contexts",
+      "regression": "Late stale score/sprites, missing reset or wrong event consumption",
+      "independent_expectation": "Original full viewports and consecutive state/event observations",
+      "stopping_condition": "Four distinct mode/end contexts with late compiled faults",
+      "limits": "Local initialization, known placement/reset errors; stop equivalent scenes",
+      "worth": "keep"
+    },
+    {
+      "id": "I19",
+      "title": "Ordinary physical mode selection",
+      "cases": [
+        "p1-accept-one-player",
+        "p1-accept-two-player"
+      ],
+      "behaviour": "No active gameplay before choice; Delete/Tab select modes",
+      "regression": "Bypass title, ignore two-player choice or keep wrong mode",
+      "independent_expectation": "Original pre-choice and accepted-mode states; physical native requests",
+      "stopping_condition": "Both requests expose gating/acceptance errors; aligned final image still open",
+      "limits": "Timed final image diagnostic while native acceptance absent; callback count is not gameplay",
+      "worth": "keep"
+    },
+    {
+      "id": "I20",
+      "title": "Result/title/restart hardware scenes",
+      "cases": [
+        "p1-one-player-result-restart-scenes",
+        "p1-two-player-result-restart-scenes"
+      ],
+      "behaviour": "Local match award through title, physical selection and restarted flight",
+      "regression": "Stale result/title/court, lost physical edge, reset or sound event",
+      "independent_expectation": "Original validated extensions with completed rasters and event stream",
+      "stopping_condition": "Both modes plus late sprite/field/refresh faults",
+      "limits": "Local interval and logical PSG events; not whole-match cadence or Paula waveform",
+      "worth": "keep"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "C01",
+      "title": "Lower return action timing",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Lower-player shot/action outcome around contact",
+      "plausible_regression": "Using upper action rule or sampling action a callback late",
+      "independent_expectation": "Original reachable lower contact with legitimate before/at/after action captures",
+      "stopping_condition": "Distinct original action outcomes and subsequent flight compared; equivalent outcomes share one case",
+      "existing_overlap": "I09 covers ordinary lower returns; I10 only upper action edge",
+      "implementation_work": "Focused source capture and existing core runner extension",
+      "evidence_readiness": "New focused source evidence required",
+      "effort": "medium",
+      "dependencies": "Existing I09 rally and I10 action-boundary harness"
+    },
+    {
+      "id": "C02",
+      "title": "Serve action acceptance",
+      "decision": "audit first",
+      "priority": "high",
+      "missing_behaviour": "Held/released/early action acceptance around serve handoff",
+      "plausible_regression": "Premature launch, stuck serve or double acceptance",
+      "independent_expectation": "Original serve phases and, only if absent, adjacent legitimate action timings",
+      "stopping_condition": "Every distinct serve action outcome protected through first flight",
+      "existing_overlap": "I01/I07 already cover several serves; identify absent outcome before capture",
+      "implementation_work": "Index existing serve inputs/outcomes first",
+      "evidence_readiness": "Existing evidence requires audit",
+      "effort": "low audit; medium if gap",
+      "dependencies": "Audit I01/I07 first"
+    },
+    {
+      "id": "C03",
+      "title": "Geometric contact edge",
+      "decision": "audit first",
+      "priority": "medium",
+      "missing_behaviour": "Adjacent reachable hit/miss positions at contact",
+      "plausible_regression": "Off-by-one collision/contact range",
+      "independent_expectation": "Original legitimate adjacent player positions; hit/miss and point records",
+      "stopping_condition": "One pair per genuinely distinct lower/upper contact rule",
+      "existing_overlap": "I09 accepts returns but does not deliberately bracket collision bounds",
+      "implementation_work": "Source edge discovery and core comparisons",
+      "evidence_readiness": "New reachable edge evidence likely needed",
+      "effort": "medium",
+      "dependencies": "C04 contact/outcome inventory and reachable legitimate controls"
+    },
+    {
+      "id": "C04",
+      "title": "Court outcome to point attribution",
+      "decision": "audit first",
+      "priority": "high",
+      "missing_behaviour": "Distinct bounce/net/out rule effects and eventual winning player",
+      "plausible_regression": "Wrong bounce count, net reflection, out classification or scorer",
+      "independent_expectation": "Existing R1/R2 callback/contact/score records",
+      "stopping_condition": "Index distinct outcomes; add comparison only when existing state streams or fault controls miss one",
+      "existing_overlap": "I01/I09 carry state/points; first mismatch can conceal later outcomes",
+      "implementation_work": "Map event to trajectory/flags/point, then choose missing local interval",
+      "evidence_readiness": "Original full records present; semantic indexing incomplete",
+      "effort": "low audit; medium if gap",
+      "dependencies": "Audit I01/I09 full-state extent and local-failure masking"
+    },
+    {
+      "id": "C05",
+      "title": "Random decisions affecting play",
+      "decision": "audit first",
+      "priority": "medium",
+      "missing_behaviour": "Refresh decision changes AI target/trajectory",
+      "plausible_regression": "Ignoring entropy or applying its sign to wrong target",
+      "independent_expectation": "Original consumed refresh choices and following reachable target/flight state",
+      "stopping_condition": "Distinct observed effects linked to existing comparisons; add only meaningful absent outcome",
+      "existing_overlap": "I01/I07 compare state; observing both bits alone insufficient",
+      "implementation_work": "Index choice-to-effect and use declared entropy seam only if necessary",
+      "evidence_readiness": "Existing records present; effect mapping incomplete",
+      "effort": "low audit; medium if gap",
+      "dependencies": "Map original entropy to actual target/trajectory consumers"
+    },
+    {
+      "id": "C06",
+      "title": "Physical input causes player/action response",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Actual native control changes gameplay, not just decoded bits",
+      "plausible_regression": "Correct reader output but wrong consumer/player/action",
+      "independent_expectation": "Original control calibration plus reachable movement/serve/contact outcomes",
+      "stopping_condition": "Representative direction/reversal/action response per distinct consumer; no exhaustive repeated bit matrix",
+      "existing_overlap": "I14 ends at readers; I08/I09 inject core inputs",
+      "implementation_work": "Extend actual hardware capture to consequent state",
+      "evidence_readiness": "Original components present; combined windows need definition",
+      "effort": "medium",
+      "dependencies": "I14 physical calibration; preserve known second-reader defect"
+    },
+    {
+      "id": "C07",
+      "title": "Physical control ownership after side exchange",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Pads control correct players after round exchange",
+      "plausible_regression": "Keep initial pad ownership or swap twice",
+      "independent_expectation": "Original later movement and round records with pad ownership",
+      "stopping_condition": "Each distinct ownership regime has a physical response comparison",
+      "existing_overlap": "I05 core phase and I14 initial ownership do not close integration",
+      "implementation_work": "One continuous or explicitly local physical exchanged-side window",
+      "evidence_readiness": "Original later states present; native physical window needed",
+      "effort": "medium",
+      "dependencies": "C06 response harness and original exchanged-side record"
+    },
+    {
+      "id": "C08",
+      "title": "Input sample boundary and latency",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Input edge consumed on correct source update independent of presentation",
+      "plausible_regression": "Sample twice, lose an edge, or tie action to video frame",
+      "independent_expectation": "Original input-read epochs and source schedule; explicit Amiga host mapping",
+      "stopping_condition": "Before/after edges for distinct direction/action consumers and bounded latency under ordinary scheduling",
+      "existing_overlap": "I10 source-core edge; I14 sustained physical windows",
+      "implementation_work": "Ordinary capture with timed physical edge; define epoch/latency criterion",
+      "evidence_readiness": "Epoch mapping and precise edge scheduling needed",
+      "effort": "high",
+      "dependencies": "C09 clock mapping; precise physical edge scheduling"
+    },
+    {
+      "id": "C09",
+      "title": "Ordinary callback cadence and deadline",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Correct source-rate gameplay/tail/result callbacks during ordinary execution",
+      "plausible_regression": "One callback per PAL frame, accumulate drift, skip/update twice, slow wait",
+      "independent_expectation": "Retained original timing baseline and regime intervals",
+      "stopping_condition": "All distinct regimes plus long interval agree with defined source-rate schedule and no unexplained lateness",
+      "existing_overlap": "Local debugger captures deliberately do not establish cadence",
+      "implementation_work": "Read-only timing instrumentation of ordinary executable, source-rate and deadline assertions",
+      "evidence_readiness": "Source timing evidence present; ordinary native measurement required",
+      "effort": "medium",
+      "dependencies": "Source timing baseline; ordinary executable trace without single-step scheduling"
+    },
+    {
+      "id": "C10",
+      "title": "Ordinary complete-match continuity",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "No visible-line commit or stale/lost graphics/sound across sustained run and restart",
+      "plausible_regression": "Prepare too slowly, publish incomplete state, lose event or leak state across round",
+      "independent_expectation": "Original R1/R2 event/state progression; Amiga blanking hardware invariant",
+      "stopping_condition": "Both control modes cover award, wait, resume, result and restart with deadlines and no visible commits",
+      "existing_overlap": "I18/I20 local scenes; I01 may stop early",
+      "implementation_work": "Ordinary run with compact commit/event trace; retain checkpoints rather than every frame",
+      "evidence_readiness": "Original progression present; native run can expose current known failures",
+      "effort": "high",
+      "dependencies": "C09 trace and C11 sound-class inventory; current product failures remain recorded"
+    },
+    {
+      "id": "C11",
+      "title": "Remaining sound event classes",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Native emitted upper serve/returns/point/round/result/restart effects",
+      "plausible_regression": "Wrong event dispatch/channel, truncated result phrase or missing resumed sound",
+      "independent_expectation": "Retained original named audio intervals and PSG streams",
+      "stopping_condition": "First inventory distinct event/envelope/channel combinations; one actual output comparison per unique class",
+      "existing_overlap": "I13 first serve; I20 logical PSG does not prove Paula output",
+      "implementation_work": "Group retained 18 intervals by actual effect and extend audio runner",
+      "evidence_readiness": "Original recordings present; effect grouping and native windows needed",
+      "effort": "medium",
+      "dependencies": "Inventory retained original audio intervals; no prerequisite product fixes"
+    },
+    {
+      "id": "C12",
+      "title": "Sound onset and duration",
+      "decision": "worth implementing",
+      "priority": "high",
+      "missing_behaviour": "Sound begins/ends in relation to source event schedule",
+      "plausible_regression": "Delayed audio update, skipped phrase or extra tail after transition",
+      "independent_expectation": "Original timed commands and measured audible boundaries",
+      "stopping_condition": "Distinct scheduling regimes have defined onset/end criteria with justified clock/sample mapping",
+      "existing_overlap": "I13 signal/silence has wide windows; not exact onset/decay proof",
+      "implementation_work": "Align audio samples to event trace and measure boundaries before asserting tolerance",
+      "evidence_readiness": "Original audio present; exact native sample/clock alignment needed",
+      "effort": "high",
+      "dependencies": "C09 clock mapping and C11 effect inventory"
+    },
+    {
+      "id": "C13",
+      "title": "Emitted pitch/envelope and waveform fidelity",
+      "decision": "worth implementing",
+      "priority": "medium",
+      "missing_behaviour": "Audible conversion matches intended pitch/relative envelope beyond registers",
+      "plausible_regression": "Wrong waveform period/content, level handling or quantization",
+      "independent_expectation": "Measured original WAV plateaus/frequency plus explicit native clock and integer quantization",
+      "stopping_condition": "Independent waveform measurements reject pitch/level/data faults for distinct relevant effects",
+      "existing_overlap": "I13 register pitch/envelope known reds; bounded presence alone weak",
+      "implementation_work": "Extend existing audio cases with actual measurements and documented mapping",
+      "evidence_readiness": "Original and first native WAVs present; fidelity criterion needs definition",
+      "effort": "medium",
+      "dependencies": "Existing I13 audio measurements and explicit waveform mapping"
+    },
+    {
+      "id": "C14",
+      "title": "Stereo routing/filter policy",
+      "decision": "audit first",
+      "priority": "medium",
+      "missing_behaviour": "Documented native channel balance and filter treatment",
+      "plausible_regression": "Accidentally silent side, cancellation, or unintended filtering",
+      "independent_expectation": "Original mono output and explicit intended Amiga mapping; original alone cannot prescribe stereo",
+      "stopping_condition": "Agree presentation policy, then test channel contributions and stable filter behaviour once",
+      "existing_overlap": "I13 per-channel silence prevents cancellation but does not specify balance",
+      "implementation_work": "Choose fidelity policy before measuring acceptance",
+      "evidence_readiness": "Design decision needed; do not invent source-equivalent stereo requirement",
+      "effort": "low decision; medium verification",
+      "dependencies": "Agree intended Amiga stereo/filter presentation"
+    },
+    {
+      "id": "C15",
+      "title": "Generation-aligned accepted-mode image",
+      "decision": "worth implementing",
+      "priority": "medium",
+      "missing_behaviour": "Accepted physical mode produces correct stable mode/court display",
+      "plausible_regression": "Correct flag with stale title or wrong mode image",
+      "independent_expectation": "Original accepted-mode generation and completed raster",
+      "stopping_condition": "Extend both existing mode cases to aligned accepted image with stale/wrong-mode control",
+      "existing_overlap": "I19 exposes selection failures; its timed final screenshot is diagnostic",
+      "implementation_work": "Extend existing cases, not add two duplicate selection cases",
+      "evidence_readiness": "Original image present; native acceptance absent is known failure, not excuse to claim coverage",
+      "effort": "medium",
+      "dependencies": "Extend I19; classify missing acceptance as known red"
+    },
+    {
+      "id": "C16",
+      "title": "Return/bounce/net/out rendering",
+      "decision": "audit first",
+      "priority": "medium",
+      "missing_behaviour": "Specific ball/frame/shadow update unique to outcome event",
+      "plausible_regression": "Only if named: freeze post-contact ball, wrong reflected frame, or stale shadow while earlier sprites remain correct",
+      "independent_expectation": "Original uploaded sprite/VDP state and associated event/next completed raster",
+      "stopping_condition": "For each unique missing render transition, prove targeted late fault rejection; skip if current images catch it",
+      "existing_overlap": "I12/I18 catch generic sprite origin and stale generations; I09 core trajectories",
+      "implementation_work": "Inspect current render contract and checkpoints first, reuse original media",
+      "evidence_readiness": "Original event rasters present; unique missing fault not yet established",
+      "effort": "low audit; medium if gap",
+      "dependencies": "Audit I12/I18 checkpoint protection; name an escaping render fault"
+    },
+    {
+      "id": "C17",
+      "title": "More movement, upper timing, status, round, result and mute variants",
+      "decision": "skip as duplicate",
+      "priority": "none",
+      "missing_behaviour": "No demonstrated additional requirement",
+      "plausible_regression": "Existing equivalent fault already caught",
+      "independent_expectation": "Existing original-backed comparisons",
+      "stopping_condition": "Reopen only with named distinct regression escaping current tests",
+      "existing_overlap": "I03/I08/I10/I13/I16/I17/I18/I20",
+      "implementation_work": "No implementation proposed",
+      "evidence_readiness": "Sufficient existing variants; no new evidence needed",
+      "effort": "none",
+      "dependencies": "None unless new distinct fault escapes current protection"
+    },
+    {
+      "id": "C18",
+      "title": "Active noise effect",
+      "decision": "skip as unsupported",
+      "priority": "none",
+      "missing_behaviour": "No active gameplay noise requirement observed",
+      "plausible_regression": "Invented effect would test behaviour not present in game",
+      "independent_expectation": "Retained original R1/R2 audio noise remains muted",
+      "stopping_condition": "Reopen only if actual original audible noise is discovered",
+      "existing_overlap": "Original audio inventory explicitly records muted noise",
+      "implementation_work": "No implementation proposed",
+      "evidence_readiness": "No original evidence for active effect",
+      "effort": "none",
+      "dependencies": "Actual original audible-noise evidence"
+    }
+  ],
+  "support_checks": [
+    {
+      "id": "S01",
+      "name": "Original ROM assembly round trip",
+      "entrypoint": "scripts/roundtrip_rom.py",
+      "protects": "Byte-preserving reproducible annotated source",
+      "limit": "Not gameplay meaning or native port acceptance; no fresh result asserted here"
+    },
+    {
+      "id": "S02",
+      "name": "Reference integrity and source-derived phase validation",
+      "entrypoints": [
+        "scripts/round_reference.py",
+        "scripts/phase_reference.py",
+        "scripts/contact_reference.py",
+        "scripts/source_audio_reference.py"
+      ],
+      "protects": "Oracles retain original provenance, prefix/phase correspondence and event associations",
+      "limit": "Validation is supporting evidence, not a new gameplay test"
+    },
+    {
+      "id": "S03",
+      "name": "Failure policy and actual executable controls",
+      "entrypoints": [
+        "scripts/run_test_suite.py",
+        "scripts/run_audio_tests.py",
+        "scripts/run_round_presentation_tests.py"
+      ],
+      "protects": "Known early failures do not conceal protected later changes; comparators reject faults",
+      "limit": "Controls have declared scopes; not every historical case has complete-observation digest or real fault control"
+    },
+    {
+      "id": "S04",
+      "name": "Coverage/timing inventories",
+      "entrypoints": [
+        "scripts/inventory_match_references.py",
+        "scripts/source_timing_baseline.py",
+        "scripts/inspect_mute_waveform.py"
+      ],
+      "protects": "Evidence discovery and gap identification",
+      "limit": "Diagnostics, not native acceptance tests"
+    }
+  ],
+  "snapshot_date": "2026-10-01"
+}
