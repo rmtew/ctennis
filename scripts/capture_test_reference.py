@@ -9,13 +9,15 @@ import zipfile
 from pathlib import Path
 from run_translated_prng_probe import ROOT
 from run_translated_player_frame_probe import ROM_SHA256
-from round_reference import build_fixture, validate_fixture
+from round_reference import build_fixture, build_focused_fixture, validate_fixture, FOCUSED_CASES
 
 
 def capture_round(config, case_name='round-transition'):
     full_match = case_name in ('one-player-match', 'two-player-match')
-    two_player = case_name == 'two-player-match'
+    focused = case_name in FOCUSED_CASES
     case = json.loads((ROOT / f'tests/cases/{case_name}.json').read_text())
+    two_player = case.get('selection') == 'two' or case_name == 'two-player-match'
+    policy_enabled = full_match or focused
     last_frame = case.get('last_begin_frame', 3000)
     out = ROOT / f'build/tests/{case_name}-capture'
     out.mkdir(parents=True, exist_ok=True)
@@ -29,7 +31,7 @@ def capture_round(config, case_name='round-transition'):
         env['CT_TEST_SELECT'] = 'two' if two_player else 'one'
         env['CT_TEST_FIRE'] = '0' if two_player else '1'
         env['CT_TEST_CONTACT_MARKERS'] = '1' if two_player else '0'
-        if full_match:
+        if policy_enabled:
             env['CT_TEST_POLICY'] = case['capture_policy']
         else:
             env.pop('CT_TEST_POLICY', None)
@@ -44,14 +46,15 @@ def capture_round(config, case_name='round-transition'):
         captures.append(path.read_bytes())
     if captures[0] != captures[1]:
         raise AssertionError('Round source captures differ; reference not replaced')
-    fixture = build_fixture(captures[0], {
+    builder = build_focused_fixture if focused else build_fixture
+    fixture = builder(captures[0], {
         'rom_sha256': ROM_SHA256, 'emulator': 'MAME 0.289 sc3000',
         'emulator_sha256': hashlib.sha256(mame.read_bytes()).hexdigest(),
         'capture_sha256': hashlib.sha256(captures[0]).hexdigest(), 'repeat_identical': True,
         'capture_script_sha256': hashlib.sha256((ROOT / 'scripts/capture_round_reference.lua').read_bytes()).hexdigest(),
         'parser_sha256': hashlib.sha256((ROOT / 'scripts/round_reference.py').read_bytes()).hexdigest(),
         'case_sha256': hashlib.sha256((ROOT / f'tests/cases/{case_name}.json').read_bytes()).hexdigest(),
-        'policy_sha256': hashlib.sha256((ROOT / case['capture_policy']).read_bytes()).hexdigest() if full_match else None,
+        'policy_sha256': hashlib.sha256((ROOT / case['capture_policy']).read_bytes()).hexdigest() if policy_enabled else None,
         'control_schedule': case.get('control_schedule'),
         'selection': 'two' if two_player else 'one',
         'machine': 'SC-3000 NTSC, SK-1100 keyboard, cartridge champtns',
@@ -60,7 +63,7 @@ def capture_round(config, case_name='round-transition'):
                          *([] if two_player else [{'frame': 1300, 'control': 'port-1 fire', 'pressed': True}])],
         'capture_bounds': {'begin_frame': 1298, 'last_begin_frame': last_frame},
         'source_command': command,
-    }, complete_match=full_match)
+    }, **({} if focused else {'complete_match': full_match}))
     if full_match and not two_player:
         prefix = json.loads((ROOT / 'tests/reference/round-transition.json').read_text())
         for index, (actual, expected) in enumerate(zip(fixture['updates'], prefix['updates']), 1):
@@ -69,15 +72,20 @@ def capture_round(config, case_name='round-transition'):
                     raise ValueError(f'Full match differs from frozen prefix at update {index}: {field}')
         if len(fixture['updates']) < len(prefix['updates']):
             raise ValueError('Full match shorter than existing prefix')
-    if full_match:
+    if policy_enabled:
         controls = [{'frame': event['frame'], 'control': event['control'], 'value': event['value']}
                     for event in fixture['timeline'] if event['kind'] == 'control']
         if controls != [event for event in case['control_schedule'] if event['frame'] >= 1298]:
             raise ValueError('Observed controls differ from frozen schedule')
+    if case_name == 'movement-serve-bounds':
+        from movement_reference import validate_movement
+        validate_movement(fixture, case)
     target = ROOT / f'tests/reference/{case_name}.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(fixture, indent=2) + '\n', encoding='utf-8')
     report = validate_fixture(fixture)
+    if case_name == 'movement-serve-bounds':
+        report.update(validate_movement(fixture, case))
     report.update(reference_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
                   capture_sha256=fixture['capture_sha256'], repeat_identical=True)
     (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
@@ -86,14 +94,19 @@ def capture_round(config, case_name='round-transition'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match'), default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + FOCUSED_CASES, default='serve')
     parser.add_argument('--verify-only', action='store_true', help='Validate an existing round-transition reference without MAME')
     args = parser.parse_args()
     if args.verify_only:
         if args.case == 'serve':
             parser.error('--verify-only applies to callback references')
         fixture = json.loads((ROOT / f'tests/reference/{args.case}.json').read_text())
-        print(json.dumps(validate_fixture(fixture), indent=2))
+        report = validate_fixture(fixture)
+        if args.case == 'movement-serve-bounds':
+            from movement_reference import validate_movement
+            case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+            report.update(validate_movement(fixture, case))
+        print(json.dumps(report, indent=2))
         return
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / "config.local.ini", encoding="utf-8")

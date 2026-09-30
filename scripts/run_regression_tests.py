@@ -7,7 +7,7 @@ import re
 import sys
 from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
-from round_reference import validate_fixture
+from round_reference import validate_fixture, FOCUSED_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 OUT = ROOT / 'build/tests'
@@ -129,7 +129,7 @@ def prepare_inputs(fixture, case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
-    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES, default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     parser.add_argument('--through-update', type=int,
                         help='Run a declared prefix through this update; report that the full replay was not executed')
@@ -144,6 +144,9 @@ def main():
     exact = fixture.get('schema_version') == 2
     if exact:
         reference_summary = validate_phase(fixture, case) if fixture.get('reference_kind') == 'source-derived-phase' else validate_fixture(fixture)
+        if args.case == 'movement-serve-bounds':
+            from movement_reference import validate_movement
+            reference_summary.update(validate_movement(fixture, case))
         case['updates'] = len(fixture['updates'])
     elif args.reference_only:
         parser.error('--reference-only applies to the round-transition case')
@@ -189,11 +192,12 @@ def main():
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
     if args.self_test and difference is None:
         source = (ROOT / 'build/translation/player-frame-routines.s').read_text()
-        anchor = 'ball_flight_update:\n'
+        anchor = 'lower_player_motion_update:\n' if args.case == 'movement-serve-bounds' else 'ball_flight_update:\n'
         if source.count(anchor) != 1:
             raise ValueError('Mutation entry point missing')
         mutation_path = OUT / 'mutated-routines.s'
-        mutation_path.write_text(source.replace(anchor, anchor + '\taddq.b #1,$35(a5)\n'))
+        coordinate = '$4a' if args.case == 'movement-serve-bounds' else '$35'
+        mutation_path.write_text(source.replace(anchor, anchor + f'\taddq.b #1,{coordinate}(a5)\n'))
         try:
             mutated, _ = execute(config, case['name'], mutation=True)
             detected = compare(mutated, fixture, case, fields)

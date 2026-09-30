@@ -74,6 +74,12 @@ source callback intervals for each phase case, comparison scope, and the last
 available native result. Those results are historical observations, not a fresh
 test run. An observed source event does not establish native acceptance.
 
+F1 now has an independent `movement-serve-bounds` capture and full native
+comparison: both players approach, hold and reverse at all four initial-row
+limits over 742 consecutive callbacks. See
+[movement evidence and remaining rows](../analysis/movement-regression.md).
+Rows 1–3 for each player remain missing; this does not complete F1.
+
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.
 

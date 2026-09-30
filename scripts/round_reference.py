@@ -1,6 +1,8 @@
 """Parse exact source callback records and validate the round-transition oracle."""
 from collections import Counter
 
+FOCUSED_CASES = ('movement-serve-bounds',)
+
 
 def parse_capture(payload):
     callbacks, timeline = [], []
@@ -128,6 +130,20 @@ def build_fixture(payload, metadata, *, complete_match=False):
                       and bytes.fromhex(row['ram'])[0x66] > 0)
         milestone_rows += [('match_award', match), ('restart_selection', selection),
                            ('restart_gameplay', restarted), ('restart_serve_flight', flight)]
+    return assemble_fixture(callbacks, timeline, metadata, milestone_rows)
+
+
+def build_focused_fixture(payload, metadata):
+    callbacks, timeline = parse_capture(payload)
+    if callbacks[0]['frame'] != 1299 or len(callbacks) < 2:
+        raise ValueError('Wrong focused initial callback')
+    return assemble_fixture(callbacks, timeline,
+                            {**metadata, 'reference_kind': 'source-focused'},
+                            [('focused_stop', callbacks[-1])])
+
+
+def assemble_fixture(callbacks, timeline, metadata, milestone_rows):
+    initial = callbacks[0]
     last = milestone_rows[-1][1]['ordinal']
     updates = callbacks[1:last + 1]
     timeline = [event for event in timeline if event.get('after_callback', 0) <= last]
@@ -196,6 +212,15 @@ def validate_fixture(fixture):
                 raise ValueError('Incorrect source saturating timer observation')
         state = bytearray(after)
     milestones = fixture['milestones']
+    between = [event for row in updates for event in row['before_events']]
+    if fixture.get('reference_kind') == 'source-focused':
+        if list(milestones) != ['focused_stop'] or milestones['focused_stop'] != {
+                'update': len(updates), 'frame': updates[-1]['frame']}:
+            raise ValueError('Focused stop does not match final complete callback')
+        bounds = fixture['capture_bounds']
+        if not updates[-1]['end_frame'] <= bounds['last_begin_frame']:
+            raise ValueError('Focused recording exceeded its finite stop')
+        return replay_summary(updates, between, milestones)
     names = ['first_game_award', 'tail_only_start', 'gameplay_resumed', 'resumed_serve_flight']
     if 'match_award' in milestones:
         names += ['match_award', 'restart_selection', 'restart_gameplay', 'restart_serve_flight']
@@ -230,6 +255,10 @@ def validate_fixture(fixture):
     installs = [event for event in between if event['kind'] == 'W' and event['address'] in (0xC000, 0xC001)]
     if len(installs) < 4 or not any(event.get('pc') == 0x144 for event in between):
         raise ValueError('Main-thread callback transition evidence missing')
+    return replay_summary(updates, between, milestones)
+
+
+def replay_summary(updates, between, milestones):
     counts = Counter(row['frame'] for row in updates)
     return {'updates': len(updates), 'callback_kinds': dict(Counter(row['callback_kind'] for row in updates)),
             'psg_bytes': sum(len(row['psg']) for row in updates),

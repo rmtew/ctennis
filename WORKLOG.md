@@ -1,3 +1,17 @@
+## 2026-09-30: green original-game initial movement bounds case
+
+Current status: fresh aggregate python scripts/run_test_suite.py --baseline-check --self-test has 25 registered cases: 14 green, 11 exact known red, no unexpected signatures or tool errors. All assembled-code and hardware-output mutation checks passed. Six explicit requirement groups still keep the suite incomplete; the goal remains active.
+
+Added movement-serve-bounds: select two-player mode from reset, keep fire released, and physically hold down/up/down then right/left/right for both controllers. Two independent MAME captures agree byte-for-byte across 742 consecutive callbacks. Both players' initial animation row stays zero, movement is unblocked, and all eight limits have observed approach, eight stopped accepted attempts spanning both counter parities, and four accepted reversal attempts with a response. Lower Y 152/153, X 128/199; upper Y 7/9, X 80/111. Narrow Y ranges do not move on every accepted attempt. No RAM state injection, Python gameplay oracle, PSG events, refresh reads or between-callback writes.
+
+The native full-state comparison passes all 742 callbacks at entry/pre-tail/return (254 bytes each). Temporary lower-X increment is detected at callback 1, pre-tail sprite record 1 X expected 192 actual 193; mutated source and executable are removed. Altered source held input is rejected by the evidence validator. This is accelerated simulation/input-reader evidence, not ordinary physical Amiga joystick or presentation timing acceptance.
+
+Added finite focused-source fixture construction alongside existing transition fixtures. Rebuilt round-transition, full R1 and full R2 from their retained raw streams using the refactored shared assembly helper: every resulting fixture is exactly unchanged. Original milestones and transition checks remain required for those match references. Focused captures require a final complete callback and finite source stop, with the F1 behavioural recipe enforced separately before freezing and before native execution.
+
+Reproduction: python scripts/capture_test_reference.py --case movement-serve-bounds; python scripts/run_regression_tests.py --case movement-serve-bounds --self-test; python scripts/inventory_match_references.py. Source capture SHA256 352b2a0849c138140d92f41ab7b60253129b5ceba5bc9d514652c3f24129d22e; fixture SHA256 9741dfe015d72e6db81bff5e624431521273f4463f179669d50e048a8bd9f711. Private raw captures/logs/report are build/tests/movement-serve-bounds-capture; coverage-inventory.json now includes exact F1 intervals. See analysis/movement-regression.md for all static bounds rows and coverage limits.
+
+Next action: read the animation-row writers in reset/contact/serve paths and index legitimate R2 intervals for rows 1-3. All four unblocked post-body row selections occur for both players, but this alone is not proof of the actual within-callback bounds row or approach/hold/reversal. Obtain only missing physical-input sequences, retaining reachable source phase provenance. Longer same-rally returns and all remaining later-phase/P1/P2/P3 requirements stay open. No product defect fixed or known red weakened.
+
 ## 2026-09-30: explicit suite coverage backlog and evidence inventory
 
 Current status: the last full aggregate remains 24 cases, 13 green and 11 exact known red. This documentation/inventory change does not claim a fresh emulator run, new behavioural coverage or any product fix. Six requirement groups remain open.

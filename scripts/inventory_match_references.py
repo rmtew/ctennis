@@ -80,6 +80,13 @@ if __name__ == '__main__':
     coverage = {'source_matches': report, 'source_derived_phases': phase_inventory(),
                 'open_requirements': json.loads((ROOT / 'tests/coverage-backlog.json').read_text()),
                 'warning': 'Last reports are historical observations, not a fresh native run or complete coverage.'}
+    from movement_reference import validate_movement
+    case = json.loads((ROOT / 'tests/cases/movement-serve-bounds.json').read_text())
+    payload = (ROOT / case['reference']).read_bytes()
+    fixture = json.loads(payload)
+    validate_fixture(fixture)
+    coverage['focused_movement'] = {'reference_sha256': hashlib.sha256(payload).hexdigest(),
+                                    **validate_movement(fixture, case)}
     (ROOT / 'build/tests/coverage-inventory.json').write_text(json.dumps(coverage, indent=2) + '\n')
     for name, row in report.items():
         print(name, 'updates', row['updates'], 'returns', row['instrumented_return_counts'],

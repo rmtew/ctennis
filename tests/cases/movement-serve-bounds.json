@@ -1,0 +1,179 @@
+{
+  "name": "movement-serve-bounds",
+  "requirement": "F1 initial serve bounds row for both players",
+  "reference": "tests/reference/movement-serve-bounds.json",
+  "schema_version": 2,
+  "selection": "two",
+  "default_fire": false,
+  "capture_policy": "scripts/capture_movement_serve_bounds.lua",
+  "last_begin_frame": 2041,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "control_schedule": [
+    {
+      "frame": 120,
+      "control": "select",
+      "value": 1
+    },
+    {
+      "frame": 420,
+      "control": "select",
+      "value": 0
+    },
+    {
+      "frame": 1320,
+      "control": "p1-down",
+      "value": 1
+    },
+    {
+      "frame": 1320,
+      "control": "p2-down",
+      "value": 1
+    },
+    {
+      "frame": 1424,
+      "control": "p1-down",
+      "value": 0
+    },
+    {
+      "frame": 1424,
+      "control": "p2-down",
+      "value": 0
+    },
+    {
+      "frame": 1440,
+      "control": "p1-up",
+      "value": 1
+    },
+    {
+      "frame": 1440,
+      "control": "p2-up",
+      "value": 1
+    },
+    {
+      "frame": 1544,
+      "control": "p1-up",
+      "value": 0
+    },
+    {
+      "frame": 1544,
+      "control": "p2-up",
+      "value": 0
+    },
+    {
+      "frame": 1560,
+      "control": "p1-down",
+      "value": 1
+    },
+    {
+      "frame": 1560,
+      "control": "p2-down",
+      "value": 1
+    },
+    {
+      "frame": 1664,
+      "control": "p1-down",
+      "value": 0
+    },
+    {
+      "frame": 1664,
+      "control": "p2-down",
+      "value": 0
+    },
+    {
+      "frame": 1680,
+      "control": "p1-right",
+      "value": 1
+    },
+    {
+      "frame": 1680,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 1784,
+      "control": "p1-right",
+      "value": 0
+    },
+    {
+      "frame": 1784,
+      "control": "p2-right",
+      "value": 0
+    },
+    {
+      "frame": 1800,
+      "control": "p1-left",
+      "value": 1
+    },
+    {
+      "frame": 1800,
+      "control": "p2-left",
+      "value": 1
+    },
+    {
+      "frame": 1904,
+      "control": "p1-left",
+      "value": 0
+    },
+    {
+      "frame": 1904,
+      "control": "p2-left",
+      "value": 0
+    },
+    {
+      "frame": 1920,
+      "control": "p1-right",
+      "value": 1
+    },
+    {
+      "frame": 1920,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 2024,
+      "control": "p1-right",
+      "value": 0
+    },
+    {
+      "frame": 2024,
+      "control": "p2-right",
+      "value": 0
+    }
+  ],
+  "movement_intervals": [
+    {
+      "direction": "down",
+      "press_frame": 1320,
+      "release_frame": 1424
+    },
+    {
+      "direction": "up",
+      "press_frame": 1440,
+      "release_frame": 1544
+    },
+    {
+      "direction": "down",
+      "press_frame": 1560,
+      "release_frame": 1664
+    },
+    {
+      "direction": "right",
+      "press_frame": 1680,
+      "release_frame": 1784
+    },
+    {
+      "direction": "left",
+      "press_frame": 1800,
+      "release_frame": 1904
+    },
+    {
+      "direction": "right",
+      "press_frame": 1920,
+      "release_frame": 2024
+    }
+  ],
+  "purpose": "Reach limits, hold and reverse both players in bounds row zero through physical controls; remaining three rows per player are open."
+}

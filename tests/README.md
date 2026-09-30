@@ -429,6 +429,15 @@ Latest aggregate baseline/self-test: 24 cases, 13 green and eleven exact known
 red; six explicit missing coverage groups still cause failure.
 # Coverage inventory
 
+The registered `movement-serve-bounds` case compares 742 consecutive original
+callbacks against actual shared 68000 gameplay routines. Reproduce its capture
+with `python scripts/capture_test_reference.py --case movement-serve-bounds`;
+run `python scripts/run_regression_tests.py --case movement-serve-bounds --self-test`
+to verify parity and movement mutation detection. Its source evidence validator
+enforces approach, eight held attempts and four reversal attempts for all eight
+initial-row limits. Remaining rows and physical native control sampling stay
+open. See [the movement evidence](../analysis/movement-regression.md).
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,
