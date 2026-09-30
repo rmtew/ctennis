@@ -66,6 +66,14 @@ for R1/R2.
 
 ## Behaviour inventory
 
+The actionable open requirements are maintained in
+[`coverage-backlog.json`](coverage-backlog.json), which the aggregate runner
+includes in its report. Run `python scripts/inventory_match_references.py` to
+produce `build/tests/coverage-inventory.json`: validated match evidence, exact
+source callback intervals for each phase case, comparison scope, and the last
+available native result. Those results are historical observations, not a fresh
+test run. An observed source event does not establish native acceptance.
+
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.
 

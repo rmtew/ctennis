@@ -10,12 +10,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix')
 AUDIO_CASES = ('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute')
 CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + PRESENTATION_CASES + AUDIO_CASES
-# These requirements await evidence-backed cases or a justified coverage inventory.
-MISSING = ['R2 same-rally return by both players (full match captured; rally gap remains)', 'F1-F5 meaningful-gap inventory and cases',
-           'phase-specific comparisons after the first continuous failure',
-           'remaining P1 native graphics cases (source checkpoints retained; native title registered)',
-           'P2 audio references and native comparisons',
-           'P3 timing/input references and native comparisons']
+# A reviewed public backlog keeps partial evidence from silently closing a gate.
+COVERAGE_BACKLOG = json.loads((ROOT / 'tests/coverage-backlog.json').read_text())
+MISSING = [f"{group['id']}: {group['summary']}" for group in COVERAGE_BACKLOG['groups']]
 
 
 def classify(report, expected):
@@ -82,7 +79,8 @@ def main():
     passed = not MISSING and all(row['status'] in allowed for row in results)
     summary = {'baseline_check': args.baseline_check, 'passed': passed,
                'cases': results, 'missing_requirements': MISSING,
-               'self_test': args.self_test}
+               'self_test': args.self_test,
+               'coverage_backlog': COVERAGE_BACKLOG}
     (out / 'suite-report.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps({'passed': passed, 'missing_requirements': MISSING}, indent=2))
     return 0 if passed else 2 if MISSING or any(row['status'] == 'tool-error' for row in results) else 1

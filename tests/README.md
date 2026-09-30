@@ -427,3 +427,18 @@ comparator, then rebuild/recapture normal outputs.
 
 Latest aggregate baseline/self-test: 24 cases, 13 green and eleven exact known
 red; six explicit missing coverage groups still cause failure.
+# Coverage inventory
+
+`python scripts/inventory_match_references.py` validates both source match
+fixtures and every registered source-derived phase. It writes the ignored
+`build/tests/coverage-inventory.json` with reference hashes, observed returns,
+counter boundaries, refresh bits and exact phase callback intervals. Native
+results in this inventory are explicitly the last available reports; use the
+aggregate command for fresh verification.
+
+[`coverage-backlog.json`](coverage-backlog.json) defines the six open requirement
+groups and their concrete next tasks. The aggregate report includes this same
+backlog. Captured observations and short passing phases do not close broader
+requirements automatically. The final implementation remains maintained native
+Amiga code; raw source-state checks are temporary diagnostics, to be replaced
+only after equivalent behavioural comparisons preserve their coverage.

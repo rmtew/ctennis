@@ -1,3 +1,15 @@
+## 2026-09-30: explicit suite coverage backlog and evidence inventory
+
+Current status: the last full aggregate remains 24 cases, 13 green and 11 exact known red. This documentation/inventory change does not claim a fresh emulator run, new behavioural coverage or any product fix. Six requirement groups remain open.
+
+Added tests/coverage-backlog.json with concrete R2 rally, F1-F5, later-phase, P1, P2 and P3 tasks. The aggregate runner reads and embeds the same backlog rather than maintaining vague duplicate descriptions. The goal remains a complete reference-backed suite followed by concise maintained native Amiga implementation; original RAM/register/PSG checks are temporary diagnostics, not architectural obligations.
+
+Extended scripts/inventory_match_references.py to validate all 13 phase fixtures against their source parents and record exact callback intervals, comparison scope and explicitly historical native results. build/tests/coverage-inventory.json is private generated evidence. Source matches retain hashes and observed score/counter/random data. R1: 52 primary wraps and both refresh bits; return markers absent, so no zero-return claim. R2: 105 wraps, 11 lower and 23 upper returns, none in a qualifying same-rally four-return sequence.
+
+Verification: python scripts/inventory_match_references.py passed parent validation. All known-failure classification/signature rejection checks passed via run_test_suite.verify_failure_policy; six open groups retained. Gameplay, frozen references and failure signatures unchanged, so no repeated emulator suite was necessary for this inventory-only change.
+
+Next action: read source movement bounds and correlate frozen R2 control/position intervals, identifying the missing F1 rows and legitimate inputs needed for the R2 rally. Use source analysis first; obtain new twice-identical recordings only for actual behavioural gaps. Do not count source capture or historical phase reports as native acceptance.
+
 ## Current checkpoint (2026-09-30, measured serve envelope and green native mute)
 
 Extended scripts/run_audio_tests.py with separate pitch, measured-envelope and mute criteria. The uninterrupted native run now reaches callback 42, with all 254 compared source state bytes matching and ordered PSG events retained. The source first serve has decay steps 0-7, a held step, then 8-14 and final mute at callback 40. The waveform calibrator uses actual frozen mono PCM, requiring all other source channels/noise muted, and extracts the two plateaus by lower/upper quartiles. Levels are identical with 2/3/4 ms edge trims; peak overshoot is excluded rather than used as amplitude. No waveform or game model generates the expected levels, and no numerical waveform tolerance is inferred.

@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from round_reference import validate_fixture
+from phase_reference import CASES as PHASE_CASES, validate_phase
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -45,15 +46,41 @@ def inventory(name):
             'score_transitions': transitions, 'instrumented_return_counts': dict(collections.Counter(
                 player for values in markers.values() for player in values)),
             'same_rally_both_players': same_rally,
+            'required_rally_candidates': [row for row in same_rally if len(row['returns']) >= 4],
             'return_marker_instrumentation': bool(markers),
             'counter_wrap_updates': wraps, 'first_timer_saturation_updates': saturations,
             'refresh_bits_observed': sorted({read['bit'] for row in fixture['updates'] for read in row['refresh_reads']}),
             'rallies_with_instrumented_returns': rallies}
 
 
+def phase_inventory():
+    """Index reachable starts and current reports without claiming upstream parity."""
+    result = []
+    for name in PHASE_CASES:
+        recipe = json.loads((ROOT / f'tests/cases/{name}.json').read_text())
+        fixture = json.loads((ROOT / recipe['reference']).read_text())
+        validate_phase(fixture, recipe)
+        report_path = ROOT / f'build/tests/{name}-report.json'
+        report = json.loads(report_path.read_text()) if report_path.exists() else None
+        start = recipe['initial_source_update'] + 1
+        result.append({'case': name, 'parent_reference': recipe['parent_reference'],
+                       'source_callback_interval': [start, start + recipe['updates'] - 1],
+                       'compared_ram_offsets': recipe.get('compared_ram_offsets', 'all except declared exclusions'),
+                       'report_present': report is not None,
+                       'last_report_passed': report['passed'] if report else None,
+                       'first_difference': report['first_difference'] if report else None,
+                       'upstream_continuous_parity_claimed': False})
+    return result
+
+
 if __name__ == '__main__':
     report = {name: inventory(name) for name in ('one-player-match', 'two-player-match')}
+    (ROOT / 'build/tests').mkdir(parents=True, exist_ok=True)
     (ROOT / 'build/tests/match-inventory.json').write_text(json.dumps(report, indent=2) + '\n')
+    coverage = {'source_matches': report, 'source_derived_phases': phase_inventory(),
+                'open_requirements': json.loads((ROOT / 'tests/coverage-backlog.json').read_text()),
+                'warning': 'Last reports are historical observations, not a fresh native run or complete coverage.'}
+    (ROOT / 'build/tests/coverage-inventory.json').write_text(json.dumps(coverage, indent=2) + '\n')
     for name, row in report.items():
         print(name, 'updates', row['updates'], 'returns', row['instrumented_return_counts'],
               'same-rally-both', len(row['same_rally_both_players']),
