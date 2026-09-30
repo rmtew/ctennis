@@ -1,3 +1,9 @@
+## 2026-10-01 ? Requirement-driven coverage audit and mute waveform evidence
+
+Previous goal turn was no progress (selection discussion only). Inspected current clean worktree, backlog, moving-prefix case, rally inventory code and audio runner. Deferred automatic additional court screenshots: six-return continuous R2 state comparison and existing launch/pre-bounce pictures must be accounted for first. Retained all open requirements.
+
+Added and executed scripts/inspect_mute_waveform.py against existing hash-validated source/native WAVs. Three fully retained 20ms windows after mute: original PCM is zero; native float32 decays from peak 2.23e-35 to subnormal 1.40e-45. This changes next action: exact-zero floating-point acceptance is invalid; define format-aware emitted-silence comparison and prove real unmuted-channel mutation detection. No new cases, product edits, emulator launches or waveform acceptance claimed. Aggregate is unchanged; no suite rerun. Roadmap and test docs now supersede the automatic next-scenes instruction.
+
 # Current checkpoint: both result/title/restart scene sequences (2026-10-01)
 
 Previous turn made progress: physical mode-request failures registered790bc8a. This turn adds both local result/title/physical-restart sequences:2844 states,12 full viewports,72 geometry crops (48 matching), six compiled late mutants rejected. Physical fire release, Delete/Tab selection press/release and fire repress applied at source epochs; no expected transition writes. Source120 rasters repeat identically and preserve the original extension callback streams; primary575 unchanged. Tail IRQ$06B1 omits sprite upload but can change VDP registers, so explicit title association uses captured hardware and unique source pixels. All four old round comparisons remain identical from actual captures.

@@ -549,3 +549,34 @@ Current incremental aggregate:99 cases,52 green,47 exact known red; four cases
 executed/rerun and95 prior reports retained. Stop equivalent result/menu/restart
 variants. Next protect both returns and distinct bounce/net/out presentation.
 Generation-aligned accepted mode, remaining F2/F4/F5, P2 and P3 stay open.
+
+
+## Current priority: requirement-driven selection
+
+This supersedes the previous automatic next batch of return/bounce/net/out images.
+Existing R2 rally comparisons already protect six accepted returns and consecutive
+simulation state; the moving-prefix graphics case covers launch and pre-bounce
+flight. New outcome images require a distinct rendering fault that those tests
+cannot detect. Do not add equivalent sprite-origin windows merely to increase count.
+F4 eventual point attribution and F5 random trajectory effects remain open until
+explicitly indexed against the existing state comparisons.
+
+Prioritise missing emitted-audio and ordinary-execution protection. For every
+addition record missing behaviour, plausible regression, independent original
+expectation and finite stopping condition before capture or implementation.
+First candidate: emitted sound after the first-serve mute. The existing green
+register test cannot catch audible output that persists despite correct registers.
+Original retained WAV establishes silence; a real private unmuted-channel mutation
+must demonstrate detection. Stop after event association, defined output
+quantization/filter treatment and fault rejection are established; do not expand
+equivalent mute windows. This does not close later effect/onset/duration requirements.
+
+`python scripts/inspect_mute_waveform.py` validated retained source/native hashes
+and measured three complete 20 ms windows, starting 5/10/20 ms after mute.
+Source PCM16 is exactly zero. Native float32 peak is 2.23e-35 in the earliest
+window and 1.40e-45 in the later windows. Exact floating-point zero is therefore
+unsuitable as an audible-silence assertion. Output is diagnostic only:
+`build/tests/mute-waveform-inspection.json`. Native debugger-stop timestamps are
+not exact audio sample timestamps. No tolerance, new green case, fresh emulator
+execution or complete waveform acceptance is claimed. Next implement the bounded
+silence comparator with explicit format handling and a real audible-fault control.

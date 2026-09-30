@@ -711,3 +711,6 @@ Physical mode-request coverage: Delete and Tab on the same fresh ordinary applic
 
 
 Current result/title/restart coverage: both modes,2844 state checks,12 completed whole viewports,72 geometry crops and six actual compiled late mutations. Physical fire/key edges are applied; no original transition RAM is injected. See [evidence](../analysis/native-result-restart-presentation.md). Source tails use validated no-upload hardware association; gameplay defaults are unchanged. Mode gating now uses active player/waiting state, not callback counts; both cases were rerun with repeat and mutant controls. Current incremental aggregate:99 cases,52 green,47 exact known red. Four cases executed/rerun,95 prior reports retained; no full99-case run claimed. Four groups remain open. Next: both returns and distinct bounce/net/out scenes.
+
+
+Current priority supersedes the preceding next-scenes instruction: require a distinct missing regression protection before adding outcome images. Prioritise emitted-audio and ordinary-execution gaps. See the roadmap section "Current priority: requirement-driven selection". `inspect_mute_waveform.py` measures validated retained mute tails only; no waveform acceptance criterion is inferred.
