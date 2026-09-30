@@ -585,3 +585,19 @@ Latest complete aggregate: **77 cases, 42 green and 35 exact known red**.
 Mutation/signature checks pass, with no unexplained/tool failures. Four missing
 groups still cause suite failure. Earlier counts are historical milestones.
 Next: distinct captured native point/status/mode field comparisons.
+
+## Native widget renderer units
+
+`python scripts/run_widget_tests.py --all --self-test` compares38 selector
+values in six field cases through the shared native Copper backend. It prepares
+inactive lists, commits in blanking and captures full completed rasters. Thirty-two
+contexts use that exact original field/column; six explicitly reuse an identical
+opposite-column font. Expected images remain captured original pixels.
+Asymmetric inputs and actual zero/adjacent-selector mutations check independence;
+all pixels outside field rectangles remain unchanged. Game callbacks are paused
+in this unit wrapper, so this does not prove game-driven update/expiry timing.
+See [widget evidence](../analysis/native-widget-regression.md).
+
+Latest aggregate: **83 cases,48 green,35 exact known red**, all mutation/signature
+checks pass and no unexplained/tool failures. Four missing groups remain.
+Next: actual game-driven status appearance/expiry; stop font-bank variants.

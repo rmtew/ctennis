@@ -118,6 +118,22 @@
       "source_fixture_preserved": true,
       "actual_executable_mutation_detected_in_all_windows": true,
       "complete_P3": false
+    },
+    {
+      "id": "P1-widget-renderer-units",
+      "evidence": "analysis/native-widget-regression.md; build/tests/p1-widget-*-report.json",
+      "case_count": 6,
+      "selector_values": 38,
+      "direct_original_field_contexts": 32,
+      "shared_opposite_column_font_cases": 6,
+      "gameplay_callbacks": 0,
+      "compiled_mutations": [
+        "zero-selector",
+        "adjacent-field-selector"
+      ],
+      "inactive_front_immutability_and_blanking_swaps_verified": true,
+      "outside_field_pixels_unchanged": true,
+      "complete_P1": false
     }
   ]
 }

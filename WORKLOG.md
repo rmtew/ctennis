@@ -1,3 +1,41 @@
+## 2026-09-30: native widget renderer matrix complete
+
+Full baseline/self-test completed83 cases:48 green,35 exact known red; no
+unexplained/tool failures. Four missing groups remain; goal incomplete. Six
+renderer cases add38 selector checks without changing product code or prior
+known failure classifications.
+
+Mined existing frozen P1 rasters beyond named checkpoints:32 direct field/value
+contexts (point_a0..5,point_b0..3/5/6,games_a0/1/4,games_b0..6,status0..6,mode0..2).
+Source recipe/media/association/parent/cartridge hashes verified; field tile
+records checked against actual ROM, PNG RGB hashes checked, visible obscuration/
+partial writes excluded. Expected pixels are original cropped rasters. Six extra
+font-unit checks use identical opposite-field records/bank geometry:point_a6
+fromB6,point_b4 fromA4,games_a2/3/5/6 fromB. Reports mark donor provenance; no
+original scene/opposite-winner coverage claimed. Aliased score3/5 routes tested.
+
+Private native wrapper drives only renderer inputs, not game RAM. Seven
+asymmetric tuples exercise all selector slots through existing sprite upload,
+score-pointer patching and blanking commit paths. Original displayed Copper bytes
+unchanged during preparation; front/back switch on every commit. Completed
+frames account for high-blank commits requiring an extra beam wrap. All outside-
+field pixels unchanged across scenes. Game callbacks remain0 (unit scope).
+
+Actual assembled selector-zero and adjacent-field mutations detected by each
+field case; separate captures retained. Normal/mutation capture hashes, native
+image hashes, alternating pointers and outside-field stability verified after
+full suite. Batching prevents six repeated captures and rejects stale/partial
+reports. No MAME recapture/new dependency or production fix.
+
+Roadmap/spec/backlog/instructions updated; analysis/native-widget-regression.md
+records limits. Stop font-bank snapshot variants. Next: game-driven status
+appearance/expiry, using live-produced selections and committed pixels. Validate
+source display-state projections against existing original field rasters; do not
+feed an expected selection tape into the game/renderer integration. Isolate later
+source-derived starts as needed; retain input and independent source-rate mapping.
+Remaining P1 timings/scenes, P2 audio, P3 response/side/latency/cadence/deadlines,
+F2/F4/F5 and original unobserved winner contexts remain in full scope.
+
 ## 2026-09-30: actual native physical-input baseline
 
 Full baseline/self-test completed77 cases:42 green,35 exact known red; no

@@ -1,0 +1,15 @@
+{
+  "name": "p1-widget-point-b",
+  "field": "point_b",
+  "variants": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "reference": "tests/reference/presentation/manifest.json",
+  "contract": "Renderer-unit snapshots from actual original rasters. Drive native field selectors, inactive-bank preparation and blanking commits; no game callbacks or expected game RAM writes. Runtime field event timing/expiry remains separate. Six unobserved column/value contexts additionally use captured opposite-column glyphs with identical ROM records and pattern/color-bank geometry; these are shared-font unit cases, not captured game-scene evidence."
+}

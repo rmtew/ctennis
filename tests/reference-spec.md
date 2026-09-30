@@ -474,3 +474,14 @@ cadence/deadlines. See
 Current aggregate: 77 cases, 42 green and 35 exact known red, four missing groups.
 Stop equivalent initial-side control windows; next protect distinct retained
 native point/status/mode field outputs. Full suite scope is unchanged.
+
+Native widget renderer units now compare all38 selector values in six green
+cases. Thirty-two original field contexts are directly observed; six additional
+checks explicitly use verified identical opposite-column fonts. Actual inactive
+list preparation, alternating blanking commits, completed rasters and unchanged
+outside pixels are verified. Zero and adjacent-selector compiled mutations are
+detected in every field case. See
+[widget scope/evidence](../analysis/native-widget-regression.md).
+This closes renderer-unit glyph selection, not game-driven timing/expiry or
+original opposite-winner scene coverage. Aggregate83 cases:48 green/35 exact
+known red, four missing groups. Next protect game-driven status lifetimes.
