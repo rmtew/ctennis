@@ -78,7 +78,7 @@ def compare(expected, actual, boundary="stable-title"):
     return None
 
 
-def build_native(case, directory):
+def build_native(case, directory, recorded_refresh=False):
     run([sys.executable, 'scripts/roundtrip_rom.py'])
     prepare_gameplay()
     run([sys.executable, 'scripts/generate_amiga_sprite_probe.py'])
@@ -89,7 +89,29 @@ def build_native(case, directory):
     parent = json.loads((ROOT / 'tests/reference/one-player-match.json').read_text())
     (OUT / 'live-initial-ram.bin').write_bytes(bytes.fromhex(parent['initial_post_tail']))
     executable = directory / 'native-application'
-    run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-L', str(directory / 'native.lst'), '-o', str(executable), case['native_source']])
+    source = case['native_source']
+    defines = []
+    if recorded_refresh:
+        signs = bytearray(len(parent['updates']))
+        for index, row in enumerate(parent['updates']):
+            bits = {event['bit'] for event in row['refresh_reads']}
+            if len(bits) > 1:
+                raise ValueError('Native replay adapter cannot supply distinct refresh bits within one callback')
+            if bits:
+                signs[index] = bits.pop()
+        (directory / 'refresh-signs.bin').write_bytes(signs)
+        include = directory / 'refresh-signs.i'
+        include.write_text(f'REFRESH_SIGN_COUNT equ {len(signs)}\nrefresh_signs: incbin "{(directory / "refresh-signs.bin").as_posix()}"\n', encoding='ascii')
+        original = (ROOT / source).read_text(encoding='utf-8')
+        old = 'include "build/amiga/long-game/refresh-signs.i"'
+        if original.count(old) != 1:
+            raise ValueError('Live replay entropy include changed')
+        wrapper = directory / 'native-recorded-refresh.s'
+        wrapper.write_text(original.replace(old, f'include "{include.as_posix()}"'), encoding='utf-8')
+        source = str(wrapper)
+        defines = ['-DLONG_GAME_REPLAY=1']
+    run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', *defines,
+         '-L', str(directory / 'native.lst'), '-o', str(executable), source])
     return executable
 
 
@@ -144,9 +166,62 @@ def player_placement(case, contract, self_test):
     return 0 if report['passed'] else 1
 
 
+def generation_sequence(case, contract, self_test):
+    from capture_native_presentation import capture
+    from associate_presentation_generations import source_generation
+    from presentation_reference import FIELDS
+    if case['source_case'] != 'one-player-match' or case['inputs'] != [{'port': 2, 'red': True}]:
+        raise ValueError('Generation adapter supports the frozen R1 held-fire prefix')
+    captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
+                       track_commits=True, completed_rasters=True)
+    checks, first = [], None
+    for observed in captured['observations']:
+        if observed['state_differences']:
+            raise ValueError('Graphics precondition failed: source/native simulation differs')
+        raster = observed['completed_raster']
+        if not raster['generation']:
+            raise ValueError('No simulated presentation generation for requested checkpoint')
+        generation = raster['generation']['prepared_after_callback']
+        source, association = source_generation(generation)
+        expected = map_source_palette(source, contract)
+        with Image.open(raster['capture']['path']) as picture:
+            actual = native_picture(picture, contract)
+        for field in case['fields']:
+            region = FIELDS[field] if field != 'whole_display' else (0, 0, 256, 192)
+            wanted, seen = expected.crop(region), actual.crop(region)
+            difference = compare(wanted, seen, f'presentation-generation-{field}')
+            if difference:
+                difference['update'] = generation
+                difference['x'] += region[0]
+                difference['y'] += region[1]
+                first = first or difference
+            if self_test:
+                if compare(wanted, wanted) is not None:
+                    raise AssertionError('Equal graphics rejected')
+                changed = seen.copy()
+                changed.putpixel((0, 0), (255, 255, 255) if wanted.getpixel((0, 0)) != (255, 255, 255) else (0, 0, 0))
+                if compare(wanted, changed) == compare(wanted, seen):
+                    raise AssertionError('Generation comparison failed to detect changed pixel')
+            checks.append({'requested_callback': observed['completed_callbacks'], 'field': field,
+                           'region': region, 'source': association, 'raster': raster,
+                           'first_difference': difference})
+    report = {'case': case['name'], 'passed': first is None, 'first_difference': first,
+              'checks': checks, 'self_test': self_test, 'scope': case['contract'],
+              'executable_sha256': captured['executable_sha256'],
+              'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
+              'capture_report_sha256': digest(ROOT / 'build/tests/native-presentation-recorded/report.json'),
+              'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
+                  'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256', 'refresh_fixture_sha256')},
+              'entropy_reads': captured['entropy_reads']}
+    (ROOT / f'build/tests/{case["name"]}-report.json').write_text(json.dumps(report, indent=2) + '\n')
+    print(json.dumps({'case': case['name'], 'passed': first is None, 'first_difference': first, 'checks': len(checks)}, indent=2))
+    return 0 if first is None else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement'), default='p1-title')
+    parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement',
+                        'p1-moving-prefix', 'p1-score-status-prefix'), default='p1-title')
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
@@ -155,6 +230,8 @@ def main():
     report_path.unlink(missing_ok=True)
     if args.case == 'p1-upper-player-placement':
         return player_placement(case, contract, args.self_test)
+    if args.case in ('p1-moving-prefix', 'p1-score-status-prefix'):
+        return generation_sequence(case, contract, args.self_test)
     if case['inputs']:
         raise ValueError('Title case requires no native controls')
     config = configparser.ConfigParser(interpolation=None)

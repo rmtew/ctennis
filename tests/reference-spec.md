@@ -364,3 +364,12 @@ than unnamed TODOs. The dataset may be complete while port comparisons fail.
 The port suite is complete only when those simulations pass and the separate
 presentation/hardware criteria pass. Neither source completeness nor passing
 selected cases establishes the other.
+
+Current native P1 evidence (2026-09-30): generation-aware prefix cases retain
+seven complete-raster comparisons through the first displayed game tally and
+42 exact field comparisons along an uninterrupted live history. Fields pass;
+whole-screen output retains the known sprite-origin failure. This covers only
+those named prefix checkpoints, not all P1 variants or P2/P3. Source-generation
+associations, recorded-entropy consumption and blanking commits are retained
+in the case reports; instrumented-prefix timing does not establish ordinary
+complete-match hardware acceptance. See the current worklog for remaining work.

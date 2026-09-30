@@ -7,7 +7,7 @@ from pathlib import Path
 from phase_reference import CASES as PHASE_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
-PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement')
+PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix')
 CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + PRESENTATION_CASES
 # These requirements await evidence-backed cases or a justified coverage inventory.
 MISSING = ['R2 same-rally return by both players (full match captured; rally gap remains)', 'F1-F5 meaningful-gap inventory and cases',

@@ -347,3 +347,37 @@ before using them as deterministic full-state presentation cases.
 
 Latest aggregate baseline/self-test: 19 cases, 11 green and eight exact known red;
 six explicit missing requirement groups still cause failure.
+
+
+## Completed native rasters and source generation
+
+`python scripts/capture_native_presentation.py --recorded-entropy --track-commits --completed-rasters`
+uses the existing native replay entropy seam with bits copied directly from
+independently captured R1 refresh reads. No Python gameplay model chooses them.
+A private source copy changes only the entropy include path; normal production
+source remains unchanged. The existing replay define also enables diagnostic
+logging, so these observations do not prove ordinary-build timing performance.
+Native consumption order/count/value is checked at the actual refresh helper.
+Actual game state must still match at each graphics checkpoint.
+
+Commit breakpoints record the actual front Copper pointer, prepared callback,
+selected fields and beam position. Completed rasters are captured at physical
+beam wrap. Finishing a raster can advance simulation past adjacent requested
+callbacks; use separated targets rather than manufacturing a missing state.
+Source expected images are selected through independently validated VDP/pixel
+associations: the source callback is active and its captured VRAM sprite records
+match that callback's recorded entry buffer. Ambiguous associations are errors.
+No native visual similarity or arbitrary lag selects the expected frame.
+
+`python scripts/run_presentation_tests.py --case p1-moving-prefix --self-test`
+compares seven complete rasters at requested callbacks 17,63,138,168,471,809,1207. It remains
+known red for the sprite-origin defect. All subsequent checks stay in its report.
+`python scripts/run_presentation_tests.py --case p1-score-status-prefix --self-test`
+compares six fields at each of those boundaries, passing 42 exact comparisons.
+This protects consecutive point graphics through the first game tally and
+IN status appearance/expiry along one continuous live history; it does not complete other score/status variants,
+upper serve, all rally/outcomes, later transitions or P2/P3.
+
+Latest aggregate after extending both generation cases through the first game
+tally: 21 cases, 12 green and nine exact known red. The field case has 42 checks;
+six explicit missing requirement groups still cause failure.

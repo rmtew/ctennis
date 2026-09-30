@@ -1,0 +1,24 @@
+{
+  "name": "p1-moving-prefix",
+  "source_case": "one-player-match",
+  "reference": "tests/reference/presentation/manifest.json",
+  "completed_callbacks": [
+    17,
+    63,
+    138,
+    168,
+    471,
+    809,
+    1207
+  ],
+  "fields": [
+    "whole_display"
+  ],
+  "inputs": [
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "contract": "Actual complete native rasters across lower launch, pre-bounce flight, first point and IN status expiry. Generation is recorded at native commits and associated with original captured pixels by source callback and uploaded sprite bytes; remaining serve stages, both ends, other outcomes and later transitions remain separate. The same uninterrupted run also checks subsequent 30/40 graphics and the first displayed game tally."
+}

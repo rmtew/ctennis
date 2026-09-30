@@ -102,3 +102,39 @@ that interval, so its positions are not comparable to the initial source frame.
 No case or known failure from that experiment was registered. Moving regions
 still require explicit presentation generation and controlled entropy; this
 invariant-region comparison does not complete the rest of P1.
+
+
+## Recorded entropy and completed-raster association
+
+The recorded-entropy capture derives every replay sign from the frozen source
+refresh_reads, not the older analogue-based discovery. The private wrapper
+changes only the existing entropy include path and selects LONG_GAME_REPLAY.
+Production source is unchanged. The latter define enables debug logging as
+well as entropy supply; ordinary-build performance remains a separate P3 check.
+Native consumed bit/order/count is observed at refresh_replay_done. Retained
+states through the first point/status expiry match all 254 diagnostic bytes.
+
+Native commits are observed at presentation_commit_in_blank after COP1LC writes;
+late-blank commits select the next visible frame, early-blank commits the current
+one. Full frames are captured at beam wrap, preserving which committed generation
+was visible in the completed raster. Source-generation selection requires the
+actual callback in captured active_updates and exact uploaded 40-byte entry
+sprite-buffer equality. The accepted source raster/VDP associations then identify
+original pixels. All resulting candidate images must be identical. Hash or
+association ambiguities are errors, never gameplay failures.
+
+For the retained continuous native sequence, requested callbacks 17/63/138/168
+show generations 16/62/138/168. They associate respectively with source VDP frames
+1315/1361/1437/1467 and original pixel frames 1314-1318/1363/1436-1438/1467-1469.
+The native/source state matches at every requested callback. The moving-prefix
+case retains seven full-frame comparisons and its first red at generation 16,
+pixel (74,12), source black/native cc55bb. The separate score-status-prefix case
+compares both points, both game tallies, status and mode at each generation:
+42 exact field comparisons pass, covering successive point graphics, the first
+game tally and IN expiry without
+concealing the whole-frame sprite failure. Remaining P1 scope stays explicit.
+
+Additional requested callbacks 471/809/1207 show generations 471/809/1206,
+associated with source hardware frames 1770/2108/2505 and original pixel frames
+1771-1772/2109-2110/2506-2507. Simulation remains matched through these
+checkpoints. The case checks all seven scenes along one uninterrupted history.

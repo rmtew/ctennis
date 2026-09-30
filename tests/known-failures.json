@@ -102,6 +102,18 @@
         "expected": "000000",
         "actual": "cc55bb"
       }
+    },
+    "p1-moving-prefix": {
+      "reason": "Completed-frame source-generation comparison exposes the same 20-pixel native sprite-origin defect as p1-upper-player-placement. All compared simulation bytes match at every retained callback; source images are associated by captured hardware state, not native visual similarity. Later moving checks remain visible in the case report.",
+      "signature": {
+        "update": 16,
+        "boundary": "presentation-generation-whole_display",
+        "field": "logical display pixel",
+        "x": 74,
+        "y": 12,
+        "expected": "000000",
+        "actual": "cc55bb"
+      }
     }
   }
 }
