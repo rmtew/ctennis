@@ -6,7 +6,7 @@
       "id": "F1-F5",
       "summary": "Focused behaviour inventory: movement limits, input/contact edges, court outcomes and random effects",
       "tasks": [
-        "F1: both service rows, all upper receiver limits and lower receiver right limit established (21 combinations). Lower right has a green independent phase and explicit continuous-prefix known red. Obtain the other three lower receiver limits and eight row-three limits with exact source observations and phase provenance.",
+        "F1: both service rows and all upper/lower receiver limits established (24 combinations). Later lower limits have green independent phases plus continuous known reds. Obtain the eight row-three limits with exact source snapshots, physical inputs and reachable phase provenance.",
         "F2: capture accepted action onset and adjacent earlier/later callbacks, plus any distinct geometric contact edge.",
         "F3: retain the existing continuous deuce/advantage/game sequence and its five boundary comparisons.",
         "F4: index each distinct bounce/net/out outcome through eventual point attribution, then compare missing outcomes independently.",

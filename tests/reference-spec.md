@@ -95,7 +95,10 @@ their own evidence.
 The lower receiver right limit is additionally established by a green
 24-callback source-derived phase. Its independently captured continuous parent
 retains the earlier known round-transition failure; both cases stay registered.
-Twenty-one movement combinations are now established, eleven remain.
+The lower left/up/down companions now pass as independent 26/30/24-callback
+phases, each with nine PSG bytes and targeted mutation detection. All continuous
+parents remain exact known red at the earlier transition. Twenty-four movement
+combinations are established; eight row-3 combinations remain.
 
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.

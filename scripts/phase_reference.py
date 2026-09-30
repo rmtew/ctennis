@@ -9,7 +9,8 @@ ROOT = Path(__file__).resolve().parent.parent
 CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-play-phase', 'deuce-enter-phase', 'advantage-enter-phase',
          'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase',
          'shared-timer-saturation-phase', 'status-timer-saturation-phase', 'status-timer-observation-phase',
-         'movement-lower-receiver-right-phase')
+         'movement-lower-receiver-right-phase', 'movement-lower-receiver-left-phase',
+         'movement-lower-receiver-up-phase', 'movement-lower-receiver-down-phase')
 
 
 def build_phase(case):

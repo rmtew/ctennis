@@ -19,8 +19,18 @@ RECEIVER_BOUNDS = {
     'movement-lower-receiver-right-bound': {'player': 'lower', 'direction': 'right', 'coordinate': 0x4A,
         'start': 192, 'limit': 199, 'prefix_frame': 5868, 'prefix_callbacks': 4569,
         'press': 5869, 'reverse': 5887, 'release': 5891, 'mode': 0x92},
+    'movement-lower-receiver-left-bound': {'player': 'lower', 'direction': 'left', 'coordinate': 0x4A,
+        'start': 56, 'limit': 40, 'prefix_frame': 6152, 'prefix_callbacks': 4853,
+        'press': 6153, 'reverse': 6173, 'release': 6177, 'mode': 0x9A},
+    'movement-lower-receiver-up-bound': {'player': 'lower', 'direction': 'up', 'coordinate': 0x49,
+        'start': 152, 'limit': 128, 'prefix_frame': 6614, 'prefix_callbacks': 5315,
+        'press': 6615, 'reverse': 6639, 'release': 6643, 'mode': 0x92},
+    'movement-lower-receiver-down-bound': {'player': 'lower', 'direction': 'down', 'coordinate': 0x49,
+        'start': 152, 'limit': 153, 'prefix_frame': 5868, 'prefix_callbacks': 4569,
+        'press': 5869, 'reverse': 5887, 'release': 5891, 'mode': 0x92},
 }
-RECEIVER_PHASES = {'movement-lower-receiver-right-phase': 'movement-lower-receiver-right-bound'}
+RECEIVER_PHASES = {f'movement-lower-receiver-{direction}-phase': f'movement-lower-receiver-{direction}-bound'
+                   for direction in ('right', 'left', 'up', 'down')}
 
 
 def validate_movement(fixture, case):

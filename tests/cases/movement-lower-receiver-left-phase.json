@@ -1,0 +1,13 @@
+{
+  "name": "movement-lower-receiver-left-phase",
+  "reference": "tests/reference/movement-lower-receiver-left-phase.json",
+  "schema_version": 2,
+  "parent_reference": "tests/reference/movement-lower-receiver-left-bound.json",
+  "initial_source_update": 4853,
+  "updates": 26,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "purpose": "Independent full native movement phase with natural captured starting state; earlier continuous failure remains registered."
+}

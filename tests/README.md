@@ -475,6 +475,12 @@ run either registered case with the ordinary regression command. The phase
 checks its source parent/recipe on every invocation and does not claim upstream
 continuous parity.
 
+The lower-receiver left/up/down bound and phase companions use the same
+capture/rebuild/test commands. Their native phases pass 26/30/24 callbacks,
+each with nine PSG bytes; the continuous parents independently reproduce the
+existing callback-2536 failure. Both receiver rows are complete. Eight movement
+combinations remain, covering row three for both players.
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,

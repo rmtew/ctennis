@@ -127,8 +127,8 @@ detected at callback 1331, pre-tail sprite record 5 X: expected 175, actual 176.
 Normal source/executable remain unchanged and temporary mutation files are
 removed. This targeted check passed after the full aggregate's mutation run.
 
-The combined inventory tracks each player/row/direction separately: 21 of
-32 combinations have approach/hold/reversal evidence, and 11 remain. Passing
+The combined inventory tracks each player/row/direction separately: 24 of
+32 combinations have approach/hold/reversal evidence, and eight remain. Passing
 one limit does not close its entire row. This is movement coverage, not a
 percentage of overall source or port correctness.
 
@@ -186,6 +186,25 @@ failure. The independent 24-callback phase is green and detects X199-to-X200
 escape at local callback 6/source 4575. It initializes once from source callback
 4569 and carries actual native state; no intermediate source writes are injected.
 This adds one lower row-2 limit without claiming continuous upstream parity.
+
+The left/up/down companions now complete lower row two as independent native
+phases, while all continuous parents retain the earlier transition failure.
+Their source captures repeat twice and match observer-free recordings. They
+preserve their R2 histories through source callbacks 4853, 5315 and 4569,
+respectively, including ordered main-thread effects and swapped pad ownership.
+
+| Lower direction | Source approach/hold | Last eight held attempts | Four reversal coordinates | Native phase |
+|---|---|---|---|---|
+| Left | 4854–4873; X56 to X40 | 4866–4873 | 41,43,44,46 | 26 callbacks, 9 PSG bytes |
+| Up | 5316–5339; Y152 to Y128 | 5332–5339 | 129,131,132,134 | 30 callbacks, 9 PSG bytes |
+| Down | 4570–4587; Y152 to Y153 | 4580–4587 | 152,150,149,147 | 24 callbacks, 9 PSG bytes |
+
+Boundary-escape mutations are detected at local/source callback 12/4865 for
+left (X40 to39), 17/5332 for up (Y128 to127), and 2/4571 for down (Y153 to154).
+Temporary mutated code is removed. Each phase is reconstructed from its exact
+source parent and must include the complete approach, hold and reversal; no
+intermediate source state is injected. Both receiver rows are now complete;
+the remaining eight movement combinations are the two row-three rectangles.
 
 `python scripts/capture_movement_observations.py --case two-player-rally`
 and `--case two-player-match` each record full RAM immediately before and after

@@ -149,6 +149,45 @@
         "actual": 1,
         "callback_kind": "tail-only"
       }
+    },
+    "movement-lower-receiver-left-bound": {
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented, first reached in R2 at callback 2536",
+      "evidence": "Independently captured natural R2 prefix; movement-lower-receiver-left-phase is separately green.",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "movement-lower-receiver-up-bound": {
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented, first reached in R2 at callback 2536",
+      "evidence": "Independently captured natural R2 prefix; movement-lower-receiver-up-phase is separately green.",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "movement-lower-receiver-down-bound": {
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented, first reached in R2 at callback 2536",
+      "evidence": "Independently captured natural R2 prefix; movement-lower-receiver-down-phase is separately green.",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
     }
   }
 }
