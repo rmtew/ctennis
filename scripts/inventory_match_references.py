@@ -3,7 +3,7 @@ import collections
 import hashlib
 import json
 from pathlib import Path
-from round_reference import validate_fixture, FOCUSED_CASES
+from round_reference import validate_fixture, MOVEMENT_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 'warning': 'Last reports are historical observations, not a fresh native run or complete coverage.'}
     from movement_reference import validate_movement
     coverage['focused_movement'] = []
-    for name in FOCUSED_CASES:
+    for name in MOVEMENT_CASES:
         case = json.loads((ROOT / f'tests/cases/{name}.json').read_text())
         payload = (ROOT / case['reference']).read_bytes()
         fixture = json.loads(payload)
@@ -94,6 +94,13 @@ if __name__ == '__main__':
         observation['bounds_row'] for case in coverage['focused_movement']
         for observation in case['observed_movement_limits'] if observation['player'] == side})
         for side in ('lower', 'upper')}
+    from rally_reference import validate_rally
+    case = json.loads((ROOT / 'tests/cases/two-player-rally.json').read_text())
+    payload = (ROOT / case['reference']).read_bytes()
+    fixture = json.loads(payload)
+    validate_fixture(fixture)
+    coverage['supplementary_two_player_rally'] = {
+        'reference_sha256': hashlib.sha256(payload).hexdigest(), **validate_rally(fixture, case)}
     (ROOT / 'build/tests/coverage-inventory.json').write_text(json.dumps(coverage, indent=2) + '\n')
     for name, row in report.items():
         print(name, 'updates', row['updates'], 'returns', row['instrumented_return_counts'],

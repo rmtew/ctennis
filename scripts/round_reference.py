@@ -1,7 +1,8 @@
 """Parse exact source callback records and validate the round-transition oracle."""
 from collections import Counter
 
-FOCUSED_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds')
+MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds')
+FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',)
 
 
 def parse_capture(payload):

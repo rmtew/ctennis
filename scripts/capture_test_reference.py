@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 from run_translated_prng_probe import ROOT
 from run_translated_player_frame_probe import ROM_SHA256
-from round_reference import build_fixture, build_focused_fixture, validate_fixture, FOCUSED_CASES
+from round_reference import build_fixture, build_focused_fixture, validate_fixture, FOCUSED_CASES, MOVEMENT_CASES
 
 
 def capture_round(config, case_name='round-transition'):
@@ -77,15 +77,20 @@ def capture_round(config, case_name='round-transition'):
                     for event in fixture['timeline'] if event['kind'] == 'control']
         if controls != [event for event in case['control_schedule'] if event['frame'] >= 1298]:
             raise ValueError('Observed controls differ from frozen schedule')
-    if case_name in FOCUSED_CASES:
+    if case_name in MOVEMENT_CASES:
         from movement_reference import validate_movement
         validate_movement(fixture, case)
+    if case_name == 'two-player-rally':
+        from rally_reference import validate_rally
+        validate_rally(fixture, case)
     target = ROOT / f'tests/reference/{case_name}.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(fixture, indent=2) + '\n', encoding='utf-8')
     report = validate_fixture(fixture)
-    if case_name in FOCUSED_CASES:
+    if case_name in MOVEMENT_CASES:
         report.update(validate_movement(fixture, case))
+    if case_name == 'two-player-rally':
+        report.update(validate_rally(fixture, case))
     report.update(reference_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
                   capture_sha256=fixture['capture_sha256'], repeat_identical=True)
     (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
@@ -102,10 +107,14 @@ def main():
             parser.error('--verify-only applies to callback references')
         fixture = json.loads((ROOT / f'tests/reference/{args.case}.json').read_text())
         report = validate_fixture(fixture)
-        if args.case in FOCUSED_CASES:
+        if args.case in MOVEMENT_CASES:
             from movement_reference import validate_movement
             case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
             report.update(validate_movement(fixture, case))
+        if args.case == 'two-player-rally':
+            from rally_reference import validate_rally
+            case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+            report.update(validate_rally(fixture, case))
         print(json.dumps(report, indent=2))
         return
     config = configparser.ConfigParser(interpolation=None)

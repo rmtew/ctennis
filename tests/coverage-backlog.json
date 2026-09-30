@@ -3,13 +3,6 @@
   "purpose": "Open suite requirements; captured evidence and native acceptance are separate. Remove a row only with reviewed coverage evidence.",
   "groups": [
     {
-      "id": "R2-rally",
-      "summary": "R2 same-rally returns: each player and at least four successful returns",
-      "tasks": [
-        "Capture a legitimate continuous rally satisfying both conditions twice; current R2 has returns by both players in separate points."
-      ]
-    },
-    {
       "id": "F1-F5",
       "summary": "Focused behaviour inventory: movement limits, input/contact edges, court outcomes and random effects",
       "tasks": [
@@ -55,6 +48,21 @@
         "Compare calibrated press/hold/release/direction/action acceptance for both input paths at actual sampling boundaries.",
         "Require zero visible-line commits and inspect complete-match presentation/sound continuity; instrumented prefix evidence is insufficient."
       ]
+    }
+  ],
+  "completed_requirements": [
+    {
+      "id": "R2-rally",
+      "case": "two-player-rally",
+      "evidence": "analysis/two-player-rally-regression.md; build/tests/two-player-rally-report.json",
+      "source_callbacks": 1390,
+      "qualifying_rally_interval": [
+        707,
+        1050
+      ],
+      "accepted_returns": 6,
+      "native_classification": "green",
+      "original_full_R2_preserved": true
     }
   ]
 }

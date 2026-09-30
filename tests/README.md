@@ -452,9 +452,28 @@ counter boundaries, refresh bits and exact phase callback intervals. Native
 results in this inventory are explicitly the last available reports; use the
 aggregate command for fresh verification.
 
-[`coverage-backlog.json`](coverage-backlog.json) defines the six open requirement
+[`coverage-backlog.json`](coverage-backlog.json) defines the open requirement
 groups and their concrete next tasks. The aggregate report includes this same
 backlog. Captured observations and short passing phases do not close broader
 requirements automatically. The final implementation remains maintained native
 Amiga code; raw source-state checks are temporary diagnostics, to be replaced
 only after equivalent behavioural comparisons preserve their coverage.
+
+## Supplementary two-player rally
+
+`two-player-rally` preserves continuous state through six alternating returns
+and a point award. Its frozen physical input schedule is captured twice from
+reset and the actual native comparison passes all 1,390 callbacks and 290 PSG
+bytes. The source validator requires at least four accepted returns by both
+players within one completed rally; it rejects one-sided or cross-point counts.
+The full R2 match remains unchanged.
+
+```text
+python scripts/capture_test_reference.py --case two-player-rally
+python scripts/run_regression_tests.py --case two-player-rally --self-test
+```
+
+The assembled-code mutation is detected at callback one and removed afterward.
+See [rally provenance and limits](../analysis/two-player-rally-regression.md).
+The R2-rally requirement moves to completed coverage; five open requirement
+groups remain. Historical checkpoints above retain their original counts.

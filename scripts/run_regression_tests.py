@@ -7,7 +7,7 @@ import re
 import sys
 from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
-from round_reference import validate_fixture, FOCUSED_CASES
+from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 OUT = ROOT / 'build/tests'
@@ -144,9 +144,12 @@ def main():
     exact = fixture.get('schema_version') == 2
     if exact:
         reference_summary = validate_phase(fixture, case) if fixture.get('reference_kind') == 'source-derived-phase' else validate_fixture(fixture)
-        if args.case in FOCUSED_CASES:
+        if args.case in MOVEMENT_CASES:
             from movement_reference import validate_movement
             reference_summary.update(validate_movement(fixture, case))
+        if args.case == 'two-player-rally':
+            from rally_reference import validate_rally
+            reference_summary.update(validate_rally(fixture, case))
         case['updates'] = len(fixture['updates'])
     elif args.reference_only:
         parser.error('--reference-only applies to the round-transition case')
@@ -192,11 +195,11 @@ def main():
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
     if args.self_test and difference is None:
         source = (ROOT / 'build/translation/player-frame-routines.s').read_text()
-        anchor = 'lower_player_motion_update:\n' if args.case in FOCUSED_CASES else 'ball_flight_update:\n'
+        anchor = 'lower_player_motion_update:\n' if args.case in MOVEMENT_CASES else 'ball_flight_update:\n'
         if source.count(anchor) != 1:
             raise ValueError('Mutation entry point missing')
         mutation_path = OUT / 'mutated-routines.s'
-        coordinate = '$4a' if args.case in FOCUSED_CASES else '$35'
+        coordinate = '$4a' if args.case in MOVEMENT_CASES else '$35'
         mutation_path.write_text(source.replace(anchor, anchor + f'\taddq.b #1,{coordinate}(a5)\n'))
         try:
             mutated, _ = execute(config, case['name'], mutation=True)
