@@ -445,6 +445,23 @@
         "expected": 4,
         "actual": 0
       }
+    },
+    "p1-status-6-lifecycle": {
+      "evidence": "analysis/native-status-six-regression.md; build/tests/p1-status-6-lifecycle-report.json; consecutive native post-tail state and independently frozen original two-player source",
+      "reason": "Both physical fire buttons are held, but the live second-input reader is a zero stub. The source combines both button bits into normalized control byte C056=17; native retains only the first group bit C056=1. All local status requests and stable pixel crops match independently; do not classify full state parity as green.",
+      "signature": {
+        "update": 20922,
+        "boundary": "status-lifecycle-state",
+        "field": "source state byte",
+        "ram_offset": 86,
+        "expected": 17,
+        "actual": 1
+      },
+      "complete_state_failure_interval": [
+        20922,
+        20958
+      ],
+      "required_raster_checks": 3
     }
   }
 }

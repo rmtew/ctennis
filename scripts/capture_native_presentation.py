@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -31,6 +31,17 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     report_path = directory / 'report.json'
     report_path.unlink(missing_ok=True)
     case = json.loads((ROOT / 'tests/cases/p1-title.json').read_text())
+    if source_case not in ('one-player-match', 'two-player-match'):
+        raise ValueError('Unsupported source parent')
+    case['source_case'] = source_case
+    if native_inputs is None:
+        native_inputs = [{'port': 2, 'red': True}]
+    if (not native_inputs or len({row.get('port') for row in native_inputs}) != len(native_inputs)
+            or any(row.get('port') not in (1, 2)
+                   or set(row) - {'port', 'up', 'down', 'left', 'right', 'red', 'blue'}
+                   or any(type(value) is not bool for key, value in row.items() if key != 'port')
+                   for row in native_inputs)):
+        raise ValueError('Invalid physical joystick inputs')
     if initial_source_update:
         if not recorded_entropy or not initial_phase_reference:
             raise ValueError('Later graphics start requires a verified phase and recorded entropy')
@@ -38,9 +49,9 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         phase = json.loads((ROOT / initial_phase_reference).read_text())
         if targets and targets[-1] > initial_source_update + len(phase['updates']):
             raise ValueError('Graphics targets extend beyond the independently verified phase')
-    source_path = ROOT / 'tests/reference/one-player-match.json'
+    source_path = ROOT / f'tests/reference/{source_case}.json'
     source = json.loads(source_path.read_text())
-    frozen = json.loads((ROOT / 'tests/reference/presentation/one-player-match/manifest.json').read_text())
+    frozen = json.loads((ROOT / f'tests/reference/presentation/{source_case}/manifest.json').read_text())
     if digest(source_path) != frozen['parent_reference_sha256']:
         raise ValueError('Source simulation reference changed relative to frozen presentation capture')
     if list(targets) != sorted(set(targets)) or not targets or targets[0] < initial_source_update or targets[-1] > len(source['updates']):
@@ -54,6 +65,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     entropy_reads = []
     audio_events = []
     field_events = []
+    state_events = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
     with CopperlineSession(ctl, ROOT) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
@@ -66,8 +78,9 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         if stop['reason'] != 'loadseg':
             raise RuntimeError(f'Application not loaded: {stop}')
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail']).group(1), 16)
-        session.inspect('input_set_port', {'port': 2, 'device': 'joystick'})
-        session.inspect('input_joy', {'port': 2, 'red': True})
+        for inputs in native_inputs:
+            session.inspect('input_set_port', {'port': inputs['port'], 'device': 'joystick'})
+            session.inspect('input_joy', inputs)
         if track_commits:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['presentation_commit_in_blank']})
         if recorded_entropy:
@@ -76,10 +89,19 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['paula_events_done']})
         if observe_fields:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['scoreboard_selection_done']})
+        if observe_state:
+            if not recorded_entropy:
+                raise ValueError('Consecutive state observation requires the private replay build')
+            session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['log_replay_transition']})
         def observe_stop(stop):
             if stop['reason'] != 'breakpoint':
                 return False
             generation = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
+            if observe_state and stop['pc'] == base + symbols['log_replay_transition']:
+                registers = session.inspect('regs_get')
+                state_events.append({'update': generation, 'stop': stop,
+                    'post_tail_ram': session.inspect('mem_read', {'addr': registers['a'][5], 'len': 256})['data']})
+                return True
             if observe_fields and stop['pc'] == base + symbols['scoreboard_selection_done']:
                 field_events.append({'update': generation + 1,
                     'field_values': session.inspect('mem_read', {'addr': base + symbols['field_values'], 'len': 6})['data'],
@@ -184,13 +206,14 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'initial_source_update': initial_source_update,
               'initial_phase_reference': initial_phase_reference,
               'initial_phase_sha256': digest(ROOT / initial_phase_reference) if initial_phase_reference else None,
-              'native_inputs': {'port': 2, 'red': True}, 'observations': observations,
+              'native_inputs': native_inputs, 'source_case': source_case, 'observations': observations,
               'recorded_entropy': recorded_entropy,
               'refresh_fixture_sha256': digest(directory / 'refresh-signs.bin') if recorded_entropy else None,
               'commits': commits, 'commit_tracking': track_commits,
               'entropy_reads': entropy_reads, 'completed_rasters': completed_rasters,
               'audio_events': audio_events, 'audio_observed': observe_audio,
               'field_events': field_events, 'fields_observed': observe_fields,
+              'state_events': state_events, 'state_observed': observe_state,
               'executable_mutated': executable_mutator is not None or source_mutator is not None,
               'native_wav': str(directory / 'native.wav') if observe_audio else None,
               'final_completed_callbacks': final_count,

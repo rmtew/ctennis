@@ -30,7 +30,20 @@ def mutation(kind):
 
 
 def check(case, expected, contract, captured, glyphs):
-    timing, pixels, first = [], [], None
+    timing, pixels, states, first = [], [], [], None
+    if case.get('observe_state'):
+        events = [row for row in captured['state_events'] if row['update'] in expected]
+        if [row['update'] for row in events] != list(expected):
+            raise ValueError('Native consecutive state observations missing or duplicated')
+        for row in events:
+            wanted = bytes.fromhex(expected[row['update']]['post_tail_ram'])
+            actual = bytes.fromhex(row['post_tail_ram'])
+            differences = [{'update': row['update'], 'boundary': 'status-lifecycle-state',
+                'field': 'source state byte', 'ram_offset': offset,
+                'expected': wanted[offset], 'actual': actual[offset]}
+                for offset in range(2, 256) if wanted[offset] != actual[offset]]
+            first = earliest(first, differences[0] if differences else None)
+            states.append({'update': row['update'], 'stop': row['stop'], 'differences': differences})
     events = [row for row in captured['field_events'] if row['update'] in expected]
     if [row['update'] for row in events] != list(expected):
         raise ValueError('Native status callback observations missing or duplicated')
@@ -55,10 +68,12 @@ def check(case, expected, contract, captured, glyphs):
                 'boundary': 'status-lifecycle-state', 'field': 'source state byte',
                 'ram_offset': state['offset'], 'expected': state['expected'], 'actual': state['actual']})
         raster = observed['completed_raster']
+        if not raster['generation']:
+            raise ValueError('Requested status raster precedes the first completed native generation')
         generation = raster['generation']['prepared_after_callback']
         if generation not in expected or raster['rendered_frame'] < raster['generation']['visible_frame']:
             raise ValueError('Native status generation is not a completed visible lifecycle frame')
-        source, association = source_generation(generation)
+        source, association = source_generation(generation, case['source_case'])
         box = FIELDS['status']
         # Only stable raster checkpoints make a callback-to-pixels claim. At the
         # exact original draw callback, scanout may still contain the prior text.
@@ -79,7 +94,7 @@ def check(case, expected, contract, captured, glyphs):
             'expected_selector': value, 'raster': raster, 'native_png_sha256': digest(Path(raster['capture']['path'])),
             'state_differences': observed['state_differences'],
             'first_difference': difference})
-    return {'timing': timing, 'pixels': pixels, 'first_difference': first}
+    return {'timing': timing, 'pixels': pixels, 'states': states, 'first_difference': first}
 
 
 def run(case, contract, glyphs, self_test):
@@ -92,7 +107,9 @@ def run(case, contract, glyphs, self_test):
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
             capture_label=case['name'] + (f'-{kind}' if kind else ''),
-            source_mutator=mutation(kind) if kind else None)
+            source_mutator=mutation(kind) if kind else None,
+            source_case=case['source_case'], native_inputs=case['inputs'],
+            observe_state=case.get('observe_state', False))
     captured = obtain()
     checked = check(case, expected, contract, captured, glyphs)
     mutations = []
@@ -100,11 +117,22 @@ def run(case, contract, glyphs, self_test):
         for kind in ('retain', 'early'):
             changed = obtain(kind)
             comparison = check(case, expected, contract, changed, glyphs)
-            difference = comparison['first_difference']
+            changed_timing = [row for normal, row in zip(checked['timing'], comparison['timing'])
+                              if normal['actual_selector'] != row['actual_selector']]
+            difference = changed_timing[0]['first_difference'] if changed_timing else None
             wanted_update = case['expiry_callback'] - (kind == 'early')
             if not difference or difference['boundary'] != 'native-status-selection' or difference['update'] != wanted_update:
                 raise AssertionError(f'Compiled {kind} status mutation escaped exact expiry check')
-            mutations.append({'kind': kind, 'detected': True, 'checks': comparison,
+            classification = None
+            known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases'].get(case['name'])
+            if known:
+                from run_test_suite import classify
+                classification = classify({'passed': comparison['first_difference'] is None,
+                    'first_difference': comparison['first_difference'], 'checks': comparison}, known)
+                if classification != 'unexpected-red':
+                    raise AssertionError('Known input failure hid an actual compiled output mutation')
+            mutations.append({'kind': kind, 'detected': True, 'mutation_first_difference': difference, 'checks': comparison,
+                'mutation_classification': classification,
                 'executable_sha256': changed['executable_sha256'],
                 'capture_report_path': changed['capture_report_path'],
                 'capture_report_sha256': digest(Path(changed['capture_report_path']))})

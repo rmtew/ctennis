@@ -4,14 +4,16 @@ from presentation_reference import ROOT
 from run_presentation_tests import digest
 from phase_reference import build_phase, validate_phase
 
-CASES = tuple(f'p1-status-{value}-lifecycle' for value in (2, 3, 4, 5))
+CASES = tuple(f'p1-status-{value}-lifecycle' for value in (2, 3, 4, 5, 6))
 
 
 def reference(case):
-    if (case['source_case'] != 'one-player-match'
-            or case['inputs'] != [{'port': 2, 'red': True}]
+    inputs = {'one-player-match': [{'port': 2, 'red': True}],
+              'two-player-match': [{'port': 1, 'red': True}, {'port': 2, 'red': True}]}
+    if (case['source_case'] not in inputs
+            or case['inputs'] != inputs[case['source_case']]
             or case['fields'] != ['status']):
-        raise ValueError('Status adapter supports only the declared R1 held-fire status field')
+        raise ValueError('Status adapter requires the declared held-fire physical inputs')
     root = ROOT / 'tests/reference/presentation'
     frozen = json.loads((root / 'manifest.json').read_text())
     if not frozen['source_media_checks_passed'] or frozen['recipe_sha256'] != digest(ROOT / 'tests/cases/presentation.json'):
@@ -40,7 +42,8 @@ def reference(case):
     if (phase['initial_source_update'] != start
             or phase['parent_reference'] != f'tests/reference/{case["source_case"]}.json'):
         raise ValueError('Status phase start or parent differs from the recipe')
-    if start != appear - 2 or end > start + len(phase['updates']):
+    lead = case.get('initial_lead_callbacks', 2)
+    if lead not in (2, 4) or start != appear - lead or end > start + len(phase['updates']):
         raise ValueError('Status lifecycle must begin before its point event')
     if bytes.fromhex(phase['initial_post_tail'])[0x42] & 0xc0:
         raise ValueError('Status phase begins with a pending/visible earlier message')
@@ -54,8 +57,12 @@ def reference(case):
         wanted = value if appear <= update < expire else 0
         if row['callback_kind'] != 'gameplay' or selector != wanted:
             raise ValueError('Original status latch does not match the bounded lifecycle')
+        if case['source_case'] == 'two-player-match' and [(event['group'], event['value']) for event in row['inputs']] != [(1, 16), (0, 16)]:
+            raise ValueError('Two-player source interval does not have both held button observations')
         expected[update] = {'selector': selector, 'score_flags_before': pre[0x42],
                             'status_timer_before': pre[0x71]}
+        if case.get('observe_state'):
+            expected[update]['post_tail_ram'] = row['post_tail_ram']
     drawing = expected[appear]
     clearing = expected[expire]
     if (drawing['score_flags_before'] & 0xc0 != 0x80

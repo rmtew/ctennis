@@ -88,14 +88,18 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
     make_copper_and_patch_tables()
     # This is the application's existing initial serve state, captured independently.
     # No intermediate expected states or title-specific code are injected.
-    parent = json.loads((ROOT / 'tests/reference/one-player-match.json').read_text())
+    source_case = case.get('source_case', 'one-player-match')
+    if source_case not in ('one-player-match', 'two-player-match'):
+        raise ValueError('Unsupported native presentation source parent')
+    parent_path = ROOT / f'tests/reference/{source_case}.json'
+    parent = json.loads(parent_path.read_text())
     if initial_source_update:
         phase_path = ROOT / case['initial_phase_reference']
         from phase_reference import validate_phase
         phase = json.loads(phase_path.read_text())
         validate_phase(phase, json.loads((ROOT / f'tests/cases/{phase_path.stem}.json').read_text()))
         if (phase['initial_source_update'] != initial_source_update
-                or phase['parent_sha256'] != digest(ROOT / 'tests/reference/one-player-match.json')):
+                or phase['parent_sha256'] != digest(parent_path)):
             raise ValueError('Native presentation start/parent differs from verified phase')
         initial = phase['initial_post_tail']
     else:

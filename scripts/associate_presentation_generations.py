@@ -13,19 +13,19 @@ from presentation_reference import ROOT, ACTIVE_AREA
 from run_presentation_tests import digest, map_source_palette, native_picture, compare
 
 
-def source_generation(generation):
+def source_generation(generation, source_case='one-player-match'):
     root = ROOT / 'tests/reference/presentation'
     frozen = json.loads((root / 'manifest.json').read_text())
     if not frozen['source_media_checks_passed']:
         raise ValueError('Source media not accepted')
     if digest(ROOT / 'tests/cases/presentation.json') != frozen['recipe_sha256']:
         raise ValueError('Presentation contract changed')
-    entry = frozen['references']['one-player-match']
+    entry = frozen['references'][source_case]
     manifest_path, validation_path = root / entry['manifest'], root / entry['validation']
     if digest(manifest_path) != entry['manifest_sha256'] or digest(validation_path) != entry['validation_sha256']:
         raise ValueError('Frozen source manifest/association changed')
     manifest, validation = json.loads(manifest_path.read_text()), json.loads(validation_path.read_text())
-    parent_path = ROOT / 'tests/reference/one-player-match.json'
+    parent_path = ROOT / f'tests/reference/{source_case}.json'
     if digest(parent_path) != manifest['parent_reference_sha256']:
         raise ValueError('Source simulation fixture changed')
     parent = json.loads(parent_path.read_text())
@@ -60,7 +60,7 @@ def source_generation(generation):
             images.append(rgb.crop(ACTIVE_AREA))
     if not images or len({picture.tobytes() for picture in images}) != 1:
         raise ValueError(f'No unique source displayed image for generation {generation}')
-    return images[0], {'generation': generation, 'hardware_frames': candidates, 'pixel_frames': frames,
+    return images[0], {'generation': generation, 'source_case': source_case, 'hardware_frames': candidates, 'pixel_frames': frames,
                        'reference_sha256': digest(root / 'manifest.json')}
 
 

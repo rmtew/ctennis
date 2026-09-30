@@ -505,3 +505,25 @@ without bypassing its known input adapter failure.
 Verified aggregate at this lifecycle milestone: **87 cases, 52 green, 35 exact
 known red**; all mutation/signature checks pass, with no unexplained/tool
 failures. Four requirement groups remain incomplete.
+
+
+## Two-player status6 evidence (2026-10-01)
+
+A local callback20921 start precedes the point event and leaves time for an
+actual first native display generation. Both physical fire buttons are held;
+the original reads both groups as16. The37 consecutive native status selections
+and three completed crops match. All37 post-tail states expose only the existing
+C056 input omission (expected17/actual1, first20922). The exact full stream is
+required for known-red acceptance, along with green request/pixel checks.
+Actual retained-text and early-expiry compiled mutations are rejected as new
+failures despite the earlier known input mismatch. See
+[two-player lifecycle evidence](../analysis/native-status-six-regression.md).
+
+All six status messages now have local appearance/expiry comparisons. Stop
+status-window expansion. Game-driven point/mode changes, other P1 scenes,
+P2/P3 and F2/F4/F5 remain required; the input defect is still unresolved.
+
+Current verified aggregate: **88 cases, 52 green and 36 exact known red**, no
+unexplained/tool failures. All actual reports retain those classifications under
+the strict later-failure policy; both compiled renderer mutants are rejected as
+new failures. Four requirement groups remain incomplete.

@@ -4,6 +4,8 @@ This document defines the target and phase gates. [WORKLOG.md](WORKLOG.md) is th
 
 Current phase boundary (2026-09-30): translated gameplay and native Amiga input, Copper/bitplane/sprite display, and Paula tone output run through one game award. Simulation is now paced independently of PAL presentation; the inactive Copper-list address is switched in blanking, with zero visible-line commits measured in the long replay and ordinary run. After a game, the source temporarily selects the existing counter/audio interrupt tail alone while its main-thread round transition runs; this callback routing and round transition, complete-match presentation/audio checks, and independent hardware verification remain open. See [the current worklog](WORKLOG.md) and [long-game replay evidence](analysis/long-game-replay.md) for measured results and the next action. No Phase 4 or Phase 5 gate is claimed.
 
+## Historical milestones (current status is in the worklog and suite section below)
+
 Full R1 source capture is now reproducible through match result and restarted serve: 13,378 updates, twice-identical, with the existing 1,566-update prefix preserved exactly. Its actual 68000 comparison completes and first diverges at the known callback 1333 round-transition boundary. R2, focused gap/phase cases, presentation references/adapters, and the all-case known-failure runner remain required before the suite goal is complete. See the latest worklog checkpoint for commands and evidence.
 
 Four source-derived phase diagnostics now supplement R1: restarted serve and a short match-tail interval pass; round-tail input handling and resumed launch calculation have independently observed known-red signatures. Phase fixtures retain exact parent provenance and are checked against the twice-captured source record. These isolate later behaviour without claiming upstream parity; longer/result-transition phases, R2 and presentation coverage remain open. See the latest worklog checkpoint.
@@ -16,7 +18,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 87 cases: 52 green and 35 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 88 cases: 52 green and 36 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
@@ -36,8 +38,8 @@ focused gap cases, fixture capture requirements and acceptance criteria.
 Its execution plan specifies artifact destinations, R1 continuation/restart
 discovery, two-player input calibration and R2 recipe, focused gap cases,
 named presentation captures and separate data/port completion checklists.
-Full-match captures and comparisons remain open; the passing serve case is the
-initial foundation.
+Full-match runtime parity remains open; original captures and known-red native
+comparisons are established. The passing serve case was the initial foundation.
 
 The exact one-player prefix reference is now captured twice identically through
 the first game award, 136 tail-only callbacks and resumed serve flight (1,566
@@ -128,7 +130,7 @@ F1 movement bounds are complete: all 32 player/row/direction combinations have
 source evidence and native comparisons, including independent phases for later
 lower receiver limits obscured by the known upstream failure. Stop movement
 exploration unless a concrete new behavioural gap appears. The current aggregate
-is 87 cases: 52 green and 35 exact known red, with mutation/signature checks.
+is 88 cases: 52 green and 36 exact known red, with mutation/signature checks.
 These known-red cases are not 35 independent defects; four broader requirement
 groups remain open.
 
@@ -184,11 +186,24 @@ retain-text and one-callback-early expiry mutations are detected in every case.
 The existing first-game prefix covers selector 1. Stop equivalent one-player
 status windows. See [status lifecycle evidence](analysis/native-status-lifecycle-regression.md).
 
-Next cover the remaining two-player status 6 lifecycle through actual physical
-inputs. Its original observations already exist; preserve the known second
-reader failure rather than injecting its expected input or pending status.
-Source-derived starting states may isolate later intervals beyond upstream
-known failures; preserve their scope and input/source-rate mapping.
+Two-player status6 now has37 consecutive request/state observations and three
+completed raster comparisons through both physical joystick ports. Status
+requests and pixels match; the exact second-reader input failure begins at20922
+and remains the sole meaningful RAM difference. Baseline acceptance requires
+that complete known stream and green outputs, so a later rendering regression
+cannot hide behind the earlier input failure. Actual compiled retained/early
+expiry mutations are rejected independently. All six messages have local
+appearance/expiry comparisons; stop equivalent status windows. See
+[status6 evidence](analysis/native-status-six-regression.md).
+
+Next protect game-driven point/mode changes, including the retained equal,
+advantage and return-to-equal sequence, plus pending round/result/restart scenes.
+The gap is when the live game requests changed graphics; correct font-bank
+selection alone is insufficient. Detect early/stale/misrouted field updates at
+source draw boundaries. Stop after the distinct retained transitions have actual
+native comparisons and an executable mutation exposes incorrect update timing
+or field routing. Source-derived starts may isolate intervals beyond known
+upstream failures; preserve their scope and actual input/source-rate mapping.
 P1 point/mode/round/result/restart timing, returns/outcomes, P2 distinct audio
 and waveform rules, P3 actual response/side exchange/latency/cadence/deadlines
 and remaining F2/F4/F5 behaviours remain in full scope. Each step must name the

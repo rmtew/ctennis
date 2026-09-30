@@ -617,12 +617,33 @@ early-expiry mutation is caught one callback earlier, even though its later
 screenshot is correct. Source/native meaningful RAM agrees at raster checkpoints.
 See [scope and evidence](../analysis/native-status-lifecycle-regression.md).
 
-The first-game prefix already covers status 1. Two-player status 6 remains
-required, with its existing source observations and known native second-reader
-failure. Stop equivalent one-player status windows. P1 point/mode/scene timing,
+The first-game prefix covers status1. Two-player status6 is now independently
+compared through both physical ports; its status output matches while its exact
+second-reader state failure remains known red. Stop equivalent status windows. P1 point/mode/scene timing,
 P2 audio, P3 ordinary controls/cadence/deadlines and F2/F4/F5 remain in full scope.
 
-Latest complete aggregate: **87 cases, 52 green and 35 exact known red**, with
+One-player lifecycle milestone aggregate: **87 cases, 52 green and 35 exact known red**, with
 all mutation/signature checks passing and no unexplained/tool failures. Four
 missing requirement groups still prevent suite completion. Earlier counts are
-historical milestones. Next: the remaining two-player status-6 lifecycle.
+historical milestones. At that milestone, two-player status6 was next.
+
+## Two-player status6 and strict known-red acceptance
+
+`python scripts/run_status_tests.py --case p1-status-6-lifecycle --self-test`
+uses both physical joystick ports and the pinned two-player parent. All37
+requests and three status crops match; consecutive post-tail state remains
+known red at20922, normalized controlsC056 expected17/actual1. No expected input
+returns or pending status are injected. See [evidence](../analysis/native-status-six-regression.md).
+
+The known exception requires precisely that input mismatch in all37 callbacks
+and no status request/pixel failures. Later regressions or a changed/partially
+fixed known stream are rejected. Both actual compiled rendering mutations
+classify as unexpected red despite the earlier input difference. Thus this
+baseline protects output while preserving the unresolved input defect.
+
+Latest complete aggregate: **88 cases, 52 green, 36 exact known red**, no
+unexplained failures or tool errors. The added red exposes the existing input
+omission; it is not a new independent defect. Supplemental strict-policy checks
+reclassify all actual reports identically and reject both compiled output
+mutations. Four requirement groups remain incomplete. Next: game-driven
+point/mode changes and the remaining round/result/restart scenes.

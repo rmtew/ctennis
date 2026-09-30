@@ -1,5 +1,6 @@
 """Run registered native regressions and keep incomplete required coverage visible."""
 import argparse
+import copy
 import json
 import subprocess
 import sys
@@ -28,6 +29,18 @@ def classify(report, expected):
         return 'unexpected-red'
     signature = expected['signature']
     if difference and all(difference.get(key) == value for key, value in signature.items()):
+        interval = expected.get('complete_state_failure_interval')
+        if interval:
+            # A known early input failure cannot hide later output regressions.
+            checks = report.get('checks', {})
+            updates = list(range(interval[0], interval[1] + 1))
+            states = checks.get('states', [])
+            if ([row['update'] for row in states] != updates
+                    or any(row['differences'] != [{**signature, 'update': row['update']}] for row in states)
+                    or len(checks.get('timing', [])) != len(updates)
+                    or len(checks.get('pixels', [])) != expected['required_raster_checks']
+                    or any(row['first_difference'] for row in checks['timing'] + checks['pixels'])):
+                return 'unexpected-red'
         return 'known-red'
     return 'unexpected-red'
 
@@ -35,6 +48,11 @@ def classify(report, expected):
 def verify_failure_policy(known):
     for case, expected in known.items():
         report = {'passed': False, 'first_difference': expected['signature']}
+        if interval := expected.get('complete_state_failure_interval'):
+            updates = range(interval[0], interval[1] + 1)
+            report['checks'] = {'states': [{'update': update, 'differences': [{**expected['signature'], 'update': update}]} for update in updates],
+                'timing': [{'first_difference': None} for _ in updates],
+                'pixels': [{'first_difference': None} for _ in range(expected['required_raster_checks'])]}
         original = expected['signature']['actual']
         changed = original ^ 1 if isinstance(original, int) else original + '00'
         altered = {'passed': False, 'first_difference': {**expected['signature'], 'actual': changed}}
@@ -42,6 +60,17 @@ def verify_failure_policy(known):
             raise AssertionError(f'Known-failure signature policy failed: {case}')
         if classify({'passed': True, 'first_difference': None}, expected) != 'unexpected-green':
             raise AssertionError(f'Unexpected pass was silently accepted: {case}')
+        if interval:
+            for kind in ('later-pixel', 'later-state', 'partially-fixed-state'):
+                altered = copy.deepcopy(report)
+                if kind == 'later-pixel':
+                    altered['checks']['pixels'][-1]['first_difference'] = {'field': 'changed pixel'}
+                elif kind == 'later-state':
+                    altered['checks']['states'][-1]['differences'][0]['actual'] ^= 1
+                else:
+                    altered['checks']['states'][-1]['differences'] = []
+                if classify(altered, expected) != 'unexpected-red':
+                    raise AssertionError(f'Known early failure hid {kind}: {case}')
 
 
 def main():

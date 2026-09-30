@@ -17,7 +17,7 @@
       "summary": "Native graphics beyond the first-game prefix",
       "tasks": [
         "Compare accepted mode selections, upper serve stages, both returns and distinct bounce/net/out checkpoints.",
-        "Protect remaining two-player status 6 lifecycle through the actual physical input path; retain the known second-reader failure. One-player statuses 1 through 5 now have local lifecycle comparisons. Complete game-driven point/mode changes, including equal/advantage; renderer-unit selector coverage alone is insufficient.",
+        "All six status messages now have local game-driven appearance/expiry comparisons (status 6 retains the native second-reader state failure). Stop equivalent status windows. Complete game-driven point/mode changes, including equal/advantage; renderer-unit selector coverage alone is insufficient.",
         "Compare round reset, match/result/menu and restart raster sequences with explicit presentation generations."
       ]
     },
@@ -155,6 +155,30 @@
       "intermediate_expected_writes": false,
       "original_source_fixture_preserved": true,
       "complete_P1": false
+    },
+    {
+      "id": "P1-two-player-status-lifecycle",
+      "case": "p1-status-6-lifecycle",
+      "evidence": "analysis/native-status-six-regression.md; build/tests/p1-status-6-lifecycle-report.json",
+      "status_request_checks": 37,
+      "consecutive_native_post_tail_checks": 37,
+      "completed_raster_checks": 3,
+      "actual_physical_ports": [
+        1,
+        2
+      ],
+      "classification": "known-red",
+      "first_state_failure": {
+        "update": 20922,
+        "ram_offset": 86,
+        "expected": 17,
+        "actual": 1
+      },
+      "status_requests_and_rasters_match": true,
+      "compiled_expiry_mutations_detected_despite_earlier_failure": true,
+      "source_parent_preserved": true,
+      "complete_P1": false,
+      "known_red_requires_complete_state_stream_and_green_outputs": true
     }
   ]
 }

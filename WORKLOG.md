@@ -1,3 +1,52 @@
+## 2026-10-01 - Two-player status6 and known-failure masking protection
+
+- Added p1-status-6-lifecycle and its reproducible source phase. Initialize once
+  from original callback20921, before the point event; hold both physical Amiga
+  joystick fire buttons, with both ports configured as joysticks. The pinned
+  original reads both groups as16 throughout the complete37-callback window.
+  No expected reader returns, pending statuses, selectors or later game states
+  are injected. Source parent, initial phase and native inputs are explicit.
+- All37 status requests and three completed status raster crops match. The case
+  remains exact known red for input/state parity: callback20922, C056 expected17
+  versus actual1. This is the combined button/control field; the missing second
+  group contributes bit16. Every consecutive post-tail state has only this
+  meaningful RAM difference. Existing native second-reader zero stub explains
+  it; no product fix or correct two-player controls are claimed.
+- Actual retained-text mutation is detected at expiry20956; actual early-clear
+  mutation at20955. The earlier input difference remains the overall first
+  failure. Mutation-specific differences and classifications are recorded.
+- Tightened this case's known-red policy: require precisely the declared input
+  mismatch in every one of37 callbacks plus green request/raster checks. Any
+  later pixel/state regression or partial change to the known stream is rejected.
+  Both actual compiled mutants classify as unexpected red despite the identical
+  earlier input failure. Synthetic policy controls also reject later pixels,
+  later changed state and partial fixes; first-signature agreement is insufficient.
+- Extended the capture/build/reference adapters to the correct one/two-player
+  parent and declared physical ports, preserving the one-player defaults. Optional
+  consecutive native post-tail observation uses the existing replay routine.
+  Original/actual native data, wrappers, executables and PNGs remain hashed.
+- Initial20923 experiment found the first requested screenshot could precede
+  any completed native generation. Starting at20921 allows three updates before
+  that target while preserving the original point event. Invalid missing-generation
+  evidence is now explicitly rejected. Source-derived initial state remains
+  inactive; no expected display state is written to conceal the prerequisite.
+- Full command: python scripts/run_test_suite.py --baseline-check --self-test.
+  Aggregate88 cases:52 green,36 exact known red; no unexplained/tool failures.
+  Four missing requirement groups cause the expected nonzero completion gate.
+  After tightening policy, reran the new native case with both actual compiled
+  mutants, then reclassified every actual aggregate report with current policy:
+  all classifications unchanged. All new capture/executable/wrapper/PNG hashes
+  verified. This added red is another context for an existing input defect.
+- All six status messages now have local appearance/expiry comparisons (status1
+  remains covered by the first-game prefix). Stop equivalent status windows.
+  Updated roadmap, backlog, README, reference spec and evidence notes; historical
+  roadmap milestones are now explicitly separated from current suite status.
+- Next: actual game-driven point/mode transitions, including equal/advantage and
+  return-to-equal, then remaining round/result/restart scenes. Preserve source
+  draw timing and detect early/stale/misrouted field updates with a compiled
+  mutation. Renderer units alone do not establish when the game requests output.
+  P1/P2/P3 and F2/F4/F5 remain in full scope; no suite-goal completion is claimed.
+
 ## 2026-10-01 - Game-driven status appearance and expiry
 
 - Added four local one-player lifecycles for status selectors 2/3/4/5. Each

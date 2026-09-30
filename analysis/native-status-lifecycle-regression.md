@@ -5,7 +5,7 @@ Each starts once from original captured state two callbacks before the message
 draw, runs the existing native gameplay, and follows the message through expiry.
 There are no intermediate expected-state writes, direct field-selector writes,
 or source-VDP writes supplied to the renderer. The existing first-game prefix
-separately covers selector 1. Two-player selector 6 remains open.
+separately covers selector 1. The subsequent [two-player case](native-status-six-regression.md) covers selector6.
 
 ## Independent source expectations
 
@@ -74,22 +74,24 @@ Run `python scripts/run_status_tests.py --all --self-test`, or select a register
 The aggregate suite registers four independent cases and clears stale reports.
 
 These are local lifecycle tests, not continuous round/match parity, ordinary
-unpaused timing, or complete P1 acceptance. Two-player status 6, game-driven
-point/mode/reset/result/restart output and other scene classes remain required.
+unpaused timing, or complete P1 acceptance. The subsequent two-player case
+adds status6; game-driven point/mode/reset/result/restart output and other scene
+classes remain required.
 The source-state/field observations are diagnostic adapters: they may change or
 retire when a redesigned Amiga implementation preserves equivalent behavior
 through an independent observable-output test.
 
-The remaining status-6 original interval is already retained in
+The subsequent status-6 original interval is retained in
 `tests/reference/two-player-match.json`: appearance20925, expiry20956, with both
 source buttons held and both input readers returning16. Its frozen physical
-windows are22224/22255. A future local start at20923 precedes the point request.
+windows are22224/22255. The subsequent case starts at20921, preserving the point request and allowing
+an actual first completed native generation.
 The current live adapter lacks the second reader, already protected by P3
-known-red cases. Extend the capture adapter to the correct source parent and
-both physical ports; do not write the expected second input, pending message
-or selector into the native game to hide that omission.
+known-red cases. The later case uses the correct source parent and both physical ports,
+retaining the input failure without injecting reader returns, pending messages
+or selectors. See [exact subsequent evidence](native-status-six-regression.md).
 
-Full aggregate baseline/self-test verified:87 cases,52 green,35 exact known red,
+One-player lifecycle milestone aggregate verified:87 cases,52 green,35 exact known red,
 no unexplained failures or tool errors. All new capture-report, private wrapper,
 executable and PNG hashes verified after that run. Four missing groups still
 cause the completion gate to fail.
