@@ -8,6 +8,7 @@ DOUBLE_BUFFER_DISPLAY equ 1
 start:
         lea     virtual_memory,a6
         lea     virtual_memory+$c000,a5
+        ifd LIVE_PHASE_START
         bsr     game_begin_active
         lea     initial_ram,a0
         move.l  a5,a1
@@ -15,6 +16,9 @@ start:
 copy_initial_ram:
         move.b  (a0)+,(a1)+
         dbra    d7,copy_initial_ram
+        else
+        bsr     game_begin_title
+        endif
         lea     pointer_sources(pc),a0
         lea     pointer_targets(pc),a1
         moveq   #11,d7
@@ -45,9 +49,17 @@ copy_back_copper:
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
         move.w  #$7fff,$096(a0)
+        ifd LIVE_PHASE_START
         move.l  #copperlist,$080(a0)
-        move.w  #0,$088(a0)
         move.w  #$83a0,$096(a0)
+        else
+        bsr     prepare_title_display
+        move.l  #title_copper,$080(a0)
+        move.w  #$8380,$096(a0)
+        endif
+        move.w  #0,$088(a0)
+        move.b  #$7f,$bfed01
+        bclr    #6,$bfee01
         bsr     paula_tone_init
         move.b  #0,$bfdf00
         move.b  #$ff,$bfd600
@@ -57,6 +69,7 @@ copy_back_copper:
         bsr     read_sim_timer
         move.w  d0,last_timer_count
 main_loop:
+        bsr     game_poll_keyboard
         bsr     poll_presentation
         bsr     read_sim_timer
         move.w  last_timer_count,d1
@@ -108,6 +121,8 @@ presentation_blank:
         move.l  front_copper,back_copper
         move.l  d0,front_copper
         move.l  d0,$dff080
+        move.w  #$8020,$dff096
+        move.w  game_accept_count,game_presented_generation
         move.w  $dff006,d0
         andi.w  #$ff00,d0
         cmpi.w  #$2c00,d0
@@ -165,6 +180,8 @@ next_back_sprite_pointer:
 
 simulation_update:
         bsr     sample_amiga_joystick
+        cmpi.w  #GAME_PLAYING,game_lifecycle
+        bne.s   simulation_menu
         bsr     upload_sprite_attributes
         bsr     game_source_tick
         move.b  #1,display_ready
@@ -173,6 +190,29 @@ simulation_update:
         bsr     log_replay_transition
         endif
         rts
+
+simulation_menu:
+        bsr     game_source_tick
+        addq.w  #1,simulation_updates
+        rts
+
+prepare_title_display:
+        movem.l d0-d1/d7/a0-a2,-(sp)
+        lea     title_planes,a1
+        lea     title_pointer0+2,a2
+        moveq   #3,d7
+title_patch_pointer:
+        move.l  (a1)+,d0
+        move.l  d0,d1
+        swap    d1
+        move.w  d1,(a2)
+        move.w  d0,4(a2)
+        addq.l  #8,a2
+        dbra    d7,title_patch_pointer
+        movem.l (sp)+,d0-d1/d7/a0-a2
+        rts
+title_planes: dc.l title_plane0,title_plane1,title_plane2,title_plane3
+game_presented_generation: dc.w 0
 
 ; Hardware integration hooks: gameplay and service order live in game/.
 game_before_scoreboard:
@@ -437,7 +477,7 @@ sprite_colour_known:
         move.b  d2,2(a2)
         moveq   #0,d0
         move.b  1(a0),d0
-        addi.w  #$6c,d0
+        addi.w  #$80,d0
         move.w  d0,d1
         lsr.w   #1,d1
         move.b  d1,1(a2)
@@ -669,6 +709,7 @@ hex_byte:
 
         include "amiga/translated_audio_tick.s"
         include "amiga/paula_tone_output.s"
+        include "amiga/game/keyboard.s"
         include "amiga/game/tick.s"
         include "amiga/game/legacy_adapter.s"
 
@@ -759,7 +800,9 @@ pointer_targets:
         dc.l cop_spr4h+2,cop_spr5h+2,cop_spr6h+2,cop_spr7h+2
         include "build/amiga/score-copper-probe/score-patch-tables.i"
         even
+        ifd LIVE_PHASE_START
 initial_ram: incbin "build/translation/live-initial-ram.bin"
+        endif
         even
 virtual_memory: incbin "build/translation/player-frame-memory.bin"
         even
@@ -777,3 +820,5 @@ sprite_back: dcb.b 8*72,0
         ifd LONG_GAME_REPLAY
         include "build/amiga/long-game/refresh-signs.i"
         endif
+
+        include "build/amiga/title/display.i"

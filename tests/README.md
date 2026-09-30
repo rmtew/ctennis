@@ -14,8 +14,8 @@ same maintained lifecycle dispatcher and temporary legacy adapter used by the
 live application. The harness supplies captured initial state once, recorded
 inputs and entropy, and reads actual state/sound outputs. It does not select a
 regime from a source callback kind or inject later source writes. The 200-update
-serve starts in the retained active scene; title and round transitions remain
-future queue work.
+serve starts in the retained active scene; ordinary title/selection has separate
+CT-02 checks below, and round transitions remain future queue work.
 
 `--subject translated` explicitly selects the preserved fixed-dispatch oracle
 baseline. Other cases still default to that diagnostic tier; CT-01 does not
@@ -46,6 +46,49 @@ The build report is `build/amiga/gameplay-integration/build-report.json`.
 Live input, presentation and audio checks remain separate from accelerated
 simulation replay; the replay executable links the same maintained modules,
 with observation/I/O hooks instead of hardware output.
+
+## CT-02 ordinary title and physical choice
+
+The ordinary build starts at the title; Delete chooses one player and Tab chooses
+two. Hold/release is handled by the native CIA keyboard reader. A choice is
+accepted once and waits for release before active play. The match is initialized
+at runtime, never by copying an in-progress game snapshot.
+
+```sh
+export RUST_LOG=info
+# Only if the local original mode/title media are missing:
+python scripts/capture_mode_reference.py
+python scripts/build_native_game.py
+python scripts/run_presentation_tests.py --case p1-title --self-test
+python scripts/run_mode_selection_tests.py --case p1-accept-one-player
+python scripts/run_mode_selection_tests.py --case p1-accept-two-player --self-test
+```
+
+These reuse the three existing case names. The bounded capture restores original
+frames 119, 300 and 1299 for each choice, twice, with physical source keys only.
+Media remain ignored. Existing full presentation manifests are preferred when
+available. The title asset is converted from verified private VRAM into Amiga
+bitplanes; rendered MAME pixels remain the independent comparison oracle.
+
+Mode checks use the ordinary executable, a five-second key hold/release, the
+first completed chosen mode label, then an exact full viewport comparison at the
+retained serve-wait ball pose. Pose alignment reads only the ball's vertical
+position; it cannot accept unrelated changed pixels. Selection re-press must
+not restart, and physical fire must enter the serve wind-up. The two-player
+self-test rejects the existing sprite and mode fault kinds. The title self-test
+preserves its pixel-comparator negative control. Reports record selected native
+state and completed presentation generations, not source callback injection.
+
+The installed Copperline emulator's CCP server is sufficient: these checks use
+`NativeControlSession` directly, without the separately packaged
+`copperline-ctl` MCP client. This transport does not alter guest gameplay or configuration. Other
+historical checks retain their existing MCP bridge dependency.
+
+`build_native_game.py --phase-start` and the older live-serve/long-game probes
+explicitly retain the captured active-scene diagnostic start. Their old
+"ordinary" long-game option means native entropy within that diagnostic phase,
+not ordinary title boot. The presentation replay builder likewise declares
+`LIVE_PHASE_START`. These results must not be reported as title-to-match play.
 
 ## Local prerequisites and reference capture
 

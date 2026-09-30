@@ -1,7 +1,6 @@
 """Build the maintained native game; generated translation is temporary adapter debt."""
 
 import configparser
-import csv
 import hashlib
 import json
 import sys
@@ -19,8 +18,7 @@ def module_hashes():
             for p in sorted((ROOT / "amiga/game").glob("*.s"))}
 
 
-def build():
-    from source_irq_tail import irq_tail_06b1
+def build(phase_start=False):
     from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
     config = configparser.ConfigParser(interpolation=None)
     if not config.read(ROOT / "config.local.ini", encoding="utf-8"):
@@ -39,20 +37,25 @@ def build():
     score_output.mkdir(parents=True, exist_ok=True)
     make_banks(score_vram)
     make_copper_and_patch_tables()
-    capture = ROOT / "build" / "reference" / "source-timing" / "run_a.tsv"
-    with capture.open(newline="", encoding="utf-8") as handle:
-        initial = next(bytes.fromhex(row["ram"])[:256]
-                       for row in csv.DictReader(handle, delimiter="\t")
-                       if row["event"] == "checkpoint" and int(row["frame"]) == 1299)
-    ram = bytearray(initial)
-    irq_tail_06b1(ram, rom=cartridge)
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "live-initial-ram.bin").write_bytes(ram)
+    from generate_native_title import generate
+    generate()
+    defines=[]
+    if phase_start:
+        # Explicit diagnostic phase, never the ordinary application's startup.
+        import csv
+        from source_irq_tail import irq_tail_06b1
+        with (ROOT/'build/reference/source-timing/run_a.tsv').open() as handle:
+            initial=next(bytes.fromhex(row['ram'])[:256] for row in csv.DictReader(handle,delimiter='\t')
+                         if row['event']=='checkpoint' and int(row['frame'])==1299)
+        ram=bytearray(initial);irq_tail_06b1(ram,rom=cartridge)
+        (OUT/'live-initial-ram.bin').write_bytes(ram)
+        defines=['-DLIVE_PHASE_START=1']
     DISPLAY.mkdir(parents=True, exist_ok=True)
     executable = DISPLAY / "gameplay-integration"
-    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-o",
+    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-o",
          str(executable), "amiga/gameplay_integration_probe.s"])
     report = {"subject": "maintained-native", "entry_point": "game_source_tick",
+              "startup": "captured diagnostic phase" if phase_start else "native title",
               "native_modules": module_hashes(),
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "executable": str(executable)}
@@ -61,5 +64,8 @@ def build():
 
 
 if __name__ == "__main__":
-    build()
+    import argparse
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--phase-start", action="store_true", help="Explicit captured diagnostic phase; ordinary builds start at title")
+    build(parser.parse_args().phase_start)
     print((DISPLAY / "build-report.json").read_text())

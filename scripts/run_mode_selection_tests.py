@@ -1,106 +1,180 @@
-"""Fresh native application selection via physical keys; no selected-mode injection."""
-import argparse,configparser,hashlib,json,re
+"""Ordinary native title and physical mode choice, through completed presentation."""
+import argparse, configparser, hashlib, json, re
 from pathlib import Path
 from PIL import Image
-from copperline_test_session import CopperlineSession
-from run_presentation_tests import ROOT,build_native,digest,source_picture,map_source_palette,native_picture,compare
+from copperline_test_session import NativeControlSession
+from run_presentation_tests import ROOT, digest, source_picture, map_source_palette, native_picture, compare
+from presentation_reference import ACTIVE_AREA
 from capture_native_presentation import code_symbols
+from build_native_game import build, module_hashes
+from run_translated_prng_probe import ASSEMBLER, run as command
 CASES=('p1-accept-one-player','p1-accept-two-player')
 
-def capture(case,kind=None):
-    config=configparser.ConfigParser(interpolation=None);config.read(ROOT/'config.local.ini',encoding='utf-8')
+
+def reference(case, frame):
+    """Use retained source media, or the bounded replacement captured on this host."""
+    if (ROOT/case['reference']).exists():
+        root=json.loads((ROOT/case['reference']).read_text())
+        if not root['source_media_checks_passed'] or root['recipe_sha256']!=digest(ROOT/'tests/cases/presentation.json'):
+            raise ValueError('Original presentation contract changed')
+        parent=root['references'][case['source_case']]
+        manifest_path=(ROOT/case['reference']).parent/parent['manifest']
+        if digest(manifest_path)!=parent['manifest_sha256']: raise ValueError('Original media manifest changed')
+        media=manifest_path.parent
+        manifest=json.loads((media/'manifest.json').read_text())
+        sample=next(row for row in manifest['samples'] if row['frame']==frame)
+        for ext in ('ram','vram','regs'):
+            if digest(media/f'f{frame:05d}.{ext}')!=sample['hardware_sha256'][ext]:
+                raise ValueError('Original mode hardware changed')
+        image=Image.open(media/f'f{frame:05d}.png').convert('RGB')
+        if hashlib.sha256(image.tobytes()).hexdigest()!=sample['rgb_sha256']:
+            raise ValueError('Original mode pixels changed')
+    else:
+        mode='two' if case['source_case'].startswith('two') else 'one'
+        root=ROOT/f'build/reference/mode-{mode}'
+        manifest=json.loads((root/'manifest.json').read_text());media=root/'a'
+        if not manifest['repeat_identical']: raise ValueError('Unverified original repeat')
+        for name, sha in manifest['files'].items():
+            if digest(media/name)!=sha: raise ValueError('Original mode media changed')
+        image=Image.open(media/f'f{frame:05d}.png').convert('RGB')
+    return image.crop(ACTIVE_AREA), (media/f'f{frame:05d}.ram').read_bytes(), digest(media/f'f{frame:05d}.png')
+
+
+def capture(case, kind=None):
+    config, ordinary=build()
     directory=ROOT/f'build/tests/{case["name"]}-{kind or "normal"}';directory.mkdir(parents=True,exist_ok=True)
-    # Both choices start the SAME current ordinary application, never a selected R2 state.
-    build_case={**case,'source_case':'one-player-match'}
-    def mutate(text):
-        marker='        lea     pointer_sources(pc),a0'
-        if text.count(marker)!=1:raise ValueError('Startup mutation anchor changed')
-        return text.replace(marker,'        ori.b   #$80,$3d(a5)\n'+marker)
-    exe=build_native(build_case,directory)
-    if kind=='mode':
-        # Private compiled variant of the maintained source; keep the initial fixture unchanged.
-        source=(ROOT/case['native_source']).read_text();private=directory/'mode-mutant.s';private.write_text(mutate(source))
-        build_case['native_source']=str(private.relative_to(ROOT));exe=build_native(build_case,directory)
-    elif kind=='sprite':
-        raw=exe.read_bytes();old=bytes.fromhex('0640006c')
-        if raw.count(old)!=1:raise ValueError('Sprite origin mutation anchor changed')
-        exe.write_bytes(raw.replace(old,bytes.fromhex('0640006d')))
+    exe=directory/'native-application'
+    command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(directory/'native.lst'),'-o',str(exe),case['native_source']])
+    if digest(exe)!=digest(ordinary): raise ValueError('Mode test differs from ordinary executable')
+    compiled_modules=module_hashes()
+    if kind=='sprite':
+        raw=exe.read_bytes();old=bytes.fromhex('06400080')
+        if raw.count(old)!=1: raise ValueError('Sprite mutation anchor changed')
+        exe.write_bytes(raw.replace(old,bytes.fromhex('06400081')))
+    elif kind=='mode':
+        # Actual compiled Tab dispatch fault, not a changed expectation.
+        path=ROOT/'amiga/game/menu.s';original=path.read_bytes()
+        try:
+            anchor=b'        moveq   #1,d0' if case['expected_mode_flags'] else b'        moveq   #0,d0'
+            if original.count(anchor)!=1: raise ValueError('Mode mutation anchor changed')
+            path.write_bytes(original.replace(anchor,b'        moveq   #0,d0' if case['expected_mode_flags'] else b'        moveq   #1,d0'))
+            compiled_modules=module_hashes()
+            command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(directory/'native.lst'),'-o',str(exe),case['native_source']])
+        finally: path.write_bytes(original)
     symbols=code_symbols((directory/'native.lst').read_text())
-    ctl=Path(config['tools']['copperline']).with_name('copperline-ctl.exe');rows=[];events=[]
     contract=json.loads((ROOT/'tests/cases/presentation.json').read_text())
-    source,frame,reference_sha=source_picture(case);expected=map_source_palette(source,contract)
-    media=ROOT/'tests/reference/presentation'/case['source_case']
-    manifest=json.loads((media/'manifest.json').read_text());sample=next(row for row in manifest['samples'] if row['frame']==frame)
-    ram=media/f'f{frame:05d}.ram'
-    if digest(ram)!=sample['hardware_sha256']['ram'] or (ram.read_bytes()[0x3d]&0x94)!=case['expected_mode_flags']:
-        raise ValueError('Accepted mode flags differ from independent original hardware')
-    pre=media/'f00119.ram';pre_sample=next(row for row in manifest['samples'] if row['frame']==119)
-    if digest(pre)!=pre_sample['hardware_sha256']['ram']:
-        raise ValueError('Original pre-choice state changed')
-    pre_ram=pre.read_bytes()
-    if not pre_ram[0x3d]&4 and (pre_ram[0x3a] or pre_ram[0x3b]):
-        raise ValueError('Original pre-choice snapshot contains active gameplay')
-    with CopperlineSession(ctl,ROOT) as s:
-        launch=s.inspect('session_launch',{'factory':True,'model':'A500','binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
-        stop=s.inspect('run_until',{'seconds':30,'wait_ms':50000})
-        if stop['reason']!='loadseg':raise RuntimeError(stop)
-        base=int(re.search(r'first hunk \$([0-9A-Fa-f]+)',stop['detail']).group(1),16);origin=stop['seconds']
-        for label,elapsed,action in [('before-selection',2,'press'),('held-selection',7,'release'),('accepted-mode',22,None)]:
-            stop=s.inspect('run_until',{'seconds':origin+elapsed,'wait_ms':50000})
-            if stop['reason']!='target' or stop.get('bridge'):raise RuntimeError(stop)
-            stop=s.inspect('run_until',{'vpos':0,'hpos':0,'wait_ms':50000})
-            if stop['reason']!='target' or stop.get('bridge') or stop['vpos']!=0:raise RuntimeError(stop)
-            mode=int(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc03d,'len':1})['data'],16)&0x94
-            count=int(s.inspect('mem_read',{'addr':base+symbols['simulation_updates'],'len':2})['data'],16)
-            phases=list(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc03a,'len':2})['data']))
-            active=not bool(mode&4) and any(phases)
-            fields=s.inspect('mem_read',{'addr':base+symbols['field_values'],'len':6})['data']
-            path=directory/(label+'.png');image=s.inspect('capture_screenshot',{'path':str(path)})
-            with Image.open(path) as im:actual=native_picture(im,contract)
-            pixel=compare(expected,actual,'accepted-mode-viewport') if label=='accepted-mode' else None
-            rows.append({'stage':label,'source_rate_callbacks':count,'player_phases':phases,'active_gameplay':active,'mode_flags':mode,'fields':fields,'pixel_difference':pixel,'pixel_sha256':hashlib.sha256(actual.tobytes()).hexdigest(),'stop':stop,'capture':image})
-            if action:events.append({'stage':label,'request':{'rawkey':case['rawkey'],'action':action},'response':s.inspect('input_key',{'rawkey':case['rawkey'],'action':action})})
-        log=Path(launch['log']).read_text(encoding='utf-8',errors='replace')
-        for marker in ('cpu=M68000','cpu_clock=7.09MHz','chip_ram=512K','fast_ram=0K','slow_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3'):
-            if marker not in log:raise ValueError(marker)
-    differences=[]
-    if not rows[-1]['active_gameplay']:
-        differences.append({'update':0,'boundary':'accepted-mode','field':'gameplay started after choice','expected':True,'actual':False})
-    if rows[0]['active_gameplay']:
-        differences.append({'update':0,'boundary':'before-mode-selection','field':'gameplay started before choice','expected':False,'actual':True})
-    if rows[-1]['mode_flags']!=case['expected_mode_flags']:
-        differences.append({'update':0,'boundary':'accepted-mode','field':'mode flags','expected':case['expected_mode_flags'],'actual':rows[-1]['mode_flags']})
-    if rows[-1]['pixel_difference']:differences.append(rows[-1]['pixel_difference'])
-    # Exclude scheduler-dependent callback counts and stop metadata from known-red acceptance.
-    # The actual counts remain evidence; all output values and pixel hashes are pinned.
-    observations=[{k:v for k,v in row.items() if k in ('stage','mode_flags','player_phases','active_gameplay','fields','pixel_difference','pixel_sha256')} for row in rows]
-    return {'case':case['name'],'passed':not differences,'first_difference':differences[0] if differences else None,'differences':differences,'baseline_observations':observations,'observations':rows,'physical_key_events':events,'executable_sha256':digest(exe),'native_source_sha256':digest(ROOT/case['native_source']),'emulator_sha256':digest(Path(config['tools']['copperline'])),'bridge_sha256':digest(ctl),'kickstart_sha256':digest(Path(config['inputs']['amiga_rom'])),'source_prechoice_ram_sha256':digest(pre),'source_mode_ram_sha256':digest(ram),'reference_sha256':reference_sha,'source_frame':frame,'case_sha256':digest(ROOT/f'tests/cases/{case["name"]}.json'),'source_initialization':'Current ordinary R1 application initialization, identical for both requested choices; no R2 fixture or selected-mode RAM writes.','scope':case['contract']}
+    _, pre, _=reference(case,119)
+    title, _, title_sha=reference(case,300)
+    expected_title=map_source_palette(title,contract)
+    if pre[0x3a] or pre[0x3b]: raise ValueError('Pre-choice reference is active')
+    rows=[];events=[];differences=[]
+    with NativeControlSession(directory) as s:
+        launch=s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
+        stop=s.inspect('run_until',{'seconds':30})
+        if stop['reason']!='loadseg': raise RuntimeError(stop)
+        base=int(re.search(r'first hunk \$([0-9A-Fa-f]+)',stop['detail'])[1],16);origin=stop['seconds']
+        def mem(name,length=2):
+            return int(s.inspect('mem_read',{'addr':base+symbols[name],'len':length})['data'],16)
+        def state():
+            return bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc000,'len':256})['data'])
+        def observe(label):
+            stop=s.inspect('run_until',{'vpos':0,'hpos':0})
+            if stop['reason']!='target': raise RuntimeError(stop)
+            path=directory/(label+'.png');s.inspect('capture_screenshot',{'path':str(path)})
+            with Image.open(path) as im: actual=native_picture(im,contract)
+            ram=state()
+            row={'stage':label,'lifecycle':mem('game_lifecycle'),'accepted_count':mem('game_accept_count'),'presented_generation':mem('game_presented_generation'),'selection_keys':mem('game_selection_keys',1),'mode_flags':ram[0x3d]&0x94,'player_phases':list(ram[0x3a:0x3c]),'source_rate_callbacks':mem('simulation_updates'),'pixel_sha256':hashlib.sha256(actual.tobytes()).hexdigest(),'stop':stop}
+            rows.append(row);return row,actual
+        s.inspect('run_until',{'seconds':origin+case.get('seconds_after_load',2)})
+        row,actual=observe('before-selection')
+        delta=compare(expected_title,actual,'stable-title')
+        if delta: differences.append(delta)
+        if row['lifecycle']!=2 or row['accepted_count'] or any(row['player_phases']):
+            differences.append({'field':'title waits without gameplay','actual':row})
+        if case['name']!='p1-title':
+            source, wanted, reference_sha=reference(case,1299)
+            expected=map_source_palette(source,contract)
+            if wanted[0x3d]&0x94!=case['expected_mode_flags']: raise ValueError('Original mode disagrees with recipe')
+            for action in ('press','release'):
+                events.append({'action':action,'rawkey':case['rawkey'],'response':s.inspect('input_key',{'rawkey':case['rawkey'],'action':action})})
+                if action=='press':
+                    s.inspect('run_until',{'seconds':origin+7})
+                    held,_=observe('held-selection')
+                    if held['accepted_count']!=1 or held['lifecycle']!=3: differences.append({'field':'choice latched once while held','actual':held})
+            # Observe the first complete court generation, before looking for the
+            # retained ball-bob pose. It must belong to this physical choice.
+            s.inspect('run_until',{'pc':base+symbols['presentation_commit_in_blank']})
+            s.inspect('run_until',{'vpos':0,'hpos':0})
+            first,first_picture=observe('first-accepted-generation')
+            if first['presented_generation']!=1 or first['mode_flags']!=case['expected_mode_flags']:
+                differences.append({'field':'first accepted generation owns selected mode','actual':first})
+            # The source frame 1299 is in serve-wait with an animated ball. Align
+            # only that observed pose; never inject state or choose a regime.
+            # All pixels and all other required outcomes still compare exactly.
+            mode_region=(208,144,248,152)
+            delta=compare(expected.crop(mode_region), first_picture.crop(mode_region), 'first-accepted-mode-label')
+            if delta: differences.append(delta)
+            def ball_pose(picture):
+                # White ball above its shadow, clear of either player/scoreboard.
+                return tuple(y for y in range(152,178)
+                             if any(picture.getpixel((x,y))==(255,255,255)
+                                    for x in range(208,224)))
+            wanted_pose=ball_pose(expected)
+            if len(wanted_pose)!=2: raise ValueError('Original serve ball pose missing')
+            matched=False
+            for index in range(150):
+                row,actual=observe('accepted-mode')
+                if ball_pose(actual)==wanted_pose:
+                    matched=True
+                    delta=compare(expected,actual,'accepted-mode-viewport')
+                    if delta: differences.append(delta)
+                    break
+                s.inspect('run_until',{'frame':row['stop']['frame']+1})
+            if not matched: differences.append({'field':'retained serve-wait pose not reached','expected':wanted_pose})
+            if row['accepted_count']!=1 or row['mode_flags']!=case['expected_mode_flags'] or row['player_phases'][0]!=0x40:
+                differences.append({'field':'selected match waits for serve','actual':row})
+            # Re-press a selection key during play: must not restart the match.
+            s.inspect('input_key',{'rawkey':case['rawkey'],'action':'press'})
+            s.inspect('run_until',{'frame':row['stop']['frame']+4})
+            s.inspect('input_key',{'rawkey':case['rawkey'],'action':'release'})
+            if mem('game_accept_count')!=1: differences.append({'field':'selection restarted live match'})
+            s.inspect('input_joy',{'port':2,'red':True})
+            s.inspect('run_until',{'frame':row['stop']['frame']+10})
+            after=state()
+            if after[0x3a]!=0x20: differences.append({'field':'physical fire starts serve','actual':after[0x3a]})
+            s.inspect('input_joy',{'port':2,'red':False})
+        else: reference_sha=title_sha
+        log=Path(launch['log']).read_text()
+        for marker in ('cpu=M68000','chip_ram=512K','fast_ram=0K','slow_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3'):
+            if marker not in log: raise ValueError(marker)
+    return {'case':case['name'],'passed':not differences,'first_difference':differences[0] if differences else None,'differences':differences,'observations':rows,'physical_key_events':events,'executable_sha256':digest(exe),'native_modules':compiled_modules,'compiled_fault':kind,'emulator_sha256':digest(Path(config['tools']['copperline'])),'kickstart_sha256':digest(Path(config['inputs']['amiga_rom'])),'case_sha256':digest(ROOT/f'tests/cases/{case["name"]}.json'),'source_frame':300 if case['name']=='p1-title' else 1299,'reference_sha256':reference_sha,'source_initialization':'Ordinary title boot and runtime initialization; no captured RAM injection.','scope':case['contract']}
+
 
 def run(case_name,self_test=False):
     case=json.loads((ROOT/f'tests/cases/{case_name}.json').read_text())
-    expected=('one-player-match',0x46,0) if case_name==CASES[0] else ('two-player-match',0x42,128)
-    if (case['source_case'],case['rawkey'],case['expected_mode_flags'])!=expected or case['checkpoint']!='accepted-mode':
-        raise ValueError('Physical choice contract changed; revalidate original key/accepted-mode mapping')
-    path=ROOT/f'build/tests/{case_name}-report.json';path.unlink(missing_ok=True)
+    if case_name in CASES:
+        expected=('one-player-match',0x46,0) if case_name==CASES[0] else ('two-player-match',0x42,128)
+        if (case['source_case'],case['rawkey'],case['expected_mode_flags'])!=expected or case['checkpoint']!='accepted-mode':
+            raise ValueError('Physical choice contract changed; revalidate original mapping')
     normal=capture(case);mutants=[]
-    if self_test:
+    if self_test and case_name=='p1-title':
+        contract=json.loads((ROOT/'tests/cases/presentation.json').read_text())
+        picture,_,_=reference(case,300);expected=map_source_palette(picture,contract)
+        changed=expected.copy();changed.putpixel((0,0),(255,255,255))
+        if compare(expected,expected) is not None or compare(expected,changed) is None:
+            raise AssertionError('Title pixel comparator control failed')
+        normal['comparator_mutation_detected']=True
+    if self_test and normal['passed'] and case_name!='p1-title':
+        # Two existing fault kinds, now checked against full green acceptance.
         for kind in ('sprite','mode'):
             changed=capture(case,kind)
-            if changed['baseline_observations']==normal['baseline_observations']:raise AssertionError(f'Actual {kind} mutation escaped')
-            if changed['first_difference']!=normal['first_difference']:raise AssertionError('Mutation did not preserve early failure')
-            from run_test_suite import classify,failure_check_digest
-            policy={'signature':normal['first_difference'],'complete_checks_sha256':failure_check_digest(normal)}
-            assert classify(normal,policy)=='known-red' and classify(changed,policy)=='unexpected-red'
-            mutants.append({'kind':kind,'detected':True,'classification':'unexpected-red','report':changed})
-    if self_test:
-        repeated=capture(case)
-        if repeated['baseline_observations']!=normal['baseline_observations'] or repeated['first_difference']!=normal['first_difference']:
-            raise AssertionError('Ordinary native outputs changed on repeat')
-        normal['repeat_identical_observations']=True
-        normal['repeat_execution']={'executable_sha256':repeated['executable_sha256'],'observations':repeated['observations'],'physical_key_events':repeated['physical_key_events']}
-    normal.update(self_test=self_test,hardware_mutations=mutants);path.write_text(json.dumps(normal,indent=2)+'\n')
+            if changed['passed']: raise AssertionError(f'Actual {kind} mutation escaped')
+            mutants.append({'kind':kind,'detected':True,'first_difference':changed['first_difference']})
+        build()  # restore ordinary executable after compiled variants
+    normal.update(self_test=self_test,hardware_mutations=mutants)
+    (ROOT/f'build/tests/{case_name}-report.json').write_text(json.dumps(normal,indent=2)+'\n')
     print(json.dumps({'case':case_name,'passed':normal['passed'],'differences':normal['differences'],'mutants':len(mutants)}),flush=True)
     return normal['passed']
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--case',choices=CASES,required=True);parser.add_argument('--self-test',action='store_true');args=parser.parse_args();raise SystemExit(0 if run(args.case,args.self_test) else 1)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--case',choices=('p1-title',)+CASES,required=True);parser.add_argument('--self-test',action='store_true');args=parser.parse_args();raise SystemExit(0 if run(args.case,args.self_test) else 1)

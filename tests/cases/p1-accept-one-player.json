@@ -6,5 +6,5 @@
   "native_source": "amiga/gameplay_integration_probe.s",
   "rawkey": 70,
   "expected_mode_flags": 0,
-  "contract": "Fresh ordinary native application: no gameplay before physical selection; Delete chooses one player and Tab (original Func analogue) chooses two. Hold five emulated seconds, release, compare completed accepted-mode screen and mode flags. No selected mode or expected transition states are injected. Timing deadlines are bounded liveness checks, not source-rate equivalence."
+  "contract": "Fresh ordinary native title boot: Delete chooses one player and Tab chooses two. Press/hold five emulated seconds/release; accept once, do not run gameplay before release, and verify the first completed chosen mode label. Align the observed serve-wait ball pose with original frame 1299 and compare the entire completed viewport exactly. Re-press selection without restarting; physical fire then starts the serve. No selected mode or expected transition state is injected."
 }

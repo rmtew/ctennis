@@ -16,7 +16,8 @@ The first command writes ignored `build/analysis/champion-tennis-classified.asm`
 Current work follows the finite [playable native implementation queue](PLAYABLE-PLAN.md)
 and [agent instructions](AGENTS.md). CT-01 provides the shared maintained native
 dispatcher in `amiga/game/` and `python scripts/build_native_game.py`; the default
-serve replay exercises that dispatcher. Next complete mode selection, physical
+serve replay exercises that dispatcher. CT-02 adds ordinary native title boot,
+Delete/Tab mode selection and runtime match initialization. Next complete physical
 controls, serve/rally, rounds, results,
 native graphics/sound, ordinary full-play verification and a bootable ADF.
 Completing an exhaustive test suite is not a prerequisite to fixing the game.
