@@ -88,7 +88,7 @@ class CopperlineSession:
 class NativeControlSession:
     """Direct CCP transport for installations without the optional ctl binary.
 
-    Used by the bounded title/mode checks; the existing MCP client is unchanged.
+    Used by bounded native title/control checks; the existing MCP client is unchanged.
     Protocol: Copperline v1.0.0-rc.1 docs/debugger/control.md.
     """
     def __init__(self, directory):

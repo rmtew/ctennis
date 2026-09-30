@@ -82,3 +82,49 @@ legacy_init_audio_channel:
         rts
 legacy_new_mode: dc.b 0
         even
+
+        ifd NATIVE_CONTROLS
+; CT-03 ABI adapter only. The maintained controls module owns physical state
+; and player/end identity; CT-04 still consumes logical-player packed nibbles.
+input_update:
+        moveq   #0,d0
+        move.b  $3d(a5),d0
+        move.b  d0,d1
+        lsr.b   #7,d0
+        lsr.b   #4,d1
+        bsr     game_assign_players
+        clr.b   $53(a5)
+        clr.b   $56(a5)
+        btst    #2,$3d(a5)
+        bne.s   legacy_input_done
+        bsr     sample_second_input_group
+        move.b  d0,d3
+        andi.b  #15,d0
+        lsl.b   #4,d0
+        move.b  d0,$53(a5)
+        andi.b  #$30,d3
+        bsr     read_game_input
+        move.b  d0,d1
+        andi.b  #15,d0
+        or.b    d0,$53(a5)
+        lsr.b   #4,d1
+        or.b    d1,d3
+        move.b  d3,$56(a5)
+legacy_input_done:
+        rts
+
+; Existing callers pass a court end in D6 bit4 and a logical-player packed
+; field in D0. Keep this ABI here; ownership comes from the native assignment.
+normalize_input_for_player_side:
+        move.b  game_lower_owner,d2
+        btst    #4,d6
+        beq.s   legacy_owner_ready
+        move.b  game_upper_owner,d2
+legacy_owner_ready:
+        tst.b   d2
+        beq.s   legacy_owner_selected
+        rol.b   #4,d0
+legacy_owner_selected:
+        move.b  d0,d2
+        rts
+        endif

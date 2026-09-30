@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03–CT-10 remain uncompleted and queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04–CT-10 remain uncompleted and queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -46,7 +46,7 @@ Evidence: shared `amiga/game/tick.s` dispatcher in live application and maintain
 
 ## CT-02 — Boot to title and accept the chosen mode
 
-**Status:** verified (2026-09-30 UTC); draft PR pending review. **Dependencies:** CT-01.
+**Status:** verified and merged in [PR #2](https://github.com/rmtew/ctennis/pull/2) (2026-09-30 UTC). **Dependencies:** CT-01.
 
 **Resolved blocker:** `start` copies a source live-game snapshot; the builder selects original frame 1299 and applies its tail. Gameplay is already active before either choice. Delete and Tab both leave one-player mode; accepted-mode generation is absent.
 
@@ -68,9 +68,9 @@ acceptance prerequisite. Captured active-scene checks now require explicit
 
 ## CT-03 — Complete physical controls and preserve player ownership
 
-**Status:** queued. **Dependencies:** CT-02.
+**Status:** verified (2026-09-30 UTC); draft PR pending review. **Dependencies:** CT-02.
 
-**Verified blocker:** `sample_amiga_joystick` reads only connector-2 left/right/fire; `sample_second_input_group` returns zero. Recorded input calibration has three green and ten known-red windows. **Unverified risk:** later side-exchange ownership and actual physical action consumption remain unproven in ordinary play.
+**Resolved blocker:** `sample_amiga_joystick` previously read only connector-2 left/right/fire; `sample_second_input_group` returned zero. Recorded input calibration has three green and ten known-red windows. **Unverified risk:** later side-exchange ownership and actual physical action consumption remain unproven in ordinary play.
 
 **Targets:** [samplers](amiga/gameplay_integration_probe.s), [physical runner](scripts/run_physical_input_tests.py), [mapping](analysis/two-player-input-map.md), [physical evidence](analysis/native-physical-input-regression.md). Native input state replaces packed source fields as logic is migrated.
 
@@ -79,6 +79,18 @@ acceptance prerequisite. Captured active-scene checks now require explicit
 **Observable acceptance:** each player can move, reverse and act independently; neutral/release clears input, simultaneous opposite-player controls remain independent, and a side exchange does not give a pad the wrong player. One-player control leaves the intended opponent under AI control.
 
 **Lightweight validation:** reuse the single 13-window physical batch and extend observation to representative actual player movement and serve/action response, not merely returned bits. Reuse one reachable exchanged-side source window to check ownership locally; CT-05/CT-09 must additionally establish reaching it continuously. No new exhaustive bit matrix. If final hardware needs a keyboard alternative for a single-button stick, document/ask for that control policy rather than silently dropping the second action.
+
+Evidence: maintained `amiga/game/controls.s` samples both two-button pads and
+owns held/pressed/released state and player/end mapping. The 13-window original
+batch passes 561 updates, including eight actual player fields and independent
+movement; the existing compiled input fault is rejected. Ordinary boot proves
+move/reverse/release for both players, player-2 exclusion from one-player control,
+and player-1 physical serve. One reachable exchanged-end phase (source callback
+2672, 105 executed updates) proves swapped end ownership, both players' reversal
+and player-2 blue-button serve. No intermediate state injection. This local
+phase does not prove reaching the exchange continuously; CT-05/CT-09 retain that
+gate. Gameplay still runs through the temporary adapter. See WORKLOG.md and
+[physical evidence](analysis/native-physical-input-regression.md).
 
 ## CT-04 — Maintain native serve, rally, movement and AI logic
 

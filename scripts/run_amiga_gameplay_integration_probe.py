@@ -39,7 +39,8 @@ def main():
             or not 58 <= states[0][1] <= 61
             or not 59 <= states[1][1] - states[0][1] <= 61):
         raise AssertionError(f"PAL/source update cadence is wrong: {states[:3]}")
-    if states[-1][3] >= 0xC0 or not any(state[3] < 0xC0 for state in states):
+    initial_x = (ROOT / "build/translation/live-initial-ram.bin").read_bytes()[0x4a]
+    if states[-1][3] >= initial_x or not any(state[3] < initial_x for state in states):
         raise AssertionError(f"Scripted left input did not move source player state: {states}")
     if any(state[3] != state[4] for state in states):
         raise AssertionError(f"Visible sprite buffer diverged from player X: {states}")

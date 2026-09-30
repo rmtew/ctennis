@@ -17,8 +17,9 @@ Current work follows the finite [playable native implementation queue](PLAYABLE-
 and [agent instructions](AGENTS.md). CT-01 provides the shared maintained native
 dispatcher in `amiga/game/` and `python scripts/build_native_game.py`; the default
 serve replay exercises that dispatcher. CT-02 adds ordinary native title boot,
-Delete/Tab mode selection and runtime match initialization. Next complete physical
-controls, serve/rally, rounds, results,
+Delete/Tab mode selection and runtime match initialization. CT-03 adds native
+two-pad controls and stable player ownership across court ends. Next complete
+serve/rally, rounds, results,
 native graphics/sound, ordinary full-play verification and a bootable ADF.
 Completing an exhaustive test suite is not a prerequisite to fixing the game.
 Reuse existing original-backed checks; add one only for a concrete fix or
@@ -31,3 +32,9 @@ diagnostics until migrated to the maintained product boundary. Local passing
 cases and retained reports do not establish ordinary full-match or complete
 hardware acceptance. See the [worklog](WORKLOG.md) for the current item and one
 next action.
+
+Controls: Delete selects one player; Tab selects two. Player 1 uses joystick
+connector 2, player 2 connector 1, with four directions and red/blue actions.
+Two-button sticks are required for both actions; no keyboard substitute for a
+missing second button is assigned. Pads remain attached to their players after
+an end exchange. In one-player mode connector 1 does not control the opponent.

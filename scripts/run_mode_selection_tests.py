@@ -138,8 +138,37 @@ def capture(case, kind=None):
             s.inspect('run_until',{'frame':row['stop']['frame']+4})
             s.inspect('input_key',{'rawkey':case['rawkey'],'action':'release'})
             if mem('game_accept_count')!=1: differences.append({'field':'selection restarted live match'})
-            s.inspect('input_joy',{'port':2,'red':True})
-            s.inspect('run_until',{'frame':row['stop']['frame']+10})
+            # CT-03 ordinary-path proof: movement must change from its observed
+            # start, reverse, and stop; connector 1 must not take over the AI.
+            s.inspect('input.set_port',{'port':1,'device':'joystick'})
+            def hold(p1,p2,frames=12):
+                s.inspect('run_until',{'pc':base+symbols['simulation_update']})
+                s.inspect('input_joy',{'port':2,**p1})
+                s.inspect('input_joy',{'port':1,**p2})
+                for _ in range(frames):
+                    s.inspect('run_until',{'pc':base+symbols['game_observe_pre_tail']})
+                    s.inspect('run_until',{'pc':base+symbols['simulation_update']})
+                return state()
+            before=state()
+            left=hold({'left':True},{'right':True})
+            right=hold({'right':True},{'left':True})
+            released=hold({}, {})
+            two=bool(case['expected_mode_flags'])
+            controls={'stage':'ordinary-physical-controls','lower_x':[r[0x4a] for r in (before,left,right,released)],
+                      'upper_x':[r[0x46] for r in (before,left,right,released)],
+                      'players':2 if two else 1}
+            rows.append(controls)
+            if not left[0x4a]<before[0x4a] or not right[0x4a]>left[0x4a] or released[0x4a]!=right[0x4a]:
+                differences.append({'field':'lower physical move/reverse/release','actual':controls})
+            if two:
+                if not left[0x46]>before[0x46] or not right[0x46]<left[0x46] or released[0x46]!=right[0x46]:
+                    differences.append({'field':'independent upper move/reverse/release','actual':controls})
+            elif any(r[0x46]!=before[0x46] for r in (left,right,released)):
+                differences.append({'field':'connector 1 stole AI receiver','actual':controls})
+            # Connector 1 action alone cannot start player 1's lower serve.
+            other=hold({}, {'red':True},6)
+            if other[0x3a]!=0x40: differences.append({'field':'wrong pad starts lower serve','actual':other[0x3a]})
+            hold({'red':True},{},6)
             after=state()
             if after[0x3a]!=0x20: differences.append({'field':'physical fire starts serve','actual':after[0x3a]})
             s.inspect('input_joy',{'port':2,'red':False})

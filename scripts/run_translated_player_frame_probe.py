@@ -75,12 +75,18 @@ def prepare_gameplay():
         if count != 1:
             raise AssertionError(f"Expected one {label} table")
     input_selection = extract(generated, "input_update", "read_game_input")
+    # Product excludes replaced input/ownership routines; raw translator diagnostics
+    # retain the original extraction. These are link boundaries, not game patches.
+    input_selection = "        ifnd NATIVE_CONTROLS\n" + input_selection + "        endif\n"
     score = extract(generated, "score_gate", "lower_player_state")
     motion = extract(generated, "lower_player_motion_update", "animate_lower_player")
     for label in ("lower_movement_bounds", "upper_movement_bounds"):
         motion, count = re.subn(rf"(?m)^{label}:\ndc\.b [^\n]*\n", "", motion)
         if count != 1:
             raise AssertionError(f"Expected one {label} table")
+    # The movement helper formerly fell through into the ownership selector.
+    split = motion.index("normalize_input_for_player_side:")
+    motion = motion[:split] + "        ifd NATIVE_CONTROLS\n        jmp normalize_input_for_player_side\n        else\n" + motion[split:] + "        endif\n"
     animation = extract(generated, "animate_lower_player", "unsigned_multiply_byte", "animation_records")
     sprites = extract(generated, "build_player_sprites", "ball_flight_update", "player_sprite_descriptors")
     ball = extract(generated, "ball_flight_update", "player_movement_and_sprites")
