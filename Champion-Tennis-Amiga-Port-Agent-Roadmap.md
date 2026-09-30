@@ -1,3 +1,5 @@
+> **Current implementation priority (2026-09-30 UTC):** [PLAYABLE-PLAN.md](PLAYABLE-PLAN.md) is the finite CT-01–CT-10 queue, and [AGENTS.md](AGENTS.md) governs execution. When implementation is authorized, follow this queue to complete the playable maintained native Amiga game, using focused existing regression protection. This supersedes the suite-first ordering and historical “next test” instructions below; complete-suite creation is not a prerequisite for product fixes. Existing requirements, failures, evidence and final ADF/independent-verification gates are preserved and are not declared complete. The 21 test-manifest candidates remain proposals, folded into product work only for a concrete fix or demonstrated gap. No product item is completed by this documentation change.
+
 # Champion Tennis (SG-1000/SC-3000) → Amiga 500: agent roadmap
 
 This document defines the target and phase gates. [WORKLOG.md](WORKLOG.md) is the authoritative current status, evidence, decision record, and next action. Update it whenever a gate changes or an experiment changes an assumption.

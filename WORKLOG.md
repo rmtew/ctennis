@@ -1,3 +1,17 @@
+## 2026-09-30 UTC â€” Defined the playable-native implementation queue
+
+- Status: plan defined; no product queue item implemented or verified.
+- Current decision: PLAYABLE-PLAN.md and AGENTS.md supersede the historical suite-first work order. Work through CT-01â€“CT-10 with one item active: maintained product execution boundary; title/mode; physical controls/ownership; native serve/rally/AI; scoring/round reset; result/restart; graphics; sound; ordinary cadence/full play; scaffolding retirement and ADF.
+- Each item records dependencies, verified versus uncertain blockers, code targets, observable acceptance and a finite lightweight validation set. Tests are guardrails for product changes; add or extend one only for a concrete fix or demonstrated behavioural gap. The 21 manifest candidates are not a new prerequisite queue.
+- Source inspection at f5de85f57f167e227e3d8160707de5c79779400e confirms live-state startup, fixed gameplay dispatch, incomplete input/second-reader stub, generated gameplay dependencies and the sprite-origin constant. Existing analyses supply the recorded launch, reset, result and audio defects; these were not rerun.
+- Documentation-only change: added PLAYABLE-PLAN.md and AGENTS.md; updated README current priority and prepended a roadmap precedence notice. Historical roadmap/worklog text is preserved, including existing entries dated 2026-10-01. This entry uses the review session's actual UTC date and explicitly changes priority rather than pretending to be a historical execution.
+- Verification scope: reviewed repository code, test manifest/review, known failures, architecture, physical/mode/round/result/audio evidence and source update contract. Checked document links, queue completeness and preservation of prior history. No emulator run, original capture, product build, new test or product fix.
+- Retained baseline only: incremental 99 cases, 52 green / 47 known red; 56 generated fixed-dispatch core cases; 35 first-signature-only red policies. R1/R2 match 1332/2535 callbacks before their existing failures. These are repository-recorded results, not fresh execution or full-match acceptance.
+- Next action when implementation is requested: CT-01, establish one maintained native source-tick/dispatcher entry shared by the application and product replay, prove reference regeneration cannot overwrite it, and reuse the short serve check. Do not start another test-expansion pass first.
+- Environment limit: this review did not have configured private ROM/capture inputs or an execution toolchain; future product verification must locate those legitimate inputs and report any exact blocker. No Phase 4/5, completed-suite, playable-match or ADF gate is claimed.
+
+---
+
 ## 2026-10-01 ? Reviewed test relevance and corrected coverage claims
 
 Reviewed actual registry, core regeneration/fixed-dispatch harness, contact and hardware/audio/input assertions, strict classifier and all retained reports. Findings: 56 core cases exercise generated fixed gameplay dispatch, not maintained application dispatcher;35 of47 red policies accept only first signature (8 digest,4 explicit interval); R1/R2 match1332/2535 callbacks, not full source lengths13378/27037; raw RAM equality constrains internal rewrites; upper action cases are shot-choice timing, not hit/miss acceptance. Copied-report late-fault controls demonstrate masking in moving-prefix/input/pitch and rejection by complete round digest. No emulator fault run claimed.
@@ -811,10 +825,10 @@ The preliminary Ghidra import/export path, label-audit prototype, and block-sugg
 
 ## Recheck
 
-- `python scripts/roundtrip_rom.py` — exact cartridge rebuild and label/comment input validation.
-- `python scripts/check_source_ball_update.py` — static translated-source checks.
-- `python scripts/source_timing_baseline.py` — repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
-- `python scripts/smoke_amiga_run.py` — copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
-- `python scripts/check_sprite_hardware_fit.py` — check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
-- `python scripts/run_amiga_sprite_probe.py` — regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
-- `git status --short` — review only intended source and documentation before a first commit.
+- `python scripts/roundtrip_rom.py` Â— exact cartridge rebuild and label/comment input validation.
+- `python scripts/check_source_ball_update.py` Â— static translated-source checks.
+- `python scripts/source_timing_baseline.py` Â— repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
+- `python scripts/smoke_amiga_run.py` Â— copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
+- `python scripts/check_sprite_hardware_fit.py` Â— check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
+- `python scripts/run_amiga_sprite_probe.py` Â— regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
+- `git status --short` Â— review only intended source and documentation before a first commit.
