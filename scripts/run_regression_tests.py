@@ -119,7 +119,7 @@ def prepare_inputs(fixture, case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
-    parser.add_argument('--case', choices=('serve', 'round-transition'), default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match'), default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
@@ -149,7 +149,7 @@ def main():
     if args.reference_only:
         report = {'case': case['name'], 'reference_valid': True, 'port_executed': False,
                   'reference_sha256': hashlib.sha256(reference.read_bytes()).hexdigest(), **reference_summary}
-        (OUT / 'round-transition-reference-report.json').write_text(json.dumps(report, indent=2) + '\n')
+        (OUT / f'{case["name"]}-reference-report.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report, indent=2))
         return 0
     # Translation/extraction is shared with the live executable build. No Python
@@ -185,7 +185,7 @@ def main():
     if exact:
         report['reference_coverage'] = reference_summary
         report['port_limit'] = 'Gameplay executes every tick; native between-game transition is not implemented'
-    report_path = 'round-transition-report.json' if exact else 'report.json'
+    report_path = f'{case["name"]}-report.json' if exact else 'report.json'
     (OUT / report_path).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     console_report = dict(report)
     if difference and 'preceding_source_events' in difference:

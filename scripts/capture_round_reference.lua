@@ -11,7 +11,11 @@ local out = assert(io.open(assert(os.getenv("CT_TEST_CAPTURE")), "w"))
 local frame, ordinal, sequence = 0, -1, 0
 local active, finished = false, false
 local taps = {}
-local condition = string.format("temp8 >= 0x%x && temp8 <= 0x%x", 1298, 3000)
+local last_frame = tonumber(os.getenv("CT_TEST_LAST_FRAME") or "3000")
+local condition = string.format("temp8 >= 0x%x && temp8 <= 0x%x", 1298, last_frame)
+local policy_path = os.getenv("CT_TEST_POLICY")
+local policy = policy_path and dofile(policy_path) or nil
+local stop_requested = false
 
 local function emit(line)
     if finished then return end
@@ -60,7 +64,7 @@ end
 dbg:command("do temp8=0")
 dbg:command("do temp9=-1")
 dbg:command("do temp7=0")
-cpu.debug:bpset(0x0049, condition, snapshot("B", true))
+local begin_bp = cpu.debug:bpset(0x0049, condition, snapshot("B", true))
 cpu.debug:bpset(0x06B1, "temp7 == 1", snapshot("T", false))
 cpu.debug:bpset(0x0045, "temp7 == 1", snapshot("E", false))
 -- Observe normalized input results at RET, and the actual R value consumed by
@@ -70,7 +74,7 @@ for _, item in ipairs({{0x0886, "I0"}, {0x088F, "I1"}, {0x0DBB, "R"}}) do
         'printf "REF %s %%d %%d %%04X %%02X",temp9,temp8,pc,a;g', item[2]))
 end
 -- Single-entry markers, not busy-wait loop breakpoints.
-for _, address in ipairs({0x0144, 0x025D, 0x0211, 0x011C, 0x058F}) do
+for _, address in ipairs({0x0109, 0x01D3, 0x0144, 0x025D, 0x0211, 0x011C, 0x0580, 0x058F}) do
     cpu.debug:bpset(address, condition, string.format(
         'printf "REF M %%d %%d %%04X",temp9,temp8,%04x;g', address))
 end
@@ -90,6 +94,7 @@ taps[2] = program:install_write_tap(0xC000, 0xC0FF, "round-between-writes", func
 end)
 
 emu.register_frame_done(function()
+    if finished then return end
     assert(taps[1] and taps[2])
     drain()
     frame = frame + 1
@@ -103,7 +108,11 @@ emu.register_frame_done(function()
         button:set_value(1)
         emit("REF CONTROL 1300 fire 1")
     end
-    if frame == 3002 then
+    if not stop_requested and policy and policy(frame, program, key, button, emit) then
+        stop_requested = true
+        cpu.debug:bpdisable(begin_bp)
+    end
+    if (stop_requested and not active) or frame == last_frame + 2 then
         finished = true
         out:close()
         print("ROUND_REFERENCE_COMPLETE")

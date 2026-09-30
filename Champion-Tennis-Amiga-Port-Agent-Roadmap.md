@@ -4,6 +4,8 @@ This document defines the target and phase gates. [WORKLOG.md](WORKLOG.md) is th
 
 Current phase boundary (2026-09-30): translated gameplay and native Amiga input, Copper/bitplane/sprite display, and Paula tone output run through one game award. Simulation is now paced independently of PAL presentation; the inactive Copper-list address is switched in blanking, with zero visible-line commits measured in the long replay and ordinary run. After a game, the source temporarily selects the existing counter/audio interrupt tail alone while its main-thread round transition runs; this callback routing and round transition, complete-match presentation/audio checks, and independent hardware verification remain open. See [the current worklog](WORKLOG.md) and [long-game replay evidence](analysis/long-game-replay.md) for measured results and the next action. No Phase 4 or Phase 5 gate is claimed.
 
+Full R1 source capture is now reproducible through match result and restarted serve: 13,378 updates, twice-identical, with the existing 1,566-update prefix preserved exactly. Its actual 68000 comparison completes and first diverges at the known callback 1333 round-transition boundary. R2, focused gap/phase cases, presentation references/adapters, and the all-case known-failure runner remain required before the suite goal is complete. See the latest worklog checkpoint for commands and evidence.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

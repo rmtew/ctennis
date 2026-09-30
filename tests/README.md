@@ -127,3 +127,38 @@ difference and preceding source actions are in
 boundary, not a weakened or passing reference. The default short serve test
 continues to pass. A complete match/restart, the complementary two-player
 record, and source presentation snapshots remain future reference work.
+
+## Complete one-player source replay
+
+```powershell
+python scripts/capture_test_reference.py --case one-player-match
+python scripts/capture_test_reference.py --case one-player-match --verify-only
+python scripts/run_regression_tests.py --case one-player-match
+```
+
+The capture runs MAME twice with a frozen physical input schedule, requires
+identical raw recordings and exact agreement with the existing round prefix,
+and saves the private reference through the first advancing restarted serve.
+It carries source state across all 13,378 updates, including match/title resets.
+The actual native replay currently returns exit 1 at callback-entry 1333:
+deferred display setup request expected 129, actual 1. The first 1,332 updates
+and 250 PSG bytes agree. This is the known unimplemented round transition;
+later native behaviour is not validated by that matching prefix.
+
+## Registered suite and known failures
+
+```powershell
+python scripts/run_test_suite.py --baseline-check --self-test
+```
+
+This runs all currently registered native cases, checks exact first-divergence
+signatures against `tests/known-failures.json`, verifies gameplay mutation
+detection, and rejects changed signatures and unexpected passes. Strict mode
+(without `--baseline-check`) also rejects known red. Tool errors are never
+classified as known red. Full reports and runner logs are in `build/tests/`;
+`suite-report.json` lists results and missing requirements.
+
+The aggregate runner is an incomplete-suite checkpoint: it currently exits 2
+in both modes because R2, meaningful gap inventory/cases, phase-specific later
+comparisons and P1-P3 references/adapters remain missing. A matching known-red
+baseline does not make missing requirements pass.

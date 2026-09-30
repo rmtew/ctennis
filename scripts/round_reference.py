@@ -96,7 +96,7 @@ def parse_capture(payload):
     return callbacks, timeline
 
 
-def build_fixture(payload, metadata):
+def build_fixture(payload, metadata, *, complete_match=False):
     callbacks, timeline = parse_capture(payload)
     if callbacks[0]['frame'] != 1299:
         raise ValueError('Wrong initial callback')
@@ -114,7 +114,21 @@ def build_fixture(payload, metadata):
                    and bytes.fromhex(row['ram'])[0x38] & 0x40 and bytes.fromhex(row['ram'])[0x66] > 0), None)
     if served is None:
         raise ValueError('First resumed serve flight missing')
-    last = served['ordinal']
+    milestone_rows = [('first_game_award', game_award), ('tail_only_start', tail),
+                      ('gameplay_resumed', resumed), ('resumed_serve_flight', served)]
+    if complete_match:
+        match = next(row for row in callbacks if bytes.fromhex(row['ram'])[0x3D] & 0x40)
+        selection = next(row for row in callbacks if row['ordinal'] > match['ordinal']
+                         and bytes.fromhex(row['ram'])[0x3D] & 4)
+        restarted = next(row for row in callbacks if row['ordinal'] > selection['ordinal']
+                         and row['callback_kind'] == 'gameplay'
+                         and not bytes.fromhex(row['ram'])[0x3D] & 4)
+        flight = next(row for row in callbacks if row['ordinal'] > restarted['ordinal']
+                      and bytes.fromhex(row['ram'])[0x38] & 0x40
+                      and bytes.fromhex(row['ram'])[0x66] > 0)
+        milestone_rows += [('match_award', match), ('restart_selection', selection),
+                           ('restart_gameplay', restarted), ('restart_serve_flight', flight)]
+    last = milestone_rows[-1][1]['ordinal']
     updates = callbacks[1:last + 1]
     timeline = [event for event in timeline if event.get('after_callback', 0) <= last]
     # Exclude events after the final callback's return. Preserve all events
@@ -134,8 +148,7 @@ def build_fixture(payload, metadata):
                'initial_callback': initial,
                'updates': updates, 'timeline': timeline,
                'milestones': {name: {'update': row['ordinal'], 'frame': row['frame']}
-                              for name, row in (('first_game_award', game_award), ('tail_only_start', tail),
-                                                ('gameplay_resumed', resumed), ('resumed_serve_flight', served))}}
+                              for name, row in milestone_rows}}
     validate_fixture(fixture)
     return fixture
 
@@ -158,7 +171,8 @@ def validate_fixture(fixture):
         for event in row['before_events']:
             if event['kind'] == 'W':
                 offset = event['address'] - 0xC000
-                if offset == 0x6B:
+                if offset == 0x6B and not (event['pc'] == 0x1E9 and event['after'] == 0
+                                         and event.get('actor') == 'main-thread'):
                     raise ValueError('Uncaptured callback counter write between callbacks')
                 if state[offset] != event['before']:
                     raise ValueError(f'Unaccounted state before callback {row["ordinal"]} at {offset:02X}')
@@ -182,11 +196,36 @@ def validate_fixture(fixture):
                 raise ValueError('Incorrect source saturating timer observation')
         state = bytearray(after)
     milestones = fixture['milestones']
-    if list(milestones) != ['first_game_award', 'tail_only_start', 'gameplay_resumed', 'resumed_serve_flight']:
+    names = ['first_game_award', 'tail_only_start', 'gameplay_resumed', 'resumed_serve_flight']
+    if 'match_award' in milestones:
+        names += ['match_award', 'restart_selection', 'restart_gameplay', 'restart_serve_flight']
+    if list(milestones) != names:
         raise ValueError('Missing transition milestones')
     ordinals = [value['update'] for value in milestones.values()]
     if ordinals != sorted(set(ordinals)) or ordinals[-1] != len(updates):
         raise ValueError('Milestones do not form the requested replay')
+    rows = {name: updates[value['update'] - 1] for name, value in milestones.items()}
+    if any(value['frame'] != rows[name]['frame'] for name, value in milestones.items()):
+        raise ValueError('Milestone frame does not match callback')
+    if bytes.fromhex(rows['first_game_award']['ram'])[0x41] != 1:
+        raise ValueError('First game award state missing')
+    if rows['tail_only_start']['callback_kind'] != 'tail-only':
+        raise ValueError('Pause milestone is not tail-only')
+    for name in ('gameplay_resumed', 'restart_gameplay'):
+        if name in rows and rows[name]['callback_kind'] != 'gameplay':
+            raise ValueError('Restoration milestone is not gameplay')
+    for name in ('resumed_serve_flight', 'restart_serve_flight'):
+        if name in rows:
+            ram = bytes.fromhex(rows[name]['ram'])
+            if not ram[0x38] & 0x40 or ram[0x66] == 0:
+                raise ValueError('Advancing serve milestone missing')
+    if 'match_award' in rows:
+        if not bytes.fromhex(rows['match_award']['ram'])[0x3D] & 0x40:
+            raise ValueError('Match award state missing')
+        if not bytes.fromhex(rows['restart_selection']['ram'])[0x3D] & 4:
+            raise ValueError('Restart selection state missing')
+        if bytes.fromhex(rows['restart_gameplay']['ram'])[0x3D] & 4:
+            raise ValueError('Restart still in selection mode')
     between = [event for row in updates for event in row['before_events']]
     installs = [event for event in between if event['kind'] == 'W' and event['address'] in (0xC000, 0xC001)]
     if len(installs) < 4 or not any(event.get('pc') == 0x144 for event in between):

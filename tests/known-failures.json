@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "cases": {
+    "round-transition": {
+      "evidence": "build/tests/round-transition-report.json; tests/reference/round-transition.json; WORKLOG.md exact first-round source checkpoint",
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented",
+      "signature": {"update": 1333, "source_frame": 2631, "boundary": "callback-entry", "ram_offset": 2, "expected": 129, "actual": 1, "callback_kind": "tail-only"}
+    },
+    "one-player-match": {
+      "evidence": "build/tests/one-player-match-report.json; tests/reference/one-player-match.json; WORKLOG.md full R1 match checkpoint",
+      "reason": "Same round-transition boundary in the continuous full-match replay; later failures remain obscured",
+      "signature": {"update": 1333, "source_frame": 2631, "boundary": "callback-entry", "ram_offset": 2, "expected": 129, "actual": 1, "callback_kind": "tail-only"}
+    }
+  }
+}
