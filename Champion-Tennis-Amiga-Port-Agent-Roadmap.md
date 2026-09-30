@@ -16,6 +16,8 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
+Source presentation collection now has a repeatability-checked observer alongside both frozen full-match replays. It preserves exact callback recordings while retaining lossless raw rasters and contemporaneous RAM/VRAM/VDP register state. This is preliminary P1 evidence; remaining windows, active-area/display-lag rules and actual native presentation comparisons remain open. See the latest worklog and test instructions.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

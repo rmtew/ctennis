@@ -286,3 +286,14 @@ to execute the complete retained replay. This avoids running an already-diverged
 suffix merely to reconfirm its first failure. Full and optimized 17-case runs
 verified the same 11 green/six known-red classifications. Required missing
 coverage remains failing in both modes.
+
+## Source presentation capture foundation
+
+Run python scripts/capture_presentation_reference.py and repeat with
+--case two-player-match. The observer must preserve the frozen callback
+recording exactly and repeat decoded screenshot pixels, RAM, VRAM, VDP
+registers and PC. Manifests and lossless files are under
+build/tests/<case>-presentation/; inspect the a subdirectory for the first copy.
+These raw bordered rasters are preliminary evidence. Active-area geometry,
+source display lag, remaining P1 windows and native comparisons are pending.
+They do not change the suite coverage or green/known-red classifications.
