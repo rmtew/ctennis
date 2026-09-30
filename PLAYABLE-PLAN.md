@@ -4,7 +4,7 @@
 
 The next implementation goal is a playable, maintainable native Amiga game, followed by a reproducible bootable ADF. Completing every proposed test is **not** a prerequisite to implementing it. This queue supersedes the old suite-first work order in the roadmap, README and historical worklog. It does not mark those old requirements complete, erase failures, or weaken any existing assertion.
 
-This document defines work; this documentation change does not execute or claim completion of any product item. Start CT-01 when implementation is requested. Work in order, with one active item. Repair a prerequisite defect under its owning item rather than opening a parallel test project.
+This document defines the implementation queue; verification below records subsequent product work. Work in order, with one active item. Repair a prerequisite defect under its owning item rather than opening a parallel test project.
 
 Target: PAL A500, 68000, OCS, 512 KB chip RAM, no slow/fast RAM, Kickstart 1.3. Preserve original rules, update order and feel at the measured source cadence, independently of PAL presentation. Deliver concise maintained native logic and direct Amiga input, rendering and sound. The translated Z80/68000 representation, original captures and ROM roundtrip remain behaviour oracles and diagnostics, not the final runtime architecture.
 
@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. All product items below are uncompleted. CT-01 is ready for an authorized implementation session; CT-02–CT-10 are queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified with bounded serve and live evidence (see WORKLOG.md); CT-02–CT-10 remain uncompleted and queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -30,7 +30,9 @@ During migration, raw-state translator cases remain their own diagnostic tier. P
 
 ## CT-01 — Establish the maintained product execution boundary
 
-**Status:** ready for implementation. **Dependencies:** none.
+**Status:** verified (2026-09-30 UTC). **Dependencies:** none.
+
+Evidence: shared `amiga/game/tick.s` dispatcher in live application and maintained serve replay; 200 updates/40 PSG bytes matched, maintained dispatch fault rejected at update 1, source restored and rebuilt, regeneration hashes unchanged. Native live input/cadence/serve/display/audio checks passed. Temporary adapter remains explicit CT-02–CT-08 debt; no later milestone is claimed.
 
 **Verified blocker:** `prepare_gameplay()` regenerates the routines on every build; both live and test code include `build/translation/player-frame-routines.s`. The harness calls a fixed gameplay sequence instead of the application's regime dispatcher. A clean native edit therefore has no protected maintained home.
 

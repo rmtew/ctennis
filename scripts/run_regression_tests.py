@@ -76,9 +76,11 @@ def compare(records, fixture, case, fields):
     return None
 
 
-def execute(config, case_name='serve', mutation=False):
+def execute(config, case_name='serve', mutation=False, subject='translated'):
     executable = OUT / (case_name + ('-mutated' if mutation else ''))
     command = [str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000']
+    if subject == 'maintained':
+        command.append('-DPRODUCT_REPLAY=1')
     if mutation:
         command.append('-DREGRESSION_MUTATION=1')
     run(command + ['-o', str(executable), 'amiga/tests/simulation_harness.s'])
@@ -128,12 +130,17 @@ def prepare_inputs(fixture, case):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--subject', choices=('maintained', 'translated'),
+                        help='Default: maintained for serve, translated diagnostics for other cases')
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
     parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     parser.add_argument('--through-update', type=int,
                         help='Run a declared prefix through this update; report that the full replay was not executed')
     args = parser.parse_args()
+    subject = args.subject or ('maintained' if args.case == 'serve' else 'translated')
+    if subject == 'maintained' and args.case != 'serve':
+        parser.error('Only the serve product check is migrated in CT-01; use translated diagnostics')
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
     if not reference.exists():
@@ -186,10 +193,19 @@ def main():
     # Translation/extraction is shared with the live executable build. No Python
     # simulation runs here, and expected state is never generated from target code.
     run([sys.executable, 'scripts/roundtrip_rom.py'])
+    from build_native_game import module_hashes
+    maintained_before = module_hashes()
+    # Regeneration must only write ignored oracle outputs.
     prepare_gameplay()
-    records, digest = execute(config, case['name'])
+    if module_hashes() != maintained_before:
+        raise AssertionError('Reference regeneration changed maintained source')
+    records, digest = execute(config, case['name'], subject=subject)
     difference = compare(records, fixture, case, fields)
-    report = {'case': case['name'], 'updates': case['updates'],
+    report = {'subject': subject,
+              'entry_point': 'game_source_tick' if subject == 'maintained' else 'fixed translated sequence',
+              'native_modules': maintained_before if subject == 'maintained' else {},
+              'regeneration_preserved_native_modules': True,
+              'case': case['name'], 'updates': case['updates'],
               'reference_updates': reference_count,
               'full_replay_executed': case['updates'] == reference_count,
               'bytes_compared_per_boundary': len(set(case.get('compared_ram_offsets', range(256))) - set(case['excluded_ram_offsets'])),
@@ -200,7 +216,30 @@ def main():
     matched = case['updates'] if difference is None else max(0, difference['update'] - 1)
     report['updates_matched'] = matched
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
-    if args.self_test and difference is None:
+    if args.self_test and difference is None and subject == 'maintained':
+        # Concrete fault: suppress active gameplay in the maintained dispatcher.
+        # Independent expectation: the retained original serve must still launch.
+        path = ROOT / 'amiga/game/tick.s'
+        original = path.read_bytes()
+        anchor = b'        bsr     legacy_active_tick'
+        if original.count(anchor) != 1:
+            raise ValueError('Maintained dispatcher mutation anchor is ambiguous')
+        try:
+            path.write_bytes(original.replace(anchor, b'        nop'))
+            mutated, mutant_digest = execute(config, case['name'], mutation=True, subject=subject)
+            detected = compare(mutated, fixture, case, fields)
+            report['mutation_kind'] = 'skip maintained active dispatcher'
+            report['mutation_executable_sha256'] = mutant_digest
+            report['mutation_first_difference'] = detected
+            if detected is None or mutant_digest == digest:
+                raise AssertionError('Maintained dispatch fault was not detected')
+        finally:
+            path.write_bytes(original)
+            restored, restored_digest = execute(config, case['name'], subject=subject)
+            if restored_digest != digest or compare(restored, fixture, case, fields) is not None:
+                raise AssertionError('Restored maintained replay did not pass identically')
+            report['restored_replay_passed'] = True
+    elif args.self_test and difference is None:
         from movement_reference import OBSERVED_BOUNDS, MOVEMENT_PHASES, DIRECTIONS
         mutation_case = MOVEMENT_PHASES.get(args.case, args.case)
         source = (ROOT / 'build/translation/player-frame-routines.s').read_text()

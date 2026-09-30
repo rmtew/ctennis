@@ -8,6 +8,7 @@ DOUBLE_BUFFER_DISPLAY equ 1
 start:
         lea     virtual_memory,a6
         lea     virtual_memory+$c000,a5
+        bsr     game_begin_active
         lea     initial_ram,a0
         move.l  a5,a1
         move.w  #255,d7
@@ -165,33 +166,28 @@ next_back_sprite_pointer:
 simulation_update:
         bsr     sample_amiga_joystick
         bsr     upload_sprite_attributes
-        move.b  $42(a5),score_flags_before
-        move.b  $71(a5),status_timer_before
-        bsr     scoreboard_update
-        bsr     update_native_scoreboard
-        bsr     input_update
-        bsr     score_gate
-        bsr     lower_player_state
-        bsr     upper_player_state
-        bsr     ball_flight_update
-        bsr     player_movement_and_sprites
-        bsr     irq_counter_prefix
-        move.l  #psg_log,psg_ptr
-        clr.b   psg_count
-        bsr     audio_tick_adapter
-        ifd LONG_GAME_REPLAY
-        bsr     log_replay_psg
-        endif
-        bsr     paula_apply_psg_events
-        move.l  #vdp_log,vdp_ptr
-        clr.b   vdp_count
-        bsr     irq_vdp_tail
+        bsr     game_source_tick
         move.b  #1,display_ready
         addq.w  #1,simulation_updates
         ifd LONG_GAME_REPLAY
         bsr     log_replay_transition
         endif
         rts
+
+; Hardware integration hooks: gameplay and service order live in game/.
+game_before_scoreboard:
+        move.b  $42(a5),score_flags_before
+        move.b  $71(a5),status_timer_before
+        rts
+game_after_scoreboard:
+        bra     update_native_scoreboard
+game_observe_pre_tail:
+        rts
+game_apply_sound:
+        ifd LONG_GAME_REPLAY
+        bsr     log_replay_psg
+        endif
+        bra     paula_apply_psg_events
 
         ifd LONG_GAME_REPLAY
 ; Log only source score changes and actual native display-bank changes.
@@ -673,7 +669,8 @@ hex_byte:
 
         include "amiga/translated_audio_tick.s"
         include "amiga/paula_tone_output.s"
-        include "build/translation/player-frame-routines.s"
+        include "amiga/game/tick.s"
+        include "amiga/game/legacy_adapter.s"
 
         even
 simulation_phase:   dc.l 11838
