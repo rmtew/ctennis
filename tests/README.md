@@ -9,14 +9,43 @@ Run from the repository root:
 python scripts/run_regression_tests.py
 ```
 
-The command rebuilds the byte-exact annotated source and shared 68000 gameplay
-routines, assembles the harness, runs Copperline, and compares against the saved
-MAME oracle. It exits **0** for a match, **1** for a behaviour difference, or **2**
+The default `serve` case executes `amiga/game/tick.s:game_source_tick`, the
+same maintained lifecycle dispatcher and temporary legacy adapter used by the
+live application. The harness supplies captured initial state once, recorded
+inputs and entropy, and reads actual state/sound outputs. It does not select a
+regime from a source callback kind or inject later source writes. The 200-update
+serve starts in the retained active scene; title and round transitions remain
+future queue work.
+
+`--subject translated` explicitly selects the preserved fixed-dispatch oracle
+baseline. Other cases still default to that diagnostic tier; CT-01 does not
+migrate their assertions or claim their product acceptance. Reports identify the
+subject, entry point, module hashes and executable hash. Generated translation
+stays under ignored `build/translation/`; regeneration must preserve maintained
+module hashes.
+
+The command exits **0** for a match, **1** for a behaviour difference, or **2**
 for a setup/build/run error. Results and native logs are in `build/tests/`.
-A difference identifies the first callback, boundary, named field, expected
-value and actual value. Run `--self-test` to additionally build a temporary
-one-pixel ball-position mutation and require the suite to detect it. The
-mutated source and executable are removed afterwards.
+A difference identifies the first callback, boundary and named field. On the
+maintained serve, `--self-test` temporarily skips the actual dispatcher's active
+call, requires the original reference to detect it, then restores the source and
+rebuilds/reruns the normal executable. Run this without concurrent builds. The
+translated subject retains its existing gameplay mutations. No new case family
+is introduced. Mutation logs/binaries are private build outputs.
+
+Build the actual hardware application without executing diagnostics:
+
+```sh
+export RUST_LOG=info
+python scripts/build_native_game.py
+python scripts/run_regression_tests.py --case serve --self-test
+python scripts/run_amiga_live_serve_probe.py
+```
+
+The build report is `build/amiga/gameplay-integration/build-report.json`.
+Live input, presentation and audio checks remain separate from accelerated
+simulation replay; the replay executable links the same maintained modules,
+with observation/I/O hooks instead of hardware output.
 
 ## Local prerequisites and reference capture
 

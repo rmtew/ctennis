@@ -14,8 +14,10 @@ python scripts/check_source_ball_update.py
 The first command writes ignored `build/analysis/champion-tennis-classified.asm`, assembles it, and requires an exact 8,192-byte match. [Whole-ROM review](analysis/static-rom-review.md), [annotation audit](analysis/annotation-audit.md), and [frame-update contract](analysis/frame-update-contract.md) explain the current interpretation and its limits. The Python source model in `scripts/` is a checking aid. [The original evidence map](analysis/rom-map.md) and [archived worklog](analysis/history/WORKLOG-pre-port-cleanup-2026-09-29.md) retain the investigation history.
 
 Current work follows the finite [playable native implementation queue](PLAYABLE-PLAN.md)
-and [agent instructions](AGENTS.md): establish the maintained product boundary,
-then complete mode selection, physical controls, serve/rally, rounds, results,
+and [agent instructions](AGENTS.md). CT-01 provides the shared maintained native
+dispatcher in `amiga/game/` and `python scripts/build_native_game.py`; the default
+serve replay exercises that dispatcher. Next complete mode selection, physical
+controls, serve/rally, rounds, results,
 native graphics/sound, ordinary full-play verification and a bootable ADF.
 Completing an exhaustive test suite is not a prerequisite to fixing the game.
 Reuse existing original-backed checks; add one only for a concrete fix or

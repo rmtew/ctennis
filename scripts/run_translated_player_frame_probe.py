@@ -37,7 +37,7 @@ def extract(generated, first, next_label, data_label=None):
 
 
 def prepare_gameplay():
-    """Generate the shared routines used by the live game and regression harness."""
+    """Generate the reference baseline used by the temporary legacy adapter."""
     config = configparser.ConfigParser(interpolation=None)
     if not config.read(ROOT / "config.local.ini", encoding="utf-8"):
         raise FileNotFoundError("config.local.ini")

@@ -15,6 +15,9 @@ start:
 copy_initial:
         move.b  (a0)+,(a1)+
         dbra    d7,copy_initial
+        ifd PRODUCT_REPLAY
+        bsr     game_begin_active
+        endif
         clr.w   update_index
         bsr     run_tail
         move.l  a5,a0
@@ -39,6 +42,9 @@ next_update:
         endif
         clr.b   write_count
         move.l  #write_log,write_ptr
+        ifd PRODUCT_REPLAY
+        bsr     game_source_tick
+        else
         bsr     scoreboard_update
         bsr     input_update
         bsr     score_gate
@@ -50,6 +56,7 @@ next_update:
         move.w  #256,d0
         bsr     emit_hex
         bsr     run_tail
+        endif
         move.l  a5,a0
         move.w  #256,d0
         bsr     emit_hex
@@ -93,6 +100,9 @@ refresh_return:
         rts
         endif
 run_tail:
+        ifd PRODUCT_REPLAY
+        bra     legacy_service_tick
+        else
         bsr     irq_counter_prefix
         clr.b   psg_count
         move.l  #psg_log,psg_ptr
@@ -101,6 +111,21 @@ run_tail:
         move.l  #vdp_log,vdp_ptr
         bsr     irq_vdp_tail
         rts
+        endif
+        ifd PRODUCT_REPLAY
+; Observation only: never writes gameplay or chooses a source callback regime.
+game_observe_pre_tail:
+        movem.l d0/a0,-(sp)
+        move.l  a5,a0
+        move.w  #256,d0
+        bsr     emit_hex
+        movem.l (sp)+,d0/a0
+        rts
+game_before_scoreboard:
+game_after_scoreboard:
+game_apply_sound:
+        rts
+        endif
 ; Copperline debug call emits one bounded hexadecimal record, including empty PSG.
 emit_hex:
         movem.l d0-d7/a0-a6,-(sp)
@@ -128,10 +153,15 @@ emit_done:
         rts
         include "amiga/tests/probe_io.i"
         include "amiga/translated_audio_tick.s"
+        ifd PRODUCT_REPLAY
+        include "amiga/game/tick.s"
+        include "amiga/game/legacy_adapter.s"
+        else
         ifd REGRESSION_MUTATION
         include "build/tests/mutated-routines.s"
         else
         include "build/translation/player-frame-routines.s"
+        endif
         endif
         even
 update_index: dc.w 0
