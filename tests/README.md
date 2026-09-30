@@ -413,3 +413,17 @@ source/native WAV formats, timing and remaining sound criteria.
 
 Latest aggregate baseline/self-test: 22 cases, 12 green and ten exact known red;
 six explicit missing groups still cause failure.
+
+
+`python scripts/run_audio_tests.py --case p2-first-serve-envelope --self-test`
+measures the captured source wave's stable plateau amplitudes and compares all
+15 decay steps with actual native volumes. It is known red at callback 39:
+nearest source-equivalent volume 3, actual 2. The independent
+`--case p2-first-serve-mute` passes at callback 40 with all mapped channels muted.
+Both use uninterrupted native gameplay through callback 42; neither hides the
+pitch failure or claims full sound-path acceptance. Self-tests alter actual
+private executable-table bytes, detect the output changes through the same
+comparator, then rebuild/recapture normal outputs.
+
+Latest aggregate baseline/self-test: 24 cases, 13 green and eleven exact known
+red; six explicit missing coverage groups still cause failure.

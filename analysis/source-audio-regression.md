@@ -69,3 +69,27 @@ the authoritative report/output. A changed frozen timestamp file was rejected
 by integrity validation and restored. Suite known-failure policy also rejects
 changed signatures and unexpected passes. This case adds one P2 comparison;
 the full objective remains incomplete.
+
+
+## Complete serve envelope and independent mute
+
+The envelope case measures all 15 nonmute source levels from the frozen WAV.
+Only one tone is active. Lower/upper sample quartiles identify its two steady
+plateaus, avoiding resampler edge overshoot. The plateau difference is identical
+under 2/3/4 ms trims for each interval, from 8191 at full level to 326 at level 14.
+Nearest native 0-64 volumes are 64,51,40,32,25,20,16,13,10,8,6,5,4,3,3. No
+synthesized samples or port-produced amplitudes become expected output.
+
+`p2-first-serve-envelope` observes the actual native application through callback
+42. Fourteen steps agree, including the held level and second decay phrase;
+at callback 39 the native volume table writes 2 while closest measured-source
+volume is 3. It is explicitly known red, independently of pitch. The separate
+`p2-first-serve-mute` passes at callback 40 with actual mapped volumes [0,0,0].
+It verifies the mute action, leaving filter decay and waveform onset/duration
+as separate measured criteria; it does not promote the entire sound path.
+
+Actual private executable-table mutations change full volume 64 to 63 and mute
+0 to 1. The shared comparator detects the changed envelope result and the real
+mute regression [0,0,1]. Product source and source evidence stay unchanged;
+normal binaries/waves are rebuilt last. The latest aggregate has 24 cases,
+13 green and eleven exact known red, with six missing groups still failing.

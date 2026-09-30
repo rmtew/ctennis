@@ -382,3 +382,9 @@ assembled-code mutation changes the observed period before normal outputs
 are restored. Other native intervals and source/native response, envelope,
 stereo/filter and onset/duration criteria remain incomplete. This is not
 complete P2 acceptance; see analysis/source-audio-regression.md and WORKLOG.md.
+
+First-serve P2 evidence now additionally includes 15 stable source-WAV plateau
+measurements and actual native attenuation/mute comparisons through callback
+42. Envelope is known red at attenuation 14 (nearest volume 3, actual 2);
+final hardware mute passes independently. This does not establish other sound
+classes or waveform filter/onset/duration acceptance.

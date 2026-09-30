@@ -125,6 +125,17 @@
         "expected": 1688,
         "actual": 1687
       }
+    },
+    "p2-first-serve-envelope": {
+      "reason": "At serve attenuation 14, the recorded source plateau amplitude is 326 relative to 8191 at full volume, stable under 2/3/4 ms trims. Its nearest 0-64 Paula level is 3; the native table writes 2. The other 14 measured decay levels agree. Source state and PSG sequence match; pitch is compared separately. No product fix is applied.",
+      "evidence": "tests/cases/p2-first-serve-envelope.json; build/tests/p2-first-serve-envelope-report.json; private source WAV; amiga/paula_tone_output.s paula_volume_table",
+      "signature": {
+        "update": 39,
+        "boundary": "paula-events-applied",
+        "field": "Paula volume for source tone 2",
+        "expected": 3,
+        "actual": 2
+      }
     }
   }
 }
