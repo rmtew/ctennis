@@ -226,3 +226,22 @@ The 34 observed returns occur in separate point intervals. This remains explicit
 missing coverage in the aggregate runner. The saved continuous match is retained
 while normal-return discovery and focused cases address the gap; no intended
 rally is claimed as observed.
+
+## Deuce and advantage regression cases
+
+The retained R2 includes the complete natural sequence: deuce at source update
+9134, advantage 9588, deuce again 9869, advantage again 10328, then game award
+10782. The source game counts change from 1-2 to 2-2. No score state is injected.
+`python scripts/phase_reference.py` materializes five four-update boundary
+fixtures plus `deuce-sequence-phase`, a continuous 1,649-update replay initialized
+once before the first deuce transition. Tracked source score/game checkpoints
+are checked against the parent; an altered scoring checkpoint is rejected.
+
+The actual native continuous case passes every retained entry/pre-tail/post-tail
+state and all 260 PSG bytes. All five boundary cases also pass. They are registered
+in the aggregate runner via the phase list. Run individually with
+`python scripts/run_regression_tests.py --case deuce-sequence-phase` (or
+`deuce-enter-phase`, `advantage-enter-phase`, `advantage-lost-phase`,
+`advantage-regained-phase`, `advantage-game-phase`). These diagnose the scoring
+sequence beyond the earlier full-match failure; they do not establish upstream
+parity, native scoreboard pixels or complete presentation coverage.

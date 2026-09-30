@@ -12,6 +12,8 @@ The resumed-launch known failure is now explained by carry loss in the translate
 
 Two-player calibration and a twice-identical varied 27,037-update full match/result/restart reference are now retained. Native R2 matches 2,535 updates before the known round-transition failure. Source markers establish returns by both players, but not in the same rally: that R2 requirement remains explicitly missing. An indexed match inventory records observed scoring, clock and refresh evidence. See the current worklog for captures and remaining gaps.
 
+The required deuce/advantage/back-to-deuce/game-award sequence now has a green continuous 1,649-update native phase replay (260 PSG bytes) and five green scoring-boundary cases, derived from natural R2 play. Source scoring checkpoints are enforced. This adds independent later scoring coverage without changing the full-match known failure or claiming hardware presentation parity.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

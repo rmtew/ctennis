@@ -6,7 +6,8 @@ from pathlib import Path
 from round_reference import validate_fixture
 
 ROOT = Path(__file__).resolve().parent.parent
-CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-play-phase')
+CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-play-phase', 'deuce-enter-phase', 'advantage-enter-phase',
+         'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase')
 
 
 def build_phase(case):
@@ -22,6 +23,10 @@ def build_phase(case):
     for ordinal, row in enumerate(updates, 1):
         row['source_ordinal'] = row['ordinal']
         row['ordinal'] = ordinal
+    for ordinal, expected in case.get('score_game_checkpoints', []):
+        actual = list(bytes.fromhex(updates[ordinal - 1]['ram'])[0x3E:0x42])
+        if actual != expected:
+            raise ValueError(f'Source scoring checkpoint differs at local update {ordinal}')
     return {'schema_version': 2, 'reference_kind': 'source-derived-phase',
             'parent_reference': case['parent_reference'],
             'parent_sha256': hashlib.sha256(payload).hexdigest(),
