@@ -46,6 +46,52 @@ The first case now passes `python scripts/run_regression_tests.py`: 200 continuo
 
 The next work follows the suite-first goal below. Establish reference-backed cases and explicit known failures before broad port cleanup or implementing missing gameplay regimes. The current suite tests the generated routines shared with the live executable; it has not yet migrated the product to editable maintained gameplay source. Keep separate normal-executable checks for joystick sampling, Copper/sprite display, Paula DMA and real-time cadence.
 
+## Intended endpoint and test migration (agreed 2026-09-30)
+
+The final product is concise, targeted, maintained native Amiga code. The
+translated 68000 implementation is a verified starting point, not a required
+internal architecture. Iterate on it with regression evidence, replacing and
+simplifying subsystems until translation scaffolding and original-hardware
+implementation debt are removed. Optimize using measurements on the target
+A500 while preserving gameplay, source cadence and presentation behaviour.
+Internal state layout, routine boundaries and data structures may change.
+Input, rendering and sound use the direct Amiga hardware paths; the product
+must not need a Z80 machine model or an SG VDP/PSG translation layer.
+
+Distinguish temporary translation diagnostics from lasting behavioural tests:
+
+- Raw source RAM, emulated registers/flags, source callback pointers and PSG
+  writes diagnose translation errors. They do not define the final port ABI.
+- Lasting tests compare meaningful simulation state and outcomes, action
+  acceptance, accumulated behaviour, logical timing, rendered content and
+  audible events. They retain continuous replays and relevant edge cases.
+- A small test-only observation adapter exposes named values and events from
+  the actual native implementation. It translates observations and captured
+  initial conditions, not gameplay or hardware operations. Keep this adapter
+  out of the production update/render/audio paths.
+
+For each subsystem replacement, define its behavioural contract from the
+independent original-game evidence. Establish the new comparison alongside
+existing detailed checks before removing those checks; preserve all relevant
+cases, including known failures, and explicitly justify any internal fields
+excluded from comparison. Map timing and random inputs to their observable
+choices/effects without requiring the original registers or memory layout.
+Sound comparisons move from source PSG bytes to equivalent audible events
+and output, with documented acceptance criteria; graphics comparisons cover
+displayed content and timing without requiring original VDP operations.
+The adapter must read actual port results, never reconstruct expected results
+or inject expected intermediate source writes to manufacture a match.
+
+Retire obsolete diagnostics, macros, virtual-memory/register machinery,
+generator dependencies and duplicated implementations as their replacements
+are verified. Preserve independent source references and provenance as test
+artifacts, not runtime dependencies. Final cleanup is complete only when the
+maintained native executable builds without translation scaffolding, the
+lasting suite preserves required coverage, and target hardware/performance
+checks pass. Passing tests alone do not prove optimality or justify keeping
+obsolete architecture. This migration follows the complete-suite baseline;
+it does not narrow the current reference/test completion goal.
+
 ## Next goal: complete the reference-backed red/green suite
 
 **Goal statement:** Build one-command regression coverage for every required

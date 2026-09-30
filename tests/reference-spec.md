@@ -20,6 +20,31 @@ sequence. State injection is acceptable only with documented source invariants
 and an explanation of why the state is reachable. Expected behaviour comes from
 the cartridge and annotated source, not assumed standard tennis rules.
 
+## Behavioural contract versus translation diagnostics
+
+The required behaviour coverage survives changes to the Amiga implementation.
+Current byte-level RAM and ordered PSG comparisons are temporary diagnostics
+for the translated starting point, not an obligation to retain its state
+layout, register emulation, callback pointers or original hardware interfaces.
+The final suite observes actual maintained native code through a small test-only
+adapter: named gameplay state/outcomes, input acceptance, timing, displayed
+content and audible events. Independent source captures remain the oracle.
+
+When replacing a subsystem, establish its behavioural comparison alongside
+existing diagnostics, retain continuous and focused cases, and document each
+mapping/exclusion before retiring obsolete checks. Preserve arithmetic effects,
+update ordering and cadence where they affect behaviour; internal addresses,
+register choices and routine structure may change. Captured source starts and
+random inputs need documented mappings to native initial conditions and choices,
+not a production emulation layer. The adapter must not calculate expected game
+behaviour or inject expected intermediate writes. Audio and graphics acceptance
+must compare equivalent observable output with explicit timing/tolerance rules.
+
+The suite-first baseline remains required in full. Later diagnostic retirement
+must preserve every required behaviour and reviewed known-failure status; it
+cannot silently weaken coverage or classify missing adapters as passing. See
+[the native endpoint and migration gates](../Champion-Tennis-Amiga-Port-Agent-Roadmap.md).
+
 ## Primary replays
 
 | ID | Required sequence | Purpose | Current evidence |
