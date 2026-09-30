@@ -108,6 +108,8 @@ if __name__ == '__main__':
     validate_fixture(fixture)
     coverage['supplementary_two_player_rally'] = {
         'reference_sha256': hashlib.sha256(payload).hexdigest(), **validate_rally(fixture, case)}
+    from contact_reference import validate_contact_set
+    coverage['upper_contact_action_timing'] = validate_contact_set()
     (ROOT / 'build/tests/coverage-inventory.json').write_text(json.dumps(coverage, indent=2) + '\n')
     for name, row in report.items():
         print(name, 'updates', row['updates'], 'returns', row['instrumented_return_counts'],

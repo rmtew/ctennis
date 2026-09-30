@@ -6,7 +6,7 @@
       "id": "F1-F5",
       "summary": "Focused behaviour inventory: input/contact edges, court outcomes and random effects",
       "tasks": [
-        "F2: capture accepted action onset and adjacent earlier/later callbacks, plus any distinct geometric contact edge.",
+        "F2: upper-return before/at/after action boundary now captured and green with contact-specific mutation detection. Remaining distinct serve acceptance, lower-return action choice and geometric contact edges; do not expand equivalent upper timing variants.",
         "F3: retain the existing continuous deuce/advantage/game sequence and its five boundary comparisons.",
         "F4: index each distinct bounce/net/out outcome through eventual point attribution, then compare missing outcomes independently.",
         "F5: retain indexed counter wraps, all six timer saturations and both refresh bits; establish resulting target/trajectory effects and any meaningful missing outcome."
@@ -71,6 +71,20 @@
       "source_evidence": "Independent original-game captures with complete approach, eight enabled held attempts and four reversals; exact movement snapshots for rows 2/3.",
       "native_evidence": "Continuous cases green except four later lower receiver parents at the exact upstream failure; four complete source-derived movement phases green.",
       "original_full_replays_preserved": true
+    },
+    {
+      "id": "F2-upper-return-action-boundary",
+      "cases": [
+        "contact-upper-action-before",
+        "contact-upper-action-at",
+        "contact-upper-action-after"
+      ],
+      "evidence": "analysis/contact-timing-regression.md; build/tests/<case-id>-report.json",
+      "native_callbacks_per_case": 722,
+      "source_contact_update": 707,
+      "classification": "green",
+      "stopping_condition_met": "Three repeated source references, complete continuous native comparisons and each targeted action-gate mutation detected at contact707.",
+      "complete_F2": false
     }
   ]
 }

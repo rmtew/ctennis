@@ -7,7 +7,7 @@ import re
 import sys
 from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
-from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES
+from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 OUT = ROOT / 'build/tests'
@@ -151,6 +151,9 @@ def main():
         if args.case == 'two-player-rally':
             from rally_reference import validate_rally
             reference_summary.update(validate_rally(fixture, case))
+        if args.case in CONTACT_CASES:
+            from contact_reference import validate_contact
+            reference_summary.update(validate_contact(fixture, case))
         case['updates'] = len(fixture['updates'])
     elif args.reference_only:
         parser.error('--reference-only applies to the round-transition case')
@@ -221,13 +224,35 @@ def main():
         else:
             coordinate = '$4a' if args.case in MOVEMENT_CASES else '$35'
             mutation = f'\taddq.b #1,{coordinate}(a5)\n'
-        mutation_path.write_text(source.replace(anchor, anchor + mutation))
+        if args.case in CONTACT_CASES:
+            # Change the action choice only at the captured contact geometry;
+            # preserve the original CCR and stack on every other path.
+            gate = '\tbeq\tupper_contact_finish_launch\t\t; [jr z,upper_contact_finish_launch]'
+            if source.count(gate) != 1:
+                raise ValueError('Upper contact action gate missing or ambiguous')
+            player_y, player_x = reference_summary['contact_entry_player_yx']
+            ball_y = reference_summary['contact_entry_ball_yx'][0]
+            replacement = ('\tmove.w sr,-(sp)\n'
+                           f'\tcmpi.b #{ball_y},$34(a5)\n\tbne.s regression_contact_original_gate\n'
+                           f'\tcmpi.b #{player_y},$45(a5)\n\tbne.s regression_contact_original_gate\n'
+                           f'\tcmpi.b #{player_x},$46(a5)\n\tbne.s regression_contact_original_gate\n'
+                           '\tmove.w (sp)+,ccr\n\tbne upper_contact_finish_launch\n'
+                           '\tbra upper_contact_apply_action_trajectory\n'
+                           'regression_contact_original_gate:\n'
+                           '\tmove.w (sp)+,ccr\n\tbeq upper_contact_finish_launch')
+            mutated_source = source.replace(gate, replacement)
+            report['mutation_kind'] = 'invert upper contact action trajectory gate'
+        else:
+            mutated_source = source.replace(anchor, anchor + mutation)
+        mutation_path.write_text(mutated_source)
         try:
             mutated, _ = execute(config, case['name'], mutation=True)
             detected = compare(mutated, fixture, case, fields)
             report['mutation_first_difference'] = detected
             if detected is None:
                 raise AssertionError('Gameplay mutation was not detected')
+            if args.case in CONTACT_CASES and detected['update'] != case['contact_timing']['contact_update']:
+                raise AssertionError('Action mutation did not first diverge at the intended contact')
         finally:
             mutation_path.unlink(missing_ok=True)
             (OUT / (case['name'] + '-mutated')).unlink(missing_ok=True)

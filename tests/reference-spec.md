@@ -102,6 +102,15 @@ continuous cases establish all row-3 limits with exact source movement snapshots
 eight enabled held attempts and four reversals. All 32 player/row/direction
 combinations are now covered; broader F2/F4/F5 and hardware gates remain open.
 
+F2 upper-return action timing now has three independent continuous cases:
+`contact-upper-action-before`, `contact-upper-action-at` and
+`contact-upper-action-after`. Each compares 722 native callbacks and 151 sound
+writes. Contact remains accepted at source callback707; before/at action selects
+one trajectory, while late action preserves the normal launch. A targeted gate
+mutation first diverges at that contact in each case. This finite boundary is
+complete; distinct serve/lower-return/geometric edges remain open. See
+[contact timing evidence](../analysis/contact-timing-regression.md).
+
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.
 

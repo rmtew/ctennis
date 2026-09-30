@@ -1,0 +1,151 @@
+{
+  "name": "contact-upper-action-at",
+  "requirement": "F2 upper-return action trajectory timing boundary",
+  "reference": "tests/reference/contact-upper-action-at.json",
+  "schema_version": 2,
+  "selection": "two",
+  "default_fire": false,
+  "capture_policy": "scripts/capture_contact_upper_action_at.lua",
+  "last_begin_frame": 2021,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "control_schedule": [
+    {
+      "frame": 120,
+      "control": "select",
+      "value": 1
+    },
+    {
+      "frame": 420,
+      "control": "select",
+      "value": 0
+    },
+    {
+      "frame": 1300,
+      "control": "p1-left",
+      "value": 1
+    },
+    {
+      "frame": 1300,
+      "control": "p1-button1",
+      "value": 1
+    },
+    {
+      "frame": 1300,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 1301,
+      "control": "p1-button1",
+      "value": 0
+    },
+    {
+      "frame": 1348,
+      "control": "p2-right",
+      "value": 0
+    },
+    {
+      "frame": 1349,
+      "control": "p2-left",
+      "value": 1
+    },
+    {
+      "frame": 1452,
+      "control": "p1-left",
+      "value": 0
+    },
+    {
+      "frame": 1464,
+      "control": "p1-left",
+      "value": 1
+    },
+    {
+      "frame": 1600,
+      "control": "p1-button1",
+      "value": 1
+    },
+    {
+      "frame": 1601,
+      "control": "p1-left",
+      "value": 0
+    },
+    {
+      "frame": 1601,
+      "control": "p1-right",
+      "value": 1
+    },
+    {
+      "frame": 1601,
+      "control": "p1-button1",
+      "value": 0
+    },
+    {
+      "frame": 1643,
+      "control": "p2-left",
+      "value": 0
+    },
+    {
+      "frame": 1643,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 1694,
+      "control": "p2-right",
+      "value": 0
+    },
+    {
+      "frame": 1729,
+      "control": "p1-right",
+      "value": 0
+    },
+    {
+      "frame": 1799,
+      "control": "p1-left",
+      "value": 1
+    },
+    {
+      "frame": 1799,
+      "control": "p2-right",
+      "value": 1
+    },
+    {
+      "frame": 1935,
+      "control": "p1-button1",
+      "value": 1
+    },
+    {
+      "frame": 1936,
+      "control": "p1-button1",
+      "value": 0
+    },
+    {
+      "frame": 1983,
+      "control": "p2-left",
+      "value": 1
+    },
+    {
+      "frame": 1983,
+      "control": "p2-right",
+      "value": 0
+    },
+    {
+      "frame": 2006,
+      "control": "p2-button1",
+      "value": 1
+    },
+    {
+      "frame": 2010,
+      "control": "p2-button1",
+      "value": 0
+    }
+  ],
+  "contact_timing": {
+    "contact_update": 707,
+    "action_onset_frame": 2006
+  },
+  "purpose": "Preserve natural rally prefix; contact remains accepted, but action after contact must not alter the existing launch. Four-frame pulse and subsequent flight retained."
+}

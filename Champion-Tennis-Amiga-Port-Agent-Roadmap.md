@@ -16,7 +16,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 47 cases: 32 green and fifteen exact known red; five missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 50 cases: 35 green and fifteen exact known red; five missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
@@ -128,17 +128,27 @@ F1 movement bounds are complete: all 32 player/row/direction combinations have
 source evidence and native comparisons, including independent phases for later
 lower receiver limits obscured by the known upstream failure. Stop movement
 exploration unless a concrete new behavioural gap appears. The current aggregate
-is 47 cases: 32 green and 15 exact known red, with mutation/signature checks.
+is 50 cases: 35 green and 15 exact known red, with mutation/signature checks.
 These known-red cases are not 15 independent defects; five broader requirement
 groups remain open.
 
-Next, freeze the small F2 upper-return action-timing set already discovered:
-onset before, at and after contact. Preserve contact acceptance and compare the
-resulting trajectory; do not multiply equivalent onset variants. Then prioritize
-the missing round/reset, result/restart and hardware-output comparisons, retaining
-specific geometric contact edges and court/random outcomes where the inventory
-identifies distinct unprotected behaviour. The full reference specification and
-suite goal remain unchanged.
+The finite F2 upper-return action-timing set is now frozen and independently
+compared: before/at contact selects the action trajectory, while after contact
+retains the normal launch. All three continuous native cases pass 722 callbacks
+and 151 sound writes, with targeted gate mutations first detected at contact707.
+Stop expanding equivalent upper timing variants. Distinct serve/lower-return
+and geometric contact gaps remain recorded separately.
+
+Next prioritize complete round/reset/resume and match/result/menu/restart
+intervals in both modes, preserving main-thread effects and sound in the source
+references. Use full-match milestones to define bounded starts/ends rather than
+adding arbitrary short windows. Existing full R1/R2 recordings supply the starts, result/menu sequence and
+first restarted flight. Their retained endpoint is only the first advancing
+restart serve: check handoff/animation completion and extend source evidence
+where necessary, preserving the existing prefix. New input discovery is
+unnecessary. Retain additional
+geometric contact edges and court/random outcomes only where the inventory
+identifies distinct unprotected behaviour. Full suite scope remains unchanged.
 
 ## Next goal: complete the reference-backed red/green suite
 

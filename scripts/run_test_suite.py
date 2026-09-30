@@ -48,13 +48,15 @@ def main():
     parser.add_argument('--self-test', action='store_true',
                         help='Verify mutation detection and changed-signature rejection')
     args = parser.parse_args()
-    known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases']
-    if args.self_test:
-        verify_failure_policy(known)
-    results = []
     out = ROOT / 'build/tests'
     out.mkdir(parents=True, exist_ok=True)
     (out / 'suite-report.json').unlink(missing_ok=True)
+    known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases']
+    if args.self_test:
+        verify_failure_policy(known)
+    from contact_reference import validate_contact_set
+    contact_timing = validate_contact_set()
+    results = []
     for case in CASES:
         report_path = out / ('report.json' if case == 'serve' else f'{case}-report.json')
         # Never classify stale output from a failed invocation as a known failure.
@@ -82,7 +84,8 @@ def main():
     summary = {'baseline_check': args.baseline_check, 'passed': passed,
                'cases': results, 'missing_requirements': MISSING,
                'self_test': args.self_test,
-               'coverage_backlog': COVERAGE_BACKLOG}
+               'coverage_backlog': COVERAGE_BACKLOG,
+               'contact_timing_source_set': contact_timing}
     (out / 'suite-report.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps({'passed': passed, 'missing_requirements': MISSING}, indent=2))
     return 0 if passed else 2 if MISSING or any(row['status'] == 'tool-error' for row in results) else 1

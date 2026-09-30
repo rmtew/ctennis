@@ -522,3 +522,10 @@ Each preserves a natural full-R2 prefix and verifies the actual row at movement
 entry/return; no source flags, coordinates or intermediate expected writes are
 injected. Their green comparisons complete the 32-combination F1 bounds inventory.
 Other focused behaviours and native hardware acceptance remain open.
+
+The bounded `contact-upper-action-before`, `contact-upper-action-at` and
+`contact-upper-action-after` cases protect the upper-return trajectory choice
+around contact. Capture/test commands use these IDs. `python scripts/contact_reference.py`
+validates their source relationship; the aggregate includes that proof and runs
+contact-specific mutation detection. See [contact timing evidence](../analysis/contact-timing-regression.md).
+This boundary is complete; equivalent onset variants are unnecessary.
