@@ -466,6 +466,15 @@ direct source movement snapshots and targeted native boundary-escape mutation
 detection. Use the same capture/test commands with these IDs. Upper row two
 is complete; lower row two and both players' row-three limits remain open.
 
+`movement-lower-receiver-right-bound` captures the natural later upper serve
+through 4,593 callbacks. Its continuous comparison is known red at callback
+2536. `movement-lower-receiver-right-phase` independently compares the 24 later
+callbacks, passes, and detects a receiver-boundary mutation. Capture the parent
+with the usual capture command, run `python scripts/phase_reference.py`, then
+run either registered case with the ordinary regression command. The phase
+checks its source parent/recipe on every invocation and does not claim upstream
+continuous parity.
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,

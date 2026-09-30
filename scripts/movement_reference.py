@@ -16,10 +16,27 @@ RECEIVER_BOUNDS = {
         'prefix_frame': 1511, 'prefix_callbacks': 212, 'press': 1512, 'reverse': 1536, 'release': 1540, 'mode': 0x80},
     'movement-receiver-down-bound': {'direction': 'down', 'coordinate': 0x45, 'start': 8, 'limit': 31,
         'prefix_frame': 1511, 'prefix_callbacks': 212, 'press': 1512, 'reverse': 1536, 'release': 1540, 'mode': 0x80},
+    'movement-lower-receiver-right-bound': {'player': 'lower', 'direction': 'right', 'coordinate': 0x4A,
+        'start': 192, 'limit': 199, 'prefix_frame': 5868, 'prefix_callbacks': 4569,
+        'press': 5869, 'reverse': 5887, 'release': 5891, 'mode': 0x92},
 }
+RECEIVER_PHASES = {'movement-lower-receiver-right-phase': 'movement-lower-receiver-right-bound'}
 
 
 def validate_movement(fixture, case):
+    if case['name'] in RECEIVER_PHASES:
+        from phase_reference import validate_phase
+        validate_phase(fixture, case)
+        source_name = RECEIVER_PHASES[case['name']]
+        source_case = json.loads((ROOT / f'tests/cases/{source_name}.json').read_text())
+        source_fixture = json.loads((ROOT / source_case['reference']).read_text())
+        proof = validate_movement(source_fixture, source_case)
+        for observation in proof['observed_movement_limits']:
+            for interval in ('source_callback_interval', 'held_callback_interval', 'reversal_callback_interval'):
+                if not all(case['initial_source_update'] < ordinal <= case['initial_source_update'] + case['updates']
+                           for ordinal in observation[interval]):
+                    raise ValueError('Native phase does not include all required movement observations')
+        return {**proof, 'source_capture_case': source_name, 'phase_initial_source_update': case['initial_source_update']}
     if case['name'] in RECEIVER_BOUNDS:
         return validate_receiver_bound(fixture, case)
     if case['name'] not in ('movement-serve-bounds', 'movement-alternate-serve-bounds'):
@@ -116,6 +133,8 @@ def validate_movement(fixture, case):
 
 def validate_receiver_bound(fixture, case):
     contract = RECEIVER_BOUNDS[case['name']]
+    player = contract.get('player', 'upper')
+    animation = 0x43 if player == 'lower' else 0x44
     coordinate, direction = contract['coordinate'], contract['direction']
     limit, start = contract['limit'], contract['start']
     sign = DIRECTIONS[direction][2]
@@ -128,7 +147,13 @@ def validate_receiver_bound(fixture, case):
     validate_fixture(parent)
     prefix = [{key: value for key, value in row.items() if not key.startswith('movement_')}
               for row in fixture['updates'] if row['frame'] <= contract['prefix_frame']]
-    if (len(prefix) != contract['prefix_callbacks'] or prefix != parent['updates'][:contract['prefix_callbacks']]
+    # Extra observer records change debugger-log sequence numbers, not the
+    # ordered source main-thread writes/events. Preserve every other field.
+    def normalized(rows):
+        return [{**row, 'before_events': [{key: value for key, value in event.items() if key != 'sequence'}
+                                         for event in row['before_events']]} for row in rows]
+    if (len(prefix) != contract['prefix_callbacks']
+            or normalized(prefix) != normalized(parent['updates'][:contract['prefix_callbacks']])
             or fixture['initial_post_tail'] != parent['initial_post_tail']):
         raise ValueError('Receiver bound did not preserve natural R2 service setup')
     held = [row for row in fixture['updates'] if contract['press'] <= row['frame'] < contract['reverse']]
@@ -139,14 +164,15 @@ def validate_receiver_bound(fixture, case):
     for row in held + reversed_rows:
         before = bytes.fromhex(row['movement_entry_ram'])
         after = bytes.fromhex(row['movement_return_ram'])
-        if row['callback_kind'] != 'gameplay' or (before[0x44] & 0xE0) != 0x40 or before[0x39] & 4:
+        if row['callback_kind'] != 'gameplay' or (before[animation] & 0xE0) != 0x40 or before[0x39] & 4:
             raise ValueError('Receiver movement not enabled in row two')
         if before[0x3D] != contract['mode']:
             raise ValueError('Unexpected physical controller ownership')
-        if before[0x44] != after[0x44] or before[0x6B] != after[0x6B]:
+        if before[animation] != after[animation] or before[0x6B] != after[0x6B]:
             raise ValueError('Movement observations straddle a phase or tick change')
         expected_direction = DIRECTIONS[direction if row['frame'] < contract['reverse'] else OPPOSITE[direction]][0]
-        if (before[0x53] >> 4) != expected_direction:
+        shift = 4 if (before[0x3D] ^ (16 if player == 'upper' else 0)) & 16 else 0
+        if (before[0x53] >> shift) & 15 != expected_direction:
             raise ValueError('Receiver did not consume held/reversed direction')
         if bytes.fromhex(row['ram'])[coordinate] != after[coordinate]:
             raise ValueError('Later callback work changed observed receiver coordinate')
@@ -160,7 +186,7 @@ def validate_receiver_bound(fixture, case):
         raise ValueError('Receiver hold lacks both step parities')
     if not all((after[coordinate] - limit) * sign < 0 for _, after in states[len(held):]):
         raise ValueError('Receiver did not respond to reversal')
-    return {'observed_movement_limits': [{'player': 'upper', 'bounds_row': 2, 'direction': direction,
+    return {'observed_movement_limits': [{'player': player, 'bounds_row': 2, 'direction': direction,
              'source_callback_interval': [held[0]['ordinal'], held[-1]['ordinal']],
              'start_coordinate': start, 'stopped_coordinate': limit,
              'held_callback_interval': [held[-8]['ordinal'], held[-1]['ordinal']],

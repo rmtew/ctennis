@@ -144,7 +144,8 @@ def main():
     exact = fixture.get('schema_version') == 2
     if exact:
         reference_summary = validate_phase(fixture, case) if fixture.get('reference_kind') == 'source-derived-phase' else validate_fixture(fixture)
-        if args.case in MOVEMENT_CASES:
+        from movement_reference import RECEIVER_PHASES
+        if args.case in MOVEMENT_CASES or args.case in RECEIVER_PHASES:
             from movement_reference import validate_movement
             reference_summary.update(validate_movement(fixture, case))
         if args.case == 'two-player-rally':
@@ -194,18 +195,22 @@ def main():
     report['updates_matched'] = matched
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
     if args.self_test and difference is None:
-        from movement_reference import RECEIVER_BOUNDS, DIRECTIONS
+        from movement_reference import RECEIVER_BOUNDS, RECEIVER_PHASES, DIRECTIONS
+        mutation_case = RECEIVER_PHASES.get(args.case, args.case)
         source = (ROOT / 'build/translation/player-frame-routines.s').read_text()
-        anchor = ('upper_player_movement:\n' if args.case in RECEIVER_BOUNDS else
+        mutation_player = RECEIVER_BOUNDS.get(mutation_case, {}).get('player', 'upper')
+        anchor = (('lower_player_motion_update:\n' if mutation_player == 'lower' else 'upper_player_movement:\n')
+                  if mutation_case in RECEIVER_BOUNDS else
                   'lower_player_motion_update:\n' if args.case in MOVEMENT_CASES else 'ball_flight_update:\n')
         if source.count(anchor) != 1:
             raise ValueError('Mutation entry point missing')
         mutation_path = OUT / 'mutated-routines.s'
-        if args.case in RECEIVER_BOUNDS:
-            contract = RECEIVER_BOUNDS[args.case]
+        if mutation_case in RECEIVER_BOUNDS:
+            contract = RECEIVER_BOUNDS[mutation_case]
             coordinate, limit = contract['coordinate'], contract['limit']
             operator = 'addq' if DIRECTIONS[contract['direction']][2] > 0 else 'subq'
-            mutation = ('\tcmpi.b #$40,$44(a5)\n\tbne.s regression_receiver_mutation_skip\n'
+            animation = 0x43 if mutation_player == 'lower' else 0x44
+            mutation = (f'\tcmpi.b #$40,${animation:x}(a5)\n\tbne.s regression_receiver_mutation_skip\n'
                         f'\tcmpi.b #{limit},${coordinate:x}(a5)\n\tbne.s regression_receiver_mutation_skip\n'
                         f'\t{operator}.b #1,${coordinate:x}(a5)\nregression_receiver_mutation_skip:\n')
         else:

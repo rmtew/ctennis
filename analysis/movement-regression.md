@@ -127,8 +127,8 @@ detected at callback 1331, pre-tail sprite record 5 X: expected 175, actual 176.
 Normal source/executable remain unchanged and temporary mutation files are
 removed. This targeted check passed after the full aggregate's mutation run.
 
-The combined inventory tracks each player/row/direction separately: 20 of
-32 combinations have approach/hold/reversal evidence, and 12 remain. Passing
+The combined inventory tracks each player/row/direction separately: 21 of
+32 combinations have approach/hold/reversal evidence, and 11 remain. Passing
 one limit does not close its entire row. This is movement coverage, not a
 percentage of overall source or port correctness.
 
@@ -170,6 +170,22 @@ continuous matches and the new independent case; do not manufacture animation
 flags or substitute the old Python movement model for original-game evidence.
 
 ## Read-only movement capture
+
+The lower receiver right limit now has a continuous source parent and a
+separate native phase: `movement-lower-receiver-right-bound` and
+`movement-lower-receiver-right-phase`. The parent preserves R2's first 4,569
+callbacks, including ordered main-thread writes; only debugger-log sequence
+numbers change with added observation records. Mode `$92` exchanges controller
+ownership, so pad 2 controls the lower player.
+
+Source callbacks 4570–4587 approach X192 to X199; 4580–4587 prove eight stopped
+attempts. Reversals 4588–4591 produce X198,196,195,193. Two observed captures
+agree through 4,593 callbacks, and match the independent observer-free run.
+The continuous native parent retains the exact callback-2536 round-transition
+failure. The independent 24-callback phase is green and detects X199-to-X200
+escape at local callback 6/source 4575. It initializes once from source callback
+4569 and carries actual native state; no intermediate source writes are injected.
+This adds one lower row-2 limit without claiming continuous upstream parity.
 
 `python scripts/capture_movement_observations.py --case two-player-rally`
 and `--case two-player-match` each record full RAM immediately before and after

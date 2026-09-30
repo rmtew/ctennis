@@ -136,6 +136,19 @@
         "expected": 3,
         "actual": 2
       }
+    },
+    "movement-lower-receiver-right-bound": {
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented, first reached in R2 at callback 2536",
+      "evidence": "Continuous independently captured lower-receiver source prefix; separate movement-lower-receiver-right-phase is green.",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
     }
   }
 }

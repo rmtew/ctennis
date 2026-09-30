@@ -89,8 +89,13 @@ It proves approach to X175, eight stopped attempts and four reversal attempts
 within the actual handoff phase. The inventory tracks all player/row/direction
 combinations separately. Its left/up/down companion cases now complete all
 four upper row-2 limits, with 242 callbacks each and source snapshots showing
-unblocked movement before the bounce. Twenty combinations are established;
-twelve remain: lower row-2 limits and all row-3 limits.
+unblocked movement before the bounce. Lower-receiver and row-3 limits need
+their own evidence.
+
+The lower receiver right limit is additionally established by a green
+24-callback source-derived phase. Its independently captured continuous parent
+retains the earlier known round-transition failure; both cases stay registered.
+Twenty-one movement combinations are now established, eleven remain.
 
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.

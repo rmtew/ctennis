@@ -8,7 +8,8 @@ from round_reference import validate_fixture
 ROOT = Path(__file__).resolve().parent.parent
 CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-play-phase', 'deuce-enter-phase', 'advantage-enter-phase',
          'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase',
-         'shared-timer-saturation-phase', 'status-timer-saturation-phase', 'status-timer-observation-phase')
+         'shared-timer-saturation-phase', 'status-timer-saturation-phase', 'status-timer-observation-phase',
+         'movement-lower-receiver-right-phase')
 
 
 def build_phase(case):
