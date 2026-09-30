@@ -89,7 +89,7 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
     # This is the application's existing initial serve state, captured independently.
     # No intermediate expected states or title-specific code are injected.
     source_case = case.get('source_case', 'one-player-match')
-    if source_case not in ('one-player-match', 'two-player-match'):
+    if source_case not in ('one-player-match', 'two-player-match', 'one-player-restart-complete', 'two-player-restart-complete'):
         raise ValueError('Unsupported native presentation source parent')
     parent_path = ROOT / f'tests/reference/{source_case}.json'
     parent = json.loads(parent_path.read_text())

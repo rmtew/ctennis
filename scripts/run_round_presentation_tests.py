@@ -68,7 +68,7 @@ def check(case, parent, captured):
     for row in events:
         wanted = bytes.fromhex(parent['updates'][row['update'] - 1]['post_tail_ram'])
         actual = bytes.fromhex(row['post_tail_ram'])
-        differences = [{'update': row['update'], 'boundary': 'round-scene-state',
+        differences = [{'update': row['update'], 'boundary': case.get('state_boundary', 'round-scene-state'),
             'field': 'source state byte', 'ram_offset': offset,
             'expected': wanted[offset], 'actual': actual[offset]}
             for offset in range(2, 256) if wanted[offset] != actual[offset]]
@@ -83,13 +83,14 @@ def check(case, parent, captured):
         generation = raster['generation']['prepared_after_callback']
         kind = parent['updates'][generation - 1]['callback_kind']
         directory = case.get('reference_directories', {}).get(str(observed['completed_callbacks']), 'tests/reference/presentation')
-        source, association = source_generation(generation, case['source_case'], directory, callback_kind=kind)
+        source, association = source_generation(generation, case['source_case'], directory, callback_kind=kind,
+            require_uploaded_sprite_buffer=kind != 'tail-only' if case.get('tail_without_sprite_upload') else True)
         wanted = map_source_palette(source, contract)
         with Image.open(raster['capture']['path']) as picture:
             actual = native_picture(picture, contract)
         for field, box in {'viewport': (0, 0, 256, 192), **FIELDS}.items():
             expected, seen = wanted.crop(box), actual.crop(box)
-            difference = compare(expected, seen, 'completed-round-' + field)
+            difference = compare(expected, seen, case.get('pixel_boundary', 'completed-round-') + field)
             if difference:
                 difference.update(update=observed['completed_callbacks'],
                     x=difference['x'] + box[0], y=difference['y'] + box[1])

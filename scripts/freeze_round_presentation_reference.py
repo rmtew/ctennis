@@ -1,4 +1,4 @@
-"""Validate only the missing upper-round source windows; retain primary media."""
+"""Validate bounded supplemental source windows; retain primary media."""
 import argparse
 import json
 import shutil
@@ -7,8 +7,8 @@ from run_presentation_tests import digest
 from associate_presentation_generations import source_generation
 
 
-def freeze(case):
-    recipe_path = ROOT / f'tests/cases/round-scenes-{case}.json'
+def freeze(case, explicit_recipe=None):
+    recipe_path = ROOT / (explicit_recipe or f'tests/cases/round-scenes-{case}.json')
     recipe = json.loads(recipe_path.read_text())
     directory = ROOT / f'build/tests/{case}-presentation-{recipe["capture_label"]}'
     manifest = json.loads((directory / 'manifest.json').read_text())
@@ -40,7 +40,9 @@ def freeze(case):
     try:
         parent = json.loads((ROOT / f'tests/reference/{case}.json').read_text())
         associations = [source_generation(update, case, recipe['reference_directory'],
-            callback_kind=parent['updates'][update - 1]['callback_kind'])[1]
+            callback_kind=parent['updates'][update - 1]['callback_kind'],
+            require_uploaded_sprite_buffer=parent['updates'][update - 1]['callback_kind'] != 'tail-only'
+                if recipe.get('tail_without_sprite_upload') else True)[1]
             for update in recipe['association_updates']]
     except Exception:
         descriptor_path.unlink(missing_ok=True)
@@ -53,5 +55,7 @@ def freeze(case):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('one-player-match', 'two-player-match'), required=True)
-    freeze(parser.parse_args().case)
+    parser.add_argument('--case', choices=('one-player-match', 'two-player-match', 'one-player-restart-complete', 'two-player-restart-complete'), required=True)
+    parser.add_argument('--recipe')
+    args = parser.parse_args()
+    freeze(args.case, args.recipe)

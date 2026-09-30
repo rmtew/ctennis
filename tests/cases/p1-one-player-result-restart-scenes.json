@@ -1,0 +1,99 @@
+{
+  "name": "p1-one-player-result-restart-scenes",
+  "source_case": "one-player-restart-complete",
+  "initial_source_update": 11959,
+  "initial_phase_reference": "tests/reference/one-player-match-complete-phase.json",
+  "completed_callbacks": [
+    11964,
+    12090,
+    12286,
+    12540,
+    13362,
+    13381
+  ],
+  "checkpoint_names": [
+    "match-tally",
+    "result",
+    "returned-title",
+    "restart-selected",
+    "restarted-court",
+    "restarted-flight"
+  ],
+  "inputs": [
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "native_input_schedule": [
+    {
+      "after_callback": 11960,
+      "source_control": {
+        "sequence": 193088,
+        "kind": "control",
+        "frame": 13260,
+        "control": "fire",
+        "value": 0
+      },
+      "arguments": {
+        "port": 2,
+        "red": false
+      }
+    },
+    {
+      "after_callback": 12536,
+      "source_control": {
+        "sequence": 202729,
+        "kind": "control",
+        "frame": 13835,
+        "control": "select",
+        "value": 1
+      },
+      "arguments": {
+        "rawkey": 70,
+        "action": "press"
+      }
+    },
+    {
+      "after_callback": 12836,
+      "source_control": {
+        "sequence": 207628,
+        "kind": "control",
+        "frame": 14135,
+        "control": "select",
+        "value": 0
+      },
+      "arguments": {
+        "rawkey": 70,
+        "action": "release"
+      }
+    },
+    {
+      "after_callback": 13360,
+      "source_control": {
+        "sequence": 216347,
+        "kind": "control",
+        "frame": 14660,
+        "control": "fire",
+        "value": 1
+      },
+      "arguments": {
+        "port": 2,
+        "red": true
+      }
+    }
+  ],
+  "presentation_reference_directory": "tests/reference/presentation-result-scenes-one-player",
+  "reference_directories": {
+    "11964": "tests/reference/presentation-result-scenes-one-player",
+    "12090": "tests/reference/presentation-result-scenes-one-player",
+    "12286": "tests/reference/presentation-result-scenes-one-player",
+    "12540": "tests/reference/presentation-result-scenes-one-player",
+    "13362": "tests/reference/presentation-result-scenes-one-player",
+    "13381": "tests/reference/presentation-result-scenes-one-player"
+  },
+  "tail_without_sprite_upload": true,
+  "state_boundary": "result-restart-scene-state",
+  "pixel_boundary": "completed-result-restart-",
+  "contract": "One local interval before match award through result/title, physical restart selection, restarted court and first displayed serve flight. Initialize once; never inject expected main-thread writes or selected transition states. Physical edges retimed to original callback epochs. No ordinary complete-match or timing parity claimed."
+}

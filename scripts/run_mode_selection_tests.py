@@ -34,6 +34,12 @@ def capture(case,kind=None):
     ram=media/f'f{frame:05d}.ram'
     if digest(ram)!=sample['hardware_sha256']['ram'] or (ram.read_bytes()[0x3d]&0x94)!=case['expected_mode_flags']:
         raise ValueError('Accepted mode flags differ from independent original hardware')
+    pre=media/'f00119.ram';pre_sample=next(row for row in manifest['samples'] if row['frame']==119)
+    if digest(pre)!=pre_sample['hardware_sha256']['ram']:
+        raise ValueError('Original pre-choice state changed')
+    pre_ram=pre.read_bytes()
+    if not pre_ram[0x3d]&4 and (pre_ram[0x3a] or pre_ram[0x3b]):
+        raise ValueError('Original pre-choice snapshot contains active gameplay')
     with CopperlineSession(ctl,ROOT) as s:
         launch=s.inspect('session_launch',{'factory':True,'model':'A500','binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
         stop=s.inspect('run_until',{'seconds':30,'wait_ms':50000})
@@ -46,27 +52,29 @@ def capture(case,kind=None):
             if stop['reason']!='target' or stop.get('bridge') or stop['vpos']!=0:raise RuntimeError(stop)
             mode=int(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc03d,'len':1})['data'],16)&0x94
             count=int(s.inspect('mem_read',{'addr':base+symbols['simulation_updates'],'len':2})['data'],16)
+            phases=list(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc03a,'len':2})['data']))
+            active=not bool(mode&4) and any(phases)
             fields=s.inspect('mem_read',{'addr':base+symbols['field_values'],'len':6})['data']
             path=directory/(label+'.png');image=s.inspect('capture_screenshot',{'path':str(path)})
             with Image.open(path) as im:actual=native_picture(im,contract)
             pixel=compare(expected,actual,'accepted-mode-viewport') if label=='accepted-mode' else None
-            rows.append({'stage':label,'gameplay_callbacks':count,'mode_flags':mode,'fields':fields,'pixel_difference':pixel,'pixel_sha256':hashlib.sha256(actual.tobytes()).hexdigest(),'stop':stop,'capture':image})
+            rows.append({'stage':label,'source_rate_callbacks':count,'player_phases':phases,'active_gameplay':active,'mode_flags':mode,'fields':fields,'pixel_difference':pixel,'pixel_sha256':hashlib.sha256(actual.tobytes()).hexdigest(),'stop':stop,'capture':image})
             if action:events.append({'stage':label,'request':{'rawkey':case['rawkey'],'action':action},'response':s.inspect('input_key',{'rawkey':case['rawkey'],'action':action})})
         log=Path(launch['log']).read_text(encoding='utf-8',errors='replace')
         for marker in ('cpu=M68000','cpu_clock=7.09MHz','chip_ram=512K','fast_ram=0K','slow_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3'):
             if marker not in log:raise ValueError(marker)
     differences=[]
-    if rows[-1]['gameplay_callbacks']==0:
+    if not rows[-1]['active_gameplay']:
         differences.append({'update':0,'boundary':'accepted-mode','field':'gameplay started after choice','expected':True,'actual':False})
-    if rows[0]['gameplay_callbacks']:
+    if rows[0]['active_gameplay']:
         differences.append({'update':0,'boundary':'before-mode-selection','field':'gameplay started before choice','expected':False,'actual':True})
     if rows[-1]['mode_flags']!=case['expected_mode_flags']:
         differences.append({'update':0,'boundary':'accepted-mode','field':'mode flags','expected':case['expected_mode_flags'],'actual':rows[-1]['mode_flags']})
     if rows[-1]['pixel_difference']:differences.append(rows[-1]['pixel_difference'])
     # Exclude scheduler-dependent callback counts and stop metadata from known-red acceptance.
     # The actual counts remain evidence; all output values and pixel hashes are pinned.
-    observations=[{k:v for k,v in row.items() if k in ('stage','mode_flags','fields','pixel_difference','pixel_sha256')} for row in rows]
-    return {'case':case['name'],'passed':not differences,'first_difference':differences[0] if differences else None,'differences':differences,'baseline_observations':observations,'observations':rows,'physical_key_events':events,'executable_sha256':digest(exe),'native_source_sha256':digest(ROOT/case['native_source']),'emulator_sha256':digest(Path(config['tools']['copperline'])),'bridge_sha256':digest(ctl),'kickstart_sha256':digest(Path(config['inputs']['amiga_rom'])),'source_mode_ram_sha256':digest(ram),'reference_sha256':reference_sha,'source_frame':frame,'case_sha256':digest(ROOT/f'tests/cases/{case["name"]}.json'),'source_initialization':'Current ordinary R1 application initialization, identical for both requested choices; no R2 fixture or selected-mode RAM writes.','scope':case['contract']}
+    observations=[{k:v for k,v in row.items() if k in ('stage','mode_flags','player_phases','active_gameplay','fields','pixel_difference','pixel_sha256')} for row in rows]
+    return {'case':case['name'],'passed':not differences,'first_difference':differences[0] if differences else None,'differences':differences,'baseline_observations':observations,'observations':rows,'physical_key_events':events,'executable_sha256':digest(exe),'native_source_sha256':digest(ROOT/case['native_source']),'emulator_sha256':digest(Path(config['tools']['copperline'])),'bridge_sha256':digest(ctl),'kickstart_sha256':digest(Path(config['inputs']['amiga_rom'])),'source_prechoice_ram_sha256':digest(pre),'source_mode_ram_sha256':digest(ram),'reference_sha256':reference_sha,'source_frame':frame,'case_sha256':digest(ROOT/f'tests/cases/{case["name"]}.json'),'source_initialization':'Current ordinary R1 application initialization, identical for both requested choices; no R2 fixture or selected-mode RAM writes.','scope':case['contract']}
 
 def run(case_name,self_test=False):
     case=json.loads((ROOT/f'tests/cases/{case_name}.json').read_text())

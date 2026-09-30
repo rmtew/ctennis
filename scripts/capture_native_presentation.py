@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False, strict_source_events=True):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False, strict_source_events=True, presentation_reference_directory='tests/reference/presentation', native_input_schedule=None):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -31,7 +31,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     report_path = directory / 'report.json'
     report_path.unlink(missing_ok=True)
     case = json.loads((ROOT / 'tests/cases/p1-title.json').read_text())
-    if source_case not in ('one-player-match', 'two-player-match'):
+    if source_case not in ('one-player-match', 'two-player-match', 'one-player-restart-complete', 'two-player-restart-complete'):
         raise ValueError('Unsupported source parent')
     case['source_case'] = source_case
     if native_inputs is None:
@@ -49,9 +49,13 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         phase = json.loads((ROOT / initial_phase_reference).read_text())
         if targets and targets[-1] > initial_source_update + len(phase['updates']):
             raise ValueError('Graphics targets extend beyond the independently verified phase')
+    schedule = native_input_schedule or []
+    if schedule and (not observe_state or any(row['after_callback'] < initial_source_update for row in schedule)):
+        raise ValueError('Physical schedules require consecutive callback observation and valid epochs')
+    applied_inputs = []
     source_path = ROOT / f'tests/reference/{source_case}.json'
     source = json.loads(source_path.read_text())
-    frozen = json.loads((ROOT / f'tests/reference/presentation/{source_case}/manifest.json').read_text())
+    frozen = json.loads((ROOT / f'{presentation_reference_directory}/{source_case}/manifest.json').read_text())
     if digest(source_path) != frozen['parent_reference_sha256']:
         raise ValueError('Source simulation reference changed relative to frozen presentation capture')
     if list(targets) != sorted(set(targets)) or not targets or targets[0] < initial_source_update or targets[-1] > len(source['updates']):
@@ -117,6 +121,12 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 registers = session.inspect('regs_get')
                 state_events.append({'update': generation, 'stop': stop,
                     'post_tail_ram': session.inspect('mem_read', {'addr': registers['a'][5], 'len': 256})['data']})
+                for event in schedule:
+                    if event['after_callback'] == generation:
+                        tool = 'input_key' if 'rawkey' in event['arguments'] else 'input_joy'
+                        applied_inputs.append({'after_callback': generation, 'source_control': event['source_control'],
+                            'tool': tool, 'arguments': event['arguments'], 'stop': stop,
+                            'response': session.inspect(tool, event['arguments'])})
                 return True
             if observe_fields and stop['pc'] == base + symbols['scoreboard_selection_done']:
                 field_events.append({'update': generation + 1,
@@ -166,7 +176,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 'addr': base + symbols['simulation_update'],
                 'cond': {'lhs': {'mem': base + symbols['simulation_updates']},
                          'op': 'eq', 'rhs': target}})
-            deadline = stop['seconds'] + 10
+            deadline = stop['seconds'] + max(10, (target - current) / 30 + 2)
             while True:
                 stop = session.inspect('run_until', {'seconds': deadline, 'wait_ms': 50000})
                 if observe_stop(stop):
@@ -243,7 +253,9 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'initial_source_update': initial_source_update,
               'initial_phase_reference': initial_phase_reference,
               'initial_phase_sha256': digest(ROOT / initial_phase_reference) if initial_phase_reference else None,
-              'native_inputs': native_inputs, 'source_case': source_case, 'observations': observations,
+              'native_inputs': native_inputs, 'source_case': source_case,
+              'native_input_schedule': schedule, 'applied_physical_events': applied_inputs,
+              'presentation_reference_directory': presentation_reference_directory, 'observations': observations,
               'recorded_entropy': recorded_entropy,
               'refresh_fixture_sha256': digest(directory / 'refresh-signs.bin') if recorded_entropy else None,
               'commits': commits, 'commit_tracking': track_commits,

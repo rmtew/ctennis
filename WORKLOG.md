@@ -1,3 +1,17 @@
+# Current checkpoint: both result/title/restart scene sequences (2026-10-01)
+
+Previous turn made progress: physical mode-request failures registered790bc8a. This turn adds both local result/title/physical-restart sequences:2844 states,12 full viewports,72 geometry crops (48 matching), six compiled late mutants rejected. Physical fire release, Delete/Tab selection press/release and fire repress applied at source epochs; no expected transition writes. Source120 rasters repeat identically and preserve the original extension callback streams; primary575 unchanged. Tail IRQ$06B1 omits sprite upload but can change VDP registers, so explicit title association uses captured hardware and unique source pixels. All four old round comparisons remain identical from actual captures.
+
+Harness correction: fixed10-second inter-checkpoint deadline could not reach the14-second restart gap; now scales with callback distance. Initial failed attempt terminal before rerun. Eight successful result captures (two normals/six mutants). Logical PSG/event differences retained; no P2 waveform acceptance claimed.
+
+Corrected and reran both mode tests: simulation_updates counts tail/menu work, so nonzero count alone is not a gameplay failure. Assert active player phases outside waiting mode against verified original pre-choice frame119. Both remain known red, repeated normals agree, all four compiled mutants rejected. Eight successful mode captures this turn. Source-rate counts are diagnostics.
+
+Current incremental99-case aggregate:52 green,47 exact known red, no unexpected/tool failures. Four cases executed/rerun;95 prior reports retained with provenance. Current policy/classifications verified. No full99-case execution claimed. Four groups remain open; goal active.
+
+Next: both return scenes and distinct bounce/net/out presentation, then remaining F2/F4/F5, audio and ordinary native cadence/input/deadline requirements. Generation-aligned startup acceptance remains open. Stop equivalent result/menu/restart variants. Evidence:analysis/native-result-restart-presentation.md. Historical worklog bytes preserved.
+
+---
+
 # Current checkpoint: physical mode-request failures registered (2026-10-01)
 
 Previous goal turn made progress: finite round matrix and stopping rules committed314e648. This turn adds two actual ordinary native physical-key selection tests. Identical R1 startup for both choices; no R2 selected-state injection. Source Del/Ins and Func map to native Delete/Tab. Existing accepted-mode1299 images/RAM verified without new MAME captures.

@@ -20,7 +20,7 @@ def sha(data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('one-player-match', 'two-player-match'), default='one-player-match')
+    parser.add_argument('--case', choices=('one-player-match', 'two-player-match', 'one-player-restart-complete', 'two-player-restart-complete'), default='one-player-match')
     parser.add_argument('--recipe', help='Additional bounded source checkpoints; retain separately from the primary media')
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None)
@@ -35,6 +35,11 @@ def main():
     parent_bytes = parent_path.read_bytes()
     parent = json.loads(parent_bytes)
     validate_fixture(parent)
+    if args.case.endswith('-restart-complete'):
+        from regime_reference import validate_extension, load_reference
+        base_name = args.case.replace('-restart-complete', '-match')
+        validate_extension(parent, {'continuous_parent': base_name})
+        parent = {**parent, 'milestones': load_reference(base_name)[0]['milestones']}
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     out = ROOT / f'build/tests/{args.case}-presentation'
     extra = json.loads((ROOT / args.recipe).read_text()) if args.recipe else None
@@ -106,6 +111,8 @@ def main():
             field_requests[name] = dict(point_a=ram[0x3e], point_b=ram[0x3f],
                 games_a=ram[0x40], games_b=ram[0x41],
                 mode=0 if ram[0x3d] & 4 else 2 if ram[0x3d] & 128 else 1)
+            if checkpoint.get('fields') == []:
+                field_requests[name] = {}
     window = extra['raster_window'] if extra else [-2, 4]
     frames = sorted({frame + delta for frame in named.values() for delta in range(window[0], window[1] + 1)
                      if 0 < frame + delta <= parent['updates'][-1]['end_frame'] + 1})
@@ -118,9 +125,9 @@ def main():
         raw = directory / 'callbacks.tsv'
         env = os.environ.copy()
         env.update(CT_TEST_CAPTURE=str(raw), CT_TEST_LAST_FRAME=str(case['last_begin_frame']),
-                   CT_TEST_SELECT='two' if args.case == 'two-player-match' else 'one',
-                   CT_TEST_FIRE='0' if args.case == 'two-player-match' else '1',
-                   CT_TEST_CONTACT_MARKERS='1' if args.case == 'two-player-match' else '0',
+                   CT_TEST_SELECT='two' if args.case.startswith('two-player-') else 'one',
+                   CT_TEST_FIRE='0' if args.case.startswith('two-player-') else '1',
+                   CT_TEST_CONTACT_MARKERS='1' if args.case.startswith('two-player-') else '0',
                    CT_TEST_POLICY='scripts/capture_presentation_policy.lua',
                    CT_MEDIA_BASE_POLICY=case['capture_policy'], CT_MEDIA_TARGETS=str(targets),
                    CT_MEDIA_DIRECTORY=str(directory))

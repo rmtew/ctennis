@@ -18,7 +18,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The current incrementally verified aggregate has 97 cases: 52 green and 45 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The current incrementally verified aggregate has 99 cases: 52 green and 47 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
@@ -531,6 +531,21 @@ Gameplay begins before a choice; Tab retains one-player mode. No R2 selected-sta
 injection is used. Timed final viewports are diagnostic while acceptance is absent;
 generation-aligned accepted-mode presentation remains open. See
 [mode-selection evidence](analysis/native-mode-selection-regression.md).
-Current incremental aggregate:97 cases,52 green,45 known red. Next protect distinct
+Mode-request milestone aggregate:97 cases,52 green,45 known red. Next protect distinct
 match/result/menu/restart presentation using existing source generations. Stop
 equivalent missing-mode variants. All four remaining groups retain their scope.
+
+
+Result/title/restart milestone: both modes now have2844 consecutive native states,
+12 completed whole viewports,72 geometry crops and six rejected compiled late
+mutations. Physical release/selection/repress edges are applied without original
+transition writes. Source media are120 twice-identical rasters from validated
+prefix-preserving extensions; primary media remain unchanged. Tail-only title
+association uses actual captured hardware, not stale sprite RAM. See
+[result/restart evidence](analysis/native-result-restart-presentation.md).
+Startup mode tests were corrected to use active player/waiting state; callback
+counts alone do not imply gameplay. Their repeated runs and mutations pass.
+Current incremental aggregate:99 cases,52 green,47 exact known red; four cases
+executed/rerun and95 prior reports retained. Stop equivalent result/menu/restart
+variants. Next protect both returns and distinct bounce/net/out presentation.
+Generation-aligned accepted mode, remaining F2/F4/F5, P2 and P3 stay open.

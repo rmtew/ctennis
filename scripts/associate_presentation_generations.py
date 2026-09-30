@@ -15,7 +15,7 @@ from run_presentation_tests import digest, map_source_palette, native_picture, c
 
 def source_generation(generation, source_case='one-player-match',
                       reference_directory='tests/reference/presentation', region=None,
-                      callback_kind='gameplay'):
+                      callback_kind='gameplay', require_uploaded_sprite_buffer=True):
     root = ROOT / reference_directory
     frozen = json.loads((root / 'manifest.json').read_text())
     if not frozen['source_media_checks_passed']:
@@ -39,6 +39,8 @@ def source_generation(generation, source_case='one-player-match',
     if callback_kind not in ('gameplay', 'tail-only') or row['callback_kind'] != callback_kind:
         raise ValueError('Source callback kind differs from the explicit presentation contract')
     ram = bytes.fromhex(row['entry_ram'])
+    if not require_uploaded_sprite_buffer and (callback_kind != 'tail-only' or ram[:2] != bytes.fromhex('b106')):
+        raise ValueError('No-upload association requires the original tail IRQ address $06B1')
     candidates = []
     for sample in manifest['samples']:
         # active_updates uses begin_frame < frame <= end_frame. Short tail
@@ -55,7 +57,7 @@ def source_generation(generation, source_case='one-player-match',
                 raise ValueError('Source hardware observation changed')
         regs, vram = stem.with_suffix('.regs').read_bytes(), stem.with_suffix('.vram').read_bytes()
         address = regs[5] * 128
-        if vram[address:address + 40] == ram[0x10:0x38]:
+        if not require_uploaded_sprite_buffer or vram[address:address + 40] == ram[0x10:0x38]:
             candidates.append(sample['frame'])
     if not candidates:
         raise ValueError(f'No source hardware observation for generation {generation}')
@@ -74,6 +76,7 @@ def source_generation(generation, source_case='one-player-match',
     return images[0], {'generation': generation, 'source_case': source_case, 'hardware_frames': candidates, 'pixel_frames': frames,
                        'reference_sha256': digest(root / 'manifest.json'),
                        'callback_kind': callback_kind,
+                       'sprite_upload_required': require_uploaded_sprite_buffer,
                        'comparison_region': region}
 
 

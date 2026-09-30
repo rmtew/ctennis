@@ -18,7 +18,7 @@
       "tasks": [
         "Physical Delete/Tab startup selection requests now expose missing choice gating and two-player acceptance; repeatable ordinary captures and compiled mode/sprite mutations are retained. A generation-aligned accepted-mode image is still required when the native acceptance path exists. Complete both returns and distinct bounce/net/out checkpoints; upper serve stages already have their own case.",
         "All six status messages have local game-driven appearance/expiry comparisons. Deuce, advantage and return-to-deuce now have 27 consecutive point request/state observations and 30 completed field crops, with compiled early/frozen-field mutations rejected behind the known second-reader failure. Stop equivalent status and equal/advantage windows. Complete remaining point/game reset and actual mode-transition changes; fixed-mode preservation and renderer-unit selector coverage do not close them.",
-        "All four local round contexts (one/two players, lower/upper serving end) now compare tally/reset-pause/final-pause/resume: 1072 consecutive states,16 whole viewports,96 matching field crops and12 compiled late mutations. Stop equivalent round windows. Complete accepted mode changes, match/result/menu and restart sequences with explicit presentation generations; local phase initialization does not establish ordinary full-match continuity."
+        "All four local round contexts and both complete local match/result/title/physical-restart scene sequences now have consecutive state, completed whole-viewport and late compiled-mutation comparisons. Stop equivalent round/result/restart variants. Generation-aligned accepted mode presentation, both returns and distinct bounce/net/out checkpoints remain; local phase starts do not establish ordinary complete-match continuity."
       ]
     },
     {
@@ -255,6 +255,24 @@
       "repeat_identical_observations": true,
       "compiled_mutations_detected": 4,
       "accepted_presentation_generation_established": false,
+      "complete_P1": false
+    },
+    {
+      "id": "P1-result-title-restart-scenes",
+      "cases": [
+        "p1-one-player-result-restart-scenes",
+        "p1-two-player-result-restart-scenes"
+      ],
+      "evidence": "analysis/native-result-restart-presentation.md",
+      "consecutive_state_checks": 2844,
+      "completed_whole_viewports": 12,
+      "region_crops": 72,
+      "matching_region_crops": 48,
+      "compiled_mutations_detected": 6,
+      "physical_source_retimed_edges": 10,
+      "supplemental_source_rasters": 120,
+      "original_full_replay_and_extensions_preserved": true,
+      "source_main_thread_writes_injected": false,
       "complete_P1": false
     }
   ]
