@@ -1,19 +1,6 @@
 {
   "schema_version": 1,
   "cases": {
-    "p1-title": {
-      "evidence": "scripts/run_presentation_tests.py; build/tests/p1-title-report.json; independently captured stable title and exact native viewport calibration",
-      "reason": "The actual native application's startup loads its existing initial serve state and displays the court/players. Original title/menu startup is unimplemented. This is a hardware-output comparison, not the accelerated simulation harness.",
-      "signature": {
-        "update": 0,
-        "boundary": "stable-title",
-        "field": "logical display pixel",
-        "x": 74,
-        "y": 12,
-        "expected": "000000",
-        "actual": "cc55bb"
-      }
-    },
     "round-transition": {
       "evidence": "build/tests/round-transition-report.json; tests/reference/round-transition.json; WORKLOG.md exact first-round source checkpoint",
       "reason": "Native main-thread round setup and tail-only dispatch are unimplemented",
@@ -567,30 +554,6 @@
       "complete_checks_sha256": "99940d8e88fa987ebb2f818fda77a2d7e9bc11f33499a6774aeb1cd1bea2e771",
       "evidence": "analysis/native-complementary-round-scenes.md; build/tests/p1-two-player-upper-round-scenes-report.json",
       "reason": "The native main-thread reset/tail-only route is absent and sprite origin remains shifted. Two-player intervals also retain the omitted second physical reader. Require the entire measured state/pixel/event stream; correct expectations remain the independent original, never the broken native baseline."
-    },
-    "p1-accept-one-player": {
-      "signature": {
-        "update": 0,
-        "boundary": "before-mode-selection",
-        "field": "gameplay started before choice",
-        "expected": false,
-        "actual": true
-      },
-      "complete_checks_sha256": "ffdee26eda6741e95193735dd3c801e5a25a3bf2ca9529a778c4c64df8389299",
-      "reason": "Ordinary startup already has active first-serve player phases before physical choice; waiting mode is absent. Two-player request also retains one-player flags. Callback counts include tail/menu ticks and are diagnostics, not the gating assertion. Complete semantic state/output observations pinned.",
-      "evidence": "analysis/native-mode-selection-regression.md"
-    },
-    "p1-accept-two-player": {
-      "signature": {
-        "update": 0,
-        "boundary": "before-mode-selection",
-        "field": "gameplay started before choice",
-        "expected": false,
-        "actual": true
-      },
-      "complete_checks_sha256": "ffdee26eda6741e95193735dd3c801e5a25a3bf2ca9529a778c4c64df8389299",
-      "reason": "Ordinary startup already has active first-serve player phases before physical choice; waiting mode is absent. Two-player request also retains one-player flags. Callback counts include tail/menu ticks and are diagnostics, not the gating assertion. Complete semantic state/output observations pinned.",
-      "evidence": "analysis/native-mode-selection-regression.md"
     },
     "p1-one-player-result-restart-scenes": {
       "signature": {

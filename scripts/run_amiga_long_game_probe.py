@@ -1,4 +1,4 @@
-"""Replay a held-fire game through its award against the source cartridge."""
+"""Replay an explicit captured phase through its award; not ordinary title boot."""
 
 import argparse
 import configparser
@@ -96,7 +96,7 @@ def main():
     constrained, audio_checks, audio_events = make_refresh_fixture(
         source, Path(config["inputs"]["cartridge"]).read_bytes())
     replay = OUT / "replay-game"
-    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-DLONG_GAME_REPLAY=1",
+    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-DLONG_GAME_REPLAY=1", "-DLIVE_PHASE_START=1",
          "-o", str(replay), "amiga/gameplay_integration_probe.s"])
     png = OUT / "after-game-award.png"
     gif = OUT / "game-award.gif"
@@ -184,7 +184,8 @@ def main():
                             for pixel in scored_image.crop(output_rectangle(tally)).get_flattened_data())
         if yellow_pixels == 0:
             mismatches.append({"update": 1205, "error": "awarded game tally not visible"})
-    report = {"ordinary_executable_sha256": hashlib.sha256(LIVE.read_bytes()).hexdigest(),
+    report = {"startup_scope": "Captured diagnostic phase; ordinary_run means native entropy, not title boot",
+              "ordinary_executable_sha256": hashlib.sha256(LIVE.read_bytes()).hexdigest(),
               "replay_executable_sha256": hashlib.sha256(replay.read_bytes()).hexdigest(),
               "source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
               "replay_source_refresh_choices": constrained,

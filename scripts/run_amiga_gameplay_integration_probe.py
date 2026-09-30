@@ -1,4 +1,4 @@
-"""Build a live-input/display integration probe from the verified gameplay body."""
+"""Check live input/display in an explicit captured diagnostic phase."""
 
 import hashlib
 import json
@@ -13,7 +13,7 @@ DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
 
 def main():
     from build_native_game import build
-    config, executable = build()
+    config, executable = build(phase_start=True)
     copperline = Path(config["tools"]["copperline"])
     amiga_rom = Path(config["inputs"]["amiga_rom"])
     png = DISPLAY / "gameplay-integration.png"

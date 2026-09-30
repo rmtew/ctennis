@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified with bounded serve and live evidence (see WORKLOG.md); CT-02–CT-10 remain uncompleted and queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03–CT-10 remain uncompleted and queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -46,9 +46,9 @@ Evidence: shared `amiga/game/tick.s` dispatcher in live application and maintain
 
 ## CT-02 — Boot to title and accept the chosen mode
 
-**Status:** queued. **Dependencies:** CT-01.
+**Status:** verified (2026-09-30 UTC); draft PR pending review. **Dependencies:** CT-01.
 
-**Verified blocker:** `start` copies a source live-game snapshot; the builder selects original frame 1299 and applies its tail. Gameplay is already active before either choice. Delete and Tab both leave one-player mode; accepted-mode generation is absent.
+**Resolved blocker:** `start` copies a source live-game snapshot; the builder selects original frame 1299 and applies its tail. Gameplay is already active before either choice. Delete and Tab both leave one-player mode; accepted-mode generation is absent.
 
 **Targets:** [startup](amiga/gameplay_integration_probe.s), [initial-state construction](scripts/run_amiga_gameplay_integration_probe.py), [mode evidence](analysis/native-mode-selection-regression.md), [mode runner](scripts/run_mode_selection_tests.py), original setup/menu labels in [ROM symbols](analysis/rom-symbols.def).
 
@@ -57,6 +57,14 @@ Evidence: shared `amiga/game/tick.s` dispatcher in live application and maintain
 **Observable acceptance:** fresh ordinary boot shows the title and waits without active play; either physical key selects its actual mode, transitions to the correct court and waits for legitimate serve action. A held key does not repeatedly restart a match. The completed accepted display belongs to that accepted choice.
 
 **Lightweight validation:** reuse `p1-title`, `p1-accept-one-player` and `p1-accept-two-player`. Extend the two existing mode checks to their first stable accepted generation, not two new case families. One fresh boot per choice, including press/hold/release. A source-rate callback count during title is not itself premature gameplay.
+
+Evidence: ordinary boot exactly matches the original title; both physical key
+choices pass hold/release, one-time acceptance, completed chosen mode label,
+exact accepted viewport at the retained serve-wait ball pose, ignored selection
+re-press and physical-fire serve response. Existing wrong-mode and sprite faults
+are rejected. The documented sprite-origin constant is corrected solely as this
+acceptance prerequisite. Captured active-scene checks now require explicit
+`LIVE_PHASE_START`; they do not establish ordinary boot or full matches.
 
 ## CT-03 — Complete physical controls and preserve player ownership
 
@@ -118,7 +126,7 @@ Evidence: shared `amiga/game/tick.s` dispatcher in live application and maintain
 
 **Status:** queued. **Dependencies:** CT-06. Presentation fixes needed for earlier acceptance are made in those items, not deferred artificially.
 
-**Verified blockers:** `upload_sprite_attributes` adds horizontal origin $6c where the viewport requires $80, producing the recorded 20-pixel logical shift. Later layouts remain stale behind missing lifecycle work. Runtime still translates source sprite records and shadows VDP writes. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
+**Resolved prerequisite in CT-02:** `upload_sprite_attributes` now uses horizontal origin $80; the previously recorded $6c/20-pixel shift blocked accepted-mode display verification. **Remaining blockers:** Later layouts remain stale behind missing lifecycle work. Runtime still translates source sprite records and shadows VDP writes. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
 
 **Targets:** [sprite upload, scoreboard and double buffers](amiga/gameplay_integration_probe.s), [display include](amiga/sprite_probe_display.i), [score patches](amiga/score_copper_patch.i), existing presentation/status/widget/round/result runners.
 
