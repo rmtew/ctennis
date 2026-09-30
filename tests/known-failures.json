@@ -52,6 +52,19 @@
         "actual": 200,
         "callback_kind": "gameplay"
       }
+    },
+    "two-player-match": {
+      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented, first reached in R2 at callback 2536",
+      "evidence": "build/tests/two-player-match-report.json and twice-identical full two-player source fixture",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
     }
   }
 }

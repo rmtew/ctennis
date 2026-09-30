@@ -27,10 +27,10 @@ copy_initial:
 next_update:
         moveq   #0,d0
         move.w  update_index,d0
-        add.w   d0,d0
+        add.l   d0,d0
         lea     inputs,a0
-        move.b  (a0,d0.w),case_game_bits
-        move.b  1(a0,d0.w),case_keyboard_bits
+        move.b  (a0,d0.l),case_game_bits
+        move.b  1(a0,d0.l),case_keyboard_bits
         ifne CASE_CAPTURE_REFRESH
         clr.b   refresh_count
         move.l  a5,a0

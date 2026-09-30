@@ -77,7 +77,7 @@ def execute(config, case_name='serve', mutation=False):
     run(command + ['-o', str(executable), 'amiga/tests/simulation_harness.s'])
     log = run([config['tools']['copperline'], '--factory', '--model', 'A500', '--chipset', 'OCS',
                '--video', 'PAL', '--cpu', '68000', '--chip', '512K', '--slow', '0', '--fast', '0',
-               '--noaudio', '--run', str(executable), '--exit-on-return', config['inputs']['amiga_rom']], timeout=120)
+               '--noaudio', '--run', str(executable), '--exit-on-return', config['inputs']['amiga_rom']], timeout=360)
     (OUT / (executable.name + '.log')).write_text(log, encoding='utf-8')
     for marker in ('cpu=M68000', 'chip_ram=512K', 'fast_ram=0K', 'slow_ram=0K',
                    'chipset=Ocs', 'video=Pal', 'Kickstart 1.3', 'program returned 0'):
@@ -91,7 +91,7 @@ def prepare_inputs(fixture, case):
     """Materialize inputs/entropy, never inject expected transition writes."""
     count = len(fixture['updates'])
     exact = fixture.get('schema_version') == 2
-    if not 0 < count <= 16384:
+    if not 0 < count <= 65535:
         raise ValueError('Replay exceeds this harness input-index range')
     initial = bytes.fromhex(fixture['initial_pre_tail'])
     if len(initial) != 256:
@@ -122,7 +122,7 @@ def prepare_inputs(fixture, case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
-    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match') + PHASE_CASES, default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())

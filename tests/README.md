@@ -198,3 +198,31 @@ the baseline difference, test temporary carry preservation against all 200
 independent phase updates, and restore the unmodified generated source. This
 is a diagnostic; the registered baseline intentionally stays known red until
 a reviewed implementation change. Earlier root-cause-pending text is superseded.
+
+Two-player input mapping is independently captured with `python scripts/capture_input_map.py`; see analysis/two-player-input-map.md. The private record retains exact callbacks and physical fields. Calibration does not count as the required full varied R2 match.
+
+## Varied two-player full match
+
+Reproduce with `python scripts/capture_test_reference.py --case two-player-match`
+and validate the saved fixture with the same command plus `--verify-only`.
+`python scripts/run_regression_tests.py --case two-player-match` executes the
+actual native replay. The frozen schedule includes individual and simultaneous
+movement, action changes, a full 4-6 match, result/reselection and restarted serve.
+The 27,037-update reference was captured twice identically. It contains 5,414
+PSG bytes, no refresh reads, and 1,203 between-callback RAM writes. Optional
+source entry markers prove 11 lower and 23 upper successful contact launches.
+Run `python scripts/inventory_match_references.py` for indexed scoring, contact,
+clock and refresh observations in `build/tests/match-inventory.json`.
+
+The native replay matches 2,535 updates/350 PSG bytes and first diverges at
+callback-entry 2536 (frame 3834), display setup request expected 129 actual 1:
+the known unimplemented round transition. Full report is
+`build/tests/two-player-match-report.json`. The harness uses a long input index
+and supports up to 65,535 updates, with a 360-second process watchdog for long
+runs. Source callback count and frame count remain distinct.
+
+R2 is still missing a rally containing successful returns by both players.
+The 34 observed returns occur in separate point intervals. This remains explicit
+missing coverage in the aggregate runner. The saved continuous match is retained
+while normal-return discovery and focused cases address the gap; no intended
+rally is claimed as observed.

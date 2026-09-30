@@ -5,7 +5,9 @@ local cpu = machine.devices[":z80"]
 local program = cpu.spaces["program"]
 local ports = cpu.spaces["io"]
 local dbg = assert(machine.debugger)
-local key = machine.ioport.ports[":sgexp:sk1100:PA3"]:field(0x10)
+local two_player = os.getenv("CT_TEST_SELECT") == "two"
+local key = two_player and machine.ioport.ports[":sgexp:sk1100:PB5"]:field(0x08)
+    or machine.ioport.ports[":sgexp:sk1100:PA3"]:field(0x10)
 local button = machine.ioport.ports[":ctrl1:mspad:JOYPAD"]:field(0x10)
 local out = assert(io.open(assert(os.getenv("CT_TEST_CAPTURE")), "w"))
 local frame, ordinal, sequence = 0, -1, 0
@@ -79,6 +81,13 @@ for _, address in ipairs({0x0109, 0x01D3, 0x0144, 0x025D, 0x0211, 0x011C, 0x0580
         'printf "REF M %%d %%d %%04X",temp9,temp8,%04x;g', address))
 end
 
+if os.getenv("CT_TEST_CONTACT_MARKERS") == "1" then
+    for _, address in ipairs({0x0C9F, 0x0FD3}) do
+        cpu.debug:bpset(address, "temp7 == 1", string.format(
+            'printf "REF M %%d %%d %%04X",temp9,temp8,%04x;g', address))
+    end
+end
+
 taps[1] = ports:install_write_tap(0x7F, 0x7F, "round-psg", function(_, value)
     if frame < 1298 or finished then return end
     drain()
@@ -104,7 +113,7 @@ emu.register_frame_done(function()
         key:set_value(1)
     elseif frame == 420 then
         key:clear_value()
-    elseif frame == 1300 then
+    elseif frame == 1300 and os.getenv("CT_TEST_FIRE") ~= "0" then
         button:set_value(1)
         emit("REF CONTROL 1300 fire 1")
     end

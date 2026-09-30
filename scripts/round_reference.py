@@ -101,7 +101,7 @@ def build_fixture(payload, metadata, *, complete_match=False):
     if callbacks[0]['frame'] != 1299:
         raise ValueError('Wrong initial callback')
     initial = callbacks[0]
-    game_award = next((row for row in callbacks if bytes.fromhex(row['ram'])[0x41] == 1), None)
+    game_award = next((row for row in callbacks if sum(bytes.fromhex(row['ram'])[0x40:0x42]) == 1), None)
     if game_award is None:
         raise ValueError('First game award missing')
     tail = next((row for row in callbacks if row['ordinal'] > game_award['ordinal'] and row['callback_kind'] == 'tail-only'), None)
@@ -207,7 +207,7 @@ def validate_fixture(fixture):
     rows = {name: updates[value['update'] - 1] for name, value in milestones.items()}
     if any(value['frame'] != rows[name]['frame'] for name, value in milestones.items()):
         raise ValueError('Milestone frame does not match callback')
-    if bytes.fromhex(rows['first_game_award']['ram'])[0x41] != 1:
+    if sum(bytes.fromhex(rows['first_game_award']['ram'])[0x40:0x42]) != 1:
         raise ValueError('First game award state missing')
     if rows['tail_only_start']['callback_kind'] != 'tail-only':
         raise ValueError('Pause milestone is not tail-only')

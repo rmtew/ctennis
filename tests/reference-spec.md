@@ -50,7 +50,7 @@ cannot silently weaken coverage or classify missing adapters as passing. See
 | ID | Required sequence | Purpose | Current evidence |
 |---|---|---|---|
 | R1: one-player match | Reset, select one-player mode, play a complete match, finish the result sequence and start another game. Include successive game transitions and the first resumed serve after each. | AI/random decisions, accumulated ball/player/score state, clocks, sound, round resets and match/restart behaviour. | Exact prefix fixture now covers 1,566 updates through first game, tail-only pause and resumed serve flight; port matches 1,332 and fails at the known round transition. The older 2202-callback capture remains partial evidence. Full R1 now captures 13,378 updates through match result/restart twice identically, preserves the prefix exactly, and executes the native replay with the same first divergence at 1333. Later native regimes remain obscured until phase-specific comparisons exist. |
-| R2: two-player varied match | Reset, select two-player mode, use both controls, play a complete match and restart. Deliberately vary movement and action timing, rally length, point winners and scoring sequences. | Complement AI play with both human input paths and varied consecutive state transitions. | Required; no complete reference fixture or port comparison established. |
+| R2: two-player varied match | Reset, select two-player mode, use both controls, play a complete match and restart. Deliberately vary movement and action timing, rally length, point winners and scoring sequences. | Complement AI play with both human input paths and varied consecutive state transitions. | Full varied 4-6 match/result/restart captured twice identically (27,037 updates); native replay matches 2,535 updates then known round-transition failure. Returns by both players occur in different rallies; required same-rally return by each remains a gap. |
 
 Choose scripts based on observed source behaviour. Seek serving from both ends,
 returns by both players, wins by both sides, short and longer rallies, and the
@@ -168,7 +168,7 @@ Its existing 1,566-update prefix remains exactly identical. The actual runner
 executes the complete replay, matches 1,332 updates and 250 PSG bytes, then first
 diverges at callback 1333 before the native round transition is implemented.
 This is known red; later native regimes still need independent phase cases.
-R2 remains missing.
+R2 now has a twice-identical full varied match and actual native comparison; its required same-rally return by both players remains missing.
 
 Next complete the suite before port cleanup: obtain R2 with complementary
 input/scoring variety, assess the inventory above, add only meaningful focused

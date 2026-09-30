@@ -13,7 +13,8 @@ from round_reference import build_fixture, validate_fixture
 
 
 def capture_round(config, case_name='round-transition'):
-    full_match = case_name == 'one-player-match'
+    full_match = case_name in ('one-player-match', 'two-player-match')
+    two_player = case_name == 'two-player-match'
     case = json.loads((ROOT / f'tests/cases/{case_name}.json').read_text())
     last_frame = case.get('last_begin_frame', 3000)
     out = ROOT / f'build/tests/{case_name}-capture'
@@ -25,6 +26,9 @@ def capture_round(config, case_name='round-transition'):
         env = os.environ.copy()
         env['CT_TEST_CAPTURE'] = str(path)
         env['CT_TEST_LAST_FRAME'] = str(last_frame)
+        env['CT_TEST_SELECT'] = 'two' if two_player else 'one'
+        env['CT_TEST_FIRE'] = '0' if two_player else '1'
+        env['CT_TEST_CONTACT_MARKERS'] = '1' if two_player else '0'
         if full_match:
             env['CT_TEST_POLICY'] = case['capture_policy']
         else:
@@ -49,14 +53,15 @@ def capture_round(config, case_name='round-transition'):
         'case_sha256': hashlib.sha256((ROOT / f'tests/cases/{case_name}.json').read_bytes()).hexdigest(),
         'policy_sha256': hashlib.sha256((ROOT / case['capture_policy']).read_bytes()).hexdigest() if full_match else None,
         'control_schedule': case.get('control_schedule'),
+        'selection': 'two' if two_player else 'one',
         'machine': 'SC-3000 NTSC, SK-1100 keyboard, cartridge champtns',
-        'setup_inputs': [{'frame': 120, 'control': 'SK1100 PA3 key 0x10', 'pressed': True},
-                         {'frame': 420, 'control': 'SK1100 PA3 key 0x10', 'pressed': False},
-                         {'frame': 1300, 'control': 'port-1 fire', 'pressed': True}],
+        'setup_inputs': [{'frame': 120, 'control': 'SK1100 PB5 key 0x08' if two_player else 'SK1100 PA3 key 0x10', 'pressed': True},
+                         {'frame': 420, 'control': 'SK1100 PB5 key 0x08' if two_player else 'SK1100 PA3 key 0x10', 'pressed': False},
+                         *([] if two_player else [{'frame': 1300, 'control': 'port-1 fire', 'pressed': True}])],
         'capture_bounds': {'begin_frame': 1298, 'last_begin_frame': last_frame},
         'source_command': command,
     }, complete_match=full_match)
-    if full_match:
+    if full_match and not two_player:
         prefix = json.loads((ROOT / 'tests/reference/round-transition.json').read_text())
         for index, (actual, expected) in enumerate(zip(fixture['updates'], prefix['updates']), 1):
             for field in ('entry_ram', 'ram', 'post_tail_ram', 'psg', 'inputs', 'refresh_reads', 'before_events'):
@@ -64,6 +69,7 @@ def capture_round(config, case_name='round-transition'):
                     raise ValueError(f'Full match differs from frozen prefix at update {index}: {field}')
         if len(fixture['updates']) < len(prefix['updates']):
             raise ValueError('Full match shorter than existing prefix')
+    if full_match:
         controls = [{'frame': event['frame'], 'control': event['control'], 'value': event['value']}
                     for event in fixture['timeline'] if event['kind'] == 'control']
         if controls != [event for event in case['control_schedule'] if event['frame'] >= 1298]:
@@ -80,7 +86,7 @@ def capture_round(config, case_name='round-transition'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match'), default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match'), default='serve')
     parser.add_argument('--verify-only', action='store_true', help='Validate an existing round-transition reference without MAME')
     args = parser.parse_args()
     if args.verify_only:
