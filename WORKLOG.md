@@ -825,10 +825,10 @@ The preliminary Ghidra import/export path, label-audit prototype, and block-sugg
 
 ## Recheck
 
-- `python scripts/roundtrip_rom.py` Â— exact cartridge rebuild and label/comment input validation.
-- `python scripts/check_source_ball_update.py` Â— static translated-source checks.
-- `python scripts/source_timing_baseline.py` Â— repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
-- `python scripts/smoke_amiga_run.py` Â— copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
-- `python scripts/check_sprite_hardware_fit.py` Â— check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
-- `python scripts/run_amiga_sprite_probe.py` Â— regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
-- `git status --short` Â— review only intended source and documentation before a first commit.
+- `python scripts/roundtrip_rom.py` — exact cartridge rebuild and label/comment input validation.
+- `python scripts/check_source_ball_update.py` — static translated-source checks.
+- `python scripts/source_timing_baseline.py` — repeat the MAME SC-3000 active-play timing and input capture; `--verify-only` checks local captures.
+- `python scripts/smoke_amiga_run.py` — copy the adjacent vasm binary locally, build the minimal hunk executable, and verify Copperline direct run on the target profile.
+- `python scripts/check_sprite_hardware_fit.py` — check source snapshot channel, overlap and paired-palette bounds against controlled gameplay VRAM.
+- `python scripts/run_amiga_sprite_probe.py` — regenerate private Amiga-ready assets, build the native display prototype, and capture its screenshot and 10-second GIF in Copperline.
+- `git status --short` — review only intended source and documentation before a first commit.
