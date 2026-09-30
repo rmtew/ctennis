@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "reference_spec": "tests/reference-spec.md",
+  "source_cases": ["one-player-match", "two-player-match"],
+  "source_capture_script": "scripts/capture_presentation_reference.py",
+  "source_validation_script": "scripts/presentation_reference.py",
+  "reference_directory": "tests/reference/presentation",
+  "source_active_rectangle": [12, 12, 268, 204],
+  "source_logical_size": [256, 192],
+  "amiga_capture_size": [716, 285],
+  "amiga_active_rectangle": [62, 16, 574, 208],
+  "amiga_pixels_per_source_pixel": [2, 1],
+  "viewport_calibration": "Unique exact court ROI (32,80)-(224,112) match in native control capture, with exact horizontal pixel duplication across the full viewport",
+  "amiga_palette_12bit": {"0": "000", "1": "000", "2": "2c4", "3": "6d7", "4": "55e", "5": "77f", "9": "f77", "10": "dc5", "13": "c5b", "14": "ccc", "15": "fff"},
+  "graphics_requirements": {
+    "P1-title": ["title"],
+    "P1-mode": ["accepted-mode"],
+    "P1-serve-lower": ["serve-lower-wait", "serve-lower-action", "serve-lower-launch", "serve-lower-first-flight"],
+    "P1-serve-upper": ["serve-upper-wait", "serve-upper-action", "serve-upper-launch", "serve-upper-first-flight"],
+    "P1-rally": ["lower-contact", "upper-contact", "first-court-bounce", "first-net-reflection", "first-outside-court-contact"],
+    "P1-points": {"observed_point_pairs": "every distinct pair in each frozen parent replay", "fields": ["point_a", "point_b"]},
+    "P1-status": {"observed_codes": [1, 2, 3, 4, 5, 6], "events": ["appears", "disappears"]},
+    "P1-game-match-restart": ["first_game_award", "tail_only_start", "gameplay_resumed", "match_award", "match-result-sound-start", "return-to-title", "restart_selection", "restart_gameplay", "restart_serve_flight"]
+  },
+  "native_graphics_comparison": "pending; actual native hardware output, exact geometry/glyph/sprite checks with explicit palette mapping and presentation generation",
+  "audio_requirements": "P2-events in tests/reference-spec.md; source WAVs and native comparison pending",
+  "timing_requirements": "P3-cadence/controls in tests/reference-spec.md; input consumption, source-to-PAL cadence and blanking commit comparison pending"
+}

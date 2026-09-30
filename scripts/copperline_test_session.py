@@ -1,0 +1,85 @@
+"""Small stdlib client for the installed Copperline test/control bridge."""
+import json
+import queue
+import subprocess
+import threading
+
+
+class CopperlineSession:
+    def __init__(self, executable, cwd):
+        self.process = subprocess.Popen([str(executable), '--mcp'], cwd=cwd,
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE, text=True, encoding='utf-8')
+        self.messages = queue.Queue()
+        self.identifier = 0
+        self.launched = False
+        self.stderr = []
+        threading.Thread(target=self._read, daemon=True).start()
+        threading.Thread(target=self._errors, daemon=True).start()
+        self.request('initialize', {'protocolVersion': '2024-11-05', 'capabilities': {},
+                                    'clientInfo': {'name': 'champion-tennis-tests', 'version': '1'}})
+        self._send({'jsonrpc': '2.0', 'method': 'notifications/initialized'})
+
+    def _read(self):
+        for line in self.process.stdout:
+            try:
+                self.messages.put(json.loads(line))
+            except ValueError:
+                self.messages.put({'error': f'Invalid bridge response: {line[:200]}'})
+        self.messages.put({'error': 'Bridge stdout closed'})
+
+    def _errors(self):
+        self.stderr.extend(self.process.stderr)
+
+    def _send(self, message):
+        self.process.stdin.write(json.dumps(message) + '\n')
+        self.process.stdin.flush()
+
+    def request(self, method, params, timeout=60):
+        self.identifier += 1
+        identifier = self.identifier
+        self._send({'jsonrpc': '2.0', 'id': identifier, 'method': method, 'params': params})
+        while True:
+            try:
+                message = self.messages.get(timeout=timeout)
+            except queue.Empty:
+                if self.process.poll() is not None:
+                    raise RuntimeError('Bridge exited while a request was pending')
+                # An observation timeout is not completion. Keep the same request alive.
+                print(f'Waiting for Copperline request {identifier} ({method})', flush=True)
+                continue
+            if message.get('id') != identifier:
+                if 'id' not in message and 'error' in message:
+                    raise RuntimeError(message['error'])
+                continue
+            if 'error' in message:
+                raise RuntimeError(message['error'])
+            return message['result']
+
+    def call(self, name, arguments=None, timeout=60):
+        result = self.request('tools/call', {'name': name, 'arguments': arguments or {}}, timeout)
+        if result.get('isError'):
+            raise RuntimeError(result)
+        if name == 'session_launch':
+            self.launched = True
+        return result
+
+    def inspect(self, name, arguments=None, timeout=60):
+        result = self.call(name, arguments, timeout)
+        return json.loads(next(block['text'] for block in result['content'] if block['type'] == 'text'))
+
+    def close(self):
+        # session_close only shuts down the emulator this bridge launched.
+        if self.launched:
+            self.call('session_close')
+            self.launched = False
+        self.process.stdin.close()
+        self.process.wait(timeout=10)
+        if self.process.returncode:
+            raise RuntimeError(''.join(self.stderr))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()

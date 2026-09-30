@@ -16,7 +16,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation collection now has a repeatability-checked observer alongside both frozen full-match replays. It preserves exact callback recordings while retaining lossless raw rasters and contemporaneous RAM/VRAM/VDP register state. This is preliminary P1 evidence; remaining windows, active-area/display-lag rules and actual native presentation comparisons remain open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. The aggregate has 18 cases: 11 green and seven exact known red; six missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 ## Maintained source and regression suite (agreed 2026-09-30)
 
@@ -114,7 +114,10 @@ maintained-source conversion, so subsequent work preserves passing behaviour
 and deliberately resolves recorded failures.
 
 This goal establishes a diagnostic baseline; it does not require fixing all
-port failures. The implementation goal that follows is distinct.
+port failures. It preserves observable original-game behaviour, not the
+translated implementation or its memory layout. The following implementation
+goal replaces those internals with concise maintained native Amiga code,
+migrating diagnostic checks to behavioural contracts before retiring them.
 
 ### Work sequence
 

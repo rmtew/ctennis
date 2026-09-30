@@ -287,13 +287,34 @@ suffix merely to reconfirm its first failure. Full and optimized 17-case runs
 verified the same 11 green/six known-red classifications. Required missing
 coverage remains failing in both modes.
 
-## Source presentation capture foundation
+## Source presentation references and first native graphics case
 
-Run python scripts/capture_presentation_reference.py and repeat with
---case two-player-match. The observer must preserve the frozen callback
-recording exactly and repeat decoded screenshot pixels, RAM, VRAM, VDP
-registers and PC. Manifests and lossless files are under
-build/tests/<case>-presentation/; inspect the a subdirectory for the first copy.
-These raw bordered rasters are preliminary evidence. Active-area geometry,
-source display lag, remaining P1 windows and native comparisons are pending.
-They do not change the suite coverage or green/known-red classifications.
+Capture explicitly with `python scripts/capture_presentation_reference.py`,
+then repeat with `--case two-player-match`. Each replay runs twice and must
+preserve its frozen callback recording exactly. Retain native RGB bitmap words,
+lossless PNGs, contemporaneous RAM/VRAM, actual paired/masked VDP registers and PC.
+The verified active crop is (12,12)-(268,204), without interpolation.
+
+Run `python scripts/freeze_presentation_reference.py` to check source hashes,
+all required named P1 windows and displayed fields, then retain private media
+under `tests/reference/presentation/manifest.json` and its two case directories.
+The current record has 263 R1 and 312 R2 rasters plus 122 field observations.
+It includes both serve ends, first marked returns by both players, bounce/net/out,
+all observed point pairs, all six status messages appearing/disappearing, and
+game/match/result/title-return/restart windows. Actual captured pixels remain
+the oracle. The test-only VDP decoder cross-checks these pixels and records
+which captured hardware states match; it never supplies expected gameplay.
+
+`python scripts/run_presentation_tests.py --case p1-title --self-test` builds
+and executes the actual native application, then captures hardware output using
+the installed Copperline control bridge. The exact measured native viewport is
+(62,16)-(574,208) in a 716x285 capture: two identical horizontal pixels per
+source pixel and one vertical pixel. Palette mapping is declared independently
+in `tests/cases/presentation.json`; no fuzzy pixel tolerance or GUI scaling is used.
+The title case is registered in the one-command suite. Its expected failure is
+the existing application starting at the court/serve state instead of the title.
+
+Other native P1 cases, P2/P3, same-rally R2 and remaining behavioural/phase gaps
+still prevent suite completion. See [capture details](../analysis/source-presentation-regression.md)
+and the authoritative worklog. The old nearly-blank title diagnosis was based
+on misleading previews: retained title files contain complete, identical pixels.

@@ -1,0 +1,176 @@
+"""Compare actual native Amiga hardware output with retained original-game pixels."""
+import argparse
+import configparser
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+from copperline_test_session import CopperlineSession
+from presentation_reference import ROOT, PALETTE, ACTIVE_AREA
+from run_translated_player_frame_probe import prepare_gameplay
+from run_translated_prng_probe import ASSEMBLER, OUT, run
+from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def source_picture(case):
+    root = ROOT / case['reference']
+    manifest = json.loads(root.read_text())
+    if not manifest['source_media_checks_passed']:
+        raise ValueError('Source graphics not verified')
+    if digest(ROOT / 'tests/cases/presentation.json') != manifest['recipe_sha256']:
+        raise ValueError('Presentation contract changed; revalidate/freeze the source media')
+    reference = manifest['references'][case['source_case']]
+    path = root.parent / reference['manifest']
+    if digest(path) != reference['manifest_sha256']:
+        raise ValueError('Source media manifest changed')
+    capture = json.loads(path.read_text())
+    frame = capture['named_frames'][case['checkpoint']]
+    sample = next(row for row in capture['samples'] if row['frame'] == frame)
+    with Image.open(path.parent / f'f{frame:05d}.png') as picture:
+        rgb = picture.convert('RGB')
+        if hashlib.sha256(rgb.tobytes()).hexdigest() != sample['rgb_sha256']:
+            raise ValueError('Source pixels changed')
+        return rgb.crop(ACTIVE_AREA), frame, digest(root)
+
+
+def map_source_palette(picture, contract):
+    mapping = {}
+    for index, value in contract['amiga_palette_12bit'].items():
+        colour = int(value, 16)
+        mapping[PALETTE[int(index)]] = tuple(((colour >> shift) & 15) * 17 for shift in (8, 4, 0))
+    try:
+        return Image.frombytes('RGB', picture.size,
+                               bytes(component for pixel in picture.get_flattened_data() for component in mapping[pixel]))
+    except KeyError as error:
+        raise ValueError(f'Undeclared source colour: {error}') from error
+
+
+def native_picture(picture, contract):
+    if list(picture.size) != contract['amiga_capture_size']:
+        raise ValueError('Native capture dimensions changed; review the viewport mapping')
+    active = picture.crop(contract['amiga_active_rectangle']).convert('RGB')
+    if active.size != (512, 192) or contract['amiga_pixels_per_source_pixel'] != [2, 1]:
+        raise ValueError('Unsupported native viewport mapping')
+    rows = []
+    for y in range(192):
+        row = active.crop((0, y, 512, y + 1)).tobytes()
+        if any(row[offset:offset + 3] != row[offset + 3:offset + 6] for offset in range(0, len(row), 6)):
+            raise ValueError('Native horizontal pixel duplication failed; no interpolated comparison allowed')
+        rows.append(bytes(component for offset in range(0, len(row), 6) for component in row[offset:offset + 3]))
+    return Image.frombytes('RGB', (256, 192), b''.join(rows))
+
+
+def compare(expected, actual):
+    if expected.size != actual.size:
+        raise ValueError('Logical display dimensions differ')
+    for index, (wanted, observed) in enumerate(zip(expected.get_flattened_data(), actual.get_flattened_data())):
+        if wanted != observed:
+            return {'update': 0, 'boundary': 'stable-title', 'field': 'logical display pixel',
+                    'x': index % expected.width, 'y': index // expected.width,
+                    'expected': bytes(wanted).hex(), 'actual': bytes(observed).hex()}
+    return None
+
+
+def build_native(case, directory):
+    run([sys.executable, 'scripts/roundtrip_rom.py'])
+    prepare_gameplay()
+    run([sys.executable, 'scripts/generate_amiga_sprite_probe.py'])
+    make_banks((ROOT / 'build/reference/source-timing/sprite-f1310.vram').read_bytes())
+    make_copper_and_patch_tables()
+    # This is the application's existing initial serve state, captured independently.
+    # No intermediate expected states or title-specific code are injected.
+    parent = json.loads((ROOT / 'tests/reference/one-player-match.json').read_text())
+    (OUT / 'live-initial-ram.bin').write_bytes(bytes.fromhex(parent['initial_post_tail']))
+    executable = directory / 'native-application'
+    run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-o', str(executable), case['native_source']])
+    return executable
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--case', choices=('p1-title',), default='p1-title')
+    parser.add_argument('--self-test', action='store_true')
+    args = parser.parse_args()
+    case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+    if case['inputs']:
+        raise ValueError('Title case requires no native controls')
+    contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(ROOT / 'config.local.ini', encoding='utf-8')
+    directory = ROOT / f'build/tests/{args.case}'
+    directory.mkdir(parents=True, exist_ok=True)
+    report_path = ROOT / f'build/tests/{args.case}-report.json'
+    report_path.unlink(missing_ok=True)
+    source, source_frame, reference_sha = source_picture(case)
+    expected = map_source_palette(source, contract)
+    executable = build_native(case, directory)
+    ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
+    png = directory / 'native.png'
+    events = []
+    with CopperlineSession(ctl, ROOT) as session:
+        launch = session.inspect('session_launch', {'factory': True, 'model': 'A500', 'cwd': str(ROOT),
+            'binary': config['tools']['copperline'],
+            'run': str(executable), 'args': ['--chipset', 'OCS', '--video', 'PAL', '--cpu', '68000',
+                                           '--chip', '512K', '--slow', '0', '--fast', '0', '--noaudio', config['inputs']['amiga_rom']]})
+        if launch['status']['cpu'] != 'M68000':
+            raise ValueError('Incorrect native CPU profile')
+        # --run reports LoadSeg before executing the application. It is not a finished run.
+        stop = session.inspect('run_until', {'seconds': 30, 'wait_ms': 50000})
+        events.append(stop)
+        if stop['reason'] != 'loadseg':
+            raise RuntimeError(f'Expected application load stop: {stop}')
+        target = stop['seconds'] + case['seconds_after_load']
+        stop = session.inspect('run_until', {'seconds': target, 'wait_ms': 50000})
+        events.append(stop)
+        if stop['reason'] != 'target' or stop.get('bridge'):
+            raise RuntimeError(f'Native capture target not reached: {stop}')
+        # Use the physical beam wrap explicitly. A generic bridge frame step can
+        # stop elsewhere in the raster; it is not sufficient evidence of blanking.
+        stop = session.inspect('run_until', {'vpos': 0, 'hpos': 0, 'wait_ms': 50000})
+        events.append(stop)
+        if stop['reason'] != 'target' or stop.get('bridge') or stop['vpos'] != 0:
+            raise RuntimeError(f'Completed native frame not reached: {stop}')
+        capture = session.inspect('capture_screenshot', {'path': str(png)})
+        log = Path(launch['log']).read_text(encoding='utf-8', errors='replace')
+        for marker in ('cpu=M68000', 'cpu_clock=7.09MHz', 'chip_ram=512K', 'fast_ram=0K',
+                       'slow_ram=0K', 'chipset=Ocs', 'video=Pal', 'Kickstart 1.3'):
+            if marker not in log:
+                raise ValueError(f'Native hardware profile marker missing: {marker}')
+        (directory / 'copperline.log').write_text(log, encoding='utf-8')
+    with Image.open(png) as picture:
+        actual = native_picture(picture, contract)
+    actual.save(directory / 'native-logical.png')
+    expected.save(directory / 'source-mapped.png')
+    difference = compare(expected, actual)
+    if args.self_test:
+        if compare(expected, expected) is not None:
+            raise AssertionError('Equal display pixels rejected')
+        altered = actual.copy()
+        altered.putpixel((0, 0), (255, 255, 255) if expected.getpixel((0, 0)) != (255, 255, 255) else (0, 0, 0))
+        if compare(expected, altered) == difference:
+            raise AssertionError('Changed first-divergence pixel was not detected')
+    report = {'case': args.case, 'passed': difference is None, 'first_difference': difference,
+              'reference_sha256': reference_sha, 'source_frame': source_frame,
+              'executable_sha256': digest(executable), 'native_source': case['native_source'],
+              'native_source_sha256': digest(ROOT / case['native_source']),
+              'emulator_sha256': digest(Path(config['tools']['copperline'])),
+              'bridge_sha256': digest(ctl), 'kickstart_sha256': digest(Path(config['inputs']['amiga_rom'])),
+              'contract_sha256': digest(ROOT / 'tests/cases/presentation.json'),
+              'native_capture': capture, 'execution_stops': events,
+              'native_capture_seconds_after_load': case['seconds_after_load'],
+              'native_inputs': case['inputs'], 'self_test': args.self_test,
+              'scope': 'Actual native application boot/title hardware output; gameplay, other P1 cases and P2/P3 remain separate'}
+    report_path.write_text(json.dumps(report, indent=2) + '\n')
+    print(json.dumps(report, indent=2))
+    return 0 if report['passed'] else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

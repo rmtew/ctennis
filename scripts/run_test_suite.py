@@ -7,11 +7,12 @@ from pathlib import Path
 from phase_reference import CASES as PHASE_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
-CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES
+PRESENTATION_CASES = ('p1-title',)
+CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + PRESENTATION_CASES
 # These requirements await evidence-backed cases or a justified coverage inventory.
 MISSING = ['R2 same-rally return by both players (full match captured; rally gap remains)', 'F1-F5 meaningful-gap inventory and cases',
            'phase-specific comparisons after the first continuous failure',
-           'P1 graphics references and native comparisons',
+           'remaining P1 native graphics cases (source checkpoints retained; native title registered)',
            'P2 audio references and native comparisons',
            'P3 timing/input references and native comparisons']
 
@@ -58,10 +59,11 @@ def main():
         report_path = out / ('report.json' if case == 'serve' else f'{case}-report.json')
         # Never classify stale output from a failed invocation as a known failure.
         report_path.unlink(missing_ok=True)
-        command = [sys.executable, 'scripts/run_regression_tests.py', '--case', case]
-        if args.baseline_check and case in known:
+        runner = 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'
+        command = [sys.executable, runner, '--case', case]
+        if args.baseline_check and case in known and case not in PRESENTATION_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and case == 'serve':
+        if args.self_test and case in ('serve', 'p1-title'):
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
         (out / f'{case}-runner.log').write_text(process.stdout + process.stderr)
