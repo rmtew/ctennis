@@ -42,7 +42,17 @@ def main():
                 failure = report['first_difference']
             else:
                 status, failure = 'missing-report', None
+            policy = known.get(name, {})
+            acceptance = ('complete observation digest' if policy.get('complete_checks_sha256') else
+                          'explicit complete interval' if policy.get('complete_state_failure_interval') else
+                          'first failure signature only' if status == 'known-red' else 'declared assertions pass')
+            extent = 'See recipe and family limits'
+            if report_path.exists() and 'updates_matched' in report:
+                extent = (f'{report["updates_matched"]} matched / {report["updates"]} executed / '
+                          f'{report["reference_updates"]} reference callbacks; '
+                          f'{report["bytes_compared_per_boundary"]} RAM bytes/boundary')
             inventory.append({'case': name, 'family': family['id'], 'status': status,
+                              'known_failure_acceptance': acceptance, 'retained_comparison_extent': extent,
                               'recipe': str(recipe_path.relative_to(ROOT)).replace('\\', '/'),
                               'reference': recipe.get('reference', recipe.get('parent_reference')),
                               'scope': recipe.get('contract', recipe.get('stop_condition', recipe.get('checkpoint'))),
@@ -57,6 +67,13 @@ def main():
              + ', '.join(f'{value} {key}' for key, value in sorted(counts.items())) + '. '
              'Green applies only to the stated scope. Known red means a test exists and exposes a reviewed implementation defect. '
              'Neither status closes other requirements.', '',
+             '## Review findings', '',
+             'The manifest was checked against runner assertions, build subjects and retained report extents. '
+             'Review corrected overstated coverage; it did not run new emulator tests or fix the suite.', '']
+    for finding in manifest['review_findings']:
+        lines += [f'- **{finding["id"]} ({finding["severity"]}):** {finding["finding"]}. '
+                  f'Action: {finding["action"]}.']
+    lines += ['',
              '## Candidate review', '',
              'Priority is a recommendation for review, not an instruction to implement. Audit-first candidates '
              'must establish additional regression protection before capture. Prefer extending existing cases '
@@ -86,10 +103,11 @@ def main():
                   f'- Independent expectation: {family["independent_expectation"]}.',
                   f'- Stopping condition: {family["stopping_condition"]}.',
                   f'- Limits/overlap: {family["limits"]}.', '',
-                  '| Case and exact recipe | Retained classification |', '| --- | --- |']
+                  f'**Subject:** {family["test_subject"]}.', '',
+                  '| Case and exact recipe | Retained classification | Acceptance gate | Actual retained extent |', '| --- | --- | --- | --- |']
         for row in inventory:
             if row['family'] == family['id']:
-                lines.append(f'| [{row["case"]}](../{row["recipe"]}) | {row["status"]} |')
+                lines.append(f'| [{row["case"]}](../{row["recipe"]}) | {row["status"]} | {row["known_failure_acceptance"]} | {row["retained_comparison_extent"]} |')
         lines.append('')
     lines += ['## Supporting checks', '', 'These are not additional gameplay acceptance cases.', '']
     for row in manifest['support_checks']:
@@ -105,12 +123,15 @@ def main():
               '| F5 timer/random effects | Existing I04; C05 for choice-to-effect audit |',
               '| P1 graphics and accepted mode | C15/C16; existing I12/I15–I20 |',
               '| P2 audible sound | C11–C14; existing I13 |',
-              '| P3 physical input/cadence/continuity | C06–C10; existing I14/I19 |', '',
-              'Suggested review order: audit C04/C05 against existing evidence first to avoid duplicate core tests; '
-              'then consider C06/C07 physical response, C09 ordinary cadence and C11 distinct sound classes. '
-              'C10 brings sustained continuity together. C08/C12 require precise time mapping; C14 requires '
-              'a presentation decision. C15 extends existing mode tests. C16 proceeds only with a named escaping '
-              'render fault. This is a discussion order, not authorization to start the candidates.', '',
+              '| P3 physical input/cadence/continuity | C06–C10; existing I14/I19 |',
+              '| Test subject follows maintained code | C19 |',
+              '| Rewrite-independent observable contract | C20 |',
+              '| Later changes behind known errors affect acceptance | C21 |', '',
+              'Suggested review order: ' + ', '.join(manifest['review_order']) + '. '
+              'First make existing tests follow the intended implementation and reject concealed later changes; '
+              'then audit duplicated core coverage before expanding integration checks. C08/C12 need time mapping; '
+              'C14 is conditional on an explicit presentation policy. C16 needs an escaping render fault. '
+              'This is a discussion order, not authorization to start the candidates.', '',
               'No test-count target. Completion requires every required behaviour to have adequate original-backed '
               'protection or a reviewed reason why existing tests already protect it. Candidate discovery is not '
               'completion, and implementation defects may remain known red after useful tests are built.', '']

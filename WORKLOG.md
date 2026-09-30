@@ -1,3 +1,9 @@
+## 2026-10-01 ? Reviewed test relevance and corrected coverage claims
+
+Reviewed actual registry, core regeneration/fixed-dispatch harness, contact and hardware/audio/input assertions, strict classifier and all retained reports. Findings: 56 core cases exercise generated fixed gameplay dispatch, not maintained application dispatcher;35 of47 red policies accept only first signature (8 digest,4 explicit interval); R1/R2 match1332/2535 callbacks, not full source lengths13378/27037; raw RAM equality constrains internal rewrites; upper action cases are shot-choice timing, not hit/miss acceptance. Copied-report late-fault controls demonstrate masking in moving-prefix/input/pitch and rejection by complete round digest. No emulator fault run claimed.
+
+Corrected families and renderer (subject, acceptance and actual extent), demoted lower action/extra fidelity to audit-first, added C19/C20/C21 existing-suite assurance proposals. Current21 candidates:11 worth,8 audit,2 skip; no candidate or product change implemented. Added analysis/test-manifest-review.md. Scope remains under discussion; no silent new completion gate or test expansion. Existing classifications unchanged. Full test goal remains incomplete.
+
 ## 2026-10-01 ? Enumerated test manifest for scope review
 
 User requested implemented tests and viable candidates to evaluate. Added tests/test-manifest.json, generated tests/TEST-MANIFEST.md and scripts/render_test_manifest.py. All 99 registered cases are assigned exactly once across 20 requirement families; exact recipe links and retained classifications are enumerated. Eighteen candidate rows state missing behaviour, plausible fault, independent original expectation, stop condition, overlap, evidence readiness, relative effort and dependencies: ten worth implementing, six audit first, two skip proposals. Supporting validators/roundtrip/diagnostics are separated from product acceptance tests. All remaining backlog groups map to manifest rows.

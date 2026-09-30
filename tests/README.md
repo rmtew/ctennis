@@ -720,3 +720,6 @@ The existing `p2-first-serve-mute` case now also requires emitted signal before 
 
 
 For scope review, see [TEST-MANIFEST.md](TEST-MANIFEST.md) and the maintained [test-manifest.json](test-manifest.json). They enumerate every registered case by requirement family and every currently identified worthwhile/conditional candidate, including original expectations, faults caught, overlap and stopping rules. Rebuild the document with `python scripts/render_test_manifest.py`; this inspects retained reports and runs no emulator tests. Candidates remain proposals pending scope discussion.
+
+
+The [manifest review](../analysis/test-manifest-review.md) corrects test-subject and coverage claims. The manifest now shows known-red acceptance strength and matched/executed/reference extents. C19/C20/C21 are proposed improvements to existing suite assurance, not additional scenario-count targets. Original-byte conformance and maintained observable gameplay acceptance must be distinguished.

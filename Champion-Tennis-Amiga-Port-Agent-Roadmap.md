@@ -593,3 +593,6 @@ finishing this case, then discussing test scope before further test work.
 
 
 Scope-review manifest: [tests/TEST-MANIFEST.md](tests/TEST-MANIFEST.md), backed by [tests/test-manifest.json](tests/test-manifest.json), assigns every registered case to a requirement family and enumerates candidates with all four value criteria, overlap, evidence readiness, effort and dependencies. Retained classifications are inspected, not freshly executed. Ten candidates are judged worthwhile, six require audit before implementation and two are proposed skips; these are review proposals, not a new implementation plan or completion claim. Next: review scope with the user before further test implementation.
+
+
+Manifest relevance review supersedes the earlier ten-candidate summary and review order. See [analysis/test-manifest-review.md](analysis/test-manifest-review.md). Current manifest distinguishes generated fixed-dispatch core tests from application integration, shows native compared extents and flags first-error masking. C19/C20/C21 propose maintained execution, rewrite-independent observations and later-failure acceptance improvements to existing tests. Lower-action and extra output-fidelity expansions are conditional. These are scope-review proposals; no new requirement gate or implementation was silently added. Next: discuss these priorities with the user.
