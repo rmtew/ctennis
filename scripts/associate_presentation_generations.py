@@ -14,7 +14,8 @@ from run_presentation_tests import digest, map_source_palette, native_picture, c
 
 
 def source_generation(generation, source_case='one-player-match',
-                      reference_directory='tests/reference/presentation', region=None):
+                      reference_directory='tests/reference/presentation', region=None,
+                      callback_kind='gameplay'):
     root = ROOT / reference_directory
     frozen = json.loads((root / 'manifest.json').read_text())
     if not frozen['source_media_checks_passed']:
@@ -34,12 +35,19 @@ def source_generation(generation, source_case='one-player-match',
     parent = json.loads(parent_path.read_text())
     if generation < 1 or generation > len(parent['updates']):
         raise ValueError('Source generation outside captured gameplay')
-    if parent['updates'][generation - 1]['callback_kind'] != 'gameplay':
-        raise ValueError('Tail-only generations need a distinct presentation contract')
-    ram = bytes.fromhex(parent['updates'][generation - 1]['entry_ram'])
+    row = parent['updates'][generation - 1]
+    if callback_kind not in ('gameplay', 'tail-only') or row['callback_kind'] != callback_kind:
+        raise ValueError('Source callback kind differs from the explicit presentation contract')
+    ram = bytes.fromhex(row['entry_ram'])
     candidates = []
     for sample in manifest['samples']:
-        if generation not in sample['active_updates']:
+        # active_updates uses begin_frame < frame <= end_frame. Short tail
+        # callbacks can begin and end in one frame and have no indexed sample.
+        # Their explicit contract admits contemporaneous endpoint observations,
+        # still requiring the captured hardware SAT to match the source entry.
+        eligible = (row['begin_frame'] <= sample['frame'] <= row['end_frame']
+                    if callback_kind == 'tail-only' else generation in sample['active_updates'])
+        if not eligible:
             continue
         stem = manifest_path.parent / f'f{sample["frame"]:05d}'
         for suffix in ('vram', 'regs'):
@@ -65,6 +73,7 @@ def source_generation(generation, source_case='one-player-match',
         raise ValueError(f'No unique source displayed image for generation {generation}')
     return images[0], {'generation': generation, 'source_case': source_case, 'hardware_frames': candidates, 'pixel_frames': frames,
                        'reference_sha256': digest(root / 'manifest.json'),
+                       'callback_kind': callback_kind,
                        'comparison_region': region}
 
 

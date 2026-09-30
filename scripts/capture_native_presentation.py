@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False, strict_source_events=True):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -67,6 +67,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     field_events = []
     state_events = []
     initial_fields = []
+    source_event_differences = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
     with CopperlineSession(ctl, ROOT) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
@@ -126,17 +127,21 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 return True
             if observe_audio and stop['pc'] == base + symbols['paula_events_done']:
                 count = int(session.inspect('mem_read', {'addr': base + symbols['psg_count'], 'len': 1})['data'], 16)
-                if count:
-                    data = session.inspect('mem_read', {'addr': base + symbols['psg_log'], 'len': count})['data']
-                    if list(bytes.fromhex(data)) != source['updates'][generation]['psg']:
+                data = session.inspect('mem_read', {'addr': base + symbols['psg_log'], 'len': count})['data'] if count else ''
+                if list(bytes.fromhex(data)) != source['updates'][generation]['psg']:
+                    if strict_source_events:
                         raise ValueError(f'Native PSG bytes differ at update {generation + 1}')
+                    source_event_differences.append({'update': generation + 1,
+                        'boundary': 'native-sound-events', 'field': 'ordered PSG writes',
+                        'expected': source['updates'][generation]['psg'], 'actual': list(bytes.fromhex(data))})
+                if count or source['updates'][generation]['psg']:
                     audio_events.append({'update': generation + 1, 'psg': data,
                                          'registers': session.inspect('custom_dump')['regs'], 'stop': stop})
                 return True
             if recorded_entropy and stop['pc'] == base + symbols['refresh_replay_done']:
                 value = session.inspect('regs_get')['d'][0] & 255
                 expected_reads = source['updates'][generation]['refresh_reads']
-                if not expected_reads or any(event['bit'] != value for event in expected_reads):
+                if strict_source_events and (not expected_reads or any(event['bit'] != value for event in expected_reads)):
                     raise ValueError(f'Native refresh consumption diverged at update {generation + 1}')
                 entropy_reads.append({'update': generation + 1, 'bit': value, 'stop': stop})
                 return True
@@ -217,7 +222,18 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             # callback as a prefix, without inventing a completed callback.
             pending_expected = [(final_count + 1, event['bit']) for event in source['updates'][final_count]['refresh_reads']] if final_count < len(source['updates']) else []
             if completed_reads != expected_entropy or pending_reads != pending_expected[:len(pending_reads)]:
-                raise ValueError('Native entropy consumption order/count differs from the source')
+                if strict_source_events:
+                    raise ValueError('Native entropy consumption order/count differs from the source')
+                for update in range(initial_source_update + 1, final_count + 2):
+                    wanted = [bit for ordinal, bit in expected_entropy if ordinal == update]
+                    actual = [bit for ordinal, bit in completed_reads if ordinal == update]
+                    if update == final_count + 1:
+                        wanted = [bit for _, bit in pending_expected[:len(pending_reads)]]
+                        actual = [bit for _, bit in pending_reads]
+                    if wanted != actual:
+                        source_event_differences.append({'update': update,
+                            'boundary': 'native-entropy-consumption', 'field': 'refresh sign reads',
+                            'expected': wanted, 'actual': actual})
     report = {'capture_report_path': str(report_path), 'scope': __doc__, 'executable_sha256': digest(executable),
               'reference_sha256': digest(source_path), 'symbols': symbols,
               'native_source': case['native_source'], 'native_source_sha256': digest(ROOT / case['native_source']),
@@ -236,6 +252,8 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'field_events': field_events, 'fields_observed': observe_fields,
               'state_events': state_events, 'state_observed': observe_state,
               'initial_fields': initial_fields,
+              'source_event_differences': source_event_differences,
+              'strict_source_events': strict_source_events,
               'executable_mutated': executable_mutator is not None or source_mutator is not None,
               'native_wav': str(directory / 'native.wav') if observe_audio else None,
               'final_completed_callbacks': final_count,

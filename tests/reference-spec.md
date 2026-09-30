@@ -555,7 +555,30 @@ Stop equivalent equal/advantage windows. Game-count resets, actual accepted mode
 transitions, other P1 scenes, P2/P3 and remaining F2/F4/F5 requirements remain
 open. Preserving games/mode through a point redraw does not close those changes.
 
-Current verified aggregate: **91 cases, 52 green and39 exact known red**, with
+Point-field milestone aggregate: **91 cases, 52 green and39 exact known red**, with
 all mutation/signature checks passing and no unexplained/tool failures. Four
 coverage groups remain incomplete. Next use the existing original round-pause
 and resumed-play rasters with an explicit tail-only generation contract.
+
+## First round pause/reset/resume presentation (2026-10-01)
+
+The first one-player round has native whole-viewport comparisons at1208/1335/
+1468/1471 and268 consecutive state observations from a single1203 start. The
+first129 states match; original main-thread reset writes precede divergence1333.
+All24 field crops match. Full pictures retain the sprite-origin and stale
+reset-layout defects. No original reset or source callback routing is injected.
+
+Explicit tail-only source association uses captured frame endpoints with matching
+original hardware sprites and verified unique pixels. `active_updates` indexes
+cross-frame intervals, not callback kinds; same-frame tails may lack entries.
+The source reset is in hardware2632 and visible pixels2633. Existing primary
+captures suffice; ordinary regression runs do not invoke MAME.
+
+Known-red acceptance requires the entire state/pixel/event observation digest.
+Actual late sprite/field/entropy mutations are rejected behind the unchanged
+earlier failure. Whole-viewport hashes cover every pixel, including reset heads
+outside the initial court ROI. See [round evidence](../analysis/native-round-presentation-regression.md).
+
+Current aggregate: **92 cases,52 green,40 exact known red**, all mutation/policy
+checks passing and no unexplained/tool failures. Four groups remain incomplete.
+Complementary round scenes and other P1/F2/F4/F5/P2/P3 requirements remain open.

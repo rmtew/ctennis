@@ -161,7 +161,7 @@ F1 movement bounds are complete: all 32 player/row/direction combinations have
 source evidence and native comparisons, including independent phases for later
 lower receiver limits obscured by the known upstream failure. Stop movement
 exploration unless a concrete new behavioural gap appears. The current aggregate
-is 91 cases: 52 green and 39 exact known red, with mutation/signature checks.
+is 92 cases: 52 green and 40 exact known red, with mutation/signature checks.
 These known-red cases are not independent defects; four broader requirement
 groups remain open.
 
@@ -239,16 +239,23 @@ Stop equivalent equal/advantage windows. Remaining game resets and actual mode
 changes need their own behavioural contracts; fixed-mode preservation in these
 windows does not close them. Source-derived starts may isolate intervals beyond
 known upstream failures; preserve their scope and actual input/source-rate mapping.
-Next bound the first round pause/reset/resume presentation against the existing
-primary source windows. Captured pause rasters have no `active_updates` because
-that index deliberately contains gameplay callbacks only. Add an explicit
-tail-only association contract rather than recapturing the match or treating
-the pause as gameplay. Detect stale reset output or continued gameplay during
-the pause; record actual source-event consumption differences as behavioural
-failures when the incomplete native transition diverges. Preserve the existing
-continuous and later-regime state failures. Stop equivalent initial round windows
-once the distinct pause/reset/resume stages have native comparisons and a
-specific output/timing defect is rejected; complementary scenes remain required.
+The first one-player round now has268 consecutive state comparisons and four
+whole-viewport comparisons at the stable tally, reset pause, final pause and
+resume. All24 field crops match; whole pictures expose the existing sprite
+origin and missing main-thread reset. Tail-only association explicitly admits
+same-frame endpoint observations only with matching original hardware sprites
+and independently verified unique source pixels. The index uses
+begin_frame < frame <= end_frame, not a callback-kind filter.
+Three actual late sprite/field/entropy mutations are rejected despite the same
+earlier sprite failure; acceptance requires the complete state/pixel/event
+observation digest. Source-event discrepancies can be recorded as behaviour
+failures instead of capture errors. No original reset writes are injected.
+See [round-scene evidence](analysis/native-round-presentation-regression.md).
+Stop equivalent first-round windows. Next establish complementary serving-end
+and two-player round scenes, reusing source media where actual matching windows
+exist and capturing only clearly missing checkpoints otherwise. Preserve the
+existing continuous and later-regime state failures; title/mode, match/result/menu
+and restart scenes still require their own native presentation comparisons.
 P1 game reset/mode/round/result/restart timing, returns/outcomes, P2 distinct audio
 and waveform rules, P3 actual response/side exchange/latency/cadence/deadlines
 and remaining F2/F4/F5 behaviours remain in full scope. Each step must name the

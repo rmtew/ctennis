@@ -513,6 +513,20 @@
         9874
       ],
       "required_raster_checks": 10
+    },
+    "p1-first-round-scenes": {
+      "signature": {
+        "update": 1208,
+        "boundary": "completed-round-viewport",
+        "field": "logical display pixel",
+        "x": 50,
+        "y": 36,
+        "expected": "000000",
+        "actual": "cc55bb"
+      },
+      "complete_checks_sha256": "44e86ea87e4246c1a7ad5db9daf142ea728cc7f9f61e425c03a3a332741f8c01",
+      "reason": "Live main-thread round reset and tail-only dispatch are absent. Existing sprite-origin offset already fails the pre-pause court; later pause/resume scenes retain old player placement. Require the complete observed state/pixel/event failure stream so that the earlier sprite failure cannot hide another defect. This fingerprint is a temporary known-failure baseline, never the expected correct oracle.",
+      "evidence": "analysis/native-round-presentation-regression.md; build/tests/p1-first-round-scenes-report.json"
     }
   }
 }

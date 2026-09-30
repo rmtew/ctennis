@@ -1,6 +1,7 @@
 """Run registered native regressions and keep incomplete required coverage visible."""
 import argparse
 import copy
+import hashlib
 import json
 import subprocess
 import sys
@@ -12,14 +13,22 @@ from physical_input_reference import CASES as INPUT_CASES
 from widget_reference import CASES as WIDGET_CASES
 from status_reference import CASES as STATUS_CASES
 from point_reference import CASES as POINT_CASES
+from run_round_presentation_tests import CASES as ROUND_PRESENTATION_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve')
 AUDIO_CASES = ('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute')
-CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES + INPUT_CASES + WIDGET_CASES + STATUS_CASES + POINT_CASES
+CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES + INPUT_CASES + WIDGET_CASES + STATUS_CASES + POINT_CASES + ROUND_PRESENTATION_CASES
 # A reviewed public backlog keeps partial evidence from silently closing a gate.
 COVERAGE_BACKLOG = json.loads((ROOT / 'tests/coverage-backlog.json').read_text())
 MISSING = [f"{group['id']}: {group['summary']}" for group in COVERAGE_BACKLOG['groups']]
+
+
+def failure_check_digest(report):
+    observations = report.get('baseline_observations')
+    if observations is None:
+        return None
+    return hashlib.sha256(json.dumps(observations, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
 def classify(report, expected):
@@ -30,6 +39,8 @@ def classify(report, expected):
         return 'unexpected-red'
     signature = expected['signature']
     if difference and all(difference.get(key) == value for key, value in signature.items()):
+        if expected.get('complete_checks_sha256') and failure_check_digest(report) != expected['complete_checks_sha256']:
+            return 'unexpected-red'
         interval = expected.get('complete_state_failure_interval')
         if interval:
             # A known early input failure cannot hide later output regressions.
@@ -48,7 +59,14 @@ def classify(report, expected):
 
 def verify_failure_policy(known):
     for case, expected in known.items():
+        expected = copy.deepcopy(expected)
         report = {'passed': False, 'first_difference': expected['signature']}
+        if expected.get('complete_checks_sha256'):
+            # Synthetic classifier controls; actual baseline acceptance below
+            # still uses the maintained digest and the real native report.
+            report['baseline_observations'] = {'states': [{'update': 1, 'differences': []}],
+                'pixels': [{'actual_sha256': 'original'}], 'source_events': []}
+            expected['complete_checks_sha256'] = failure_check_digest(report)
         if interval := expected.get('complete_state_failure_interval'):
             updates = range(interval[0], interval[1] + 1)
             report['checks'] = {'states': [{'update': update, 'differences': [{**expected['signature'], 'update': update}]} for update in updates],
@@ -70,6 +88,20 @@ def verify_failure_policy(known):
                     altered['checks']['states'][-1]['differences'][0]['actual'] ^= 1
                 else:
                     altered['checks']['states'][-1]['differences'] = []
+                if classify(altered, expected) != 'unexpected-red':
+                    raise AssertionError(f'Known early failure hid {kind}: {case}')
+        if expected.get('complete_checks_sha256'):
+            for kind in ('later-pixel', 'later-state', 'later-event', 'missing-observations'):
+                altered = copy.deepcopy(report)
+                observations = altered['baseline_observations']
+                if kind == 'later-pixel':
+                    observations['pixels'][-1]['actual_sha256'] = 'changed'
+                elif kind == 'later-state':
+                    observations['states'][-1]['differences'] = [{'changed': True}]
+                elif kind == 'later-event':
+                    observations['source_events'].append({'unexpected': True})
+                else:
+                    del altered['baseline_observations']
                 if classify(altered, expected) != 'unexpected-red':
                     raise AssertionError(f'Known early failure hid {kind}: {case}')
 
@@ -133,11 +165,11 @@ def main():
             continue
         # Never classify stale output from a failed invocation as a known failure.
         report_path.unlink(missing_ok=True)
-        runner = 'scripts/run_point_tests.py' if case in POINT_CASES else 'scripts/run_status_tests.py' if case in STATUS_CASES else 'scripts/run_audio_tests.py' if case in AUDIO_CASES else 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'
+        runner = 'scripts/run_round_presentation_tests.py' if case in ROUND_PRESENTATION_CASES else 'scripts/run_point_tests.py' if case in POINT_CASES else 'scripts/run_status_tests.py' if case in STATUS_CASES else 'scripts/run_audio_tests.py' if case in AUDIO_CASES else 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'
         command = [sys.executable, runner, '--case', case]
-        if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES + POINT_CASES:
+        if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES + POINT_CASES + ROUND_PRESENTATION_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and (case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES + POINT_CASES
+        if args.self_test and (case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES + POINT_CASES + ROUND_PRESENTATION_CASES
                                or case in PHASE_CASES and 'regime' in json.loads((ROOT / f'tests/cases/{case}.json').read_text())):
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)

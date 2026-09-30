@@ -1,3 +1,72 @@
+## 2026-10-01 - First-round whole-viewport suite checkpoint
+
+- Full runtime suite completed:92 cases,52 green,40 exact known red; all
+  compiled mutations and policy controls pass, no unexplained/tool failures.
+  Command: python scripts/run_test_suite.py --baseline-check --self-test.
+  Owned session47253 is terminal (PowerShell exit1; Python aggregate returns2
+  for the four open coverage groups). The goal remains active.
+- The new p1-first-round-scenes initializes once1203 before award1204;
+  checkpoints1208/1335/1468/1471 cover stable tally, reset pause, final pause
+  and resumed gameplay. Reuses validated full round phase and original rasters.
+  No original main-thread writes or callback routing are injected.
+- 268 consecutive post-tail states:129 match before missing reset diverges1333.
+  Score/status/mode:24 crops match. Four whole-viewport pictures expose the
+  existing sprite-origin error and stale round layout. State differences at
+  checkpoints0/20/30/48; normal source-event consumption has no differences.
+- Expanded the initial partial court ROI to all256x192 pixels after inspection
+  found115/115/119 differing reset-head pixels outside it in the later scenes.
+  Rechecked the same full-suite normal and three compiled-mutant captures,
+  validating pinned capture reports, executables, native/source reference hashes
+  and unchanged earlier pixel regions. No runtime code/captures changed.
+  Actual reports and aggregate record comparison followup/provenance; all
+  current reports were reclassified against the reviewed whole-viewport policy.
+- Whole-view first failure:1208 at50,36, black expected/pink actual. Later
+  reset failures begin94,12, blue expected/black actual. Every compared state
+  difference and expected/actual pixel/event observation participates in the
+  strict known-failure digest, so earlier sprite failure cannot hide later work.
+- Three late compiled mutants preserve game RAM and that earlier failure: extra
+  sprite pixel shift, wrong second point, extra refresh read. All classify new
+  failures. Extra read is a behaviour difference1335 ([] versus[0]), not a
+  capture exception. Default strict source-event checks remain for older cases.
+- Explicit tail-only association now handles short same-frame callbacks using
+  matching contemporaneous hardware SAT plus independent unique raster pixels.
+  Correction to preceding history: active_updates uses begin_frame < frame <=
+  end_frame and does not filter callback kinds. Reset hardware2632/pixels2633.
+- Updated roadmap, backlog, test instructions and spec. Evidence:
+  analysis/native-round-presentation-regression.md. No product fixes. ROMs,
+  full generated data and captured images remain local/ignored.
+- Stop equivalent first-round windows. Next: complementary serving-end and
+  two-player round presentation; first inspect existing source windows and
+  capture only genuinely missing bounded checkpoints. Accepted mode, result/
+  menu/restart scenes and all other F2/F4/F5/P2/P3 requirements stay in scope.
+  No whole-match/native hardware gate or complete-suite claim.
+
+## 2026-10-01 - First round presentation comparison (aggregate running)
+
+- Added p1-first-round-scenes: one native initialization before award1204,
+  stable tally1208, reset pause1335, final pause1468, resumed gameplay1471.
+  Reuses the validated full round phase and existing original media; no new
+  original capture and no injected main-thread resets.
+- Corrects the preceding index note: active_updates uses begin_frame < frame
+  <= end_frame, not a gameplay-kind filter. Short same-frame tail callbacks
+  lack entries; crossing tail callbacks have entries. Explicit tail association
+  admits contemporaneous endpoints only with matching captured/source SAT and
+  unchanged independent raster validation. Hardware reset appears2632, pixels2633.
+- 268 state checks:129 match then the known missing round reset diverges1333.
+  All24 score/status/mode crops pass; four court crops retain the known origin
+  shift and stale round placement. Normal full observations repeated identically.
+- Three actual compiled late mutations preserve game RAM and the earlier sprite
+  failure: extra sprite shift, wrong second point field, extra refresh read.
+  All classify unexpected red under the complete state/pixel/event digest.
+  Unexpected entropy read is recorded1335, expected[]/actual[0], not a tool error.
+- First entropy-mutant build used the wrong adapter symbol; corrected to the
+  existing read_refresh_adapter and ran it successfully. Failed partial runner
+  did not publish a completed case report. Full suite will recreate all evidence.
+- python scripts/run_test_suite.py --baseline-check --self-test is currently
+  running (owned exec session47253). Last full verified aggregate remains91
+  cases,52 green,39 known red; do not claim92 until this run completes.
+  Four coverage groups remain open and the goal remains active.
+
 ## 2026-10-01 - Native point draw boundaries and complete aggregate verification
 
 - Added p1-deuce-fields, p1-advantage-fields and p1-return-deuce-fields,

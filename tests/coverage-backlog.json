@@ -18,7 +18,7 @@
       "tasks": [
         "Compare accepted mode selections, upper serve stages, both returns and distinct bounce/net/out checkpoints.",
         "All six status messages have local game-driven appearance/expiry comparisons. Deuce, advantage and return-to-deuce now have 27 consecutive point request/state observations and 30 completed field crops, with compiled early/frozen-field mutations rejected behind the known second-reader failure. Stop equivalent status and equal/advantage windows. Complete remaining point/game reset and actual mode-transition changes; fixed-mode preservation and renderer-unit selector coverage do not close them.",
-        "Compare round reset, match/result/menu and restart raster sequences with explicit presentation generations."
+        "First one-player round now has native tally/reset-pause/final-pause/resume raster comparisons, 268 consecutive state checks, and strict full-check failure acceptance. Score/status/mode crops match; courts retain old placement and the known sprite-origin offset. Complete complementary serving-end and two-player round scenes, accepted mode changes, match/result/menu and restart sequences with explicit presentation generations."
       ]
     },
     {
@@ -199,6 +199,28 @@
       "compiled_mutations_rejected_despite_earlier_input_failure": true,
       "source_parent_preserved": true,
       "complete_P1": false
+    },
+    {
+      "id": "P1-first-round-scenes",
+      "case": "p1-first-round-scenes",
+      "evidence": "analysis/native-round-presentation-regression.md; build/tests/p1-first-round-scenes-report.json",
+      "initial_source_callback": 1203,
+      "last_source_callback": 1471,
+      "consecutive_native_state_checks": 268,
+      "matching_state_prefix": 129,
+      "matching_field_crops": 24,
+      "actual_compiled_late_mutations": [
+        "sprite-one-pixel-shift",
+        "wrong-second-point-field",
+        "unexpected-refresh-read"
+      ],
+      "original_media_reused": true,
+      "source_main_thread_writes_injected": false,
+      "known_failure_requires_complete_observation_digest": true,
+      "complete_P1": false,
+      "whole_viewport_comparisons": 4,
+      "known_failing_whole_viewport_comparisons": 4,
+      "full_viewport_and_field_checks": 28
     }
   ]
 }

@@ -672,8 +672,33 @@ run the capture and freeze commands in [the evidence note](../analysis/native-po
 Stop equivalent point permutations. Actual mode changes, game resets, later
 scenes and the remaining F2/F4/F5/P2/P3 requirements stay open.
 
-Latest complete aggregate: **91 cases, 52 green and39 exact known red**. All
+Point-field milestone aggregate: **91 cases, 52 green and39 exact known red**. All
 mutation/signature checks pass, with no unexplained differences or tool errors.
 The aggregate still returns a failing result because four required coverage
 groups remain open. The three added reds retain the existing second-reader
 defect; their point request and pixel comparisons match independently.
+
+## First round presentation
+
+```powershell
+python scripts/run_round_presentation_tests.py --case p1-first-round-scenes --self-test
+```
+
+One initialization precedes the first award and carries native state through
+the tally, reset pause, final pause and resumed play. All268 consecutive states
+are compared;129 match before the known missing reset diverges. All24 field
+crops match, while four whole-viewport comparisons expose stale player layout
+and the existing sprite-origin error. Existing original images are reused;
+tail-only association explicitly handles short same-frame callbacks.
+
+The known exception pins all compared state/pixel/event observations, rather
+than accepting only the earlier sprite failure. Actual late sprite, field and
+extra-refresh-read mutations preserve that earlier failure and game RAM, yet
+classify as unexpected red. See [evidence and scope](../analysis/native-round-presentation-regression.md).
+
+Latest verified aggregate: **92 cases,52 green,40 exact known red**, with all
+mutation/policy checks passing and no unexplained/tool failures. Whole-viewport
+assertions were expanded using the same verified full-run captures; followup
+metadata records that comparison change. Four coverage groups remain open.
+Next: complementary round scenes, followed by the pending mode/result/restart
+presentation requirements. Stop equivalent first-round windows.
