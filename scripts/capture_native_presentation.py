@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -35,16 +35,20 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     if list(targets) != sorted(set(targets)) or not targets or targets[0] < 0 or targets[-1] > len(source['updates']):
         raise ValueError('Callback targets must be unique, increasing and inside the source replay')
     executable = build_native(case, directory, recorded_refresh=recorded_entropy)
+    if executable_mutator:
+        executable_mutator(executable)
     symbols = code_symbols((directory / 'native.lst').read_text())
     observations = []
     commits = []
     entropy_reads = []
+    audio_events = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
     with CopperlineSession(ctl, ROOT) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
             'binary': config['tools']['copperline'], 'run': str(executable),
             'args': ['--chipset', 'OCS', '--video', 'PAL', '--cpu', '68000',
                      '--chip', '512K', '--slow', '0', '--fast', '0', '--noaudio',
+                     *(['--audio-wav', str(directory / 'native.wav')] if observe_audio else []),
                      config['inputs']['amiga_rom']]})
         stop = session.inspect('run_until', {'seconds': 30, 'wait_ms': 50000})
         if stop['reason'] != 'loadseg':
@@ -56,10 +60,21 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['presentation_commit_in_blank']})
         if recorded_entropy:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['refresh_replay_done']})
+        if observe_audio:
+            session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['paula_events_done']})
         def observe_stop(stop):
             if stop['reason'] != 'breakpoint':
                 return False
             generation = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
+            if observe_audio and stop['pc'] == base + symbols['paula_events_done']:
+                count = int(session.inspect('mem_read', {'addr': base + symbols['psg_count'], 'len': 1})['data'], 16)
+                if count:
+                    data = session.inspect('mem_read', {'addr': base + symbols['psg_log'], 'len': count})['data']
+                    if list(bytes.fromhex(data)) != source['updates'][generation]['psg']:
+                        raise ValueError(f'Native PSG bytes differ at update {generation + 1}')
+                    audio_events.append({'update': generation + 1, 'psg': data,
+                                         'registers': session.inspect('custom_dump')['regs'], 'stop': stop})
+                return True
             if recorded_entropy and stop['pc'] == base + symbols['refresh_replay_done']:
                 value = session.inspect('regs_get')['d'][0] & 255
                 expected_reads = source['updates'][generation]['refresh_reads']
@@ -149,6 +164,9 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'refresh_fixture_sha256': digest(directory / 'refresh-signs.bin') if recorded_entropy else None,
               'commits': commits, 'commit_tracking': track_commits,
               'entropy_reads': entropy_reads, 'completed_rasters': completed_rasters,
+              'audio_events': audio_events, 'audio_observed': observe_audio,
+              'executable_mutated': executable_mutator is not None,
+              'native_wav': str(directory / 'native.wav') if observe_audio else None,
               'final_completed_callbacks': final_count,
               'graphics_comparison_complete': False}
     report_path.write_text(json.dumps(report, indent=2) + '\n')

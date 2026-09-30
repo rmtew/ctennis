@@ -114,6 +114,17 @@
         "expected": "000000",
         "actual": "cc55bb"
       }
+    },
+    "p2-first-serve-pitch": {
+      "reason": "Actual AUD3PER is 1687 for captured SN76489A tone divisor 213. The nearest integral Paula period is 1688 using the stock PAL 3546895 Hz clock and four-sample waveform. Native conversion uses 507/64=7.921875 instead of 3546895*8/3579545=7.927029832. Captured native WAV is consistent with the written period; source state and PSG bytes match. No waveform tolerance is inferred and no product correction is applied.",
+      "evidence": "tests/cases/p2-first-serve-pitch.json; private tests/reference/audio; build/tests/p2-first-serve-pitch-report.json; amiga/paula_tone_output.s paula_nonzero_period",
+      "signature": {
+        "update": 17,
+        "boundary": "paula-events-applied",
+        "field": "Paula period for source tone 2",
+        "expected": 1688,
+        "actual": 1687
+      }
     }
   }
 }

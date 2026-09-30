@@ -373,3 +373,12 @@ those named prefix checkpoints, not all P1 variants or P2/P3. Source-generation
 associations, recorded-entropy consumption and blanking commits are retained
 in the case reports; instrumented-prefix timing does not establish ordinary
 complete-match hardware acceptance. See the current worklog for remaining work.
+
+Current P2 evidence (2026-09-30): both complete source replays now have twice-
+identical WAVs, timed PSG/frame records and 18 named audio intervals retained
+privately. Source write association is exact. The first actual native Paula
+pitch comparison is known red (period 1688 expected, 1687 actual), and an
+assembled-code mutation changes the observed period before normal outputs
+are restored. Other native intervals and source/native response, envelope,
+stereo/filter and onset/duration criteria remain incomplete. This is not
+complete P2 acceptance; see analysis/source-audio-regression.md and WORKLOG.md.

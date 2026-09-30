@@ -381,3 +381,35 @@ upper serve, all rally/outcomes, later transitions or P2/P3.
 Latest aggregate after extending both generation cases through the first game
 tally: 21 cases, 12 green and nine exact known red. The field case has 42 checks;
 six explicit missing requirement groups still cause failure.
+
+
+## Original audio references and first native pitch case
+
+Capture source sound explicitly:
+
+```powershell
+python scripts/capture_source_audio_reference.py
+python scripts/capture_source_audio_reference.py --case two-player-match
+python scripts/freeze_audio_reference.py
+```
+
+Each full replay runs twice, preserving the exact parent callback hash while
+recording native PCM16 WAVs and precise PSG/frame timestamps. Eighteen named
+intervals cover serve, return, point, round, result and restart evidence across
+both parents. Files remain private and ignored under tests/reference/audio/.
+This is source capture/association evidence; waveform response measurements
+and native comparisons for all intervals still remain.
+
+`python scripts/run_audio_tests.py --case p2-first-serve-pitch --self-test`
+compares actual Paula registers and captures the native waveform. The first
+serve is known red: source tone divisor 213 requires nearest period 1688,
+while actual AUD3PER is 1687 because the native ratio approximation is low.
+The self-test changes an actual instruction in the private executable and
+observes period 1691, then rebuilds and recaptures the unmodified application.
+It never modifies product source or saved expected sound. The audio case is
+registered in the same one-command suite; this single pitch criterion does
+not complete P2. See ../analysis/source-audio-regression.md for evidence and
+source/native WAV formats, timing and remaining sound criteria.
+
+Latest aggregate baseline/self-test: 22 cases, 12 green and ten exact known red;
+six explicit missing groups still cause failure.
