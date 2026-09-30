@@ -13,7 +13,7 @@
       "id": "F1-F5",
       "summary": "Focused behaviour inventory: movement limits, input/contact edges, court outcomes and random effects",
       "tasks": [
-        "F1: initial row zero is independently captured and green for all four directions/both players (movement-serve-bounds). Obtain approach, stopped hold and reversal for remaining rows 1-3 per player, with source phase provenance.",
+        "F1: rows zero and one independently captured and green for all four directions/both players; alternate row preserves a natural R2 point/reset prefix. Establish reachable limits and approach/hold/reversal for remaining rows two and three, with within-callback phase provenance.",
         "F2: capture accepted action onset and adjacent earlier/later callbacks, plus any distinct geometric contact edge.",
         "F3: retain the existing continuous deuce/advantage/game sequence and its five boundary comparisons.",
         "F4: index each distinct bounce/net/out outcome through eventual point attribution, then compare missing outcomes independently.",

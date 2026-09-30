@@ -78,7 +78,10 @@ F1 now has an independent `movement-serve-bounds` capture and full native
 comparison: both players approach, hold and reverse at all four initial-row
 limits over 742 consecutive callbacks. See
 [movement evidence and remaining rows](../analysis/movement-regression.md).
-Rows 1–3 for each player remain missing; this does not complete F1.
+The independent `movement-alternate-serve-bounds` case now preserves R2's first
+485 callbacks through a natural point/reset and tests the alternate row over
+1,322 callbacks, including 50 sound writes. Both cases are green. Rows 2–3 for
+each player remain missing; this does not complete F1.
 
 For each row, record which replay and callback interval establishes it. A row
 without evidence remains a gap. One interval may establish several rows.

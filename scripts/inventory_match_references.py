@@ -3,7 +3,7 @@ import collections
 import hashlib
 import json
 from pathlib import Path
-from round_reference import validate_fixture
+from round_reference import validate_fixture, FOCUSED_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -81,12 +81,19 @@ if __name__ == '__main__':
                 'open_requirements': json.loads((ROOT / 'tests/coverage-backlog.json').read_text()),
                 'warning': 'Last reports are historical observations, not a fresh native run or complete coverage.'}
     from movement_reference import validate_movement
-    case = json.loads((ROOT / 'tests/cases/movement-serve-bounds.json').read_text())
-    payload = (ROOT / case['reference']).read_bytes()
-    fixture = json.loads(payload)
-    validate_fixture(fixture)
-    coverage['focused_movement'] = {'reference_sha256': hashlib.sha256(payload).hexdigest(),
-                                    **validate_movement(fixture, case)}
+    coverage['focused_movement'] = []
+    for name in FOCUSED_CASES:
+        case = json.loads((ROOT / f'tests/cases/{name}.json').read_text())
+        payload = (ROOT / case['reference']).read_bytes()
+        fixture = json.loads(payload)
+        validate_fixture(fixture)
+        coverage['focused_movement'].append({'case': name,
+                                            'reference_sha256': hashlib.sha256(payload).hexdigest(),
+                                            **validate_movement(fixture, case)})
+    coverage['remaining_movement_bounds_rows'] = {side: sorted(set(range(4)) - {
+        observation['bounds_row'] for case in coverage['focused_movement']
+        for observation in case['observed_movement_limits'] if observation['player'] == side})
+        for side in ('lower', 'upper')}
     (ROOT / 'build/tests/coverage-inventory.json').write_text(json.dumps(coverage, indent=2) + '\n')
     for name, row in report.items():
         print(name, 'updates', row['updates'], 'returns', row['instrumented_return_counts'],

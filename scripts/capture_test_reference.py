@@ -77,14 +77,14 @@ def capture_round(config, case_name='round-transition'):
                     for event in fixture['timeline'] if event['kind'] == 'control']
         if controls != [event for event in case['control_schedule'] if event['frame'] >= 1298]:
             raise ValueError('Observed controls differ from frozen schedule')
-    if case_name == 'movement-serve-bounds':
+    if case_name in FOCUSED_CASES:
         from movement_reference import validate_movement
         validate_movement(fixture, case)
     target = ROOT / f'tests/reference/{case_name}.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(fixture, indent=2) + '\n', encoding='utf-8')
     report = validate_fixture(fixture)
-    if case_name == 'movement-serve-bounds':
+    if case_name in FOCUSED_CASES:
         report.update(validate_movement(fixture, case))
     report.update(reference_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
                   capture_sha256=fixture['capture_sha256'], repeat_identical=True)
@@ -102,7 +102,7 @@ def main():
             parser.error('--verify-only applies to callback references')
         fixture = json.loads((ROOT / f'tests/reference/{args.case}.json').read_text())
         report = validate_fixture(fixture)
-        if args.case == 'movement-serve-bounds':
+        if args.case in FOCUSED_CASES:
             from movement_reference import validate_movement
             case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
             report.update(validate_movement(fixture, case))

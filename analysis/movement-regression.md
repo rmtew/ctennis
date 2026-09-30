@@ -70,12 +70,55 @@ sprite record 1 X: expected 192, actual 193. Temporary mutated source and
 executable are removed. An altered source held-direction observation is also
 rejected by the behavioural evidence validator.
 
+## Alternate-service row
+
+`movement-alternate-serve-bounds` preserves the first 485 callbacks of the
+frozen R2 source record exactly, through source frame 1784. Its natural first
+point toggles mode bit 3; `initialize_round_state` then selects animation row 1
+for both players. The following physical-input sequence keeps serve actions
+released and holds down/up/down then left/right/left. Both independent source
+captures agree: 1,322 callbacks and 50 ordered PSG bytes. The full native case
+passes and the same native movement mutation is detected at callback 1.
+
+| Direction | Approach/hold callbacks | Four reversal callbacks |
+|---|---:|---:|
+| Down | 601–704; stopped 697–704 | 721–724 |
+| Up | 721–824; stopped 817–824 | 841–844 |
+| Left | 961–1064; stopped 1057–1064 | 1081–1084 |
+| Right | 1081–1184; stopped 1177–1184 | 1201–1204 |
+
+The upper reset X is 160, one beyond row 1's permitted positive destination
+159. The sequence moves left first, then approaches the positive limit from
+inside the range. Reset positions are not automatically valid destinations
+for every direction; the original movement code rejects rather than clamps.
+The validator checks exact natural-prefix equality against its hashed R2
+parent on every capture validation and native run.
+
+Raw SHA256:
+`b0a91d89f4472f1f4a1f0e2c2f6fc608bc44b232279dceb5d2207913dcd811ad`.
+Fixture SHA256:
+`592a872488874a9099767f31a56e3cf892ecef37f31ebf61e2adde4305cf15e5`.
+Use the preceding capture/test commands with case
+`movement-alternate-serve-bounds`. Both cases remain continuous from reset;
+neither injects expected intermediate results.
+
 ## Remaining F1 work
 
-Rows 1–3 for each player still need approach/hold/reversal evidence. Existing
+Rows 2–3 for each player still need approach/hold/reversal evidence. Existing
 R2 post-body observations include all four unblocked animation row selections,
 but that alone does not establish their bounds, movement inputs or the exact
 row used earlier within the callback. Read the phase/reset/trajectory writers
 and index intervals before collecting missing sequences. Preserve the existing
 continuous matches and the new independent case; do not manufacture animation
 flags or substitute the old Python movement model for original-game evidence.
+
+The serve handoff selects receiving-player row 2 by retaining low animation
+bits and setting bit 6. The bounce path replaces bits 5–6 with both set for
+both players, selecting row 3. Completed serve/contact animations also permit
+row 3 movement after clearing the movement-blocking bit. In the first retained
+R2 serve, upper row 2 is visible from callback 213 (frame 1512) until the bounce
+at callback 243 (frame 1542). Post-body row selections identify candidate
+intervals; they do not alone prove the exact row at movement entry. Investigate
+whether distant row-2 limits are actually reachable during that transient
+phase before requiring a hold there or proposing a documented starting-state
+injection. Keep geometric limits separate from phase-blocked movement.

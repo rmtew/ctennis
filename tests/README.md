@@ -438,6 +438,13 @@ enforces approach, eight held attempts and four reversal attempts for all eight
 initial-row limits. Remaining rows and physical native control sampling stay
 open. See [the movement evidence](../analysis/movement-regression.md).
 
+`movement-alternate-serve-bounds` adds the alternate initial row after a natural
+point/reset: 1,322 continuous callbacks and 50 PSG bytes, with exact equality
+to the first 485 R2 callbacks checked as source provenance. Use the same
+capture/test commands with that case ID. The combined inventory now reports
+only rows 2 and 3 remaining per player. Each case's own remaining-row list
+describes that case alone.
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,
