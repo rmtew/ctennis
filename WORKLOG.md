@@ -1,3 +1,25 @@
+## 2026-10-01 - Useful-test selection and bounded point references
+
+- Roadmap now requires a named behavioural gap, plausible detected defect,
+  implementation decision and finite stopping condition for each test effort.
+  Prioritize missing behaviours; stop equivalent variants and diagnostics that
+  no longer protect behaviour. Case/script counts are not completion evidence.
+- Proceeded with three distinct P1 gaps: deuce, advantage and return-to-deuce.
+  Captured 30 original rasters twice from the unchanged two-player replay;
+  repeats are identical and the full original callback record is preserved.
+  Supplemental media is separate from the primary frozen presentation media.
+- Verified all five score/game/mode regions at two stable callbacks per
+  transition (30 field observations). Each region has unambiguous independently
+  validated original pixels. Existing full-image reference lookup still works.
+  Recipe, freeze helper and optional region/supplement lookup are maintained;
+  ROM and generated source media remain ignored. No product logic was changed.
+- This completes source-reference preparation, not native regression coverage.
+  Suite baseline remains 88 cases, 52 green and 36 known red; no aggregate rerun
+  or new native cases claimed. Next: three bounded native point-transition
+  cases, checking draw timing and completed field pixels, then compiled early
+  consumer/frozen-field mutations and strict later-failure rejection. Stop
+  equivalent point permutations after those checks pass.
+
 ## 2026-10-01 - Two-player status6 and known-failure masking protection
 
 - Added p1-status-6-lifecycle and its reproducible source phase. Initialize once

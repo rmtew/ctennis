@@ -1,0 +1,12 @@
+{
+  "source_case": "two-player-match",
+  "capture_label": "point-fields",
+  "reference_directory": "tests/reference/presentation-point-fields",
+  "raster_window": [-2, 7],
+  "checkpoints": {
+    "deuce": {"update": 9134, "scores": [5, 5, 1, 2]},
+    "advantage": {"update": 9588, "scores": [4, 6, 1, 2]},
+    "return-deuce": {"update": 9869, "scores": [5, 5, 1, 2]}
+  },
+  "contract": "Bounded original raster supplement for game-driven deuce, advantage and return-to-deuce field updates. Repeat the unchanged original two-player replay, retain every callback byte unchanged, and validate captured rasters against captured VDP state. No replacement for the primary frozen P1 media."
+}

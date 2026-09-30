@@ -118,6 +118,36 @@ it does not narrow the current reference/test completion goal.
 
 ## Test work selection and stopping rules
 
+Select work by the port decision it enables. A useful test must distinguish a
+correct implementation from a plausible incorrect one, using independently
+observed original behaviour. Record the behaviour, current coverage gap,
+expected defect, bounded case set and stopping condition before doing capture
+or harness work. A helper is justified only when a named pending comparison
+needs it; infrastructure completion is not gameplay completion.
+
+Prioritize missing behaviours over extra variants of covered behaviours.
+Continuous replays protect accumulated state; bounded starts expose later
+behaviours hidden behind an earlier known failure. Require both where they
+answer different questions, rather than duplicating every case in both forms.
+Known-red acceptance must not conceal a new later discrepancy. Keep mutation
+checks focused on whether the comparison detects a meaningful mistake.
+
+Stop investigating when the independent reference, actual native comparison,
+specific failure classification and detection check answer the stated question.
+Do not pursue exhaustive branch/input coverage, repeated emulator confirmation
+of settled facts, or internal byte parity without a behavioural reason. If work
+does not enable a new regression case or an implementation decision, defer it
+and record the reason. Report newly protected behaviours and exposed defects,
+not captures, scripts or case counts alone.
+
+Immediate bounded work: deuce, advantage and return-to-deuce must update the
+point fields at the original draw boundary while preserving games and mode.
+Use the existing two-player replay and three source windows; do not add
+equivalent regained-advantage permutations. Stop once these transitions have
+native field/timing and completed-raster comparisons, with a deliberately early
+update and a frozen point field rejected even behind the known input failure.
+Then select the next missing requirement from the coverage backlog.
+
 Before adding a test or capture, name the gameplay behaviour to preserve, the
 specific gap in existing comparisons, a plausible implementation mistake the
 test would detect, and a finite stopping condition. Added cases, traces or

@@ -13,13 +13,16 @@ from presentation_reference import ROOT, ACTIVE_AREA
 from run_presentation_tests import digest, map_source_palette, native_picture, compare
 
 
-def source_generation(generation, source_case='one-player-match'):
-    root = ROOT / 'tests/reference/presentation'
+def source_generation(generation, source_case='one-player-match',
+                      reference_directory='tests/reference/presentation', region=None):
+    root = ROOT / reference_directory
     frozen = json.loads((root / 'manifest.json').read_text())
     if not frozen['source_media_checks_passed']:
         raise ValueError('Source media not accepted')
     if digest(ROOT / 'tests/cases/presentation.json') != frozen['recipe_sha256']:
         raise ValueError('Presentation contract changed')
+    if frozen.get('supplemental_recipe') and digest(ROOT / frozen['supplemental_recipe']) != frozen['supplemental_recipe_sha256']:
+        raise ValueError('Supplemental presentation recipe changed')
     entry = frozen['references'][source_case]
     manifest_path, validation_path = root / entry['manifest'], root / entry['validation']
     if digest(manifest_path) != entry['manifest_sha256'] or digest(validation_path) != entry['validation_sha256']:
@@ -58,10 +61,11 @@ def source_generation(generation, source_case='one-player-match'):
             if hashlib.sha256(rgb.tobytes()).hexdigest() != samples[frame]['rgb_sha256']:
                 raise ValueError('Original captured pixels changed')
             images.append(rgb.crop(ACTIVE_AREA))
-    if not images or len({picture.tobytes() for picture in images}) != 1:
+    if not images or len({(picture.crop(region) if region else picture).tobytes() for picture in images}) != 1:
         raise ValueError(f'No unique source displayed image for generation {generation}')
     return images[0], {'generation': generation, 'source_case': source_case, 'hardware_frames': candidates, 'pixel_frames': frames,
-                       'reference_sha256': digest(root / 'manifest.json')}
+                       'reference_sha256': digest(root / 'manifest.json'),
+                       'comparison_region': region}
 
 
 def main():

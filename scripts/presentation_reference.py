@@ -86,8 +86,8 @@ def rgb_image(indices):
     return Image.frombytes('RGB', (256, 192), bytes(channel for index in indices for channel in PALETTE[index]))
 
 
-def verify_capture(case):
-    directory = ROOT / f'build/tests/{case}-presentation'
+def verify_capture(case, directory=None):
+    directory = directory or ROOT / f'build/tests/{case}-presentation'
     manifest = json.loads((directory / 'manifest.json').read_text())
     parent_path = ROOT / f'tests/reference/{case}.json'
     if hashlib.sha256(parent_path.read_bytes()).hexdigest() != manifest['parent_reference_sha256']:
@@ -147,8 +147,10 @@ def field_checkpoints(directory, manifest, parent):
         hardware[frame] = (vram, regs, decode_vdp(vram, regs))
     results = {}
     for name, frame in manifest['named_frames'].items():
-        selected = {}
-        if name.startswith('point-codes-'):
+        selected = manifest.get('field_requests', {}).get(name, {})
+        if selected:
+            pass
+        elif name.startswith('point-codes-'):
             a, b = map(int, name.removeprefix('point-codes-').split('-'))
             selected = {'point_a': a, 'point_b': b}
         elif name.startswith('status-'):

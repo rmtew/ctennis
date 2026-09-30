@@ -4,6 +4,7 @@ import configparser
 import hashlib
 import json
 import os
+import re
 import subprocess
 import zipfile
 from pathlib import Path
@@ -20,6 +21,7 @@ def sha(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=('one-player-match', 'two-player-match'), default='one-player-match')
+    parser.add_argument('--recipe', help='Additional bounded source checkpoints; retain separately from the primary media')
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
@@ -35,6 +37,11 @@ def main():
     validate_fixture(parent)
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     out = ROOT / f'build/tests/{args.case}-presentation'
+    extra = json.loads((ROOT / args.recipe).read_text()) if args.recipe else None
+    if extra:
+        if extra['source_case'] != args.case or not re.fullmatch('[a-z0-9-]+', extra['capture_label']):
+            raise ValueError('Invalid supplemental source recipe')
+        out = out.with_name(out.name + '-' + extra['capture_label'])
     out.mkdir(parents=True, exist_ok=True)
     (out / 'manifest.json').unlink(missing_ok=True)
     # Keep surrounding rasters: callback completion and visible scanout need not coincide.
@@ -87,7 +94,20 @@ def main():
                 named.setdefault('match-result-sound-start', event['frame'])
             elif event.get('pc') == 0x0109:
                 named.setdefault('return-to-title', event['frame'])
-    frames = sorted({frame + delta for frame in named.values() for delta in range(-2, 5)
+    field_requests = {}
+    if extra:
+        named, trigger_updates = {}, {}
+        for name, checkpoint in extra['checkpoints'].items():
+            row = parent['updates'][checkpoint['update'] - 1]
+            ram = bytes.fromhex(row['post_tail_ram'])
+            if list(ram[0x3e:0x42]) != checkpoint['scores']:
+                raise ValueError('Supplemental scoring checkpoint differs from the original')
+            named[name], trigger_updates[name] = row['end_frame'], row['ordinal']
+            field_requests[name] = dict(point_a=ram[0x3e], point_b=ram[0x3f],
+                games_a=ram[0x40], games_b=ram[0x41],
+                mode=0 if ram[0x3d] & 4 else 2 if ram[0x3d] & 128 else 1)
+    window = extra['raster_window'] if extra else [-2, 4]
+    frames = sorted({frame + delta for frame in named.values() for delta in range(window[0], window[1] + 1)
                      if 0 < frame + delta <= parent['updates'][-1]['end_frame'] + 1})
     targets = out / 'targets.lua'
     targets.write_text('return {' + ','.join(f'[{frame}]=true' for frame in frames) + '}\n')
@@ -148,7 +168,7 @@ def main():
     if runs[0] != runs[1]:
         raise ValueError('Repeated media captures differ')
     title = [row['rgb_sha256'] for row in runs[0] if 299 <= row['frame'] <= 302]
-    if len(title) != 4 or len(set(title)) != 1:
+    if not extra and (len(title) != 4 or len(set(title)) != 1):
         raise ValueError('Stable title adjacent rasters differ')
     manifest = dict(schema_version=1, rom_sha256=ROM_SHA256,
                     accepted_graphics_oracle=False,
@@ -160,6 +180,8 @@ def main():
                     geometry_source='MAME mame0289 src/devices/video/tms9928a.cpp device_config_complete',
                     capture_boundary='frame_done after frozen input policy; RAM is contemporaneous, not asserted post-tail',
                     named_frames=named, trigger_updates=trigger_updates, samples=runs[0],
+                    field_requests=field_requests, supplemental_recipe=args.recipe,
+                    supplemental_recipe_sha256=sha((ROOT / args.recipe).read_bytes()) if extra else None,
                     observer_sha256=sha((ROOT / 'scripts/capture_presentation_policy.lua').read_bytes()),
                     recorder_sha256=sha((ROOT / 'scripts/capture_round_reference.lua').read_bytes()),
                     policy_sha256=sha((ROOT / case['capture_policy']).read_bytes()),
