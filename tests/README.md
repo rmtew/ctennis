@@ -245,3 +245,44 @@ in the aggregate runner via the phase list. Run individually with
 `advantage-regained-phase`, `advantage-game-phase`). These diagnose the scoring
 sequence beyond the earlier full-match failure; they do not establish upstream
 parity, native scoreboard pixels or complete presentation coverage.
+
+## Later timer saturation and audio cadence
+
+Three additional source-derived cases cover shared/status timer boundaries.
+`shared-timer-saturation-phase` checks reaching 255 at source update 2183 and
+remaining 255 on the following callback; its full native state passes.
+`status-timer-saturation-phase` retains the full comparison at source updates
+12535-12536 and is known red at initialization: audio countdown expected 1,
+actual 2 (RAM offset 131). The source skips audio on alternate callbacks when
+its reload value is 2; the native harness and live callback call the interpreter
+unconditionally and reload 2. This is an explained cadence defect, not a timer
+failure or a setup error.
+
+`status-timer-observation-phase` runs the same native executable/source window
+with an explicitly scoped seven-counter observation (C06B-C071). It passes,
+including the status timer's 254-to-255 transition. PSG/refresh event checks
+remain enabled. Its report declares seven compared RAM bytes; it does not claim
+full state or audio parity, and the full-state known-red case stays registered.
+All existing cases keep their full 254-byte comparisons. The observation layout
+is temporary diagnostic scaffolding subject to the behavioural-test migration.
+Timer checkpoints are checked against the independent parent reference and
+incorrect checkpoint recipes are rejected.
+
+The matched R1 prefix already observes both refresh-sign outcomes and five
+primary counter wraps. The inventory identifies the earlier C06D/C06E/C06F/C071
+saturations; the two new windows cover later C06C/C070 saturation. This indexes
+clock evidence without duplicating every arbitrary counter value. It does not
+complete movement/contact/court or native hardware cadence coverage.
+
+Baseline-check mode now executes known-red continuous cases through their
+recorded first-divergence boundary (at least one update for an initialization
+failure). The reference is validated in full before selecting that native prefix;
+reports distinguish `updates`, `reference_updates` and `full_replay_executed`.
+All green cases and independent later-phase cases still run their retained
+sequences. A matching prefix without the expected failure is unexpected green
+and fails baseline review; it does not promote the full replay to passing.
+Strict aggregate mode and individual runs without `--through-update` continue
+to execute the complete retained replay. This avoids running an already-diverged
+suffix merely to reconfirm its first failure. Full and optimized 17-case runs
+verified the same 11 green/six known-red classifications. Required missing
+coverage remains failing in both modes.

@@ -7,7 +7,8 @@ from round_reference import validate_fixture
 
 ROOT = Path(__file__).resolve().parent.parent
 CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-play-phase', 'deuce-enter-phase', 'advantage-enter-phase',
-         'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase')
+         'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase',
+         'shared-timer-saturation-phase', 'status-timer-saturation-phase', 'status-timer-observation-phase')
 
 
 def build_phase(case):
@@ -27,6 +28,10 @@ def build_phase(case):
         actual = list(bytes.fromhex(updates[ordinal - 1]['ram'])[0x3E:0x42])
         if actual != expected:
             raise ValueError(f'Source scoring checkpoint differs at local update {ordinal}')
+    for ordinal, offset, before, after in case.get('timer_checkpoints', []):
+        row = updates[ordinal - 1]
+        if bytes.fromhex(row['ram'])[offset] != before or bytes.fromhex(row['post_tail_ram'])[offset] != after:
+            raise ValueError(f'Source timer checkpoint differs at local update {ordinal}')
     return {'schema_version': 2, 'reference_kind': 'source-derived-phase',
             'parent_reference': case['parent_reference'],
             'parent_sha256': hashlib.sha256(payload).hexdigest(),

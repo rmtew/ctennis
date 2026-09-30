@@ -28,6 +28,18 @@ def classify(report, expected):
     return 'unexpected-red'
 
 
+def verify_failure_policy(known):
+    for case, expected in known.items():
+        report = {'passed': False, 'first_difference': expected['signature']}
+        original = expected['signature']['actual']
+        changed = original ^ 1 if isinstance(original, int) else original + '00'
+        altered = {'passed': False, 'first_difference': {**expected['signature'], 'actual': changed}}
+        if classify(report, expected) != 'known-red' or classify(altered, expected) != 'unexpected-red':
+            raise AssertionError(f'Known-failure signature policy failed: {case}')
+        if classify({'passed': True, 'first_difference': None}, expected) != 'unexpected-green':
+            raise AssertionError(f'Unexpected pass was silently accepted: {case}')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline-check', action='store_true',
@@ -36,14 +48,19 @@ def main():
                         help='Verify mutation detection and changed-signature rejection')
     args = parser.parse_args()
     known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases']
+    if args.self_test:
+        verify_failure_policy(known)
     results = []
     out = ROOT / 'build/tests'
     out.mkdir(parents=True, exist_ok=True)
+    (out / 'suite-report.json').unlink(missing_ok=True)
     for case in CASES:
         report_path = out / ('report.json' if case == 'serve' else f'{case}-report.json')
         # Never classify stale output from a failed invocation as a known failure.
         report_path.unlink(missing_ok=True)
         command = [sys.executable, 'scripts/run_regression_tests.py', '--case', case]
+        if args.baseline_check and case in known:
+            command += ['--through-update', str(max(1, known[case]['signature']['update']))]
         if args.self_test and case == 'serve':
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
@@ -57,13 +74,6 @@ def main():
         status = classify(report, known.get(case))
         results.append({'case': case, 'status': status, 'report': str(report_path),
                         'first_difference': report['first_difference']})
-        if args.self_test and case in known:
-            altered = {**report, 'passed': False,
-                       'first_difference': {**known[case]['signature'], 'actual': 2}}
-            if classify(altered, known[case]) != 'unexpected-red':
-                raise AssertionError('Changed known-failure signature was accepted')
-            if classify({**report, 'passed': True, 'first_difference': None}, known[case]) != 'unexpected-green':
-                raise AssertionError('Unexpected pass was silently accepted')
         print(f'{case}: {status}', flush=True)
     allowed = {'green', 'known-red'} if args.baseline_check else {'green'}
     passed = not MISSING and all(row['status'] in allowed for row in results)

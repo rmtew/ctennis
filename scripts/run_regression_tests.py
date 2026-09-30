@@ -14,6 +14,12 @@ OUT = ROOT / 'build/tests'
 
 
 def compare(records, fixture, case, fields):
+    selected = case.get('compared_ram_offsets', list(range(256)))
+    if not selected or len(selected) != len(set(selected)) or any(type(offset) is not int or not 0 <= offset < 256 for offset in selected):
+        raise ValueError('Invalid RAM observation fields')
+    offsets = set(case.get('compared_ram_offsets', range(256))) - set(case['excluded_ram_offsets'])
+    if not offsets:
+        raise ValueError('RAM observation excludes every selected field')
     exact = fixture.get('schema_version') == 2
     stride = 5 if exact else 3
     expected_records = 2 + stride * case['updates']
@@ -22,8 +28,9 @@ def compare(records, fixture, case, fields):
     if len(records[0]) != 256 or len(bytes.fromhex(fixture['initial_post_tail'])) != 256:
         raise ValueError('Incomplete initial state record')
     for offset, (actual, expected) in enumerate(zip(records[0], bytes.fromhex(fixture['initial_post_tail']))):
-        if offset not in case['excluded_ram_offsets'] and actual != expected:
-            return {'update': 0, 'field': fields[str(offset)], 'expected': expected, 'actual': actual}
+        if offset in offsets and actual != expected:
+            return {'update': 0, 'boundary': 'initial-post-tail', 'ram_offset': offset,
+                    'field': fields[str(offset)], 'expected': expected, 'actual': actual}
     initial = bytes(fixture['initial_psg'])
     if records[1] != initial:
         return {'update': 0, 'field': 'initial ordered PSG events',
@@ -45,7 +52,7 @@ def compare(records, fixture, case, fields):
             if len(actual) != 256 or len(wanted) != 256:
                 raise ValueError('Incomplete state record')
             for offset in range(256):
-                if offset in case['excluded_ram_offsets']:
+                if offset not in offsets:
                     continue
                 if actual[offset] != wanted[offset]:
                     difference = {'update': index, 'source_frame': expected['frame'], 'boundary': boundary,
@@ -124,6 +131,8 @@ def main():
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
     parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
+    parser.add_argument('--through-update', type=int,
+                        help='Run a declared prefix through this update; report that the full replay was not executed')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
@@ -142,8 +151,14 @@ def main():
         raise ValueError('The serve reference assumes refresh bit zero')
     if fixture['rom_sha256'] != ROM_SHA256 or len(fixture['updates']) != case['updates']:
         raise ValueError('Wrong reference revision or callback count')
+    reference_count = case['updates']
     if not exact and [row['frame'] for row in fixture['updates']] != list(range(case['first_frame'], case['first_frame'] + case['updates'])):
         raise ValueError('Reference callback sequence is incomplete')
+    if args.through_update is not None:
+        if not 1 <= args.through_update <= reference_count:
+            raise ValueError('Requested prefix is outside the retained reference')
+        case['updates'] = args.through_update
+        fixture = {**fixture, 'updates': fixture['updates'][:args.through_update]}
     fields = json.loads((ROOT / 'tests/state-fields.json').read_text())['bytes']
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
@@ -161,7 +176,10 @@ def main():
     prepare_gameplay()
     records, digest = execute(config, case['name'])
     difference = compare(records, fixture, case, fields)
-    report = {'case': case['name'], 'updates': case['updates'], 'bytes_compared_per_boundary': 254,
+    report = {'case': case['name'], 'updates': case['updates'],
+              'reference_updates': reference_count,
+              'full_replay_executed': case['updates'] == reference_count,
+              'bytes_compared_per_boundary': len(set(case.get('compared_ram_offsets', range(256))) - set(case['excluded_ram_offsets'])),
               'boundaries_per_update': 3 if exact else 2,
               'reference_psg_bytes': sum(len(row['psg']) for row in fixture['updates']),
               'reference_sha256': hashlib.sha256(reference.read_bytes()).hexdigest(),

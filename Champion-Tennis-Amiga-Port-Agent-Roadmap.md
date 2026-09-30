@@ -14,6 +14,8 @@ Two-player calibration and a twice-identical varied 27,037-update full match/res
 
 The required deuce/advantage/back-to-deuce/game-award sequence now has a green continuous 1,649-update native phase replay (260 PSG bytes) and five green scoring-boundary cases, derived from natural R2 play. Source scoring checkpoints are enforced. This adds independent later scoring coverage without changing the full-match known failure or claiming hardware presentation parity.
 
+Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

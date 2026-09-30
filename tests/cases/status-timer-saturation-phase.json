@@ -1,0 +1,21 @@
+{
+  "name": "status-timer-saturation-phase",
+  "reference": "tests/reference/status-timer-saturation-phase.json",
+  "schema_version": 2,
+  "parent_reference": "tests/reference/one-player-match.json",
+  "initial_source_update": 12534,
+  "updates": 2,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "timer_checkpoints": [
+    [
+      2,
+      112,
+      254,
+      255
+    ]
+  ],
+  "purpose": "F5 reachable later timer saturation; source-derived phase supplements continuous replays"
+}

@@ -65,6 +65,18 @@
         "actual": 1,
         "callback_kind": "tail-only"
       }
+    },
+    "status-timer-saturation-phase": {
+      "reason": "Native run_tail and live gameplay call audio_tick_adapter unconditionally after irq_counter_prefix; source only calls its audio engine when countdown reaches zero. With C082=2 and C083=2, source decrements C083 to 1 without audio, native reloads 2. Timers are separately compared in status-timer-observation-phase.",
+      "evidence": "build/tests/status-timer-saturation-phase-report.json; amiga/tests/simulation_harness.s run_tail; amiga/gameplay_integration_probe.s audio callback; amiga/translated_audio_tick.s reload; retained source initial pre/post-tail states",
+      "signature": {
+        "update": 0,
+        "boundary": "initial-post-tail",
+        "ram_offset": 131,
+        "field": "audio tick countdown",
+        "expected": 1,
+        "actual": 2
+      }
     }
   }
 }
