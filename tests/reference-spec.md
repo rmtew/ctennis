@@ -594,3 +594,6 @@ Current result/title/restart coverage: both modes,2844 state checks,12 completed
 
 
 Current priority supersedes the preceding next-scenes instruction: require a distinct missing regression protection before adding outcome images. Prioritise emitted-audio and ordinary-execution gaps. See the roadmap section "Current priority: requirement-driven selection". `inspect_mute_waveform.py` measures validated retained mute tails only; no waveform acceptance criterion is inferred.
+
+
+The existing `p2-first-serve-mute` case now also requires emitted signal before mute and digital silence afterwards at original PCM16 precision. Actual unmuted-volume and zero-waveform executable faults are rejected; the second leaves period/volume/length controls unchanged. Stop equivalent mute windows. Exact onset/decay and later effects remain open. See [evidence](../analysis/native-emitted-mute-regression.md). Current next action: discuss test scope as requested.

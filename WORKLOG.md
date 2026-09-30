@@ -1,3 +1,9 @@
+## 2026-10-01 ? Existing mute case completed; stop for scope discussion
+
+Extended p2-first-serve-mute rather than adding a new case. Original WAV establishes a 5ms audible pre-mute window and a 20ms silent post-mute window. Native output matches at source PCM16 precision, per channel. Actual private mute-volume1 fault produces residual peak166; actual zero-waveform fault removes the pre-mute signal while period/volume/length controls stay unchanged. Normal peak332 before mute, zero after. Three successful self-test captures; normal rebuilt last. Initial harness assertion compared all custom registers and rejected expected changed DMA sample data; corrected control comparison and reran all three.
+
+No product/source media changes. Bounded signal/silence closed; no waveform fidelity, exact onset/decay or complete P2 acceptance claimed. User asked to finish this case then discuss scoping; no additional test work should begin before that discussion. Full goal remains incomplete. See analysis/native-emitted-mute-regression.md for proof and scope.
+
 ## 2026-10-01 ? Requirement-driven coverage audit and mute waveform evidence
 
 Previous goal turn was no progress (selection discussion only). Inspected current clean worktree, backlog, moving-prefix case, rally inventory code and audio runner. Deferred automatic additional court screenshots: six-return continuous R2 state comparison and existing launch/pre-bounce pictures must be accounted for first. Retained all open requirements.

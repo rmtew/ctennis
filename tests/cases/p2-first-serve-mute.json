@@ -9,8 +9,26 @@
   "paula_channel": 3,
   "paula_clock_hz": 3546895,
   "samples_per_cycle": 4,
-  "criterion": "At recorded source callback 40, all three mapped native tone volumes must be zero, matching the source all-muted state. This verifies the hardware mute action; filter decay and later sound remain separate waveform criteria.",
-  "contract": "First serve final mute boundary on actual Paula hardware output. Independent of pitch and attenuation quantization failures.",
+  "criterion": "At recorded source callback 40, all three mapped native tone volumes must be zero, matching the source all-muted state. This verifies the hardware mute action; filter decay and later sound remain separate waveform criteria. Emitted audio must also be nonzero in the original-established pre-mute window and zero at PCM16 precision in the post-mute window, with channels checked individually.",
+  "contract": "First-serve mute hardware action and bounded emitted signal/silence; independent of pitch/envelope failures. Onset and filter decay deadlines remain separate.",
   "comparison": "mute",
-  "mute_update": 40
+  "mute_update": 40,
+  "waveform_windows": [
+    {
+      "kind": "audible",
+      "offset_seconds": -0.01,
+      "duration_seconds": 0.005
+    },
+    {
+      "kind": "silent",
+      "offset_seconds": 0.01,
+      "duration_seconds": 0.02
+    }
+  ],
+  "test_requirements": {
+    "missing_behaviour": "Emitted sound must be present before the first-serve mute and silent afterwards; register checks alone do not establish output.",
+    "plausible_regression": "An unmuted output channel or missing/corrupted waveform can leave audible residue or remove the effect despite the expected logical commands.",
+    "independent_expectation": "Hash-validated original PCM16 WAV and exact PSG callback40 association establish the audible and silent windows.",
+    "stopping_condition": "Both bounded windows match the original at PCM16 precision and real private mute-volume and zero-waveform faults are rejected; stop equivalent mute windows."
+  }
 }

@@ -27,7 +27,7 @@
       "tasks": [
         "Compare the retained upper serve, both returns, point, round wait/resume, match/result and restart intervals.",
         "Measure native waveform response, onset and duration against the source event schedule; define stereo/filter/waveform mappings and measured quantization rules.",
-        "Retain first-serve pitch/envelope known failures and independent mute coverage; register values alone do not establish audible acceptance."
+        "Retain first-serve pitch/envelope known failures and independent hardware mute coverage. Emitted signal-before-mute and silence-after-mute are now checked at original PCM16 recording precision with actual unmuted-volume and disconnected-waveform faults rejected. Stop equivalent first-serve mute windows; onset/decay timing, later effects and full waveform fidelity remain open."
       ]
     },
     {
@@ -274,6 +274,19 @@
       "original_full_replay_and_extensions_preserved": true,
       "source_main_thread_writes_injected": false,
       "complete_P1": false
+    },
+    {
+      "id": "P2-first-serve-emitted-mute",
+      "case": "p2-first-serve-mute",
+      "evidence": "analysis/native-emitted-mute-regression.md; build/tests/p2-first-serve-mute-report.json",
+      "missing_behaviour": "Emitted signal presence before mute and absence after mute, beyond register values",
+      "independent_expectation": "Frozen original WAV and callback40 PSG event association",
+      "compiled_faults": [
+        "mute-volume-one",
+        "zero-waveform-with-unchanged-period-volume-length"
+      ],
+      "stopping_condition_met": "Both original-established windows match at source PCM16 precision and both actual executable faults rejected",
+      "complete_P2": false
     }
   ]
 }

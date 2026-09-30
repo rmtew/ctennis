@@ -5,6 +5,7 @@ from fractions import Fraction
 from pathlib import Path
 
 from audio_wave import read_wave, crossing_frequency
+from audio_mute import check_emitted_mute
 from capture_native_presentation import capture
 from run_presentation_tests import ROOT, digest
 
@@ -78,6 +79,7 @@ def main():
     comparison = case.get('comparison', 'pitch')
     envelope = measured_envelope(source, source_directory, case['source_tone'], 17, 39) if comparison == 'volume' else None
     mutation = None
+    disconnected = None
     if args.self_test:
         def mutate_output(executable):
             original = executable.read_bytes()
@@ -98,8 +100,33 @@ def main():
                     'first_period': altered['audio_events'][0]['registers'][f'AUD{case["paula_channel"]}PER'],
                     'volumes': {event['update']: event['registers'][f'AUD{case["paula_channel"]}VOL'] for event in altered['audio_events']}}
         if comparison == 'mute':
+            mutation['capture_report_path'] = altered['capture_report_path']
+            mutation['capture_report_sha256'] = digest(Path(altered['capture_report_path']))
+            mutation['native_wav_sha256'] = digest(Path(altered['native_wav']))
             event = next(event for event in altered['audio_events'] if event['update'] == case['mute_update'])
             mutation['criterion_value'] = [event['registers'][f'AUD{c}VOL'] for c in (0, 1, 3)]
+            mutation['emitted_waveform'] = check_emitted_mute(case, source, source_directory, altered)
+            if mutation['emitted_waveform']['first_difference'] is None:
+                raise AssertionError('Emitted audio comparator missed the actual unmuted-channel fault')
+            def disconnect_waveform(executable):
+                original = executable.read_bytes()
+                waveform = bytes.fromhex('7f7f8181')
+                if original.count(waveform) != 1:
+                    raise ValueError('Private waveform is not uniquely identified')
+                executable.write_bytes(original.replace(waveform, bytes(4)))
+            silent = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
+                             observe_audio=True, executable_mutator=disconnect_waveform,
+                             capture_label=case['name'] + '-disconnected')
+            disconnected = {'executable_sha256': silent['executable_sha256'],
+                            'capture_report_path': silent['capture_report_path'],
+                            'capture_report_sha256': digest(Path(silent['capture_report_path'])),
+                            'native_wav_sha256': digest(Path(silent['native_wav'])),
+                            'emitted_waveform': check_emitted_mute(case, source, source_directory, silent),
+                            'audio_controls': [{key: event['registers'][key]
+                                for key in (f'AUD{channel}{suffix}' for channel in (0, 1, 3) for suffix in ('PER', 'VOL', 'LEN'))}
+                                for event in silent['audio_events']]}
+            if disconnected['emitted_waveform']['first_difference'] is None:
+                raise AssertionError('Emitted audio comparator missed a disconnected waveform')
         else:
             mutation['criterion_value'] = mutation['first_period'] if comparison == 'pitch' else mutation['volumes'][altered['audio_events'][0]['update']]
     # Rebuild and recapture the normal executable last; no mutation remains in
@@ -141,6 +168,17 @@ def main():
                              'paula_volume': native['registers'][f'AUD{channel}VOL'], 'first_difference': difference})
     if not observations:
         raise ValueError('No audible native tone observations')
+    waveform = check_emitted_mute(case, source, source_directory, captured) if comparison == 'mute' else None
+    if waveform:
+        first = first or waveform['first_difference']
+    if disconnected:
+        controls = [{key: event['registers'][key]
+                     for key in (f'AUD{channel}{suffix}' for channel in (0, 1, 3) for suffix in ('PER', 'VOL', 'LEN'))}
+                    for event in captured['audio_events']]
+        if disconnected['audio_controls'] != controls:
+            raise AssertionError('Disconnected waveform control changed period/volume/length expectations')
+        if disconnected['executable_sha256'] == captured['executable_sha256']:
+            raise AssertionError('Disconnected waveform control did not change the executable')
     if args.self_test:
         changed = mutation['first_period'] != observations[0]['paula_period'] if comparison == 'pitch' else mutation['volumes'][observations[0]['update']] != observations[0]['paula_volume']
         if not changed or mutation['executable_sha256'] == captured['executable_sha256']:
@@ -163,6 +201,8 @@ def main():
               'wave_measurement_scope': 'Diagnostic rising-crossing estimate; no waveform acceptance tolerance inferred.',
               'source_wav_sha256': digest(source_directory / 'a/source.wav'), 'self_test': args.self_test,
               'mutation': mutation,
+              'emitted_waveform': waveform, 'disconnected_waveform_mutation': disconnected,
+              'waveform_comparator_sha256': digest(ROOT / 'scripts/audio_mute.py') if waveform else None,
               'comparison': comparison, 'source_envelope_measurements': envelope,
               'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
                   'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256')},

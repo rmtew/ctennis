@@ -580,3 +580,13 @@ unsuitable as an audible-silence assertion. Output is diagnostic only:
 not exact audio sample timestamps. No tolerance, new green case, fresh emulator
 execution or complete waveform acceptance is claimed. Next implement the bounded
 silence comparator with explicit format handling and a real audible-fault control.
+
+
+First-serve emitted mute is now protected within the existing mute case. The
+original-established signal and silent windows match at source PCM16 precision;
+actual private unmuted-volume and zero-waveform faults are rejected. The latter
+preserves period/volume/length controls and proves output coverage beyond registers.
+See [emitted mute evidence](analysis/native-emitted-mute-regression.md).
+Stop equivalent mute windows. This closes bounded signal/silence only; exact
+onset/decay timing, later sounds and ordinary execution remain open. User requested
+finishing this case, then discussing test scope before further test work.
