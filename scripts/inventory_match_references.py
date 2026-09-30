@@ -90,9 +90,16 @@ if __name__ == '__main__':
         coverage['focused_movement'].append({'case': name,
                                             'reference_sha256': hashlib.sha256(payload).hexdigest(),
                                             **validate_movement(fixture, case)})
-    coverage['remaining_movement_bounds_rows'] = {side: sorted(set(range(4)) - {
-        observation['bounds_row'] for case in coverage['focused_movement']
-        for observation in case['observed_movement_limits'] if observation['player'] == side})
+    observed_limits = {(observation['player'], observation['bounds_row'], observation['direction'])
+                       for case in coverage['focused_movement']
+                       for observation in case['observed_movement_limits']}
+    missing_limits = [(side, row, direction) for side in ('lower', 'upper') for row in range(4)
+                      for direction in ('up', 'down', 'left', 'right')
+                      if (side, row, direction) not in observed_limits]
+    coverage['remaining_movement_limits'] = [{'player': side, 'bounds_row': row, 'direction': direction}
+                                             for side, row, direction in missing_limits]
+    coverage['remaining_movement_bounds_rows'] = {
+        side: sorted({row for player, row, _ in missing_limits if player == side})
         for side in ('lower', 'upper')}
     from rally_reference import validate_rally
     case = json.loads((ROOT / 'tests/cases/two-player-rally.json').read_text())

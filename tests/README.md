@@ -445,6 +445,20 @@ capture/test commands with that case ID. The combined inventory now reports
 only rows 2 and 3 remaining per player. Each case's own remaining-row list
 describes that case alone.
 
+`movement-receiver-right-bound` covers the upper receiver row-2 positive X
+limit over 1,348 continuous callbacks and 190 PSG bytes. Its optional source
+snapshots bracket actual movement; a separate ordinary run must match after
+those snapshots are removed. Use the same capture/test commands with that case
+ID. Its self-test alters upper X only in the active receiver row. The combined
+inventory now lists missing direction/player/row combinations, avoiding closure
+of a whole row from one passing limit.
+
+For read-only interval discovery, use
+`python scripts/capture_movement_observations.py --case two-player-rally` or
+`--case two-player-match`. Both captures must repeat exactly and recover the
+previous raw source stream byte-for-byte without the optional observations.
+This is source evidence, not a fresh native test run or completed F1 claim.
+
 `python scripts/inventory_match_references.py` validates both source match
 fixtures and every registered source-derived phase. It writes the ignored
 `build/tests/coverage-inventory.json` with reference hashes, observed returns,

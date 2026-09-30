@@ -104,6 +104,34 @@ neither injects expected intermediate results.
 
 ## Remaining F1 work
 
+One receiver-row limit is now independently established by
+`movement-receiver-right-bound`. It preserves the first 1,320 R2 callbacks
+through frame 2619, then moves the upper receiver right during the alternate
+lower serve. Direct source snapshots bracket the movement calls, establishing
+row 2 before movement rather than inferring it from later animation state.
+
+| Observation | Source callbacks | Actual upper X |
+|---|---:|---:|
+| Approach and hold | 1321–1342 | 160 to 175 |
+| Last eight enabled held attempts | 1335–1342 | 175 throughout |
+| Four reversal attempts | 1343–1346 | 173, 172, 170, 169 |
+
+The full native comparison passes 1,348 callbacks and 190 PSG bytes. Source
+capture repeats exactly with the extra observations; removing them produces
+exactly the independently recorded ordinary stream. Source fixture SHA256:
+`5d9aabd25124f451f35014fa87e247acde56f036019674259f29e23cab596530`.
+Raw observed capture SHA256:
+`5895f458630c61769b3658899e64b54dcce9e4f9a45ad9c47e993caa34fc2c3f`.
+The native self-test deliberately lets the row-2 receiver escape X175. It is
+detected at callback 1331, pre-tail sprite record 5 X: expected 175, actual 176.
+Normal source/executable remain unchanged and temporary mutation files are
+removed. This targeted check passed after the full aggregate's mutation run.
+
+The combined inventory tracks each player/row/direction separately: 17 of
+32 combinations have approach/hold/reversal evidence, and 15 remain. Passing
+one limit does not close its entire row. This is movement coverage, not a
+percentage of overall source or port correctness.
+
 Rows 2–3 for each player still need approach/hold/reversal evidence. Existing
 R2 post-body observations include all four unblocked animation row selections,
 but that alone does not establish their bounds, movement inputs or the exact
@@ -111,6 +139,31 @@ row used earlier within the callback. Read the phase/reset/trajectory writers
 and index intervals before collecting missing sequences. Preserve the existing
 continuous matches and the new independent case; do not manufacture animation
 flags or substitute the old Python movement model for original-game evidence.
+
+## Read-only movement capture
+
+`python scripts/capture_movement_observations.py --case two-player-rally`
+and `--case two-player-match` each record full RAM immediately before and after
+both player movement calls, twice. The tool verifies the source ROM contains
+the two expected CALL instructions at `$13B9` and `$13BC`. Optional debugger
+hooks snapshot at `$13B9` and `$13BF`, then immediately continue; they do not
+write CPU/game state or step instructions.
+
+After stripping only those snapshots and restoring raw sequence numbers,
+each capture must equal its original raw source record byte-for-byte. This
+passed for the complete rally and full R2 record. Raw R2 includes one callback
+after the retained fixture endpoint; the indexed inventory excludes it and
+reports raw/retained extents explicitly, including the initial callback.
+
+Observed raw SHA256s are
+`135724ae50a43355f5be4f3391908c3b63aeb01e11446eeec8d54de893db1912`
+(rally) and
+`8b6d22f6b409c58fae2c577d1362b26ee128e7e70c92c3ad4b4200f77d70c12a`
+(full R2). Reports and raw data stay in ignored
+`build/tests/<case>-movement-observations/`. The source hooks are disabled for
+ordinary reference collection unless the case explicitly requests them. Such
+cases additionally require an observer-free run to match exactly before the
+fixture is frozen. Altering the observed receiver row is rejected by validation.
 
 The serve handoff selects receiving-player row 2 by retaining low animation
 bits and setting bit 6. The bounce path replaces bits 5–6 with both set for

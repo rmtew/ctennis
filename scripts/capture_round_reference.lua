@@ -69,6 +69,12 @@ dbg:command("do temp7=0")
 local begin_bp = cpu.debug:bpset(0x0049, condition, snapshot("B", true))
 cpu.debug:bpset(0x06B1, "temp7 == 1", snapshot("T", false))
 cpu.debug:bpset(0x0045, "temp7 == 1", snapshot("E", false))
+-- Optional read-only movement observations. The two three-byte CALLs at
+-- 13B9/13BC finish before 13BF; animation/sprite construction follows them.
+if os.getenv("CT_TEST_MOVEMENT_SNAPSHOTS") == "1" then
+    cpu.debug:bpset(0x13B9, "temp7 == 1", snapshot("V", false))
+    cpu.debug:bpset(0x13BF, "temp7 == 1", snapshot("U", false))
+end
 -- Observe normalized input results at RET, and the actual R value consumed by
 -- LD A,R before its BIT test. Neither hook changes CPU state or random choices.
 for _, item in ipairs({{0x0886, "I0"}, {0x088F, "I1"}, {0x0DBB, "R"}}) do

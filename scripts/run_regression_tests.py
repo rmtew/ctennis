@@ -195,12 +195,19 @@ def main():
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
     if args.self_test and difference is None:
         source = (ROOT / 'build/translation/player-frame-routines.s').read_text()
-        anchor = 'lower_player_motion_update:\n' if args.case in MOVEMENT_CASES else 'ball_flight_update:\n'
+        anchor = ('upper_player_movement:\n' if args.case == 'movement-receiver-right-bound' else
+                  'lower_player_motion_update:\n' if args.case in MOVEMENT_CASES else 'ball_flight_update:\n')
         if source.count(anchor) != 1:
             raise ValueError('Mutation entry point missing')
         mutation_path = OUT / 'mutated-routines.s'
-        coordinate = '$4a' if args.case in MOVEMENT_CASES else '$35'
-        mutation_path.write_text(source.replace(anchor, anchor + f'\taddq.b #1,{coordinate}(a5)\n'))
+        if args.case == 'movement-receiver-right-bound':
+            mutation = ('\tcmpi.b #$40,$44(a5)\n\tbne.s regression_receiver_mutation_skip\n'
+                        '\tcmpi.b #175,$46(a5)\n\tbne.s regression_receiver_mutation_skip\n'
+                        '\taddq.b #1,$46(a5)\nregression_receiver_mutation_skip:\n')
+        else:
+            coordinate = '$4a' if args.case in MOVEMENT_CASES else '$35'
+            mutation = f'\taddq.b #1,{coordinate}(a5)\n'
+        mutation_path.write_text(source.replace(anchor, anchor + mutation))
         try:
             mutated, _ = execute(config, case['name'], mutation=True)
             detected = compare(mutated, fixture, case, fields)

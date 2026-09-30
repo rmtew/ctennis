@@ -26,6 +26,11 @@ def capture_round(config, case_name='round-transition'):
     for name in ('a', 'b'):
         path = out / (name + '.tsv')
         env = os.environ.copy()
+        # Extended diagnostic observations use a separate capture command and
+        # must not silently change a frozen regression oracle's schema.
+        env.pop('CT_TEST_MOVEMENT_SNAPSHOTS', None)
+        if case.get('movement_observations'):
+            env['CT_TEST_MOVEMENT_SNAPSHOTS'] = '1'
         env['CT_TEST_CAPTURE'] = str(path)
         env['CT_TEST_LAST_FRAME'] = str(last_frame)
         env['CT_TEST_SELECT'] = 'two' if two_player else 'one'
@@ -46,8 +51,24 @@ def capture_round(config, case_name='round-transition'):
         captures.append(path.read_bytes())
     if captures[0] != captures[1]:
         raise AssertionError('Round source captures differ; reference not replaced')
+    observation_metadata = {}
+    if case.get('movement_observations'):
+        from capture_movement_observations import remove_observations
+        ordinary_env = env.copy()
+        ordinary_env.pop('CT_TEST_MOVEMENT_SNAPSHOTS')
+        ordinary_path = out / 'without-observer.tsv'
+        ordinary_env['CT_TEST_CAPTURE'] = str(ordinary_path)
+        result = subprocess.run(command, cwd=ROOT, env=ordinary_env, capture_output=True, text=True, timeout=120)
+        (out / 'without-observer.log').write_text(result.stdout + result.stderr)
+        if result.returncode or 'ROUND_REFERENCE_COMPLETE' not in result.stdout or 'LUA ERROR' in result.stdout + result.stderr:
+            raise RuntimeError('Ordinary source control capture failed')
+        ordinary_payload = ordinary_path.read_bytes()
+        if remove_observations(captures[0]) != ordinary_payload:
+            raise ValueError('Movement observations changed source behaviour')
+        observation_metadata = {'movement_observations': True, 'ordinary_raw_stream_unchanged': True,
+                                'ordinary_capture_sha256': hashlib.sha256(ordinary_payload).hexdigest()}
     builder = build_focused_fixture if focused else build_fixture
-    fixture = builder(captures[0], {
+    fixture = builder(captures[0], {**observation_metadata,
         'rom_sha256': ROM_SHA256, 'emulator': 'MAME 0.289 sc3000',
         'emulator_sha256': hashlib.sha256(mame.read_bytes()).hexdigest(),
         'capture_sha256': hashlib.sha256(captures[0]).hexdigest(), 'repeat_identical': True,

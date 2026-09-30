@@ -1,7 +1,7 @@
 """Parse exact source callback records and validate the round-transition oracle."""
 from collections import Counter
 
-MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds')
+MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds', 'movement-receiver-right-bound')
 FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',)
 
 
@@ -37,7 +37,9 @@ def parse_capture(payload):
                              'control': tokens[3], 'value': int(tokens[4])})
             continue
         ordinal, frame, pc = int(tokens[2]), int(tokens[3]), int(tokens[4], 16)
-        if kind in ('B', 'T', 'E') and pc != {'B': 0x49, 'T': 0x6B1, 'E': 0x45}[kind]:
+        boundaries = {'B': (0x49, 'entry_ram'), 'T': (0x6B1, 'ram'), 'E': (0x45, 'post_tail_ram'),
+                      'V': (0x13B9, 'movement_entry_ram'), 'U': (0x13BF, 'movement_return_ram')}
+        if kind in boundaries and pc != boundaries[kind][0]:
             raise ValueError('Wrong source instruction boundary')
         if kind == 'B':
             if active or ordinal != len(callbacks):
@@ -58,8 +60,10 @@ def parse_capture(payload):
             raise ValueError('Event has wrong callback ordinal')
         event = {'sequence': sequence, 'kind': kind, 'after_callback': ordinal,
                  'frame': frame, 'pc': pc, 'context': 'callback' if active else 'between-callbacks'}
-        if kind in ('B', 'T', 'E'):
-            field = {'B': 'entry_ram', 'T': 'ram', 'E': 'post_tail_ram'}[kind]
+        if kind in boundaries:
+            if kind in ('V', 'U') and not active:
+                raise ValueError('Movement snapshot outside a callback')
+            field = boundaries[kind][1]
             if field in current:
                 raise ValueError('Duplicate callback boundary')
             pending = {'field': field, 'bytes': bytearray()}
@@ -96,6 +100,8 @@ def parse_capture(payload):
         for field in ('entry_ram', 'ram', 'post_tail_ram'):
             if len(bytes.fromhex(callback[field])) != 256:
                 raise ValueError('Invalid RAM extent')
+        if ('movement_entry_ram' in callback) != ('movement_return_ram' in callback):
+            raise ValueError('Unpaired movement observations')
     return callbacks, timeline
 
 
