@@ -462,6 +462,57 @@
         20958
       ],
       "required_raster_checks": 3
+    },
+    "p1-deuce-fields": {
+      "evidence": "analysis/native-point-field-regression.md; build/tests/p1-deuce-fields-report.json",
+      "reason": "Both physical fire buttons are held; native second reader remains a zero stub. Require only C056 expected17 versus actual1 throughout the full bounded state window and green point request/raster checks. These local output comparisons do not establish full two-player state parity.",
+      "signature": {
+        "update": 9131,
+        "boundary": "point-transition-state",
+        "field": "source state byte",
+        "ram_offset": 86,
+        "expected": 17,
+        "actual": 1
+      },
+      "complete_state_failure_interval": [
+        9131,
+        9139
+      ],
+      "required_raster_checks": 10
+    },
+    "p1-advantage-fields": {
+      "evidence": "analysis/native-point-field-regression.md; build/tests/p1-advantage-fields-report.json",
+      "reason": "Both physical fire buttons are held; native second reader remains a zero stub. Require only C056 expected17 versus actual1 throughout the full bounded state window and green point request/raster checks. These local output comparisons do not establish full two-player state parity.",
+      "signature": {
+        "update": 9585,
+        "boundary": "point-transition-state",
+        "field": "source state byte",
+        "ram_offset": 86,
+        "expected": 17,
+        "actual": 1
+      },
+      "complete_state_failure_interval": [
+        9585,
+        9593
+      ],
+      "required_raster_checks": 10
+    },
+    "p1-return-deuce-fields": {
+      "evidence": "analysis/native-point-field-regression.md; build/tests/p1-return-deuce-fields-report.json",
+      "reason": "Both physical fire buttons are held; native second reader remains a zero stub. Require only C056 expected17 versus actual1 throughout the full bounded state window and green point request/raster checks. These local output comparisons do not establish full two-player state parity.",
+      "signature": {
+        "update": 9866,
+        "boundary": "point-transition-state",
+        "field": "source state byte",
+        "ram_offset": 86,
+        "expected": 17,
+        "actual": 1
+      },
+      "complete_state_failure_interval": [
+        9866,
+        9874
+      ],
+      "required_raster_checks": 10
     }
   }
 }

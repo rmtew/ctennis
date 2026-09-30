@@ -140,13 +140,14 @@ does not enable a new regression case or an implementation decision, defer it
 and record the reason. Report newly protected behaviours and exposed defects,
 not captures, scripts or case counts alone.
 
-Immediate bounded work: deuce, advantage and return-to-deuce must update the
+Completed bounded point work: deuce, advantage and return-to-deuce update the
 point fields at the original draw boundary while preserving games and mode.
-Use the existing two-player replay and three source windows; do not add
-equivalent regained-advantage permutations. Stop once these transitions have
-native field/timing and completed-raster comparisons, with a deliberately early
-update and a frozen point field rejected even behind the known input failure.
-Then select the next missing requirement from the coverage backlog.
+Three source-derived native windows have27 consecutive request/state checks
+and30 completed field crops. All output comparisons pass; each retains only
+the known second-reader input failure. Deliberately early updates and frozen
+second-point copies are rejected in all three contexts even behind that failure.
+Stop equivalent regained-advantage permutations. Select the next missing
+requirement from the coverage backlog.
 
 Before adding a test or capture, name the gameplay behaviour to preserve, the
 specific gap in existing comparisons, a plausible implementation mistake the
@@ -160,8 +161,8 @@ F1 movement bounds are complete: all 32 player/row/direction combinations have
 source evidence and native comparisons, including independent phases for later
 lower receiver limits obscured by the known upstream failure. Stop movement
 exploration unless a concrete new behavioural gap appears. The current aggregate
-is 88 cases: 52 green and 36 exact known red, with mutation/signature checks.
-These known-red cases are not 35 independent defects; four broader requirement
+is 91 cases: 52 green and 39 exact known red, with mutation/signature checks.
+These known-red cases are not independent defects; four broader requirement
 groups remain open.
 
 The finite F2 upper-return action-timing set is now frozen and independently
@@ -226,15 +227,29 @@ expiry mutations are rejected independently. All six messages have local
 appearance/expiry comparisons; stop equivalent status windows. See
 [status6 evidence](analysis/native-status-six-regression.md).
 
-Next protect game-driven point/mode changes, including the retained equal,
-advantage and return-to-equal sequence, plus pending round/result/restart scenes.
-The gap is when the live game requests changed graphics; correct font-bank
-selection alone is insufficient. Detect early/stale/misrouted field updates at
-source draw boundaries. Stop after the distinct retained transitions have actual
-native comparisons and an executable mutation exposes incorrect update timing
-or field routing. Source-derived starts may isolate intervals beyond known
-upstream failures; preserve their scope and actual input/source-rate mapping.
-P1 point/mode/round/result/restart timing, returns/outcomes, P2 distinct audio
+The retained equal, advantage and return-to-equal sequence now has live native
+draw-boundary and completed field comparisons. Original awards request new
+values; the following callback draws them. The tests read actual native
+bootstrap selections before that boundary and do not inject preceding source
+graphics. All27 requests and30 field crops match. Complete consecutive state
+streams retain only C056 expected17/actual1; compiled early/frozen-field changes
+classify as new failures even when that earlier input failure is unchanged.
+See [point-field evidence](analysis/native-point-field-regression.md).
+Stop equivalent equal/advantage windows. Remaining game resets and actual mode
+changes need their own behavioural contracts; fixed-mode preservation in these
+windows does not close them. Source-derived starts may isolate intervals beyond
+known upstream failures; preserve their scope and actual input/source-rate mapping.
+Next bound the first round pause/reset/resume presentation against the existing
+primary source windows. Captured pause rasters have no `active_updates` because
+that index deliberately contains gameplay callbacks only. Add an explicit
+tail-only association contract rather than recapturing the match or treating
+the pause as gameplay. Detect stale reset output or continued gameplay during
+the pause; record actual source-event consumption differences as behavioural
+failures when the incomplete native transition diverges. Preserve the existing
+continuous and later-regime state failures. Stop equivalent initial round windows
+once the distinct pause/reset/resume stages have native comparisons and a
+specific output/timing defect is rejected; complementary scenes remain required.
+P1 game reset/mode/round/result/restart timing, returns/outcomes, P2 distinct audio
 and waveform rules, P3 actual response/side exchange/latency/cadence/deadlines
 and remaining F2/F4/F5 behaviours remain in full scope. Each step must name the
 unprotected behaviour, plausible regression and finite stopping condition.

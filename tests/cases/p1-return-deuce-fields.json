@@ -1,0 +1,29 @@
+{
+  "name": "p1-return-deuce-fields",
+  "source_case": "two-player-match",
+  "transition": "return-deuce",
+  "initial_source_update": 9865,
+  "initial_phase_reference": "tests/reference/p1-return-deuce-fields-phase.json",
+  "completed_callbacks": [
+    9871,
+    9874
+  ],
+  "fields": [
+    "point_a",
+    "point_b",
+    "games_a",
+    "games_b",
+    "mode"
+  ],
+  "inputs": [
+    {
+      "port": 1,
+      "red": true
+    },
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "contract": "Initialize once before the original point event; compare actual native field requests before and after the original draw boundary and independently captured completed score pixels. Pre-draw native bootstrap fields are observed, never seeded from expected selectors. Continuous state checks expose the known physical input omission without hiding later field failures."
+}

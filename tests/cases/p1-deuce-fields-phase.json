@@ -1,0 +1,7 @@
+{
+  "name": "p1-deuce-fields-phase",
+  "parent_reference": "tests/reference/two-player-match.json",
+  "initial_source_update": 9130,
+  "updates": 12,
+  "purpose": "Reachable original start before deuce point award; do not inject intermediate selectors or state."
+}

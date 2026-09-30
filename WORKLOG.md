@@ -1,3 +1,43 @@
+## 2026-10-01 - Native point draw boundaries and complete aggregate verification
+
+- Added p1-deuce-fields, p1-advantage-fields and p1-return-deuce-fields,
+  reproducible source phases, point_reference.py and run_point_tests.py. Each
+  starts once four callbacks before the original award and holds both physical
+  fire inputs. Original awards9134/9588/9869 draw on9135/9589/9870.
+- Observe actual native bootstrap field selections at the first simulation
+  entry; never seed expected previous scores or inject intermediate values.
+  Preserve those selections until the source draw boundary, then compare both
+  points, both games and mode. Pre-draw prior-screen parity is outside these
+  local starts. The continuous scoring replay remains accumulation evidence.
+- All27 consecutive request observations and30 completed field crops match.
+  Every one of27 post-tail states has only C056 expected17/actual1, the existing
+  combined-control omission caused by the missing second input reader. First
+  failures9131/9585/9866 remain exact known red; these are not new defects.
+- All six compiled mutations are detected: early consumers at9134/9588/9869,
+  frozen second-point fields at9135/9589/9870. Mutants preserve normal game RAM
+  and classify as unexpected red despite the unchanged earlier input failure.
+  Known-red acceptance requires the complete state stream and green outputs.
+- First capture attempt exposed Copperline single-PC-breakpoint uniqueness.
+  Corrected test-only bootstrap observation to finish and remove its breakpoint
+  before adding later callback targets. No product implementation changed.
+- Full command python scripts/run_test_suite.py --baseline-check --self-test
+  completed:91 cases,52 green,39 exact known red; all compiled/signature checks
+  pass, no unexpected outcomes or tool errors. Verified every reported case and
+  classification against the current registry and actual reports. The aggregate
+  deliberately remains failed for the four open requirement groups (Python
+  return2, PowerShell session reports1). The goal remains active.
+- Both primary original replay hashes remain unchanged. Source supplement and
+  generated captures stay ignored. Updated roadmap, backlog, reference spec and
+  test instructions; evidence is analysis/native-point-field-regression.md.
+- Next: first round pause/reset/resume presentation using existing primary media.
+  Original frames2632-2635 exist but have no active_updates because that index
+  excludes tail-only callbacks. Add an explicit tail-only association contract;
+  do not recapture the full match. Compare actual paused/reset/resumed output,
+  recording behaviour/event-consumption discrepancies rather than converting
+  known incomplete transitions into tool errors. Preserve existing state cases.
+  Stop equivalent point permutations; F2/F4/F5, other P1 scenes, P2 and P3 stay
+  in full scope. No Phase4/Phase5 or full hardware acceptance claim.
+
 ## 2026-10-01 - Useful-test selection and bounded point references
 
 - Roadmap now requires a named behavioural gap, plausible detected defect,

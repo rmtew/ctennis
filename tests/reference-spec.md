@@ -523,7 +523,39 @@ All six status messages now have local appearance/expiry comparisons. Stop
 status-window expansion. Game-driven point/mode changes, other P1 scenes,
 P2/P3 and F2/F4/F5 remain required; the input defect is still unresolved.
 
-Current verified aggregate: **88 cases, 52 green and 36 exact known red**, no
+Status6 milestone aggregate: **88 cases, 52 green and 36 exact known red**, no
 unexplained/tool failures. All actual reports retain those classifications under
 the strict later-failure policy; both compiled renderer mutants are rejected as
 new failures. Four requirement groups remain incomplete.
+
+## Game-driven equal/advantage point fields (2026-10-01)
+
+Three source-derived native cases protect deuce, advantage and return-to-deuce.
+Each begins four callbacks before its original award, initializes once and
+uses both physical fire inputs. Nine consecutive point/game/mode request
+observations and ten completed field crops match per case. Expected pixels are
+the separately retained, twice-identical original raster supplement; the primary
+presentation media and full original callback records remain unchanged.
+
+Original scoring requests new values on the award callback and consumes the
+draw request on the following callback. Before the first draw, the test observes
+and preserves actual native bootstrap fields, without claiming that this local
+start displays the previous original score. From the draw onward it compares
+the original field selections and their stable displayed pixels. The continuous
+deuce/advantage/game simulation replay remains the accumulated-state reference.
+
+All27 post-tail state observations retain only C056 expected17/actual1, the
+known second-reader input omission. Acceptance requires precisely that full
+stream and green requests/pixels. Actual compiled early-copy and frozen-second
+field changes are detected at their award/draw boundaries in all three cases
+and rejected as new failures despite the earlier known input difference.
+See [point-field evidence](../analysis/native-point-field-regression.md).
+
+Stop equivalent equal/advantage windows. Game-count resets, actual accepted mode
+transitions, other P1 scenes, P2/P3 and remaining F2/F4/F5 requirements remain
+open. Preserving games/mode through a point redraw does not close those changes.
+
+Current verified aggregate: **91 cases, 52 green and39 exact known red**, with
+all mutation/signature checks passing and no unexplained/tool failures. Four
+coverage groups remain incomplete. Next use the existing original round-pause
+and resumed-play rasters with an explicit tail-only generation contract.

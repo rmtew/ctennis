@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -66,6 +66,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     audio_events = []
     field_events = []
     state_events = []
+    initial_fields = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
     with CopperlineSession(ctl, ROOT) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
@@ -89,6 +90,14 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['paula_events_done']})
         if observe_fields:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['scoreboard_selection_done']})
+        initial_break = None
+        if observe_initial_fields:
+            if not observe_fields or targets[0] <= initial_source_update:
+                raise ValueError('Initial field observation requires later targets and field tracking')
+            initial_break = session.inspect('break_add', {'kind': 'pc',
+                'addr': base + symbols['simulation_update'],
+                'cond': {'lhs': {'mem': base + symbols['simulation_updates']},
+                         'op': 'eq', 'rhs': initial_source_update}})
         if observe_state:
             if not recorded_entropy:
                 raise ValueError('Consecutive state observation requires the private replay build')
@@ -97,6 +106,12 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             if stop['reason'] != 'breakpoint':
                 return False
             generation = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
+            if initial_break and stop['pc'] == base + symbols['simulation_update'] and generation == initial_source_update:
+                initial_fields.append({'update': generation,
+                    'field_values': session.inspect('mem_read', {'addr': base + symbols['field_values'], 'len': 6})['data'],
+                    'stop': stop})
+                session.inspect('break_remove', {'id': initial_break['id']})
+                return True
             if observe_state and stop['pc'] == base + symbols['log_replay_transition']:
                 registers = session.inspect('regs_get')
                 state_events.append({'update': generation, 'stop': stop,
@@ -132,6 +147,12 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                                 'visible_frame': stop['frame'] + (1 if stop['vpos'] >= 236 else 0), 'stop': stop})
                 return True
             return False
+        if initial_break:
+            deadline = stop['seconds'] + 10
+            while not initial_fields:
+                stop = session.inspect('run_until', {'seconds': deadline, 'wait_ms': 50000})
+                if not observe_stop(stop):
+                    raise RuntimeError(f'Initial native field boundary not reached: {stop}')
         for target in targets:
             current = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
             if current > target:
@@ -214,6 +235,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'audio_events': audio_events, 'audio_observed': observe_audio,
               'field_events': field_events, 'fields_observed': observe_fields,
               'state_events': state_events, 'state_observed': observe_state,
+              'initial_fields': initial_fields,
               'executable_mutated': executable_mutator is not None or source_mutator is not None,
               'native_wav': str(directory / 'native.wav') if observe_audio else None,
               'final_completed_callbacks': final_count,

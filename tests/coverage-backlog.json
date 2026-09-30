@@ -17,7 +17,7 @@
       "summary": "Native graphics beyond the first-game prefix",
       "tasks": [
         "Compare accepted mode selections, upper serve stages, both returns and distinct bounce/net/out checkpoints.",
-        "All six status messages now have local game-driven appearance/expiry comparisons (status 6 retains the native second-reader state failure). Stop equivalent status windows. Complete game-driven point/mode changes, including equal/advantage; renderer-unit selector coverage alone is insufficient.",
+        "All six status messages have local game-driven appearance/expiry comparisons. Deuce, advantage and return-to-deuce now have 27 consecutive point request/state observations and 30 completed field crops, with compiled early/frozen-field mutations rejected behind the known second-reader failure. Stop equivalent status and equal/advantage windows. Complete remaining point/game reset and actual mode-transition changes; fixed-mode preservation and renderer-unit selector coverage do not close them.",
         "Compare round reset, match/result/menu and restart raster sequences with explicit presentation generations."
       ]
     },
@@ -179,6 +179,26 @@
       "source_parent_preserved": true,
       "complete_P1": false,
       "known_red_requires_complete_state_stream_and_green_outputs": true
+    },
+    {
+      "id": "P1-point-equal-advantage-transitions",
+      "cases": [
+        "p1-deuce-fields",
+        "p1-advantage-fields",
+        "p1-return-deuce-fields"
+      ],
+      "evidence": "analysis/native-point-field-regression.md; build/tests/p1-*-fields-report.json",
+      "consecutive_request_and_state_checks": 27,
+      "completed_field_raster_checks": 30,
+      "known_red_cases": 3,
+      "point_requests_and_rasters_match": true,
+      "compiled_mutations": [
+        "one-callback-early-score-consumer",
+        "frozen-second-point-copy"
+      ],
+      "compiled_mutations_rejected_despite_earlier_input_failure": true,
+      "source_parent_preserved": true,
+      "complete_P1": false
     }
   ]
 }

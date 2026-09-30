@@ -641,9 +641,39 @@ fixed known stream are rejected. Both actual compiled rendering mutations
 classify as unexpected red despite the earlier input difference. Thus this
 baseline protects output while preserving the unresolved input defect.
 
-Latest complete aggregate: **88 cases, 52 green, 36 exact known red**, no
+Status6 milestone aggregate: **88 cases, 52 green, 36 exact known red**, no
 unexplained failures or tool errors. The added red exposes the existing input
 omission; it is not a new independent defect. Supplemental strict-policy checks
 reclassify all actual reports identically and reject both compiled output
 mutations. Four requirement groups remain incomplete. Next: game-driven
 point/mode changes and the remaining round/result/restart scenes.
+
+## Game-driven point-field boundaries
+
+```powershell
+python scripts/run_point_tests.py --all --self-test
+```
+
+Three bounded native cases protect deuce, advantage and return-to-deuce. Each
+initializes once before the original award and uses both physical fire inputs.
+All27 consecutive field requests and30 completed score/game/mode crops match.
+Only the existing C056 input mismatch remains in every state observation.
+Acceptance requires the complete measured state stream and green outputs, so
+compiled early-copy and frozen-second-point changes cannot hide behind it.
+All six mutation runs are rejected at the expected award/draw boundary.
+
+Before the first source draw, these local cases observe native bootstrap fields
+without seeding expected prior scores; preceding full-screen parity is outside
+their scope. The continuous scoring replay remains separate evidence. Expected
+pixels come from the independently validated original supplement; ordinary
+regression runs do not run MAME. To obtain that local reference on a fresh setup,
+run the capture and freeze commands in [the evidence note](../analysis/native-point-field-regression.md).
+
+Stop equivalent point permutations. Actual mode changes, game resets, later
+scenes and the remaining F2/F4/F5/P2/P3 requirements stay open.
+
+Latest complete aggregate: **91 cases, 52 green and39 exact known red**. All
+mutation/signature checks pass, with no unexplained differences or tool errors.
+The aggregate still returns a failing result because four required coverage
+groups remain open. The three added reds retain the existing second-reader
+defect; their point request and pixel comparisons match independently.

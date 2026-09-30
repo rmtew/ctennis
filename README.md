@@ -13,4 +13,10 @@ python scripts/check_source_ball_update.py
 
 The first command writes ignored `build/analysis/champion-tennis-classified.asm`, assembles it, and requires an exact 8,192-byte match. [Whole-ROM review](analysis/static-rom-review.md), [annotation audit](analysis/annotation-audit.md), and [frame-update contract](analysis/frame-update-contract.md) explain the current interpretation and its limits. The Python source model in `scripts/` is a checking aid. [The original evidence map](analysis/rom-map.md) and [archived worklog](analysis/history/WORKLOG-pre-port-cleanup-2026-09-29.md) retain the investigation history.
 
-The next implementation milestone is a measured source update/input baseline and a minimal Amiga executable with matching replay checkpoints. See the worklog before running or extending emulator experiments.
+Current work completes the reference-backed red/green test suite before broader
+port cleanup. Tests execute actual assembled 68000 code and the native Amiga
+hardware paths against independently captured original behaviour. See
+[test commands and coverage](tests/README.md), the
+[open requirements](tests/coverage-backlog.json), and the worklog for current
+results and the next action. Local passing cases do not establish full-match
+parity or complete hardware acceptance.
