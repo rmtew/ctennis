@@ -1,0 +1,23 @@
+{
+  "name": "p1-one-player-upper-round-scenes",
+  "source_case": "one-player-match",
+  "initial_source_update": 3844,
+  "initial_phase_reference": "tests/reference/one-player-round-upper-complete-phase.json",
+  "completed_callbacks": [
+    3849,
+    3976,
+    4109,
+    4112
+  ],
+  "inputs": [
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "contract": "Initialize once before the verified round award. Compare full tally/reset/final-pause/resume viewports and consecutive state using actual physical held-fire inputs. Original main-thread writes and reader returns are never injected. Retain existing input/reset/placement failures and reject late mutations behind them; this is one local round, not whole-match parity.",
+  "reference_directories": {
+    "3849": "tests/reference/presentation-round-scenes-one-player-match",
+    "3976": "tests/reference/presentation-round-scenes-one-player-match"
+  }
+}

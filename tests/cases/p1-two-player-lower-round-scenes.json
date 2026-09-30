@@ -1,0 +1,23 @@
+{
+  "name": "p1-two-player-lower-round-scenes",
+  "source_case": "two-player-match",
+  "initial_source_update": 2406,
+  "initial_phase_reference": "tests/reference/two-player-round-lower-complete-phase.json",
+  "completed_callbacks": [
+    2411,
+    2538,
+    2671,
+    2674
+  ],
+  "inputs": [
+    {
+      "port": 1,
+      "red": true
+    },
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "contract": "Initialize once before the verified round award. Compare full tally/reset/final-pause/resume viewports and consecutive state using actual physical held-fire inputs. Original main-thread writes and reader returns are never injected. Retain existing input/reset/placement failures and reject late mutations behind them; this is one local round, not whole-match parity."
+}

@@ -579,6 +579,9 @@ Actual late sprite/field/entropy mutations are rejected behind the unchanged
 earlier failure. Whole-viewport hashes cover every pixel, including reset heads
 outside the initial court ROI. See [round evidence](../analysis/native-round-presentation-regression.md).
 
-Current aggregate: **92 cases,52 green,40 exact known red**, all mutation/policy
+First-round milestone: **92 cases,52 green,40 exact known red**, all mutation/policy
 checks passing and no unexplained/tool failures. Four groups remain incomplete.
 Complementary round scenes and other P1/F2/F4/F5/P2/P3 requirements remain open.
+
+
+Current round-family coverage: four mode/serving-end contexts,1072 state checks,16 full viewports,96 matching field crops and12 detected compiled mutations. See [evidence](../analysis/native-complementary-round-scenes.md). Current aggregate: **95 cases,52 green,43 exact known red**. Four round runners executed with self-tests;91 unchanged reports reuse prior full92-case evidence, recorded in incremental_execution. Four groups remain open. Stop equivalent round windows; next protect actual accepted mode selections, then distinct result/menu/restart transitions.

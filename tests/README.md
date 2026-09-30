@@ -696,9 +696,12 @@ than accepting only the earlier sprite failure. Actual late sprite, field and
 extra-refresh-read mutations preserve that earlier failure and game RAM, yet
 classify as unexpected red. See [evidence and scope](../analysis/native-round-presentation-regression.md).
 
-Latest verified aggregate: **92 cases,52 green,40 exact known red**, with all
+First-round milestone: **92 cases,52 green,40 exact known red**, with all
 mutation/policy checks passing and no unexplained/tool failures. Whole-viewport
 assertions were expanded using the same verified full-run captures; followup
 metadata records that comparison change. Four coverage groups remain open.
 Next: complementary round scenes, followed by the pending mode/result/restart
 presentation requirements. Stop equivalent first-round windows.
+
+
+Current round-family coverage: four mode/serving-end contexts,1072 state checks,16 full viewports,96 matching field crops and12 detected compiled mutations. See [evidence](../analysis/native-complementary-round-scenes.md). Current aggregate: **95 cases,52 green,43 exact known red**. Four round runners executed with self-tests;91 unchanged reports reuse prior full92-case evidence, recorded in incremental_execution. Four groups remain open. Stop equivalent round windows; next protect actual accepted mode selections, then distinct result/menu/restart transitions.

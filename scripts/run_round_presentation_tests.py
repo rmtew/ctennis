@@ -1,4 +1,4 @@
-"""Compare the first round's tally, reset pause and resumed native display."""
+"""Compare both modes/serving ends through tally, reset pause and resumed display."""
 import argparse
 import hashlib
 import json
@@ -11,7 +11,8 @@ from associate_presentation_generations import source_generation
 from run_presentation_tests import digest, map_source_palette, native_picture, compare
 from run_status_tests import earliest
 
-CASES = ('p1-first-round-scenes',)
+CASES = ('p1-first-round-scenes', 'p1-one-player-upper-round-scenes',
+         'p1-two-player-lower-round-scenes', 'p1-two-player-upper-round-scenes')
 
 
 def reference(case):
@@ -22,19 +23,24 @@ def reference(case):
     phase_path.write_text(json.dumps(phase, indent=2) + '\n')
     parent_path = ROOT / phase['parent_reference']
     parent = json.loads(parent_path.read_text())
-    milestones = parent['milestones']
-    if (case['source_case'] != 'one-player-match' or phase['initial_source_update'] != 1203
-            or case['initial_source_update'] != 1203
-            or case['completed_callbacks'] != [1208, 1335, 1468, 1471]
-            or case['inputs'] != [{'port': 2, 'red': True}]
-            or [(milestones[k]['update']) for k in ('first_game_award', 'tail_only_start', 'gameplay_resumed')] != [1204, 1333, 1469]):
+    milestones = proof['complete_regime']['milestones']
+    targets = [milestones['first_game_award']['update'] + 4,
+               milestones['tail_only_start']['update'] + 2,
+               milestones['gameplay_resumed']['update'] - 1,
+               milestones['gameplay_resumed']['update'] + 2]
+    inputs = {'one-player-match': [{'port': 2, 'red': True}],
+              'two-player-match': [{'port': 1, 'red': True}, {'port': 2, 'red': True}]}
+    if (case['source_case'] != phase_case['continuous_parent']
+            or case['initial_source_update'] != phase['initial_source_update']
+            or case['completed_callbacks'] != targets or case['inputs'] != inputs[case['source_case']]):
         raise ValueError('Round scene recipe differs from its verified source regime')
     proof.update(parent_sha256=digest(parent_path), phase_sha256=digest(phase_path),
                  milestones=milestones)
     return parent, proof
 
 
-def mutation(kind):
+def mutation(kind, case):
+    threshold = case['completed_callbacks'][1] - 1
     def alter(text):
         if kind == 'sprite':
             old = '        addi.w  #$6c,d0'
@@ -47,6 +53,7 @@ def mutation(kind):
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_entropy_done\n        movem.l d0-d1/a0,-(sp)\n        bsr     read_refresh_adapter\n        movem.l (sp)+,d0-d1/a0\nround_mutation_entropy_done:'
         if text.count(old) != 1:
             raise ValueError('Round mutation instruction is no longer unique')
+        new = new.replace('#1334,simulation_updates', f'#{threshold},simulation_updates')
         return text.replace(old, new)
     return alter
 
@@ -75,7 +82,8 @@ def check(case, parent, captured):
             raise ValueError('Round raster was not fully displayed')
         generation = raster['generation']['prepared_after_callback']
         kind = parent['updates'][generation - 1]['callback_kind']
-        source, association = source_generation(generation, case['source_case'], callback_kind=kind)
+        directory = case.get('reference_directories', {}).get(str(observed['completed_callbacks']), 'tests/reference/presentation')
+        source, association = source_generation(generation, case['source_case'], directory, callback_kind=kind)
         wanted = map_source_palette(source, contract)
         with Image.open(raster['capture']['path']) as picture:
             actual = native_picture(picture, contract)
@@ -110,7 +118,7 @@ def run(case, self_test):
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
             capture_label=case['name'] + (f'-{kind}' if kind else ''),
-            source_mutator=mutation(kind) if kind else None,
+            source_mutator=mutation(kind, case) if kind else None,
             source_case=case['source_case'], native_inputs=case['inputs'], strict_source_events=False)
     captured = obtain()
     checks, baseline = check(case, parent, captured)
@@ -124,13 +132,13 @@ def run(case, self_test):
             if observed['pixels'][:7] != baseline['pixels'][:7] or comparison['first_difference'] != checks['first_difference']:
                 raise AssertionError('Late mutation unexpectedly changed the earlier baseline failure')
             if kind == 'entropy':
-                if not observed['source_events'] or observed['source_events'][0]['update'] != 1335:
+                if not observed['source_events'] or observed['source_events'][0]['update'] != case['completed_callbacks'][1]:
                     raise AssertionError('Unexpected refresh consumption was not reported as a behaviour failure')
             else:
                 affected = [row for normal, row in zip(baseline['pixels'], observed['pixels'])
                             if normal['actual_sha256'] != row['actual_sha256']]
                 region = 'viewport' if kind == 'sprite' else 'point_b'
-                if not any(row['checkpoint'] == 1335 and row['region'] == region for row in affected):
+                if not any(row['checkpoint'] == case['completed_callbacks'][1] and row['region'] == region for row in affected):
                     raise AssertionError('Actual late output mutation escaped the reset checkpoint')
             classification = None
             known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases'].get(case['name'])

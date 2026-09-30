@@ -1,3 +1,15 @@
+# Current checkpoint: complementary round presentation complete (2026-10-01)
+
+Roadmap requires missing observable behaviour, a plausible regression, independent expectations and a finite stop for each task. Equivalent permutations and unchanged full-suite repeats are not progress.
+
+Four local round contexts:1072 state checks,16 whole viewports,96 matching fields and12 compiled late sprite/field/refresh mutation checks. Three new cases expose existing reset/origin/second-reader defects. No product fixes or source reset injection. Added40 twice-identical missing source rasters; primary575 and replay controls preserved. See analysis/native-complementary-round-scenes.md.
+
+95-case aggregate:52 green,43 exact known red, no unexpected/tool failures. Four round runners executed with self-tests and complete digest acceptance;91 unchanged reports reused from prior full92-case proof. suite-report.json records incremental provenance, not full95-case execution. Policy checks pass. Four groups remain open; suite goal remains incomplete.
+
+Next: actual accepted one/two-player mode selections using physical native input and completed presentation generations. Initialized mode preservation is insufficient. Then distinct result/menu/restart and remaining F2/F4/F5, P2 and P3. Stop equivalent round windows.
+
+---
+
 ## 2026-10-01 - First-round whole-viewport suite checkpoint
 
 - Full runtime suite completed:92 cases,52 green,40 exact known red; all

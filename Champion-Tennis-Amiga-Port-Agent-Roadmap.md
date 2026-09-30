@@ -18,7 +18,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 88 cases: 52 green and 36 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The current incrementally verified aggregate has 95 cases: 52 green and 43 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
@@ -251,11 +251,21 @@ earlier sprite failure; acceptance requires the complete state/pixel/event
 observation digest. Source-event discrepancies can be recorded as behaviour
 failures instead of capture errors. No original reset writes are injected.
 See [round-scene evidence](analysis/native-round-presentation-regression.md).
-Stop equivalent first-round windows. Next establish complementary serving-end
-and two-player round scenes, reusing source media where actual matching windows
-exist and capturing only clearly missing checkpoints otherwise. Preserve the
-existing continuous and later-regime state failures; title/mode, match/result/menu
-and restart scenes still require their own native presentation comparisons.
+All four mode/serving-end round contexts are now covered locally:1072 consecutive
+states,16 full viewports,96 matching fields and12 compiled late mutations.
+Only40 missing source rasters were added; primary media remain unchanged.
+See [complementary round evidence](analysis/native-complementary-round-scenes.md).
+Stop equivalent round windows. Next compare actual accepted one/two-player mode
+selection using native physical input and completed display generations. Initialized
+mode flags do not establish menu acceptance. Then cover distinct result/menu/restart.
+
+A test task is useful when it names an unprotected observable behaviour, a
+plausible regression, an independent original-game expectation and a finite
+stopping condition. It must reject that regression even behind existing failures.
+Stop once distinct outcomes and meaningful timing boundaries are protected.
+Equivalent permutations, repeated unchanged full-suite runs and instrumentation
+without an acceptance comparison do not advance this goal.
+
 P1 game reset/mode/round/result/restart timing, returns/outcomes, P2 distinct audio
 and waveform rules, P3 actual response/side exchange/latency/cadence/deadlines
 and remaining F2/F4/F5 behaviours remain in full scope. Each step must name the
