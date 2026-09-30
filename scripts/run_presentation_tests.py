@@ -67,12 +67,12 @@ def native_picture(picture, contract):
     return Image.frombytes('RGB', (256, 192), b''.join(rows))
 
 
-def compare(expected, actual):
+def compare(expected, actual, boundary="stable-title"):
     if expected.size != actual.size:
         raise ValueError('Logical display dimensions differ')
     for index, (wanted, observed) in enumerate(zip(expected.get_flattened_data(), actual.get_flattened_data())):
         if wanted != observed:
-            return {'update': 0, 'boundary': 'stable-title', 'field': 'logical display pixel',
+            return {'update': 0, 'boundary': boundary, 'field': 'logical display pixel',
                     'x': index % expected.width, 'y': index // expected.width,
                     'expected': bytes(wanted).hex(), 'actual': bytes(observed).hex()}
     return None
@@ -89,19 +89,74 @@ def build_native(case, directory):
     parent = json.loads((ROOT / 'tests/reference/one-player-match.json').read_text())
     (OUT / 'live-initial-ram.bin').write_bytes(bytes.fromhex(parent['initial_post_tail']))
     executable = directory / 'native-application'
-    run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-o', str(executable), case['native_source']])
+    run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-L', str(directory / 'native.lst'), '-o', str(executable), case['native_source']])
     return executable
+
+
+def player_placement(case, contract, self_test):
+    # Imported lazily: the capture adapter uses this module's shared builder.
+    from capture_native_presentation import capture
+    if case['inputs'] != [{'port': 2, 'red': True}] or case['native_source'] != 'amiga/gameplay_integration_probe.s':
+        raise ValueError('Placement adapter supports only the declared live application/fire input')
+    source, source_frame, reference_sha = source_picture(case)
+    expected = map_source_palette(source, contract)
+    region = case['region']
+    capture_manifest = ROOT / 'tests/reference/presentation' / case['source_case'] / 'manifest.json'
+    manifest = json.loads(capture_manifest.read_text())
+    samples = {row['frame']: row for row in manifest['samples']}
+    for frame in case['source_frames']:
+        with Image.open(capture_manifest.parent / f'f{frame:05d}.png') as picture:
+            rgb = picture.convert('RGB')
+            if hashlib.sha256(rgb.tobytes()).hexdigest() != samples[frame]['rgb_sha256']:
+                raise ValueError('Source window pixels changed')
+            mapped = map_source_palette(rgb.crop(ACTIVE_AREA), contract)
+            if mapped.crop(region).tobytes() != expected.crop(region).tobytes():
+                raise ValueError('Placement region is not invariant across the declared source window')
+    captured = capture((case['completed_callbacks'],))
+    observed = captured['observations'][0]
+    if observed['state_differences']:
+        raise ValueError('Placement precondition failed: native simulation differs from source')
+    if observed['stop']['vpos'] <= 0x2c + region[3]:
+        raise ValueError('Placement region scanlines have not completed')
+    with Image.open(observed['capture']['path']) as picture:
+        actual = native_picture(picture, contract)
+    difference = compare(expected.crop(region), actual.crop(region), case['boundary'])
+    if difference:
+        difference['x'] += region[0]
+        difference['y'] += region[1]
+        difference['update'] = case['completed_callbacks']
+    if self_test:
+        altered = actual.crop(region)
+        wanted = expected.crop(region)
+        altered.putpixel((0, 0), (255, 255, 255) if wanted.getpixel((0, 0)) != (255, 255, 255) else (0, 0, 0))
+        if compare(wanted, altered, case['boundary']) == compare(wanted, actual.crop(region), case['boundary']):
+            raise AssertionError('Placement mutation was not detected')
+    report = {'case': case['name'], 'passed': difference is None,
+              'first_difference': difference, 'source_frame': source_frame,
+              'reference_sha256': reference_sha, 'executable_sha256': captured['executable_sha256'],
+              'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
+                  'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256')},
+              'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
+              'scope': case['contract'], 'source_window': case['source_frames'],
+              'region': region, 'self_test': self_test, 'native_observation': observed}
+    (ROOT / f'build/tests/{case["name"]}-report.json').write_text(json.dumps(report, indent=2) + '\n')
+    print(json.dumps(report, indent=2))
+    return 0 if report['passed'] else 1
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('p1-title',), default='p1-title')
+    parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement'), default='p1-title')
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+    contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
+    report_path = ROOT / f'build/tests/{args.case}-report.json'
+    report_path.unlink(missing_ok=True)
+    if args.case == 'p1-upper-player-placement':
+        return player_placement(case, contract, args.self_test)
     if case['inputs']:
         raise ValueError('Title case requires no native controls')
-    contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / f'build/tests/{args.case}'
@@ -148,7 +203,7 @@ def main():
         actual = native_picture(picture, contract)
     actual.save(directory / 'native-logical.png')
     expected.save(directory / 'source-mapped.png')
-    difference = compare(expected, actual)
+    difference = compare(expected, actual, case.get('boundary', 'stable-title'))
     if args.self_test:
         if compare(expected, expected) is not None:
             raise AssertionError('Equal display pixels rejected')
@@ -166,7 +221,7 @@ def main():
               'native_capture': capture, 'execution_stops': events,
               'native_capture_seconds_after_load': case['seconds_after_load'],
               'native_inputs': case['inputs'], 'self_test': args.self_test,
-              'scope': 'Actual native application boot/title hardware output; gameplay, other P1 cases and P2/P3 remain separate'}
+              'scope': case['contract']}
     report_path.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
     return 0 if report['passed'] else 1

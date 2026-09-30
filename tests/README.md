@@ -318,3 +318,32 @@ Other native P1 cases, P2/P3, same-rally R2 and remaining behavioural/phase gaps
 still prevent suite completion. See [capture details](../analysis/source-presentation-regression.md)
 and the authoritative worklog. The old nearly-blank title diagnosis was based
 on misleading previews: retained title files contain complete, identical pixels.
+
+
+## Callback-aligned native sprite placement
+
+`python scripts/run_presentation_tests.py --case p1-upper-player-placement --self-test`
+executes the unmodified native application with physical joystick fire held.
+The assembler listing supplies relocated code-symbol offsets; a conditional
+Copperline breakpoint stops at entry to callback 18, after exactly 17 updates.
+All 254 compared simulation bytes must match the frozen source before accepting
+this graphics comparison. The checked upper-player rectangle (60,0)-(112,40)
+is identical in every retained source frame 1314-1320, and the native beam has
+passed those scanlines. No moving-sprite lag is inferred from this invariant.
+
+The current known red is exact pixel (74,12), expected black and observed pink.
+The entire pink silhouette is shifted 20 logical pixels left; the application
+uses horizontal sprite origin $6c instead of the viewport's $80. This case is
+registered alongside the title case. It covers this placement contract only,
+not the complete serve/rally presentation requirements.
+
+`python scripts/capture_native_presentation.py` additionally records actual state,
+beam positions, front Copper pointer, readiness and screenshots at selected live
+callbacks. Those screenshots may contain partial rasters and are diagnostic
+observations, not automatically accepted full-frame graphics comparisons.
+Its uncontrolled native refresh choice starts differing at an AI target byte
+by the later recorded checkpoints; controlled source entropy remains necessary
+before using them as deterministic full-state presentation cases.
+
+Latest aggregate baseline/self-test: 19 cases, 11 green and eight exact known red;
+six explicit missing requirement groups still cause failure.

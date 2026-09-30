@@ -73,3 +73,32 @@ is absent. Its first observed difference is logical pixel (74,12), black expecte
 and native `cc55bb` observed. The comparator detects a changed first pixel; the
 suite policy rejects changed signatures and unexpected passes. This case does
 not claim coverage of other native scenes or fix the startup implementation.
+
+
+## Live callback alignment and upper-player placement
+
+The shared native builder emits an assembler listing without changing executable
+bytes (SHA256 remains d974224c00c1c27b60cb5eda75009b21bfbede9d8b50a0376c9dd78a7c38a1ed).
+Copperline's LoadSeg event identifies the relocated first code hunk. A conditional
+PC breakpoint at simulation_update reads the actual simulation_updates word.
+The diagnostic capture reaches exactly 0,17,18,63,134,135,136,166 completed updates,
+without writing game memory or replacing its scheduling/input/hardware paths.
+All 254 bytes match at 0,17,18,63. Later captures differ only at AI target C076
+(source 212/native 172 in this run), following an uncontrolled refresh-sign
+choice; this must not be treated as a presentation-only mismatch or ignored.
+
+The registered p1-upper-player-placement comparison uses completed update 17.
+Its source crop is byte-identical across frames 1314-1320; beam line 166 is past
+that crop. All simulation bytes match. The expected pink pixel set spans X88-103,
+the actual set X68-83, both Y12-39, with 254 pixels each. Translating every source
+pixel by (-20,0) yields the exact actual set. The source/native differences thus
+identify an origin error rather than physics or animation drift: native sprite
+coordinates add $6c, 20 short of $80 for this viewport. The first differing crop
+pixel is logical (74,12), source black/native cc55bb. No product correction is
+made while establishing the red/green baseline.
+
+A five-second initial-serve comparison was rejected: gameplay continues during
+that interval, so its positions are not comparable to the initial source frame.
+No case or known failure from that experiment was registered. Moving regions
+still require explicit presentation generation and controlled entropy; this
+invariant-region comparison does not complete the rest of P1.

@@ -90,6 +90,18 @@
         "expected": 1,
         "actual": 2
       }
+    },
+    "p1-upper-player-placement": {
+      "reason": "Actual upper player is drawn 20 logical pixels left of the source while all 254 compared simulation bytes match after 17 callbacks. The coloured sprite silhouette is an exact horizontal translation; the native sprite origin uses $6c where this viewport requires $80. No fix is applied.",
+      "signature": {
+        "update": 17,
+        "boundary": "lower-serve-launch-upper-player",
+        "field": "logical display pixel",
+        "x": 74,
+        "y": 12,
+        "expected": "000000",
+        "actual": "cc55bb"
+      }
     }
   }
 }

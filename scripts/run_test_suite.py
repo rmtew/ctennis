@@ -7,7 +7,7 @@ from pathlib import Path
 from phase_reference import CASES as PHASE_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
-PRESENTATION_CASES = ('p1-title',)
+PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement')
 CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + PRESENTATION_CASES
 # These requirements await evidence-backed cases or a justified coverage inventory.
 MISSING = ['R2 same-rally return by both players (full match captured; rally gap remains)', 'F1-F5 meaningful-gap inventory and cases',
@@ -63,7 +63,7 @@ def main():
         command = [sys.executable, runner, '--case', case]
         if args.baseline_check and case in known and case not in PRESENTATION_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and case in ('serve', 'p1-title'):
+        if args.self_test and case in ('serve',) + PRESENTATION_CASES:
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
         (out / f'{case}-runner.log').write_text(process.stdout + process.stderr)
