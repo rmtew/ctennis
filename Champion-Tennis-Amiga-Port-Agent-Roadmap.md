@@ -8,6 +8,8 @@ Full R1 source capture is now reproducible through match result and restarted se
 
 Four source-derived phase diagnostics now supplement R1: restarted serve and a short match-tail interval pass; round-tail input handling and resumed launch calculation have independently observed known-red signatures. Phase fixtures retain exact parent provenance and are checked against the twice-captured source record. These isolate later behaviour without claiming upstream parity; longer/result-transition phases, R2 and presentation coverage remain open. See the latest worklog checkpoint.
 
+The resumed-launch known failure is now explained by carry loss in the translated triangular-root helper. A temporary native correction matches all 200 retained phase updates and restores the baseline source; no product fix or additional coverage completion is claimed. The worklog records the reproducible diagnostic.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

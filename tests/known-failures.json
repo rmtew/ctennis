@@ -41,8 +41,8 @@
       }
     },
     "resumed-play-phase": {
-      "reason": "Translated launch calculation differs despite matching callback-entry state and captured input; no refresh reads occur at this boundary. Trajectory/vector outputs differ. Root cause still requires arithmetic translation investigation",
-      "evidence": "build/tests/resumed-play-phase-report.json and retained source-derived fixture",
+      "reason": "Triangular-root SBC HL,BC translation assembles BC/HL using flag-changing shifts without preserving input carry/X. For product 0x1040 source root is 64, native root is 65; resulting launch trajectory/vector differs. Temporary carry-preservation correction matches all 200 phase updates; baseline remains unchanged.",
+      "evidence": "scripts/diagnose_phase_launch.py; build/tests/root-carry-diagnostic-report.json; source/native math traces under build/tests; retained independent source phase fixture",
       "signature": {
         "update": 96,
         "source_frame": 2864,

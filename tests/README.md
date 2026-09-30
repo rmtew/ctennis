@@ -190,3 +190,11 @@ entry is identical, no refresh read occurs, and further launch-vector bytes
 differ; arithmetic translation investigation is still required. Both signatures
 are retained as known red. Longer/result-transition and R2 phase coverage remain
 open; these short intervals do not complete all required phase coverage.
+
+The resumed-launch root cause is confirmed: triangular-root register-pair
+assembly clobbers the carry input before SUBX. For product $1040, source root
+64 becomes native 65. Run `python scripts/diagnose_phase_launch.py` to reproduce
+the baseline difference, test temporary carry preservation against all 200
+independent phase updates, and restore the unmodified generated source. This
+is a diagnostic; the registered baseline intentionally stays known red until
+a reviewed implementation change. Earlier root-cause-pending text is superseded.
