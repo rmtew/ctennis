@@ -93,7 +93,7 @@ def main():
                 raise ValueError('Native pitch instruction not uniquely identified')
             executable.write_bytes(original.replace(old, new))
         altered = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
-                          observe_audio=True, executable_mutator=mutate_output)
+                          observe_audio=True, executable_mutator=mutate_output, capture_label=case['name'] + '-mutation')
         mutation = {'executable_sha256': altered['executable_sha256'],
                     'first_period': altered['audio_events'][0]['registers'][f'AUD{case["paula_channel"]}PER'],
                     'volumes': {event['update']: event['registers'][f'AUD{case["paula_channel"]}VOL'] for event in altered['audio_events']}}
@@ -104,7 +104,7 @@ def main():
             mutation['criterion_value'] = mutation['first_period'] if comparison == 'pitch' else mutation['volumes'][altered['audio_events'][0]['update']]
     # Rebuild and recapture the normal executable last; no mutation remains in
     # the authoritative report, audio file or executable used by the case.
-    captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True, observe_audio=True)
+    captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True, observe_audio=True, capture_label=case['name'])
     if any(row['state_differences'] for row in captured['observations']):
         raise ValueError('Native audio replay state differs from source')
     observations, first = [], None
@@ -155,6 +155,8 @@ def main():
     measured = crossing_frequency(pcm, fmt['sample_rate'], fmt['channels'], start, end)
     result = {'case': args.case, 'passed': first is None, 'first_difference': first,
               'criterion': case['criterion'], 'scope': case['contract'], 'observations': observations,
+              'capture_report_path': captured['capture_report_path'],
+              'capture_report_sha256': digest(Path(captured['capture_report_path'])),
               'reference_sha256': reference_sha, 'native_executable_sha256': captured['executable_sha256'],
               'native_wav_sha256': digest(Path(captured['native_wav'])),
               'native_wav_format': fmt, 'measured_native_wave': measured,

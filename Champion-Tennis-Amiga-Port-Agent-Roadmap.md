@@ -16,7 +16,7 @@ The required deuce/advantage/back-to-deuce/game-award sequence now has a green c
 
 Later shared/status timer boundaries now have explicit source-derived cases. Shared timer full state and the scoped seven-counter status observation pass; the full status case records an explained audio-cadence failure (unconditional native audio service versus the source two-callback countdown). Both comparisons remain registered, so focused clock evidence does not conceal the audio defect or claim whole-state parity. See the current worklog for exact signatures and aggregate verification.
 
-Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 63 cases: 39 green and 24 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
+Source presentation now retains 575 twice-identical rasters across both frozen full-match replays and 122 verified field observations. Named P1 windows and exact source/native viewport rules are recorded. The actual native executable has a registered title comparison: known red because title/menu presentation is not implemented. A callback-aligned upper-player placement case also exposes a 20-pixel sprite-origin error with matching simulation state. Generation-aligned moving-scene and field-sequence cases now cover an uninterrupted prefix through the first game tally: seven whole-screen comparisons retain the sprite failure, while 42 field comparisons pass. Repeated full source audio now retains 18 named intervals, and an actual Paula pitch test exposes a one-period conversion error. The complete first-serve envelope is now compared from measured source amplitudes (one low-volume failure), and the final native mute passes independently. The aggregate has 64 cases: 39 green and 25 exact known red; four missing requirement groups still prevent suite completion. Remaining native P1 comparisons and P2/P3 stay open. See the latest worklog and test instructions.
 
 The open suite requirements now have a concrete public backlog in `tests/coverage-backlog.json`, consumed by the aggregate runner. `python scripts/inventory_match_references.py` validates both source matches and all 13 phase fixtures, indexing exact source intervals and historical native reports in the ignored coverage inventory. Source observations and native acceptance remain separate; five groups remain open. The maintained native endpoint and diagnostic retirement gates below are unchanged.
 
@@ -128,8 +128,8 @@ F1 movement bounds are complete: all 32 player/row/direction combinations have
 source evidence and native comparisons, including independent phases for later
 lower receiver limits obscured by the known upstream failure. Stop movement
 exploration unless a concrete new behavioural gap appears. The current aggregate
-is 63 cases: 39 green and 24 exact known red, with mutation/signature checks.
-These known-red cases are not 24 independent defects; four broader requirement
+is 64 cases: 39 green and 25 exact known red, with mutation/signature checks.
+These known-red cases are not 25 independent defects; four broader requirement
 groups remain open.
 
 The finite F2 upper-return action-timing set is now frozen and independently
@@ -148,13 +148,25 @@ parity. See [later-regime evidence](analysis/later-regime-regression.md).
 Stop extending equivalent later-regime windows. These cases expose missing
 round/result/menu work; implementing it belongs to the subsequent port phase.
 
-Next extend actual native P1 graphics and P2 audio comparisons using already
-retained source checkpoints, with a finite set of distinct observable outputs.
-Do not recapture equivalent simulation intervals. Remaining distinct F2
-serve/lower-return/geometric edges, F4 court outcomes, F5 random effects and
-ordinary executable P3 input/cadence/deadline checks remain in scope. For each
-step identify the unprotected behaviour and plausible regression, then stop
-when its reference, native comparison and sensitivity check are established.
+The bounded upper-serve P1 test now compares windup, first flight and early
+flight from a validated reachable source start. All three native simulation
+checkpoints match; real completed rasters retain the 20-pixel sprite-origin
+failure. A temporary assembled sprite-position mutation is detected at every
+checkpoint without changing simulation state. Score fields are outside this
+local start's output scope. See [upper-serve graphics evidence](analysis/native-upper-serve-graphics.md).
+Stop equivalent upper-serve-start raster variants.
+
+Next establish native P3 press/hold/release/direction/action comparisons for both
+physical control paths, using retained original input-reader observations and
+explicit source-to-Amiga port mapping. Inspection of the current live sampler
+shows lower horizontal/fire handling and a second input routine returning zero;
+ordinary native tests must measure these omissions rather than relying on the
+core replay's supplied input bytes. Then extend distinct retained P1 graphics
+and P2 audio checkpoints. Remaining F2 serve/lower-return/geometric edges, F4
+court outcomes, F5 random effects and complete native cadence/deadlines remain
+in scope. For each step identify the unprotected behaviour and plausible
+regression, then stop when its reference, actual native comparison and sensitivity
+check are established.
 
 ## Next goal: complete the reference-backed red/green suite
 

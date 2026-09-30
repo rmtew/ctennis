@@ -1,3 +1,37 @@
+## 2026-09-30: native upper-serve rasters and preserved hardware evidence
+
+Full python scripts/run_test_suite.py --baseline-check --self-test completed64
+cases:39 green,25 exact known red; no unexplained failures/tool errors. Four
+missing groups remain and the goal is incomplete. Production code unchanged.
+
+Added p1-upper-serve: initialize once from validated upper resumed-serve phase
+at source4110, retain source global callback/entropy indexing, and compare real
+completed rasters at requested4111/4128/4131 (displayed4111/4128/4130). All three
+native RAM snapshots match source. Fixed upper-court rectangle x48..207/y0..71
+excludes prior scoreboard renderer selections; handoff/fields/continuous round
+parity remain separate. Actual pixels retain20px sprite-origin failure: source
+white pixels at77/78 on row1, native57/58. Exact known signature4111/x57/y1.
+
+Temporary assembled ADDI.W sprite-origin instruction changed6c to6d in a
+separate private executable. Every raster detects the one-pixel change while
+simulation remains unchanged. Normal evidence is preserved. Out-of-phase
+endpoint4161 and altered initial snapshot were rejected before execution.
+
+Generation display and native audio cases previously reused a capture directory.
+Now each case and mutation has its own directory and reports retain capture
+paths/hashes. Full suite verifies existing classification unchanged; afterward
+all six normal capture-report hashes, display screenshot existence and native
+WAV hashes were checked against retained files. No source recapture needed.
+
+Roadmap/spec/instructions updated; analysis/native-upper-serve-graphics.md records
+scope, associations and mutation evidence. Stop equivalent upper-start frames.
+Next concrete gap: P3 physical controls. Live source inspection shows lower
+horizontal/fire sampling and second input group returning0; core replay inputs
+bypass those paths. Build original-input-backed press/hold/release/direction/
+action native comparisons for both mapped ports, making omissions known red.
+Retained P1 returns/handoff/field/outcome/later presentation, P2 audio, F2/F4/F5
+and complete ordinary cadence/deadlines remain in full scope.
+
 ## 2026-09-30: complete bounded later-regime diagnostic coverage
 
 Aggregate baseline/self-test completed: 63 cases, 39 green, 24 exact known red;

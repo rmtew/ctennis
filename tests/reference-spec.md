@@ -447,6 +447,15 @@ modes. Expanded tail and independent serve cases expose later known failures
 without injecting expected main-thread writes. This closes the later-phases
 diagnostic group, not continuous port parity or hardware acceptance.
 See [exact evidence and boundaries](../analysis/later-regime-regression.md).
-The current aggregate is 63 cases, 39 green and 24 exact known red; four missing
+At that later-regime milestone the aggregate was 63 cases, 39 green and 24 exact known red; four missing
 groups remain in `coverage-backlog.json`. Stop equivalent later-phase expansion;
 next compare distinct retained native graphics/audio checkpoints.
+
+Upper-serve P1 now independently compares three completed upper-court rasters
+from the validated callback4110 start. Matching simulation state accompanies
+the known sprite placement failure; actual executable mutation demonstrates
+renderer sensitivity. Score fields, handoff and continuous transition parity
+remain outside this local case. See
+[upper-serve evidence](../analysis/native-upper-serve-graphics.md). Native P3
+physical sampling is the next concrete gap: core replay input injection does
+not test the live joystick sampler or its absent second input group.

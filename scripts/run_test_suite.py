@@ -9,7 +9,7 @@ from round_reference import FOCUSED_CASES
 from movement_reference import MOVEMENT_PHASES
 
 ROOT = Path(__file__).resolve().parent.parent
-PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix')
+PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve')
 AUDIO_CASES = ('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute')
 CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES
 # A reviewed public backlog keeps partial evidence from silently closing a gate.

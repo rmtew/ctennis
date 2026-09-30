@@ -1,0 +1,30 @@
+{
+  "name": "p1-upper-serve",
+  "source_case": "one-player-match",
+  "reference": "tests/reference/presentation/manifest.json",
+  "initial_source_update": 4110,
+  "initial_phase_reference": "tests/reference/one-player-upper-resumed-serve-complete-phase.json",
+  "completed_callbacks": [
+    4111,
+    4128,
+    4131
+  ],
+  "fields": [
+    "upper_serve_scene"
+  ],
+  "regions": {
+    "upper_serve_scene": [
+      48,
+      0,
+      208,
+      72
+    ]
+  },
+  "inputs": [
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "contract": "Actual native Copper/bitplane/sprite rasters across upper serve windup, first advancing flight and early flight. Initialize once from the independently verified resumed upper-serve phase; carry native state and use recorded source entropy. Upper court region (x48..207, y0..71) excludes scoreboard state not initialized by this phase adapter. This is local rendering evidence, not continuous round parity."
+}

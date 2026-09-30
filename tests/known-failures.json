@@ -312,6 +312,19 @@
         "actual": 1,
         "callback_kind": "tail-only"
       }
+    },
+    "p1-upper-serve": {
+      "evidence": "analysis/native-upper-serve-graphics.md; build/tests/p1-upper-serve-report.json",
+      "reason": "Actual upper-serve scene retains the known native sprite-origin placement error despite matching captured simulation state. Reachable independent source start excludes uninitialized scoreboard fields.",
+      "signature": {
+        "update": 4111,
+        "boundary": "presentation-generation-upper_serve_scene",
+        "field": "logical display pixel",
+        "x": 57,
+        "y": 1,
+        "expected": "000000",
+        "actual": "ffffff"
+      }
     }
   }
 }

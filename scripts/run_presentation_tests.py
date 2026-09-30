@@ -78,7 +78,7 @@ def compare(expected, actual, boundary="stable-title"):
     return None
 
 
-def build_native(case, directory, recorded_refresh=False):
+def build_native(case, directory, recorded_refresh=False, initial_source_update=0):
     run([sys.executable, 'scripts/roundtrip_rom.py'])
     prepare_gameplay()
     run([sys.executable, 'scripts/generate_amiga_sprite_probe.py'])
@@ -87,7 +87,18 @@ def build_native(case, directory, recorded_refresh=False):
     # This is the application's existing initial serve state, captured independently.
     # No intermediate expected states or title-specific code are injected.
     parent = json.loads((ROOT / 'tests/reference/one-player-match.json').read_text())
-    (OUT / 'live-initial-ram.bin').write_bytes(bytes.fromhex(parent['initial_post_tail']))
+    if initial_source_update:
+        phase_path = ROOT / case['initial_phase_reference']
+        from phase_reference import validate_phase
+        phase = json.loads(phase_path.read_text())
+        validate_phase(phase, json.loads((ROOT / f'tests/cases/{phase_path.stem}.json').read_text()))
+        if (phase['initial_source_update'] != initial_source_update
+                or phase['parent_sha256'] != digest(ROOT / 'tests/reference/one-player-match.json')):
+            raise ValueError('Native presentation start/parent differs from verified phase')
+        initial = phase['initial_post_tail']
+    else:
+        initial = parent['initial_post_tail']
+    (OUT / 'live-initial-ram.bin').write_bytes(bytes.fromhex(initial))
     executable = directory / 'native-application'
     source = case['native_source']
     defines = []
@@ -103,6 +114,11 @@ def build_native(case, directory, recorded_refresh=False):
         include = directory / 'refresh-signs.i'
         include.write_text(f'REFRESH_SIGN_COUNT equ {len(signs)}\nrefresh_signs: incbin "{(directory / "refresh-signs.bin").as_posix()}"\n', encoding='ascii')
         original = (ROOT / source).read_text(encoding='utf-8')
+        if initial_source_update:
+            marker = 'simulation_updates: dc.w 0'
+            if original.count(marker) != 1:
+                raise ValueError('Native callback count initializer changed')
+            original = original.replace(marker, f'simulation_updates: dc.w {initial_source_update}')
         old = 'include "build/amiga/long-game/refresh-signs.i"'
         if original.count(old) != 1:
             raise ValueError('Live replay entropy include changed')
@@ -173,7 +189,8 @@ def generation_sequence(case, contract, self_test):
     if case['source_case'] != 'one-player-match' or case['inputs'] != [{'port': 2, 'red': True}]:
         raise ValueError('Generation adapter supports the frozen R1 held-fire prefix')
     captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
-                       track_commits=True, completed_rasters=True)
+                       track_commits=True, completed_rasters=True, initial_source_update=case.get('initial_source_update', 0),
+                       initial_phase_reference=case.get('initial_phase_reference'), capture_label=case['name'])
     checks, first = [], None
     for observed in captured['observations']:
         if observed['state_differences']:
@@ -187,7 +204,7 @@ def generation_sequence(case, contract, self_test):
         with Image.open(raster['capture']['path']) as picture:
             actual = native_picture(picture, contract)
         for field in case['fields']:
-            region = FIELDS[field] if field != 'whole_display' else (0, 0, 256, 192)
+            region = tuple(case['regions'][field]) if field in case.get('regions', {}) else FIELDS[field] if field != 'whole_display' else (0, 0, 256, 192)
             wanted, seen = expected.crop(region), actual.crop(region)
             difference = compare(wanted, seen, f'presentation-generation-{field}')
             if difference:
@@ -205,11 +222,52 @@ def generation_sequence(case, contract, self_test):
             checks.append({'requested_callback': observed['completed_callbacks'], 'field': field,
                            'region': region, 'source': association, 'raster': raster,
                            'first_difference': difference})
+    hardware_mutation = None
+    if self_test and case.get('initial_source_update'):
+        def move_sprite_one_pixel(executable):
+            code = executable.read_bytes()
+            old, new = bytes.fromhex('0640006c'), bytes.fromhex('0640006d')
+            if code.count(old) != 1:
+                raise ValueError('Native sprite origin instruction changed')
+            executable.write_bytes(code.replace(old, new))
+        changed_capture = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
+            track_commits=True, completed_rasters=True,
+            initial_source_update=case['initial_source_update'],
+            initial_phase_reference=case['initial_phase_reference'],
+            executable_mutator=move_sprite_one_pixel, capture_label=case['name'] + '-mutation')
+        changed_checks = []
+        for observed in changed_capture['observations']:
+            if observed['state_differences']:
+                raise AssertionError('Renderer mutation changed simulation state')
+            raster = observed['completed_raster']
+            generation = raster['generation']['prepared_after_callback']
+            source, association = source_generation(generation)
+            wanted = map_source_palette(source, contract)
+            with Image.open(raster['capture']['path']) as picture:
+                seen = native_picture(picture, contract)
+            for field in case['fields']:
+                region = tuple(case['regions'][field])
+                difference = compare(wanted.crop(region), seen.crop(region), f'presentation-generation-{field}')
+                if difference:
+                    difference.update(update=generation, x=difference['x'] + region[0], y=difference['y'] + region[1])
+                normal = next(row for row in checks if row['requested_callback'] == observed['completed_callbacks'] and row['field'] == field)
+                if difference == normal['first_difference']:
+                    raise AssertionError('Actual sprite-position mutation was not detected')
+                changed_checks.append({'requested_callback': observed['completed_callbacks'],
+                    'first_difference': difference, 'source': association, 'raster': raster})
+        hardware_mutation = {'instruction': 'ADDI.W #$6c,D0 changed to #$6d in test executable',
+            'executable_sha256': changed_capture['executable_sha256'], 'checks': changed_checks,
+            'simulation_unchanged': True, 'detected_at_all_checkpoints': True}
     report = {'case': case['name'], 'passed': first is None, 'first_difference': first,
               'checks': checks, 'self_test': self_test, 'scope': case['contract'],
+              'hardware_mutation': hardware_mutation,
+              'initial_source_update': captured['initial_source_update'],
+              'initial_phase_reference': captured['initial_phase_reference'],
+              'initial_phase_sha256': captured['initial_phase_sha256'],
               'executable_sha256': captured['executable_sha256'],
               'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
-              'capture_report_sha256': digest(ROOT / 'build/tests/native-presentation-recorded/report.json'),
+              'capture_report_path': captured['capture_report_path'],
+              'capture_report_sha256': digest(Path(captured['capture_report_path'])),
               'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
                   'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256', 'refresh_fixture_sha256')},
               'entropy_reads': captured['entropy_reads']}
@@ -221,7 +279,7 @@ def generation_sequence(case, contract, self_test):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement',
-                        'p1-moving-prefix', 'p1-score-status-prefix'), default='p1-title')
+                        'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'), default='p1-title')
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
@@ -230,7 +288,7 @@ def main():
     report_path.unlink(missing_ok=True)
     if args.case == 'p1-upper-player-placement':
         return player_placement(case, contract, args.self_test)
-    if args.case in ('p1-moving-prefix', 'p1-score-status-prefix'):
+    if args.case in ('p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'):
         return generation_sequence(case, contract, args.self_test)
     if case['inputs']:
         raise ValueError('Title case requires no native controls')

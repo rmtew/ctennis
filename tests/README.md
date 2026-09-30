@@ -540,3 +540,25 @@ Known-red case counts do not count independent product defects. Complete
 later-regime comparisons and source extensions are described in
 [later-regime evidence](../analysis/later-regime-regression.md). Earlier count
 reports below/above are historical milestones.
+
+## Native upper-serve graphics
+
+Run `python scripts/run_presentation_tests.py --case p1-upper-serve --self-test`.
+The independent start is validated against its retained source phase; subsequent
+simulation state is carried normally. Three completed upper-court rasters cover
+windup and early flight, retaining the known 20-pixel sprite placement error.
+An actual assembled sprite-position mutation is detected at all three
+checkpoints while simulation state remains identical. This covers a fixed upper
+court region, not scoreboard initialization, handoff or continuous round parity.
+See [evidence and limits](../analysis/native-upper-serve-graphics.md).
+
+Generation display and native audio cases now use separate capture directories.
+Reports record their capture-report paths/hashes; later cases no longer overwrite
+earlier screenshot or WAV evidence. Mutations use separate private directories.
+
+Current verified aggregate after this addition: **64 cases, 39 green and 25 exact
+known red**, with mutation/signature checks and no unexplained/tool failures.
+Four required coverage groups still cause suite failure. Capture-report hashes
+for all three generation display cases and all three audio cases, screenshot
+existence and native WAV hashes were rechecked after the entire suite completed.
+Next: native physical press/hold/release tests for both input paths.

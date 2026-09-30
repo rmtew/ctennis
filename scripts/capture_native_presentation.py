@@ -19,22 +19,33 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
+    if capture_label:
+        if not re.fullmatch(r'[a-z0-9-]+', capture_label):
+            raise ValueError('Invalid private capture label')
+        directory = directory.with_name(directory.name + '-' + capture_label)
     directory.mkdir(parents=True, exist_ok=True)
     report_path = directory / 'report.json'
     report_path.unlink(missing_ok=True)
     case = json.loads((ROOT / 'tests/cases/p1-title.json').read_text())
+    if initial_source_update:
+        if not recorded_entropy or not initial_phase_reference:
+            raise ValueError('Later graphics start requires a verified phase and recorded entropy')
+        case['initial_phase_reference'] = initial_phase_reference
+        phase = json.loads((ROOT / initial_phase_reference).read_text())
+        if targets and targets[-1] > initial_source_update + len(phase['updates']):
+            raise ValueError('Graphics targets extend beyond the independently verified phase')
     source_path = ROOT / 'tests/reference/one-player-match.json'
     source = json.loads(source_path.read_text())
     frozen = json.loads((ROOT / 'tests/reference/presentation/one-player-match/manifest.json').read_text())
     if digest(source_path) != frozen['parent_reference_sha256']:
         raise ValueError('Source simulation reference changed relative to frozen presentation capture')
-    if list(targets) != sorted(set(targets)) or not targets or targets[0] < 0 or targets[-1] > len(source['updates']):
+    if list(targets) != sorted(set(targets)) or not targets or targets[0] < initial_source_update or targets[-1] > len(source['updates']):
         raise ValueError('Callback targets must be unique, increasing and inside the source replay')
-    executable = build_native(case, directory, recorded_refresh=recorded_entropy)
+    executable = build_native(case, directory, recorded_refresh=recorded_entropy, initial_source_update=initial_source_update)
     if executable_mutator:
         executable_mutator(executable)
     symbols = code_symbols((directory / 'native.lst').read_text())
@@ -144,7 +155,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         (directory / 'copperline.log').write_text(log, encoding='utf-8')
         final_count = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
         if recorded_entropy:
-            expected_entropy = [(row['ordinal'], event['bit']) for row in source['updates'][:final_count]
+            expected_entropy = [(row['ordinal'], event['bit']) for row in source['updates'][initial_source_update:final_count]
                                 for event in row['refresh_reads']]
             completed_reads = [(event['update'], event['bit']) for event in entropy_reads if event['update'] <= final_count]
             pending_reads = [(event['update'], event['bit']) for event in entropy_reads if event['update'] > final_count]
@@ -154,11 +165,14 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             pending_expected = [(final_count + 1, event['bit']) for event in source['updates'][final_count]['refresh_reads']] if final_count < len(source['updates']) else []
             if completed_reads != expected_entropy or pending_reads != pending_expected[:len(pending_reads)]:
                 raise ValueError('Native entropy consumption order/count differs from the source')
-    report = {'scope': __doc__, 'executable_sha256': digest(executable),
+    report = {'capture_report_path': str(report_path), 'scope': __doc__, 'executable_sha256': digest(executable),
               'reference_sha256': digest(source_path), 'symbols': symbols,
               'native_source': case['native_source'], 'native_source_sha256': digest(ROOT / case['native_source']),
               'emulator_sha256': digest(Path(config['tools']['copperline'])),
               'bridge_sha256': digest(ctl), 'kickstart_sha256': digest(Path(config['inputs']['amiga_rom'])),
+              'initial_source_update': initial_source_update,
+              'initial_phase_reference': initial_phase_reference,
+              'initial_phase_sha256': digest(ROOT / initial_phase_reference) if initial_phase_reference else None,
               'native_inputs': {'port': 2, 'red': True}, 'observations': observations,
               'recorded_entropy': recorded_entropy,
               'refresh_fixture_sha256': digest(directory / 'refresh-signs.bin') if recorded_entropy else None,
