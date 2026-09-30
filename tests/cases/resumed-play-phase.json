@@ -9,5 +9,8 @@
     0,
     1
   ],
-  "purpose": "Independent source-derived phase diagnostic; does not prove upstream continuous parity"
+  "purpose": "Independent complete later-regime comparison; initialize from the captured source once and carry native state without expected intermediate writes.",
+  "continuous_parent": "one-player-match",
+  "regime": "resumed-serve",
+  "service_end": "lower"
 }

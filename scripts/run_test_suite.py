@@ -65,7 +65,8 @@ def main():
         command = [sys.executable, runner, '--case', case]
         if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES:
+        if args.self_test and (case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES
+                               or case in PHASE_CASES and 'regime' in json.loads((ROOT / f'tests/cases/{case}.json').read_text())):
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
         (out / f'{case}-runner.log').write_text(process.stdout + process.stderr)

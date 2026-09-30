@@ -1,3 +1,28 @@
+## 2026-09-30: complete bounded later-regime diagnostic coverage
+
+Aggregate baseline/self-test completed: 63 cases, 39 green, 24 exact known red;
+no unexplained failures/tool errors. Four missing groups still fail the suite:
+remaining focused F2/F4/F5, P1, P2, P3. Goal remains incomplete. No product fixes.
+
+Two independently repeated original-game extensions preserve every old full
+R1/R2 callback and initial state, extending to 13413/27072 updates through
+restarted-serve handoff/release. Six complete award intervals cover both ends
+and both modes, including match/result/menu/restart. Actual full native runs
+completed before signatures were registered; aggregate known-red runs stop at
+first failure. Main-thread reference writes are never injected. Expanded match
+tail matches 192 callbacks before missing menu setup: the old green 40 prefix
+still matches. Five 50-callback direct serves and one 32-callback post-AI-launch
+phase pass, with mutation detection. Source interval shortening is rejected.
+Contact choice validation now checks actual active flight vector, not input
+scratch. All prior contact comparisons remain green.
+
+Exact boundaries, source hashes, failure evidence and limitations are in
+analysis/later-regime-regression.md. Roadmap/reference spec/test instructions
+updated. The later-phases diagnostic backlog group is closed without claiming
+continuous parity or P1/P2/P3 acceptance. Stop equivalent window expansion.
+Next: actual native graphics/audio comparisons at distinct retained checkpoints;
+remaining contact/court/random behaviours and ordinary execution stay in scope.
+
 ## 2026-09-30: bounded upper-return action-timing set complete
 
 Fresh python scripts/run_test_suite.py --baseline-check --self-test completed50 cases:35 green,15 exact known red, no tool errors or unexplained failures. All mutation/signature checks passed. Five broader requirement groups remain open; full goal active/incomplete. Movement exploration remains closed after its32 combinations; upper before/at/after action timing is now also a completed finite boundary. Roadmap records behaviour/gap/plausible-regression/stopping-condition discipline and prioritizes full later-regime/hardware coverage.

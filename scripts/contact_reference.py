@@ -45,7 +45,7 @@ def validate_contact(fixture, case):
                 sampled.append(update['ordinal'])
     if fixture['updates'][-1]['frame'] != 2021:
         raise ValueError('Capture does not retain action release and subsequent flight')
-    vector, normal = after[0x56:0x66], bytes.fromhex(parent['updates'][contact - 1]['ram'])[0x56:0x66]
+    vector, normal = after[0x60:0x67], bytes.fromhex(parent['updates'][contact - 1]['ram'])[0x60:0x67]
     if (vector == normal) != (onset > 2006):
         raise ValueError('Source action trajectory relationship is absent')
     return {'natural_prefix_callbacks': len(prefix),
@@ -55,7 +55,7 @@ def validate_contact(fixture, case):
             'accepted_contact_update': contact, 'accepted_contact_frame': row['frame'],
             'contact_entry_player_yx': list(before[0x45:0x47]),
             'contact_entry_ball_yx': list(before[0x34:0x36]),
-            'captured_launch_state_56_65': vector.hex(),
+            'captured_active_flight_vector': vector.hex(),
             'action_changes_trajectory': vector != normal,
             'contact_psg': row['psg'], 'complete_F2': False}
 
@@ -67,7 +67,7 @@ def validate_contact_set():
         fixture = json.loads((ROOT / case['reference']).read_text())
         validate_fixture(fixture)
         observations.append({'case': name, **validate_contact(fixture, case)})
-    vectors = [row['captured_launch_state_56_65'] for row in observations]
+    vectors = [row['captured_active_flight_vector'] for row in observations]
     if vectors[0] != vectors[1] or vectors[1] == vectors[2]:
         raise ValueError('Before/at/after set does not distinguish the action boundary')
     return observations

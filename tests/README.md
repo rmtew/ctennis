@@ -179,17 +179,17 @@ show both local and original source update IDs. Initialization runs the captured
 initial callback's common tail; subsequent updates carry native state without
 injecting source main-thread writes.
 
-Current results: restarted play matches all 18 updates and five PSG bytes;
-the selected 40-callback match-tail interval matches, including 113 PSG bytes.
-That interval does not prove correct native dispatch, because executing extra
-gameplay there happens to leave the compared state unchanged. Round-tail first
-differs at local update 1 (source update 1334): input direction B expected 1,
-actual 0. Resumed play matches 95 updates, then launch calculation differs at
-local update 96 (source 1565): trajectory expected 199, actual 200. Its callback
-entry is identical, no refresh read occurs, and further launch-vector bytes
-differ; arithmetic translation investigation is still required. Both signatures
-are retained as known red. Longer/result-transition and R2 phase coverage remain
-open; these short intervals do not complete all required phase coverage.
+Current later-regime results: restarted play now matches 50 callbacks through
+handoff and animation release, including 20 PSG events. Match-tail now spans
+448 callbacks through menu selection: 192 match before the missing title/menu
+display request differs at local 193. The previous 40-callback prefix still
+matches. Round-tail spans 136 callbacks through reset/resume and retains its
+first failure at local 1. Resumed play retains the launch failure at local 96.
+Six full award-to-completed-serve phases cover both ends and both modes; separate
+post-reset starts protect working serves beyond known transition failures.
+See [later-regime evidence](../analysis/later-regime-regression.md) for exact
+boundaries, failures and source-prefix preservation. These are diagnostic
+comparisons; P1/P2/P3 hardware acceptance remains separate.
 
 The resumed-launch root cause is confirmed: triangular-root register-pair
 assembly clobbers the carry input before SUBX. For product $1040, source root
@@ -529,3 +529,14 @@ around contact. Capture/test commands use these IDs. `python scripts/contact_ref
 validates their source relationship; the aggregate includes that proof and runs
 contact-specific mutation detection. See [contact timing evidence](../analysis/contact-timing-regression.md).
 This boundary is complete; equivalent onset variants are unnecessary.
+
+## Current suite boundary after later-regime coverage
+
+`python scripts/run_test_suite.py --baseline-check --self-test` classifies
+63 cases: 39 green and 24 exact known red, with no unexplained/tool failures.
+Four missing requirement groups still make the suite fail: remaining focused
+F2/F4/F5 behaviour, P1 graphics, P2 audio and P3 ordinary native execution.
+Known-red case counts do not count independent product defects. Complete
+later-regime comparisons and source extensions are described in
+[later-regime evidence](../analysis/later-regime-regression.md). Earlier count
+reports below/above are historical milestones.

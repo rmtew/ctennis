@@ -10,7 +10,10 @@ CASES = ('round-tail-phase', 'resumed-play-phase', 'match-tail-phase', 'restart-
          'advantage-lost-phase', 'advantage-regained-phase', 'advantage-game-phase', 'deuce-sequence-phase',
          'shared-timer-saturation-phase', 'status-timer-saturation-phase', 'status-timer-observation-phase',
          'movement-lower-receiver-right-phase', 'movement-lower-receiver-left-phase',
-         'movement-lower-receiver-up-phase', 'movement-lower-receiver-down-phase')
+         'movement-lower-receiver-up-phase', 'movement-lower-receiver-down-phase',
+         'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'one-player-match-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-match-complete-phase',
+         'two-player-resumed-serve-complete-phase', 'one-player-upper-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase', 'two-player-restarted-serve-complete-phase',
+         'one-player-ai-launched-serve-complete-phase')
 
 
 def build_phase(case):
@@ -18,6 +21,9 @@ def build_phase(case):
     payload = path.read_bytes()
     parent = json.loads(payload)
     validate_fixture(parent)
+    if 'regime' in case:
+        from regime_reference import validate_regime_span
+        validate_regime_span(parent, case)
     start, count = case['initial_source_update'], case['updates']
     if start < 1 or count < 1 or start + count > len(parent['updates']):
         raise ValueError('Phase exceeds retained continuous source evidence')
@@ -48,10 +54,15 @@ def validate_phase(fixture, case):
     # editable phase metadata or snapshots. No expected data comes from the port.
     if fixture != build_phase(case):
         raise ValueError('Phase differs from its retained source parent or recipe')
+    proof = {}
+    if 'regime' in case:
+        from regime_reference import validate_regime_span
+        parent = json.loads((ROOT / case['parent_reference']).read_text())
+        proof['complete_regime'] = validate_regime_span(parent, case)
     return {'updates': len(fixture['updates']), 'reference_kind': fixture['reference_kind'],
             'parent_sha256': fixture['parent_sha256'],
             'initial_source_update': fixture['initial_source_update'],
-            'final_source_update': fixture['updates'][-1]['source_ordinal']}
+            'final_source_update': fixture['updates'][-1]['source_ordinal'], **proof}
 
 
 if __name__ == '__main__':

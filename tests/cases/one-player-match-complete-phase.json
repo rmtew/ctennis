@@ -1,0 +1,15 @@
+{
+  "name": "one-player-match-complete-phase",
+  "reference": "tests/reference/one-player-match-complete-phase.json",
+  "parent_reference": "tests/reference/one-player-restart-complete.json",
+  "continuous_parent": "one-player-match",
+  "schema_version": 2,
+  "regime": "match",
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "purpose": "Complete recorded award/pause/reset or result/menu/restart interval through actual serve handoff and animation release; initialize once, never inject expected intermediate state.",
+  "initial_source_update": 11959,
+  "updates": 1451
+}

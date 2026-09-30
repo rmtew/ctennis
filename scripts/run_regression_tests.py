@@ -7,7 +7,7 @@ import re
 import sys
 from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
-from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES
+from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES, EXTENSION_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 
 OUT = ROOT / 'build/tests'
@@ -154,6 +154,9 @@ def main():
         if args.case in CONTACT_CASES:
             from contact_reference import validate_contact
             reference_summary.update(validate_contact(fixture, case))
+        if args.case in EXTENSION_CASES:
+            from regime_reference import validate_extension
+            reference_summary.update(validate_extension(fixture, case))
         case['updates'] = len(fixture['updates'])
     elif args.reference_only:
         parser.error('--reference-only applies to the round-transition case')
@@ -222,7 +225,8 @@ def main():
                         f'\tcmpi.b #{limit},${coordinate:x}(a5)\n\tbne.s regression_receiver_mutation_skip\n'
                         f'\t{operator}.b #1,${coordinate:x}(a5)\nregression_receiver_mutation_skip:\n')
         else:
-            coordinate = '$4a' if args.case in MOVEMENT_CASES else '$35'
+            coordinate = ('$60' if case.get('regime') == 'launched-serve' else
+                          '$4a' if args.case in MOVEMENT_CASES else '$35')
             mutation = f'\taddq.b #1,{coordinate}(a5)\n'
         if args.case in CONTACT_CASES:
             # Change the action choice only at the captured contact geometry;

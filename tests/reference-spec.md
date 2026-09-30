@@ -436,3 +436,17 @@ measurements and actual native attenuation/mute comparisons through callback
 42. Envelope is known red at attenuation 14 (nearest volume 3, actual 2);
 final hardware mute passes independently. This does not establish other sound
 classes or waveform filter/onset/duration acceptance.
+
+## Later-regime diagnostic completion (2026-09-30)
+
+The original full R1/R2 fixtures remain unchanged. Independently repeated
+extensions retain every prior callback and continue to 13,413/27,072 callbacks,
+past restarted-serve handoff and animation release. Six bounded native phases
+cover game awards from both serving ends and match/result/menu/restart in both
+modes. Expanded tail and independent serve cases expose later known failures
+without injecting expected main-thread writes. This closes the later-phases
+diagnostic group, not continuous port parity or hardware acceptance.
+See [exact evidence and boundaries](../analysis/later-regime-regression.md).
+The current aggregate is 63 cases, 39 green and 24 exact known red; four missing
+groups remain in `coverage-backlog.json`. Stop equivalent later-phase expansion;
+next compare distinct retained native graphics/audio checkpoints.

@@ -1,0 +1,53 @@
+{
+  "name": "one-player-restart-complete",
+  "requirement": "later-phases complete restarted serve source extent",
+  "reference": "tests/reference/one-player-restart-complete.json",
+  "continuous_parent": "one-player-match",
+  "schema_version": 2,
+  "selection": "one",
+  "default_fire": true,
+  "capture_policy": "scripts/capture_one_player_restart_complete.lua",
+  "last_begin_frame": 14712,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "control_schedule": [
+    {
+      "frame": 120,
+      "control": "select",
+      "value": 1
+    },
+    {
+      "frame": 420,
+      "control": "select",
+      "value": 0
+    },
+    {
+      "frame": 1300,
+      "control": "fire",
+      "value": 1
+    },
+    {
+      "frame": 13260,
+      "control": "fire",
+      "value": 0
+    },
+    {
+      "frame": 13835,
+      "control": "select",
+      "value": 1
+    },
+    {
+      "frame": 14135,
+      "control": "select",
+      "value": 0
+    },
+    {
+      "frame": 14660,
+      "control": "fire",
+      "value": 1
+    }
+  ],
+  "purpose": "Preserve the entire original full-match replay, then retain handoff and animation release of its restarted serve. No additional inputs or source state writes."
+}

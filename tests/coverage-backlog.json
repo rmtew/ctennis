@@ -13,15 +13,6 @@
       ]
     },
     {
-      "id": "later-phases",
-      "summary": "Independent later-regime comparisons beyond existing short phase windows",
-      "tasks": [
-        "Compare complete round-tail/reset/resumed-serve intervals, including main-thread writes and sound.",
-        "Compare complete match award, result sound, return to menu, accepted restart and subsequent serve; short match-tail/restart cases alone are insufficient.",
-        "Cover both modes and service ends without injecting expected intermediate state."
-      ]
-    },
-    {
       "id": "P1",
       "summary": "Native graphics beyond the first-game prefix",
       "tasks": [
@@ -85,6 +76,36 @@
       "classification": "green",
       "stopping_condition_met": "Three repeated source references, complete continuous native comparisons and each targeted action-gate mutation detected at contact707.",
       "complete_F2": false
+    },
+    {
+      "id": "later-phases",
+      "evidence": "analysis/later-regime-regression.md; build/tests/<case-id>-report.json",
+      "complete_award_intervals": [
+        "one-player-round-lower-complete-phase",
+        "one-player-round-upper-complete-phase",
+        "one-player-match-complete-phase",
+        "two-player-round-lower-complete-phase",
+        "two-player-round-upper-complete-phase",
+        "two-player-match-complete-phase"
+      ],
+      "continuous_source_prefixes_preserved": true,
+      "complete_restart_source_extensions": [
+        "one-player-restart-complete",
+        "two-player-restart-complete"
+      ],
+      "independent_later_comparisons": [
+        "round-tail-phase",
+        "match-tail-phase",
+        "resumed-play-phase",
+        "restart-play-phase",
+        "two-player-resumed-serve-complete-phase",
+        "one-player-upper-resumed-serve-complete-phase",
+        "two-player-upper-resumed-serve-complete-phase",
+        "two-player-restarted-serve-complete-phase",
+        "one-player-ai-launched-serve-complete-phase"
+      ],
+      "classification": "Exact known-red transition/result/menu/AI-launch boundaries and green independent later serve comparisons; no upstream continuous parity claimed.",
+      "native_hardware_P1_P2_P3_separate": true
     }
   ]
 }

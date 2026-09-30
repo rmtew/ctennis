@@ -1,0 +1,16 @@
+{
+  "name": "two-player-resumed-serve-complete-phase",
+  "reference": "tests/reference/two-player-resumed-serve-complete-phase.json",
+  "schema_version": 2,
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "parent_reference": "tests/reference/two-player-match.json",
+  "continuous_parent": "two-player-match",
+  "regime": "resumed-serve",
+  "purpose": "Independent complete later-regime comparison; initialize from the captured source once and carry native state without expected intermediate writes.",
+  "service_end": "lower",
+  "initial_source_update": 2672,
+  "updates": 50
+}

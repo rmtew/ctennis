@@ -1,0 +1,16 @@
+{
+  "name": "one-player-round-upper-complete-phase",
+  "reference": "tests/reference/one-player-round-upper-complete-phase.json",
+  "parent_reference": "tests/reference/one-player-match.json",
+  "continuous_parent": "one-player-match",
+  "schema_version": 2,
+  "regime": "round",
+  "excluded_ram_offsets": [
+    0,
+    1
+  ],
+  "purpose": "Complete recorded award/pause/reset or result/menu/restart interval through actual serve handoff and animation release; initialize once, never inject expected intermediate state.",
+  "service_end": "upper",
+  "initial_source_update": 3844,
+  "updates": 316
+}

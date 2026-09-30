@@ -7,7 +7,8 @@ MOVEMENT_CASES = ('movement-serve-bounds', 'movement-alternate-serve-bounds', 'm
                   'movement-lower-receiver-up-bound', 'movement-lower-receiver-down-bound',
                   'movement-lower-rally-down-bound', 'movement-lower-rally-up-bound', 'movement-lower-rally-left-bound', 'movement-lower-rally-right-bound', 'movement-upper-rally-up-bound', 'movement-upper-rally-down-bound', 'movement-upper-rally-left-bound', 'movement-upper-rally-right-bound')
 CONTACT_CASES = tuple(f'contact-upper-action-{timing}' for timing in ('before', 'at', 'after'))
-FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',) + CONTACT_CASES
+EXTENSION_CASES = ('one-player-restart-complete', 'two-player-restart-complete')
+FOCUSED_CASES = MOVEMENT_CASES + ('two-player-rally',) + CONTACT_CASES + EXTENSION_CASES
 
 
 def parse_capture(payload):

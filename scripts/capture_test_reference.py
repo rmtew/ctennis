@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 from run_translated_prng_probe import ROOT
 from run_translated_player_frame_probe import ROM_SHA256
-from round_reference import build_fixture, build_focused_fixture, validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES
+from round_reference import build_fixture, build_focused_fixture, validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES, EXTENSION_CASES
 
 
 def capture_round(config, case_name='round-transition'):
@@ -107,6 +107,9 @@ def capture_round(config, case_name='round-transition'):
     if case_name in CONTACT_CASES:
         from contact_reference import validate_contact
         validate_contact(fixture, case)
+    if case_name in EXTENSION_CASES:
+        from regime_reference import validate_extension
+        validate_extension(fixture, case)
     target = ROOT / f'tests/reference/{case_name}.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(fixture, indent=2) + '\n', encoding='utf-8')
@@ -117,6 +120,8 @@ def capture_round(config, case_name='round-transition'):
         report.update(validate_rally(fixture, case))
     if case_name in CONTACT_CASES:
         report.update(validate_contact(fixture, case))
+    if case_name in EXTENSION_CASES:
+        report.update(validate_extension(fixture, case))
     report.update(reference_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
                   capture_sha256=fixture['capture_sha256'], repeat_identical=True)
     (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
@@ -145,6 +150,10 @@ def main():
             from contact_reference import validate_contact
             case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
             report.update(validate_contact(fixture, case))
+        if args.case in EXTENSION_CASES:
+            from regime_reference import validate_extension
+            case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+            report.update(validate_extension(fixture, case))
         print(json.dumps(report, indent=2))
         return
     config = configparser.ConfigParser(interpolation=None)

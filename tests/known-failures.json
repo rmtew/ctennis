@@ -188,6 +188,130 @@
         "actual": 1,
         "callback_kind": "tail-only"
       }
+    },
+    "one-player-round-lower-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-round-lower-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 130,
+        "source_update": 1333,
+        "source_frame": 2631,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "one-player-round-upper-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-round-upper-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 130,
+        "source_update": 3974,
+        "source_frame": 5272,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "one-player-match-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-match-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread result music selection and tail-only result/menu dispatch are absent; original queues its result stream after129 matched callbacks.",
+      "signature": {
+        "update": 130,
+        "source_update": 12089,
+        "source_frame": 13387,
+        "boundary": "callback-entry",
+        "ram_offset": 133,
+        "expected": 150,
+        "actual": 4,
+        "callback_kind": "tail-only"
+      }
+    },
+    "two-player-round-lower-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-round-lower-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 130,
+        "source_update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "two-player-round-upper-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-round-upper-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 130,
+        "source_update": 4401,
+        "source_frame": 5699,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "two-player-match-complete-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-match-complete-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread result music selection and tail-only result/menu dispatch are absent; original queues its result stream after129 matched callbacks.",
+      "signature": {
+        "update": 130,
+        "source_update": 25748,
+        "source_frame": 27046,
+        "boundary": "callback-entry",
+        "ram_offset": 133,
+        "expected": 150,
+        "actual": 4,
+        "callback_kind": "tail-only"
+      }
+    },
+    "one-player-restart-complete": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-restart-complete-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 1333,
+        "source_frame": 2631,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "two-player-restart-complete": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-restart-complete-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
+      "signature": {
+        "update": 2536,
+        "source_frame": 3834,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "match-tail-phase": {
+      "evidence": "analysis/later-regime-regression.md; build/tests/match-tail-phase-report.json; validated source interval and complete native execution",
+      "reason": "Native main-thread title/menu initialization after result music is absent; expanded result tail matches192 callbacks before the source requests its title display.",
+      "signature": {
+        "update": 193,
+        "source_update": 12282,
+        "source_frame": 13580,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 131,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
     }
   }
 }
