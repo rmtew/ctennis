@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -45,7 +45,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         raise ValueError('Source simulation reference changed relative to frozen presentation capture')
     if list(targets) != sorted(set(targets)) or not targets or targets[0] < initial_source_update or targets[-1] > len(source['updates']):
         raise ValueError('Callback targets must be unique, increasing and inside the source replay')
-    executable = build_native(case, directory, recorded_refresh=recorded_entropy, initial_source_update=initial_source_update)
+    executable = build_native(case, directory, recorded_refresh=recorded_entropy, initial_source_update=initial_source_update, source_mutator=source_mutator)
     if executable_mutator:
         executable_mutator(executable)
     symbols = code_symbols((directory / 'native.lst').read_text())
@@ -53,6 +53,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     commits = []
     entropy_reads = []
     audio_events = []
+    field_events = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
     with CopperlineSession(ctl, ROOT) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
@@ -73,10 +74,19 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['refresh_replay_done']})
         if observe_audio:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['paula_events_done']})
+        if observe_fields:
+            session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['scoreboard_selection_done']})
         def observe_stop(stop):
             if stop['reason'] != 'breakpoint':
                 return False
             generation = int(session.inspect('mem_read', {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
+            if observe_fields and stop['pc'] == base + symbols['scoreboard_selection_done']:
+                field_events.append({'update': generation + 1,
+                    'field_values': session.inspect('mem_read', {'addr': base + symbols['field_values'], 'len': 6})['data'],
+                    'score_flags_before': int(session.inspect('mem_read', {'addr': base + symbols['score_flags_before'], 'len': 1})['data'], 16),
+                    'status_timer_before': int(session.inspect('mem_read', {'addr': base + symbols['status_timer_before'], 'len': 1})['data'], 16),
+                    'stop': stop})
+                return True
             if observe_audio and stop['pc'] == base + symbols['paula_events_done']:
                 count = int(session.inspect('mem_read', {'addr': base + symbols['psg_count'], 'len': 1})['data'], 16)
                 if count:
@@ -168,6 +178,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     report = {'capture_report_path': str(report_path), 'scope': __doc__, 'executable_sha256': digest(executable),
               'reference_sha256': digest(source_path), 'symbols': symbols,
               'native_source': case['native_source'], 'native_source_sha256': digest(ROOT / case['native_source']),
+              'private_replay_wrapper_sha256': digest(directory / 'native-recorded-refresh.s') if recorded_entropy else None,
               'emulator_sha256': digest(Path(config['tools']['copperline'])),
               'bridge_sha256': digest(ctl), 'kickstart_sha256': digest(Path(config['inputs']['amiga_rom'])),
               'initial_source_update': initial_source_update,
@@ -179,7 +190,8 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'commits': commits, 'commit_tracking': track_commits,
               'entropy_reads': entropy_reads, 'completed_rasters': completed_rasters,
               'audio_events': audio_events, 'audio_observed': observe_audio,
-              'executable_mutated': executable_mutator is not None,
+              'field_events': field_events, 'fields_observed': observe_fields,
+              'executable_mutated': executable_mutator is not None or source_mutator is not None,
               'native_wav': str(directory / 'native.wav') if observe_audio else None,
               'final_completed_callbacks': final_count,
               'graphics_comparison_complete': False}

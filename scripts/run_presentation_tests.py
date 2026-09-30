@@ -78,7 +78,9 @@ def compare(expected, actual, boundary="stable-title"):
     return None
 
 
-def build_native(case, directory, recorded_refresh=False, initial_source_update=0):
+def build_native(case, directory, recorded_refresh=False, initial_source_update=0, source_mutator=None):
+    if source_mutator and not recorded_refresh:
+        raise ValueError('Source mutations require a private replay wrapper')
     run([sys.executable, 'scripts/roundtrip_rom.py'])
     prepare_gameplay()
     run([sys.executable, 'scripts/generate_amiga_sprite_probe.py'])
@@ -123,7 +125,10 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
         if original.count(old) != 1:
             raise ValueError('Live replay entropy include changed')
         wrapper = directory / 'native-recorded-refresh.s'
-        wrapper.write_text(original.replace(old, f'include "{include.as_posix()}"'), encoding='utf-8')
+        original = original.replace(old, f'include "{include.as_posix()}"')
+        if source_mutator:
+            original = source_mutator(original)
+        wrapper.write_text(original, encoding='utf-8')
         source = str(wrapper)
         defines = ['-DLONG_GAME_REPLAY=1']
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', *defines,

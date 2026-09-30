@@ -1,0 +1,7 @@
+{
+  "name": "p1-status-2-phase",
+  "parent_reference": "tests/reference/one-player-match.json",
+  "initial_source_update": 2233,
+  "updates": 38,
+  "purpose": "Reachable original state before point event; carry state through status appearance and expiry."
+}

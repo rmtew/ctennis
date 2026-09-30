@@ -9,11 +9,12 @@ from round_reference import FOCUSED_CASES
 from movement_reference import MOVEMENT_PHASES
 from physical_input_reference import CASES as INPUT_CASES
 from widget_reference import CASES as WIDGET_CASES
+from status_reference import CASES as STATUS_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve')
 AUDIO_CASES = ('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute')
-CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES + INPUT_CASES + WIDGET_CASES
+CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES + INPUT_CASES + WIDGET_CASES + STATUS_CASES
 # A reviewed public backlog keeps partial evidence from silently closing a gate.
 COVERAGE_BACKLOG = json.loads((ROOT / 'tests/coverage-backlog.json').read_text())
 MISSING = [f"{group['id']}: {group['summary']}" for group in COVERAGE_BACKLOG['groups']]
@@ -102,11 +103,11 @@ def main():
             continue
         # Never classify stale output from a failed invocation as a known failure.
         report_path.unlink(missing_ok=True)
-        runner = 'scripts/run_audio_tests.py' if case in AUDIO_CASES else 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'
+        runner = 'scripts/run_status_tests.py' if case in STATUS_CASES else 'scripts/run_audio_tests.py' if case in AUDIO_CASES else 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'
         command = [sys.executable, runner, '--case', case]
-        if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES:
+        if args.baseline_check and case in known and case not in PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES:
             command += ['--through-update', str(max(1, known[case]['signature']['update']))]
-        if args.self_test and (case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES
+        if args.self_test and (case in ('serve',) + FOCUSED_CASES + tuple(MOVEMENT_PHASES) + PRESENTATION_CASES + AUDIO_CASES + STATUS_CASES
                                or case in PHASE_CASES and 'regime' in json.loads((ROOT / f'tests/cases/{case}.json').read_text())):
             command.append('--self-test')
         process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)

@@ -17,7 +17,7 @@
       "summary": "Native graphics beyond the first-game prefix",
       "tasks": [
         "Compare accepted mode selections, upper serve stages, both returns and distinct bounce/net/out checkpoints.",
-        "Compare every captured point/status variant and expiry, including equal/advantage.",
+        "Protect remaining two-player status 6 lifecycle through the actual physical input path; retain the known second-reader failure. One-player statuses 1 through 5 now have local lifecycle comparisons. Complete game-driven point/mode changes, including equal/advantage; renderer-unit selector coverage alone is insufficient.",
         "Compare round reset, match/result/menu and restart raster sequences with explicit presentation generations."
       ]
     },
@@ -133,6 +133,27 @@
       ],
       "inactive_front_immutability_and_blanking_swaps_verified": true,
       "outside_field_pixels_unchanged": true,
+      "complete_P1": false
+    },
+    {
+      "id": "P1-one-player-status-lifecycles",
+      "cases": [
+        "p1-status-2-lifecycle",
+        "p1-status-3-lifecycle",
+        "p1-status-4-lifecycle",
+        "p1-status-5-lifecycle"
+      ],
+      "evidence": "analysis/native-status-lifecycle-regression.md; build/tests/p1-status-*-lifecycle-report.json",
+      "case_count": 4,
+      "consecutive_request_checks": 140,
+      "completed_raster_checks": 12,
+      "compiled_mutations": [
+        "retain-status-after-expiry",
+        "clear-status-one-callback-early"
+      ],
+      "initial_state_before_point_event": true,
+      "intermediate_expected_writes": false,
+      "original_source_fixture_preserved": true,
       "complete_P1": false
     }
   ]

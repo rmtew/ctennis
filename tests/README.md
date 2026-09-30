@@ -581,10 +581,10 @@ Game response, side exchange, real-time latency and ordinary cadence/deadlines
 remain P3 requirements; these byte diagnostics can migrate to named native
 input intents without retaining SG device-reader routines in production.
 
-Latest complete aggregate: **77 cases, 42 green and 35 exact known red**.
+Physical-reader milestone aggregate: **77 cases, 42 green and 35 exact known red**.
 Mutation/signature checks pass, with no unexplained/tool failures. Four missing
 groups still cause suite failure. Earlier counts are historical milestones.
-Next: distinct captured native point/status/mode field comparisons.
+At that milestone, distinct native point/status/mode fields were next.
 
 ## Native widget renderer units
 
@@ -598,6 +598,31 @@ all pixels outside field rectangles remain unchanged. Game callbacks are paused
 in this unit wrapper, so this does not prove game-driven update/expiry timing.
 See [widget evidence](../analysis/native-widget-regression.md).
 
-Latest aggregate: **83 cases,48 green,35 exact known red**, all mutation/signature
+Widget-renderer milestone aggregate: **83 cases,48 green,35 exact known red**, all mutation/signature
 checks pass and no unexplained/tool failures. Four missing groups remain.
-Next: actual game-driven status appearance/expiry; stop font-bank variants.
+At that milestone, game-driven status timing remained the next task.
+
+## Game-driven native status lifecycles
+
+Run `python scripts/run_status_tests.py --all --self-test`, or select one
+`--case p1-status-2-lifecycle` (selectors 3, 4 and 5 also have cases). Each
+rebuilds a private phase from the pinned original recording, initializes once
+before the point event, and follows the actual native game through expiry.
+No expected selectors or intermediate game states are written into the run.
+
+Four green cases compare 140 consecutive status requests and 12 completed
+rasters. Original drawn-message latches and stable captured pixels are separate
+references. Each compiled retained-text mutation is caught at expiry; each
+early-expiry mutation is caught one callback earlier, even though its later
+screenshot is correct. Source/native meaningful RAM agrees at raster checkpoints.
+See [scope and evidence](../analysis/native-status-lifecycle-regression.md).
+
+The first-game prefix already covers status 1. Two-player status 6 remains
+required, with its existing source observations and known native second-reader
+failure. Stop equivalent one-player status windows. P1 point/mode/scene timing,
+P2 audio, P3 ordinary controls/cadence/deadlines and F2/F4/F5 remain in full scope.
+
+Latest complete aggregate: **87 cases, 52 green and 35 exact known red**, with
+all mutation/signature checks passing and no unexplained/tool failures. Four
+missing requirement groups still prevent suite completion. Earlier counts are
+historical milestones. Next: the remaining two-player status-6 lifecycle.

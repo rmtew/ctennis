@@ -1,3 +1,45 @@
+## 2026-10-01 - Game-driven status appearance and expiry
+
+- Added four local one-player lifecycles for status selectors 2/3/4/5. Each
+  source-derived initial state precedes its point event; the actual native
+  application then runs through message expiry without intermediate expected
+  game-state or selector writes. Held fire is an actual joystick input.
+- Source timing expectations come from the original drawn-message latch in the
+  pinned continuous recording. Three stable original raster crops per case
+  validate that projection separately from physical scanout. The exact draw
+  callback can still have older pixels; no callback-to-PAL-frame shortcut is used.
+- All 140 consecutive native requests and 12 completed status raster crops pass.
+  Original/native input flags and timers agree every observed selection;
+  meaningful RAM agrees at each raster checkpoint. Initial state is written
+  once only; no Python gameplay analogue or product source changes were added.
+- Two actual compiled mutations per case are detected: retained text fails at
+  expiry; comparing timer254 instead of255 clears one callback early and fails
+  there even though the later cleared screenshot is correct. Mutation captures
+  preserve source/native simulation state at the raster checkpoints.
+- Added scripts/status_reference.py, scripts/run_status_tests.py, four public
+  lifecycle recipes and their reproducible phase recipes. Ignored phases are
+  rebuilt from the pinned original by the runner. Capture adapters now optionally
+  observe live selections and compile private source mutations; existing callers
+  preserve their normal path. Reports retain private-wrapper/capture/PNG hashes.
+- Full verification: python scripts/run_test_suite.py --baseline-check --self-test.
+  Aggregate87 cases:52 green,35 exact known red; all prior classifications
+  unchanged, no unexplained failures/tool errors. Four required groups still
+  cause expected nonzero completion-gate exit. All new capture, executable,
+  wrapper and screenshot hashes verified after the full aggregate run.
+- Supplemental checker verification: first differences are ordered by actual
+  callback across request/state/pixel observations. Re-evaluated all twelve
+  hashed normal/mutation native captures after that ordering change; every
+  checked result is identical. No additional emulator capture was needed.
+- See analysis/native-status-lifecycle-regression.md for source intervals, exact
+  scope and reproducible commands. Roadmap, reference spec, README and backlog
+  updated. Stop equivalent one-player status windows; existing prefix covers
+  status1. This does not close continuous transition parity or all P1 evidence.
+- Next: two-player status6, appearance20925/expiry20956, local start20923. Source
+  media and both held-button observations already exist. Extend the native
+  adapter to that source parent and both physical ports; preserve the existing
+  known second-reader failure instead of supplying its expected input or pending
+  message. Remaining point/mode/scene, P2/P3 and F2/F4/F5 scope is unchanged.
+
 ## 2026-09-30: native widget renderer matrix complete
 
 Full baseline/self-test completed83 cases:48 green,35 exact known red; no

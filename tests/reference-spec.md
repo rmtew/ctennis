@@ -471,7 +471,7 @@ hashed evidence. This closes the local reader/normalization comparison stage,
 not actual player/action response, side exchange, sampling latency or ordinary
 cadence/deadlines. See
 [native input evidence](../analysis/native-physical-input-regression.md).
-Current aggregate: 77 cases, 42 green and 35 exact known red, four missing groups.
+Physical-reader milestone aggregate: 77 cases, 42 green and 35 exact known red, four missing groups.
 Stop equivalent initial-side control windows; next protect distinct retained
 native point/status/mode field outputs. Full suite scope is unchanged.
 
@@ -485,3 +485,23 @@ detected in every field case. See
 This closes renderer-unit glyph selection, not game-driven timing/expiry or
 original opposite-winner scene coverage. Aggregate83 cases:48 green/35 exact
 known red, four missing groups. Next protect game-driven status lifetimes.
+
+## Native status lifecycle evidence (2026-10-01)
+
+Four local one-player lifecycles now compare all 35 consecutive requested
+status states and three stable completed rasters per case. Starts precede the
+point event; native state is then carried without expected writes. Original
+drawn-message latches supply callback expectations, while captured rasters
+separately validate stable physical output. Actual retained-text and early-expiry
+compiled mutations are rejected at the precise affected callback. See
+[lifecycle evidence](../analysis/native-status-lifecycle-regression.md).
+
+This adds selectors 2/3/4/5 to the existing status-1 prefix evidence. It does not
+close two-player status 6, continuous transitions, other fields/scenes, native
+waveform acceptance or ordinary unpaused control/timing/deadlines. Stop
+equivalent one-player status windows; cover the remaining two-player lifecycle
+without bypassing its known input adapter failure.
+
+Verified aggregate at this lifecycle milestone: **87 cases, 52 green, 35 exact
+known red**; all mutation/signature checks pass, with no unexplained/tool
+failures. Four requirement groups remain incomplete.

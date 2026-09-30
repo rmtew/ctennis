@@ -1,0 +1,25 @@
+{
+  "name": "p1-status-5-lifecycle",
+  "source_case": "one-player-match",
+  "reference": "tests/reference/presentation/manifest.json",
+  "initial_source_update": 7071,
+  "initial_phase_reference": "tests/reference/p1-status-5-phase.json",
+  "completed_callbacks": [
+    7072,
+    7075,
+    7106
+  ],
+  "fields": [
+    "status"
+  ],
+  "inputs": [
+    {
+      "port": 2,
+      "red": true
+    }
+  ],
+  "status_variant": 5,
+  "appearance_callback": 7073,
+  "expiry_callback": 7104,
+  "contract": "Live native gameplay requests and displays status, then clears it. Source-derived initial state once before the point event; original captured pixels and recorded entropy. Local lifecycle evidence, not continuous round or match parity."
+}
