@@ -1,0 +1,13 @@
+{
+  "name": "physical-input",
+  "reference": "tests/reference/input-map.json",
+  "reference_sha256": "3ff7a462b3178d42abbbc5c171337a727e0ab231e4ef556a5d45abef36d4b636",
+  "capture_sha256": "e6fa3b7fb4b5862eb7b4dac70e0a1b74a297764fcc840b2882b6eb58bffbb3da",
+  "rom_sha256": "19bb6647f14ef50f976e8d0a06d389f06b2e700d54a54fb1734d3140f9745ad1",
+  "native_source": "amiga/gameplay_integration_probe.s",
+  "amiga_ports": {
+    "1": 2,
+    "2": 1
+  },
+  "contract": "Source pad1 maps to Amiga joystick connector2; pad2 to connector1. Both source buttons map to red/blue. Compare original reader returns and normalized directions/actions at actual native sampling boundaries."
+}

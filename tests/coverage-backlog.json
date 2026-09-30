@@ -35,7 +35,7 @@
       "summary": "Ordinary native cadence, both physical controls and complete-match presentation deadlines",
       "tasks": [
         "Measure source/native callback cadence and lateness through gameplay, tail-only and result regimes using the ordinary executable.",
-        "Compare calibrated press/hold/release/direction/action acceptance for both input paths at actual sampling boundaries.",
+        "Retain the 13 initial-side physical-reader/normalized-control baseline windows (three green, ten exact known red). Complete actual player/action response, side exchange and sampling-edge/real-time latency; core replay input injection does not establish these.",
         "Require zero visible-line commits and inspect complete-match presentation/sound continuity; instrumented prefix evidence is insufficient."
       ]
     }
@@ -106,6 +106,18 @@
       ],
       "classification": "Exact known-red transition/result/menu/AI-launch boundaries and green independent later serve comparisons; no upstream continuous parity claimed.",
       "native_hardware_P1_P2_P3_separate": true
+    },
+    {
+      "id": "P3-initial-side-physical-readers",
+      "evidence": "analysis/native-physical-input-regression.md; build/tests/native-physical-input/capture.json; build/tests/p3-input-*-report.json",
+      "case_count": 13,
+      "samples_per_window": 41,
+      "completed_native_callbacks_per_capture": 561,
+      "green_cases": 3,
+      "known_red_cases": 10,
+      "source_fixture_preserved": true,
+      "actual_executable_mutation_detected_in_all_windows": true,
+      "complete_P3": false
     }
   ]
 }

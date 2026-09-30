@@ -459,3 +459,18 @@ remain outside this local case. See
 [upper-serve evidence](../analysis/native-upper-serve-graphics.md). Native P3
 physical sampling is the next concrete gap: core replay input injection does
 not test the live joystick sampler or its absent second input group.
+
+## Native physical-reader evidence (2026-09-30)
+
+The frozen original input-map now supplies 13 initial-side neutral/hold/release
+windows driven through actual Amiga joystick inputs and live reader returns.
+Three green cases and ten exact known failures expose current omissions; an
+actual assembled sampler mutation is rejected in each window. Both complete
+561-callback native captures retain consecutive callback-counter proof and
+hashed evidence. This closes the local reader/normalization comparison stage,
+not actual player/action response, side exchange, sampling latency or ordinary
+cadence/deadlines. See
+[native input evidence](../analysis/native-physical-input-regression.md).
+Current aggregate: 77 cases, 42 green and 35 exact known red, four missing groups.
+Stop equivalent initial-side control windows; next protect distinct retained
+native point/status/mode field outputs. Full suite scope is unchanged.

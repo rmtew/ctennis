@@ -7,11 +7,12 @@ from pathlib import Path
 from phase_reference import CASES as PHASE_CASES
 from round_reference import FOCUSED_CASES
 from movement_reference import MOVEMENT_PHASES
+from physical_input_reference import CASES as INPUT_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESENTATION_CASES = ('p1-title', 'p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve')
 AUDIO_CASES = ('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute')
-CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES
+CASES = ('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES + PRESENTATION_CASES + AUDIO_CASES + INPUT_CASES
 # A reviewed public backlog keeps partial evidence from silently closing a gate.
 COVERAGE_BACKLOG = json.loads((ROOT / 'tests/coverage-backlog.json').read_text())
 MISSING = [f"{group['id']}: {group['summary']}" for group in COVERAGE_BACKLOG['groups']]
@@ -57,8 +58,29 @@ def main():
     from contact_reference import validate_contact_set
     contact_timing = validate_contact_set()
     results = []
+    input_batch = None
     for case in CASES:
         report_path = out / ('report.json' if case == 'serve' else f'{case}-report.json')
+        if case in INPUT_CASES:
+            # One continuous real-hardware calibration produces separate control
+            # windows; never replay the same 561 callbacks thirteen times.
+            if input_batch is None:
+                for name in INPUT_CASES:
+                    (out / f'{name}-report.json').unlink(missing_ok=True)
+                command = [sys.executable, 'scripts/run_physical_input_tests.py', '--all']
+                if args.self_test:
+                    command.append('--self-test')
+                input_batch = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+                (out / 'physical-input-runner.log').write_text(input_batch.stdout + input_batch.stderr, encoding='utf-8')
+            if input_batch.returncode not in (0, 1) or not all((out / f'{name}-report.json').exists() for name in INPUT_CASES):
+                results.append({'case': case, 'status': 'tool-error', 'exit_code': input_batch.returncode})
+                continue
+            report = json.loads(report_path.read_text())
+            status = classify(report, known.get(case))
+            results.append({'case': case, 'status': status, 'report': str(report_path),
+                            'first_difference': report['first_difference']})
+            print(f'{case}: {status}', flush=True)
+            continue
         # Never classify stale output from a failed invocation as a known failure.
         report_path.unlink(missing_ok=True)
         runner = 'scripts/run_audio_tests.py' if case in AUDIO_CASES else 'scripts/run_presentation_tests.py' if case in PRESENTATION_CASES else 'scripts/run_regression_tests.py'

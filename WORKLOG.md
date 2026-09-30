@@ -1,3 +1,47 @@
+## 2026-09-30: actual native physical-input baseline
+
+Full baseline/self-test completed77 cases:42 green,35 exact known red; no
+unexplained failures/tool errors. Four broader groups still cause suite failure;
+goal remains incomplete. Product code unchanged. Earlier64-case baseline
+preserved all classifications; thirteen physical-control windows added.
+
+Reused unchanged twice-captured input-map oracle:562 source callbacks/1124
+reader observations, raw SHAe6fa3b7fb4b5862eb7b4dac70e0a1b74a297764fcc840b2882b6eb58bffbb3da,
+fixture SHA3ff7a462b3178d42abbbc5c171337a727e0ab231e4ef556a5d45abef36d4b636.
+Source timeline/raw-reader/state agreement verified; all13 neutral+24held+16
+release windows validate. Twenty-six shortened/shifted recipes rejected. No
+source emulator run/recapture or new external dependency needed.
+
+Native adapter initializes once at captured source callback0 post-tail state,
+maps source pad1 to Amiga2 and pad2 to Amiga1, buttons to red/blue, and drives
+actual joystick lines at live callback sampling points. Actual reader-return
+bytes are collected via real stack return addresses; normalized fields observed
+after input update. No expected intermediate RAM writes or Python game model.
+Counter checks prove561 consecutive native callbacks and complete last callback.
+Full normal/mutated captures and all13 normal/mutation hashes verified.
+
+Green:pad1 Left/Right/Button1. Known red:pad1 Up/Down/Button2 at21/61/221;
+all pad2 Up/Down/Left/Right/Button1/Button2 at261/301/341/381/421/461;
+simultaneous pad1Right+pad2Left at521. Missing reader value always0 versus
+original2/8/32 (pad1) or2/8/4/1/16/32/4 (pad2/simultaneous). Exact callback/frame,
+group and values recorded in known-failure policy. These cases expose existing
+vertical/second-button and second-reader omissions, not new product regressions.
+
+Actual assembled temporary sampler toggles pad1Right at input_ready. Each case
+rejects this wrong/cross-player direction at its otherwise-matching neutral
+boundary. Normal/mutated directories separate. Aggregate executes one full batch
+and independently classifies13 reports, deleting stale reports and rejecting
+failed/incomplete batches as tool errors. No13-fold repeated capture.
+
+Roadmap/spec/instructions/backlog updated; analysis/native-physical-input-
+regression.md records details and limits. Byte-format diagnostics may migrate to
+named native input intents; no SG reader retention required in final port.
+Stop equivalent initial-side control windows. P3 response/side exchange, sampling
+edges/real-time latency, ordinary cadence/deadlines remain open. Next: native
+point/status/mode field comparisons from retained original rasters, a finite set
+of distinct outputs with actual hardware sensitivity. P1 other outcomes/later
+regimes, P2 audio and remaining F2/F4/F5 stay in full scope.
+
 ## 2026-09-30: native upper-serve rasters and preserved hardware evidence
 
 Full python scripts/run_test_suite.py --baseline-check --self-test completed64

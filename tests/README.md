@@ -562,3 +562,26 @@ Four required coverage groups still cause suite failure. Capture-report hashes
 for all three generation display cases and all three audio cases, screenshot
 existence and native WAV hashes were rechecked after the entire suite completed.
 Next: native physical press/hold/release tests for both input paths.
+
+## Native physical input baseline
+
+`python scripts/run_physical_input_tests.py --all --self-test` runs one
+continuous native hardware calibration and writes 13 control-window reports.
+Use `--case p3-input-p1-left` (or another registered input case) for one report.
+The original input-map fixture stays unchanged; its timeline drives actual
+Amiga pads at live sampling boundaries. Every case compares one neutral,
+24 held and 16 release samples from both readers and normalized control fields.
+
+Pad1 Left/Right/Button1 pass. Its Up/Down/Button2, all six pad2 controls and
+simultaneous movement expose existing omissions. Actual sampler mutation is
+rejected in every case. The aggregate invokes the batch once, validates all
+reports and preserves normal/mutated captures separately. See
+[exact input evidence and limits](../analysis/native-physical-input-regression.md).
+Game response, side exchange, real-time latency and ordinary cadence/deadlines
+remain P3 requirements; these byte diagnostics can migrate to named native
+input intents without retaining SG device-reader routines in production.
+
+Latest complete aggregate: **77 cases, 42 green and 35 exact known red**.
+Mutation/signature checks pass, with no unexplained/tool failures. Four missing
+groups still cause suite failure. Earlier counts are historical milestones.
+Next: distinct captured native point/status/mode field comparisons.
