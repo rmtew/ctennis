@@ -4,9 +4,10 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from phase_reference import CASES as PHASE_CASES
 
 ROOT = Path(__file__).resolve().parent.parent
-CASES = ('serve', 'round-transition', 'one-player-match')
+CASES = ('serve', 'round-transition', 'one-player-match') + PHASE_CASES
 # These requirements await evidence-backed cases or a justified coverage inventory.
 MISSING = ['R2 two-player continuous match', 'F1-F5 meaningful-gap inventory and cases',
            'phase-specific comparisons after the first continuous failure',

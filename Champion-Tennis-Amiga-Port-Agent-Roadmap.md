@@ -6,6 +6,8 @@ Current phase boundary (2026-09-30): translated gameplay and native Amiga input,
 
 Full R1 source capture is now reproducible through match result and restarted serve: 13,378 updates, twice-identical, with the existing 1,566-update prefix preserved exactly. Its actual 68000 comparison completes and first diverges at the known callback 1333 round-transition boundary. R2, focused gap/phase cases, presentation references/adapters, and the all-case known-failure runner remain required before the suite goal is complete. See the latest worklog checkpoint for commands and evidence.
 
+Four source-derived phase diagnostics now supplement R1: restarted serve and a short match-tail interval pass; round-tail input handling and resumed launch calculation have independently observed known-red signatures. Phase fixtures retain exact parent provenance and are checked against the twice-captured source record. These isolate later behaviour without claiming upstream parity; longer/result-transition phases, R2 and presentation coverage remain open. See the latest worklog checkpoint.
+
 ## Maintained source and regression suite (agreed 2026-09-30)
 
 [The original-game reference specification](tests/reference-spec.md) defines

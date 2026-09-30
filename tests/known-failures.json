@@ -4,12 +4,54 @@
     "round-transition": {
       "evidence": "build/tests/round-transition-report.json; tests/reference/round-transition.json; WORKLOG.md exact first-round source checkpoint",
       "reason": "Native main-thread round setup and tail-only dispatch are unimplemented",
-      "signature": {"update": 1333, "source_frame": 2631, "boundary": "callback-entry", "ram_offset": 2, "expected": 129, "actual": 1, "callback_kind": "tail-only"}
+      "signature": {
+        "update": 1333,
+        "source_frame": 2631,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
     },
     "one-player-match": {
       "evidence": "build/tests/one-player-match-report.json; tests/reference/one-player-match.json; WORKLOG.md full R1 match checkpoint",
       "reason": "Same round-transition boundary in the continuous full-match replay; later failures remain obscured",
-      "signature": {"update": 1333, "source_frame": 2631, "boundary": "callback-entry", "ram_offset": 2, "expected": 129, "actual": 1, "callback_kind": "tail-only"}
+      "signature": {
+        "update": 1333,
+        "source_frame": 2631,
+        "boundary": "callback-entry",
+        "ram_offset": 2,
+        "expected": 129,
+        "actual": 1,
+        "callback_kind": "tail-only"
+      }
+    },
+    "round-tail-phase": {
+      "reason": "Native harness executes gameplay during source tail-only phase; input direction B is overwritten",
+      "evidence": "build/tests/round-tail-phase-report.json and retained source-derived fixture",
+      "signature": {
+        "update": 1,
+        "source_frame": 2632,
+        "boundary": "pre-tail",
+        "ram_offset": 86,
+        "expected": 1,
+        "actual": 0,
+        "callback_kind": "tail-only"
+      }
+    },
+    "resumed-play-phase": {
+      "reason": "Translated launch calculation differs despite matching callback-entry state and captured input; no refresh reads occur at this boundary. Trajectory/vector outputs differ. Root cause still requires arithmetic translation investigation",
+      "evidence": "build/tests/resumed-play-phase-report.json and retained source-derived fixture",
+      "signature": {
+        "update": 96,
+        "source_frame": 2864,
+        "boundary": "pre-tail",
+        "ram_offset": 87,
+        "expected": 199,
+        "actual": 200,
+        "callback_kind": "gameplay"
+      }
     }
   }
 }

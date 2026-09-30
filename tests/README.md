@@ -162,3 +162,31 @@ The aggregate runner is an incomplete-suite checkpoint: it currently exits 2
 in both modes because R2, meaningful gap inventory/cases, phase-specific later
 comparisons and P1-P3 references/adapters remain missing. A matching known-red
 baseline does not make missing requirements pass.
+
+## Independent phase diagnostics
+
+Run `python scripts/phase_reference.py` to derive four retained phase fixtures
+from the twice-identical full one-player source reference. Each fixture is
+validated against its exact parent bytes and tracked case recipe on every run;
+changed snapshots or stale parent hashes are rejected. The original continuous
+replay stays registered. These are reachable source starts, not evidence that
+the port reached those starts correctly.
+
+The aggregate runner also executes `round-tail-phase`, `resumed-play-phase`,
+`match-tail-phase` and `restart-play-phase`. Individual cases use the usual
+`python scripts/run_regression_tests.py --case <name>` command. Phase reports
+show both local and original source update IDs. Initialization runs the captured
+initial callback's common tail; subsequent updates carry native state without
+injecting source main-thread writes.
+
+Current results: restarted play matches all 18 updates and five PSG bytes;
+the selected 40-callback match-tail interval matches, including 113 PSG bytes.
+That interval does not prove correct native dispatch, because executing extra
+gameplay there happens to leave the compared state unchanged. Round-tail first
+differs at local update 1 (source update 1334): input direction B expected 1,
+actual 0. Resumed play matches 95 updates, then launch calculation differs at
+local update 96 (source 1565): trajectory expected 199, actual 200. Its callback
+entry is identical, no refresh read occurs, and further launch-vector bytes
+differ; arithmetic translation investigation is still required. Both signatures
+are retained as known red. Longer/result-transition and R2 phase coverage remain
+open; these short intervals do not complete all required phase coverage.

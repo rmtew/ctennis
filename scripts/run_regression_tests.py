@@ -8,6 +8,7 @@ import sys
 from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
 from round_reference import validate_fixture
+from phase_reference import CASES as PHASE_CASES, validate_phase
 
 OUT = ROOT / 'build/tests'
 
@@ -53,6 +54,8 @@ def compare(records, fixture, case, fields):
                     if exact:
                         difference['callback_kind'] = expected['callback_kind']
                         difference['preceding_source_events'] = expected['before_events']
+                        if 'source_ordinal' in expected:
+                            difference['source_update'] = expected['source_ordinal']
                     return difference
         expected_psg = bytes(expected['psg'])
         if actual_psg != expected_psg:
@@ -119,7 +122,7 @@ def prepare_inputs(fixture, case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
-    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match'), default='serve')
+    parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match') + PHASE_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
@@ -131,7 +134,7 @@ def main():
         raise ValueError('Reference determinism has not been established')
     exact = fixture.get('schema_version') == 2
     if exact:
-        reference_summary = validate_fixture(fixture)
+        reference_summary = validate_phase(fixture, case) if fixture.get('reference_kind') == 'source-derived-phase' else validate_fixture(fixture)
         case['updates'] = len(fixture['updates'])
     elif args.reference_only:
         parser.error('--reference-only applies to the round-transition case')
