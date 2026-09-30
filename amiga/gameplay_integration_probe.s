@@ -1,4 +1,5 @@
         section code,code
+NATIVE_CONTROLS equ 1
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1
 DOUBLE_BUFFER_DISPLAY equ 1
@@ -60,6 +61,7 @@ copy_back_copper:
         move.w  #0,$088(a0)
         move.b  #$7f,$bfed01
         bclr    #6,$bfee01
+        bsr     game_init_controls
         bsr     paula_tone_init
         move.b  #0,$bfdf00
         move.b  #$ff,$bfd600
@@ -375,29 +377,7 @@ refresh_replay_done:
         rts
         endif
 
-sample_amiga_joystick:
-        clr.b   game_input_bits
-        move.w  $dff00c,d0
-        btst    #9,d0
-        beq.s   input_right
-        ori.b   #4,game_input_bits
-input_right:
-        btst    #1,d0
-        beq.s   input_fire
-        ori.b   #1,game_input_bits
-input_fire:
-        move.b  $bfe001,d0
-        btst    #7,d0
-        bne.s   input_ready
-        ori.b   #$10,game_input_bits
-input_ready:
-        rts
-read_game_input:
-        move.b  game_input_bits,d0
-        rts
-sample_second_input_group:
-        clr.b   d0
-        rts
+        include "amiga/game/controls.s"
 
 ; Compress the previous ten source records into eight Amiga channels in source
 ; priority order, then build each sprite from its source pattern and colour.
@@ -727,7 +707,6 @@ simulation_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
-game_input_bits:   dc.b 0
 score_flags_before: dc.b 0
 status_timer_before: dc.b 0
 score_dirty: dc.b 0

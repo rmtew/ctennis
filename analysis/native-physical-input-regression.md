@@ -1,3 +1,61 @@
+# CT-03 verification — 2026-09-30 UTC
+
+The historical baseline below is superseded for these 13 controls: all now pass.
+`amiga/game/controls.s` reads both JOY registers, XOR-decodes vertical directions,
+reads active-low CIA fire and POTGOR blue buttons, and records held/press/release
+per logical player. Connector 2 belongs to player 1, connector 1 to player 2.
+Native ownership selects the court end independently; one-player mode masks
+player 2. Only the temporary adapter knows source mode flags and packed fields.
+Generated input selection/ownership code is excluded from the native application;
+raw translation diagnostics retain their original implementation.
+
+The saved environment lacked the old private input fixture. Re-running the
+existing `capture_input_map.py` twice produced identical raw captures, SHA-256
+`00a25ef2154b6679f3f11954b78f8cdaa55a4e08f88cbc601658c1a4c04e166b`.
+The current policy pins the restored fixture and retains both historical hashes.
+The recorded source movement endpoints agree with the earlier analysis. This is
+a fresh independent original capture, not a native-output rebaseline.
+
+`RUST_LOG=info python scripts/run_physical_input_tests.py --all --self-test --ownership`
+uses the ordinary native build dependencies and explicit diagnostic phase startup,
+then physical CCP joystick events. The direct protocol client replaces the missing
+optional `copperline-ctl` dependency for this runner. It checks 561 updates in one
+calibration run, with 41 samples per existing window. Every update compares reader
+returns, normalized controls, owners, press/release edges, both X/Y positions,
+both phases and both animation states. All match. The compiled spurious-right
+fault is rejected by every window, including neutral boundaries. Only the ten
+now-passing physical-input known-failure entries are removed.
+
+The same ownership check was refined to an earlier source window because the
+first candidate demonstrated only player 1's action. Reproduce its bounded source
+with `python scripts/capture_control_ownership.py`, then the command above.
+The final source starts at callback 2672 (frame 3971), reached through the existing
+source physical schedule, and retains 106 states/105 subsequent updates. Two
+captures agree (raw SHA-256
+`cf68d077f6f3e6ecc7b92dad0c375bce89e1d11eb34c3d7270f1592718c4ba05`).
+With exchanged ends, pad 1 moves upper X 88→80→104, pad 2 moves lower X
+192→199→175. At local update 57 pad 2's blue button alone changes lower serve
+phase 64→32. The final native phase replay matches all 105 updates and the eight
+player fields. The source loader rejects a window lacking real reversal or that
+player-2 serve. This is one initial source state, no intermediate state writes,
+and does not establish continuous native round progression or ball parity.
+
+Both ordinary mode checks also pass actual movement from observed initial
+positions: lower X 192→174→192→192; two-player upper X 88→106→88→88.
+The last observation is release. In one-player mode upper X stays 88 despite
+connector-1 controls; connector-1 fire cannot start the lower serve, and
+connector-2 fire does. The old captured-phase left assertion now compares against
+the loaded initial X rather than the unrelated constant 192.
+
+Machine: Copperline 1.0.0-rc.1 PAL A500/68000/OCS/512 KB chip/no expansion,
+Kickstart 1.3, `RUST_LOG=info`. Ordinary executable SHA-256
+`06b525d932ace213d7c9337e1a293d43303921ebb7fdce8470f03104442b3db0`.
+No real-time input-edge/deadline, uninterrupted side-exchange, full-match,
+WinUAE or physical Amiga acceptance is claimed. Two-button pads are the declared
+hardware; a single-button keyboard alternative needs an explicit control policy.
+
+---
+
 # Native physical input regression baseline
 
 The retained original calibration now drives actual Amiga joystick lines and
