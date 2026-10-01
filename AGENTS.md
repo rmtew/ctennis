@@ -73,3 +73,12 @@ populate the progress report. Do not run builds/mutations concurrently.
 - Blocker/decision needed: exact missing input, authority or unresolved question, if any
 
 Do not mark an item verified merely because a test was written, a local phase passed or the documentation was committed.
+
+CT05 focused ordinary acceptance uses
+`RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one` and
+`--mode=two`: physical title choice, first game award, stationary round pause
+and next advancing serve. It records consecutive actual callbacks; no phase
+initialization or expected RAM writes. The existing four round-scene checks
+remain full raw-state/pixel comparisons, including any obsolete scratch
+differences. Report their raw failure separately from matched crops; do not
+quietly remove fields or count that partial result as a passing gate.

@@ -13,12 +13,18 @@ from physical_input_reference import CASES as INPUT_CASES
 
 
 REPLAY = native_replay_cases()
+CT05_REPLAY = ('round-transition', 'deuce-sequence-phase',
+               'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase',
+               'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase',
+               'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase')
+CT05_SCENES = ('p1-first-round-scenes', 'p1-one-player-upper-round-scenes',
+               'p1-two-player-lower-round-scenes', 'p1-two-player-upper-round-scenes')
 GATES = {
     'CT-01': ['serve'],
     'CT-02': ['p1-accept-one-player', 'p1-accept-two-player'],
     'CT-03': list(INPUT_CASES) + ['control-ownership', 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-04': list(REPLAY) + ['p1-accept-one-player', 'p1-accept-two-player'],
-    'CT-05': ['round-transition', 'two-player-match', 'deuce-sequence-phase'],
+    'CT-05': list(CT05_REPLAY) + list(CT05_SCENES) + ['two-player-match', 'ct05-ordinary-one-round', 'ct05-ordinary-two-round'],
     'CT-06': ['one-player-restart-complete', 'two-player-restart-complete'],
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'status-timer-saturation-phase'],
@@ -50,8 +56,8 @@ def report_path(name):
 def progress(fresh_since=None):
     evidence = {}
     for name in sorted(set(n for names in GATES.values() for n in names)):
-        subject = 'maintained' if name in REPLAY or name.startswith(('round-', 'deuce-')) or name.endswith('-match') else 'maintained-native'
-        full = name in REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
+        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name.endswith('-match') else 'maintained-native'
+        full = name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
         evidence[name] = status(report_path(name), subject, full, fresh_since)
     build_path = ROOT / 'build/amiga/gameplay-integration/build-report.json'
     build = status(build_path, 'maintained-native', fresh_since=fresh_since)

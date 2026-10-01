@@ -10,7 +10,7 @@ import json
 import re
 from pathlib import Path
 
-from copperline_test_session import CopperlineSession
+from copperline_test_session import CopperlineSession, NativeControlSession
 from run_presentation_tests import ROOT, build_native, digest
 
 
@@ -73,7 +73,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     initial_fields = []
     source_event_differences = []
     ctl = Path(config['tools']['copperline']).with_name('copperline-ctl.exe')
-    with CopperlineSession(ctl, ROOT) as session:
+    with (CopperlineSession(ctl, ROOT) if ctl.exists() else NativeControlSession(directory)) as session:
         launch = session.inspect('session_launch', {'factory': True, 'model': 'A500',
             'binary': config['tools']['copperline'], 'run': str(executable),
             'args': ['--chipset', 'OCS', '--video', 'PAL', '--cpu', '68000',
@@ -249,7 +249,8 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'native_source': case['native_source'], 'native_source_sha256': digest(ROOT / case['native_source']),
               'private_replay_wrapper_sha256': digest(directory / 'native-recorded-refresh.s') if recorded_entropy else None,
               'emulator_sha256': digest(Path(config['tools']['copperline'])),
-              'bridge_sha256': digest(ctl), 'kickstart_sha256': digest(Path(config['inputs']['amiga_rom'])),
+              'bridge_sha256': digest(ctl) if ctl.exists() else None,
+        'control_transport': 'optional MCP bridge' if ctl.exists() else 'direct CCP', 'kickstart_sha256': digest(Path(config['inputs']['amiga_rom'])),
               'initial_source_update': initial_source_update,
               'initial_phase_reference': initial_phase_reference,
               'initial_phase_sha256': digest(ROOT / initial_phase_reference) if initial_phase_reference else None,

@@ -12,6 +12,10 @@ from phase_reference import CASES as PHASE_CASES, validate_phase
 from evidence import tracked_call, compile_manifest
 
 OUT = ROOT / 'build/tests'
+SCORING_REPLAY_CASES = ('round-transition', 'deuce-sequence-phase',
+    'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase',
+    'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase',
+    'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase')
 
 
 def compare(records, fixture, case, fields):
@@ -157,8 +161,8 @@ def _main():
     # Keep those raw translator diagnostics separately selectable and unchanged.
     migrated_cases = tuple(name for name in product_cases
                            if not name.startswith('movement-lower-receiver-') or name.endswith('-phase'))
-    subject = args.subject or ('maintained' if args.case in migrated_cases else 'translated')
-    if subject == 'maintained' and args.case not in product_cases:
+    subject = args.subject or ('maintained' if args.case in migrated_cases + SCORING_REPLAY_CASES else 'translated')
+    if subject == 'maintained' and args.case not in product_cases + ('round-transition', 'deuce-sequence-phase', 'one-player-match', 'two-player-match', 'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase'):
         parser.error('This lifecycle case is not yet migrated to maintained replay')
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
@@ -332,7 +336,9 @@ def _main():
             (OUT / (case['name'] + '-mutated')).unlink(missing_ok=True)
     if exact:
         report['reference_coverage'] = reference_summary
-        report['port_limit'] = 'Gameplay executes every tick; native between-game transition is not implemented'
+        report['port_limit'] = ('Native scoring/round lifecycle; presentation/audio adapters and result/restart remain'
+                                if subject == 'maintained' else
+                                'Translated diagnostic executes gameplay every tick; no native round main path')
     report_path = f'{case["name"]}-report.json' if exact else 'report.json'
     (OUT / report_path).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     console_report = dict(report)
@@ -362,7 +368,7 @@ def main():
     case = selected.case
     if not re.fullmatch(r'[a-z0-9-]+', case):
         return _main()
-    subject = selected.subject or ('maintained' if case in native_replay_cases() else 'translated')
+    subject = selected.subject or ('maintained' if case in native_replay_cases() + SCORING_REPLAY_CASES else 'translated')
     path = OUT / ('report.json' if case == 'serve' else case + '-report.json')
     return tracked_call([path], 'replay', subject, 'captured phase',
                         'scripts/run_regression_tests.py', case, _main,

@@ -169,13 +169,27 @@ def run(case, self_test):
     return report['passed']
 
 
-def main():
+def run_cli():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=CASES, required=True)
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     return 0 if run(case, args.self_test) else 1
+
+
+def main():
+    from evidence import tracked_call
+    import sys
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument('--case')
+    selected, _ = probe.parse_known_args()
+    if selected.case not in CASES:
+        return run_cli()
+    path = ROOT / f'build/tests/{selected.case}-report.json'
+    return tracked_call([path], 'round-scenes', 'maintained-native', 'captured round phase',
+                        'scripts/run_round_presentation_tests.py', selected.case, run_cli,
+                        lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])
 
 
 if __name__ == '__main__':

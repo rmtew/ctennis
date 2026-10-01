@@ -132,6 +132,12 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
             raise ValueError('Live replay entropy include changed')
         wrapper = directory / 'native-recorded-refresh.s'
         original = original.replace(old, f'include "{include.as_posix()}"')
+        initial_path = directory / 'live-initial-ram.bin'
+        initial_path.write_bytes(bytes.fromhex(initial))
+        marker = 'incbin "build/translation/live-initial-ram.bin"'
+        if original.count(marker) != 1:
+            raise ValueError('Live phase initializer include changed')
+        original = original.replace(marker, f'incbin "{initial_path.as_posix()}"')
         if source_mutator:
             original = source_mutator(original)
         wrapper.write_text(original, encoding='utf-8')
@@ -139,6 +145,8 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
         defines = ['-DLONG_GAME_REPLAY=1', '-DLIVE_PHASE_START=1']
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', *defines,
          '-L', str(directory / 'native.lst'), '-o', str(executable), source])
+    from evidence import compile_manifest
+    compile_manifest(executable, directory / "native.lst")
     return executable
 
 

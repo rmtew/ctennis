@@ -301,5 +301,25 @@ class FreshnessTests(unittest.TestCase):
         self.assertEqual(status(self.report)['status'], 'stale')
 
 
+class ListingAssetTests(unittest.TestCase):
+    def test_truncated_incbin_line_uses_compiled_source_and_invalidates_asset_change(self):
+        from evidence import compile_manifest
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, asset = root / 'source.s', root / 'long-private-asset.bin'
+            source.write_text(f'blob: incbin "{asset}"\n')
+            asset.write_bytes(b'asset')
+            exe, listing = root / 'game', root / 'native.lst'
+            exe.write_bytes(b'game')
+            listing.write_text(f'Source: "{source}"\n00:00000000 blob: incbin "{str(asset)[:-4]}\n'
+                               f'00:00000008 00000000\nSource: "{source}"\n')
+            compiled = compile_manifest(exe, listing)
+            self.assertIn(str(asset), compiled['files'])
+            from evidence import changed
+            self.assertFalse(changed(compiled['files']))
+            asset.write_bytes(b'changed')
+            self.assertIn(str(asset), changed(compiled['files']))
+
+
 if __name__ == '__main__':
     unittest.main()

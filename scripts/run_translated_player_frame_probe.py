@@ -79,6 +79,7 @@ def prepare_gameplay():
     # retain the original extraction. These are link boundaries, not game patches.
     input_selection = "        ifnd NATIVE_CONTROLS\n" + input_selection + "        endif\n"
     score = extract(generated, "score_gate", "lower_player_state")
+    score = "        ifnd NATIVE_SCORING\n" + score + "        endif\n"
     motion = extract(generated, "lower_player_motion_update", "animate_lower_player")
     for label in ("lower_movement_bounds", "upper_movement_bounds"):
         motion, count = re.subn(rf"(?m)^{label}:\ndc\.b [^\n]*\n", "", motion)
