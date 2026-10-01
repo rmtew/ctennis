@@ -94,7 +94,7 @@ gate. Gameplay still runs through the temporary adapter. See WORKLOG.md and
 
 ## CT-04 — Maintain native serve, rally, movement and AI logic
 
-**Status:** verified (2026-10-01 UTC), awaiting review/publication. **Dependencies:** CT-03.
+**Status:** verified and merged in [PR #4](https://github.com/rmtew/ctennis/pull/4) (2026-10-01 UTC). **Dependencies:** CT-03.
 
 **Resolved blocker:** serve/rally logic was regenerated translation; the resumed-launch triangular-root helper lost carry before SUBX. The retained diagnostic temporarily corrected all 200 phase updates and restored the unfixed baseline. **Not assumed broken:** existing six-return rally and movement/scoring phases have substantial green coverage.
 

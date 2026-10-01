@@ -67,9 +67,9 @@ Run the following from the repository root with `RUST_LOG=info`:
   release and physical serve. They are ordinary starts with native entropy.
 - `python scripts/run_amiga_live_serve_probe.py`: passed the existing live state,
   flight-slot, point-field pixel change and audible serve-tone checks. This
-  older probe starts in an explicitly captured diagnostic phase and retains its
-  weak historical left check; ordinary movement above supplies the stronger
-  control evidence.
+  probe starts in an explicitly captured diagnostic phase. Its left assertion
+  compares against the actual initial X, as strengthened in CT-03; the mode
+  checks above separately provide ordinary-start control evidence.
 
 The 25 focused replay reports total 15,084 matched updates, not 25 independent
 product capabilities. Raw translated serve still passes; raw translated resumed

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from run_translated_prng_probe import ROOT, OUT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay
+from evidence import tracked_call, compile_manifest
 
 
 DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
@@ -18,7 +19,7 @@ def module_hashes():
             for p in sorted(p for p in (ROOT / "amiga/game").iterdir() if p.suffix in (".s", ".i"))}
 
 
-def build(phase_start=False):
+def _build(phase_start=False):
     from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
     config = configparser.ConfigParser(interpolation=None)
     if not config.read(ROOT / "config.local.ini", encoding="utf-8"):
@@ -52,8 +53,9 @@ def build(phase_start=False):
         defines=['-DLIVE_PHASE_START=1']
     DISPLAY.mkdir(parents=True, exist_ok=True)
     executable = DISPLAY / "gameplay-integration"
-    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-o",
+    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(DISPLAY / "native.lst"), "-o",
          str(executable), "amiga/gameplay_integration_probe.s"])
+    compile_manifest(executable, DISPLAY / "native.lst")
     report = {"subject": "maintained-native", "entry_point": "game_source_tick",
               "startup": "captured diagnostic phase" if phase_start else "native title",
               "native_modules": module_hashes(),
@@ -61,6 +63,13 @@ def build(phase_start=False):
               "executable": str(executable)}
     (DISPLAY / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
     return config, executable
+
+
+def build(phase_start=False):
+    return tracked_call([DISPLAY / 'build-report.json'], 'build', 'maintained-native',
+                        'captured phase' if phase_start else 'ordinary title',
+                        'scripts/build_native_game.py', None, lambda: _build(phase_start),
+                        lambda path, report: [Path(report['executable'])])
 
 
 if __name__ == "__main__":

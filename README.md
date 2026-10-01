@@ -43,3 +43,9 @@ connector 2, player 2 connector 1, with four directions and red/blue actions.
 Two-button sticks are required for both actions; no keyboard substitute for a
 missing second button is assigned. Pads remain attached to their players after
 an end exchange. In one-player mode connector 1 does not control the opponent.
+
+Use `RUST_LOG=info python scripts/progress.py` to check current local evidence
+before and after focused work. It reports behavior extents, compiled runtime
+dependencies and target delivery separately. Legacy or changed evidence is
+unverified; compatible retained evidence is reused, not a fresh execution.
+See [report integrity](analysis/evidence-freshness.md).

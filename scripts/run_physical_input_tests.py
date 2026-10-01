@@ -9,6 +9,7 @@ from copperline_test_session import NativeControlSession
 from capture_native_presentation import code_symbols
 from physical_input_reference import ROOT, CASES, load_reference, window, compare_row, sha, OUTCOME_FIELDS, ownership_reference
 from build_native_game import build, module_hashes
+from evidence import tracked_call, compile_manifest
 from run_translated_prng_probe import ASSEMBLER, run
 
 
@@ -37,6 +38,7 @@ def capture(policy, source, rows, mutation=False, label="physical-input"):
     listing = directory / 'native.lst'
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-DLIVE_PHASE_START=1', '-L', str(listing),
          '-o', str(executable), str(wrapper)])
+    compile_manifest(executable,listing)
     symbols = code_symbols(listing.read_text())
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
@@ -132,7 +134,7 @@ def capture(policy, source, rows, mutation=False, label="physical-input"):
     return path, report
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=CASES)
     parser.add_argument('--all', action='store_true')
@@ -193,6 +195,25 @@ def main():
         print(json.dumps({'exchanged_end_ownership': first is None, 'first_difference': first}),flush=True)
         passed &= first is None
     return 0 if passed else 1
+
+
+def main():
+    import sys
+    if '--help' in sys.argv:
+        return _main()
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument('--case', choices=CASES)
+    probe.add_argument('--all', action='store_true')
+    selected, _ = probe.parse_known_args()
+    names = CASES if selected.all else (selected.case,) if selected.case else ()
+    paths = [ROOT/f'build/tests/{name}-report.json' for name in names]
+    if '--ownership' in sys.argv:
+        paths.append(ROOT/'build/tests/native-control-ownership/capture.json')
+    def executables(path,report):
+        capture = ROOT/report['capture'] if 'capture' in report else path
+        return [capture.parent/'native-application']
+    return tracked_call(paths, 'physical', 'maintained-native', 'captured phase',
+                        'scripts/run_physical_input_tests.py', list(names) + ['physical-input'], _main, executables)
 
 
 if __name__ == '__main__':

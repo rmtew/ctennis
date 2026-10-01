@@ -1,3 +1,27 @@
+# Current report integrity
+
+Run `RUST_LOG=info python scripts/progress.py` before selecting checks and after
+running them. Add `--fresh-since <ISO timestamp with timezone>` to distinguish
+session execution from compatible retained evidence. [Report integrity and
+limits](../analysis/evidence-freshness.md) documents the local provenance and
+fixed CT-01–CT-10 mapping. Existing reports without provenance are stale; do not
+reinterpret their historical results as fresh runs. The tracked inventory is
+retained evidence, not a new execution.
+
+The five integrated build/replay/mode/physical/live runners atomically invalidate
+the latest report at invocation start. Relevant changed/missing sources, compiled
+assets, executable, reference, tool or configuration invalidate a pass. Run these
+serially with `RUST_LOG=info`. Raw translated green rows and deliberately truncated
+known-red prefixes remain diagnostic results. Only full maintained replay extents
+can establish the mapped native behavior checks. A compiled entry point alone
+cannot promote a gate. Later delivery dimensions remain unmeasured.
+
+Targeted integrity controls (no gameplay model or expanded coverage campaign):
+
+```sh
+RUST_LOG=info python -m unittest discover -s tests/unit -v
+```
+
 # 68000 simulation regression suite
 
 [Original-game reference specification](reference-spec.md) defines the two
