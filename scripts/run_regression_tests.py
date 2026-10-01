@@ -131,16 +131,23 @@ def prepare_inputs(fixture, case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--subject', choices=('maintained', 'translated'),
-                        help='Default: maintained for serve, translated diagnostics for other cases')
+                        help='Default: maintained for migrated CT-04 cases, translated for lifecycle diagnostics')
     parser.add_argument('--self-test', action='store_true', help='Also verify detection of a temporary gameplay mutation')
     parser.add_argument('--case', choices=('serve', 'round-transition', 'one-player-match', 'two-player-match') + PHASE_CASES + FOCUSED_CASES, default='serve')
     parser.add_argument('--reference-only', action='store_true', help='Validate and prepare the round reference without running the port')
     parser.add_argument('--through-update', type=int,
                         help='Run a declared prefix through this update; report that the full replay was not executed')
     args = parser.parse_args()
-    subject = args.subject or ('maintained' if args.case == 'serve' else 'translated')
-    if subject == 'maintained' and args.case != 'serve':
-        parser.error('Only the serve product check is migrated in CT-01; use translated diagnostics')
+    from movement_reference import MOVEMENT_PHASES
+    product_cases = ('serve', 'resumed-play-phase', 'two-player-rally',
+                     'one-player-upper-resumed-serve-complete-phase') + MOVEMENT_CASES + tuple(MOVEMENT_PHASES) + CONTACT_CASES
+    # Continuous lower-receiver prefixes still cross the CT-05 round boundary.
+    # Keep those raw translator diagnostics separately selectable and unchanged.
+    migrated_cases = tuple(name for name in product_cases
+                           if not name.startswith('movement-lower-receiver-') or name.endswith('-phase'))
+    subject = args.subject or ('maintained' if args.case in migrated_cases else 'translated')
+    if subject == 'maintained' and args.case not in product_cases:
+        parser.error('This lifecycle case is not yet migrated to maintained replay')
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
     if not reference.exists():
@@ -180,6 +187,10 @@ def main():
         case['updates'] = args.through_update
         fixture = {**fixture, 'updates': fixture['updates'][:args.through_update]}
     fields = json.loads((ROOT / 'tests/state-fields.json').read_text())['bytes']
+    if subject == 'maintained':
+        # Temporary arithmetic scratch is not native game state. Keep raw
+        # translator diagnostics exact; product observations omit only scratch.
+        case['excluded_ram_offsets'] = sorted(set(case['excluded_ram_offsets']) | set(range(0x67,0x6b)))
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -208,6 +219,7 @@ def main():
               'case': case['name'], 'updates': case['updates'],
               'reference_updates': reference_count,
               'full_replay_executed': case['updates'] == reference_count,
+              'omitted_legacy_scratch_offsets': list(range(0x67,0x6b)) if subject == 'maintained' else [],
               'bytes_compared_per_boundary': len(set(case.get('compared_ram_offsets', range(256))) - set(case['excluded_ram_offsets'])),
               'boundaries_per_update': 3 if exact else 2,
               'reference_psg_bytes': sum(len(row['psg']) for row in fixture['updates']),
@@ -217,22 +229,29 @@ def main():
     report['updates_matched'] = matched
     report['psg_bytes_compared_in_matched_updates'] = sum(len(row['psg']) for row in fixture['updates'][:matched])
     if args.self_test and difference is None and subject == 'maintained':
-        # Concrete fault: suppress active gameplay in the maintained dispatcher.
-        # Independent expectation: the retained original serve must still launch.
-        path = ROOT / 'amiga/game/tick.s'
+        # The resumed case must detect the repaired late launch, not only an
+        # earlier dispatcher failure. Other cases retain the CT-01 smoke fault.
+        late_launch = args.case == 'resumed-play-phase'
+        path = ROOT / ('amiga/game/gameplay_math.s' if late_launch else 'amiga/game/tick.s')
         original = path.read_bytes()
-        anchor = b'        bsr     legacy_active_tick'
+        anchor = (b'        move.w  d1,d0\n        rts' if late_launch
+                  else b'        bsr     legacy_active_tick')
         if original.count(anchor) != 1:
             raise ValueError('Maintained dispatcher mutation anchor is ambiguous')
         try:
-            path.write_bytes(original.replace(anchor, b'        nop'))
+            replacement = (b'        move.w  d1,d0\n        addq.w  #1,d0\n        rts'
+                           if late_launch else b'        nop')
+            path.write_bytes(original.replace(anchor, replacement))
             mutated, mutant_digest = execute(config, case['name'], mutation=True, subject=subject)
             detected = compare(mutated, fixture, case, fields)
-            report['mutation_kind'] = 'skip maintained active dispatcher'
+            report['mutation_kind'] = ('increment native launch root' if late_launch
+                                       else 'skip maintained active dispatcher')
             report['mutation_executable_sha256'] = mutant_digest
             report['mutation_first_difference'] = detected
             if detected is None or mutant_digest == digest:
-                raise AssertionError('Maintained dispatch fault was not detected')
+                raise AssertionError('Maintained gameplay fault was not detected')
+            if late_launch and detected['update'] != 96:
+                raise AssertionError('Native launch fault did not expose the repaired update 96')
         finally:
             path.write_bytes(original)
             restored, restored_digest = execute(config, case['name'], subject=subject)

@@ -50,7 +50,10 @@ class Field:
 
 FIELDS = (
     Field("point_a", 0, 16, 40, 2, 2, 7, POINT_TILES, (2,), (0,), 0x3D, 2),
-    Field("point_b", 1, 224, 40, 2, 2, 7, POINT_TILES, (2,), (0,), 0xA1, 28),
+    # Switch before the x=208 fetch, not between its high/low pointer writes.
+    # Native gameplay changes bus contention; a split pointer crossing 64K
+    # otherwise reads unrelated data just left of the right point glyph.
+    Field("point_b", 1, 224, 40, 2, 2, 7, POINT_TILES, (2,), (0,), 0x99, 26),
     Field("games_a", 2, 16, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0x3D, 2),
     Field("games_b", 3, 224, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0xA1, 28),
     # Four planes begin switching at x=64, leaving time before status x=112.

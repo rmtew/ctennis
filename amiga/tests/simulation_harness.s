@@ -1,3 +1,6 @@
+        ifd PRODUCT_REPLAY
+NATIVE_GAMEPLAY equ 1
+        endif
 ; Continuous replay: RAM is initialized once and carried across all callbacks.
         section code,code
         include "build/tests/harness-config.i"

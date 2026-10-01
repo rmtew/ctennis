@@ -1,4 +1,5 @@
         section code,code
+NATIVE_GAMEPLAY equ 1
 NATIVE_CONTROLS equ 1
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1

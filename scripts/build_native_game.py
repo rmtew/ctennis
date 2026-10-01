@@ -15,7 +15,7 @@ DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
 
 def module_hashes():
     return {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted((ROOT / "amiga/game").glob("*.s"))}
+            for p in sorted(p for p in (ROOT / "amiga/game").iterdir() if p.suffix in (".s", ".i"))}
 
 
 def build(phase_start=False):
