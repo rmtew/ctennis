@@ -175,7 +175,9 @@ from read-only DF0 at real floppy speed, verifies actual relocated LoadSeg bytes
 and observes full physical title/match/result/restart without callback stops.
 Record the exact executable/ADF hashes and target. Allocation telemetry starts
 with initialized Exec chip pools; pre-pool bootstrap usage remains unmeasured.
-A local Copperline receipt cannot certify independent emulator/real-A500
-validation. Keep CT10 blocked if that final gate is unavailable. Run one complete
+The user approved Copperline as sufficient target validation on 2026-10-01
+20:00 UTC. Keep exact PAL A500/512 KB and reproducible cold ADF acceptance;
+independent exact-head code/runtime review still precedes merge. Other emulator
+or real-hardware verification was not performed and is no longer required. Run one complete
 aggregate at delivery; preserve diagnostic errors/known-red prefixes separately
 and rerun only affected focused checks after concrete fixes.

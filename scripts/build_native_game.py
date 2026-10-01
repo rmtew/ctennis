@@ -35,7 +35,7 @@ def _build(phase_start=False):
                          if row['event']=='checkpoint' and int(row['frame'])==1299)
         ram=bytearray(initial);irq_tail_06b1(ram,rom=cartridge)
         (OUT/'live-initial-ram.bin').write_bytes(ram)
-        defines=['-DLIVE_PHASE_START=1']
+        defines=['-DLIVE_PHASE_START=1','-DCOPPERLINE_LOG=1']
     DISPLAY.mkdir(parents=True, exist_ok=True)
     executable = DISPLAY / "gameplay-integration"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(DISPLAY / "native.lst"), "-o",

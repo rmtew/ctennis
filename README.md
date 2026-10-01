@@ -17,8 +17,9 @@ Current work follows the finite [playable native queue](PLAYABLE-PLAN.md).
 CT01–CT09 are merged: maintained gameplay, scoring/rounds, result/restart,
 physical controls, native graphics/sound and bounded ordinary cadence are in
 place. CT10 removes the final generated clock/state integration and packages
-the private native executable as a bootable ADF. Its independent-target and
-whole-cold-boot transient RAM gates remain open until their own evidence exists.
+the private native executable as a bootable ADF. Copperline is the user-approved sufficient validation target; exact-head
+independent review and current delivery receipts remain required. Pre-Exec-pool
+transient RAM usage is unmeasured.
 See [delivery instructions](analysis/native-delivery.md) and [WORKLOG](WORKLOG.md).
 Source-format captured replays are test-only observations/initialization;
 ordinary assembly consumes prepared native assets and vasm, without translation

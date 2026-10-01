@@ -72,7 +72,7 @@ locates actual Exec pool headers; a second cold reset continuously observes thei
 initialization and every free-count update through DOS entry and restarted flight.
 The scoped allocation peak begins at the initialized Exec chip pool; pre-pool
 bootstrap transient usage stays unmeasured. No executable-size-as-RAM claim.
-Independent emulator/real-A500 validation remains unverified when unavailable. A local Copperline pass cannot close that independent gate.
+Copperline is the user-approved sufficient validation target (2026-10-01 20:00 UTC). Independent exact-head code/runtime review remains required; other emulator/real-hardware validation was not performed.
 The complete registered delivery aggregate keeps translator diagnostics,
 known-red prefixes, stale/error rows and unresolved coverage distinct; its case
 counts do not certify product behaviours or full original equivalence.
@@ -111,8 +111,9 @@ provenance determine acceptance, not that retained aggregate's counts.
 Local Copperline disk audio also includes synthesized floppy-drive sound; WAV
 existence or nonzero samples alone cannot certify native Paula output. Ordinary
 audio checks and actual Paula registers are distinct evidence. The installed
-MAME driver list has no `a500`, and fs-uae/amiberry are absent. Independent emulator
-or real-A500 validation therefore remains unavailable and CT10 stays unverified.
+MAME driver list has no `a500`, and fs-uae/amiberry are absent. These tools remain unavailable, but the user-approved Copperline scope no longer
+requires them. Final accepted-target receipts and exact-head review still govern
+CT10 completion.
 See the latest WORKLOG entry and ignored `build/ct10` reports for final guard status.
 
 Final focused direct runs complete 11,891/23,836 native-entropy callbacks and
@@ -124,4 +125,12 @@ Ordinary physical result/title/restart additionally verifies returned-title
 Paula volumes/emitted samples are zero and restart-intro signal is present on
 both channels. These debug audio observations remain distinct from uninterrupted
 cadence. All 40 unit checks pass. The current progress command reports local
-delivery evidence and leaves the independent target gate unverified.
+delivery evidence and requires current accepted-target receipts and independent exact-head review.
+
+Review follow-up: phase-only build now explicitly defines COPPERLINE_LOG, as
+does the long-game diagnostic assembler command. Live integration, live serve
+and long-game diagnostic probes pass; this fixes a genuine new omission, not
+a historical diagnostic error. Ordinary assembly defines neither flag and the
+executable/ADF hashes above remain unchanged. Common-helper provenance properly
+invalidates earlier receipts; they are not edited or silently promoted. Fresh
+accepted-target reruns are required after this build-helper change.

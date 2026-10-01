@@ -35,7 +35,9 @@ GATES = {
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes', 'status-timer-saturation-phase', 'ct06-ordinary-one-restart'],
     'CT-09': ['one-player-match', 'two-player-match', 'ct09-ordinary-one-cadence',
               'ct09-ordinary-two-cadence', 'ct09-input-timing-edges','ct09-published-bank-control'],
-    'CT-10': ['ct10-adf-one-cadence'],
+    'CT-10': ['ct10-adf-one-cadence','one-player-match','two-player-match',
+              'ct09-ordinary-one-cadence','ct09-ordinary-two-cadence',
+              'ct09-input-timing-edges','ct09-published-bank-control','ct06-ordinary-one-restart'],
 }
 NAMES = {
     'CT-01': 'Shared maintained dispatcher / regeneration / mutation',
@@ -604,10 +606,18 @@ def progress(fresh_since=None):
                 verified=False
                 reasons.append('Actual delayed wrong-bank publication control missing or incompatible')
         if gate == 'CT-10':
-            verified = False # Independent target acceptance cannot be inferred from local passes.
+            # User approved Copperline as the sufficient target on 2026-10-01.
+            # Preserve exact-profile/full-play/loaded-byte/audio evidence; never
+            # upgrade an older receipt when a build dependency changed.
+            verified = bool(ordinary and package_verified and cold_verified)
             if not package_verified:reasons.append('Two clean identical native executable/ADF package receipts missing or incompatible')
             if not cold_verified:reasons.append('Cold disk native lifecycle/cadence/loaded-byte/allocation receipt missing or incompatible')
-            reasons.append('Independent emulator/real A500 validation unverified; pre-Exec-pool transient RAM usage unmeasured')
+            if capabilities['CT-09']['acceptance']!='evidenced within stated scope':
+                verified=False;reasons.append('Current both-mode ordinary cadence/replay/control acceptance missing')
+            audio_name='ct06-ordinary-one-restart'
+            if (evidence[audio_name]['status']!='passed' or not ordinary or not ordinary_audio_proof(
+                    json.loads(report_path(audio_name).read_text()),json.loads(build_path.read_text()).get('executable_sha256'))):
+                verified=False;reasons.append('Current ordinary Paula/emitted result/title/restart audio receipt missing')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',
                               'evidence': names, 'limitations': reasons}
     runtime_target = all(evidence[n]['status'] == 'passed' and evidence[n].get('startup') == 'ordinary title'
@@ -627,7 +637,10 @@ def progress(fresh_since=None):
                          'native_ADF_package': {'status':'evidenced' if package_verified else 'unverified','evidence':package_status},
                          'cold_ADF_boot': 'evidenced local Copperline full lifecycle' if cold_verified else 'unverified',
                          'cold_boot_chip_ram': {'bytes':cold_report['memory']['cold_boot_peak'],'scope':cold_report['memory']['cold_boot_peak_scope']} if cold_verified else 'unverified',
-                         'independent_emulator_or_hardware': 'unverified'},
+                         'accepted_validation_target':'Copperline (user approved 2026-10-01 20:00 UTC)',
+                         'independent_emulator_or_hardware': 'not performed; not required by user-approved scope',
+                         'independent_code_runtime_review':'pending external exact-head review',
+                         'pre_Exec_pool_peak':'unmeasured; scoped initialized-pool allocation reported separately'},
             'scope': 'Retained reports checked against current dependencies; integration symbols are not runtime acceptance. No percentages or file-size RAM estimate.'}
 
 
