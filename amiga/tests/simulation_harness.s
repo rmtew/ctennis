@@ -1,6 +1,9 @@
         ifd PRODUCT_REPLAY
 NATIVE_GAMEPLAY equ 1
 NATIVE_SCORING equ 1
+NATIVE_SPRITES equ 1
+NATIVE_PRESENTATION equ 1
+NATIVE_SCENE_OBSERVE equ 1
         endif
 ; Continuous replay: RAM is initialized once and carried across all callbacks.
         section code,code
@@ -21,6 +24,7 @@ copy_initial:
         dbra    d7,copy_initial
         ifd PRODUCT_REPLAY
         bsr     game_begin_active
+        bsr     scene_import_capture
         endif
         clr.w   update_index
         bsr     run_tail
@@ -131,11 +135,11 @@ game_observe_pre_tail:
         bsr     emit_hex
         movem.l (sp)+,d0/a0
         rts
+game_render_sprites:
 game_show_returned_title:
 game_show_returned_court:
 game_clear_returned_status:
-game_before_scoreboard:
-game_after_scoreboard:
+game_scene_present_fields:
 game_apply_sound:
         rts
         endif
@@ -164,6 +168,11 @@ emit_done:
         addq.l  #8,sp
         movem.l (sp)+,d0-d7/a0-a6
         rts
+        ifd PRODUCT_REPLAY
+score_dirty: dc.b 0
+field_values: dc.b 0,0,0,0,0,1
+        even
+        endif
         include "amiga/tests/probe_io.i"
         include "amiga/translated_audio_tick.s"
         ifd PRODUCT_REPLAY

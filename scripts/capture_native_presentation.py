@@ -197,6 +197,32 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 'ram': actual.hex(), 'state_differences': differences, 'capture': capture,
                 'display_ready': session.inspect('mem_read', {'addr': base + symbols['display_ready'], 'len': 1})['data'],
                 'front_copper': session.inspect('mem_read', {'addr': base + symbols['presentation_copper'], 'len': 4})['data']})
+            # Actual CT07 primitives and the published hardware sprite bank.
+            # Observation only: no expected geometry or intermediate writes.
+            def scene_snapshot():
+                objects = bytes.fromhex(session.inspect('mem_read', {'addr':base+symbols['game_scene_objects'],'len':64})['data'])
+                front = int(session.inspect('mem_read', {'addr':base+symbols['presentation_copper'],'len':4})['data'],16)
+                hardware = []
+                courts = [int(session.inspect('mem_read', {'addr':base+symbols[name],'len':4})['data'],16) for name in ('front_copper','back_copper')]
+                court_selected = front in courts
+                # The title has no sprite pointer commands and disables sprite DMA.
+                for channel in range(8) if court_selected else ():
+                    pointer = bytes.fromhex(session.inspect('mem_read', {'addr':front+68+8*channel,'len':8})['data'])
+                    if int.from_bytes(pointer[:2],'big') != 0x120+4*channel or int.from_bytes(pointer[4:6],'big') != 0x122+4*channel:
+                        raise ValueError('Native sprite pointer layout changed')
+                    address = int.from_bytes(pointer[2:4],'big')*65536 + int.from_bytes(pointer[6:8],'big')
+                    image = bytes.fromhex(session.inspect('mem_read', {'addr':address,'len':72})['data'])
+                    hardware.append({'channel':channel,'address':address,'control':image[:4].hex(),
+                                     'plane_words':image[4:68].hex()})
+                visible = sum(bool(objects[n+5]) for n in range(0,64,8))
+                error = int(session.inspect('mem_read', {'addr':base+symbols['sprite_bridge_error'],'len':1})['data'],16)
+                if error or not 0 <= visible <= 8:
+                    raise AssertionError('Native scene exceeds its sprite/colour capacity')
+                return {'objects':objects.hex(), 'visible_primitives':visible, 'fit_error':error,
+                        'selected_copper':front, 'court_bank_selected':court_selected,
+                        'observation_frame':stop['frame'], 'hardware_sprites':hardware}
+
+            observations[-1]['native_scene_at_callback'] = scene_snapshot()
             observations[-1]['latest_commit'] = commits[-1] if commits else None
             session.inspect('break_remove', {'id': breakpoint['id']})
             if completed_rasters:
@@ -212,6 +238,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 rendered_frame = stop['frame'] - 1
                 visible = [event for event in commits if event['visible_frame'] <= rendered_frame]
                 raster = session.inspect('capture_screenshot', {'path': str(directory / f'completed-{target:05d}.png')})
+                observations[-1]['native_scene_at_raster'] = scene_snapshot()
                 observations[-1]['completed_raster'] = {'stop': stop, 'rendered_frame': rendered_frame,
                     'generation': visible[-1] if visible else None, 'capture': raster}
             print(f'callback {count}: {len(differences)} state differences, beam {stop["vpos"]}:{stop["hpos"]}', flush=True)

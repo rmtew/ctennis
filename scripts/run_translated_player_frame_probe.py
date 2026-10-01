@@ -49,6 +49,8 @@ def prepare_gameplay():
     for path in (ASSEMBLER, copperline, amiga_rom):
         if not path.is_file():
             raise FileNotFoundError(path)
+    from generate_native_scene_assets import generate
+    generate()
     OUT.mkdir(parents=True, exist_ok=True)
     source = OUT / "champion-raw.68k"
     run([sys.executable, "-W", "ignore", "scripts/z80268k.py", "--champion-source", "-n",
@@ -110,6 +112,10 @@ def prepare_gameplay():
         return "        ifnd NATIVE_GAMEPLAY\n" + code + "        endif\n"
     player_state, ball, ball_slots, motion, arithmetic, helpers = map(
         diagnostic_only, (player_state, ball, ball_slots, motion, arithmetic, helpers))
+    scoreboard = "        ifnd NATIVE_PRESENTATION\n" + scoreboard + "        endif\n"
+    irq_vdp = "        ifnd NATIVE_PRESENTATION\n" + irq_vdp + "        endif\n"
+    animation = "        ifnd NATIVE_SPRITES\n" + animation + "        endif\n"
+    sprites = "        ifnd NATIVE_SPRITES\n" + sprites + "        endif\n"
     routines = (irq_prefix + irq_vdp + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")

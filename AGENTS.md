@@ -108,3 +108,16 @@ play and requires advancing flight without a second release. P2 stays held and
 must remain latched/filtered. This is required in addition to the two ordinary
 late-release checks. Latch retirement observes physical sampling in every
 lifecycle; it must not depend on active player assignment.
+
+CT07 focused graphics acceptance reuses placement, moving-prefix and
+score/status-prefix in `scripts/run_presentation_tests.py`, the four existing
+round scenes in `scripts/run_round_presentation_tests.py`, and both result scenes
+in `scripts/run_result_presentation_tests.py`, with `--self-test`. Keep exact
+pixels, completed-generation association, full scene intervals and compiled
+late faults. Presentation preconditions use only the established C067–C06A
+scratch contract and retain full raw diagnostics. Ordinary mode checks and a
+normal final build are distinct from captured phases. `scripts/progress.py`
+requires their current provenance plus complete graphics receipts and actual
+compiled display bridge retirement; it does not promote CT08–CT10 or delivery
+measurements from CT07 success. Do not restore VDP/shadow writes for diagnostic
+convenience: capture adapters alone may serialize actual native scene outcomes.

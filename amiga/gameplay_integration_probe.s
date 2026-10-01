@@ -2,6 +2,11 @@
 NATIVE_GAMEPLAY equ 1
 NATIVE_SCORING equ 1
 NATIVE_CONTROLS equ 1
+NATIVE_SPRITES equ 1
+NATIVE_PRESENTATION equ 1
+        ifd LIVE_PHASE_START
+NATIVE_SCENE_OBSERVE equ 1
+        endif
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1
 DOUBLE_BUFFER_DISPLAY equ 1
@@ -19,6 +24,7 @@ start:
 copy_initial_ram:
         move.b  (a0)+,(a1)+
         dbra    d7,copy_initial_ram
+        bsr     scene_import_capture
         else
         bsr     game_begin_title
         endif
@@ -137,6 +143,9 @@ presentation_court:
 presentation_selected:
         move.l  d0,presentation_copper
         move.l  d0,$dff080
+        ; COP1LC alone takes effect at the next automatic Copper restart.
+        ; Reload in blank so an early-blank publication drives this frame too.
+        move.w  #0,$dff088
         move.w  game_accept_count,game_presented_generation
         move.w  $dff006,d0
         andi.w  #$ff00,d0
@@ -197,7 +206,7 @@ simulation_update:
         bsr     sample_amiga_joystick
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne.s   simulation_menu
-        bsr     upload_sprite_attributes
+        bsr     game_render_sprites
         bsr     game_source_tick
         move.b  #1,display_ready
         addq.w  #1,simulation_updates
@@ -209,7 +218,7 @@ simulation_update:
 simulation_menu:
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
         bcs.s   simulation_service_tick
-        bsr     upload_sprite_attributes
+        bsr     game_render_sprites
 simulation_service_tick:
         bsr     game_source_tick
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
@@ -241,12 +250,12 @@ title_planes: dc.l title_plane0,title_plane1,title_plane2,title_plane3
 game_presented_generation: dc.w 0
 
 ; Hardware integration hooks: gameplay and service order live in game/.
-game_before_scoreboard:
-        move.b  $42(a5),score_flags_before
-        move.b  $71(a5),status_timer_before
+game_scene_present_fields:
+        tst.b   score_dirty
+        beq.s   scoreboard_selection_done
+        bsr     patch_score_pointers
+scoreboard_selection_done:
         rts
-game_after_scoreboard:
-        bra     update_native_scoreboard
 game_show_returned_title:
         bsr     prepare_title_display
         st      game_title_display
@@ -332,56 +341,6 @@ replay_no_log:
         rts
         endif
 
-; Match the source scoreboard routine's two draw events. Point/game/mode RAM
-; may change earlier in the score gate, but the source draws them only when
-; status bit 5 is consumed on the following update. Status text remains shown
-; until the source timer expires, even if other RAM state changes meanwhile.
-update_native_scoreboard:
-        movem.l d0-d2/a0,-(sp)
-        clr.b   score_dirty
-        move.b  score_flags_before,d0
-        btst    #7,d0
-        beq.s   check_score_redraw
-        btst    #6,d0
-        beq.s   set_status_selection
-        cmpi.b  #$ff,status_timer_before
-        bne.s   check_score_redraw
-        clr.b   field_values+4
-        move.b  #1,score_dirty
-        bra.s   check_score_redraw
-set_status_selection:
-        move.b  $42(a5),d1
-        andi.b  #7,d1
-        move.b  d1,field_values+4
-        move.b  #1,score_dirty
-check_score_redraw:
-        btst    #5,d0
-        beq.s   commit_score_selection
-        lea     field_values(pc),a0
-        move.b  $3e(a5),(a0)+
-        move.b  $3f(a5),(a0)+
-        move.b  $40(a5),(a0)+
-        move.b  $41(a5),(a0)+
-        addq.l  #1,a0
-        moveq   #0,d1
-        move.b  $3d(a5),d2
-        btst    #2,d2
-        bne.s   store_mode_selection
-        moveq   #1,d1
-        btst    #7,d2
-        beq.s   store_mode_selection
-        moveq   #2,d1
-store_mode_selection:
-        move.b  d1,(a0)
-        move.b  #1,score_dirty
-commit_score_selection:
-        tst.b   score_dirty
-        beq.s   scoreboard_selection_done
-        bsr     patch_score_pointers
-scoreboard_selection_done:
-        movem.l (sp)+,d0-d2/a0
-        rts
-
         include "amiga/score_copper_patch.i"
 
 ; The cartridge uses bit 0 of Z80 R as one AI target-sign choice. The normal
@@ -416,75 +375,66 @@ refresh_replay_done:
 
         include "amiga/game/controls.s"
 
-; Compress the previous ten source records into eight Amiga channels in source
-; priority order, then build each sprite from its source pattern and colour.
-upload_sprite_attributes:
+; Eight native primitives drive hardware channels directly. Images are already
+; Amiga two-plane data; there is no VDP pattern/record decoder in this path.
+game_render_sprites:
         movem.l d0-d7/a0-a4,-(sp)
         clr.l   pair_colours
         clr.l   pair_colours+4
         clr.b   sprite_bridge_error
         move.b  #$ff,active_ball_slot
-        lea     $10(a5),a0
+        tst.b   game_scene_objects+SC_BALL+O_VISIBLE
+        beq.s   .order
+        move.b  game_scene_ball_layer,d0
+        lsl.b   #2,d0
+        move.b  d0,active_ball_slot ; diagnostic depth label only
+.order:
+        moveq   #0,d0
+        move.b  game_scene_ball_layer,d0
+        lsl.w   #3,d0
+        lea     game_scene_order,a3
+        adda.w  d0,a3
         lea     sprite_targets(pc),a1
         moveq   #0,d6
-        moveq   #9,d7
-next_source_sprite:
+        moveq   #7,d7
+.next:
+        moveq   #0,d0
+        move.b  (a3)+,d0
+        lsl.w   #3,d0
+        lea     game_scene_objects,a0
+        adda.w  d0,a0
+        tst.b   O_VISIBLE(a0)
+        beq     .skip
         moveq   #0,d3
-        move.b  (a0),d3
-        cmpi.b  #$c0,d3
-        bcc     source_sprite_done
+        move.b  O_Y(a0),d3
         moveq   #0,d4
-        move.b  3(a0),d4
-        andi.b  #15,d4
-        beq     source_sprite_done
-        cmpi.w  #8,d6
-        bcs.s   source_sprite_fits
-        ori.b   #1,sprite_bridge_error
-        bra     source_sprite_done
-source_sprite_fits:
-        moveq   #9,d0
-        sub.w   d7,d0
-        cmpi.b  #0,d0
-        beq.s   source_ball_slot
-        cmpi.b  #4,d0
-        beq.s   source_ball_slot
-        cmpi.b  #8,d0
-        bne.s   select_sprite_palette
-source_ball_slot:
-        move.b  d0,active_ball_slot
-select_sprite_palette:
+        move.b  O_COLOUR(a0),d4
         move.w  d6,d0
         andi.w  #$fffe,d0
         lea     pair_colours,a4
         adda.w  d0,a4
         moveq   #1,d5
         tst.b   (a4)
-        bne.s   compare_first_colour
+        bne.s   .first
         move.b  d4,(a4)
-        bra.s   sprite_palette_ready
-compare_first_colour:
+        bra.s   .palette
+.first:
         cmp.b   (a4),d4
-        beq.s   sprite_palette_ready
+        beq.s   .palette
         moveq   #2,d5
         tst.b   1(a4)
-        bne.s   compare_second_colour
+        bne.s   .second
         move.b  d4,1(a4)
-        bra.s   sprite_palette_ready
-compare_second_colour:
+        bra.s   .palette
+.second:
         cmp.b   1(a4),d4
-        beq.s   sprite_palette_ready
+        beq.s   .palette
         ori.b   #2,sprite_bridge_error
-sprite_palette_ready:
-        cmpi.b  #1,d4
-        beq.s   sprite_colour_known
-        cmpi.b  #4,d4
-        beq.s   sprite_colour_known
-        cmpi.b  #13,d4
-        beq.s   sprite_colour_known
-        cmpi.b  #15,d4
-        beq.s   sprite_colour_known
+.palette:
+        cmpi.b  #COLOUR_BLACK,d4
+        bls.s   .colour_valid
         ori.b   #4,sprite_bridge_error
-sprite_colour_known:
+.colour_valid:
         move.l  (a1)+,a2
         adda.l  sprite_write_delta,a2
         addi.w  #$2d,d3
@@ -493,110 +443,63 @@ sprite_colour_known:
         move.b  d3,(a2)
         move.b  d2,2(a2)
         moveq   #0,d0
-        move.b  1(a0),d0
+        move.b  O_X(a0),d0
         addi.w  #$80,d0
         move.w  d0,d1
         lsr.w   #1,d1
         move.b  d1,1(a2)
         andi.b  #1,d0
         btst    #8,d3
-        beq.s   sprite_vstop_high
+        beq.s   .stop_high
         ori.b   #4,d0
-sprite_vstop_high:
+.stop_high:
         btst    #8,d2
-        beq.s   sprite_control_ready
+        beq.s   .control
         ori.b   #2,d0
-sprite_control_ready:
+.control:
         move.b  d0,3(a2)
         moveq   #0,d0
-        move.b  2(a0),d0
-        andi.w  #$fc,d0
-        lsl.w   #3,d0
-        lea     sprite_pattern_rows,a3
-        adda.w  d0,a3
+        move.w  O_FRAME(a0),d0
+        cmpi.b  #2,d5
+        bne.s   .image
+        addi.w  #64,d0
+.image:
+        lea     game_scene_images,a4
+        adda.w  d0,a4
         lea     4(a2),a2
         moveq   #15,d2
-next_sprite_pattern_row:
-        move.w  (a3)+,d0
-        cmpi.b  #1,d5
-        bne.s   sprite_pattern_colour_two
-        move.w  d0,(a2)+
-        clr.w   (a2)+
-        bra.s   sprite_pattern_row_done
-sprite_pattern_colour_two:
-        clr.w   (a2)+
-        move.w  d0,(a2)+
-sprite_pattern_row_done:
-        dbra    d2,next_sprite_pattern_row
+.copy:
+        move.l  (a4)+,(a2)+
+        dbra    d2,.copy
         clr.l   (a2)
         addq.w  #1,d6
-source_sprite_done:
-        addq.l  #4,a0
-        dbra    d7,next_source_sprite
+.skip:
+        dbra    d7,.next
         moveq   #7,d7
         sub.w   d6,d7
-        bmi.s   update_sprite_palettes
-hide_unused_sprites:
+        bmi.s   .colours
+.hide:
         move.l  (a1)+,a2
+        adda.l  sprite_write_delta,a2
         clr.l   (a2)
-        dbra    d7,hide_unused_sprites
-update_sprite_palettes:
+        dbra    d7,.hide
+.colours:
         lea     pair_colours,a0
         lea     palette_targets(pc),a1
         moveq   #7,d7
-next_sprite_colour:
+.palette_next:
         moveq   #0,d0
         move.b  (a0)+,d0
         add.w   d0,d0
-        lea     sg_sprite_palette(pc),a2
-        move.w  0(a2,d0.w),d0
-        move.l  (a1)+,a3
-        adda.l  copper_write_delta,a3
-        move.w  d0,(a3)
-        dbra    d7,next_sprite_colour
+        lea     game_scene_palette,a2
+        move.w  (a2,d0.w),d0
+        move.l  (a1)+,a4
+        adda.l  copper_write_delta,a4
+        move.w  d0,(a4)
+        dbra    d7,.palette_next
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
-; Source writes are retained for verification; display selection uses game state.
-copy_cpu_bytes_to_vram_b_count:
-        MAKE_HL_NO_AR
-        MAKE_DE_NO_AR
-        tst.b   d1
-        beq.s   copy_vram_done
-copy_vram_byte:
-        lea     virtual_memory,a0
-        moveq   #0,d0
-        move.w  d6,d0
-        adda.l  d0,a0
-        move.b  (a0),d0
-        bsr     log_vram_write
-        addq.w  #1,d6
-        addq.w  #1,d4
-        subq.b  #1,d1
-        bne.s   copy_vram_byte
-copy_vram_done:
-        MAKE_H
-        MAKE_D
-        clr.b   d0
-        rts
-l_0008:
-        movem.l d4/d6-d7,-(sp)
-        MAKE_HL_NO_AR
-        move.w  d6,d4
-        bsr     log_vram_write
-        movem.l (sp)+,d4/d6-d7
-        rts
-log_vram_write:
-        andi.w  #$3fff,d4
-        lea     shadow_vram,a1
-        move.b  d0,0(a1,d4.w)
-        rts
-record_vdp_byte:
-        move.l  vdp_ptr,a1
-        move.b  d0,(a1)+
-        move.l  a1,vdp_ptr
-        addq.b  #1,vdp_count
-        rts
 log_state:
         movem.l d0-d2/a0-a1,-(sp)
         lea     log_frames(pc),a0
@@ -617,7 +520,7 @@ log_state:
         bsr     hex_byte
         lea     log_sprite_x(pc),a0
         moveq   #0,d0
-        move.b  $15(a5),d0
+        move.b  game_scene_objects+SC_LOWER+O_X,d0
         bsr     hex_byte
         lea     log_bridge_error(pc),a0
         moveq   #0,d0
@@ -744,22 +647,16 @@ simulation_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
-score_flags_before: dc.b 0
-status_timer_before: dc.b 0
 score_dirty: dc.b 0
 field_values: dc.b 0,0,0,0,0,1
         ifd LONG_GAME_REPLAY
 last_replay_score: dcb.b 4,0
         endif
         even
-vdp_count:         dc.b 0
-        even
 pair_colours:      dcb.b 8,0
 sprite_bridge_error: dc.b 0
 active_ball_slot: dc.b $ff
         even
-vdp_ptr:           dc.l 0
-vdp_log:           dcb.b 4,0
 sprite_targets:
         dc.l sprite0,sprite1,sprite2,sprite3,sprite4,sprite5,sprite6,sprite7
 palette_targets:
@@ -822,8 +719,8 @@ initial_ram: incbin "build/translation/live-initial-ram.bin"
         even
 virtual_memory: incbin "build/translation/player-frame-memory.bin"
         even
-sprite_pattern_rows: incbin "build/amiga/sprite-probe/sprite-pattern-rows.bin"
-shadow_vram: dcb.b 16384,0
+game_scene_images: incbin "build/amiga/native-scene/sprite-images.bin"
+
 
         include "amiga/sprite_probe_display.i"
         even

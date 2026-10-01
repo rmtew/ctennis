@@ -46,8 +46,8 @@ game_score_tick:
         move.b  d0,$3c(a5)
         btst    #S_EVENT_POSITIONS,S_EVENT(a4)
         beq.s   .sound
-        bsr     build_player_sprites
-        bsr     upload_sprite_attributes
+        bsr     game_scene_build_players
+        bsr     game_render_sprites
 .sound:
         lea     game_score_state,a4
         btst    #S_EVENT_SOUND,S_EVENT(a4)

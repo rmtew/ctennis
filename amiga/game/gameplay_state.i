@@ -8,6 +8,7 @@ P_COLOUR equ 5
 P_TARGET_Y equ 6
 P_TARGET_X equ 7
 P_CLOCK equ 8
+P_STYLE equ 9 ; native colour role owned by logical player/end mapping
 P_SIZE equ 10
 G_LOWER equ 0
 G_UPPER equ P_SIZE

@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is active; CT-07–CT-10 remain queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is active; CT-08–CT-10 remain queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -136,7 +136,7 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 ## CT-06 — Finish a match, return to title and restart
 
-**Status:** active, revised implementation and focused acceptance ready for independent exact-head review. The confirmed early-release latch defect at `8dcdcb8` is fixed and runtime-verified locally. Not merged. **Dependencies:** CT-05.
+**Status:** verified and merged in [PR #7](https://github.com/rmtew/ctennis/pull/7), merge `d15f778` after independent source/runtime clearance of exact `066d03a`. **Dependencies:** CT-05.
 
 **Resolved boundary:** native result/title/restart state now handles sound requests, return display, shared mode selection and old-action release gating. Complete local scene checks remain separate from ordinary continuous match/restart acceptance; see the evidence record below.
 
@@ -152,9 +152,9 @@ Evidence: both complete maintained match phases match1451/1451; both six-scene w
 
 ## CT-07 — Correct native graphics and remove the display translation bridge
 
-**Status:** queued. **Dependencies:** CT-06. Presentation fixes needed for earlier acceptance are made in those items, not deferred artificially.
+**Status:** active; native scene/animation and direct sprite/Copper field selection implemented; bounded graphics acceptance passed; ready for independent exact-head review, not merged. **Dependencies:** CT-06. Presentation fixes needed for earlier acceptance are made in those items, not deferred artificially.
 
-**Resolved prerequisite in CT-02:** `upload_sprite_attributes` now uses horizontal origin $80; the previously recorded $6c/20-pixel shift blocked accepted-mode display verification. **Remaining blockers:** Later layouts remain stale behind missing lifecycle work. Runtime still translates source sprite records and shadows VDP writes. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
+**Resolved prerequisite in CT-02:** `upload_sprite_attributes` now uses horizontal origin $80; the previously recorded $6c/20-pixel shift blocked accepted-mode display verification. **Replaced boundary:** maintained native scene primitives and logical field events replace source sprite records and generated scoreboard/VDP/shadow-memory operations; independent review remains pending. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
 
 **Targets:** [sprite upload, scoreboard and double buffers](amiga/gameplay_integration_probe.s), [display include](amiga/sprite_probe_display.i), [score patches](amiga/score_copper_patch.i), existing presentation/status/widget/round/result runners.
 
@@ -163,6 +163,19 @@ Evidence: both complete maintained match phases match1451/1451; both six-scene w
 **Observable acceptance:** players, ball and shadow align with court; mode/score/status and round/result/title displays represent the correct completed generation; no stale or partially prepared scene is published. Preserve eight-channel/colour capacity behaviour or provide a measured native solution for a real overflow.
 
 **Lightweight validation:** existing placement and moving-prefix pictures, green score/status fields, and round/result checkpoints. Reuse already captured return/bounce/net/out images only if a named changed rendering behaviour escapes these checks. For a relevant multi-observation known-red case, make a temporary late fault fail the check; an unchanged first error is not protection of later frames.
+
+Evidence: direct native primitive/field routing and old display entry-point retirement
+are compiled in the ordinary build. Placement, seven moving viewports, 42 field
+crops, four round windows (268 semantic states/28 crops each) and both result
+windows (1422 states/42 crops each) pass with all 22 compiled late scene faults
+detected. Both ordinary mode checks and full maintained serve 200/200 pass.
+Early-blank Copper reload repairs the restarted-ball generation mismatch;
+right tally pointer writes use a verified plane1 fetch gap. All 11 required
+receipts are current/fresh in the generated progress report. Ordinary executable
+SHA256 `dc0a0afbff24a2e8c5abd4891988ccfc15eea726b6e5f881855c5bc89b1087a5`.
+Raw scratch diagnostics remain separate. Scope is these finite graphics windows,
+not full reference match/cadence/RAM/ADF/independent hardware proof. See
+[graphics evidence](analysis/native-graphics-regression.md) and WORKLOG.md.
 
 ## CT-08 — Maintain native sound timing and audible effects
 

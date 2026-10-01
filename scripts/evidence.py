@@ -210,10 +210,12 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(ROOT / 'tests/cases/physical-input.json')
             if '--ownership' in sys.argv:
                 paths.update(ROOT / 'build/reference/control-ownership' / n for n in ('reference.json','a.tsv','b.tsv'))
-    if kind in ('round-scenes', 'result-scenes'):
+    if kind in ('presentation', 'round-scenes', 'result-scenes'):
         recipe = json.loads((ROOT / f'tests/cases/{case}.json').read_text())
-        phase = Path(recipe['initial_phase_reference'])
-        paths |= reference_inputs(ROOT / f'tests/cases/{phase.stem}.json')
+        if recipe.get('initial_phase_reference'):
+            phase = Path(recipe['initial_phase_reference'])
+            paths |= reference_inputs(ROOT / f'tests/cases/{phase.stem}.json')
+        paths.add(ROOT / 'tests/cases/presentation.json')
         directories = {'tests/reference/presentation', *recipe.get('reference_directories', {}).values()}
         for directory in directories:
             paths |= reference_inputs(ROOT / directory / 'manifest.json')
@@ -234,7 +236,7 @@ def inputs_for(kind, runner, case=None):
         title = ROOT / 'tests/reference/presentation/one-player-match/manifest.json'
         paths |= reference_inputs(title if title.exists() else ROOT / 'build/reference/mode-one/manifest.json')
     # Decoder implementations are runtime dependencies of the media checks.
-    if kind in ('mode', 'live-serve', 'round-scenes', 'result-scenes'):
+    if kind in ('mode', 'live-serve', 'presentation', 'round-scenes', 'result-scenes'):
         # Pillow registers PNG decoders lazily on the first Image.open().
         from PIL import PngImagePlugin  # noqa: F401
     paths.update(Path(module.__file__) for name, module in list(sys.modules.items())
@@ -393,7 +395,7 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
                 value = report.get(name)
                 if isinstance(value, str):
                     artifacts.append(ROOT / value)
-            if kind in ('round-scenes', 'result-scenes'):
+            if kind in ('presentation', 'round-scenes', 'result-scenes'):
                 capture_path = Path(report['capture_report_path'])
                 artifacts.append(capture_path)
                 for mutation in report.get('hardware_mutations', []):
