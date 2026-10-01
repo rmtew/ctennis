@@ -117,10 +117,12 @@ def prepare_gameplay():
     defined.update(("read_game_input", "sample_second_input_group",
                     "upload_sprite_attributes", "copy_cpu_bytes_to_vram_b_count", "l_0008",
                     "record_vdp_byte"))
+    # Native lifecycle requests use the existing audio stream ABI until CT08.
+    abi_symbols = (ROOT / "amiga/game/result_adapter.s").read_text()
     symbol_lines = []
     for name, value in re.findall(r"(?m)^([A-Za-z_]\w*): equ 0x([0-9a-fA-F]+)$",
                                   (ROOT / "analysis" / "rom-symbols.def").read_text(encoding="utf-8")):
-        if name not in defined and re.search(rf"\b{re.escape(name)}\b", routines):
+        if name not in defined and re.search(rf"\b{re.escape(name)}\b", routines + abi_symbols):
             symbol_lines.append(f"{name} equ ${value}\n")
     (OUT / "player-frame-symbols.i").write_text("".join(symbol_lines), encoding="utf-8")
     memory = bytearray(65536)

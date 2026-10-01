@@ -1,27 +1,95 @@
-# Native result/title/restart presentation
+# Native result/title/restart acceptance (CT06)
 
-The finite set covers both modes from one source-derived initialization immediately before match award through six completed scene checkpoints. Original transition RAM and normalized reader returns are never injected. The current maintained native application runs with actual physical fire release, Delete/Tab restart selection press/release and fire repress, retimed to original callback epochs.
+The maintained dispatcher now finishes a match, requests its result cue, returns
+through the original title transition, and reuses the native mode selection to
+restart. `amiga/game/result.s` owns that lifecycle; `result_adapter.s` explicitly
+retains the existing audio stream ABI pending CT08. The display bridge remains
+CT07 debt. Ordinary restart clears scores, mode/end state and pending phases.
+Per-player action latches suppress buttons inherited through selection until each
+physical button is released. Normal rally holds and direction input are preserved.
 
-| Context | Initial callback | Tally | Result cue | Returned title | Restart selected | Restarted court | Visible first flight |
+The application and replay use the same dispatcher and main/service paths.
+A local phase initializes once from captured original conditions; it does not
+inject subsequent source writes or choose dispatch by source PC. Ordinary runs
+boot at the title and use real physical inputs without captured initialization.
+
+| Local scene context | Initial callback | Tally | Result | Title | Selection | Court | Flight |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | One player |11959|11964|12090|12286|12540|13362|13381|
 | Two players |25618|25623|25749|25945|26199|27021|27040|
 
-Each case compares1422 consecutive states and six full256x192 viewports plus36 geometry crops. Across both cases:2844 states,12 full viewports and72 crops. All12 full viewports retain known failures;48 crops match. Crops on the title are geometric observations, not assertions that gameplay score fields exist there.
+Each existing scene case compares all 1422 consecutive maintained observations,
+six full 256x192 viewports and 36 crops, plus ordered logical PSG/entropy events.
+Both normals pass these complete comparisons. Each retains all three actual
+compiled sprite/field/extra-refresh faults and rejects them at a later observable
+checkpoint while preserving the normal state sequence and early images.
+The two existing maintained match-complete phases separately match 1451/1451
+updates each. These captured phases are not ordinary full-match comparisons.
 
-One-player has129 matching states before the missing result-sound initialization at12089 changes the audio records. Two-player has128 matching states, with the existing second-reader C056 expected17/actual1 at25619, and missing result initialization at25748. Later original title/reset/selection writes are absent in the native state and display. Each records467 sound/entropy event differences; these are logical-event diagnostics, not Paula waveform acceptance.
+Semantic state acceptance uses the existing CT04 contract: 250 bytes, omitting
+exactly C067–C06A retired arithmetic scratch. Separate 254-byte raw diagnostics
+remain red: one-player first C067 at 13377 (expected57/actual0), two-player first
+C067 at 27019 (expected43/actual0). No source fixtures, pixel tolerances or event
+expectations were rebaselined. The two obsolete result semantic known-red
+policies are removed; the raw mismatch is still reported explicitly.
 
-Both frozen source parents are validated restart extensions with identical complete original full-match prefixes. Two repeated unchanged original captures retain60 rasters each. Their raw callback recording hashes match the existing source fixtures. All selected images pass independent captured-pixel/VDP-state association. Primary575 source rasters remain unchanged.
+## Diagnostic timing, separate from gameplay
 
-The source IRQ tail at$06B1 does not call sprite upload, although it can apply deferred video-register writes. During title/reset, RAM sprite attributes therefore cannot identify displayed hardware sprites. An explicit tail-only association uses captured VDP state and callback frame bounds, requiring one unique independently verified original displayed image. It requires the recorded$06B1 handler word and rejects gameplay callbacks. Existing gameplay and round callers keep the original uploaded-buffer check; all four old round cases were rechecked from their actual captures with identical observations. The returned source title image was also visually inspected.
+The two-player field fault originally targeted callback 27021 but observed the
+bank prepared at 27020. Poisoning at threshold27020 affected only the next bank;
+its first visible mismatch occurred at27040. The retained before artifacts are
+`build/ct06/field-timing-before/`. The diagnostic now poisons before generation
+27020 is built (compiled threshold27019). The unchanged intended checkpoint27021
+therefore detects point_b pixel(227,45), black versus7777ff. One-player likewise
+uses threshold13360 for unchanged checkpoint13362. Machine assertions and
+compiled-source/executable hashes are in `build/ct06/field-timing-after.json`.
+This changes fault activation only, not normal gameplay, reference checkpoints
+or the strict comparison. Sprite faults use the visible selected-court checkpoint
+(result sprites are hidden); extra-refresh faults use the final flight checkpoint.
 
-Each actual compiled late sprite, point-field and extra-refresh variant preserves all1422 state observations and the earlier failure, but changes later output/events. All six variants classify as unexpected red against complete state/pixel/event digests. The extra-refresh variants add exactly one observed read at the result checkpoint. Eight successful native captures were executed. A preceding failed attempt exposed a fixed ten-second harness deadline across a fourteen-second restart gap; the deadline now scales with callback distance. This is bounded liveness, not a cadence acceptance rule.
+## Ordinary target evidence
 
-```powershell
-python scripts/run_result_presentation_tests.py --case p1-one-player-result-restart-scenes --self-test
-python scripts/run_result_presentation_tests.py --case p1-two-player-result-restart-scenes --self-test
+Both modes start from an ordinary title boot, run continuously through the match
+award and title return, select the opposite mode, and reach a restarted serve.
+Both red buttons remain held across result/title/selection. Eighty callbacks at
+the restarted serve prove physical raw bits16+16 are filtered to zero actions and
+the ball remains stationary. After releasing both buttons for80 callbacks, a fresh
+player1 press launches advancing flight. The existing two commands record only
+actual lifecycle/score checkpoints, checking callback continuity throughout.
+
+The final ordinary executable SHA256 is
+`80b16463f5673f033241a10333ed38a6157f5d986b54e45f2d75cda5efff56fa`.
+One→two records11807 consecutive observations; two→one records23753.
+These are ordinary lifecycle/action acceptance, not original full-match parity.
+The actual logs use PAL A500/68000/OCS/512KB chip/no expansion/Kickstart1.3,
+with `RUST_LOG=info`.
+
+```sh
+RUST_LOG=info python scripts/run_result_presentation_tests.py --case=p1-one-player-result-restart-scenes --self-test
+RUST_LOG=info python scripts/run_result_presentation_tests.py --case=p1-two-player-result-restart-scenes --self-test
+RUST_LOG=info python scripts/run_regression_tests.py --subject=maintained --case=one-player-match-complete-phase
+RUST_LOG=info python scripts/run_regression_tests.py --subject=maintained --case=two-player-match-complete-phase
+RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match
+RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=two --match
+RUST_LOG=info python scripts/progress.py
 ```
 
-Both currently return1 with exact known failures. The two startup mode cases were additionally corrected and rerun: source-rate callback counts include menu/tail work, so active player phases and waiting-mode state determine premature gameplay instead of a zero-count assertion. Their original pre-choice RAM is hash-verified; repeated normals and four compiled mutants pass the comparison controls.
+Root reports in ignored `build/tests/` contain atomic run state and source,
+executable, reference, tool and exact-target provenance. The focused progress gate
+requires full extent, semantic/raw labels, all three real faults, ordinary start,
+ordered lifecycle, held-action proof and the current ordinary executable. It does
+not count translated diagnostics or source integration as runtime acceptance.
+Dependency discovery follows primary media's declared children and the recipe's
+supplemental directories, avoiding an invented absent primary restart child while
+still invalidating missing actual declared media.
 
-Current incremental aggregate:99 cases,52 green,47 exact known red. Four cases executed/rerun;95 previous reports retained, with provenance. No full99-case execution is claimed. These are local source-derived intervals, not ordinary native full-match continuity. Four requirement groups remain open. Stop equivalent result/title/restart permutations. Next protect both return scenes and distinct bounce/net/out scenes, then remaining F2/F4/F5, audio and ordinary execution requirements. Generation-aligned startup acceptance remains open while its native path is absent.
+Affected guards are maintained serve200, round-transition1566, both existing mode
+checks and the ordinary build. Focused integrity unit checks reject wrong subject,
+short extent, expanded scratch, missing faults, wrong executable, unordered/local
+ordinary evidence and old-pass retention after failed/interrupted setup.
+
+Cadence, peak chip RAM, ADF boot, Paula waveform equivalence and independent
+exact-head validation remain unverified here. CT07/CT08 still own display/audio
+bridge removal; CT09 still owns complete reference-matched uninterrupted play.
+CT06 is ready for independent review only when the final machine progress report
+shows all required current evidence; it is not merged or independently verified.

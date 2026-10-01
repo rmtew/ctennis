@@ -96,10 +96,129 @@ def run(mode):
     return 0 if report['passed'] else 1
 
 
+def run_match(mode):
+    """Ordinary physical play through award/title/reselection and fresh serve."""
+    config, ordinary = build()
+    directory = ROOT / f'build/tests/ct06-ordinary-{mode}-restart'
+    directory.mkdir(parents=True, exist_ok=True)
+    exe = directory / 'native-application'
+    shutil.copy2(ordinary, exe)
+    listing = directory / 'native.lst'
+    shutil.copy2(ordinary.parent / 'native.lst', listing)
+    compile_manifest(exe, listing)
+    symbols = code_symbols(listing.read_text())
+    checkpoints, differences = {}, []
+    observations = 0
+    previous_callback = None
+    previous = None
+    snapshots = []
+    restarted_mode = 'two' if mode == 'one' else 'one'
+    selection_pressed = False
+    released_callback = None
+    waiting_callback = None
+    with NativeControlSession(directory) as session:
+        session.inspect('session_launch', {'binary': config['tools']['copperline'], 'run': str(exe),
+            'args': ['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K',
+                     '--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
+        stop = session.inspect('run_until', {'seconds':30})
+        if stop['reason'] != 'loadseg': raise RuntimeError(stop)
+        base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1],16)
+        def mem(name,count):
+            return bytes.fromhex(session.inspect('mem_read',{'addr':base+symbols[name],'len':count})['data'])
+        stop = session.inspect('run_until', {'seconds':stop['seconds']+2})
+        if int.from_bytes(mem('game_lifecycle',2),'big') != 2: raise AssertionError('Ordinary title missing')
+        key = 0x46 if mode == 'one' else 0x42
+        session.inspect('input_key',{'rawkey':key,'action':'press'})
+        stop = session.inspect('run_until',{'seconds':stop['seconds']+5})
+        session.inspect('input_key',{'rawkey':key,'action':'release'})
+        for port in (1,2):
+            session.inspect('input_set_port',{'port':port,'device':'joystick'})
+            session.inspect('input_joy',{'port':port,'red':True})
+        pc = base+symbols['game_observe_pre_tail']
+        session.inspect('break_add',{'kind':'pc','addr':pc})
+        deadline = stop['seconds']+1000
+        for index in range(40000):
+            stop = session.inspect('run_until',{'seconds':deadline})
+            if stop['pc'] != pc or stop['reason'] not in ('target','breakpoint'): raise RuntimeError(stop)
+            ram = bytes.fromhex(session.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc000,'len':256})['data'])
+            lifecycle = int.from_bytes(mem('game_lifecycle',2),'big')
+            callback = int.from_bytes(mem('simulation_updates',2),'big')+1
+            if previous_callback is not None and callback != previous_callback+1:
+                raise AssertionError('Ordinary callback continuity lost')
+            previous_callback=callback;observations+=1
+            state=(lifecycle,tuple(ram[0x40:0x42]))
+            if state != previous:
+                snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                previous=state
+            if lifecycle == 6 and 'match_award' not in checkpoints:
+                if max(ram[0x40:0x42]) != 6 or any(ram[0x3e:0x40]):
+                    raise AssertionError('Result before six-game award / nonzero points')
+                checkpoints['match_award']=callback
+                # Deliberately keep both old action buttons held across the menu.
+            if lifecycle == 7 and 'returned_title_display' not in checkpoints:
+                if any(ram[0x3d:0x42]): raise AssertionError('Old mode/score leaked into title reset')
+                checkpoints['returned_title_display']=callback
+            if lifecycle == 2 and 'match_award' in checkpoints and not selection_pressed:
+                checkpoints['title_ready']=callback
+                session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'press'})
+                selection_pressed=True
+            if selection_pressed and lifecycle == 3:
+                if 'restart_selected' not in checkpoints:
+                    checkpoints['restart_selected']=callback
+                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]):
+                        raise AssertionError('Chosen restart mode/score not fresh')
+                if released_callback is None and callback-checkpoints['restart_selected'] >= 80:
+                    session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'release'})
+                    released_callback=callback
+            if released_callback is not None and lifecycle == 1:
+                if 'restart_playing' not in checkpoints:
+                    checkpoints['restart_playing']=callback
+                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]) or ram[0x3d]&0x70:
+                        raise AssertionError('Old mode/end/score leaked into restarted match')
+                    if mem('game_lower_owner',2) != bytes([0,1]):
+                        raise AssertionError('Old player ownership survived reset')
+                if waiting_callback is None and ram[0x3a]&0x40:
+                    waiting_callback=callback
+                if waiting_callback is not None and 'restart_action' not in checkpoints:
+                    if ram[0x38] or any(ram[0x3e:0x42]): raise AssertionError('Restart launched without fresh action')
+                    if 'old_action_blocked' not in checkpoints and callback-waiting_callback >= 80:
+                        if mem('game_input_bits',2) != bytes([16,16]):
+                            raise AssertionError('Old physical actions were not still held')
+                        if any(v&0x30 for v in mem('game_player_controls',2)):
+                            raise AssertionError('Old physical action leaked into player controls')
+                        checkpoints['old_action_blocked']=callback
+                        for port in (1,2):session.inspect('input_joy',{'port':port,'red':False,'blue':False})
+                    elif 'old_action_blocked' in checkpoints and callback-checkpoints['old_action_blocked'] >= 80:
+                        checkpoints['restart_action']=callback
+                        session.inspect('input_joy',{'port':2,'red':True})
+                elif 'restart_action' in checkpoints and ram[0x38] and ram[0x66]:
+                    checkpoints['restarted_flight']=callback
+                    snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                    break
+        required=('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight')
+        if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
+    capture=directory/'checkpoints.json';atomic_json(capture,snapshots)
+    report={'case':f'ct06-ordinary-{mode}-restart','subject':'maintained-native','passed':not differences,
+            'first_difference':differences[0] if differences else None,'checkpoints':checkpoints,
+            'observed_callbacks':observations,'consecutive_callbacks':True,'start_mode':mode,'restart_mode':restarted_mode,'held_old_actions_verified': 'old_action_blocked' in checkpoints,
+            'capture':str(capture.relative_to(ROOT)),
+            'scope':'Ordinary uninterrupted physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
+    path=ROOT/f'build/tests/ct06-ordinary-{mode}-restart-report.json';atomic_json(path,report)
+    print(json.dumps(report),flush=True)
+    return 0 if report['passed'] else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('one','two'), required=True)
-    mode = parser.parse_args().mode
+    parser.add_argument('--match',action='store_true',help='CT06 ordinary result/title/restarted serve')
+    args=parser.parse_args()
+    mode=args.mode
+    if args.match:
+        path=ROOT/f'build/tests/ct06-ordinary-{mode}-restart-report.json'
+        return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode),
+                            lambda path,report:[ROOT/f'build/tests/ct06-ordinary-{mode}-restart/native-application'])
     path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',
                         'scripts/run_ordinary_round_tests.py', None, lambda: run(mode),

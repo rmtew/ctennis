@@ -53,10 +53,12 @@ copy_back_copper:
         move.w  #$7fff,$09a(a0)
         move.w  #$7fff,$096(a0)
         ifd LIVE_PHASE_START
+        move.l  #copperlist,presentation_copper
         move.l  #copperlist,$080(a0)
         move.w  #$83a0,$096(a0)
         else
         bsr     prepare_title_display
+        move.l  #title_copper,presentation_copper
         move.l  #title_copper,$080(a0)
         move.w  #$8380,$096(a0)
         endif
@@ -121,12 +123,20 @@ presentation_blank:
         move.b  #1,blank_seen
         addq.w  #1,presentation_frames
         tst.b   display_ready
-        beq.s   presentation_log
+        beq     presentation_log
         move.l  back_copper,d0
         move.l  front_copper,back_copper
         move.l  d0,front_copper
-        move.l  d0,$dff080
+        tst.b   game_title_display
+        beq.s   presentation_court
+        move.l  #title_copper,d0
+        move.w  #$0020,$dff096
+        bra.s   presentation_selected
+presentation_court:
         move.w  #$8020,$dff096
+presentation_selected:
+        move.l  d0,presentation_copper
+        move.l  d0,$dff080
         move.w  game_accept_count,game_presented_generation
         move.w  $dff006,d0
         andi.w  #$ff00,d0
@@ -237,6 +247,19 @@ game_before_scoreboard:
         rts
 game_after_scoreboard:
         bra     update_native_scoreboard
+game_show_returned_title:
+        bsr     prepare_title_display
+        st      game_title_display
+        rts
+game_show_returned_court:
+        clr.b   game_title_display
+        rts
+game_clear_returned_status:
+        clr.b   field_values+4
+        bra     patch_score_pointers
+game_title_display: dc.b 0
+        even
+presentation_copper: dc.l 0
 game_observe_pre_tail:
         rts
 game_apply_sound:
@@ -814,4 +837,5 @@ sprite_back: dcb.b 8*72,0
         include "build/amiga/long-game/refresh-signs.i"
         endif
 
+        even
         include "build/amiga/title/display.i"

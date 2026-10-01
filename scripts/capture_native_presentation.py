@@ -156,7 +156,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 entropy_reads.append({'update': generation + 1, 'bit': value, 'stop': stop})
                 return True
             if track_commits and stop['pc'] == base + symbols['presentation_commit_in_blank']:
-                front = session.inspect('mem_read', {'addr': base + symbols['front_copper'], 'len': 4})['data']
+                front = session.inspect('mem_read', {'addr': base + symbols['presentation_copper'], 'len': 4})['data']
                 commits.append({'prepared_after_callback': generation, 'front_copper': front,
                                 'field_values': session.inspect('mem_read', {'addr': base + symbols['field_values'], 'len': 6})['data'],
                                 'visible_frame': stop['frame'] + (1 if stop['vpos'] >= 236 else 0), 'stop': stop})
@@ -196,7 +196,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             observations.append({'completed_callbacks': count, 'stop': stop,
                 'ram': actual.hex(), 'state_differences': differences, 'capture': capture,
                 'display_ready': session.inspect('mem_read', {'addr': base + symbols['display_ready'], 'len': 1})['data'],
-                'front_copper': session.inspect('mem_read', {'addr': base + symbols['front_copper'], 'len': 4})['data']})
+                'front_copper': session.inspect('mem_read', {'addr': base + symbols['presentation_copper'], 'len': 4})['data']})
             observations[-1]['latest_commit'] = commits[-1] if commits else None
             session.inspect('break_remove', {'id': breakpoint['id']})
             if completed_rasters:

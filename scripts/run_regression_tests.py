@@ -93,7 +93,7 @@ def execute(config, case_name='serve', mutation=False, subject='translated'):
     harness = ROOT / 'amiga/tests/simulation_harness.s'
     source = harness.read_text()
     directory = OUT / (case_name + '-inputs')
-    for name in ('harness-config.i', 'initial-ram.bin', 'inputs.bin', 'refresh-values.bin'):
+    for name in ('harness-config.i', 'initial-ram.bin', 'inputs.bin', 'refresh-values.bin', 'selection-inputs.bin'):
         source = source.replace('build/tests/' + name, str((directory / name).relative_to(ROOT)))
     wrapper = directory / 'simulation_harness.s'
     wrapper.write_text(source)
@@ -140,6 +140,22 @@ def prepare_inputs(fixture, case):
         for segment in case['input']:
             for update in range(segment['from'], min(segment['through'], count) + 1):
                 inputs[2 * (update - 1)] = segment['game_bits']
+    # Menu edges are actual source control events, separate from gameplay
+    # reader bytes. No expected RAM or callback-kind selects native lifecycle.
+    selections = bytearray(count)
+    control_reference = (json.loads((ROOT / fixture['parent_reference']).read_text())
+                         if fixture.get('reference_kind') == 'source-derived-phase' else fixture)
+    events = [e for e in control_reference.get('timeline', [])
+              if e.get('kind') == 'control' and e.get('control') == 'select']
+    held = 0
+    event_index = 0
+    choice = 2 if case['name'].startswith('two-player-') else 1
+    for index, row in enumerate(fixture['updates']):
+        while event_index < len(events) and events[event_index]['frame'] <= row['begin_frame']:
+            held = choice if events[event_index]['value'] else 0
+            event_index += 1
+        selections[index] = held
+    (directory / 'selection-inputs.bin').write_bytes(selections)
     (directory / 'inputs.bin').write_bytes(inputs)
     (directory / 'harness-config.i').write_text(
         f'CASE_UPDATE_COUNT equ {count}\nCASE_CAPTURE_REFRESH equ {int(exact)}\n')
@@ -163,7 +179,7 @@ def _main():
     migrated_cases = tuple(name for name in product_cases
                            if not name.startswith('movement-lower-receiver-') or name.endswith('-phase'))
     subject = args.subject or ('maintained' if args.case in migrated_cases + SCORING_REPLAY_CASES else 'translated')
-    if subject == 'maintained' and args.case not in product_cases + ('round-transition', 'deuce-sequence-phase', 'one-player-match', 'two-player-match', 'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase'):
+    if subject == 'maintained' and args.case not in product_cases + ('round-transition', 'deuce-sequence-phase', 'one-player-match', 'two-player-match', 'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase', 'one-player-match-complete-phase', 'two-player-match-complete-phase'):
         parser.error('This lifecycle case is not yet migrated to maintained replay')
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
