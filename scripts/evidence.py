@@ -116,6 +116,10 @@ def reference_inputs(path):
                     target = ROOT / v
                     if target != path:
                         found.update(reference_inputs(target))
+                elif k == 'continuous_parent' and isinstance(v, str):
+                    target = ROOT / f'tests/reference/{v}.json'
+                    if target != path:
+                        found.update(reference_inputs(target))
                 elif k == 'manifest' and isinstance(v, str):
                     found.update(reference_inputs(path.parent / v))
                 else:
@@ -124,6 +128,10 @@ def reference_inputs(path):
             for v in value:
                 visit(v)
     visit(data)
+    if data.get('regime') in ('match', 'restarted-serve'):
+        # regime_layout validates the extension recipe before accepting its phase.
+        name = data['continuous_parent'].replace('-match', '-restart-complete')
+        found.update(reference_inputs(ROOT / f'tests/cases/{name}.json'))
     if 'files' in data and isinstance(data['files'], dict):
         # Existing replacement mode manifest stores media in a/.
         found.update(path.parent / 'a' / name for name in data['files'])
@@ -175,6 +183,9 @@ def inputs_for(kind, runner, case=None):
                  ('rom-blocks.def', 'rom-symbols.def', 'rom-comments.tsv', 'rom-literal-operands.tsv'))
     entry = ROOT / ('amiga/tests/simulation_harness.s' if kind == 'replay' else 'amiga/gameplay_integration_probe.s')
     paths |= assembly_inputs(entry)
+    if kind == 'replay':
+        # Names reported mismatches; compared offsets remain in the case recipe.
+        paths.add(ROOT / 'tests/state-fields.json')
     for case in ([case] if isinstance(case, str) else case or []):
         recipe = ROOT / 'tests/cases' / (case + '.json')
         paths |= {recipe} if kind == 'mode' else reference_inputs(recipe)
@@ -184,6 +195,10 @@ def inputs_for(kind, runner, case=None):
                 paths |= reference_inputs(root_reference)
         if case.startswith('movement-'):
             paths.add(ROOT / 'tests/reference/two-player-match.json')
+            from movement_reference import MOVEMENT_PHASES
+            parent = MOVEMENT_PHASES.get(case)
+            if parent:
+                paths |= reference_inputs(ROOT / f'tests/cases/{parent}.json')
         if case.startswith('contact-'):
             paths.add(ROOT / 'tests/reference/two-player-rally.json')
         if case in ('p1-title', 'p1-accept-one-player', 'p1-accept-two-player'):
@@ -203,8 +218,11 @@ def inputs_for(kind, runner, case=None):
         title = ROOT / 'tests/reference/presentation/one-player-match/manifest.json'
         paths |= reference_inputs(title if title.exists() else ROOT / 'build/reference/mode-one/manifest.json')
     # Decoder implementations are runtime dependencies of the media checks.
+    if kind in ('mode', 'live-serve'):
+        # Pillow registers PNG decoders lazily on the first Image.open().
+        from PIL import PngImagePlugin  # noqa: F401
     paths.update(Path(module.__file__) for name, module in list(sys.modules.items())
-                 if name.startswith('PIL.') and getattr(module, '__file__', None))
+                 if (name == 'PIL' or name.startswith('PIL.')) and getattr(module, '__file__', None))
     tools, payloads = tool_info()
     return paths | payloads, tools
 

@@ -53,8 +53,12 @@ required RUST_LOG=info, machine profile, executable, and checksums for local Pyt
 import/generator closure, assembly/include sources, actual compiled incbin assets
 and listing, original recipes/reference data/media, config/ROM inputs and tools.
 Tool versions and the published Copperline wrapper's actual executable payload
-are included. Media decoder modules loaded by the runner are fingerprinted.
-Missing/changed dependencies invalidate the pass. Build module_hashes are retained
+are included. PNG decoder modules are explicitly loaded before fingerprinting
+the mode/live media checks, including Pillow's package/version and decoder core.
+Missing/changed dependencies invalidate the pass. Replay mismatch-label names
+(state-fields.json), mapped movement phase parent recipes/reference closure and
+dynamically loaded continuous/restart validation recipes are included. Naming
+provenance does not change which gameplay bytes the case compares. Build module_hashes are retained
 for regression compatibility, but are not the freshness dependency closure.
 Replay fixture materialization is case-owned so another replay does not overwrite
 its input provenance. Case-specific reference dependencies avoid a blanket hash
@@ -90,5 +94,10 @@ source changes and corroborate runtime reports independently before merging.
 changed/missing inputs, missing/legacy reports, interrupted/failed reruns replacing
 passes, compatible reused/fresh evidence, subject/extent disagreement, aggregate
 retained-body rejection, target disagreement and optional reference appearance.
+Further controls discover all four mapped movement recipes and their transitive
+references, four translated regime/restart validation closures, explicit PNG
+decoder inputs, and input-prefix byte equivalence. The serve prefix overflow
+pre-existed PR5; materialization now clips the declared schedule to the requested
+extent, while full-acceptance classification continues to reject partial runs.
 Real runner integration commands and exact results are recorded in WORKLOG.md;
 raw reports/logs and the generated progress output remain under ignored build/.

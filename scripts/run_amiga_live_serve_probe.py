@@ -14,7 +14,7 @@ from PIL import Image, ImageChops
 from run_translated_prng_probe import ROOT, run
 from run_amiga_score_copper_probe import FIELDS, output_rectangle
 from source_irq_tail import irq_tail_06b1
-from evidence import tracked_call, compile_manifest, compile_manifest
+from evidence import tracked_call, compile_manifest
 
 
 DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"

@@ -133,7 +133,7 @@ def prepare_inputs(fixture, case):
         (directory / 'refresh-values.bin').write_bytes(refresh)
     else:
         for segment in case['input']:
-            for update in range(segment['from'], segment['through'] + 1):
+            for update in range(segment['from'], min(segment['through'], count) + 1):
                 inputs[2 * (update - 1)] = segment['game_bits']
     (directory / 'inputs.bin').write_bytes(inputs)
     (directory / 'harness-config.i').write_text(
