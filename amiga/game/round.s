@@ -58,8 +58,8 @@ game_round_poll:
         move.b  #88,$46(a5)
         move.b  #7,$4b(a5)
         clr.b   $47(a5)
-        bsr     build_player_sprites
-        bsr     upload_sprite_attributes
+        bsr     game_scene_build_players
+        bsr     game_render_sprites
         clr.b   $6c(a5)
         bra     game_round_done
 .pause:
@@ -80,7 +80,7 @@ game_round_poll:
         move.b  d1,$3c(a5)
         move.b  #S_WAIT_SOUND,S_STAGE(a4)
         move.b  #$20,$42(a5)
-        bsr     draw_pending_scoreboard_mode_and_scores
+        bsr     game_scene_redraw_fields
         bsr     assign_sound_stream_4
         move.w  #GAME_ROUND_SOUND,game_lifecycle
         bra.s   game_round_done

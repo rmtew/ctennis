@@ -13,6 +13,13 @@ legacy_import_gameplay:
         move.b  (a5,d0.w),(a4,d1.w)
         bra   .legacy_import_field
 .legacy_import_controls:
+        move.b  #2,G_LOWER+P_STYLE(a4)
+        move.b  #3,G_UPPER+P_STYLE(a4)
+        btst    #4,$3d(a5)
+        beq.s   .legacy_styles_ready
+        move.b  #3,G_LOWER+P_STYLE(a4)
+        move.b  #2,G_UPPER+P_STYLE(a4)
+.legacy_styles_ready:
         clr.b   G_SOUND_EVENT(a4)
         move.b  $3c(a5),d0
         move.b  d0,d1
@@ -93,40 +100,6 @@ game_entropy:
         movem.l (sp)+,d1-d7/a0-a6
         rts
 
-; Existing presentation remains previous-update based. CT-07 owns replacing
-; animation descriptors and the source sprite-record adapter.
-legacy_present_players:
-        bsr     animate_lower_player
-        bsr     animate_upper_player
-        bsr     build_player_sprites
-        move.b  #$c2,$10(a5)
-        move.b  #$c2,$20(a5)
-        move.b  #$c2,$30(a5)
-        lea     $30(a5),a0
-        move.b  $45(a5),d0
-        addi.b  #$20,d0
-        cmp.b   $34(a5),d0
-        bcc   .legacy_ball_slot
-        lea     $20(a5),a0
-        move.b  $49(a5),d0
-        addi.b  #$24,d0
-        cmp.b   $34(a5),d0
-        bcc   .legacy_ball_slot
-        lea     $10(a5),a0
-.legacy_ball_slot:
-        move.b  $4d(a5),(a0)
-        move.b  $4e(a5),1(a0)
-        move.b  $4f(a5),2(a0)
-        move.b  $50(a5),3(a0)
-        cmpi.b  #$c0,$4d(a5)
-        bcs   .legacy_sprite_done
-        move.b  #$c2,$34(a5)
-        move.b  #$c2,$10(a5)
-        move.b  #$c2,$20(a5)
-        move.b  #$c2,$30(a5)
-.legacy_sprite_done:
-        rts
-
 legacy_game_fields:
         dc.b $3a,G_LOWER+P_PHASE
         dc.b $43,G_LOWER+P_ANIMATION
@@ -178,24 +151,3 @@ legacy_game_fields:
         dc.b $42,G_DISPLAY
         dc.b 255
         even
-
-; Retained animation ABI only (CT-07). D6 is its legacy table address; D0
-; is the animation clock. Native gameplay never calls this lookup.
-threshold_table_lookup:
-        moveq   #0,d2
-        move.b  d5,d2
-        lsl.w   #8,d2
-        move.b  d6,d2
-        lea     (a6,d2.l),a0
-        moveq   #0,d1
-.legacy_animation_threshold:
-        cmpi.w  #4,d1
-        beq.s   .legacy_animation_selected
-        cmp.b   (a0,d1.w),d0
-        bcs.s   .legacy_animation_selected
-        addq.w  #1,d1
-        bra.s   .legacy_animation_threshold
-.legacy_animation_selected:
-        move.b  4(a0,d1.w),d0
-        moveq   #0,d1
-        rts

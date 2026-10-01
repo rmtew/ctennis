@@ -39,6 +39,4 @@ game_pair_sound_complete:
         rts
 
 game_result_redraw:
-        bsr     game_before_scoreboard
-        bsr     draw_pending_scoreboard_mode_and_scores
-        bra     game_after_scoreboard
+        bra     game_scene_redraw_fields

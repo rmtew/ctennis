@@ -9,5 +9,5 @@
   "region": [60, 0, 112, 40],
   "boundary": "lower-serve-launch-upper-player",
   "inputs": [{"port": 2, "red": true}],
-  "contract": "The upper player's unchanged initial sprite placement matches the source throughout the lower serve launch window. The full 254-byte simulation state must match at completed callback 17; compare only this generation-invariant region after its scanlines have rendered. This does not establish the moving ball or lower player's presentation timing."
+  "contract": "The upper player's unchanged initial sprite placement matches the source throughout the lower serve launch window. At completed callback 17, the maintained semantic state must match under the established C067–C06A arithmetic-scratch omission; retain all 254 raw bytes and their differences separately. Compare this generation-invariant region only after its published raster has completed. This does not establish the moving ball or lower player's presentation timing."
 }

@@ -2,9 +2,7 @@
 ; Generated routines and private virtual memory remain build-only oracle inputs.
 ; Do not put new gameplay into the generator or this compatibility layer.
 legacy_active_tick:
-        bsr     game_before_scoreboard
-        bsr     scoreboard_update
-        bsr     game_after_scoreboard
+        bsr     game_scene_update_fields
         bsr     input_update
         ifd NATIVE_SCORING
         bsr     game_score_tick
@@ -13,7 +11,7 @@ legacy_active_tick:
         endif
         ifd NATIVE_GAMEPLAY
         bsr     game_play_tick
-        bra     legacy_present_players
+        bra     game_scene_finish_tick
         else
         bsr     lower_player_state
         bsr     upper_player_state
@@ -30,9 +28,7 @@ legacy_service_tick:
         bsr     audio_tick_adapter
 legacy_audio_wait:
         bsr     game_apply_sound
-        move.l  #vdp_log,vdp_ptr
-        clr.b   vdp_count
-        bra     irq_vdp_tail
+        bra     game_scene_service
 
         include "build/translation/player-frame-routines.s"
 
@@ -93,7 +89,8 @@ legacy_init_audio_channel:
         adda.w  #14,a0
         addi.w  #32,d0
         dbra    d7,legacy_init_audio_channel
-        bsr     build_player_sprites
+        bsr     game_scene_reset
+        bsr     game_scene_build_players
         rts
 legacy_new_mode: dc.b 0
         even
@@ -147,6 +144,9 @@ legacy_owner_selected:
         ifd NATIVE_GAMEPLAY
         include "amiga/game/gameplay.s"
         include "amiga/game/gameplay_adapter.s"
+        include "amiga/game/scene.s"
+        include "amiga/game/scene_fields.s"
+        include "amiga/game/scene_adapter.s"
         endif
 
         ifd NATIVE_SCORING

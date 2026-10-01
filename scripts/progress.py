@@ -29,7 +29,7 @@ GATES = {
     'CT-04': list(REPLAY) + ['p1-accept-one-player', 'p1-accept-two-player'],
     'CT-05': list(CT05_REPLAY) + list(CT05_SCENES) + ['ct05-r2-first-round', 'ct05-ordinary-one-round', 'ct05-ordinary-two-round'],
     'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart', 'ct06-ordinary-one-early-release'],
-    'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix'],
+    'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', *CT05_SCENES, *CT06_SCENES, 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'status-timer-saturation-phase'],
     'CT-09': ['one-player-match', 'two-player-match'],
     'CT-10': [],
@@ -46,6 +46,30 @@ NAMES = {
     'CT-09': 'Uninterrupted ordinary play / cadence',
     'CT-10': 'Adapter-free executable / cold bootable ADF',
 }
+
+
+def presentation_proof(report, recipe):
+    """Finite CT07 recipes: exact pixels and only the established raw scratch debt."""
+    if (report.get('subject') != 'maintained-native'
+            or report.get('state_contract') != MAINTAINED_STATE_CONTRACT
+            or report.get('omitted_legacy_scratch_offsets') != list(MAINTAINED_SCRATCH_OFFSETS)
+            or report.get('self_test') is not True or report.get('passed') is not True
+            or report.get('first_difference') is not None):
+        return False
+    if recipe['name'] == 'p1-upper-player-placement':
+        raw = report.get('raw_state_differences', [])
+        raster = report.get('completed_raster', {})
+        return (report.get('region') == recipe['region']
+                and report.get('native_observation', {}).get('completed_callbacks') == recipe['completed_callbacks']
+                and bool(raster.get('generation'))
+                and all(r.get('offset') in MAINTAINED_SCRATCH_OFFSETS for r in raw))
+    checks = report.get('checks', [])
+    expected = [(c,f) for c in recipe['completed_callbacks'] for f in recipe['fields']]
+    return ([(r.get('requested_callback'), r.get('field')) for r in checks] == expected
+            and all(r.get('first_difference') is None and r.get('raster', {}).get('generation') for r in checks)
+            and [r.get('update') for r in report.get('raw_state_differences', [])] == recipe['completed_callbacks']
+            and all(d.get('offset') in MAINTAINED_SCRATCH_OFFSETS
+                    for r in report['raw_state_differences'] for d in r['differences']))
 
 
 def report_path(name):
@@ -103,7 +127,7 @@ def ordinary_round_proof(report, mode, executable_sha256):
             and report['observed_callbacks'] >= checkpoints[-1] - checkpoints[0] + 1)
 
 
-def result_scene_proof(report, recipe):
+def result_scene_proof(report, recipe, fault_kinds=('entropy', 'field', 'sprite')):
     """A local source phase proves only its declared complete scene window."""
     start=recipe['initial_source_update'];targets=recipe['completed_callbacks']
     states=report.get('checks',{}).get('states',[])
@@ -125,7 +149,7 @@ def result_scene_proof(report, recipe):
                 and row.get('expected_sha256') and row.get('first_difference') is None for row in pixels)
         and report.get('checks',{}).get('source_events')==[]
         and sorted((m.get('kind'),m.get('detected')) for m in report.get('hardware_mutations',[]))
-            ==[('entropy',True),('field',True),('sprite',True)])
+            ==sorted((kind,True) for kind in fault_kinds))
 
 def ordinary_restart_proof(report,mode,executable_sha256):
     """Ordinary physical path is distinct from captured result initialization."""
@@ -193,12 +217,14 @@ def progress(fresh_since=None):
     symbols = set(json.loads(build_path.read_text()).get('compiled_symbols', [])) if ordinary else set()
     native = {'serve/contact': ['game_player_tick', 'game_player_contact'],
               'ball/launch': ['game_ball_tick', 'game_derive_launch', 'game_launch_root'],
-              'movement': ['game_move_player'], 'AI': ['game_ai_track', 'game_ai_setup']}
+              'movement': ['game_move_player'], 'AI': ['game_ai_track', 'game_ai_setup'],
+              'presentation': ['game_scene_finish_tick', 'game_render_sprites', 'game_scene_update_fields']}
     old = {'serve/contact': ['lower_player_state', 'upper_player_state'],
            'ball/launch': ['ball_flight_update', 'derive_launch_vector', 'triangular_root_step'],
-           'movement': ['lower_player_motion_update', 'upper_player_movement'], 'AI': ['predict_ball_intercept', 'direction_ai']}
+           'movement': ['lower_player_motion_update', 'upper_player_movement'], 'AI': ['predict_ball_intercept', 'direction_ai'],
+           'presentation': ['build_player_sprites', 'scoreboard_update', 'irq_vdp_tail', 'shadow_vram', 'copy_cpu_bytes_to_vram_b_count']}
     remaining = {'score/lifecycle': ['score_gate', 'scoreboard_update'],
-                 'presentation': ['build_player_sprites', 'virtual_memory', 'shadow_vram'],
+                 'shared scalar ABI (CT10)': ['virtual_memory'],
                  'audio': ['audio_tick_adapter']}
     architecture = {'ordinary_build': build, 'subsystems': {}}
     for group in native:
@@ -284,7 +310,26 @@ def progress(fresh_since=None):
                 verified=False;reasons.append('Restart-sound release/repress with continuously held P2 acceptance missing')
             if not all(n in symbols for n in ('game_result_poll','game_restart_begin','game_menu_tick','game_source_tick')):
                 verified=False;reasons.append('Ordinary native result/restart routing unverified')
-        if gate in ('CT-07', 'CT-08', 'CT-09', 'CT-10'):
+        if gate == 'CT-07':
+            if not ordinary or not all(n in symbols for n in native['presentation']) or any(n in symbols for n in old['presentation']):
+                verified = False
+                reasons.append('Ordinary native display routing/bridge retirement unverified')
+            for name in names[:3]:
+                if evidence[name]['status'] == 'passed' and not presentation_proof(json.loads(report_path(name).read_text()), json.loads((ROOT/f'tests/cases/{name}.json').read_text())):
+                    verified = False
+                    reasons.append(f'{name} complete exact pixel/semantic coverage missing')
+            for name in CT05_SCENES:
+                if evidence[name]['status'] == 'passed':
+                    r = json.loads(report_path(name).read_text())
+                    recipe = json.loads((ROOT/f'tests/cases/{name}.json').read_text())
+                    if not result_scene_proof(r, recipe, ('entropy','field','sprite','state')):
+                        verified = False
+                        reasons.append(f'{name} complete round pixel/event/fault protection missing')
+            for name in CT06_SCENES:
+                if evidence[name]['status'] == 'passed' and not result_scene_proof(json.loads(report_path(name).read_text()), json.loads((ROOT/f'tests/cases/{name}.json').read_text())):
+                    verified = False
+                    reasons.append(f'{name} complete result pixel/event/fault protection missing')
+        if gate in ('CT-08', 'CT-09', 'CT-10'):
             verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
             reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',

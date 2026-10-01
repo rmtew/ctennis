@@ -32,7 +32,9 @@ game_result_poll:
         clr.b   $42(a5)
         clr.b   $6c(a5)
         bsr     game_show_returned_title
+        ifd NATIVE_SCENE_OBSERVE
         move.b  #$83,$02(a5)
+        endif
         st      game_restart_context
         move.w  #GAME_TITLE_TRANSITION,game_lifecycle
         bra     game_round_done
@@ -42,9 +44,11 @@ game_result_poll:
         bsr     game_show_returned_court
         move.b  #4,$3d(a5)
         move.b  #$83,$3c(a5)
+        ifd NATIVE_SCENE_OBSERVE
         move.b  #$81,$02(a5)
+        endif
         move.b  #$20,$42(a5)
-        bsr     upload_sprite_attributes
+        bsr     game_render_sprites
         bsr     game_result_redraw
         bsr     assign_sound_stream_4
         move.w  #GAME_TITLE_SOUND,game_lifecycle

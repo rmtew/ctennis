@@ -48,7 +48,7 @@ def mutation(kind, case, reset_generation=None):
     def alter(text):
         if kind == 'sprite':
             old = '        addi.w  #$80,d0'
-            new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_sprite_done\n        addq.w  #1,d0\nround_mutation_sprite_done:'
+            new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   .round_mutation_sprite_done\n        addq.w  #1,d0\n.round_mutation_sprite_done:'
         elif kind == 'field':
             old = 'simulation_service_observed:'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_field_done\n        move.b  #1,field_values+1\n        bsr     patch_score_pointers\nround_mutation_field_done:'

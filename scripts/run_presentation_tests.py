@@ -13,6 +13,7 @@ from presentation_reference import ROOT, PALETTE, ACTIVE_AREA
 from run_translated_player_frame_probe import prepare_gameplay
 from run_translated_prng_probe import ASSEMBLER, OUT, run
 from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
+from maintained_state_contract import MAINTAINED_STATE_CONTRACT, MAINTAINED_SCRATCH_OFFSETS
 
 
 def digest(path):
@@ -143,6 +144,18 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
         wrapper.write_text(original, encoding='utf-8')
         source = str(wrapper)
         defines = ['-DLONG_GAME_REPLAY=1', '-DLIVE_PHASE_START=1']
+    if not recorded_refresh:
+        # A capture owns its initial state; later phase builds must not replace
+        # a live dependency of its retained executable/evidence.
+        initial_path = directory / 'live-initial-ram.bin'
+        initial_path.write_bytes(bytes.fromhex(initial))
+        original = (ROOT / source).read_text(encoding='utf-8')
+        marker = 'incbin "build/translation/live-initial-ram.bin"'
+        if original.count(marker) != 1:
+            raise ValueError('Live phase initializer include changed')
+        wrapper = directory / 'native-captured-phase.s'
+        wrapper.write_text(original.replace(marker, f'incbin "{initial_path.as_posix()}"'))
+        source = str(wrapper)
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', *defines,
          '-L', str(directory / 'native.lst'), '-o', str(executable), source])
     from evidence import compile_manifest
@@ -169,13 +182,18 @@ def player_placement(case, contract, self_test):
             mapped = map_source_palette(rgb.crop(ACTIVE_AREA), contract)
             if mapped.crop(region).tobytes() != expected.crop(region).tobytes():
                 raise ValueError('Placement region is not invariant across the declared source window')
-    captured = capture((case['completed_callbacks'],))
+    captured = capture((case['completed_callbacks'],),track_commits=True,completed_rasters=True)
     observed = captured['observations'][0]
-    if observed['state_differences']:
+    if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
         raise ValueError('Placement precondition failed: native simulation differs from source')
-    if observed['stop']['vpos'] <= 0x2c + region[3]:
-        raise ValueError('Placement region scanlines have not completed')
-    with Image.open(observed['capture']['path']) as picture:
+    raster=observed['completed_raster']
+    if not raster['generation'] or raster['rendered_frame'] < raster['generation']['visible_frame']:
+        raise ValueError('Placement raster has not completed its published generation')
+    from associate_presentation_generations import source_generation
+    published,association=source_generation(raster['generation']['prepared_after_callback'])
+    if map_source_palette(published,contract).crop(region).tobytes()!=expected.crop(region).tobytes():
+        raise ValueError('Completed placement generation is outside the invariant source region')
+    with Image.open(raster['capture']['path']) as picture:
         actual = native_picture(picture, contract)
     difference = compare(expected.crop(region), actual.crop(region), case['boundary'])
     if difference:
@@ -188,14 +206,17 @@ def player_placement(case, contract, self_test):
         altered.putpixel((0, 0), (255, 255, 255) if wanted.getpixel((0, 0)) != (255, 255, 255) else (0, 0, 0))
         if compare(wanted, altered, case['boundary']) == compare(wanted, actual.crop(region), case['boundary']):
             raise AssertionError('Placement mutation was not detected')
-    report = {'case': case['name'], 'passed': difference is None,
+    report = {'case': case['name'], 'subject':'maintained-native', 'state_contract':MAINTAINED_STATE_CONTRACT,
+              'omitted_legacy_scratch_offsets':list(MAINTAINED_SCRATCH_OFFSETS),
+              'raw_state_differences':observed['state_differences'],
+              'completed_raster':raster, 'source_generation':association, 'passed': difference is None,
               'first_difference': difference, 'source_frame': source_frame,
               'reference_sha256': reference_sha, 'executable_sha256': captured['executable_sha256'],
               'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
                   'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256')},
               'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
               'scope': case['contract'], 'source_window': case['source_frames'],
-              'region': region, 'self_test': self_test, 'native_observation': observed}
+              'region': region, 'self_test': self_test, 'native_observation': observed, 'capture_report_path':captured['capture_report_path']}
     (ROOT / f'build/tests/{case["name"]}-report.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
     return 0 if report['passed'] else 1
@@ -212,7 +233,7 @@ def generation_sequence(case, contract, self_test):
                        initial_phase_reference=case.get('initial_phase_reference'), capture_label=case['name'])
     checks, first = [], None
     for observed in captured['observations']:
-        if observed['state_differences']:
+        if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
             raise ValueError('Graphics precondition failed: source/native simulation differs')
         raster = observed['completed_raster']
         if not raster['generation']:
@@ -245,7 +266,7 @@ def generation_sequence(case, contract, self_test):
     if self_test and case.get('initial_source_update'):
         def move_sprite_one_pixel(executable):
             code = executable.read_bytes()
-            old, new = bytes.fromhex('0640006c'), bytes.fromhex('0640006d')
+            old, new = bytes.fromhex('06400080'), bytes.fromhex('06400081')
             if code.count(old) != 1:
                 raise ValueError('Native sprite origin instruction changed')
             executable.write_bytes(code.replace(old, new))
@@ -256,7 +277,7 @@ def generation_sequence(case, contract, self_test):
             executable_mutator=move_sprite_one_pixel, capture_label=case['name'] + '-mutation')
         changed_checks = []
         for observed in changed_capture['observations']:
-            if observed['state_differences']:
+            if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
                 raise AssertionError('Renderer mutation changed simulation state')
             raster = observed['completed_raster']
             generation = raster['generation']['prepared_after_callback']
@@ -274,10 +295,13 @@ def generation_sequence(case, contract, self_test):
                     raise AssertionError('Actual sprite-position mutation was not detected')
                 changed_checks.append({'requested_callback': observed['completed_callbacks'],
                     'first_difference': difference, 'source': association, 'raster': raster})
-        hardware_mutation = {'instruction': 'ADDI.W #$6c,D0 changed to #$6d in test executable',
+        hardware_mutation = {'instruction': 'ADDI.W #$80,D0 changed to #$81 in test executable',
             'executable_sha256': changed_capture['executable_sha256'], 'checks': changed_checks,
             'simulation_unchanged': True, 'detected_at_all_checkpoints': True}
-    report = {'case': case['name'], 'passed': first is None, 'first_difference': first,
+    report = {'case': case['name'], 'subject':'maintained-native', 'state_contract':MAINTAINED_STATE_CONTRACT,
+              'omitted_legacy_scratch_offsets':list(MAINTAINED_SCRATCH_OFFSETS),
+              'raw_state_differences':[{'update':row['completed_callbacks'],'differences':row['state_differences']} for row in captured['observations']],
+              'passed': first is None, 'first_difference': first,
               'checks': checks, 'self_test': self_test, 'scope': case['contract'],
               'hardware_mutation': hardware_mutation,
               'initial_source_update': captured['initial_source_update'],
@@ -295,7 +319,7 @@ def generation_sequence(case, contract, self_test):
     return 0 if first is None else 1
 
 
-def main():
+def run_cli():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement',
                         'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'), default='p1-title')
@@ -312,6 +336,21 @@ def main():
         return player_placement(case, contract, args.self_test)
     if args.case in ('p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'):
         return generation_sequence(case, contract, args.self_test)
+
+
+def main():
+    from evidence import tracked_call
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--case', default='p1-title')
+    args, _ = parser.parse_known_args()
+    if args.case == 'p1-title':
+        return run_cli()
+    if args.case not in ('p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'):
+        return run_cli()
+    path = ROOT / f'build/tests/{args.case}-report.json'
+    return tracked_call([path], 'presentation', 'maintained-native', 'captured presentation phase',
+                        'scripts/run_presentation_tests.py', args.case, run_cli,
+                        lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])
 
 
 if __name__ == '__main__':
