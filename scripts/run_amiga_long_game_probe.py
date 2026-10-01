@@ -96,7 +96,7 @@ def main():
     constrained, audio_checks, audio_events = make_refresh_fixture(
         source, Path(config["inputs"]["cartridge"]).read_bytes())
     replay = OUT / "replay-game"
-    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-DLONG_GAME_REPLAY=1", "-DLIVE_PHASE_START=1",
+    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", "-DLONG_GAME_REPLAY=1", "-DLIVE_PHASE_START=1", "-DCOPPERLINE_LOG=1",
          "-o", str(replay), "amiga/gameplay_integration_probe.s"])
     png = OUT / "after-game-award.png"
     gif = OUT / "game-award.gif"

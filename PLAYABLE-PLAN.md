@@ -1,3 +1,4 @@
+<!-- CT10 repair checkpoint: all six affected guards and final accepted-target checks pass with current machine evidence; exact-head independent source/runtime review and merge authorization remain pending. Primary media/upper checkpoint unchanged; separate original generation4131 raster supplement verified. See newest WORKLOG and analysis/native-delivery-review-regressions.md. -->
 # Playable native A500 implementation queue
 
 ## Decision and scope
@@ -20,7 +21,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 is active; CT-09–CT-10 remain queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 and CT-09 are verified and merged; CT-10 is active with final delivery gates still open.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -193,7 +194,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-09 — Verify uninterrupted native cadence and complete play
 
-**Status:** active; bounded acceptance passed, ready for independent exact-head review, unmerged. Current uninterrupted native-entropy runs complete 11,890/23,837 updates through full match/restart, with actual 9,753/19,689 Copper-bank publications verified and unchanged clock bounds. Full maintained recorded-entropy replays match 13,378/27,037 updates. Four physical edges, affected display guards and actual delayed stale-bank control pass. Peak occupied chip allocation is 329,136 bytes from CIA timer start onward in both modes; pre-timer/cold-boot peak unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
+**Status:** verified and merged in [PR10](https://github.com/rmtew/ctennis/pull/10), master `41b9e16`, after parent exact-head clearance of `328ca34`. Current uninterrupted native-entropy runs complete 11,890/23,837 updates through full match/restart, with actual 9,753/19,689 Copper-bank publications verified and unchanged clock bounds. Full maintained recorded-entropy replays match 13,378/27,037 updates. Four physical edges, affected display guards and actual delayed stale-bank control pass. Peak occupied chip allocation is 329,136 bytes from CIA timer start onward in both modes; pre-timer/cold-boot peak unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
 
 **Verified existing evidence:** CIA-B timing targets 59.922738 Hz; prior long replay and ordinary prefix measured no visible-line Copper commits. **Open verification, not a newly diagnosed defect:** normal execution across all regimes, input latency and complete matches has not passed the final acceptance gate.
 
@@ -207,9 +208,9 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-10 — Remove residual scaffolding and deliver the bootable ADF
 
-**Status:** queued. **Dependencies:** CT-09.
+**Status:** local delivery acceptance ready; independent exact-head runtime review pending in [draft PR11](https://github.com/rmtew/ctennis/pull/11), source `be7dda6` (native game code unchanged from `c828126`). User-approved Copperline target; no second emulator requirement. Diagnostic logging repair passes all three affected probes, ordinary executable/ADF unchanged. Nine required accepted-target commands freshly pass after the common-helper change; machine progress evidences CT10 within that scope. Aggregate remains failed with [exact attribution](analysis/native-delivery-aggregate.md), including unresolved local diagnostic observations. Private Library upload is blocked before preparation by helper proxy CONNECT403; no Library IDs. Pre-pool RAM usage remains unmeasured. No merge/final independent review claim. **Dependencies:** CT-09.
 
-**Verified blocker:** current product includes generated routines, virtual source memory and source snapshots; the reviewed tracked tree has no finished native build/ADF packaging recipe. **Unknown until execution:** final memory/boot-path costs and independent-emulator/hardware behaviour.
+**Resolved native dependency:** the ordinary product now uses subsystem-owned native state and clocks, with generated routines/register macros/source memory and snapshots excluded. Explicit private asset preparation and isolated native assembly/ADF packaging are implemented. Remaining verification is current Copperline acceptance and independent exact-head code/runtime review; pre-pool bootstrap RAM usage is unmeasured.
 
 **Targets:** maintained build entry, all product includes from [current executable](amiga/gameplay_integration_probe.s), [setup script](scripts/setup-emulators.ps1), README; proposed reproducible executable/ADF build and boot files.
 
@@ -217,7 +218,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 **Observable acceptance:** clean reproducible build yields the native executable and ADF; product logic builds without the translation generator (asset preparation can remain a separate explicit local step). ADF cold-boots on the exact 512 KB profile, accepts real controls, plays a complete match and restarts with sound. Direct executable and disk boot have equivalent behaviour. Architecture review finds no residual runtime source-machine compatibility layer.
 
-**Lightweight validation:** record pinned tool versions, commands, executable/ADF hashes, memory footprint and profile. Cold-boot the ADF itself, not only direct-launch its executable. Run affected regression guardrails and one complete aggregate report at this delivery milestone, classifying translator-only diagnostics separately without relabelling failures. Verify in an independent emulator/real A500 under the roadmap. If unavailable, deliver the available build/evidence but leave CT-10 blocked with the exact missing verification; that final gate remains unverified. Deliver source/build instructions, ADF, evidence and a concise limitations list. Do not claim Phase 4/5 complete while their checks remain unverified.
+**Lightweight validation:** record pinned tool versions, commands, executable/ADF hashes, memory footprint and profile. Cold-boot the ADF itself, not only direct-launch its executable. Run affected regression guardrails and one complete aggregate report at this delivery milestone, classifying translator-only diagnostics separately without relabelling failures. Copperline validation is sufficient under the user-approved scope of 2026-10-01 20:00 UTC. Preserve independent exact-head code/runtime review; do not claim another emulator/real hardware was verified. Deliver source/build instructions, ADF, evidence and a concise limitations list. Do not claim Phase 4/5 complete while their checks remain unverified.
 
 ## Deliberate deferrals and stopping rules
 

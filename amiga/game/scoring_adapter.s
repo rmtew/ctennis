@@ -1,13 +1,11 @@
-; Temporary ABI for gameplay/presentation/audio that have not yet retired the
-; byte page. Points, games, mode and scoring stage persist in native state.
+; Native scoring packet. Shared score cells alias scorer-owned state; gameplay
+; outcomes/poses are sampled and resolved before the native player update.
 game_score_tick:
         movem.l d0-d7/a0-a4,-(sp)
         lea     game_score_state,a4
         tst.b   game_score_initialized
         bne.s   .sample
-        lea     score_initial_fields,a0
-        bsr     score_import_fields
-        move.b  $3c(a5),d0
+        move.b  game_score_flags,d0
         move.b  d0,d1
         andi.b  #7,d0
         move.b  d0,S_AI(a4)
@@ -36,8 +34,6 @@ game_score_tick:
         bsr     game_audio_cue_complete
         move.b  d0,S_AUDIO_COMPLETE(a4)
         bsr     game_score_resolve
-        lea     score_initial_fields,a0
-        bsr     score_export_fields
         lea     score_sample_fields,a0
         bsr     score_export_fields
         moveq   #0,d0
@@ -45,7 +41,7 @@ game_score_tick:
         lea     score_stage_flags,a0
         move.b  (a0,d0.w),d0
         or.b    S_AI(a4),d0
-        move.b  d0,$3c(a5)
+        move.b  d0,game_score_flags
         btst    #S_EVENT_POSITIONS,S_EVENT(a4)
         beq.s   .sound
         bsr     game_scene_build_players
@@ -62,11 +58,12 @@ score_import_fields:
         moveq   #0,d0
         moveq   #0,d1
 .next:
-        move.b  (a0)+,d0
-        cmpi.b  #255,d0
+        move.l  (a0)+,d0
+        tst.l   d0
         beq.s   .done
-        move.b  (a0)+,d1
-        move.b  (a5,d0.w),(a4,d1.w)
+        move.w  (a0)+,d1
+        move.l  d0,a1
+        move.b  (a1),(a4,d1.w)
         bra.s   .next
 .done:
         rts
@@ -74,23 +71,45 @@ score_export_fields:
         moveq   #0,d0
         moveq   #0,d1
 .next:
-        move.b  (a0)+,d0
-        cmpi.b  #255,d0
+        move.l  (a0)+,d0
+        tst.l   d0
         beq.s   .done
-        move.b  (a0)+,d1
-        move.b  (a4,d1.w),(a5,d0.w)
+        move.w  (a0)+,d1
+        move.l  d0,a1
+        move.b  (a4,d1.w),(a1)
         bra.s   .next
 .done:
         rts
 score_stage_flags: dc.b 0,$40,$20,$10,$80
-score_initial_fields:
-        dc.b $3d,S_MODE,$3e,S_POINTS,$3f,S_POINTS+1
-        dc.b $40,S_GAMES,$41,S_GAMES+1
-        dc.b $77,S_ROUND_GAME_A,$78,S_ROUND_GAME_B,255
+        even
 score_sample_fields:
-        dc.b $39,S_OUTCOME,$42,S_DISPLAY,$6c,S_TIMER
-        dc.b $43,S_LOWER_ANIMATION,$44,S_UPPER_ANIMATION,$38,S_FLIGHT
-        dc.b $3a,S_LOWER_PHASE,$3b,S_UPPER_PHASE
-        dc.b $49,S_LOWER_Y,$4a,S_LOWER_X,$45,S_UPPER_Y,$46,S_UPPER_X
-        dc.b $4b,S_LOWER_IMAGE,$47,S_UPPER_IMAGE,255
+        dc.l game_contact
+        dc.w S_OUTCOME
+        dc.l game_display
+        dc.w S_DISPLAY
+        dc.l game_serve_clock
+        dc.w S_TIMER
+        dc.l game_lower_animation
+        dc.w S_LOWER_ANIMATION
+        dc.l game_upper_animation
+        dc.w S_UPPER_ANIMATION
+        dc.l game_flight
+        dc.w S_FLIGHT
+        dc.l game_lower_phase
+        dc.w S_LOWER_PHASE
+        dc.l game_upper_phase
+        dc.w S_UPPER_PHASE
+        dc.l game_lower_y
+        dc.w S_LOWER_Y
+        dc.l game_lower_x
+        dc.w S_LOWER_X
+        dc.l game_upper_y
+        dc.w S_UPPER_Y
+        dc.l game_upper_x
+        dc.w S_UPPER_X
+        dc.l game_lower_image
+        dc.w S_LOWER_IMAGE
+        dc.l game_upper_image
+        dc.w S_UPPER_IMAGE
+        dc.l 0
         even

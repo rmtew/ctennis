@@ -340,5 +340,59 @@ class ListingAssetTests(unittest.TestCase):
             self.assertIn(str(asset), changed(compiled['files']))
 
 
+class DeliveryGateTests(unittest.TestCase):
+    def test_each_review_regression_receipt_blocks_actual_ct10_progress(self):
+        # All other gates/proofs are independently stubbed positive. Exercise
+        # progress() itself: its delivery branch must not overwrite a red guard.
+        import progress as module
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            build = root / 'build/amiga/gameplay-integration/build-report.json'
+            build.parent.mkdir(parents=True)
+            build.write_text(json.dumps({'compiled_symbols': [], 'executable_sha256': 'exe'}))
+            package = root / 'build/amiga/ctennis-delivery/package-report.json'
+            package.parent.mkdir(parents=True)
+            package.write_text(json.dumps({'embedded_executable_verified': True,
+                'executable_sha256': 'exe', 'adf_sha256': 'disk', 'reproducibility': {
+                    'two_clean_builds': True, 'first_adf_sha256': 'disk', 'second_adf_sha256': 'disk'}}))
+            gates = {name: module.GATES[name] for name in ('CT-02', 'CT-09', 'CT-10')}
+            reports = root / 'reports'; reports.mkdir()
+            payload = {'memory': {'peak_chip_bytes': 100, 'cold_boot_peak': 100,
+                'cold_boot_peak_scope': 'synthetic initialized pool'}, 'passed': True,
+                'normal_executable_sha256': 'exe', 'detected_failure': {
+                    'field': 'published Copper bank', 'generation': 200,
+                    'expected_pointer': 1, 'actual_pointer': 2}}
+            for name in set(n for names in gates.values() for n in names):
+                (reports / f'{name}.json').write_text(json.dumps(payload))
+                recipe = root / f'tests/cases/{name}.json'
+                recipe.parent.mkdir(parents=True, exist_ok=True)
+                recipe.write_text('{}')
+            states = {}
+            def receipt(path, *args, **kwargs):
+                name = Path(path).stem
+                kind = 'physical' if name == 'ct09-input-timing-edges' else 'ordinary-cadence'
+                return {'status': states.get(name, 'passed'), 'startup': 'ordinary title', 'kind': kind}
+            with ExitStack() as stack:
+                for name, value in [('ROOT', root), ('GATES', gates), ('status', receipt),
+                    ('report_path', lambda name: reports / f'{name}.json'),
+                    ('cadence_proof', lambda *args: True), ('timing_edge_proof', lambda *args: True),
+                    ('ordinary_audio_proof', lambda *args: True),
+                    ('presentation_proof', lambda *args: True),
+                    ('status_lifecycle_proof', lambda *args: True)]:
+                    stack.enter_context(patch.object(module, name, value))
+                capability = lambda: module.progress()['behavior']['capabilities']['CT-10']
+                self.assertEqual(capability()['acceptance'], 'evidenced within stated scope')
+                guards = ['p1-moving-prefix', 'p1-upper-serve'] + [f'p1-status-{n}-lifecycle' for n in range(2, 6)]
+                for guard in guards:
+                    for state in ('failed', 'stale', 'not run', 'interrupted'):
+                        with self.subTest(guard=guard, state=state):
+                            states[guard] = state
+                            actual = capability()
+                            self.assertEqual(actual['acceptance'], 'unverified')
+                            self.assertIn(f'{guard} required delivery guard is {state}', actual['limitations'])
+                            states.clear()
+
+
 if __name__ == '__main__':
     unittest.main()

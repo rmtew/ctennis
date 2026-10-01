@@ -19,17 +19,24 @@ game_menu_tick:
         moveq   #1,d0
 game_latch_choice:
         move.b  d0,game_selected_mode
-        bsr     legacy_new_match
+        bsr     game_new_match
         tst.b   game_restart_context
-        beq.s   game_choice_ready
+        bne.s   game_restart_choice
+        ; First preparation must already carry the physical mode selection.
+        ; Do not consume the pending gameplay display event before its tick.
+        move.b  game_selected_mode,d0
+        addq.b  #1,d0
+        move.b  d0,field_values+5
+        bra.s   game_choice_ready
+game_restart_choice:
         ifd NATIVE_CONTROLS
         bsr     game_latch_old_actions
         endif
-        clr.b   $3a(a5)
-        clr.b   $3b(a5)
-        clr.b   $3c(a5)
-        clr.b   $42(a5)
-        clr.b   $6c(a5)
+        clr.b   game_lower_phase
+        clr.b   game_upper_phase
+        clr.b   game_score_flags
+        clr.b   game_display
+        clr.b   game_serve_clock
 game_choice_ready:
         addq.w  #1,game_accept_count
         move.w  #GAME_SELECTION_HELD,game_lifecycle
@@ -38,7 +45,7 @@ game_choice_ready:
 game_wait_release:
         tst.b   game_restart_context
         beq.s   game_first_release
-        cmpi.b  #$40,$6c(a5)
+        cmpi.b  #$40,game_serve_clock
         bcs.s   game_menu_return
         bra.s   game_check_release
 game_first_release:

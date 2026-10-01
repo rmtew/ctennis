@@ -13,22 +13,18 @@ python scripts/check_source_ball_update.py
 
 The first command writes ignored `build/analysis/champion-tennis-classified.asm`, assembles it, and requires an exact 8,192-byte match. [Whole-ROM review](analysis/static-rom-review.md), [annotation audit](analysis/annotation-audit.md), and [frame-update contract](analysis/frame-update-contract.md) explain the current interpretation and its limits. The Python source model in `scripts/` is a checking aid. [The original evidence map](analysis/rom-map.md) and [archived worklog](analysis/history/WORKLOG-pre-port-cleanup-2026-09-29.md) retain the investigation history.
 
-Current work follows the finite [playable native implementation queue](PLAYABLE-PLAN.md)
-and [agent instructions](AGENTS.md). CT-01 provides the shared maintained native
-dispatcher in `amiga/game/` and `python scripts/build_native_game.py`; the default
-serve replay exercises that dispatcher. CT-02 adds ordinary native title boot,
-Delete/Tab mode selection and runtime match initialization. CT-03 adds native
-two-pad controls and stable player ownership across court ends. CT-04 replaces
-serve, contact, ball flight, movement and AI with maintained native 68000 logic
-and fixes resumed-launch arithmetic. Focused product replays cover both-end
-serves, a six-return rally and point ownership, movement limits and shot choice;
-they do not establish continuous rounds or complete matches. Temporary
-score/lifecycle, sprite/VDP and sound adapters remain CT-05–CT-08 debt. Next
-complete rounds, results, native graphics/sound, ordinary full-play verification
-and a bootable ADF. See [CT-04 evidence](analysis/native-gameplay-regression.md).
-Completing an exhaustive test suite is not a prerequisite to fixing the game.
-Reuse existing original-backed checks; add one only for a concrete fix or
-demonstrated behavioural gap.
+Current work follows the finite [playable native queue](PLAYABLE-PLAN.md).
+CT01–CT09 are merged: maintained gameplay, scoring/rounds, result/restart,
+physical controls, native graphics/sound and bounded ordinary cadence are in
+place. CT10 removes the final generated clock/state integration and packages
+the private native executable as a bootable ADF. Copperline is the user-approved sufficient validation target; exact-head
+independent review and current delivery receipts remain required. Pre-Exec-pool
+transient RAM usage is unmeasured.
+See [delivery instructions](analysis/native-delivery.md) and [WORKLOG](WORKLOG.md).
+Source-format captured replays are test-only observations/initialization;
+ordinary assembly consumes prepared native assets and vasm, without translation
+regeneration, source virtual memory or emulator debug calls. No cartridge is
+required at runtime. This is not a whole-game pixel/waveform/raw parity claim.
 
 The [test commands](tests/README.md), [manifest review](analysis/test-manifest-review.md)
 and [coverage backlog](tests/coverage-backlog.json) retain their evidence and

@@ -56,7 +56,7 @@ def mutation(kind, case, reset_generation=None):
                    'round_mutation_field_done:\n        bsr     patch_score_pointers')
         elif kind == 'state':
             old = 'game_observe_pre_tail:\n        rts'
-            new = 'game_observe_pre_tail:\n        cmpi.w  #1334,simulation_updates\n        bne.s   round_mutation_state_done\n        eori.b  #1,$7c(a5)\nround_mutation_state_done:\n        rts'
+            new = 'game_observe_pre_tail:\n        cmpi.w  #1334,simulation_updates\n        bne.s   round_mutation_state_done\n        eori.b  #1,game_lower_x\nround_mutation_state_done:\n        rts'
         else:
             old = 'simulation_service_observed:'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_entropy_done\n        movem.l d0-d1/a0,-(sp)\n        bsr     read_refresh_adapter\n        movem.l (sp)+,d0-d1/a0\nround_mutation_entropy_done:'
@@ -149,8 +149,8 @@ def run(case, self_test):
                 raise AssertionError('Actual late fault escaped semantic acceptance')
             if kind == 'state':
                 fault = comparison['first_difference']
-                if fault.get('ram_offset') != 0x7c or fault['update'] != case['completed_callbacks'][1]:
-                    raise AssertionError('Retained native state mutation escaped its exact callback')
+                if fault.get('ram_offset') != 0x4a or fault['update'] != case['completed_callbacks'][1]:
+                    raise AssertionError('Actual native player-position mutation escaped its exact callback')
                 if observed['states'][:case['completed_callbacks'][1] - case['initial_source_update'] - 1] != baseline['states'][:case['completed_callbacks'][1] - case['initial_source_update'] - 1]:
                     raise AssertionError('Retained state fault changed earlier observations')
             elif kind == 'entropy':

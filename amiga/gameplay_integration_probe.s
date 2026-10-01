@@ -17,12 +17,18 @@ DOUBLE_BUFFER_DISPLAY equ 1
 ; (nearest 16.16 value = 775830074) rather than rounding every update down.
 SIM_INTERVAL_WHOLE equ 11838
 SIM_INTERVAL_FRACTION equ 14906
-        include "build/translation/player-frame-symbols.i"
-        include "amiga/translated_z80_macros.i"
 
 start:
-        lea     virtual_memory,a6
-        lea     virtual_memory+$c000,a5
+        ; DOS enters on its task stack. Finish all OS scheduling calls there,
+        ; then own the machine and use a bounded application stack forever.
+        move.l  sp,dos_entry_sp
+        move.l  4.w,a6
+        jsr     -132(a6) ; Exec Forbid
+        jsr     -120(a6) ; Exec Disable
+        lea     game_stack_top,sp
+        ifd LIVE_PHASE_START
+        lea     captured_state,a5
+        endif
         ifd LIVE_PHASE_START
         bsr     game_begin_active
         lea     initial_ram,a0
@@ -31,6 +37,7 @@ start:
 copy_initial_ram:
         move.b  (a0)+,(a1)+
         dbra    d7,copy_initial_ram
+        bsr     capture_import_state
         bsr     scene_import_capture
         bsr     game_audio_import_capture
         else
@@ -134,7 +141,10 @@ poll_presentation:
         andi.w  #$ff00,d0
         cmpi.w  #$ec00,d0
         bcc.s   presentation_blank
-        cmpi.w  #$2c00,d0
+        ; Sprite POS/CTL DMA starts before the visible bitplane window.
+        ; Publish with one line of margin before its line25 header fetch;
+        ; changing banks later can mix old controls with new sprite pixels.
+        cmpi.w  #$1800,d0
         bcs.s   presentation_blank
         bra     presentation_not_blank
 presentation_blank:
@@ -188,7 +198,9 @@ presentation_log:
         subq.w  #1,log_timer
         bne.s   presentation_poll_done
         move.w  #50,log_timer
+        ifd COPPERLINE_LOG
         bsr     log_state
+        endif
 presentation_poll_done:
         rts
 presentation_not_blank:
@@ -336,7 +348,7 @@ replay_psg_no_log:
 log_replay_transition:
         movem.l d0-d2/a0-a1,-(sp)
         moveq   #0,d2
-        lea     $3e(a5),a0
+        lea     game_point_a,a0
         lea     last_replay_score(pc),a1
         moveq   #3,d1
 replay_compare_score:
@@ -384,7 +396,7 @@ refresh_replay_done:
         move.l  d1,-(sp)
         moveq   #0,d0
         move.b  $bfe401,d0
-        move.b  $72(a5),d1
+        move.b  game_random_seed,d1
         eor.b   d1,d0
         andi.b  #1,d0
         move.l  (sp)+,d1
@@ -525,10 +537,12 @@ prepare_scene_fields:
         adda.l  copper_write_delta,a4
         move.w  d0,(a4)
         dbra    d7,.palette_next
+game_scene_prepared:
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
 log_state:
+        ifd COPPERLINE_LOG
         movem.l d0-d2/a0-a1,-(sp)
         lea     log_frames(pc),a0
         moveq   #0,d0
@@ -544,7 +558,7 @@ log_state:
         bsr     hex_byte
         lea     log_player_x(pc),a0
         moveq   #0,d0
-        move.b  $4a(a5),d0
+        move.b  game_lower_x,d0
         bsr     hex_byte
         lea     log_sprite_x(pc),a0
         moveq   #0,d0
@@ -560,19 +574,19 @@ log_state:
         bsr     hex_byte
         lea     log_ball_y(pc),a0
         moveq   #0,d0
-        move.b  $34(a5),d0
+        move.b  game_court_y,d0
         bsr     hex_byte
         lea     log_ball_x(pc),a0
         moveq   #0,d0
-        move.b  $35(a5),d0
+        move.b  game_court_x,d0
         bsr     hex_byte
         lea     log_lower_phase(pc),a0
         moveq   #0,d0
-        move.b  $49(a5),d0
+        move.b  game_lower_y,d0
         bsr     hex_byte
         lea     log_upper_phase(pc),a0
         moveq   #0,d0
-        move.b  $45(a5),d0
+        move.b  game_upper_y,d0
         bsr     hex_byte
         lea     log_score_b(pc),a0
         moveq   #0,d0
@@ -591,27 +605,27 @@ log_state:
         bsr     hex_byte
         lea     log_point_a(pc),a0
         moveq   #0,d0
-        move.b  $3e(a5),d0
+        move.b  game_point_a,d0
         bsr     hex_byte
         lea     log_point_b(pc),a0
         moveq   #0,d0
-        move.b  $3f(a5),d0
+        move.b  game_point_b,d0
         bsr     hex_byte
         lea     log_games_a(pc),a0
         moveq   #0,d0
-        move.b  $40(a5),d0
+        move.b  game_games_a,d0
         bsr     hex_byte
         lea     log_games_b(pc),a0
         moveq   #0,d0
-        move.b  $41(a5),d0
+        move.b  game_games_b,d0
         bsr     hex_byte
         lea     log_score_flags(pc),a0
         moveq   #0,d0
-        move.b  $42(a5),d0
+        move.b  game_display,d0
         bsr     hex_byte
         lea     log_mode(pc),a0
         moveq   #0,d0
-        move.b  $3d(a5),d0
+        move.b  game_mode,d0
         bsr     hex_byte
         lea     log_display_game_b(pc),a0
         moveq   #0,d0
@@ -645,6 +659,7 @@ log_state:
         jsr     $f0ff60
         addq.l  #8,sp
         movem.l (sp)+,d0-d2/a0-a1
+        endif
         rts
 hex_byte:
         lea     hex_digits(pc),a1
@@ -658,9 +673,12 @@ hex_byte:
         include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
         include "amiga/game/tick.s"
-        include "amiga/game/legacy_adapter.s"
+        include "amiga/game/integration.s"
 
         even
+dos_entry_sp: dc.l 0
+game_stack_bottom: dcb.b 4096,0
+game_stack_top:
 simulation_phase:   dc.l SIM_INTERVAL_WHOLE
 simulation_interval: dc.l SIM_INTERVAL_WHOLE
 simulation_fraction: dc.w 0
@@ -696,9 +714,6 @@ palette_targets:
         dc.l cop_spr_pair1_c1+2,cop_spr_pair1_c2+2
         dc.l cop_spr_pair2_c1+2,cop_spr_pair2_c2+2
         dc.l cop_spr_pair3_c1+2,cop_spr_pair3_c2+2
-sg_sprite_palette:
-        dc.w $000,$000,$2c4,$6d7,$55e,$77f,$000,$000
-        dc.w $000,$f77,$dc5,$000,$000,$c5b,$ccc,$fff
 log_text:          dc.b "LIVE F="
 log_frames:        dc.b "00 U="
 log_updates:       dc.b "00 I="
@@ -749,7 +764,10 @@ pointer_targets:
 initial_ram: incbin "build/translation/live-initial-ram.bin"
         endif
         even
-virtual_memory: incbin "build/translation/player-frame-memory.bin"
+        ifd LIVE_PHASE_START
+captured_state: dcb.b 256,0
+        include "amiga/tests/native_state_projection.s"
+        endif
         even
 game_scene_images: incbin "build/amiga/native-scene/sprite-images.bin"
 

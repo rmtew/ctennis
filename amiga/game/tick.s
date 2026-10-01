@@ -1,6 +1,6 @@
 ; Maintained native lifecycle and source-rate dispatcher, shared by live/replay.
 ; No source PC/callback kind selects this state. CT-05 owns round transitions.
-; Hooks preserve registers; the temporary adapter owns its legacy register ABI.
+; Native state is shared directly; source-format serialization is test-only.
 GAME_SERVICE equ 0
 GAME_PLAYING equ 1
 GAME_TITLE equ 2
@@ -27,10 +27,13 @@ game_source_tick:
         beq     game_selection_tick
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne.s   game_service_tick
-        bsr     legacy_active_tick
+        bsr     game_active_tick
 game_service_tick:
+        ifd NATIVE_SCENE_OBSERVE
+        bsr     capture_export_state
+        endif
         bsr     game_observe_pre_tail
-        bra     legacy_service_tick
+        bra     game_service_tail
 
         even
 game_lifecycle: dc.w GAME_SERVICE
@@ -42,7 +45,7 @@ game_lifecycle: dc.w GAME_SERVICE
 game_returned_title_tick:
         tst.b   game_restart_context
         beq     game_menu_tick
-        bsr     legacy_active_tick
+        bsr     game_active_tick
         bra     game_service_tick
 
 game_selection_tick:

@@ -19,13 +19,21 @@ def earliest(first, difference):
 
 def mutation(kind):
     def alter(text):
+        # Fault the maintained status selector, not the unrelated returned-title
+        # clear in the application wrapper. Keep all product sources untouched.
+        fields = (ROOT / 'amiga/game/scene_fields.s').read_text()
         old = ('        clr.b   field_values+4' if kind == 'retain'
-               else '        cmpi.b  #$ff,status_timer_before')
+               else '        cmpi.b  #255,D_TIMER(a0)')
         new = ('        nop' if kind == 'retain'
-               else '        cmpi.b  #$fe,status_timer_before')
-        if text.count(old) != 1:
+               else '        cmpi.b  #254,D_TIMER(a0)')
+        if fields.count(old) != 1:
             raise ValueError('Status expiry instruction changed')
-        return text.replace(old, new)
+        integration = (ROOT / 'amiga/game/integration.s').read_text()
+        field_include = '        include "amiga/game/scene_fields.s"'
+        integration_include = '        include "amiga/game/integration.s"'
+        if integration.count(field_include) != 1 or text.count(integration_include) != 1:
+            raise ValueError('Maintained status selector include changed')
+        return text.replace(integration_include, integration.replace(field_include, fields.replace(old, new)))
     return alter
 
 
@@ -136,7 +144,7 @@ def run(case, contract, glyphs, self_test):
                 'executable_sha256': changed['executable_sha256'],
                 'capture_report_path': changed['capture_report_path'],
                 'capture_report_sha256': digest(Path(changed['capture_report_path']))})
-    report = {'case': case['name'], 'passed': checked['first_difference'] is None,
+    report = {'case': case['name'], 'subject': 'maintained-native', 'passed': checked['first_difference'] is None,
         'first_difference': checked['first_difference'], 'checks': checked,
         'reference_proof': proof, 'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
         'capture_report_path': captured['capture_report_path'],
@@ -150,7 +158,7 @@ def run(case, contract, glyphs, self_test):
     return report['passed']
 
 
-def main():
+def run_cli():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=CASES)
     parser.add_argument('--all', action='store_true')
@@ -165,6 +173,21 @@ def main():
         case = json.loads((ROOT / f'tests/cases/{name}.json').read_text())
         passed.append(run(case, contract, glyphs['status'], args.self_test))
     return 0 if all(passed) else 1
+
+
+def main():
+    from evidence import tracked_call
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--case')
+    parser.add_argument('--all', action='store_true')
+    args, _ = parser.parse_known_args()
+    if args.all == bool(args.case) or args.case and args.case not in CASES:
+        return run_cli()
+    names = (args.case,) if args.case else CASES
+    paths = [ROOT / f'build/tests/{name}-report.json' for name in names]
+    return tracked_call(paths, 'presentation', 'maintained-native', 'captured status lifecycle phase',
+                        'scripts/run_status_tests.py', args.case or list(names), run_cli,
+                        lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])
 
 
 if __name__ == '__main__':

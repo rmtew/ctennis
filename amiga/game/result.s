@@ -24,13 +24,13 @@ game_result_poll:
 ; Clear match ownership, points, games, old actions and audio using the same
 ; initialization as CT02. Returned title waits through its own display epoch.
         moveq   #0,d0
-        bsr     legacy_new_match
-        clr.b   $3a(a5)
-        clr.b   $3b(a5)
-        clr.b   $3c(a5)
-        clr.b   $3d(a5)
-        clr.b   $42(a5)
-        clr.b   $6c(a5)
+        bsr     game_new_match
+        clr.b   game_lower_phase
+        clr.b   game_upper_phase
+        clr.b   game_score_flags
+        clr.b   game_mode
+        clr.b   game_display
+        clr.b   game_serve_clock
         bsr     game_show_returned_title
         ifd NATIVE_SCENE_OBSERVE
         move.b  #$83,$02(a5)
@@ -39,15 +39,15 @@ game_result_poll:
         move.w  #GAME_TITLE_TRANSITION,game_lifecycle
         bra     game_round_done
 .title_wait:
-        cmpi.b  #$ff,$6c(a5)
+        cmpi.b  #$ff,game_serve_clock
         bne     game_round_done
         bsr     game_show_returned_court
-        move.b  #4,$3d(a5)
-        move.b  #$83,$3c(a5)
+        move.b  #4,game_mode
+        move.b  #$83,game_score_flags
         ifd NATIVE_SCENE_OBSERVE
         move.b  #$81,$02(a5)
         endif
-        move.b  #$20,$42(a5)
+        move.b  #$20,game_display
         bsr     game_render_sprites
         bsr     game_result_redraw
         bsr     game_audio_request_cue
@@ -64,12 +64,12 @@ game_result_poll:
         bsr     game_pair_sound_complete
         tst.b   d0
         beq     game_round_done
-        move.b  #$80,$3c(a5)
+        move.b  #$80,game_score_flags
         tst.b   game_selected_mode
         bne.s   .mode
-        move.b  #$81,$3c(a5)
+        move.b  #$81,game_score_flags
 .mode:
-        move.b  #$20,$42(a5)
+        move.b  #$20,game_display
         bsr     game_result_redraw
         bsr     game_audio_request_cue
         move.w  #GAME_RESTART_SERVE_SOUND,game_lifecycle

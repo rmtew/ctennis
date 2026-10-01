@@ -1,3 +1,4 @@
+from native_state_observation import read_native_state
 """Four CT09 physical edges; paused boundary probes are separate from cadence."""
 import json
 import re
@@ -32,7 +33,7 @@ def run():
                 def mem(name, n):
                     return bytes.fromhex(s.inspect('mem_read', {'addr':base+symbols[name],'len':n})['data'])
                 def snapshot():
-                    ram = bytes.fromhex(s.inspect('mem_read', {'addr':base+symbols['virtual_memory']+0xc000,'len':256})['data'])
+                    ram = read_native_state(s,base,symbols)
                     return {'ram':ram.hex(), 'lower_x':ram[0x4a], 'lower_phase':ram[0x3a],
                             'tick':ram[0x6b], 'raw':mem('game_input_bits',2).hex(),
                             'started':int.from_bytes(mem('simulation_started_updates',2),'big'),

@@ -112,7 +112,10 @@ class NativeControlSession:
             self.log = self.directory / 'emulator.log'
             self.output = self.log.open('w')
             command = [arguments['binary'], '--control', '127.0.0.1:0', '--control-info', str(info),
-                       '--factory', '--model', 'A500', '--run', arguments['run'], *arguments['args']]
+                       '--factory', '--model', 'A500']
+            if arguments.get('run'):
+                command += ['--run',arguments['run']]
+            command += arguments['args']
             self.process = subprocess.Popen(command, stdout=self.output, stderr=self.output)
             deadline = time.monotonic() + 30
             while not info.exists():

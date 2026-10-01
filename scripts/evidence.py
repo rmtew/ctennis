@@ -175,6 +175,24 @@ def tool_info():
 
 
 def inputs_for(kind, runner, case=None):
+    if kind in ('build','native-package'):
+        # Ordinary assembly consumes only native sources, the assembler and
+        # explicit prepared assets. Original-machine tools/ROMs/emulator are
+        # test/asset preparation dependencies, not build requirements.
+        paths = {ROOT/runner, ROOT/'scripts/native_tools.py',ROOT/'scripts/evidence.py',
+                 Path(sys.executable),ROOT/'.tools/vasm/vasmm68k_mot.exe'}
+        paths |= assembly_inputs(ROOT/'amiga/gameplay_integration_probe.s')
+        paths.add(ROOT/'scripts/build_native_game.py')
+        if kind=='native-package':
+            paths.update((ROOT/'.tools/python').rglob('*.py'))
+            paths.update((ROOT/'.tools/python').glob('amitools-*.dist-info/METADATA'))
+        tools={}
+        for name,path,flags in [('python',Path(sys.executable),['--version']),
+                                ('vasm',ROOT/'.tools/vasm/vasmm68k_mot.exe',[])]:
+            result=subprocess.run([str(path),*flags],capture_output=True,text=True,timeout=10)
+            version=next(line for line in (result.stdout+result.stderr).splitlines() if name.lower() in line.lower())
+            tools[name]={'path':key(path),'version':version}
+        return paths,tools
     paths = python_inputs(ROOT / runner) | {ROOT / 'scripts/evidence.py', ROOT / 'config.local.ini'}
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini')
@@ -210,6 +228,9 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(ROOT / 'tests/cases/physical-input.json')
             if '--ownership' in sys.argv:
                 paths.update(ROOT / 'build/reference/control-ownership' / n for n in ('reference.json','a.tsv','b.tsv'))
+    if kind == 'native-package':
+        paths.update((ROOT/'.tools/python').rglob('*.py'))
+        paths.update((ROOT/'.tools/python').glob('amitools-*.dist-info/METADATA'))
     if kind in ('presentation', 'round-scenes', 'result-scenes'):
         recipe = json.loads((ROOT / f'tests/cases/{case}.json').read_text())
         if recipe.get('initial_phase_reference'):
@@ -217,6 +238,10 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(ROOT / f'tests/cases/{phase.stem}.json')
         paths.add(ROOT / 'tests/cases/presentation.json')
         directories = {'tests/reference/presentation', *recipe.get('reference_directories', {}).values()}
+        if kind == 'presentation' and case == 'p1-upper-serve':
+            supplement = ROOT / 'tests/cases/presentation-upper-serve-generation-4131.json'
+            paths.add(supplement)
+            directories.add(json.loads(supplement.read_text())['reference_directory'])
         for directory in directories:
             paths |= reference_inputs(ROOT / directory / 'manifest.json')
             # Primary media has its own declared children (original matches).
@@ -317,7 +342,7 @@ class ReportRun:
         files.update(snapshot(artifacts))
         meta['files'] = files
         meta['compiled_executables'] = {m['executable']: m['executable_sha256'] for m in compiled}
-        if self.meta['kind'] == 'build':
+        if self.meta['kind'] in ('build','phase-build'):
             report = dict(report, compiled_symbols=[s for m in compiled for s in m['symbols']])
         meta['changed_during_run'] = changed(files)
         report = dict(report, evidence=meta)
@@ -412,7 +437,7 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
         for path in transaction.reports:
             report = json.loads(path.read_text())
             artifacts = []
-            for name in ('capture', 'screenshot', 'gif', 'audio_wav', 'scored_screenshot'):
+            for name in ('capture', 'screenshot', 'gif', 'audio_wav', 'scored_screenshot','adf','startup_sequence'):
                 value = report.get(name)
                 if isinstance(value, str):
                     artifacts.append(ROOT / value)
@@ -460,7 +485,7 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
             transaction.meta['runner'] = runner
             if len(manifests) == 1:
                 report.setdefault('executable_sha256', manifests[0]['executable_sha256'])
-            if kind == 'build':
+            if kind in ('build','phase-build'):
                 report['passed'] = True
             transaction.finalize(path, report, manifests, artifacts)
         return result

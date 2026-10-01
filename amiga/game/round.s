@@ -30,7 +30,9 @@ game_round_poll:
         btst    #6,S_MODE(a4)
         bne     game_result_begin
         move.w  #GAME_ROUND_PAUSE,game_lifecycle
+        ifd NATIVE_SCENE_OBSERVE
         move.b  #$81,$02(a5)
+        endif
         move.b  S_MODE(a4),d0
         andi.b  #$d7,d0
         move.b  d0,d1
@@ -44,26 +46,26 @@ game_round_poll:
 .mode:
         or.b    d1,d0
         move.b  d0,S_MODE(a4)
-        move.b  d0,$3d(a5)
-        move.b  #$f4,$4c(a5)
-        move.b  #$fd,$48(a5)
+        move.b  d0,game_mode
+        move.b  #$f4,game_lower_colour
+        move.b  #$fd,game_upper_colour
         btst    #4,d0
         beq.s   .players
-        move.b  #$fd,$4c(a5)
-        move.b  #$f4,$48(a5)
+        move.b  #$fd,game_lower_colour
+        move.b  #$f4,game_upper_colour
 .players:
-        move.b  #152,$49(a5)
-        move.b  #192,$4a(a5)
-        move.b  #8,$45(a5)
-        move.b  #88,$46(a5)
-        move.b  #7,$4b(a5)
-        clr.b   $47(a5)
+        move.b  #152,game_lower_y
+        move.b  #192,game_lower_x
+        move.b  #8,game_upper_y
+        move.b  #88,game_upper_x
+        move.b  #7,game_lower_image
+        clr.b   game_upper_image
         bsr     game_scene_build_players
         bsr     game_render_sprites
-        clr.b   $6c(a5)
+        clr.b   game_serve_clock
         bra     game_round_done
 .pause:
-        cmpi.b  #$80,$6c(a5)
+        cmpi.b  #$80,game_serve_clock
         bcs     game_round_done
         moveq   #0,d0
         move.b  S_MODE(a4),d0
@@ -77,9 +79,9 @@ game_round_poll:
 .controls:
         move.b  d1,S_AI(a4)
         ori.b   #$80,d1
-        move.b  d1,$3c(a5)
+        move.b  d1,game_score_flags
         move.b  #S_WAIT_SOUND,S_STAGE(a4)
-        move.b  #$20,$42(a5)
+        move.b  #$20,game_display
         bsr     game_scene_redraw_fields
         bsr     game_audio_request_cue
         move.w  #GAME_ROUND_SOUND,game_lifecycle

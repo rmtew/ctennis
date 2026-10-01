@@ -6,6 +6,8 @@ import re
 import shutil
 from run_translated_prng_probe import ASSEMBLER, run as assemble
 
+from native_state_observation import field_addresses, read_native_state
+from native_hunk import loaded_hunks
 from build_native_game import build
 from capture_native_presentation import code_symbols
 from copperline_test_session import NativeControlSession
@@ -46,7 +48,7 @@ def clock_contract():
             'interval_rounding_error_eclock': '<= N/(2*65536)',
             'rules': {'entry': 'not before source deadline minus quantization; before next deadline',
                       'completion': 'before next deadline',
-                      'publication': 'physical beam outside visible rows 44..235; latest completed prepared epoch',
+                      'publication': 'court bank before PAL sprite DMA line25 or late blank >=236; latest completed prepared epoch',
                       'telemetry': 'zero missing, duplicate or dropped events',
                       'memory': 'validated Exec chip free list; continuously observe topology/free mutations',
                       'entropy': 'ordinary native timer; no captured-phase or recorded entropy initialization'}}
@@ -85,9 +87,10 @@ def chip_memory(read):
             'used_chip_bytes': CHIP_BYTES-sum(r['free'] for r in regions)}
 
 
-def run(mode, bank_control=False):
+def run(mode, bank_control=False, boot_adf=None):
     config, ordinary = build()
-    name = 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
+    adf_sha=__import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest() if boot_adf else None
+    name = f'ct10-adf-{mode}-cadence' if boot_adf else 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe, listing = directory/'native-application', directory/'native.lst'
@@ -123,14 +126,71 @@ def run(mode, bank_control=False):
     state.update(title=0, prepared=None, bank_fault_pause=False)
     restarted = 'two' if mode == 'one' else 'one'
     with NativeControlSession(directory) as s, (directory/'events.jsonl').open('w') as raw:
-        s.inspect('session_launch', {'binary': config['tools']['copperline'], 'run': str(exe),
-            'args': ['--chipset', 'OCS', '--video', 'PAL', '--cpu', '68000', '--chip', '512K',
-                     '--slow', '0', '--fast', '0', '--noaudio', '--audio-wav',
-                     str(directory/'native.wav'), '--record-input', str(directory/'inputs.record'),
-                     config['inputs']['amiga_rom']]})
-        stop = s.inspect('run_until', {'seconds': 30})
-        if stop['reason'] != 'loadseg':
-            raise RuntimeError(stop)
+        args=['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K',
+              '--slow','0','--fast','0','--noaudio','--audio-wav',str(directory/'native.wav'),
+              '--record-input',str(directory/'inputs.record'),config['inputs']['amiga_rom']]
+        launch={'binary':config['tools']['copperline'],'args':args}
+        boot_samples=[]
+        boot_allocations=[]
+        boot_calibration=None
+        if boot_adf:
+            args += ['--floppy-drives','1','--floppy-speed','100']
+        else:
+            launch['run']=str(exe)
+        s.inspect('session_launch',launch)
+        if boot_adf:
+            s.inspect('media.floppy.insert',{'drive':0,'path':str(boot_adf),'write_protected':True})
+            catch=s.inspect('break.add',{'kind':'loadseg','name':'ctennis'})
+            calibrated_stop=s.inspect('run_until',{'seconds':120})
+            if calibrated_stop['reason']!='loadseg':raise RuntimeError('ADF calibration did not load product')
+            def boot_read(a,n):return bytes.fromhex(s.inspect('mem_read',{'addr':a,'len':n})['data'])
+            boot_calibration=chip_memory(boot_read)
+            s.inspect('break.remove',{'id':catch['id']})
+            s.inspect('machine.reset',{'kind':'cold'})
+            headers={r['header']:bytearray(32) for r in boot_calibration['regions']}
+            free_counts={}
+            def boot_event(message, log=True):
+                if log:raw.write(json.dumps(message)+'\n')
+                if message.get('method')!='event.mmio':return
+                row=message['params'];a,v,n=row['addr'],row['value'],row['size']
+                if row.get('dropped_events',0) or row.get('dropped_notifications',0):
+                    failures.append({'field':'boot allocation telemetry drop'})
+                for region in boot_calibration['regions']:
+                    h=region['header']
+                    if h<=a and a+n<=h+32:
+                        headers[h][a-h:a-h+n]=v.to_bytes(n,'big')
+                        data=headers[h]
+                        # Accept a complete low-word store only after the
+                        # actual header's chip pool bounds are initialized.
+                        if (a<=h+30 and a+n>=h+32 and int.from_bytes(data[14:16],'big')&2
+                                and int.from_bytes(data[20:24],'big')==region['lower']
+                                and int.from_bytes(data[24:28],'big')==region['upper']):
+                            free=int.from_bytes(data[28:32],'big')
+                            if free>region['upper']-region['lower']:
+                                failures.append({'field':'invalid boot free-count update'})
+                            free_counts[h]=free
+                            if len(free_counts)==len(headers):
+                                boot_allocations.append({'position':row['position'],'pc':row['pc'],
+                                    'free_counts':dict(free_counts),'used_chip_bytes':CHIP_BYTES-sum(free_counts.values())})
+            s.notification_handler=boot_event
+            s.inspect('events.subscribe',{'events':['mmio'],'mmio':[
+                {'addr':h,'len':32,'access':'write'} for h in headers]})
+            catch=s.inspect('break.add',{'kind':'loadseg','name':'ctennis'})
+            # Read-only samples during boot are lower-bound observations, not
+            # an unobserved transient allocation peak. Play is uninterrupted.
+            for frame in range(1,6000):
+                stop=s.inspect('run_until',{'frame':frame})
+                if stop['reason']=='loadseg':break
+                if stop['reason']!='target':raise RuntimeError(stop)
+                if frame%50==0:
+                    try:
+                        def boot_read(a,n):return bytes.fromhex(s.inspect('mem_read',{'addr':a,'len':n})['data'])
+                        boot_samples.append({'position':stop,'memory':chip_memory(boot_read)})
+                    except ValueError:pass # Exec free list not initialized yet
+            s.inspect('break.remove',{'id':catch['id']})
+        else:
+            stop=s.inspect('run_until',{'seconds':30})
+        if stop['reason']!='loadseg':raise RuntimeError(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
             'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready',
@@ -149,13 +209,25 @@ def run(mode, bank_control=False):
             banks[n]=segments[h]['start']+offset
         pointer_addresses = {n:address[n] for n in pointer_bytes if n!='cop1lc'}
         pointer_addresses['cop1lc']=0xdff080
-        virtual = base+symbols['virtual_memory']+0xc000
+        native_fields=field_addresses(base,symbols)
+        native_offsets={address:offset for offset,address in native_fields.items()}
         def read(a, n):
             return bytes.fromhex(s.inspect('mem_read', {'addr': a, 'len': n})['data'])
+        loaded_checks=loaded_hunks(exe,segments,read)
         initial_memory = chip_memory(read)
+        if boot_adf and [r['header'] for r in initial_memory['regions']]!=list(headers):
+            raise ValueError('Cold-reset memory pool differs from actual calibration')
+
+        entry_stop=s.inspect('run_until',{'pc':base+symbols['start']})
+        entry_regs=s.inspect('regs.get')
+        task=int.from_bytes(read(initial_memory['execbase']+0x114,4),'big')
+        cli=4*int.from_bytes(read(task+0xac,4),'big')
+        entry_stack={'sp':entry_regs['a'][7],'cli_default_bytes':4*int.from_bytes(read(cli+0x34,4),'big'),
+                     'native_lower':base+symbols['game_stack_bottom'],'native_upper':base+symbols['game_stack_top']}
+
         title_initial = read(address['game_title_display'],1)[0]
         state['title']=title_initial
-        ram[:] = read(virtual, 256)
+        ram[:] = read_native_state(s,base,symbols)
         for port in (1, 2):
             s.inspect('input_set_port', {'port': port, 'device': 'joystick'})
         def send(method, params):
@@ -234,6 +306,7 @@ def run(mode, bank_control=False):
                 if 'error' in message: fault('asynchronous control error', error=message['error'])
                 return
             if message.get('method') != 'event.mmio': return
+            if boot_adf:boot_event(message,log=False)
             r = message['params']; a, value, size = r['addr'], r['value'], r['size']
             position = r['position']
             if r.get('dropped_events', 0) or r.get('dropped_notifications', 0): fault('telemetry drop')
@@ -243,8 +316,9 @@ def run(mode, bank_control=False):
             if a==address['game_title_display']:
                 state['title']=value
                 view_selections.append({'title':bool(value),'position':position})
-            if virtual <= a < virtual+256:
-                ram[a-virtual:a-virtual+size] = value.to_bytes(size, 'big')
+            if any(a+i in native_offsets for i in range(size)):
+                for i,v in enumerate(value.to_bytes(size,'big')):
+                    if a+i in native_offsets:ram[native_offsets[a+i]]=v
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
                 controls[a-address['game_input_bits']:a-address['game_input_bits']+size] = value.to_bytes(size, 'big')
             elif a == address['game_lifecycle']:
@@ -296,13 +370,16 @@ def run(mode, bank_control=False):
                                 'title_selected':bool(state['title']),'expected_pointer':expected})
             if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 236:
                 fault('visible-line Copper commit', position=position)
+            if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
+                    and not state['title'] and 25 <= position['vpos'] < 236):
+                fault('court bank publication after sprite header DMA starts', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)
+        if boot_adf:s.inspect('events.unsubscribe')
         s.notification_handler = event
         watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
-                    {'addr': virtual+0x38, 'len': 0x4d-0x38, 'access': 'write'},
-                    {'addr': virtual+0x66, 'len': 1, 'access': 'write'},
+                    *[{'addr':a,'len':1,'access':'write'} for offset,a in native_fields.items() if 0x38<=offset<0x4d or offset==0x66],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
                     {'addr': 0xdff088, 'len': 2, 'access': 'write'},
                     {'addr': 0xbfdf00, 'len': 1, 'access': 'write'},
@@ -351,18 +428,25 @@ def run(mode, bank_control=False):
         if str(row['id']) not in replies: fault('missing asynchronous reply', id=row['id'])
     capture = directory/'measurement.json'
     atomic_json(capture, {'clock_contract': contract, 'clock_origin_cck': origin, 'callbacks': callbacks,
-                         'base': base, 'addresses': address, 'virtual_state': virtual, 'watch_ranges': watches,
+                         'base': base, 'addresses': address, 'native_fields':native_fields, 'watch_ranges': watches,
                          'timer_start_cck': state['start'], 'timer_origin_count': state['origin'],
                          'bank_addresses':banks,'prepared_scenes':preparations,
                          'title_initial':bool(title_initial),'view_selections':view_selections,
-                         'loaded_hunks':segments,
+                         'loaded_hunks':segments,'loaded_executable_checks':loaded_checks,'launch':launch,'entry_stack':entry_stack,'entry_stop':entry_stop,'boot_samples':boot_samples,'boot_allocations':boot_allocations,'boot_calibration':boot_calibration,
                          'pending_final_callback': pending_callback,
                          'commits': commits, 'lifecycle_changes': changes, 'memory_initial': initial_memory,
                          'memory_final': final_memory, 'memory_writes': memory_writes,
                          'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints})
+    if boot_adf:
+        if not boot_allocations or boot_allocations[0]['position']['cck']>=state['start']:
+            fault('cold boot allocator observation absent')
+        elif boot_allocations[-1]['used_chip_bytes']!=final_memory['used_chip_bytes']:
+            fault('cold boot allocator final count differs from actual free list')
+    if boot_adf and __import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest()!=adf_sha:
+        fault('ADF changed during execution')
     report = {'case': name, 'subject': 'maintained-native', 'passed': not failures,
               'first_difference': failures[0] if failures else None, 'differences': failures,
-              'start_mode': mode, 'restart_mode': restarted, 'startup': 'ordinary title',
+              'start_mode': mode, 'restart_mode': restarted, 'startup': 'cold ADF' if boot_adf else 'ordinary title',
               'entropy': 'ordinary native timer', 'uninterrupted': True, 'callback_breakpoints': 0,
               'observed_callbacks': len(callbacks), 'checkpoints': checkpoints,
               'started_callbacks': state['started'], 'pending_final_callback': pending_callback,
@@ -373,9 +457,12 @@ def run(mode, bank_control=False):
                                'actual_pointer_checked':True},
               'memory': {'peak_chip_bytes': final_memory['used_chip_bytes'] if not active_memory_writes else None,
                          'scope': 'CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed',
-                         'continuous_allocation_watch': not active_memory_writes, 'cold_disk_boot': 'unverified'},
+                         'continuous_allocation_watch': not active_memory_writes, 'cold_disk_boot': 'observed' if boot_adf else 'unverified','cold_boot_peak':max((r['used_chip_bytes'] for r in boot_allocations),default=None),
+                         'cold_boot_peak_scope':'first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified'},
               'capture': str(capture.relative_to(ROOT)), 'audio_wav': str((directory/'native.wav').relative_to(ROOT)),
-              'scope': 'Uninterrupted native ordinary lifecycle/cadence; no original full-match/pixel/waveform parity or ADF gate'}
+              'loaded_executable_verified':all(c['matched'] for c in loaded_checks),
+              'adf':str(boot_adf.relative_to(ROOT)) if boot_adf else None,'adf_sha256':adf_sha,
+              'scope': 'Uninterrupted native ordinary lifecycle/cadence; boot samples do not establish cold-boot transient peak; no original full-match/pixel/waveform parity'}
     atomic_json(ROOT/f'build/tests/{name}-report.json', report)
     if bank_control:
         wrong = [f for f in failures if f['field']=='published Copper bank']

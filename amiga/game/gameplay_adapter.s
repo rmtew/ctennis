@@ -1,27 +1,8 @@
-; Temporary CT-04 boundary to score/lifecycle, presentation and audio.
-; Native gameplay has its own named layout. These mappings disappear when the
-; remaining native subsystems replace the legacy byte page (CT-05/07/08).
-legacy_import_gameplay:
-        lea     legacy_game_fields,a0
-        moveq   #0,d0
-        moveq   #0,d1
-.legacy_import_field:
-        move.b  (a0)+,d0
-        cmpi.b  #255,d0
-        beq   .legacy_import_controls
-        move.b  (a0)+,d1
-        move.b  (a5,d0.w),(a4,d1.w)
-        bra   .legacy_import_field
-.legacy_import_controls:
-        move.b  #2,G_LOWER+P_STYLE(a4)
-        move.b  #3,G_UPPER+P_STYLE(a4)
-        btst    #4,$3d(a5)
-        beq.s   .legacy_styles_ready
-        move.b  #3,G_LOWER+P_STYLE(a4)
-        move.b  #2,G_UPPER+P_STYLE(a4)
-.legacy_styles_ready:
+; Native logical player assignment and physical action packet.
+game_prepare_controls:
+        bsr     game_assign_styles
         clr.b   G_SOUND_EVENT(a4)
-        move.b  $3c(a5),d0
+        move.b  game_score_flags,d0
         move.b  d0,d1
         andi.b  #1,d0
         move.b  d0,G_UPPER_AI(a4)
@@ -30,16 +11,16 @@ legacy_import_gameplay:
         move.b  d0,G_LOWER_AI(a4)
         andi.b  #$40,d1
         move.b  d1,G_TRACK_AI(a4)
-        move.b  $3d(a5),d0
+        move.b  game_mode,d0
         andi.b  #8,d0
         move.b  d0,G_FLIP_SERVE(a4)
-        move.b  $53(a5),d0
-        move.b  $56(a5),d1
-        btst    #4,$3d(a5)
-        beq   .legacy_controls_ordered
+        move.b  game_directions,d0
+        move.b  game_actions,d1
+        btst    #4,game_mode
+        beq   .native_controls_ordered
         rol.b   #4,d0
         rol.b   #4,d1
-.legacy_controls_ordered:
+.native_controls_ordered:
         move.b  d0,d2
         andi.b  #15,d0
         move.b  d0,G_LOWER_DIRECTION(a4)
@@ -53,30 +34,19 @@ legacy_import_gameplay:
         move.b  d2,G_UPPER_ACTION(a4)
         rts
 
-legacy_export_gameplay:
-        lea     legacy_game_fields,a0
-        moveq   #0,d0
-        moveq   #0,d1
-.legacy_export_field:
-        move.b  (a0)+,d0
-        cmpi.b  #255,d0
-        beq   .legacy_export_controls
-        move.b  (a0)+,d1
-        move.b  (a4,d1.w),(a5,d0.w)
-        bra   .legacy_export_field
-.legacy_export_controls:
+game_finish_controls:
         move.b  G_UPPER_DIRECTION(a4),d0
         lsl.b   #4,d0
         or.b    G_LOWER_DIRECTION(a4),d0
-        btst    #4,$3d(a5)
-        beq   .legacy_export_directions
+        btst    #4,game_mode
+        beq   .native_export_directions
         rol.b   #4,d0
-.legacy_export_directions:
-        move.b  d0,$53(a5)
+.native_export_directions:
+        move.b  d0,game_directions
         tst.b   G_SOUND_EVENT(a4)
-        beq   .legacy_export_done
+        beq   .native_export_done
         bsr     game_audio_request_hit
-.legacy_export_done:
+.native_export_done:
         rts
 
 game_entropy:
@@ -94,54 +64,13 @@ game_entropy:
         movem.l (sp)+,d1-d7/a0-a6
         rts
 
-legacy_game_fields:
-        dc.b $3a,G_LOWER+P_PHASE
-        dc.b $43,G_LOWER+P_ANIMATION
-        dc.b $49,G_LOWER+P_Y
-        dc.b $4a,G_LOWER+P_X
-        dc.b $4b,G_LOWER+P_IMAGE
-        dc.b $4c,G_LOWER+P_COLOUR
-        dc.b $73,G_LOWER+P_TARGET_Y
-        dc.b $74,G_LOWER+P_TARGET_X
-        dc.b $6d,G_LOWER+P_CLOCK
-        dc.b $3b,G_UPPER+P_PHASE
-        dc.b $44,G_UPPER+P_ANIMATION
-        dc.b $45,G_UPPER+P_Y
-        dc.b $46,G_UPPER+P_X
-        dc.b $47,G_UPPER+P_IMAGE
-        dc.b $48,G_UPPER+P_COLOUR
-        dc.b $75,G_UPPER+P_TARGET_Y
-        dc.b $76,G_UPPER+P_TARGET_X
-        dc.b $6e,G_UPPER+P_CLOCK
-        dc.b $34,G_COURT_Y
-        dc.b $35,G_COURT_X
-        dc.b $37,G_SHADOW_COLOUR
-        dc.b $38,G_FLIGHT
-        dc.b $39,G_CONTACT
-        dc.b $4d,G_BALL_Y
-        dc.b $4e,G_BALL_X
-        dc.b $4f,G_BALL_IMAGE
-        dc.b $50,G_BALL_COLOUR
-        dc.b $57,G_LAUNCH_X
-        dc.b $58,G_LAUNCH_Y
-        dc.b $59,G_LAUNCH_Z
-        dc.b $5a,G_LAUNCH_SCREEN_Y
-        dc.b $5b,G_LAUNCH_BASE_X
-        dc.b $5c,G_LAUNCH_BASE_Y
-        dc.b $5d,G_TARGET_Y
-        dc.b $5e,G_TARGET_X
-        dc.b $5f,G_HEIGHT
-        dc.b $60,G_VELOCITY_X
-        dc.b $61,G_VELOCITY_Y
-        dc.b $62,G_VELOCITY_Z
-        dc.b $63,G_BASE_SCREEN_Y
-        dc.b $64,G_BASE_X
-        dc.b $65,G_BASE_Y
-        dc.b $66,G_STEP
-        dc.b $72,G_RANDOM
-        dc.b $6b,G_TICK
-        dc.b $6c,G_SERVE_CLOCK
-        dc.b $6f,G_ACTION_CLOCK
-        dc.b $42,G_DISPLAY
-        dc.b 255
-        even
+
+game_assign_styles:
+        move.b  #2,G_LOWER+P_STYLE(a4)
+        move.b  #3,G_UPPER+P_STYLE(a4)
+        btst    #4,game_mode
+        beq.s   .styles_ready
+        move.b  #3,G_LOWER+P_STYLE(a4)
+        move.b  #2,G_UPPER+P_STYLE(a4)
+.styles_ready:
+        rts
