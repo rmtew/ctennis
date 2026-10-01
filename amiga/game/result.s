@@ -50,13 +50,13 @@ game_result_poll:
         move.b  #$20,$42(a5)
         bsr     game_render_sprites
         bsr     game_result_redraw
-        bsr     assign_sound_stream_4
+        bsr     game_audio_request_cue
         move.w  #GAME_TITLE_SOUND,game_lifecycle
         bra     game_round_done
 .title_sound:
-        move.b  $a4(a5),d0
-        cmp.b   $a5(a5),d0
-        bne     game_round_done
+        bsr     game_audio_cue_complete
+        tst.b   d0
+        beq     game_round_done
         move.w  #GAME_TITLE,game_lifecycle
         bsr     game_menu_tick
         bra     game_round_done
@@ -71,13 +71,13 @@ game_result_poll:
 .mode:
         move.b  #$20,$42(a5)
         bsr     game_result_redraw
-        bsr     assign_sound_stream_4
+        bsr     game_audio_request_cue
         move.w  #GAME_RESTART_SERVE_SOUND,game_lifecycle
         bra     game_round_done
 .serve_sound:
-        move.b  $a4(a5),d0
-        cmp.b   $a5(a5),d0
-        bne     game_round_done
+        bsr     game_audio_cue_complete
+        tst.b   d0
+        beq     game_round_done
         clr.b   game_restart_context
         clr.b   game_score_initialized
         move.w  #GAME_PLAYING,game_lifecycle

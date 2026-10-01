@@ -228,6 +228,23 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(media / 'manifest.json')
             if media.exists():
                 paths.update(p for p in media.iterdir() if p.is_file())
+    if kind == 'audio':
+        recipe = json.loads((ROOT / f'tests/cases/{case}.json').read_text())
+        paths.add(ROOT / f'tests/reference/{recipe["source_case"]}.json')
+        if recipe.get('presentation_case'):
+            scene_recipe=ROOT / f'tests/cases/{recipe["presentation_case"]}.json'
+            paths |= reference_inputs(scene_recipe)
+            scene=json.loads(scene_recipe.read_text())
+            paths.add(ROOT / f'tests/reference/{scene["source_case"]}.json')
+            paths |= reference_inputs(ROOT / scene['presentation_reference_directory'] / scene['source_case'] / 'manifest.json')
+            for source_name in ('one-player-match','two-player-match'):
+                paths.add(ROOT / f'tests/reference/{source_name}.json')
+        manifest_path = ROOT / recipe['reference']
+        if manifest_path.exists():
+            entry = json.loads(manifest_path.read_text())['references'][recipe['source_case']]
+            entries = list(json.loads(manifest_path.read_text())['references'].values()) if recipe.get('presentation_case') else [entry]
+            for item in entries:
+                paths.update(manifest_path.parent / item['directory'] / name for name in item['files'])
     if kind == 'live-serve':
         paths.add(ROOT / 'build/reference/source-serve/run_a.tsv')
     if kind != 'replay':
@@ -395,11 +412,17 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
                 value = report.get(name)
                 if isinstance(value, str):
                     artifacts.append(ROOT / value)
-            if kind in ('presentation', 'round-scenes', 'result-scenes'):
+            if kind in ('presentation', 'round-scenes', 'result-scenes', 'audio'):
                 capture_path = Path(report['capture_report_path'])
                 artifacts.append(capture_path)
-                for mutation in report.get('hardware_mutations', []):
+                mutations = list(report.get('hardware_mutations', []))
+                if kind == 'audio':
+                    artifacts.append(Path(report['native_wav']))
+                    mutations += [m for m in (report.get('mutation'), report.get('disconnected_waveform_mutation')) if m]
+                for mutation in mutations:
                     changed_capture = Path(mutation['capture_report_path'])
+                    if mutation.get('native_wav'):
+                        artifacts.append(Path(mutation['native_wav']))
                     changed_exe = changed_capture.parent / 'native-application'
                     changed_manifest = Path(str(changed_exe) + '.compile.json')
                     artifacts.extend([changed_capture, changed_manifest, changed_exe])

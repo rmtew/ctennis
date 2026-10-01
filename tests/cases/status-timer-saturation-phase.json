@@ -17,5 +17,6 @@
       255
     ]
   ],
-  "purpose": "F5 reachable later timer saturation; source-derived phase supplements continuous replays"
+  "purpose": "F5 reachable later timer saturation; source-derived phase supplements continuous replays",
+  "native_initial_lifecycle": "returned-title-wait"
 }

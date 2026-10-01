@@ -87,6 +87,14 @@ def execute(config, case_name='serve', mutation=False, subject='translated'):
     command = [str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000']
     if subject == 'maintained':
         command.append('-DPRODUCT_REPLAY=1')
+        recipe = json.loads((ROOT / f'tests/cases/{case_name}.json').read_text())
+        if recipe.get('native_initial_lifecycle'):
+            if recipe['native_initial_lifecycle'] != 'returned-title-wait':
+                raise ValueError('Unsupported captured initial lifecycle')
+            initial = bytes.fromhex(json.loads((ROOT / recipe['reference']).read_text())['initial_post_tail'])
+            if (initial[2] & 0x7f) != 3 or any(initial[0x3a:0x43]):
+                raise ValueError('Captured state does not establish returned-title wait')
+            command.append('-DPRODUCT_RETURNED_TITLE_WAIT=1')
     if mutation:
         command.append('-DREGRESSION_MUTATION=1')
     # Case-owned fixture paths keep another replay from invalidating this executable.
@@ -179,7 +187,7 @@ def _main():
     migrated_cases = tuple(name for name in product_cases
                            if not name.startswith('movement-lower-receiver-') or name.endswith('-phase'))
     subject = args.subject or ('maintained' if args.case in migrated_cases + SCORING_REPLAY_CASES else 'translated')
-    if subject == 'maintained' and args.case not in product_cases + ('round-transition', 'deuce-sequence-phase', 'one-player-match', 'two-player-match', 'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase', 'one-player-match-complete-phase', 'two-player-match-complete-phase'):
+    if subject == 'maintained' and args.case not in product_cases + ('round-transition', 'deuce-sequence-phase', 'one-player-match', 'two-player-match', 'one-player-round-lower-complete-phase', 'one-player-round-upper-complete-phase', 'two-player-round-lower-complete-phase', 'two-player-round-upper-complete-phase', 'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase', 'one-player-match-complete-phase', 'two-player-match-complete-phase', 'status-timer-saturation-phase'):
         parser.error('This lifecycle case is not yet migrated to maintained replay')
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     reference = ROOT / case['reference']
@@ -268,12 +276,12 @@ def _main():
         path = ROOT / ('amiga/game/gameplay_math.s' if late_launch else 'amiga/game/tick.s')
         original = path.read_bytes()
         anchor = (b'        move.w  d1,d0\n        rts' if late_launch
-                  else b'        bsr     legacy_active_tick')
+                  else b'        bsr     legacy_active_tick\ngame_service_tick:')
         if original.count(anchor) != 1:
             raise ValueError('Maintained dispatcher mutation anchor is ambiguous')
         try:
             replacement = (b'        move.w  d1,d0\n        addq.w  #1,d0\n        rts'
-                           if late_launch else b'        nop')
+                           if late_launch else b'        nop\ngame_service_tick:')
             path.write_bytes(original.replace(anchor, replacement))
             mutated, mutant_digest = execute(config, case['name'], mutation=True, subject=subject)
             detected = compare(mutated, fixture, case, fields)
@@ -353,7 +361,7 @@ def _main():
             (OUT / (case['name'] + '-mutated')).unlink(missing_ok=True)
     if exact:
         report['reference_coverage'] = reference_summary
-        report['port_limit'] = ('Native scoring/round lifecycle; presentation/audio adapters and result/restart remain'
+        report['port_limit'] = ('Maintained native subsystems; shared scalar/generated-clock adapter remains; captured start is not ordinary cadence/ADF proof'
                                 if subject == 'maintained' else
                                 'Translated diagnostic executes gameplay every tick; no native round main path')
     report_path = f'{case["name"]}-report.json' if exact else 'report.json'

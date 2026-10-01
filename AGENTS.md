@@ -121,3 +121,22 @@ requires their current provenance plus complete graphics receipts and actual
 compiled display bridge retirement; it does not promote CT08–CT10 or delivery
 measurements from CT07 success. Do not restore VDP/shadow writes for diagnostic
 convenience: capture adapters alone may serialize actual native scene outcomes.
+
+## Focused native audio evidence (CT08)
+
+Use `RUST_LOG=info python scripts/run_audio_tests.py --case=<case> --self-test`
+for the retained first-serve pitch/envelope/mute controls. `--case=ct08-effect-classes`
+reuses the existing result/title/restart captured window, with consecutive state,
+actual Paula registers, independently measured source amplitudes and emitted WAV
+checks for the six phrase classes. Eighteen source intervals are a retained class
+inventory, not eighteen fresh native play-throughs. The standalone
+`status-timer-saturation-phase --subject=maintained` starts once in the original
+returned-title wait; its two updates are not ordinary startup evidence.
+`run_ordinary_round_tests.py --mode=one --match --audio` additionally records
+actual returned-title mute and restarted intro sound under physical inputs.
+Keep callback and between-callback source audio writes distinct. Report matched
+extent, original scratch diagnostics, actual hardware faults and normal restoration.
+The native sequencer and diagnostic observer are separate; the ordinary executable
+must exclude the source-stream decoder, PSG sink and audio capture import/trace.
+Unmeasured waveform/filter/phase/stereo equivalence, complete ordinary cadence,
+RAM and ADF remain unverified. Do not rerun unrelated suites to fill progress rows.

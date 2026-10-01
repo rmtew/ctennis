@@ -51,6 +51,8 @@ def prepare_gameplay():
             raise FileNotFoundError(path)
     from generate_native_scene_assets import generate
     generate()
+    from generate_native_audio_assets import generate as generate_audio
+    generate_audio()
     OUT.mkdir(parents=True, exist_ok=True)
     source = OUT / "champion-raw.68k"
     run([sys.executable, "-W", "ignore", "scripts/z80268k.py", "--champion-source", "-n",
@@ -61,7 +63,8 @@ def prepare_gameplay():
     tail_match = re.search(r"(?ms)^irq_counter_update:\n(.*?)^\s*bne\s+\.lb_13\s+; \[call z,audio_tick_three_channels\]", generated)
     if not tail_match or "ERROR" in tail_match.group(1):
         raise AssertionError("Generated IRQ counter prefix is unavailable")
-    irq_prefix = "irq_counter_prefix:\n" + tail_match.group(1) + "\trts\n"
+    counter_code, audio_countdown = tail_match.group(1).split("; Run the sound engine", 1)
+    irq_prefix = ("irq_counter_prefix:\n" + counter_code + "        ifnd NATIVE_AUDIO\n; Run the sound engine" + audio_countdown + "        endif\n\trts\n")
     vdp_match = re.search(r"(?ms)^\.lb_13:\n(.*?)^scoreboard_update:", generated)
     if not vdp_match:
         raise AssertionError("Generated deferred VDP branch is unavailable")
@@ -116,6 +119,7 @@ def prepare_gameplay():
     irq_vdp = "        ifnd NATIVE_PRESENTATION\n" + irq_vdp + "        endif\n"
     animation = "        ifnd NATIVE_SPRITES\n" + animation + "        endif\n"
     sprites = "        ifnd NATIVE_SPRITES\n" + sprites + "        endif\n"
+    sound = "        ifnd NATIVE_AUDIO\n" + sound + "        endif\n"
     routines = (irq_prefix + irq_vdp + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")
