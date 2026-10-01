@@ -122,9 +122,9 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 ## CT-05 — Score, pause, exchange ends and resume the next game
 
-**Status:** queued. **Dependencies:** CT-04.
+**Status:** active, implementation ready for review. Native scoring/main-path round reset crosses both ordinary first-game boundaries and subsequent serves. The bounded machine gate is evidenced; separate raw diagnostics retain retired scratch differences. Revised-head independent clearance remains pending. **Dependencies:** CT-04.
 
-**Verified blocker:** the live `simulation_update` always executes gameplay. The original switches to shared tail-only service while its main path resets a round; native reset/display requests are missing at R1 callback 1333 and R2 2536. Existing deuce/advantage logic has green local evidence and should be preserved, not redesigned.
+**Resolved boundary:** shared native main-path polling now switches to service-only, requests the display/player reset, advances serve/end ownership, waits for phase/audio completion and resumes. Maintained R1 crosses callback 1333 through its full 1566-update round window; maintained R2 matches a declared 2800-update prefix beyond callback 2536. Native deuce/advantage and four complete round phases match. Three round-scene full raw-state reports still differ only at retired contact scratch offsets 0x67–0x68; all four pixel/field contexts match. Scenes now apply the existing CT04 maintained scratch contract for semantic acceptance, while separately preserving all254 raw diagnostic bytes and their failures. See [CT-05 evidence](analysis/native-scoring-round-regression.md).
 
 **Targets:** [simulation_update](amiga/gameplay_integration_probe.s), native lifecycle from CT-01; [round evidence](analysis/long-game-replay.md), [frame contract](analysis/frame-update-contract.md), [round runner](scripts/run_round_presentation_tests.py), existing continuous/phase recipes.
 

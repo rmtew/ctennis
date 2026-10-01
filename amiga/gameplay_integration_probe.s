@@ -1,5 +1,6 @@
         section code,code
 NATIVE_GAMEPLAY equ 1
+NATIVE_SCORING equ 1
 NATIVE_CONTROLS equ 1
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1
@@ -72,6 +73,7 @@ copy_back_copper:
         bsr     read_sim_timer
         move.w  d0,last_timer_count
 main_loop:
+        bsr     game_round_poll
         bsr     game_poll_keyboard
         bsr     poll_presentation
         bsr     read_sim_timer
@@ -195,8 +197,19 @@ simulation_update:
         rts
 
 simulation_menu:
+        cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
+        bcs.s   simulation_service_tick
+        bsr     upload_sprite_attributes
+simulation_service_tick:
         bsr     game_source_tick
+        cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
+        bcs.s   simulation_service_observed
+        move.b  #1,display_ready
+simulation_service_observed:
         addq.w  #1,simulation_updates
+        ifd LONG_GAME_REPLAY
+        bsr     log_replay_transition
+        endif
         rts
 
 prepare_title_display:

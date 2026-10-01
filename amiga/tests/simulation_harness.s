@@ -1,5 +1,6 @@
         ifd PRODUCT_REPLAY
 NATIVE_GAMEPLAY equ 1
+NATIVE_SCORING equ 1
         endif
 ; Continuous replay: RAM is initialized once and carried across all callbacks.
         section code,code
@@ -31,6 +32,9 @@ copy_initial:
         move.b  psg_count,d0
         bsr     emit_hex
 next_update:
+        ifd PRODUCT_REPLAY
+        bsr     game_round_poll
+        endif
         moveq   #0,d0
         move.w  update_index,d0
         add.l   d0,d0

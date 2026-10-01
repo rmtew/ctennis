@@ -301,5 +301,44 @@ class FreshnessTests(unittest.TestCase):
         self.assertEqual(status(self.report)['status'], 'stale')
 
 
+class ListingAssetTests(unittest.TestCase):
+    def test_truncated_shared_directory_uses_actual_listing_source_context(self):
+        from evidence import compile_manifest
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first, second = root / 'initial.bin', root / 'refresh.bin'
+            first.write_bytes(b'initial')
+            second.write_bytes(b'refresh')
+            source, include = root / 'game.s', root / 'refresh.i'
+            source.write_text(f'initial: incbin "{first}"\n')
+            include.write_text(f'refresh: incbin "{second}"\n')
+            exe, listing = root / 'game', root / 'native.lst'
+            exe.write_bytes(b'game')
+            listing.write_text(f'Source: "{source}"\n00:00000000 initial: incbin "{root}/\n'
+                               f'Source: "{include}"\n00:00000008 refresh: incbin "{root}/\n')
+            compiled = compile_manifest(exe, listing)
+            self.assertIn(str(first), compiled['files'])
+            self.assertIn(str(second), compiled['files'])
+
+
+    def test_truncated_incbin_line_uses_compiled_source_and_invalidates_asset_change(self):
+        from evidence import compile_manifest
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, asset = root / 'source.s', root / 'long-private-asset.bin'
+            source.write_text(f'blob: incbin "{asset}"\n')
+            asset.write_bytes(b'asset')
+            exe, listing = root / 'game', root / 'native.lst'
+            exe.write_bytes(b'game')
+            listing.write_text(f'Source: "{source}"\n00:00000000 blob: incbin "{str(asset)[:-4]}\n'
+                               f'00:00000008 00000000\nSource: "{source}"\n')
+            compiled = compile_manifest(exe, listing)
+            self.assertIn(str(asset), compiled['files'])
+            from evidence import changed
+            self.assertFalse(changed(compiled['files']))
+            asset.write_bytes(b'changed')
+            self.assertIn(str(asset), changed(compiled['files']))
+
+
 if __name__ == '__main__':
     unittest.main()

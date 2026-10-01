@@ -1,19 +1,6 @@
 {
   "schema_version": 1,
   "cases": {
-    "round-transition": {
-      "evidence": "build/tests/round-transition-report.json; tests/reference/round-transition.json; WORKLOG.md exact first-round source checkpoint",
-      "reason": "Native main-thread round setup and tail-only dispatch are unimplemented",
-      "signature": {
-        "update": 1333,
-        "source_frame": 2631,
-        "boundary": "callback-entry",
-        "ram_offset": 2,
-        "expected": 129,
-        "actual": 1,
-        "callback_kind": "tail-only"
-      }
-    },
     "one-player-match": {
       "evidence": "build/tests/one-player-match-report.json; tests/reference/one-player-match.json; WORKLOG.md full R1 match checkpoint",
       "reason": "Same round-transition boundary in the continuous full-match replay; later failures remain obscured",
@@ -163,34 +150,6 @@
         "callback_kind": "tail-only"
       }
     },
-    "one-player-round-lower-complete-phase": {
-      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-round-lower-complete-phase-report.json; validated source interval and complete native execution",
-      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
-      "signature": {
-        "update": 130,
-        "source_update": 1333,
-        "source_frame": 2631,
-        "boundary": "callback-entry",
-        "ram_offset": 2,
-        "expected": 129,
-        "actual": 1,
-        "callback_kind": "tail-only"
-      }
-    },
-    "one-player-round-upper-complete-phase": {
-      "evidence": "analysis/later-regime-regression.md; build/tests/one-player-round-upper-complete-phase-report.json; validated source interval and complete native execution",
-      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
-      "signature": {
-        "update": 130,
-        "source_update": 3974,
-        "source_frame": 5272,
-        "boundary": "callback-entry",
-        "ram_offset": 2,
-        "expected": 129,
-        "actual": 1,
-        "callback_kind": "tail-only"
-      }
-    },
     "one-player-match-complete-phase": {
       "evidence": "analysis/later-regime-regression.md; build/tests/one-player-match-complete-phase-report.json; validated source interval and complete native execution",
       "reason": "Native main-thread result music selection and tail-only result/menu dispatch are absent; original queues its result stream after129 matched callbacks.",
@@ -202,34 +161,6 @@
         "ram_offset": 133,
         "expected": 150,
         "actual": 4,
-        "callback_kind": "tail-only"
-      }
-    },
-    "two-player-round-lower-complete-phase": {
-      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-round-lower-complete-phase-report.json; validated source interval and complete native execution",
-      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
-      "signature": {
-        "update": 130,
-        "source_update": 2536,
-        "source_frame": 3834,
-        "boundary": "callback-entry",
-        "ram_offset": 2,
-        "expected": 129,
-        "actual": 1,
-        "callback_kind": "tail-only"
-      }
-    },
-    "two-player-round-upper-complete-phase": {
-      "evidence": "analysis/later-regime-regression.md; build/tests/two-player-round-upper-complete-phase-report.json; validated source interval and complete native execution",
-      "reason": "Native main-thread round setup and tail-only dispatch are absent; the recorded round transition signature is preserved in this complete interval.",
-      "signature": {
-        "update": 130,
-        "source_update": 4401,
-        "source_frame": 5699,
-        "boundary": "callback-entry",
-        "ram_offset": 2,
-        "expected": 129,
-        "actual": 1,
         "callback_kind": "tail-only"
       }
     },
@@ -367,60 +298,6 @@
         9874
       ],
       "required_raster_checks": 10
-    },
-    "p1-first-round-scenes": {
-      "signature": {
-        "update": 1208,
-        "boundary": "completed-round-viewport",
-        "field": "logical display pixel",
-        "x": 50,
-        "y": 36,
-        "expected": "000000",
-        "actual": "cc55bb"
-      },
-      "complete_checks_sha256": "44e86ea87e4246c1a7ad5db9daf142ea728cc7f9f61e425c03a3a332741f8c01",
-      "reason": "Live main-thread round reset and tail-only dispatch are absent. Existing sprite-origin offset already fails the pre-pause court; later pause/resume scenes retain old player placement. Require the complete observed state/pixel/event failure stream so that the earlier sprite failure cannot hide another defect. This fingerprint is a temporary known-failure baseline, never the expected correct oracle.",
-      "evidence": "analysis/native-round-presentation-regression.md; build/tests/p1-first-round-scenes-report.json"
-    },
-    "p1-one-player-upper-round-scenes": {
-      "signature": {
-        "update": 3849,
-        "boundary": "completed-round-viewport",
-        "field": "logical display pixel",
-        "x": 57,
-        "y": 1,
-        "expected": "000000",
-        "actual": "ffffff"
-      },
-      "complete_checks_sha256": "7d1f9f03ff59ea2943fad1299b94090d1bd67b5f38c4fcdc507db1a0e9f4cd87",
-      "evidence": "analysis/native-complementary-round-scenes.md; build/tests/p1-one-player-upper-round-scenes-report.json",
-      "reason": "The native main-thread reset/tail-only route is absent and sprite origin remains shifted. Two-player intervals also retain the omitted second physical reader. Require the entire measured state/pixel/event stream; correct expectations remain the independent original, never the broken native baseline."
-    },
-    "p1-two-player-lower-round-scenes": {
-      "signature": {
-        "update": 2407,
-        "boundary": "round-scene-state",
-        "field": "source state byte",
-        "ram_offset": 86,
-        "expected": 17,
-        "actual": 1
-      },
-      "complete_checks_sha256": "cbbac8589f931d924e1dbe20fdd7ed75690af0ad6a761426f996ccbbbadd4c39",
-      "evidence": "analysis/native-complementary-round-scenes.md; build/tests/p1-two-player-lower-round-scenes-report.json",
-      "reason": "The native main-thread reset/tail-only route is absent and sprite origin remains shifted. Two-player intervals also retain the omitted second physical reader. Require the entire measured state/pixel/event stream; correct expectations remain the independent original, never the broken native baseline."
-    },
-    "p1-two-player-upper-round-scenes": {
-      "signature": {
-        "update": 4272,
-        "boundary": "round-scene-state",
-        "field": "source state byte",
-        "ram_offset": 86,
-        "expected": 17,
-        "actual": 1
-      },
-      "complete_checks_sha256": "99940d8e88fa987ebb2f818fda77a2d7e9bc11f33499a6774aeb1cd1bea2e771",
-      "evidence": "analysis/native-complementary-round-scenes.md; build/tests/p1-two-player-upper-round-scenes-report.json",
-      "reason": "The native main-thread reset/tail-only route is absent and sprite origin remains shifted. Two-player intervals also retain the omitted second physical reader. Require the entire measured state/pixel/event stream; correct expectations remain the independent original, never the broken native baseline."
     },
     "p1-one-player-result-restart-scenes": {
       "signature": {

@@ -10,6 +10,7 @@ from capture_native_presentation import capture
 from associate_presentation_generations import source_generation
 from run_presentation_tests import digest, map_source_palette, native_picture, compare
 from run_status_tests import earliest
+from maintained_state_contract import MAINTAINED_STATE_CONTRACT, MAINTAINED_SCRATCH_OFFSETS
 
 CASES = ('p1-first-round-scenes', 'p1-one-player-upper-round-scenes',
          'p1-two-player-lower-round-scenes', 'p1-two-player-upper-round-scenes')
@@ -39,17 +40,23 @@ def reference(case):
     return parent, proof
 
 
-def mutation(kind, case):
-    threshold = case['completed_callbacks'][1] - 1
+def mutation(kind, case, reset_generation=None):
+    # Pixels belong to the fully displayed bank, which can precede the CPU
+    # checkpoint. Fault that measured generation; state/events use callbacks.
+    threshold = (reset_generation if kind in ('sprite', 'field') and reset_generation is not None
+                 else case['completed_callbacks'][1]) - 1
     def alter(text):
         if kind == 'sprite':
-            old = '        addi.w  #$6c,d0'
+            old = '        addi.w  #$80,d0'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_sprite_done\n        addq.w  #1,d0\nround_mutation_sprite_done:'
         elif kind == 'field':
-            old = 'scoreboard_selection_done:'
+            old = 'simulation_service_observed:'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_field_done\n        move.b  #1,field_values+1\n        bsr     patch_score_pointers\nround_mutation_field_done:'
+        elif kind == 'state':
+            old = 'game_observe_pre_tail:\n        rts'
+            new = 'game_observe_pre_tail:\n        cmpi.w  #1334,simulation_updates\n        bne.s   round_mutation_state_done\n        eori.b  #1,$7c(a5)\nround_mutation_state_done:\n        rts'
         else:
-            old = '        bsr     upload_sprite_attributes'
+            old = 'simulation_service_observed:'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_entropy_done\n        movem.l d0-d1/a0,-(sp)\n        bsr     read_refresh_adapter\n        movem.l (sp)+,d0-d1/a0\nround_mutation_entropy_done:'
         if text.count(old) != 1:
             raise ValueError('Round mutation instruction is no longer unique')
@@ -61,7 +68,7 @@ def mutation(kind, case):
 def check(case, parent, captured):
     contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
     start, end = case['initial_source_update'], case['completed_callbacks'][-1]
-    states, pixels, first = [], [], None
+    states, raw_states, pixels, first, raw_first = [], [], [], None, None
     events = [row for row in captured['state_events'] if start < row['update'] <= end]
     if [row['update'] for row in events] != list(range(start + 1, end + 1)):
         raise ValueError('Round state observation window is incomplete')
@@ -72,6 +79,9 @@ def check(case, parent, captured):
             'field': 'source state byte', 'ram_offset': offset,
             'expected': wanted[offset], 'actual': actual[offset]}
             for offset in range(2, 256) if wanted[offset] != actual[offset]]
+        raw_states.append({'update': row['update'], 'differences': differences})
+        raw_first = earliest(raw_first, differences[0] if differences else None)
+        differences = [d for d in differences if d['ram_offset'] not in MAINTAINED_SCRATCH_OFFSETS]
         states.append({'update': row['update'], 'differences': differences})
         first = earliest(first, differences[0] if differences else None)
     if [row['completed_callbacks'] for row in captured['observations']] != case['completed_callbacks']:
@@ -105,13 +115,13 @@ def check(case, parent, captured):
     baseline = {'states': states, 'pixels': [{key: row[key] for key in
         ('checkpoint', 'region', 'expected_sha256', 'actual_sha256', 'first_difference')} for row in pixels],
         'source_events': source_events}
-    return {'states': states, 'pixels': pixels, 'source_events': source_events,
+    return {'states': states, 'raw_states': raw_states, 'raw_state_first_difference': raw_first,
+            'pixels': pixels, 'source_events': source_events,
             'first_difference': first}, baseline
 
 
 def run(case, self_test):
     path = ROOT / f'build/tests/{case["name"]}-report.json'
-    path.unlink(missing_ok=True)
     parent, proof = reference(case)
     def obtain(kind=None):
         return capture(tuple(case['completed_callbacks']), recorded_entropy=True,
@@ -119,20 +129,29 @@ def run(case, self_test):
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
             capture_label=case['name'] + (f'-{kind}' if kind else ''),
-            source_mutator=mutation(kind, case) if kind else None,
+            source_mutator=mutation(kind, case, captured['observations'][1]['completed_raster']['generation']['prepared_after_callback']) if kind else None,
             source_case=case['source_case'], native_inputs=case['inputs'], strict_source_events=False)
     captured = obtain()
     checks, baseline = check(case, parent, captured)
     mutations = []
     if self_test:
-        for kind in ('sprite', 'field', 'entropy'):
+        for kind in ('sprite', 'field', 'entropy', 'state'):
             changed = obtain(kind)
             comparison, observed = check(case, parent, changed)
-            if observed['states'] != baseline['states']:
+            if kind != 'state' and observed['states'] != baseline['states']:
                 raise AssertionError('Presentation/event-observation mutation changed game RAM')
-            if observed['pixels'][:7] != baseline['pixels'][:7] or comparison['first_difference'] != checks['first_difference']:
+            if (observed['pixels'][:7] != baseline['pixels'][:7]
+                    or checks['first_difference'] is not None and comparison['first_difference'] != checks['first_difference']):
                 raise AssertionError('Late mutation unexpectedly changed the earlier baseline failure')
-            if kind == 'entropy':
+            if comparison['first_difference'] is None:
+                raise AssertionError('Actual late fault escaped semantic acceptance')
+            if kind == 'state':
+                fault = comparison['first_difference']
+                if fault.get('ram_offset') != 0x7c or fault['update'] != case['completed_callbacks'][1]:
+                    raise AssertionError('Retained native state mutation escaped its exact callback')
+                if observed['states'][:case['completed_callbacks'][1] - case['initial_source_update'] - 1] != baseline['states'][:case['completed_callbacks'][1] - case['initial_source_update'] - 1]:
+                    raise AssertionError('Retained state fault changed earlier observations')
+            elif kind == 'entropy':
                 if not observed['source_events'] or observed['source_events'][0]['update'] != case['completed_callbacks'][1]:
                     raise AssertionError('Unexpected refresh consumption was not reported as a behaviour failure')
             else:
@@ -144,8 +163,8 @@ def run(case, self_test):
             classification = None
             known = json.loads((ROOT / 'tests/known-failures.json').read_text())['cases'].get(case['name'])
             if known:
-                from run_test_suite import classify
-                classification = classify({'passed': False, 'first_difference': comparison['first_difference'],
+                from run_test_suite import classify_behavior
+                classification = classify_behavior({'passed': False, 'first_difference': comparison['first_difference'],
                     'baseline_observations': observed}, known)
                 if classification != 'unexpected-red':
                     raise AssertionError('Known early sprite failure hid a later compiled mutation')
@@ -154,7 +173,16 @@ def run(case, self_test):
                 'capture_report_path': changed['capture_report_path'],
                 'capture_report_sha256': digest(Path(changed['capture_report_path'])),
                 'executable_sha256': changed['executable_sha256']})
-    report = {'case': case['name'], 'passed': checks['first_difference'] is None,
+    report = {'case': case['name'], 'subject': 'maintained-native',
+        'state_contract': MAINTAINED_STATE_CONTRACT,
+        'omitted_legacy_scratch_offsets': list(MAINTAINED_SCRATCH_OFFSETS),
+        'state_bytes_compared_per_callback': 254 - len(MAINTAINED_SCRATCH_OFFSETS),
+        'raw_state_subject': 'maintained-native',
+        'raw_state_contract': 'original-byte-page-diagnostic-v1',
+        'raw_state_bytes_compared_per_callback': 254,
+        'raw_state_passed': checks['raw_state_first_difference'] is None,
+        'raw_state_first_difference': checks['raw_state_first_difference'],
+        'passed': checks['first_difference'] is None,
         'first_difference': checks['first_difference'], 'checks': checks,
         'baseline_observations': baseline, 'reference_proof': proof,
         'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
@@ -169,13 +197,27 @@ def run(case, self_test):
     return report['passed']
 
 
-def main():
+def run_cli():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=CASES, required=True)
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     return 0 if run(case, args.self_test) else 1
+
+
+def main():
+    from evidence import tracked_call
+    import sys
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument('--case')
+    selected, _ = probe.parse_known_args()
+    if selected.case not in CASES:
+        return run_cli()
+    path = ROOT / f'build/tests/{selected.case}-report.json'
+    return tracked_call([path], 'round-scenes', 'maintained-native', 'captured round phase',
+                        'scripts/run_round_presentation_tests.py', selected.case, run_cli,
+                        lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])
 
 
 if __name__ == '__main__':

@@ -125,7 +125,10 @@ class NativeControlSession:
             self.inspect('hello', {'token': endpoint['token']})
             return {'log': str(self.log)}
         methods = {'mem_read': 'mem.read', 'capture_screenshot': 'capture.screenshot',
-                   'input_key': 'input.key', 'input_joy': 'input.joy'}
+                   'input_key': 'input.key', 'input_joy': 'input.joy',
+                   'input_set_port': 'input.set_port', 'break_add': 'break.add',
+                   'break_remove': 'break.remove', 'regs_get': 'regs.get',
+                   'custom_dump': 'custom.dump'}
         self.identifier += 1
         self.stream.write((json.dumps({'jsonrpc': '2.0', 'id': self.identifier,
                                      'method': methods.get(method, method), 'params': arguments})+'\n').encode())

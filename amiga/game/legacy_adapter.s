@@ -6,7 +6,11 @@ legacy_active_tick:
         bsr     scoreboard_update
         bsr     game_after_scoreboard
         bsr     input_update
+        ifd NATIVE_SCORING
+        bsr     game_score_tick
+        else
         bsr     score_gate
+        endif
         ifd NATIVE_GAMEPLAY
         bsr     game_play_tick
         bra     legacy_present_players
@@ -33,6 +37,9 @@ legacy_service_tick:
 ; are explicit here; ordinary boot no longer copies an in-progress capture.
 ; D0=0 one player, 1 two players. CT-04/08 will own native player/audio state.
 legacy_new_match:
+        ifd NATIVE_SCORING
+        clr.b   game_score_initialized
+        endif
         move.b  d0,legacy_new_mode
         lea     $10(a5),a0
         move.w  #239,d7
@@ -137,4 +144,10 @@ legacy_owner_selected:
         ifd NATIVE_GAMEPLAY
         include "amiga/game/gameplay.s"
         include "amiga/game/gameplay_adapter.s"
+        endif
+
+        ifd NATIVE_SCORING
+        include "amiga/game/scoring.s"
+        include "amiga/game/scoring_adapter.s"
+        include "amiga/game/round.s"
         endif

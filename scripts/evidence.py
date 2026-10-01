@@ -95,7 +95,7 @@ def assembly_inputs(entry):
         if path in found or not path.is_file():
             continue
         found.add(path)
-        for name in re.findall(r'(?im)\binclude\s+"([^"]+)"', path.read_text()):
+        for name in re.findall(r'(?im)\binclude\s+"([^"\r\n]+)"', path.read_text()):
             candidate = ROOT / name
             if not candidate.is_relative_to(ROOT / 'build'):
                 pending.append(candidate)
@@ -210,6 +210,17 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(ROOT / 'tests/cases/physical-input.json')
             if '--ownership' in sys.argv:
                 paths.update(ROOT / 'build/reference/control-ownership' / n for n in ('reference.json','a.tsv','b.tsv'))
+    if kind == 'round-scenes':
+        recipe = json.loads((ROOT / f'tests/cases/{case}.json').read_text())
+        phase = Path(recipe['initial_phase_reference'])
+        paths |= reference_inputs(ROOT / f'tests/cases/{phase.stem}.json')
+        directories = {'tests/reference/presentation', *recipe.get('reference_directories', {}).values()}
+        for directory in directories:
+            paths |= reference_inputs(ROOT / directory / 'manifest.json')
+            media = ROOT / directory / recipe['source_case']
+            paths |= reference_inputs(media / 'manifest.json')
+            if media.exists():
+                paths.update(p for p in media.iterdir() if p.is_file())
     if kind == 'live-serve':
         paths.add(ROOT / 'build/reference/source-serve/run_a.tsv')
     if kind != 'replay':
@@ -218,7 +229,7 @@ def inputs_for(kind, runner, case=None):
         title = ROOT / 'tests/reference/presentation/one-player-match/manifest.json'
         paths |= reference_inputs(title if title.exists() else ROOT / 'build/reference/mode-one/manifest.json')
     # Decoder implementations are runtime dependencies of the media checks.
-    if kind in ('mode', 'live-serve'):
+    if kind in ('mode', 'live-serve', 'round-scenes'):
         # Pillow registers PNG decoders lazily on the first Image.open().
         from PIL import PngImagePlugin  # noqa: F401
     paths.update(Path(module.__file__) for name, module in list(sys.modules.items())
@@ -230,8 +241,24 @@ def inputs_for(kind, runner, case=None):
 def compile_manifest(executable, listing):
     """Snapshot actual assembly sources/assets immediately after assembly."""
     text = Path(listing).read_text()
-    sources = {ROOT / p for p in re.findall(r'^Source: "([^"]+)"', text, re.M)}
-    assets = {ROOT / p for p in re.findall(r'^\w\w:[0-9A-Fa-f]{8}[^\n]*\bincbin\s+"([^"]+)"', text, re.M)}
+    sources = {ROOT / p for p in re.findall(r'^Source: "([^"\r\n]+)"', text, re.M)}
+    assets = {ROOT / p for p in re.findall(r'^\w\w:[0-9A-Fa-f]{8}[^\n]*\bincbin\s+"([^"\r\n]+)"', text, re.M)}
+    # Vasm truncates long instruction text. Recover only emitted incbin
+    # prefixes, avoiding inactive conditional assets from the source file.
+    candidates = {source: set(re.findall(r'(?im)\bincbin\s+"([^"\r\n]+)"', source.read_text()))
+                  for source in sources if source.is_file()}
+    active_source = None
+    for line in text.splitlines():
+        context = re.match(r'^Source: "([^"\r\n]+)"', line)
+        if context:
+            active_source = ROOT / context[1]
+        match = re.match(r'^\w\w:[0-9A-Fa-f]{8}.*\bincbin\s+"([^"\r\n]*)$', line)
+        if match:
+            recovered = {ROOT / name for name in candidates.get(active_source, set())
+                         if name.startswith(match[1])}
+            if len(recovered) != 1:
+                raise ValueError('Truncated compiled incbin cannot be resolved uniquely in its source')
+            assets |= recovered
     symbols = sorted(re.findall(r'^([A-Za-z_][\w]*)\s+\d\d:[0-9A-Fa-f]{8}\s*$', text, re.M))
     value = {'files': snapshot(sources | assets | {Path(executable), Path(listing)}),
              'executable': key(executable), 'executable_sha256': digest(executable), 'symbols': symbols}
@@ -361,12 +388,26 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
                 value = report.get(name)
                 if isinstance(value, str):
                     artifacts.append(ROOT / value)
+            if kind == 'round-scenes':
+                capture_path = Path(report['capture_report_path'])
+                artifacts.append(capture_path)
+                for mutation in report.get('hardware_mutations', []):
+                    changed_capture = Path(mutation['capture_report_path'])
+                    changed_exe = changed_capture.parent / 'native-application'
+                    changed_manifest = Path(str(changed_exe) + '.compile.json')
+                    artifacts.extend([changed_capture, changed_manifest, changed_exe])
+                    artifacts.extend(ROOT / name for name in
+                                     json.loads(changed_manifest.read_text())['files'])
+                    artifacts.extend(p for p in changed_capture.parent.iterdir()
+                                     if p.suffix in ('.png', '.log'))
+                artifacts.extend(p for p in capture_path.parent.iterdir()
+                                 if p.suffix in ('.png', '.log'))
             exes = executables(path, report)
             for exe in exes:
                 if kind == 'replay':
                     artifacts.append(Path(str(exe) + '.log'))
-                elif kind in ('mode', 'physical'):
-                    artifacts.append(Path(exe).parent / 'copperline.log')
+                elif kind in ('mode', 'physical', 'ordinary-round'):
+                    artifacts.append(Path(exe).parent / ('emulator.log' if kind == 'ordinary-round' else 'copperline.log'))
                     if kind == 'mode':
                         artifacts.extend(Path(exe).parent / (r['stage'] + '.png')
                                          for r in report.get('observations', []) if 'pixel_sha256' in r)
