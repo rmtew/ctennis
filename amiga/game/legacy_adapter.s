@@ -7,10 +7,15 @@ legacy_active_tick:
         bsr     game_after_scoreboard
         bsr     input_update
         bsr     score_gate
+        ifd NATIVE_GAMEPLAY
+        bsr     game_play_tick
+        bra     legacy_present_players
+        else
         bsr     lower_player_state
         bsr     upper_player_state
         bsr     ball_flight_update
         bra     player_movement_and_sprites
+        endif
 
 legacy_service_tick:
         bsr     irq_counter_prefix
@@ -127,4 +132,9 @@ legacy_owner_ready:
 legacy_owner_selected:
         move.b  d0,d2
         rts
+        endif
+
+        ifd NATIVE_GAMEPLAY
+        include "amiga/game/gameplay.s"
+        include "amiga/game/gameplay_adapter.s"
         endif

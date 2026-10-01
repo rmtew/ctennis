@@ -104,6 +104,11 @@ def prepare_gameplay():
     helpers = extract(generated, "triangular_root_step", "initialize_audio_records")
     sound = extract(generated, "assign_sound_stream_4", "wait_audio_channels_0_1")
     ldir = extract(generated, "ldir", "exx")
+    # CT-04 native gameplay replaces these complete extracted subsystems.
+    def diagnostic_only(code):
+        return "        ifnd NATIVE_GAMEPLAY\n" + code + "        endif\n"
+    player_state, ball, ball_slots, motion, arithmetic, helpers = map(
+        diagnostic_only, (player_state, ball, ball_slots, motion, arithmetic, helpers))
     routines = (irq_prefix + irq_vdp + scoreboard + input_selection + score + player_state + ball + ball_slots + motion + animation +
                 sprites + arithmetic + helpers + sound + ldir)
     (OUT / "player-frame-routines.s").write_text(routines, encoding="utf-8")

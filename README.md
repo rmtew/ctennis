@@ -18,9 +18,14 @@ and [agent instructions](AGENTS.md). CT-01 provides the shared maintained native
 dispatcher in `amiga/game/` and `python scripts/build_native_game.py`; the default
 serve replay exercises that dispatcher. CT-02 adds ordinary native title boot,
 Delete/Tab mode selection and runtime match initialization. CT-03 adds native
-two-pad controls and stable player ownership across court ends. Next complete
-serve/rally, rounds, results,
-native graphics/sound, ordinary full-play verification and a bootable ADF.
+two-pad controls and stable player ownership across court ends. CT-04 replaces
+serve, contact, ball flight, movement and AI with maintained native 68000 logic
+and fixes resumed-launch arithmetic. Focused product replays cover both-end
+serves, a six-return rally and point ownership, movement limits and shot choice;
+they do not establish continuous rounds or complete matches. Temporary
+score/lifecycle, sprite/VDP and sound adapters remain CT-05–CT-08 debt. Next
+complete rounds, results, native graphics/sound, ordinary full-play verification
+and a bootable ADF. See [CT-04 evidence](analysis/native-gameplay-regression.md).
 Completing an exhaustive test suite is not a prerequisite to fixing the game.
 Reuse existing original-backed checks; add one only for a concrete fix or
 demonstrated behavioural gap.

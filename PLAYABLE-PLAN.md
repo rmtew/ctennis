@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04–CT-10 remain uncompleted and queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05–CT-10 remain queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -68,9 +68,9 @@ acceptance prerequisite. Captured active-scene checks now require explicit
 
 ## CT-03 — Complete physical controls and preserve player ownership
 
-**Status:** verified (2026-09-30 UTC); draft PR pending review. **Dependencies:** CT-02.
+**Status:** verified and merged in [PR #3](https://github.com/rmtew/ctennis/pull/3) (2026-09-30 UTC). **Dependencies:** CT-02.
 
-**Resolved blocker:** `sample_amiga_joystick` previously read only connector-2 left/right/fire; `sample_second_input_group` returned zero. Recorded input calibration has three green and ten known-red windows. **Unverified risk:** later side-exchange ownership and actual physical action consumption remain unproven in ordinary play.
+**Resolved blocker:** `sample_amiga_joystick` previously read only connector-2 left/right/fire; `sample_second_input_group` returned zero. Recorded input calibration has three green and ten known-red windows. **Remaining verification:** reaching a side exchange continuously remains CT-05/CT-09 work. Ordinary player-1 physical serve and local exchanged-end player-2 serve are verified below.
 
 **Targets:** [samplers](amiga/gameplay_integration_probe.s), [physical runner](scripts/run_physical_input_tests.py), [mapping](analysis/two-player-input-map.md), [physical evidence](analysis/native-physical-input-regression.md). Native input state replaces packed source fields as logic is migrated.
 
@@ -94,9 +94,9 @@ gate. Gameplay still runs through the temporary adapter. See WORKLOG.md and
 
 ## CT-04 — Maintain native serve, rally, movement and AI logic
 
-**Status:** queued. **Dependencies:** CT-03.
+**Status:** verified (2026-10-01 UTC), awaiting review/publication. **Dependencies:** CT-03.
 
-**Verified blocker:** serve/rally logic is still regenerated translation; the resumed-launch triangular-root helper loses carry before SUBX. The retained diagnostic temporarily corrected all 200 phase updates and restored the unfixed baseline. **Not assumed broken:** existing six-return rally and movement/scoring phases have substantial green coverage.
+**Resolved blocker:** serve/rally logic was regenerated translation; the resumed-launch triangular-root helper lost carry before SUBX. The retained diagnostic temporarily corrected all 200 phase updates and restored the unfixed baseline. **Not assumed broken:** existing six-return rally and movement/scoring phases have substantial green coverage.
 
 **Targets:** translated extraction boundaries `lower_player_state`, `upper_player_state`, `ball_flight_update`, `player_movement_and_sprites`, `triangular_root_step` in [generator](scripts/run_translated_player_frame_probe.py); [launch diagnosis](scripts/diagnose_phase_launch.py); [update contract](analysis/frame-update-contract.md). Implement maintained counterparts under the CT-01 boundary.
 
@@ -105,6 +105,20 @@ gate. Gameplay still runs through the temporary adapter. See WORKLOG.md and
 **Observable acceptance:** both ends can serve; the ball advances correctly; both players can return in one rally; a point is awarded to the correct player; movement limits and action-dependent shot choice remain correct; resumed serve no longer inherits the diagnosed launch error.
 
 **Lightweight validation:** existing `serve`, `resumed-play-phase`, `two-player-rally`, affected movement cases and existing upper action timing cases. Reuse the 200-update failure reproduction. Upper before/at/after action cases protect shot choice, not geometric hit/miss thresholds. Audit existing court/entropy outcomes only when a changed path needs an uncovered outcome; one bounded missing example is enough.
+
+Evidence: the application and maintained replay now use named native player,
+ball, movement and AI routines. Serve 200, resumed launch 200, upper completed
+serve 50, six-return rally 1,390, all 18 affected movement windows (11,078
+updates) and three upper action windows (722 each) match every selected boundary.
+The repaired launch is independently faulted at update 96, then restored and
+rerun. Ordinary mode checks pass full retained viewport/physical movement/serve;
+the existing live serve probe passes state, changed point field and tone. A
+right-point Copper switch is moved before its fetch after the faster native
+path exposed a display artifact. Raw translated launch still fails at update
+96; only the migrated product case is promoted. Score/lifecycle, animation/VDP
+and audio remain explicit temporary adapters. Local starts do not establish
+continuous rounds, complete matches or independent-hardware parity. See
+[CT-04 evidence](analysis/native-gameplay-regression.md).
 
 ## CT-05 — Score, pause, exchange ends and resume the next game
 

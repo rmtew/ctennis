@@ -18,11 +18,19 @@ serve starts in the retained active scene; ordinary title/selection has separate
 CT-02 checks below, and round transitions remain future queue work.
 
 `--subject translated` explicitly selects the preserved fixed-dispatch oracle
-baseline. Other cases still default to that diagnostic tier; CT-01 does not
-migrate their assertions or claim their product acceptance. Reports identify the
+baseline. CT-04 defaults its serve/resumed/rally, upper completed-serve,
+movement and upper action-timing checks to maintained gameplay. Continuous
+lower-receiver prefixes still cross the unimplemented round boundary and
+remain translated diagnostics; their four existing local phase checks use
+maintained gameplay. Other lifecycle cases remain translated diagnostics. Reports identify the
 subject, entry point, module hashes and executable hash. Generated translation
 stays under ignored `build/translation/`; regeneration must preserve maintained
 module hashes.
+
+Maintained comparisons omit only the four obsolete arithmetic scratch bytes
+C067–C06A in addition to existing exclusions; all 250 remaining bytes, including
+AI targets and flight vectors, remain exact at every boundary. Raw translated
+comparisons preserve their original scratch assertions.
 
 The command exits **0** for a match, **1** for a behaviour difference, or **2**
 for a setup/build/run error. Results and native logs are in `build/tests/`.
@@ -30,6 +38,8 @@ A difference identifies the first callback, boundary and named field. On the
 maintained serve, `--self-test` temporarily skips the actual dispatcher's active
 call, requires the original reference to detect it, then restores the source and
 rebuilds/reruns the normal executable. Run this without concurrent builds. The
+resumed-play `--self-test` instead increments the native launch root, requires
+a difference at update 96, restores the source and reruns all 200 updates. The
 translated subject retains its existing gameplay mutations. No new case family
 is introduced. Mutation logs/binaries are private build outputs.
 
