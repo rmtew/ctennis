@@ -30,7 +30,7 @@ game_scene_reset:
 game_scene_build_players:
         movem.l d0-d7/a0-a4,-(sp)
         lea     game_play_state,a4
-        bsr     legacy_import_gameplay
+        bsr     game_assign_styles
         lea     G_LOWER(a4),a3
         lea     game_scene_objects+SC_LOWER,a2
         bsr     game_scene_actor
@@ -98,7 +98,7 @@ game_scene_finish_tick:
         lea     G_UPPER(a4),a3
         moveq   #0,d7
         bsr     game_scene_animate
-        bsr     legacy_export_gameplay
+        bsr     game_finish_controls
         bsr     game_scene_build_players
         lea     game_play_state,a4
         moveq   #2,d0
@@ -131,7 +131,7 @@ game_scene_finish_tick:
         cmpi.b  #192,G_BALL_Y(a4)
         bcs.s   .shadow
         move.b  #194,G_COURT_Y(a4)
-        move.b  #194,$34(a5) ; remaining gameplay scalar ABI, not sprite memory
+        move.b  #194,game_court_y ; remaining gameplay scalar ABI, not sprite memory
 .shadow:
         lea     game_scene_objects+SC_SHADOW,a2
         move.b  G_COURT_Y(a4),O_Y(a2)

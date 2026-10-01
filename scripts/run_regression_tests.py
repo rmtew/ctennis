@@ -276,7 +276,7 @@ def _main():
         path = ROOT / ('amiga/game/gameplay_math.s' if late_launch else 'amiga/game/tick.s')
         original = path.read_bytes()
         anchor = (b'        move.w  d1,d0\n        rts' if late_launch
-                  else b'        bsr     legacy_active_tick\ngame_service_tick:')
+                  else b'        bsr     game_active_tick\ngame_service_tick:')
         if original.count(anchor) != 1:
             raise ValueError('Maintained dispatcher mutation anchor is ambiguous')
         try:
@@ -361,7 +361,7 @@ def _main():
             (OUT / (case['name'] + '-mutated')).unlink(missing_ok=True)
     if exact:
         report['reference_coverage'] = reference_summary
-        report['port_limit'] = ('Maintained native subsystems; shared scalar/generated-clock adapter remains; captured start is not ordinary cadence/ADF proof'
+        report['port_limit'] = ('Maintained native state and clock tail; source-byte projection is test-only; captured start is not ordinary cadence/ADF proof'
                                 if subject == 'maintained' else
                                 'Translated diagnostic executes gameplay every tick; no native round main path')
     report_path = f'{case["name"]}-report.json' if exact else 'report.json'

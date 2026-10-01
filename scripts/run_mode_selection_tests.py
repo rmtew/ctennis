@@ -1,3 +1,4 @@
+from native_state_observation import read_native_state
 """Ordinary native title and physical mode choice, through completed presentation."""
 import argparse, configparser, hashlib, json, re
 from pathlib import Path
@@ -78,7 +79,7 @@ def capture(case, kind=None):
         def mem(name,length=2):
             return int(s.inspect('mem_read',{'addr':base+symbols[name],'len':length})['data'],16)
         def state():
-            return bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc000,'len':256})['data'])
+            return read_native_state(s,base,symbols)
         def observe(label):
             stop=s.inspect('run_until',{'vpos':0,'hpos':0})
             if stop['reason']!='target': raise RuntimeError(stop)

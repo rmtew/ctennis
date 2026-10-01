@@ -35,7 +35,7 @@ GATES = {
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes', 'status-timer-saturation-phase', 'ct06-ordinary-one-restart'],
     'CT-09': ['one-player-match', 'two-player-match', 'ct09-ordinary-one-cadence',
               'ct09-ordinary-two-cadence', 'ct09-input-timing-edges','ct09-published-bank-control'],
-    'CT-10': [],
+    'CT-10': ['ct10-adf-one-cadence'],
 }
 NAMES = {
     'CT-01': 'Shared maintained dispatcher / regeneration / mutation',
@@ -85,14 +85,14 @@ def report_path(name):
     return ROOT / f'build/tests/{name}-report.json'
 
 
-def cadence_proof(report, mode, executable_sha):
+def cadence_proof(report, mode, executable_sha, cold_adf=False):
     """Validate the finite ordinary receipt, never promote replay counts to CT09."""
     from ordinary_cadence import clock_contract
     if (report.get('passed') is not True or report.get('first_difference') is not None
-            or report.get('case') != f'ct09-ordinary-{mode}-cadence'
+            or report.get('case') != (f'ct10-adf-{mode}-cadence' if cold_adf else f'ct09-ordinary-{mode}-cadence')
             or report.get('subject') != 'maintained-native' or report.get('start_mode') != mode
             or report.get('restart_mode') != ('two' if mode == 'one' else 'one')
-            or report.get('startup') != 'ordinary title' or report.get('entropy') != 'ordinary native timer'
+            or report.get('startup') != ('cold ADF' if cold_adf else 'ordinary title') or report.get('entropy') != 'ordinary native timer'
             or report.get('uninterrupted') is not True or report.get('callback_breakpoints') != 0
             or not executable_sha or report.get('executable_sha256') != executable_sha):
         return False
@@ -108,6 +108,28 @@ def cadence_proof(report, mode, executable_sha):
         if any(marker not in log for marker in ('cpu=M68000','chip_ram=512K','fast_ram=0K',
                 'slow_ram=0K','z3_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3 (34.5)')):
             return False
+        if cold_adf:
+            adf=ROOT/report['adf']
+            loaded=measurement['loaded_executable_checks']
+            allocations=measurement['boot_allocations']
+            regions=measurement['boot_calibration']['regions']
+            headers={str(r['header']):r for r in regions}
+            positions=[r['position']['cck'] for r in allocations]
+            if positions!=sorted(positions):return False
+            for row in allocations:
+                free=row['free_counts']
+                if (set(free)!=set(headers) or row['used_chip_bytes']!=524288-sum(free.values())
+                        or any(not 0<=n<=headers[h]['upper']-headers[h]['lower'] for h,n in free.items())):
+                    return False
+            if (report.get('loaded_executable_verified') is not True
+                    or report['adf_sha256']!=digest(adf)
+                    or report['evidence']['files'].get(str(adf.relative_to(ROOT)))!=digest(adf)
+                    or 'run' in measurement['launch'] or not loaded
+                    or any(c.get('matched') is not True or c.get('expected_sha256')!=c.get('actual_sha256') for c in loaded)
+                    or not allocations or allocations[0]['position']['cck']>=measurement['timer_start_cck']
+                    or allocations[-1]['used_chip_bytes']!=measurement['memory_final']['used_chip_bytes']
+                    or report['memory']['cold_boot_peak']!=max(r['used_chip_bytes'] for r in allocations)):
+                return False
         contract = clock_contract()
         if measurement['clock_contract'] != contract or report['cadence']['clock_contract'] != contract:
             return False
@@ -431,8 +453,11 @@ def progress(fresh_since=None):
            'movement': ['lower_player_motion_update', 'upper_player_movement'], 'AI': ['predict_ball_intercept', 'direction_ai'],
            'presentation': ['build_player_sprites', 'scoreboard_update', 'irq_vdp_tail', 'shadow_vram', 'copy_cpu_bytes_to_vram_b_count']}
     old['audio'] = ['audio_tick_adapter','paula_apply_psg_events','assign_sound_stream_4','psg_log','game_audio_import_capture']
-    remaining = {'score/lifecycle': ['score_gate', 'scoreboard_update'],
-                 'shared scalar ABI (CT10)': ['virtual_memory']}
+    native['score/lifecycle']=['game_score_tick','game_round_poll','game_result_poll']
+    old['score/lifecycle']=['score_gate','scoreboard_update']
+    native['shared native state/order']=['game_active_tick','game_service_tail']
+    old['shared native state/order']=['virtual_memory','legacy_active_tick','legacy_tail_tick']
+    remaining = {}
     architecture = {'ordinary_build': build, 'subsystems': {}}
     for group in native:
         architecture['subsystems'][group] = {'integration': ('native entry points compiled; replaced translated entry points absent'
@@ -442,6 +467,16 @@ def progress(fresh_since=None):
     for group, labels in remaining.items():
         architecture['subsystems'][group] = {'integration': 'temporary runtime dependencies remain' if ordinary and any(n in symbols for n in labels) else 'unverified',
                                              'compiled_dependencies': [n for n in labels if n in symbols]}
+    package_path=ROOT/'build/amiga/ctennis-delivery/package-report.json'
+    package_status=status(package_path,'maintained-native',fresh_since=fresh_since)
+    package_report=json.loads(package_path.read_text()) if package_status['status']=='passed' else {}
+    package_verified=(package_report.get('embedded_executable_verified') is True
+        and package_report.get('reproducibility',{}).get('two_clean_builds') is True
+        and package_report.get('reproducibility',{}).get('first_adf_sha256')==package_report.get('adf_sha256')
+        and package_report.get('reproducibility',{}).get('second_adf_sha256')==package_report.get('adf_sha256')
+        and ordinary and package_report.get('executable_sha256')==json.loads(build_path.read_text()).get('executable_sha256'))
+    cold_report=json.loads(report_path('ct10-adf-one-cadence').read_text()) if evidence['ct10-adf-one-cadence']['status']=='passed' else {}
+    cold_verified=(ordinary and bool(cold_report) and cadence_proof(cold_report,'one',json.loads(build_path.read_text()).get('executable_sha256'),True))
     capabilities = {}
     for gate, names in GATES.items():
         verified = bool(names) and all(evidence[n]['status'] == 'passed' for n in names)
@@ -569,8 +604,10 @@ def progress(fresh_since=None):
                 verified=False
                 reasons.append('Actual delayed wrong-bank publication control missing or incompatible')
         if gate == 'CT-10':
-            verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
-            reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
+            verified = False # Independent target acceptance cannot be inferred from local passes.
+            if not package_verified:reasons.append('Two clean identical native executable/ADF package receipts missing or incompatible')
+            if not cold_verified:reasons.append('Cold disk native lifecycle/cadence/loaded-byte/allocation receipt missing or incompatible')
+            reasons.append('Independent emulator/real A500 validation unverified; pre-Exec-pool transient RAM usage unmeasured')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',
                               'evidence': names, 'limitations': reasons}
     runtime_target = all(evidence[n]['status'] == 'passed' and evidence[n].get('startup') == 'ordinary title'
@@ -585,9 +622,12 @@ def progress(fresh_since=None):
                 'scope': 'CIA timer start through restarted flight in both modes; resident OS/allocated stack included; pre-timer and cold ADF boot peak unverified'}
     return {'behavior': {'capabilities': capabilities, 'evidence': evidence, 'supporting_evidence': supporting},
             'runtime_dependencies': architecture,
-            'delivery': {'target': TARGET, 'ordinary_target_execution': 'evidenced in uninterrupted ordinary runs' if ordinary_complete else 'evidenced in mode/control checks' if runtime_target else 'unverified',
+            'delivery': {'target': TARGET, 'ordinary_target_execution': 'evidenced in uninterrupted ordinary runs' if ordinary_complete else 'evidenced local cold-disk lifecycle' if cold_verified else 'evidenced in mode/control checks' if runtime_target else 'unverified',
                          'peak_chip_ram': peak, 'cadence_and_full_ordinary_play': 'evidenced in two native-entropy runs' if ordinary_complete else 'unverified',
-                         'cold_ADF_boot': 'not run', 'independent_emulator_or_hardware': 'unverified'},
+                         'native_ADF_package': {'status':'evidenced' if package_verified else 'unverified','evidence':package_status},
+                         'cold_ADF_boot': 'evidenced local Copperline full lifecycle' if cold_verified else 'unverified',
+                         'cold_boot_chip_ram': {'bytes':cold_report['memory']['cold_boot_peak'],'scope':cold_report['memory']['cold_boot_peak_scope']} if cold_verified else 'unverified',
+                         'independent_emulator_or_hardware': 'unverified'},
             'scope': 'Retained reports checked against current dependencies; integration symbols are not runtime acceptance. No percentages or file-size RAM estimate.'}
 
 

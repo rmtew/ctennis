@@ -31,6 +31,7 @@ copy_initial:
         move.w  #GAME_TITLE_TRANSITION,game_lifecycle
         st      game_restart_context
         endif
+        bsr     capture_import_state
         bsr     scene_import_capture
         bsr     game_audio_import_capture
         endif
@@ -123,7 +124,7 @@ refresh_return:
         endif
 run_tail:
         ifd PRODUCT_REPLAY
-        bra     legacy_service_tick
+        bra     game_service_tail
         else
         bsr     irq_counter_prefix
         clr.b   psg_count
@@ -153,6 +154,9 @@ game_apply_sound:
         endif
 ; Copperline debug call emits one bounded hexadecimal record, including empty PSG.
 emit_hex:
+        ifd PRODUCT_REPLAY
+        bsr     capture_export_state
+        endif
         movem.l d0-d7/a0-a6,-(sp)
         lea     output_text+4,a1
         lea     hex_digits,a2
@@ -191,7 +195,8 @@ game_audio_write_level:
         endif
         ifd PRODUCT_REPLAY
         include "amiga/game/tick.s"
-        include "amiga/game/legacy_adapter.s"
+        include "amiga/game/integration.s"
+        include "amiga/tests/native_state_projection.s"
         else
         ifd REGRESSION_MUTATION
         include "build/tests/mutated-routines.s"

@@ -1,4 +1,4 @@
-"""Build the maintained native game; generated translation is temporary adapter debt."""
+"""Assemble the maintained native game from explicitly prepared private assets."""
 
 import configparser
 import hashlib
@@ -6,8 +6,8 @@ import json
 import sys
 from pathlib import Path
 
-from run_translated_prng_probe import ROOT, OUT, ASSEMBLER, run
-from run_translated_player_frame_probe import prepare_gameplay
+from native_tools import ROOT, ASSEMBLER, run
+OUT = ROOT / "build/translation"
 from evidence import tracked_call, compile_manifest
 
 
@@ -20,28 +20,13 @@ def module_hashes():
 
 
 def _build(phase_start=False):
-    from run_amiga_score_copper_probe import make_banks, make_copper_and_patch_tables
     config = configparser.ConfigParser(interpolation=None)
-    if not config.read(ROOT / "config.local.ini", encoding="utf-8"):
-        raise FileNotFoundError("config.local.ini")
-    copperline = Path(config["tools"]["copperline"])
-    amiga_rom = Path(config["inputs"]["amiga_rom"])
-    cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
-    for path in (ASSEMBLER, copperline, amiga_rom):
-        if not path.is_file():
-            raise FileNotFoundError(path)
-    run([sys.executable, "scripts/roundtrip_rom.py"])
-    prepare_gameplay()
-    run([sys.executable, "scripts/generate_amiga_sprite_probe.py"], timeout=120)
-    score_vram = (ROOT / "build" / "reference" / "source-timing" / "sprite-f1310.vram").read_bytes()
-    score_output = ROOT / "build" / "amiga" / "score-copper-probe"
-    score_output.mkdir(parents=True, exist_ok=True)
-    make_banks(score_vram)
-    make_copper_and_patch_tables()
-    from generate_native_title import generate
-    generate()
+    config.read(ROOT / 'config.local.ini', encoding='utf-8')
+    if not ASSEMBLER.is_file():
+        raise FileNotFoundError(ASSEMBLER)
     defines=[]
     if phase_start:
+        cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
         # Explicit diagnostic phase, never the ordinary application's startup.
         import csv
         from source_irq_tail import irq_tail_06b1
@@ -66,7 +51,7 @@ def _build(phase_start=False):
 
 
 def build(phase_start=False):
-    return tracked_call([DISPLAY / 'build-report.json'], 'build', 'maintained-native',
+    return tracked_call([DISPLAY / 'build-report.json'], 'phase-build' if phase_start else 'build', 'maintained-native',
                         'captured phase' if phase_start else 'ordinary title',
                         'scripts/build_native_game.py', None, lambda: _build(phase_start),
                         lambda path, report: [Path(report['executable'])])

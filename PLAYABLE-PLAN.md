@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 is active; CT-09–CT-10 remain queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 and CT-09 are verified and merged; CT-10 is active with final delivery gates still open.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -193,7 +193,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-09 — Verify uninterrupted native cadence and complete play
 
-**Status:** active; bounded acceptance passed, ready for independent exact-head review, unmerged. Current uninterrupted native-entropy runs complete 11,890/23,837 updates through full match/restart, with actual 9,753/19,689 Copper-bank publications verified and unchanged clock bounds. Full maintained recorded-entropy replays match 13,378/27,037 updates. Four physical edges, affected display guards and actual delayed stale-bank control pass. Peak occupied chip allocation is 329,136 bytes from CIA timer start onward in both modes; pre-timer/cold-boot peak unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
+**Status:** verified and merged in [PR10](https://github.com/rmtew/ctennis/pull/10), master `41b9e16`, after parent exact-head clearance of `328ca34`. Current uninterrupted native-entropy runs complete 11,890/23,837 updates through full match/restart, with actual 9,753/19,689 Copper-bank publications verified and unchanged clock bounds. Full maintained recorded-entropy replays match 13,378/27,037 updates. Four physical edges, affected display guards and actual delayed stale-bank control pass. Peak occupied chip allocation is 329,136 bytes from CIA timer start onward in both modes; pre-timer/cold-boot peak unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
 
 **Verified existing evidence:** CIA-B timing targets 59.922738 Hz; prior long replay and ordinary prefix measured no visible-line Copper commits. **Open verification, not a newly diagnosed defect:** normal execution across all regimes, input latency and complete matches has not passed the final acceptance gate.
 
@@ -207,7 +207,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-10 — Remove residual scaffolding and deliver the bootable ADF
 
-**Status:** queued. **Dependencies:** CT-09.
+**Status:** active. Native state/counter integration, isolated assembly and private reproducible ADF packaging implemented; focused delivery validation in progress. Independent target and whole-boot transient RAM peak remain unverified. **Dependencies:** CT-09.
 
 **Verified blocker:** current product includes generated routines, virtual source memory and source snapshots; the reviewed tracked tree has no finished native build/ADF packaging recipe. **Unknown until execution:** final memory/boot-path costs and independent-emulator/hardware behaviour.
 

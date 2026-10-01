@@ -163,3 +163,19 @@ can be evidenced. Chip-memory peak currently covers CIA timer start through
 restarted flight; pre-timer/cold-boot peak remains unverified. Display fault
 controls target `prepared_field_values` before its normal patch, so they corrupt
 actual output without adding a second full patch and unrelated scheduling delay.
+
+
+CT10 assembles the ordinary application exclusively from maintained native sources
+and explicitly prepared private assets. Use `scripts/prepare_native_assets.py`
+only for offline conversion, then `scripts/build_native_game.py` and
+`scripts/build_native_adf.py --self-test`; no translator or emulator is a build
+prerequisite. Disk output contains original-derived assets and stays ignored and
+private. `run_ordinary_round_tests.py --mode=one --match --cadence --adf` starts
+from read-only DF0 at real floppy speed, verifies actual relocated LoadSeg bytes
+and observes full physical title/match/result/restart without callback stops.
+Record the exact executable/ADF hashes and target. Allocation telemetry starts
+with initialized Exec chip pools; pre-pool bootstrap usage remains unmeasured.
+A local Copperline receipt cannot certify independent emulator/real-A500
+validation. Keep CT10 blocked if that final gate is unavailable. Run one complete
+aggregate at delivery; preserve diagnostic errors/known-red prefixes separately
+and rerun only affected focused checks after concrete fixes.

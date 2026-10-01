@@ -1,3 +1,4 @@
+from native_state_observation import read_native_state
 """Focused CT05 ordinary physical-input proof: first game, pause, next serve."""
 import argparse
 import json
@@ -50,7 +51,7 @@ def run(mode):
         for index in range(6000):
             stop = s.inspect('run_until', {'seconds': deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target', 'breakpoint'): raise RuntimeError(stop)
-            ram = bytes.fromhex(s.inspect('mem_read', {'addr': base + symbols['virtual_memory'] + 0xc000, 'len': 256})['data'])
+            ram = read_native_state(s,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle', 2), 'big')
             stage = mem('game_score_state', 1)[0]
             games = sum(ram[0x40:0x42])
@@ -144,7 +145,7 @@ def run_match(mode, early_release=False, audio=False):
         for index in range(40000):
             stop = session.inspect('run_until',{'seconds':deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target','breakpoint'): raise RuntimeError(stop)
-            ram = bytes.fromhex(session.inspect('mem_read',{'addr':base+symbols['virtual_memory']+0xc000,'len':256})['data'])
+            ram = read_native_state(session,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle',2),'big')
             callback = int.from_bytes(mem('simulation_updates',2),'big')+1
             if previous_callback is not None and callback != previous_callback+1:
@@ -288,12 +289,26 @@ def main():
     parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
     parser.add_argument('--audio',action='store_true',help='CT08 ordinary result mute and restart emitted sound')
     parser.add_argument('--cadence',action='store_true',help='CT09 non-stopping ordinary match, clock and chip-memory measurement')
+    parser.add_argument('--adf',action='store_true',help='CT10 cold boot packaged ADF, then existing uninterrupted cadence/lifecycle acceptance')
     parser.add_argument('--bank-control',action='store_true',help='CT09 delayed compiled stale Copper bank control')
     args=parser.parse_args()
     if args.audio and not args.match:parser.error('--audio requires --match')
     if args.early_release and (not args.match or args.mode != 'one'):
         parser.error('--early-release requires --match --mode=one')
     mode=args.mode
+    if args.adf:
+        if not args.match or not args.cadence or args.bank_control or args.audio or args.early_release:
+            parser.error('--adf requires --match --cadence and is distinct from compiled controls')
+        from ordinary_cadence import run as run_cadence
+        from build_native_adf import package
+        path=ROOT/f'build/tests/ct10-adf-{mode}-cadence-report.json'
+        adf=ROOT/'build/amiga/ctennis-delivery/ctennis.adf'
+        def run_boot():
+            package()
+            return run_cadence(mode,False,adf)
+        return tracked_call([path],'ordinary-cadence','maintained-native','cold ADF',
+                            'scripts/run_ordinary_round_tests.py',None,run_boot,
+                            lambda path,report:[ROOT/f'build/tests/ct10-adf-{mode}-cadence/native-application'])
     if args.bank_control:
         if args.cadence or args.early_release or args.audio:
             parser.error('--bank-control is a separate bounded compiled control')

@@ -1,3 +1,4 @@
+from native_state_observation import read_native_state
 """Drive real Amiga pads and compare live input readers with original calibration."""
 import argparse
 import configparser
@@ -94,7 +95,7 @@ def capture(policy, source, rows, mutation=False, label="physical-input"):
             if normalized['reason'] != 'target' or normalized.get('bridge'):
                 raise RuntimeError(f'Native normalization not reached: {normalized}')
             regs = session.inspect('regs.get')
-            data = bytes.fromhex(session.inspect('mem_read', {'addr': regs['a'][5], 'len': 256})['data'])
+            data = read_native_state(session,base,symbols)
             actual = {'update': row['update'], 'readers': [values[0], values[1]],
                       'native_completed_before_sample': native_count,
                       'normalized': [data[0x53], data[0x56]], 'mode_side': data[0x3d] & 0x94,
@@ -102,7 +103,7 @@ def capture(policy, source, rows, mutation=False, label="physical-input"):
             outcome_stop = session.inspect('run_until', {'pc': base + symbols['game_observe_pre_tail']})
             if outcome_stop['reason'] != 'target':
                 raise RuntimeError(f'Native player outcome boundary not reached: {outcome_stop}')
-            result = bytes.fromhex(session.inspect('mem_read', {'addr': base + symbols['virtual_memory'] + 0xc000, 'len': 256})['data'])
+            result = read_native_state(session,base,symbols)
             actual['outcome'] = {name: result[offset] for name, offset in OUTCOME_FIELDS.items()}
             actual['edges'] = list(bytes.fromhex(session.inspect('mem_read', {'addr': base + symbols['game_input_pressed'], 'len': 4})['data']))
             actual['owners'] = list(bytes.fromhex(session.inspect('mem_read', {'addr': base + symbols['game_lower_owner'], 'len': 2})['data']))

@@ -1,9 +1,9 @@
         include "amiga/game/gameplay_state.i"
 ; All native gameplay functions use A4 for state, A3/D7 for player/end.
-; The adapter imports/exports only at the boundary until CT-05/07/08 retire it.
+; Shared aliases let scoring/lifecycle update the same owned native fields.
 game_play_tick:
         lea     game_play_state,a4
-        bsr     legacy_import_gameplay
+        bsr     game_prepare_controls
         lea     G_LOWER(a4),a3
         moveq   #0,d7
         bsr     game_player_tick
@@ -17,7 +17,7 @@ game_play_tick:
         lea     G_UPPER(a4),a3
         moveq   #1,d7
         bsr     game_move_player
-        bra     legacy_export_gameplay
+        bra     game_finish_controls
 
         include "amiga/game/gameplay_math.s"
         include "amiga/game/gameplay_ball.s"
