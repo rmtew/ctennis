@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05–CT-10 remain queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is active; CT-07–CT-10 remain queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -122,7 +122,7 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 ## CT-05 — Score, pause, exchange ends and resume the next game
 
-**Status:** active, implementation ready for review. Native scoring/main-path round reset crosses both ordinary first-game boundaries and subsequent serves. The bounded machine gate is evidenced; separate raw diagnostics retain retired scratch differences. Revised-head independent clearance remains pending. **Dependencies:** CT-04.
+**Status:** verified and merged in [PR #6](https://github.com/rmtew/ctennis/pull/6), master `8cb8c87`. Bounded native scoring/round acceptance independently cleared at `cbbaf89`; raw scratch diagnostics remain separate. **Dependencies:** CT-04.
 
 **Resolved boundary:** shared native main-path polling now switches to service-only, requests the display/player reset, advances serve/end ownership, waits for phase/audio completion and resumes. Maintained R1 crosses callback 1333 through its full 1566-update round window; maintained R2 matches a declared 2800-update prefix beyond callback 2536. Native deuce/advantage and four complete round phases match. Three round-scene full raw-state reports still differ only at retired contact scratch offsets 0x67–0x68; all four pixel/field contexts match. Scenes now apply the existing CT04 maintained scratch contract for semantic acceptance, while separately preserving all254 raw diagnostic bytes and their failures. See [CT-05 evidence](analysis/native-scoring-round-regression.md).
 
@@ -136,9 +136,9 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 ## CT-06 — Finish a match, return to title and restart
 
-**Status:** queued. **Dependencies:** CT-05.
+**Status:** active, revised implementation and focused acceptance ready for independent exact-head review. The confirmed early-release latch defect at `8dcdcb8` is fixed and runtime-verified locally. Not merged. **Dependencies:** CT-05.
 
-**Verified blocker:** local result windows show missing result-sound initialization (R1 12089 / R2 25748), followed by absent title/reset/selection changes. Existing result checks are local source-derived starts, not proof the native application reaches them.
+**Resolved boundary:** native result/title/restart state now handles sound requests, return display, shared mode selection and old-action release gating. Complete local scene checks remain separate from ordinary continuous match/restart acceptance; see the evidence record below.
 
 **Targets:** native lifecycle; [result evidence](analysis/native-result-restart-presentation.md), [result runner](scripts/run_result_presentation_tests.py), [restart recipes](tests/cases/one-player-restart-complete.json) and [two-player recipe](tests/cases/two-player-restart-complete.json).
 
@@ -147,6 +147,8 @@ continuous rounds, complete matches or independent-hardware parity. See
 **Observable acceptance:** both modes reach their result, return to title, accept a new mode selection and launch a restarted serve. Old score, side assignment, held action and audio state do not leak into the restarted match.
 
 **Lightweight validation:** reuse the two existing six-checkpoint result/restart cases and their complete state/pixel/event acceptance. Then carry ordinary/continuous play from fresh mode selection through the result and restarted serve; retain checkpoints rather than all frames. Do not create more equivalent result-scene permutations.
+
+Evidence: both complete maintained match phases match1451/1451; both six-scene windows pass1422 states/42 images each and all six compiled late faults. Ordinary one→two11807 and two→one23753 consecutive callbacks cross match/title/reselection and held-action release/repress through restarted flight. Revised executable `6312d8c798fd8d3fe1e98e29b2fddbb0d5b529dbc113eed2906f265932febdfc`; additional early-release/repress regression passes11647 consecutive observations with continuously held P2 still blocked and flight12067 without a second release. Progress reports CT06 evidenced within this scope with all required reports fresh. Raw scratch diagnostics remain separately red; cadence/full reference match/peak RAM/waveform/ADF/independent validation remain open. See [CT06 evidence](analysis/native-result-restart-presentation.md).
 
 ## CT-07 — Correct native graphics and remove the display translation bridge
 

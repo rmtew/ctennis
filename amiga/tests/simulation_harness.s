@@ -32,15 +32,18 @@ copy_initial:
         move.b  psg_count,d0
         bsr     emit_hex
 next_update:
-        ifd PRODUCT_REPLAY
-        bsr     game_round_poll
-        endif
         moveq   #0,d0
         move.w  update_index,d0
         add.l   d0,d0
         lea     inputs,a0
         move.b  (a0,d0.l),case_game_bits
         move.b  1(a0,d0.l),case_keyboard_bits
+        ifd PRODUCT_REPLAY
+        move.w  update_index,d0
+        lea     selection_inputs,a0
+        move.b  (a0,d0.w),game_selection_keys
+        bsr     game_round_poll
+        endif
         ifne CASE_CAPTURE_REFRESH
         clr.b   refresh_count
         move.l  a5,a0
@@ -128,6 +131,9 @@ game_observe_pre_tail:
         bsr     emit_hex
         movem.l (sp)+,d0/a0
         rts
+game_show_returned_title:
+game_show_returned_court:
+game_clear_returned_status:
 game_before_scoreboard:
 game_after_scoreboard:
 game_apply_sound:
@@ -199,4 +205,8 @@ refresh_seen: dcb.b 64,0
 refresh_values:
         incbin "build/tests/refresh-values.bin"
 refresh_end:
+        endif
+
+        ifd PRODUCT_REPLAY
+selection_inputs: incbin "build/tests/selection-inputs.bin"
         endif

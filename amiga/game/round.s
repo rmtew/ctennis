@@ -3,20 +3,32 @@
 ; continue while gameplay is paused. Presentation/audio remain temporary ABI.
 game_round_poll:
         movem.l d0-d7/a0-a4,-(sp)
+        tst.b   game_restart_context
+        beq.s   .non_menu
+        cmpi.w  #GAME_TITLE,game_lifecycle
+        beq.s   .menu
+        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle
+        bne.s   .non_menu
+.menu:
+        bsr     game_menu_tick
+        bra     game_round_done
+.non_menu:
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bcc     game_result_poll
         tst.b   game_score_initialized
-        beq     .done
+        beq     game_round_done
         lea     game_score_state,a4
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
         beq     .pause
         cmpi.w  #GAME_ROUND_SOUND,game_lifecycle
         beq     .sound
         cmpi.w  #GAME_PLAYING,game_lifecycle
-        bne     .done
+        bne     game_round_done
         btst    #5,S_MODE(a4)
-        beq     .done
-; Match-result handling belongs to CT-06.
+        beq     game_round_done
+; Match award enters the native result/title lifecycle.
         btst    #6,S_MODE(a4)
-        bne     .done
+        bne     game_result_begin
         move.w  #GAME_ROUND_PAUSE,game_lifecycle
         move.b  #$81,$02(a5)
         move.b  S_MODE(a4),d0
@@ -49,10 +61,10 @@ game_round_poll:
         bsr     build_player_sprites
         bsr     upload_sprite_attributes
         clr.b   $6c(a5)
-        bra     .done
+        bra     game_round_done
 .pause:
         cmpi.b  #$80,$6c(a5)
-        bcs     .done
+        bcs     game_round_done
         moveq   #0,d0
         move.b  S_MODE(a4),d0
         moveq   #0,d1
@@ -71,12 +83,12 @@ game_round_poll:
         bsr     draw_pending_scoreboard_mode_and_scores
         bsr     assign_sound_stream_4
         move.w  #GAME_ROUND_SOUND,game_lifecycle
-        bra.s   .done
+        bra.s   game_round_done
 .sound:
         move.b  $a4(a5),d0
         cmp.b   $a5(a5),d0
-        bne.s   .done
+        bne.s   game_round_done
         move.w  #GAME_PLAYING,game_lifecycle
-.done:
+game_round_done:
         movem.l (sp)+,d0-d7/a0-a4
         rts

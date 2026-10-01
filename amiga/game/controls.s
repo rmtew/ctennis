@@ -63,6 +63,9 @@ game_decode_done:
 game_store_pad:
         move.b  (a0),d1
         move.b  d0,(a0)
+; Retire inherited actions on every physical sample, including menu/sound
+; waits. Do not assign player controls or consume gameplay while waiting.
+        and.b   d0,game_old_action_latches-game_input_bits(a0)
         eor.b   d0,d1
         move.b  d1,d2
         and.b   d0,d1
@@ -82,8 +85,23 @@ game_assign_players:
         move.b  game_input_bits,game_player_controls
         clr.b   game_player_controls+1
         tst.b   d0
-        beq.s   game_assignment_done
+        beq.s   game_filter_old_actions
         move.b  game_input_bits+1,game_player_controls+1
+; A new match must not treat an action carried across its menu as a new serve.
+; Suppress only those action bits held at selection, independently per player;
+; each becomes eligible after its physical release. Normal rally holds survive.
+game_filter_old_actions:
+        lea     game_input_bits,a0
+        lea     game_old_action_latches,a1
+        lea     game_player_controls,a2
+        moveq   #1,d2
+game_filter_old_action:
+        move.b  (a0)+,d0
+        and.b   (a1),d0
+        move.b  d0,(a1)+
+        not.b   d0
+        and.b   d0,(a2)+
+        dbra    d2,game_filter_old_action
 game_assignment_done:
         rts
 
@@ -101,4 +119,15 @@ game_input_released:   dc.b 0,0
 game_player_controls: dc.b 0,0
 game_lower_owner:     dc.b 0
 game_upper_owner:     dc.b 1
+        even
+
+game_latch_old_actions:
+        move.b  game_input_bits,d0
+        andi.b  #$30,d0
+        move.b  d0,game_old_action_latches
+        move.b  game_input_bits+1,d0
+        andi.b  #$30,d0
+        move.b  d0,game_old_action_latches+1
+        rts
+game_old_action_latches: dc.b 0,0
         even

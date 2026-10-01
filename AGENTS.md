@@ -88,3 +88,23 @@ label semantic acceptance as a raw pass. The range is supported by independent c
 require exact-head independent review before clearance. The bounded CT05
 R2 gate uses the original first-round advancing-serve milestone; CT09 still
 requires the entire match. Never promote a prefix to full-match acceptance.
+
+CT06 uses the existing two result/restart scene checks with `--self-test`, explicit
+`--subject=maintained` for both match-complete phases, and the ordinary round
+runner's `--mode=one --match` / `--mode=two --match`. Keep local source-derived
+starts separate from ordinary title-to-match-to-restart proof. The ordinary
+commands hold both physical red buttons through return/reselection, require
+stationary action suppression, then release/repress and advancing flight.
+Keep the exact CT04 semantic scratch range and separate raw diagnostic labels.
+A presentation fault must reach its intended unchanged checkpoint: use the
+actually displayed Copper bank, not an assumed front/prepared generation.
+Document diagnostic activation timing separately from normal product changes.
+Final evidence must remain current after all builds; use `scripts/progress.py`
+rather than manually promoting successful but stale reports.
+The focused CT06 review regression is
+`RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match --early-release`.
+It releases P1 during restart sound, verifies a sampled release, represses before
+play and requires advancing flight without a second release. P2 stays held and
+must remain latched/filtered. This is required in addition to the two ordinary
+late-release checks. Latch retirement observes physical sampling in every
+lifecycle; it must not depend on active player assignment.

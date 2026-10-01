@@ -20,13 +20,15 @@ CT05_REPLAY = ('round-transition', 'deuce-sequence-phase',
                'two-player-resumed-serve-complete-phase', 'two-player-upper-resumed-serve-complete-phase')
 CT05_SCENES = ('p1-first-round-scenes', 'p1-one-player-upper-round-scenes',
                'p1-two-player-lower-round-scenes', 'p1-two-player-upper-round-scenes')
+CT06_PHASES = ('one-player-match-complete-phase', 'two-player-match-complete-phase')
+CT06_SCENES = ('p1-one-player-result-restart-scenes', 'p1-two-player-result-restart-scenes')
 GATES = {
     'CT-01': ['serve'],
     'CT-02': ['p1-accept-one-player', 'p1-accept-two-player'],
     'CT-03': list(INPUT_CASES) + ['control-ownership', 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-04': list(REPLAY) + ['p1-accept-one-player', 'p1-accept-two-player'],
     'CT-05': list(CT05_REPLAY) + list(CT05_SCENES) + ['ct05-r2-first-round', 'ct05-ordinary-one-round', 'ct05-ordinary-two-round'],
-    'CT-06': ['one-player-restart-complete', 'two-player-restart-complete'],
+    'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart', 'ct06-ordinary-one-early-release'],
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'status-timer-saturation-phase'],
     'CT-09': ['one-player-match', 'two-player-match'],
@@ -101,16 +103,86 @@ def ordinary_round_proof(report, mode, executable_sha256):
             and report['observed_callbacks'] >= checkpoints[-1] - checkpoints[0] + 1)
 
 
+def result_scene_proof(report, recipe):
+    """A local source phase proves only its declared complete scene window."""
+    start=recipe['initial_source_update'];targets=recipe['completed_callbacks']
+    states=report.get('checks',{}).get('states',[])
+    pixels=report.get('checks',{}).get('pixels',[])
+    regions=('viewport','point_a','point_b','games_a','games_b','status','mode')
+    return (report.get('case')==recipe['name'] and report.get('subject')=='maintained-native'
+        and report.get('state_contract')==MAINTAINED_STATE_CONTRACT
+        and report.get('omitted_legacy_scratch_offsets')==list(MAINTAINED_SCRATCH_OFFSETS)
+        and report.get('state_bytes_compared_per_callback')==250
+        and report.get('raw_state_subject')=='maintained-native'
+        and report.get('raw_state_contract')=='original-byte-page-diagnostic-v1'
+        and report.get('raw_state_bytes_compared_per_callback')==254
+        and isinstance(report.get('raw_state_passed'),bool)
+        and [row.get('update') for row in states]==list(range(start+1,targets[-1]+1))
+        and all(row.get('differences')==[] for row in states)
+        and [(row.get('checkpoint'),row.get('region')) for row in pixels]
+            ==[(target,region) for target in targets for region in regions]
+        and all(row.get('expected_sha256')==row.get('actual_sha256')
+                and row.get('expected_sha256') and row.get('first_difference') is None for row in pixels)
+        and report.get('checks',{}).get('source_events')==[]
+        and sorted((m.get('kind'),m.get('detected')) for m in report.get('hardware_mutations',[]))
+            ==[('entropy',True),('field',True),('sprite',True)])
+
+def ordinary_restart_proof(report,mode,executable_sha256):
+    """Ordinary physical path is distinct from captured result initialization."""
+    checkpoints=report.get('checkpoints',{})
+    names=('match_award','returned_title_display','title_ready','restart_selected',
+           'restart_playing','old_action_blocked','restart_action','restarted_flight')
+    values=[checkpoints.get(name) for name in names]
+    return (report.get('case')==f'ct06-ordinary-{mode}-restart'
+        and report.get('subject')=='maintained-native'
+        and report.get('executable_sha256')==executable_sha256
+        and report.get('start_mode')==mode
+        and report.get('restart_mode')==('two' if mode=='one' else 'one')
+        and report.get('consecutive_callbacks') is True
+        and report.get('held_old_actions_verified') is True
+        and all(type(n) is int and n>0 for n in values)
+        and values==sorted(set(values))
+        and type(report.get('observed_callbacks')) is int
+        and report['observed_callbacks']>=values[-1]-values[0]+1)
+
+
+def early_release_proof(report, executable_sha256):
+    names=('match_award','returned_title_display','title_ready','restart_selected',
+           'early_release','sampled_release','early_repress','sampled_repress',
+           'restart_playing','fresh_action_eligible','restarted_flight')
+    points=report.get('checkpoints',{});values=[points.get(n) for n in names]
+    samples=report.get('action_samples',{})
+    expected={'before_release':(9,[16,16],[16,16]),'sampled_release':(9,[0,16],[0,16]),
+              'sampled_repress':(9,[16,16],[0,16]),'playable':(1,[16,16],[0,16])}
+    return (report.get('case')=='ct06-ordinary-one-early-release'
+        and report.get('subject')=='maintained-native'
+        and report.get('executable_sha256')==executable_sha256
+        and report.get('start_mode')=='one' and report.get('restart_mode')=='two'
+        and report.get('consecutive_callbacks') is True and report.get('early_release_verified') is True
+        and all(type(n) is int and n>0 for n in values) and values==sorted(set(values))
+        and type(report.get('observed_callbacks')) is int
+        and report['observed_callbacks']>=values[-1]-values[0]+1
+        and all(samples.get(name,{}).get('lifecycle')==state
+                and samples[name].get('raw')==raw and samples[name].get('latches')==latches
+                for name,(state,raw,latches) in expected.items())
+        and samples['sampled_release'].get('released')==[16,0]
+        and samples['sampled_repress'].get('pressed')==[16,0]
+        and samples['playable'].get('controls')==[16,0]
+        and samples['sampled_release'].get('callback')==points['sampled_release']
+        and samples['sampled_repress'].get('callback')==points['sampled_repress']
+        and samples['playable'].get('callback')==points['fresh_action_eligible'])
+
+
 def progress(fresh_since=None):
     evidence = {}
     for name in sorted(set(n for names in GATES.values() for n in names)):
         if name == 'ct05-r2-first-round':
             evidence[name] = bounded_round_status(report_path(name), fresh_since)
             continue
-        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name.endswith('-match') else 'maintained-native'
-        full = name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
+        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') else 'maintained-native'
+        full = name in CT06_PHASES or name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
         evidence[name] = status(report_path(name), subject, full, fresh_since)
-        if name in CT05_SCENES and evidence[name]['status'] in ('passed', 'failed'):
+        if name in CT05_SCENES + CT06_SCENES and evidence[name]['status'] in ('passed', 'failed'):
             report = json.loads(report_path(name).read_text())
             evidence[name]['state_contract'] = report.get('state_contract')
             evidence[name]['raw_diagnostic'] = {k: report.get('raw_state_' + k) for k in
@@ -141,7 +213,7 @@ def progress(fresh_since=None):
     for gate, names in GATES.items():
         verified = bool(names) and all(evidence[n]['status'] == 'passed' for n in names)
         reasons = []
-        if gate in ('CT-01', 'CT-02', 'CT-03', 'CT-04', 'CT-05') and not ordinary:
+        if gate in ('CT-01', 'CT-02', 'CT-03', 'CT-04', 'CT-05', 'CT-06') and not ordinary:
             verified = False
             reasons.append('Current ordinary executable build dependencies unverified')
         if gate in ('CT-02', 'CT-03', 'CT-04') and not all(
@@ -189,7 +261,30 @@ def progress(fresh_since=None):
                 reasons.append('Ordinary native scoring/round routing unverified')
             if any(evidence[n]['status'] != 'passed' for n in names):
                 reasons.append('Required bounded round/serve/deuce/scene evidence missing or failing')
-        if gate in ('CT-06', 'CT-07', 'CT-08', 'CT-09', 'CT-10'):
+        if gate == 'CT-06':
+            for scene in CT06_SCENES:
+                if evidence[scene]['status'] != 'passed':continue
+                recipe=json.loads((ROOT/f'tests/cases/{scene}.json').read_text())
+                if not result_scene_proof(json.loads(report_path(scene).read_text()),recipe):
+                    verified=False;reasons.append(f'{scene} complete semantic/pixel/event/fault acceptance missing')
+            for mode in ('one','two'):
+                name=f'ct06-ordinary-{mode}-restart'
+                if (not ordinary or evidence[name]['status']!='passed'
+                        or evidence[name].get('startup')!='ordinary title'
+                        or evidence[name].get('kind')!='ordinary-round'
+                        or not ordinary_restart_proof(json.loads(report_path(name).read_text()),mode,
+                            json.loads(build_path.read_text()).get('executable_sha256'))):
+                    verified=False;reasons.append(f'Ordinary {mode}-player match/title/restarted serve missing')
+            name='ct06-ordinary-one-early-release'
+            if (not ordinary or evidence[name]['status']!='passed'
+                    or evidence[name].get('startup')!='ordinary title'
+                    or evidence[name].get('kind')!='ordinary-round'
+                    or not early_release_proof(json.loads(report_path(name).read_text()),
+                        json.loads(build_path.read_text()).get('executable_sha256'))):
+                verified=False;reasons.append('Restart-sound release/repress with continuously held P2 acceptance missing')
+            if not all(n in symbols for n in ('game_result_poll','game_restart_begin','game_menu_tick','game_source_tick')):
+                verified=False;reasons.append('Ordinary native result/restart routing unverified')
+        if gate in ('CT-07', 'CT-08', 'CT-09', 'CT-10'):
             verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
             reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',

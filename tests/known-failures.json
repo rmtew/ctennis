@@ -298,33 +298,6 @@
         9874
       ],
       "required_raster_checks": 10
-    },
-    "p1-one-player-result-restart-scenes": {
-      "signature": {
-        "update": 11964,
-        "boundary": "completed-result-restart-viewport",
-        "field": "logical display pixel",
-        "x": 146,
-        "y": 12,
-        "expected": "000000",
-        "actual": "5555ee"
-      },
-      "complete_checks_sha256": "64c2ec7cf7597721ab31811cd050839c97f4d62da27d19dfd57055462aae220b",
-      "reason": "Existing sprite-origin error and missing main-thread result/audio/title/reset/restart transitions. Two-player retains initial second-reader C05617vs1. Complete state/pixel/event digest required; real physical fire/key edges applied, no original transition RAM injected.",
-      "evidence": "analysis/native-result-restart-presentation.md"
-    },
-    "p1-two-player-result-restart-scenes": {
-      "signature": {
-        "update": 25619,
-        "boundary": "result-restart-scene-state",
-        "field": "source state byte",
-        "ram_offset": 86,
-        "expected": 17,
-        "actual": 1
-      },
-      "complete_checks_sha256": "820771f65146dc2fea04d926712ecdf3db8b7af6f3f3455e05832bab1c12a94a",
-      "reason": "Existing sprite-origin error and missing main-thread result/audio/title/reset/restart transitions. Two-player retains initial second-reader C05617vs1. Complete state/pixel/event digest required; real physical fire/key edges applied, no original transition RAM injected.",
-      "evidence": "analysis/native-result-restart-presentation.md"
     }
   }
 }

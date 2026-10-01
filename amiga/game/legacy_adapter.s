@@ -25,7 +25,10 @@ legacy_service_tick:
         bsr     irq_counter_prefix
         move.l  #psg_log,psg_ptr
         clr.b   psg_count
+        tst.b   $83(a5)
+        bne.s   legacy_audio_wait
         bsr     audio_tick_adapter
+legacy_audio_wait:
         bsr     game_apply_sound
         move.l  #vdp_log,vdp_ptr
         clr.b   vdp_count
@@ -150,4 +153,6 @@ legacy_owner_selected:
         include "amiga/game/scoring.s"
         include "amiga/game/scoring_adapter.s"
         include "amiga/game/round.s"
+        include "amiga/game/result.s"
+        include "amiga/game/result_adapter.s"
         endif
