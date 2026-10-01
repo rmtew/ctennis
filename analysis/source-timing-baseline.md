@@ -17,3 +17,89 @@ This establishes a controlled active-play timing and input baseline on MAME's SC
 `python scripts/check_translated_timing_replay.py` resumes the translated full update from source interval 1299 and matches all 256 RAM bytes for each of intervals 1300-1339, after accounting for the tap occurring before the `$C06B` write. All 40 updates take the lower `serve_wait`, upper `ai_wait` and ball-dispatch `idle` paths; changing displayed ball coordinates arise from the lower serve wait path, not active ball flight. This is translation-vs-source evidence for this one bounded state trajectory, not native Amiga equivalence.
 
 A separate `python scripts/capture_source_serve.py` run presses button 1 after frame 1300 and captures intervals 1299-1499 twice. The 201-checkpoint files are byte-identical (SHA-256 `633f77ba928793c358ea2941321d11662615486e703de13243fede1efe1f9c83`). The translated full update matches every byte of the 256-byte pre-tail RAM snapshot for intervals 1300-1499. Serve triggers at 1300, launches at 1316, active flight later crosses a net/return and ends in the observed point state at 1432. This is a strong differential reference for evaluating a mechanical transcode, not a native-port result.
+
+## CT09 ordinary clock contract
+
+The retained original one/two-player audio `frame-times.tsv` files give a
+constant **16688156054054544 attoseconds** per source frame. Both full source
+state fixtures' `begin_frame` labels also advance exactly one frame per callback: 13,378 and 27,037
+updates respectively. `ordinary_cadence.clock_contract()` checks these original
+facts and saves its contract before running the maintained application.
+
+On the pinned PAL emulator, a colour clock is 1/3546895 second and the CIA
+E-clock is one tick per five colour clocks, or 709379 Hz. These are emulated
+time, independent of host execution speed. CPU bus notifications include an
+integer colour-clock timestamp and full physical beam position. The source
+interval is **11838.227453469159 E-clock ticks**; its nearest 16.16 value is
+**775830074**, split into 11838 whole ticks and a 14906/65536 remainder.
+The maintained loop accumulates this remainder rather than discarding it per
+update. Its initial immediately due update is preserved.
+
+The timer start write and initial CIA counter read establish the time origin:
+start colour clock + (65535 − initial count) × 5. Origin uncertainty is at
+most one E-clock. Fractional deadline quantization contributes another tick;
+rounding the interval contributes at most N/(2×65536) ticks after N intervals.
+An update must start no earlier than that independently derived bound, and
+complete before its next source deadline. A late callback is a failure, not a
+reason to fit a larger tolerance. Entry and completion counters distinguish
+work duration from polling delay without stopping execution.
+
+`run_ordinary_round_tests.py --mode=one --match --cadence` (and `--mode=two`)
+uses one uninterrupted execution from loaded application through complete
+match, returned title, opposite selection, held-action suppression and a fresh
+restarted serve. Only physical keyboard/pad commands are injected. Ordinary
+native timer entropy is separate from the two recorded-entropy reference
+replays. Milestone screenshots, emitted audio and actual input replies are
+retained privately. The completion counter, lifecycle, inputs, score/pose and
+Copper writes are observed externally; no expected state is written to RAM.
+Every Copper publication must use the latest completed prepared bank and
+occur outside physical visible rows 44–235. PAL can legitimately present the
+latest of multiple source updates; it must not publish an older epoch.
+Actual COP1LCH/L bus values are combined and compared at COPJMP1 with the
+prepared bank, resolved from the loaded chip-data hunk. Readiness/callback
+counts alone cannot certify this. The native main lifecycle can select the
+permanently prepared title or completed court between callbacks; the observed
+page-selection write is associated independently. A compiled stale-bank write
+after update200 must fail despite unchanged counters and readiness.
+
+Memory is measured from Kickstart Exec's MemList/free chunks, cross-checking
+their sum against each chip MemHeader's free count. Header/list writes are
+watched continuously during the ordinary run. A changed allocation/topology
+leaves peak memory unverified unless accounted for; an unchanged allocation
+establishes the peak from CIA timer start through restarted flight, including
+resident OS and allocated executable/stack. Pre-timer peak is not claimed.
+Executable file size is not a RAM measurement. Cold ADF boot remains CT10.
+
+Four focused `run_physical_input_tests.py --timing-edges` probes put a real
+direction/action immediately before sampling or after the pre-tail checkpoint.
+They check actual movement from the measured initial X, and actual serve phase,
+in the same or following callback. Debugger stops make these boundary probes,
+not uninterrupted cadence evidence.
+
+The initial integer scheduler title check accumulated 1.24 ms of advance over
+3,595 updates. With fractional scheduling its endpoint difference was 6.9 μs.
+The first uninterrupted ordinary match still failed at callback 4,072: completion
+was 59,415 colour clocks after its deadline, beyond the next interval (~59,191).
+Unconditional repatching of 224 unchanged scoreboard descriptors between
+callbacks delayed entry. A separate cache for each native Copper bank avoids
+that redundant work while changed fields still patch their inactive list.
+Final ordinary measurements and focused display checks determine acceptance;
+these baseline observations alone do not certify CT09.
+
+The cache also exposed an existing mixed-generation publication at generation
+470: a newer score/status selection could alter the already prepared sprites'
+Copper bank. The original 42-check score/status prefix rejected it. Preparing
+the six field selections together with the sprite scene, and using that
+snapshot for bank patches, restored all 42 exact comparisons. The source
+fixtures and pixel expectations were retained unchanged.
+
+The final one-player and two-player ordinary runs pass through
+result, returned title, opposite selection and fresh restarted flight: 11,890
+and 23,837 completed updates, 9,753 and 19,689 actual bank publications, no
+deadline violations, wrong/stale banks or visible-line commits, and **329,136
+bytes peak chip allocation from CIA timer start** in both modes. Four final
+direction/action boundary probes pass. Full maintained recorded-entropy replays
+match 13,378/27,037 updates; representative round/result display guards pass
+their existing compiled controls. The delayed stale bank fails at update200.
+Progress evidences this bounded CT09 scope; independent exact-head review,
+original full-match pixel/waveform parity and CT10 delivery remain separate.

@@ -12,6 +12,11 @@ NATIVE_SCENE_OBSERVE equ 1
 SCORE_COPPER_DISPLAY equ 1
 LIVE_REFRESH_ADAPTER equ 1
 DOUBLE_BUFFER_DISPLAY equ 1
+; Original frame timestamps: 16688156054054544 attoseconds. PAL E-clock:
+; 709379 Hz, giving 11838.227453469159 ticks. Retain the fractional phase
+; (nearest 16.16 value = 775830074) rather than rounding every update down.
+SIM_INTERVAL_WHOLE equ 11838
+SIM_INTERVAL_FRACTION equ 14906
         include "build/translation/player-frame-symbols.i"
         include "amiga/translated_z80_macros.i"
 
@@ -83,6 +88,7 @@ copy_back_copper:
         move.b  #$01,$bfdf00
         bsr     read_sim_timer
         move.w  d0,last_timer_count
+        move.w  d0,simulation_timer_origin
 main_loop:
         bsr     game_round_poll
         bsr     game_poll_keyboard
@@ -94,10 +100,15 @@ main_loop:
         andi.l  #$ffff,d1
         add.l   d1,simulation_phase
         move.l  simulation_phase,d0
-        cmpi.l  #11838,d0
+        cmp.l   simulation_interval,d0
         bcs.s   main_loop
-        subi.l  #11838,d0
+        sub.l   simulation_interval,d0
         move.l  d0,simulation_phase
+        move.l  #SIM_INTERVAL_WHOLE,simulation_interval
+        addi.w  #SIM_INTERVAL_FRACTION,simulation_fraction
+        bcc.s   simulation_interval_ready
+        addq.l  #1,simulation_interval
+simulation_interval_ready:
         bsr     simulation_update
         bra     main_loop
 
@@ -206,6 +217,9 @@ next_back_sprite_pointer:
         rts
 
 simulation_update:
+        ; Compact observational counter: external bus timestamps distinguish
+        ; update entry/completion without stopping or tracing each instruction.
+        addq.w  #1,simulation_started_updates
         bsr     sample_amiga_joystick
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne.s   simulation_menu
@@ -383,6 +397,16 @@ refresh_replay_done:
 ; Amiga two-plane data; there is no VDP pattern/record decoder in this path.
 game_render_sprites:
         movem.l d0-d7/a0-a4,-(sp)
+        ; Score/status selection belongs to this prepared scene, just like
+        ; its sprites. The subsequent source tick may select fields for the
+        ; following scene; it must not repatch this generation after rendering.
+        lea     field_values(pc),a0
+        lea     prepared_field_values(pc),a1
+        moveq   #5,d7
+prepare_scene_fields:
+        move.b  (a0)+,(a1)+
+        dbra    d7,prepare_scene_fields
+        bsr     patch_score_pointers
         clr.l   pair_colours
         clr.l   pair_colours+4
         clr.b   sprite_bridge_error
@@ -637,7 +661,10 @@ hex_byte:
         include "amiga/game/legacy_adapter.s"
 
         even
-simulation_phase:   dc.l 11838
+simulation_phase:   dc.l SIM_INTERVAL_WHOLE
+simulation_interval: dc.l SIM_INTERVAL_WHOLE
+simulation_fraction: dc.w 0
+simulation_timer_origin: dc.w 0
 last_timer_count:  dc.w 0
 blank_seen:        dc.b 0
 display_ready:     dc.b 0
@@ -647,11 +674,13 @@ back_copper:       dc.l 0
 copper_write_delta: dc.l 0
 sprite_write_delta: dc.l 0
 simulation_updates: dc.w 0
+simulation_started_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
 score_dirty: dc.b 0
 field_values: dc.b 0,0,0,0,0,1
+prepared_field_values: dc.b 0,0,0,0,0,1
         ifd LONG_GAME_REPLAY
 last_replay_score: dcb.b 4,0
         endif

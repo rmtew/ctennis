@@ -11,6 +11,8 @@ from evidence import ROOT, TARGET, atomic_json, status, now, snapshot, python_in
 from run_regression_tests import native_replay_cases
 from physical_input_reference import CASES as INPUT_CASES
 from maintained_state_contract import MAINTAINED_STATE_CONTRACT, MAINTAINED_SCRATCH_OFFSETS
+from fractions import Fraction
+from bisect import bisect_right
 
 
 REPLAY = native_replay_cases()
@@ -31,7 +33,8 @@ GATES = {
     'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart', 'ct06-ordinary-one-early-release'],
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', *CT05_SCENES, *CT06_SCENES, 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes', 'status-timer-saturation-phase', 'ct06-ordinary-one-restart'],
-    'CT-09': ['one-player-match', 'two-player-match'],
+    'CT-09': ['one-player-match', 'two-player-match', 'ct09-ordinary-one-cadence',
+              'ct09-ordinary-two-cadence', 'ct09-input-timing-edges','ct09-published-bank-control'],
     'CT-10': [],
 }
 NAMES = {
@@ -80,6 +83,146 @@ def report_path(name):
     if name == 'control-ownership':
         return ROOT / 'build/tests/native-control-ownership/capture.json'
     return ROOT / f'build/tests/{name}-report.json'
+
+
+def cadence_proof(report, mode, executable_sha):
+    """Validate the finite ordinary receipt, never promote replay counts to CT09."""
+    from ordinary_cadence import clock_contract
+    if (report.get('passed') is not True or report.get('first_difference') is not None
+            or report.get('case') != f'ct09-ordinary-{mode}-cadence'
+            or report.get('subject') != 'maintained-native' or report.get('start_mode') != mode
+            or report.get('restart_mode') != ('two' if mode == 'one' else 'one')
+            or report.get('startup') != 'ordinary title' or report.get('entropy') != 'ordinary native timer'
+            or report.get('uninterrupted') is not True or report.get('callback_breakpoints') != 0
+            or not executable_sha or report.get('executable_sha256') != executable_sha):
+        return False
+    try:
+        captured = ROOT/report['capture']
+        if report['evidence']['files'].get(str(captured.relative_to(ROOT))) != digest(captured):
+            return False
+        application = captured.parent/'native-application'
+        if report['evidence']['compiled_executables'].get(str(application.relative_to(ROOT))) != executable_sha:
+            return False
+        measurement = json.loads((ROOT/report['capture']).read_text())
+        log = (ROOT/report['capture']).parent.joinpath('emulator.log').read_text()
+        if any(marker not in log for marker in ('cpu=M68000','chip_ram=512K','fast_ram=0K',
+                'slow_ram=0K','z3_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3 (34.5)')):
+            return False
+        contract = clock_contract()
+        if measurement['clock_contract'] != contract or report['cadence']['clock_contract'] != contract:
+            return False
+        rows = measurement['callbacks']
+        if not rows or len(rows) != report['observed_callbacks']:
+            return False
+        pending = measurement.get('pending_final_callback')
+        if pending and (pending != report.get('pending_final_callback') or pending.get('callback') != len(rows)+1
+                        or 'completion' in pending or measurement['stop'].get('reason') != 'pause'):
+            return False
+        if report.get('started_callbacks') != len(rows)+bool(pending):
+            return False
+        origin = measurement['timer_start_cck']+(65535-measurement['timer_origin_count'])*5
+        if origin != measurement['clock_origin_cck']:
+            return False
+        interval = Fraction(contract['source_period_attoseconds']*contract['cck_hz'],10**18)
+        for n, row in enumerate(rows,1):
+            if row['callback'] != n or row['entry']['cck'] >= row['completion']['cck']:
+                return False
+            ideal = origin+(n-1)*interval
+            allowance = 10+Fraction((n-1)*5,131072)
+            if row['entry']['cck'] < ideal-allowance or row['completion']['cck'] >= ideal+interval+allowance:
+                return False
+        required = ('initial_title','first_selection','first_release','first_play','first_flight',
+                    'point','game','pause','resume','result','returned_title','restart_title_ready',
+                    'restart_selection','restart_release','restart_play','held_blocked','fresh_action','restarted_flight','finished')
+        checkpoints = measurement['checkpoints']
+        if checkpoints != report['checkpoints'] or any(k not in checkpoints for k in required):
+            return False
+        sequence = [checkpoints[k]['callback'] for k in required]
+        if sequence != sorted(sequence) or sequence[-1] != len(rows):
+            return False
+        result_ram = bytes.fromhex(checkpoints['result']['ram'])
+        if max(result_ram[0x40:0x42]) != 6 or any(result_ram[0x3e:0x40]):
+            return False
+        for label, selected in (('first_selection',mode),('restart_selection',report['restart_mode'])):
+            selected_ram = bytes.fromhex(checkpoints[label]['ram'])
+            if bool(selected_ram[0x3d]&128) != (selected=='two') or any(selected_ram[0x3e:0x42]):
+                return False
+        held_start, held_end = checkpoints['restart_play']['callback'], checkpoints['held_blocked']['callback']
+        if held_end-held_start < 80:
+            return False
+        for row in rows[held_start-1:held_end]:
+            if row['flight'] or any(v&0x30 for v in bytes.fromhex(row['controls'])[6:8]):
+                return False
+        memory = measurement['memory_final']
+        if (report['memory']['continuous_allocation_watch'] is not True
+                or any(w['position']['cck'] >= measurement['timer_start_cck'] for w in measurement['memory_writes'])
+                or memory['used_chip_bytes'] != 524288-sum(h['free'] for h in memory['regions'])
+                or report['memory']['peak_chip_bytes'] != memory['used_chip_bytes']
+                or not 0 < memory['used_chip_bytes'] < 524288):
+            return False
+        watched = {(w['addr'],w['len'],w['access']) for w in measurement['watch_ranges']}
+        if any((h['header'],32,'write') not in watched or not h['attributes']&2
+               or sum(c['bytes'] for c in h['chunks']) != h['free'] for h in memory['regions']):
+            return False
+        commits = measurement['commits']
+        generations = [c['generation'] for c in commits]
+        if not commits or generations != sorted(set(generations)):
+            return False
+        if any(c['generation'] > len(rows) or 44 <= c['position']['vpos'] < 236 for c in commits):
+            return False
+        banks = measurement['bank_addresses']
+        preparations = measurement['prepared_scenes']
+        prepared_by_key={(p['generation'],p['bank'],p['position']['cck']):p for p in preparations}
+        prepare_times=[p['position']['cck'] for p in preparations]
+        if prepare_times!=sorted(set(prepare_times)):
+            return False
+        for commit in commits:
+            prepared = commit['prepared']
+            selections=[v for v in measurement['view_selections'] if v['position']['cck']<=commit['position']['cck']]
+            title=selections[-1]['title'] if selections else measurement['title_initial']
+            expected=banks['title_copper'] if title else prepared['bank']
+            index=bisect_right(prepare_times,commit['position']['cck'])-1
+            if (prepared_by_key.get((prepared['generation'],prepared['bank'],prepared['position']['cck']))!=prepared or prepared['generation']!=commit['generation']
+                    or index<0 or preparations[index]!=prepared
+                    or rows[prepared['generation']-1]['completion']['cck']>commit['position']['cck']
+                    or prepared['bank'] not in (banks['copperlist'],banks['copperlist_back'])
+                    or prepared['position']['cck']>=commit['position']['cck']
+                    or commit['title_selected']!=title or commit['pointer']!=expected
+                    or commit['expected_pointer']!=expected):
+                return False
+        if report['presentation'].get('actual_pointer_checked') is not True:
+            return False
+        if any(str(c['id']) not in measurement['replies'] or 'error' in measurement['replies'][str(c['id'])]
+               for c in measurement['inputs']):
+            return False
+        return True
+    except (KeyError,TypeError,ValueError,OSError):
+        return False
+
+
+def timing_edge_proof(report, executable_sha):
+    if (report.get('passed') is not True or report.get('first_difference') is not None
+            or report.get('subject')!='maintained-native' or not executable_sha
+            or report.get('case')!='ct09-input-timing-edges'
+            or report.get('executable_sha256') != executable_sha):
+        return False
+    checks = report.get('checks',[])
+    if [(c.get('kind'),c.get('boundary')) for c in checks] != [(k,b) for k in ('direction','action') for b in ('before','after')]:
+        return False
+    for c in checks:
+        try:
+            a,b = c['actual'],c['before']
+            if c['passed'] is not True or a['started'] != b['started']+(c['boundary']=='after') or a['completed'] != a['started']-1:
+                return False
+            if c['kind']=='direction' and not a['lower_x'] < b['lower_x']:
+                return False
+            if c['kind']=='action' and not (b['lower_phase']&0x40 and a['lower_phase']==0x20):
+                return False
+            if c['boundary']=='after' and (c['neutral_same_callback']['lower_x']!=b['lower_x'] or c['neutral_same_callback']['lower_phase']!=b['lower_phase']):
+                return False
+        except (KeyError,TypeError):
+            return False
+    return True
 
 
 def bounded_round_status(path, fresh_since=None):
@@ -266,7 +409,7 @@ def progress(fresh_since=None):
         if name == 'ct05-r2-first-round':
             evidence[name] = bounded_round_status(report_path(name), fresh_since)
             continue
-        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') or name == 'status-timer-saturation-phase' else 'maintained-native'
+        subject = 'maintained-native-mutant' if name=='ct09-published-bank-control' else 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') or name == 'status-timer-saturation-phase' else 'maintained-native'
         full = name == 'status-timer-saturation-phase' or name in CT06_PHASES or name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
         evidence[name] = status(report_path(name), subject, full, fresh_since)
         if name in CT05_SCENES + CT06_SCENES and evidence[name]['status'] in ('passed', 'failed'):
@@ -402,7 +545,30 @@ def progress(fresh_since=None):
             name='ct06-ordinary-one-restart'
             if not ordinary or evidence[name]['status']!='passed' or not ordinary_audio_proof(json.loads(report_path(name).read_text()),json.loads(build_path.read_text()).get('executable_sha256')):
                 verified=False;reasons.append('Ordinary physical result/title/restart audio proof missing')
-        if gate in ('CT-09', 'CT-10'):
+        if gate == 'CT-09':
+            sha = json.loads(build_path.read_text()).get('executable_sha256') if ordinary else None
+            for mode in ('one','two'):
+                name=f'ct09-ordinary-{mode}-cadence'
+                if (not ordinary or evidence[name]['status']!='passed'
+                        or evidence[name].get('kind')!='ordinary-cadence'
+                        or not cadence_proof(json.loads(report_path(name).read_text()),mode,sha)):
+                    verified=False
+                    reasons.append(f'Uninterrupted ordinary {mode} cadence/complete-play/memory receipt missing or incompatible')
+            name='ct09-input-timing-edges'
+            if (evidence[name]['status']!='passed' or evidence[name].get('kind')!='physical'
+                    or evidence[name].get('startup')!='ordinary title'
+                    or not timing_edge_proof(json.loads(report_path(name).read_text()),sha)):
+                verified=False
+                reasons.append('Four ordinary direction/action boundary edges missing or incompatible')
+            name='ct09-published-bank-control'
+            control=json.loads(report_path(name).read_text()) if evidence[name]['status']=='passed' else {}
+            fault=control.get('detected_failure',{})
+            if (not control.get('passed') or fault.get('field')!='published Copper bank'
+                    or fault.get('generation',0)<200 or fault.get('expected_pointer')==fault.get('actual_pointer')
+                    or control.get('normal_executable_sha256')!=sha):
+                verified=False
+                reasons.append('Actual delayed wrong-bank publication control missing or incompatible')
+        if gate == 'CT-10':
             verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
             reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',
@@ -412,10 +578,15 @@ def progress(fresh_since=None):
     supporting = {'captured_live_serve': status(
         ROOT/'build/amiga/gameplay-integration/serve-report.json', 'maintained-native',
         fresh_since=fresh_since)}
+    ordinary_complete = capabilities['CT-09']['acceptance']=='evidenced within stated scope'
+    peak = 'unverified'
+    if ordinary_complete:
+        peak = {'bytes': max(json.loads(report_path(f'ct09-ordinary-{m}-cadence').read_text())['memory']['peak_chip_bytes'] for m in ('one','two')),
+                'scope': 'CIA timer start through restarted flight in both modes; resident OS/allocated stack included; pre-timer and cold ADF boot peak unverified'}
     return {'behavior': {'capabilities': capabilities, 'evidence': evidence, 'supporting_evidence': supporting},
             'runtime_dependencies': architecture,
-            'delivery': {'target': TARGET, 'ordinary_target_execution': 'evidenced in mode/control checks' if runtime_target else 'unverified',
-                         'peak_chip_ram': 'unverified', 'cadence_and_full_ordinary_play': 'unverified',
+            'delivery': {'target': TARGET, 'ordinary_target_execution': 'evidenced in uninterrupted ordinary runs' if ordinary_complete else 'evidenced in mode/control checks' if runtime_target else 'unverified',
+                         'peak_chip_ram': peak, 'cadence_and_full_ordinary_play': 'evidenced in two native-entropy runs' if ordinary_complete else 'unverified',
                          'cold_ADF_boot': 'not run', 'independent_emulator_or_hardware': 'unverified'},
             'scope': 'Retained reports checked against current dependencies; integration symbols are not runtime acceptance. No percentages or file-size RAM estimate.'}
 
