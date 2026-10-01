@@ -41,6 +41,25 @@ Use ignored config.local.ini for legitimate cartridge/Kickstart paths. Never com
 
 Preserve all historical WORKLOG.md content. Prepend new entries; do not rewrite earlier results into current claims. Honour the user's publication scope, avoid overwriting concurrent edits, and verify the exact remote commit after an authorized push. A plan-only request does not authorize product implementation.
 
+## Evidence freshness and progress
+
+Run `RUST_LOG=info python scripts/progress.py` at session start and after the
+selected item's checks. Use `--fresh-since <ISO timestamp with timezone>` to
+identify executions in this session; compatible older evidence is **reused**,
+not fresh. The command writes ignored `build/progress-report.json` and does not
+run tests. See [report integrity](analysis/evidence-freshness.md).
+
+Use the generated status and actual runner results in progress records. Missing,
+legacy, stale, interrupted or partial evidence must not be manually declared
+passed. A historical milestone's merged implementation may remain recorded as
+verified while its current local evidence is unverified; explain that distinction.
+An ordinary build's compiled symbols describe integration/dependencies, not
+runtime acceptance. Translated diagnostics and known-red prefixes cannot certify
+native product gates. RAM, cadence, uninterrupted play, ADF and independent target
+validation stay unverified until their own measurements exist. Choose only the
+focused checks needed for the active change; do not rerun a broad suite merely to
+populate the progress report. Do not run builds/mutations concurrently.
+
 ## WORKLOG session template
 
 ### <actual date/time and timezone> — CT-XX: <concrete outcome>

@@ -38,8 +38,8 @@ def main():
             report_path = ROOT / 'build/tests' / ('report.json' if name == 'serve' else f'{name}-report.json')
             if report_path.exists():
                 report = json.loads(report_path.read_text())
-                status = classify(report, known.get(name))
-                failure = report['first_difference']
+                status = classify(report, known.get(name), report_path)
+                failure = report.get('first_difference')
             else:
                 status, failure = 'missing-report', None
             policy = known.get(name, {})

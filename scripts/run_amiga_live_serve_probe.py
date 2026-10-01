@@ -14,6 +14,7 @@ from PIL import Image, ImageChops
 from run_translated_prng_probe import ROOT, run
 from run_amiga_score_copper_probe import FIELDS, output_rectangle
 from source_irq_tail import irq_tail_06b1
+from evidence import tracked_call, compile_manifest, compile_manifest
 
 
 DISPLAY = ROOT / "build" / "amiga" / "gameplay-integration"
@@ -89,7 +90,7 @@ def check_serve_tone(wav, source, cartridge):
             "adjacent_strength": round(best[1], 2), "wav_sample_rate": rate}
 
 
-def main():
+def _main():
     # Also builds the exact executable and checks the existing left-movement run.
     run([sys.executable, "scripts/run_amiga_gameplay_integration_probe.py"], timeout=120)
     config = configparser.ConfigParser(interpolation=None)
@@ -97,7 +98,12 @@ def main():
         raise FileNotFoundError("config.local.ini")
     copperline = Path(config["tools"]["copperline"])
     amiga_rom = Path(config["inputs"]["amiga_rom"])
-    executable = DISPLAY / "gameplay-integration"
+    # Retain this captured-phase subject when the ordinary build is restored.
+    executable = DISPLAY / "serve-gameplay-integration"
+    executable.write_bytes((DISPLAY / "gameplay-integration").read_bytes())
+    listing = DISPLAY / "serve-native.lst"
+    listing.write_bytes((DISPLAY / "native.lst").read_bytes())
+    compile_manifest(executable, listing)
     png = DISPLAY / "serve.png"
     gif = DISPLAY / "serve.gif"
     wav = DISPLAY / "serve-audio.wav"
@@ -159,7 +165,7 @@ def main():
     if not pixel_changes["point_b"] or any(pixel_changes[name] for name in
                                             ("point_a", "games_a", "games_b", "status", "mode")):
         raise AssertionError(f"Scored point pixels differ from expected fields: {pixel_changes}")
-    report = {"executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
+    report = {"passed": True, "first_difference": None, "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "source_state_matches": checked, "native_log_checkpoints": len(records),
               "screenshot": str(png), "gif": str(gif), "audio_wav": str(wav),
               "scored_screenshot": str(scored_png), "score_field_pixel_changes": pixel_changes,
@@ -167,6 +173,12 @@ def main():
               "machine": "PAL A500 OCS 68000, 512K chip, 0 slow/fast, Kickstart 1.3"}
     (DISPLAY / "serve-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
+
+
+def main():
+    return tracked_call([DISPLAY/'serve-report.json'], 'live-serve', 'maintained-native',
+                        'captured phase', 'scripts/run_amiga_live_serve_probe.py', 'serve', _main,
+                        lambda path,report: [DISPLAY/'serve-gameplay-integration'])
 
 
 if __name__ == "__main__":

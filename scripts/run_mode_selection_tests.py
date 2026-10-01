@@ -7,6 +7,7 @@ from run_presentation_tests import ROOT, digest, source_picture, map_source_pale
 from presentation_reference import ACTIVE_AREA
 from capture_native_presentation import code_symbols
 from build_native_game import build, module_hashes
+from evidence import tracked_call, compile_manifest
 from run_translated_prng_probe import ASSEMBLER, run as command
 CASES=('p1-accept-one-player','p1-accept-two-player')
 
@@ -46,6 +47,7 @@ def capture(case, kind=None):
     exe=directory/'native-application'
     command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(directory/'native.lst'),'-o',str(exe),case['native_source']])
     if digest(exe)!=digest(ordinary): raise ValueError('Mode test differs from ordinary executable')
+    compile_manifest(exe,directory/'native.lst')
     compiled_modules=module_hashes()
     if kind=='sprite':
         raw=exe.read_bytes();old=bytes.fromhex('06400080')
@@ -174,12 +176,13 @@ def capture(case, kind=None):
             s.inspect('input_joy',{'port':2,'red':False})
         else: reference_sha=title_sha
         log=Path(launch['log']).read_text()
+        (directory/'copperline.log').write_text(log)
         for marker in ('cpu=M68000','chip_ram=512K','fast_ram=0K','slow_ram=0K','chipset=Ocs','video=Pal','Kickstart 1.3'):
             if marker not in log: raise ValueError(marker)
     return {'case':case['name'],'passed':not differences,'first_difference':differences[0] if differences else None,'differences':differences,'observations':rows,'physical_key_events':events,'executable_sha256':digest(exe),'native_modules':compiled_modules,'compiled_fault':kind,'emulator_sha256':digest(Path(config['tools']['copperline'])),'kickstart_sha256':digest(Path(config['inputs']['amiga_rom'])),'case_sha256':digest(ROOT/f'tests/cases/{case["name"]}.json'),'source_frame':300 if case['name']=='p1-title' else 1299,'reference_sha256':reference_sha,'source_initialization':'Ordinary title boot and runtime initialization; no captured RAM injection.','scope':case['contract']}
 
 
-def run(case_name,self_test=False):
+def _run(case_name,self_test=False):
     case=json.loads((ROOT/f'tests/cases/{case_name}.json').read_text())
     if case_name in CASES:
         expected=('one-player-match',0x46,0) if case_name==CASES[0] else ('two-player-match',0x42,128)
@@ -204,6 +207,12 @@ def run(case_name,self_test=False):
     (ROOT/f'build/tests/{case_name}-report.json').write_text(json.dumps(normal,indent=2)+'\n')
     print(json.dumps({'case':case_name,'passed':normal['passed'],'differences':normal['differences'],'mutants':len(mutants)}),flush=True)
     return normal['passed']
+
+def run(case_name,self_test=False):
+    return tracked_call([ROOT/f'build/tests/{case_name}-report.json'], 'mode', 'maintained-native',
+                        'ordinary title', 'scripts/run_mode_selection_tests.py', case_name,
+                        lambda: _run(case_name,self_test),
+                        lambda path, report: [ROOT/f'build/tests/{case_name}-normal/native-application'])
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--case',choices=('p1-title',)+CASES,required=True);parser.add_argument('--self-test',action='store_true');args=parser.parse_args();raise SystemExit(0 if run(args.case,args.self_test) else 1)

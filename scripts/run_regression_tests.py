@@ -9,6 +9,7 @@ from run_translated_prng_probe import ROOT, ASSEMBLER, run
 from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
 from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES, EXTENSION_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
+from evidence import tracked_call, compile_manifest
 
 OUT = ROOT / 'build/tests'
 
@@ -83,7 +84,16 @@ def execute(config, case_name='serve', mutation=False, subject='translated'):
         command.append('-DPRODUCT_REPLAY=1')
     if mutation:
         command.append('-DREGRESSION_MUTATION=1')
-    run(command + ['-o', str(executable), 'amiga/tests/simulation_harness.s'])
+    # Case-owned fixture paths keep another replay from invalidating this executable.
+    harness = ROOT / 'amiga/tests/simulation_harness.s'
+    source = harness.read_text()
+    directory = OUT / (case_name + '-inputs')
+    for name in ('harness-config.i', 'initial-ram.bin', 'inputs.bin', 'refresh-values.bin'):
+        source = source.replace('build/tests/' + name, str((directory / name).relative_to(ROOT)))
+    wrapper = directory / 'simulation_harness.s'
+    wrapper.write_text(source)
+    run(command + ['-L', str(executable) + '.lst', '-o', str(executable), str(wrapper)])
+    compile_manifest(executable, str(executable) + '.lst')
     log = run([config['tools']['copperline'], '--factory', '--model', 'A500', '--chipset', 'OCS',
                '--video', 'PAL', '--cpu', '68000', '--chip', '512K', '--slow', '0', '--fast', '0',
                '--noaudio', '--run', str(executable), '--exit-on-return', config['inputs']['amiga_rom']], timeout=360)
@@ -105,7 +115,9 @@ def prepare_inputs(fixture, case):
     initial = bytes.fromhex(fixture['initial_pre_tail'])
     if len(initial) != 256:
         raise ValueError('Invalid initial RAM extent')
-    (OUT / 'initial-ram.bin').write_bytes(initial)
+    directory = OUT / (case['name'] + '-inputs')
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / 'initial-ram.bin').write_bytes(initial)
     inputs = bytearray(2 * count)
     if exact:
         refresh = bytearray()
@@ -118,17 +130,17 @@ def prepare_inputs(fixture, case):
                 seen.add(group)
                 inputs[2 * index + group] = read['value']
             refresh.extend(read['value'] for read in row['refresh_reads'])
-        (OUT / 'refresh-values.bin').write_bytes(refresh)
+        (directory / 'refresh-values.bin').write_bytes(refresh)
     else:
         for segment in case['input']:
             for update in range(segment['from'], segment['through'] + 1):
                 inputs[2 * (update - 1)] = segment['game_bits']
-    (OUT / 'inputs.bin').write_bytes(inputs)
-    (OUT / 'harness-config.i').write_text(
+    (directory / 'inputs.bin').write_bytes(inputs)
+    (directory / 'harness-config.i').write_text(
         f'CASE_UPDATE_COUNT equ {count}\nCASE_CAPTURE_REFRESH equ {int(exact)}\n')
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--subject', choices=('maintained', 'translated'),
                         help='Default: maintained for migrated CT-04 cases, translated for lifecycle diagnostics')
@@ -331,6 +343,30 @@ def main():
         console_report['full_report'] = str(OUT / report_path)
     print(json.dumps(console_report, indent=2))
     return 1 if difference else 0
+
+
+def native_replay_cases():
+    from movement_reference import MOVEMENT_PHASES
+    cases = ('serve', 'resumed-play-phase', 'two-player-rally',
+             'one-player-upper-resumed-serve-complete-phase') + MOVEMENT_CASES + tuple(MOVEMENT_PHASES) + CONTACT_CASES
+    return tuple(n for n in cases if not n.startswith('movement-lower-receiver-') or n.endswith('-phase'))
+
+
+def main():
+    if '--help' in sys.argv or '--reference-only' in sys.argv:
+        return _main()
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument('--case', default='serve')
+    probe.add_argument('--subject')
+    selected, _ = probe.parse_known_args()
+    case = selected.case
+    if not re.fullmatch(r'[a-z0-9-]+', case):
+        return _main()
+    subject = selected.subject or ('maintained' if case in native_replay_cases() else 'translated')
+    path = OUT / ('report.json' if case == 'serve' else case + '-report.json')
+    return tracked_call([path], 'replay', subject, 'captured phase',
+                        'scripts/run_regression_tests.py', case, _main,
+                        lambda path, report: [OUT / case])
 
 
 if __name__ == '__main__':

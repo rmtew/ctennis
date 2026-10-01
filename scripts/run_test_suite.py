@@ -33,7 +33,7 @@ def failure_check_digest(report):
     return hashlib.sha256(json.dumps(observations, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
-def classify(report, expected):
+def classify_behavior(report, expected):
     difference = report['first_difference']
     if report['passed']:
         return 'unexpected-green' if expected else 'green'
@@ -59,6 +59,35 @@ def classify(report, expected):
     return 'unexpected-red'
 
 
+def classify(report, expected, report_path=None):
+    from evidence import status as evidence_status
+    from run_regression_tests import native_replay_cases
+    if report_path is None:
+        return 'unverified'
+    # Classify the saved latest invocation, never a caller's retained body.
+    try:
+        report = json.loads(Path(report_path).read_text())
+    except (OSError, ValueError):
+        return 'stale'
+    name = report.get('case')
+    subject = ('maintained' if name in native_replay_cases() else
+               'maintained-native' if name in INPUT_CASES + MODE_SELECTION_CASES + ('p1-title',) else None)
+    integrity = evidence_status(report_path, subject)
+    if integrity['status'] not in ('passed', 'failed'):
+        return integrity['status']
+    if integrity['status'] == 'failed' and report.get('passed'):
+        return 'unexpected-red'
+    if report.get('passed') and 'reference_updates' in report:
+        if not report.get('full_replay_executed') or report['updates'] != report['reference_updates']:
+            return 'incomplete'
+    result = classify_behavior(report, expected)
+    if result == 'green' and report.get('subject') == 'translated':
+        return 'diagnostic-green'
+    if result == 'known-red' and report.get('full_replay_executed') is False:
+        return 'known-red-prefix'
+    return result
+
+
 def verify_failure_policy(known):
     for case, expected in known.items():
         expected = copy.deepcopy(expected)
@@ -77,9 +106,9 @@ def verify_failure_policy(known):
         original = expected['signature']['actual']
         changed = original ^ 1 if isinstance(original, int) else original + '00'
         altered = {'passed': False, 'first_difference': {**expected['signature'], 'actual': changed}}
-        if classify(report, expected) != 'known-red' or classify(altered, expected) != 'unexpected-red':
+        if classify_behavior(report, expected) != 'known-red' or classify_behavior(altered, expected) != 'unexpected-red':
             raise AssertionError(f'Known-failure signature policy failed: {case}')
-        if classify({'passed': True, 'first_difference': None}, expected) != 'unexpected-green':
+        if classify_behavior({'passed': True, 'first_difference': None}, expected) != 'unexpected-green':
             raise AssertionError(f'Unexpected pass was silently accepted: {case}')
         if interval:
             for kind in ('later-pixel', 'later-state', 'partially-fixed-state'):
@@ -90,7 +119,7 @@ def verify_failure_policy(known):
                     altered['checks']['states'][-1]['differences'][0]['actual'] ^= 1
                 else:
                     altered['checks']['states'][-1]['differences'] = []
-                if classify(altered, expected) != 'unexpected-red':
+                if classify_behavior(altered, expected) != 'unexpected-red':
                     raise AssertionError(f'Known early failure hid {kind}: {case}')
         if expected.get('complete_checks_sha256'):
             for kind in ('later-pixel', 'later-state', 'later-event', 'missing-observations'):
@@ -104,7 +133,7 @@ def verify_failure_policy(known):
                     observations['source_events'].append({'unexpected': True})
                 else:
                     del altered['baseline_observations']
-                if classify(altered, expected) != 'unexpected-red':
+                if classify_behavior(altered, expected) != 'unexpected-red':
                     raise AssertionError(f'Known early failure hid {kind}: {case}')
 
 
@@ -141,7 +170,7 @@ def main():
                 results.append({'case': case, 'status': 'tool-error', 'exit_code': widget_batch.returncode})
                 continue
             report = json.loads(report_path.read_text())
-            status = classify(report, known.get(case))
+            status = classify(report, known.get(case), report_path)
             results.append({'case': case, 'status': status, 'report': str(report_path), 'first_difference': report['first_difference']})
             print(f'{case}: {status}', flush=True)
             continue
@@ -160,7 +189,7 @@ def main():
                 results.append({'case': case, 'status': 'tool-error', 'exit_code': input_batch.returncode})
                 continue
             report = json.loads(report_path.read_text())
-            status = classify(report, known.get(case))
+            status = classify(report, known.get(case), report_path)
             results.append({'case': case, 'status': status, 'report': str(report_path),
                             'first_difference': report['first_difference']})
             print(f'{case}: {status}', flush=True)
@@ -182,11 +211,12 @@ def main():
         report = json.loads(report_path.read_text())
         if report['passed'] != (process.returncode == 0):
             raise ValueError('Runner exit status and report disagree')
-        status = classify(report, known.get(case))
+        status = classify(report, known.get(case), report_path)
         results.append({'case': case, 'status': status, 'report': str(report_path),
                         'first_difference': report['first_difference']})
         print(f'{case}: {status}', flush=True)
-    allowed = {'green', 'known-red'} if args.baseline_check else {'green'}
+    # Prefix baselines and translator greens are diagnostics, not delivery acceptance.
+    allowed = {'green', 'known-red', 'known-red-prefix', 'diagnostic-green'} if args.baseline_check else {'green'}
     passed = not MISSING and all(row['status'] in allowed for row in results)
     summary = {'baseline_check': args.baseline_check, 'passed': passed,
                'cases': results, 'missing_requirements': MISSING,
