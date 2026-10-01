@@ -1,4 +1,4 @@
-<!-- CT10 independent review checkpoint: delivery remains blocked. Newly regressed moving-prefix and status2–5 guards are repaired in the current worktree; upper-serve exact generation4131 still lacks validated original raster association. See newest WORKLOG; no six-guard completion or merge. -->
+<!-- CT10 repair checkpoint: all six affected guards and final accepted-target checks pass with current machine evidence; exact-head independent source/runtime review and merge authorization remain pending. Primary media/upper checkpoint unchanged; separate original generation4131 raster supplement verified. See newest WORKLOG and analysis/native-delivery-review-regressions.md. -->
 # Playable native A500 implementation queue
 
 ## Decision and scope

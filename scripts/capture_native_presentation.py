@@ -86,6 +86,16 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
         if stop['reason'] != 'loadseg':
             raise RuntimeError(f'Application not loaded: {stop}')
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail']).group(1), 16)
+        # Static title data lives in the chip-data hunk. Resolve its compiled
+        # symbol against actual LoadSeg segments, never against the code base.
+        segments = session.inspect('segments.list')['current']
+        located = {name: (int(h), int(offset, 16)) for name, h, offset in re.findall(
+            r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',
+            (directory / 'native.lst').read_text(), re.M)}
+        title_hunk, title_offset = located['title_copper']
+        if segments[0]['start'] != base or title_offset >= segments[title_hunk]['size']:
+            raise ValueError('Static title symbol differs from actual loaded hunks')
+        title_bank = f"{segments[title_hunk]['start'] + title_offset:08x}"
         for inputs in native_inputs:
             session.inspect('input_set_port', {'port': inputs['port'], 'device': 'joystick'})
             session.inspect('input_joy', inputs)
@@ -164,7 +174,8 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 return True
             if track_commits and stop['pc'] == base + symbols['game_scene_prepared']:
                 bank = session.inspect('mem_read', {'addr': base + symbols['back_copper'], 'len': 4})['data']
-                prepared_scenes.append({'generation': generation + 1, 'bank': bank,
+                started = int(session.inspect('mem_read', {'addr': base + symbols['simulation_started_updates'], 'len': 2})['data'], 16)
+                prepared_scenes.append({'generation': initial_source_update + started, 'bank': bank,
                     'field_values': session.inspect('mem_read', {'addr': base + symbols['prepared_field_values'], 'len': 6})['data'],
                     'objects': session.inspect('mem_read', {'addr': base + symbols['game_scene_objects'], 'len': 64})['data'],
                     'stop': stop})
@@ -172,9 +183,15 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             if track_commits and stop['pc'] == base + symbols['presentation_commit_in_blank']:
                 front = session.inspect('mem_read', {'addr': base + symbols['presentation_copper'], 'len': 4})['data']
                 prepared = prepared_scenes[-1] if prepared_scenes else None
-                if not prepared or prepared['generation'] != generation or prepared['bank'] != front:
+                title = bool(int(session.inspect('mem_read', {'addr': base + symbols['game_title_display'], 'len': 1})['data'], 16))
+                expected_bank = title_bank if title else prepared['bank'] if prepared else None
+                if not prepared or prepared['generation'] > generation or expected_bank != front:
                     raise ValueError('Published bank does not match the actual completed prepared scene')
-                commits.append({'prepared_after_callback': prepared['generation'], 'prepared_scene': prepared, 'front_copper': front,
+                # The title is a separate static asset selected by the native
+                # lifecycle. Frozen service ticks need not prepare a new court.
+                commits.append({'prepared_after_callback': generation if title else prepared['generation'],
+                                'completed_callback': generation, 'title_selected': title,
+                                'expected_bank': expected_bank, 'prepared_scene': prepared, 'front_copper': front,
                                 'field_values': prepared['field_values'],
                                 'visible_frame': stop['frame'] + (1 if stop['vpos'] >= 236 else 0), 'stop': stop})
                 return True

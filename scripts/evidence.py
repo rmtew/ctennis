@@ -238,6 +238,10 @@ def inputs_for(kind, runner, case=None):
             paths |= reference_inputs(ROOT / f'tests/cases/{phase.stem}.json')
         paths.add(ROOT / 'tests/cases/presentation.json')
         directories = {'tests/reference/presentation', *recipe.get('reference_directories', {}).values()}
+        if kind == 'presentation' and case == 'p1-upper-serve':
+            supplement = ROOT / 'tests/cases/presentation-upper-serve-generation-4131.json'
+            paths.add(supplement)
+            directories.add(json.loads(supplement.read_text())['reference_directory'])
         for directory in directories:
             paths |= reference_inputs(ROOT / directory / 'manifest.json')
             # Primary media has its own declared children (original matches).

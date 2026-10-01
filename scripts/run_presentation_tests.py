@@ -226,6 +226,15 @@ def generation_sequence(case, contract, self_test):
     from capture_native_presentation import capture
     from associate_presentation_generations import source_generation
     from presentation_reference import FIELDS
+    def original_generation(generation):
+        # Keep primary frozen media intact. Only this previously missing exact
+        # upper-serve checkpoint uses the separately repeated/validated capture.
+        if case['name'] == 'p1-upper-serve' and generation == 4131:
+            recipe = json.loads((ROOT / 'tests/cases/presentation-upper-serve-generation-4131.json').read_text())
+            if recipe['source_case'] != case['source_case'] or recipe['association_updates'] != [4131]:
+                raise ValueError('Upper-serve supplement changed its declared checkpoint')
+            return source_generation(generation, case['source_case'], recipe['reference_directory'])
+        return source_generation(generation)
     if case['source_case'] != 'one-player-match' or case['inputs'] != [{'port': 2, 'red': True}]:
         raise ValueError('Generation adapter supports the frozen R1 held-fire prefix')
     captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
@@ -239,7 +248,7 @@ def generation_sequence(case, contract, self_test):
         if not raster['generation']:
             raise ValueError('No simulated presentation generation for requested checkpoint')
         generation = raster['generation']['prepared_after_callback']
-        source, association = source_generation(generation)
+        source, association = original_generation(generation)
         expected = map_source_palette(source, contract)
         with Image.open(raster['capture']['path']) as picture:
             actual = native_picture(picture, contract)
@@ -281,7 +290,7 @@ def generation_sequence(case, contract, self_test):
                 raise AssertionError('Renderer mutation changed simulation state')
             raster = observed['completed_raster']
             generation = raster['generation']['prepared_after_callback']
-            source, association = source_generation(generation)
+            source, association = original_generation(generation)
             wanted = map_source_palette(source, contract)
             with Image.open(raster['capture']['path']) as picture:
                 seen = native_picture(picture, contract)

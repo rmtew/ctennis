@@ -91,6 +91,25 @@ def report_path(name):
     return ROOT / f'build/tests/{name}-report.json'
 
 
+def status_lifecycle_proof(report, recipe):
+    """The existing finite status contract: every callback, raster and fault."""
+    checks = report.get('checks', {})
+    timing, pixels = checks.get('timing', []), checks.get('pixels', [])
+    mutations = report.get('hardware_mutations', [])
+    return (report.get('subject') == 'maintained-native' and report.get('passed') is True
+            and report.get('first_difference') is None and checks.get('first_difference') is None
+            and report.get('self_test') is True
+            and [r.get('update') for r in timing] == list(range(recipe['initial_source_update'] + 1, recipe['completed_callbacks'][-1] + 1))
+            and all(r.get('first_difference') is None for r in timing)
+            and [r.get('requested_callback') for r in pixels] == recipe['completed_callbacks']
+            and all(r.get('first_difference') is None and r.get('raster', {}).get('generation') for r in pixels)
+            and [m.get('kind') for m in mutations] == ['retain', 'early']
+            and all(m.get('detected') is True
+                    and m.get('mutation_first_difference', {}).get('boundary') == 'native-status-selection'
+                    and m['mutation_first_difference'].get('update') == recipe['expiry_callback'] - (m['kind'] == 'early')
+                    and m.get('executable_sha256') != report.get('executable_sha256') for m in mutations))
+
+
 def cadence_proof(report, mode, executable_sha, cold_adf=False):
     """Validate the finite ordinary receipt, never promote replay counts to CT09."""
     from ordinary_cadence import clock_contract
@@ -208,6 +227,8 @@ def cadence_proof(report, mode, executable_sha, cold_adf=False):
             prepared = commit['prepared']
             selections=[v for v in measurement['view_selections'] if v['position']['cck']<=commit['position']['cck']]
             title=selections[-1]['title'] if selections else measurement['title_initial']
+            if not title and 25 <= commit['position']['vpos'] < 236:
+                return False
             expected=banks['title_copper'] if title else prepared['bank']
             index=bisect_right(prepare_times,commit['position']['cck'])-1
             if (prepared_by_key.get((prepared['generation'],prepared['bank'],prepared['position']['cck']))!=prepared or prepared['generation']!=commit['generation']
@@ -613,7 +634,17 @@ def progress(fresh_since=None):
             # User approved Copperline as the sufficient target on 2026-10-01.
             # Preserve exact-profile/full-play/loaded-byte/audio evidence; never
             # upgrade an older receipt when a build dependency changed.
-            verified = bool(ordinary and package_verified and cold_verified)
+            verified = bool(verified and ordinary and package_verified and cold_verified)
+            reasons += [f'{name} required delivery guard is {evidence[name]["status"]}'
+                        for name in names if evidence[name]['status'] != 'passed']
+            for name in ['p1-moving-prefix', 'p1-upper-serve'] + [f'p1-status-{n}-lifecycle' for n in range(2,6)]:
+                if evidence[name]['status'] != 'passed':
+                    continue
+                receipt = json.loads(report_path(name).read_text())
+                recipe = json.loads((ROOT/f'tests/cases/{name}.json').read_text())
+                proof = status_lifecycle_proof if name.startswith('p1-status-') else presentation_proof
+                if not proof(receipt, recipe):
+                    verified=False;reasons.append(f'{name} full declared pixel/status/fault extent missing')
             if not package_verified:reasons.append('Two clean identical native executable/ADF package receipts missing or incompatible')
             if not cold_verified:reasons.append('Cold disk native lifecycle/cadence/loaded-byte/allocation receipt missing or incompatible')
             if capabilities['CT-09']['acceptance']!='evidenced within stated scope':

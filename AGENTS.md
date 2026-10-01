@@ -181,3 +181,31 @@ independent exact-head code/runtime review still precedes merge. Other emulator
 or real-hardware verification was not performed and is no longer required. Run one complete
 aggregate at delivery; preserve diagnostic errors/known-red prefixes separately
 and rerun only affected focused checks after concrete fixes.
+
+### CT10 repaired delivery guards
+
+Delivery acceptance also requires the unchanged `p1-moving-prefix`,
+`p1-upper-serve` and `p1-status-2-lifecycle` through `p1-status-5-lifecycle`
+checks, with current provenance and their declared pixel/status/fault extent.
+Run the existing presentation/status runners with `--self-test` for these finite
+guards. Whole-match/cold-boot passes must not overwrite their conjunction.
+Source regeneration and diagnostics cannot certify them.
+
+The exact missing original upper-serve generation4131 has a separate nine-frame
+supplement; retain the primary media and case unchanged. In a fresh verification
+environment, reproduce it with `RUST_LOG=info python
+scripts/capture_presentation_reference.py --case=one-player-match
+--recipe=tests/cases/presentation-upper-serve-generation-4131.json`, then
+`RUST_LOG=info python scripts/freeze_round_presentation_reference.py
+--case=one-player-match
+--recipe=tests/cases/presentation-upper-serve-generation-4131.json`.
+Both original runs must preserve the frozen callback recording. Do not substitute
+older generation4130 or synthesize an expected image with the native renderer.
+
+A captured raster belongs to the actual latest completed prepared bank/epoch;
+service callback counts may advance without a new court. Static title selection
+is independently validated against its actual LoadSeg chip-data hunk. PAL court
+publication must precede sprite header DMA at physical line25 or be in late
+blank, not merely precede bitplanes at44. Preserve those distinctions in both
+live observation and receipt validation; rerun an affected result/title guard
+when changing the shared captured-phase observer.
