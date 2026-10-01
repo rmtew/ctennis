@@ -78,7 +78,13 @@ CT05 focused ordinary acceptance uses
 `RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one` and
 `--mode=two`: physical title choice, first game award, stationary round pause
 and next advancing serve. It records consecutive actual callbacks; no phase
-initialization or expected RAM writes. The existing four round-scene checks
-remain full raw-state/pixel comparisons, including any obsolete scratch
-differences. Report their raw failure separately from matched crops; do not
-quietly remove fields or count that partial result as a passing gate.
+initialization or expected RAM writes. The four round-scene checks pair an explicit maintained semantic
+contract (250 retained bytes) with full raw diagnostics (254 bytes), preserving
+raw differences and labels separately. The semantic omission is exactly the
+existing CT04 arithmetic scratch range C067–C06A, not a pixel/event tolerance.
+Do not expand that omission, alter source fixtures, write expected scratch, or
+label semantic acceptance as a raw pass. The range is supported by independent consumer/scratch-poison review at
+2b6c36f; preserve the separate raw diagnostic result. CT05 revisions still
+require exact-head independent review before clearance. The bounded CT05
+R2 gate uses the original first-round advancing-serve milestone; CT09 still
+requires the entire match. Never promote a prefix to full-match acceptance.

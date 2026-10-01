@@ -10,6 +10,7 @@ from run_translated_player_frame_probe import prepare_gameplay, ROM_SHA256
 from round_reference import validate_fixture, FOCUSED_CASES, MOVEMENT_CASES, CONTACT_CASES, EXTENSION_CASES
 from phase_reference import CASES as PHASE_CASES, validate_phase
 from evidence import tracked_call, compile_manifest
+from maintained_state_contract import MAINTAINED_SCRATCH_OFFSETS
 
 OUT = ROOT / 'build/tests'
 SCORING_REPLAY_CASES = ('round-transition', 'deuce-sequence-phase',
@@ -206,7 +207,7 @@ def _main():
     if subject == 'maintained':
         # Temporary arithmetic scratch is not native game state. Keep raw
         # translator diagnostics exact; product observations omit only scratch.
-        case['excluded_ram_offsets'] = sorted(set(case['excluded_ram_offsets']) | set(range(0x67,0x6b)))
+        case['excluded_ram_offsets'] = sorted(set(case['excluded_ram_offsets']) | set(MAINTAINED_SCRATCH_OFFSETS))
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -235,7 +236,7 @@ def _main():
               'case': case['name'], 'updates': case['updates'],
               'reference_updates': reference_count,
               'full_replay_executed': case['updates'] == reference_count,
-              'omitted_legacy_scratch_offsets': list(range(0x67,0x6b)) if subject == 'maintained' else [],
+              'omitted_legacy_scratch_offsets': list(MAINTAINED_SCRATCH_OFFSETS) if subject == 'maintained' else [],
               'bytes_compared_per_boundary': len(set(case.get('compared_ram_offsets', range(256))) - set(case['excluded_ram_offsets'])),
               'boundaries_per_update': 3 if exact else 2,
               'reference_psg_bytes': sum(len(row['psg']) for row in fixture['updates']),

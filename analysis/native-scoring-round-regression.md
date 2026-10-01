@@ -17,8 +17,9 @@ the unchanged comparison now matches.
 
 ## Focused execution
 
-Final commands and exit codes are mechanically recorded in ignored
-`build/ct05/final-commands.json` and `final-summary.log`. Each runner report has
+Final revised commands and exit codes are mechanically recorded in ignored
+`build/ct05/revised-commands.json` and `final-scene-commands.json`. The latter
+refreshes all four complete scenes/faults after the final run-start fix. Each runner report has
 run-start/finalization provenance for actual sources, emitted assets, executable,
 independent reference data, tools and target. Private captures remain ignored.
 Configuration: `RUST_LOG=info`, PAL A500, 68000, OCS, 512 KB chip, no slow/fast
@@ -29,7 +30,8 @@ expansion, Kickstart 1.3. Both ordinary logs contain those target markers.
 | `serve` | 200/200 | Passed |
 | `deuce-sequence-phase` | 1649/1649 | Passed |
 | `round-transition` | 1566/1566 | Passed; old update 1333/frame 2631 reset failure resolved |
-| Four one/two-player lower/upper round-complete phases | 316/316 each | Passed |
+| One-player/lower round-complete phase | 395/395 | Passed |
+| Other three round-complete phases | 316/316 each | Passed |
 | Two two-player resumed-serve-complete phases | 50/50 each | Passed |
 | Continuous `two-player-match --through-update=2800` | 2800/2800 | Passed declared prefix beyond old 2536 failure; full 27037-update match not executed |
 
@@ -55,13 +57,17 @@ include the ordinary selection lifecycle and normal timer-derived entropy.
 Final ordinary executable SHA256:
 `e77510df79d8fcdc4e9c1bdb5d75534b406c660804b8d1849b6b1479dd643d43`.
 
-## Remaining raw comparison failures
+## Semantic acceptance and preserved raw diagnostics
 
 All four existing round-scene contexts match every viewport/field crop and have
 no source-event mismatch. Each covers 268 consecutive state observations.
-The existing **full raw-state** checker remains unchanged and reports:
+The explicit `CT04-maintained-state-v1` contract compares 250 retained bytes per
+callback, omitting exactly the existing four translated arithmetic scratch
+bytes C067–C06A. All four complete scene windows pass this semantic comparison.
+The separate `original-byte-page-diagnostic-v1` contract still compares all254
+raw bytes from the same maintained executable and preserves these results:
 
-| Context | Overall result | First raw difference |
+| Context | Raw diagnostic result | First raw difference |
 | --- | --- | --- |
 | First one-player/lower round | Failed | 1469, offset 0x67, expected 43, actual 240 |
 | One-player/upper round | Passed | None |
@@ -71,10 +77,13 @@ The existing **full raw-state** checker remains unchanged and reports:
 Across these failures the only differing offsets are `0x67–0x68`, retired contact
 scratch. The source contact routine writes its temporary coordinate there;
 maintained native contact computes in named state/registers. Maintained replay
-already omits `0x67–0x6a` under the CT04 policy. No new exclusions, tolerance,
-expected-value writes or fixture edits were added to the scene checker. Its raw
-red remains visible rather than manually declared green. Whether that checker
-should adopt the existing maintained-state contract is an explicit review issue.
+already omits `0x67–0x6a` under the CT04 policy. The semantic check now applies that same exact contract; raw comparisons
+remain intact and are explicitly labelled separately. Pixels and observed event
+streams remain exact. No expected-value writes or fixture edits were made.
+Parent reported independent consumer/poison validation at2b6c36f: altering all
+four scratch bytes changed only scratch over268 callbacks, preserving pixels,
+entropy and ordered sound. This supports the qualification; exact revised-head
+independent review remains pending.
 
 Missing original media were restored with the existing deterministic source
 capture and freeze tools (primary one/two-player media and bounded upper-round
@@ -84,7 +93,7 @@ validated; no native output was made into an expectation. Logs are under
 
 ## Fault protection and freshness
 
-An actual native point-increment fault (`+1` changed to `+2`) is detected by the
+The historical control on the unchanged native scorer, an actual point-increment fault (`+1` changed to `+2`) is detected by the
 full round replay at update 134/frame 1433/pre-tail/offset 0x3f, expected 1,
 actual 2. Source restoration reproduces the previously passing round executable
 SHA256 `778812426f84b74fd5308fa698b90ca87ed0bbcae5750b5121deb86f0ff71ede`
@@ -97,16 +106,36 @@ Case-owned phase assets prevent later captures invalidating unrelated subjects.
 The capture tool falls back to existing direct CCP when the optional control
 bridge is absent. A targeted compilation-manifest fix resolves a truncated
 emitted `incbin` from its unique actual source prefix, fingerprints the asset,
-and avoids hashing inactive conditional assets. Unit controls: 17 passed,
-including changed-asset invalidation for that truncation; no broad new suite.
+and avoids hashing inactive conditional assets. Unit controls:23 passed, including source-context resolution for truncated
+assets, bounded-gate false-pass cases, and actual scene run-start retention.
+Long mutant paths are resolved within their actual listing Source section;
+ambiguous/missing recovery fails. No broad new suite.
 
 `RUST_LOG=info python scripts/progress.py --fresh-since
-2026-10-01T02:29:30+00:00` records fresh passes for the complete CT05 replays and
-ordinary runs, fresh failures for three raw scene reports, and rejects the
-2800-update prefix as full-match acceptance. **CT05 remains unverified.** Old
-promoted green known-failure entries were removed only for the full round replay,
-four full round phases and completely passing upper one-player scene. Other
-known reds remain; no shortened or weakened comparison promotes them.
+2026-10-01T03:42:49.850470+00:00` records all required CT05 checks passed/fresh
+and **CT05 evidenced within its bounded scope**, not independent-review clearance.
+The R2 first-round gate requires current maintained continuous evidence through
+original resumed-flight milestone2690; actual2800/27037 is explicit, with
+`full_match_executed=false`. The separate full-match status rejects that prefix;
+**CT09 stays unverified**. The progress output also exposes all three raw
+scratch failures separately from semantic passes. Removed only now-green
+product known-failure baselines; original expectations/raw diagnostics remain.
+
+Each scene has268 consecutive state observations and28 exact crops, totaling
+112 crops across four contexts. All sixteen actual compiled faults are detected:
+sprite, point-field display, extra entropy consumption and retained byte0x7c,
+which is outside scratch. Pixel faults use the measured completed-bank
+generation; state/entropy faults use the exact reset callback. Root provenance
+fingerprints every fault capture, executable, emitted source/assets and media.
+A scene run keeps its atomic incomplete record until finalization; one targeted
+unit control verifies setup failure cannot erase it or revive an old pass.
+
+Ignored `build/ct05/revised-evidence-index.json` links final source/comparator
+fingerprints, original references, normal/fault executable hashes, results and
+raw differences. `revised-progress.json`, `revised-unit.log`, `revised-*.log` and
+`final-scene-*` provide mechanically generated supporting evidence. The index
+is private evidence, not committed raw data.
 
 No complete match, result/restart, full ordinary cadence, RAM ceiling, ADF boot
-or independent-hardware parity claim is made. CT06 has not begun.
+or independent-hardware parity claim is made. Current CT05 revision is reviewable,
+not cleared or merged. Subsequent work waits for parent exact-head clearance.

@@ -245,14 +245,19 @@ def compile_manifest(executable, listing):
     assets = {ROOT / p for p in re.findall(r'^\w\w:[0-9A-Fa-f]{8}[^\n]*\bincbin\s+"([^"\r\n]+)"', text, re.M)}
     # Vasm truncates long instruction text. Recover only emitted incbin
     # prefixes, avoiding inactive conditional assets from the source file.
-    candidates = {name for source in sources if source.is_file()
-                  for name in re.findall(r'(?im)\bincbin\s+"([^"\r\n]+)"', source.read_text())}
+    candidates = {source: set(re.findall(r'(?im)\bincbin\s+"([^"\r\n]+)"', source.read_text()))
+                  for source in sources if source.is_file()}
+    active_source = None
     for line in text.splitlines():
+        context = re.match(r'^Source: "([^"\r\n]+)"', line)
+        if context:
+            active_source = ROOT / context[1]
         match = re.match(r'^\w\w:[0-9A-Fa-f]{8}.*\bincbin\s+"([^"\r\n]*)$', line)
         if match:
-            recovered = {ROOT / name for name in candidates if name.startswith(match[1])}
+            recovered = {ROOT / name for name in candidates.get(active_source, set())
+                         if name.startswith(match[1])}
             if len(recovered) != 1:
-                raise ValueError('Truncated compiled incbin cannot be resolved uniquely')
+                raise ValueError('Truncated compiled incbin cannot be resolved uniquely in its source')
             assets |= recovered
     symbols = sorted(re.findall(r'^([A-Za-z_][\w]*)\s+\d\d:[0-9A-Fa-f]{8}\s*$', text, re.M))
     value = {'files': snapshot(sources | assets | {Path(executable), Path(listing)}),
@@ -386,6 +391,15 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
             if kind == 'round-scenes':
                 capture_path = Path(report['capture_report_path'])
                 artifacts.append(capture_path)
+                for mutation in report.get('hardware_mutations', []):
+                    changed_capture = Path(mutation['capture_report_path'])
+                    changed_exe = changed_capture.parent / 'native-application'
+                    changed_manifest = Path(str(changed_exe) + '.compile.json')
+                    artifacts.extend([changed_capture, changed_manifest, changed_exe])
+                    artifacts.extend(ROOT / name for name in
+                                     json.loads(changed_manifest.read_text())['files'])
+                    artifacts.extend(p for p in changed_capture.parent.iterdir()
+                                     if p.suffix in ('.png', '.log'))
                 artifacts.extend(p for p in capture_path.parent.iterdir()
                                  if p.suffix in ('.png', '.log'))
             exes = executables(path, report)
