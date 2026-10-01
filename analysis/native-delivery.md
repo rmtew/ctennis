@@ -114,3 +114,14 @@ audio checks and actual Paula registers are distinct evidence. The installed
 MAME driver list has no `a500`, and fs-uae/amiberry are absent. Independent emulator
 or real-A500 validation therefore remains unavailable and CT10 stays unverified.
 See the latest WORKLOG entry and ignored `build/ct10` reports for final guard status.
+
+Final focused direct runs complete 11,891/23,836 native-entropy callbacks and
+9,765/19,717 checked publications, with 267,208 occupied chip bytes from timer
+start onward in both modes. Serve mutation/restoration, round/result compiled
+faults, four input timing edges, all thirteen physical windows plus ownership,
+both mode selections, delayed bank fault and emitted mute/disconnect pass.
+Ordinary physical result/title/restart additionally verifies returned-title
+Paula volumes/emitted samples are zero and restart-intro signal is present on
+both channels. These debug audio observations remain distinct from uninterrupted
+cadence. All 40 unit checks pass. The current progress command reports local
+delivery evidence and leaves the independent target gate unverified.

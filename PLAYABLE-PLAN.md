@@ -207,9 +207,9 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-10 — Remove residual scaffolding and deliver the bootable ADF
 
-**Status:** active. Native state/counter integration, isolated assembly and private reproducible ADF packaging implemented; focused delivery validation in progress. Independent target and whole-boot transient RAM peak remain unverified. **Dependencies:** CT-09.
+**Status:** blocked at final independent-target verification; local native cleanup and delivery ready in [draft PR11](https://github.com/rmtew/ctennis/pull/11), native source `c828126`. Final private reproducible ADF cold boot verifies loaded bytes and completes physical match/restart (11,890 callbacks/9,766 checked publications). Both direct native-entropy matches, full maintained replays and focused display/input/mode/audio guards pass. Initialized Exec-pool allocation peak is 237,088 bytes; pre-pool usage unmeasured. Independent emulator/real A500 unavailable; no final CT10/roadmap completion claim. See latest WORKLOG. **Dependencies:** CT-09.
 
-**Verified blocker:** current product includes generated routines, virtual source memory and source snapshots; the reviewed tracked tree has no finished native build/ADF packaging recipe. **Unknown until execution:** final memory/boot-path costs and independent-emulator/hardware behaviour.
+**Resolved native dependency:** the ordinary product now uses subsystem-owned native state and clocks, with generated routines/register macros/source memory and snapshots excluded. Explicit private asset preparation and isolated native assembly/ADF packaging are implemented. Remaining external verification is independent-emulator/hardware behaviour; pre-pool bootstrap RAM usage is unmeasured.
 
 **Targets:** maintained build entry, all product includes from [current executable](amiga/gameplay_integration_probe.s), [setup script](scripts/setup-emulators.ps1), README; proposed reproducible executable/ADF build and boot files.
 
