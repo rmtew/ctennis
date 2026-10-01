@@ -141,9 +141,10 @@ poll_presentation:
         andi.w  #$ff00,d0
         cmpi.w  #$ec00,d0
         bcc.s   presentation_blank
-        ; Leave one whole line for selection and COP1LC/COPJMP bus writes.
-        ; Sampling line43 near its end cannot safely publish before line44.
-        cmpi.w  #$2b00,d0
+        ; Sprite POS/CTL DMA starts before the visible bitplane window.
+        ; Publish with one line of margin before its line25 header fetch;
+        ; changing banks later can mix old controls with new sprite pixels.
+        cmpi.w  #$1800,d0
         bcs.s   presentation_blank
         bra     presentation_not_blank
 presentation_blank:
@@ -536,6 +537,7 @@ prepare_scene_fields:
         adda.l  copper_write_delta,a4
         move.w  d0,(a4)
         dbra    d7,.palette_next
+game_scene_prepared:
         movem.l (sp)+,d0-d7/a0-a4
         rts
 

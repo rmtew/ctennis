@@ -66,6 +66,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     symbols = code_symbols((directory / 'native.lst').read_text())
     observations = []
     commits = []
+    prepared_scenes = []
     entropy_reads = []
     audio_events = []
     audio_ticks = []
@@ -89,6 +90,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             session.inspect('input_set_port', {'port': inputs['port'], 'device': 'joystick'})
             session.inspect('input_joy', inputs)
         if track_commits:
+            session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['game_scene_prepared']})
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['presentation_commit_in_blank']})
         if recorded_entropy:
             session.inspect('break_add', {'kind': 'pc', 'addr': base + symbols['refresh_replay_done']})
@@ -160,10 +162,20 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                     raise ValueError(f'Native refresh consumption diverged at update {generation + 1}')
                 entropy_reads.append({'update': generation + 1, 'bit': value, 'stop': stop})
                 return True
+            if track_commits and stop['pc'] == base + symbols['game_scene_prepared']:
+                bank = session.inspect('mem_read', {'addr': base + symbols['back_copper'], 'len': 4})['data']
+                prepared_scenes.append({'generation': generation + 1, 'bank': bank,
+                    'field_values': session.inspect('mem_read', {'addr': base + symbols['prepared_field_values'], 'len': 6})['data'],
+                    'objects': session.inspect('mem_read', {'addr': base + symbols['game_scene_objects'], 'len': 64})['data'],
+                    'stop': stop})
+                return True
             if track_commits and stop['pc'] == base + symbols['presentation_commit_in_blank']:
                 front = session.inspect('mem_read', {'addr': base + symbols['presentation_copper'], 'len': 4})['data']
-                commits.append({'prepared_after_callback': generation, 'front_copper': front,
-                                'field_values': session.inspect('mem_read', {'addr': base + symbols['field_values'], 'len': 6})['data'],
+                prepared = prepared_scenes[-1] if prepared_scenes else None
+                if not prepared or prepared['generation'] != generation or prepared['bank'] != front:
+                    raise ValueError('Published bank does not match the actual completed prepared scene')
+                commits.append({'prepared_after_callback': prepared['generation'], 'prepared_scene': prepared, 'front_copper': front,
+                                'field_values': prepared['field_values'],
                                 'visible_frame': stop['frame'] + (1 if stop['vpos'] >= 236 else 0), 'stop': stop})
                 return True
             return False
@@ -233,11 +245,18 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
             if completed_rasters:
                 if not track_commits:
                     raise ValueError('Completed raster capture requires presentation commit tracking')
+                raster_deadline = stop['frame'] + 3
                 while True:
                     stop = session.inspect('run_until', {'vpos': 0, 'hpos': 0, 'wait_ms': 50000})
                     if observe_stop(stop):
                         continue
-                    break
+                    # A fast first phase callback can finish in the blank already
+                    # observed before its scene was ready. Wait for its first
+                    # actual publication AND completed scanout, not the prior frame.
+                    if any(event['visible_frame'] <= stop['frame'] - 1 for event in commits):
+                        break
+                    if stop['frame'] >= raster_deadline:
+                        raise RuntimeError('No completed published scene within three frames')
                 if stop['reason'] != 'target' or stop['vpos'] != 0 or stop.get('bridge'):
                     raise RuntimeError(f'Completed raster boundary not reached: {stop}')
                 rendered_frame = stop['frame'] - 1

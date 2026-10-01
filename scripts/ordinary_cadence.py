@@ -48,7 +48,7 @@ def clock_contract():
             'interval_rounding_error_eclock': '<= N/(2*65536)',
             'rules': {'entry': 'not before source deadline minus quantization; before next deadline',
                       'completion': 'before next deadline',
-                      'publication': 'physical beam outside visible rows 44..235; latest completed prepared epoch',
+                      'publication': 'court bank before PAL sprite DMA line25 or late blank >=236; latest completed prepared epoch',
                       'telemetry': 'zero missing, duplicate or dropped events',
                       'memory': 'validated Exec chip free list; continuously observe topology/free mutations',
                       'entropy': 'ordinary native timer; no captured-phase or recorded entropy initialization'}}
@@ -370,6 +370,9 @@ def run(mode, bank_control=False, boot_adf=None):
                                 'title_selected':bool(state['title']),'expected_pointer':expected})
             if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 236:
                 fault('visible-line Copper commit', position=position)
+            if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
+                    and not state['title'] and 25 <= position['vpos'] < 236):
+                fault('court bank publication after sprite header DMA starts', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)
         if boot_adf:s.inspect('events.unsubscribe')

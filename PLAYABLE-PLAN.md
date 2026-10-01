@@ -1,3 +1,4 @@
+<!-- CT10 independent review checkpoint: delivery remains blocked. Newly regressed moving-prefix and status2–5 guards are repaired in the current worktree; upper-serve exact generation4131 still lacks validated original raster association. See newest WORKLOG; no six-guard completion or merge. -->
 # Playable native A500 implementation queue
 
 ## Decision and scope

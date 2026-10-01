@@ -37,7 +37,11 @@ GATES = {
               'ct09-ordinary-two-cadence', 'ct09-input-timing-edges','ct09-published-bank-control'],
     'CT-10': ['ct10-adf-one-cadence','one-player-match','two-player-match',
               'ct09-ordinary-one-cadence','ct09-ordinary-two-cadence',
-              'ct09-input-timing-edges','ct09-published-bank-control','ct06-ordinary-one-restart'],
+              'ct09-input-timing-edges','ct09-published-bank-control','ct06-ordinary-one-restart',
+              # Newly demonstrated delivery regressions remain required guards;
+              # ordinary match counts cannot override a broken pixel/raster check.
+              'p1-moving-prefix','p1-upper-serve',
+              *[f'p1-status-{n}-lifecycle' for n in range(2,6)]],
 }
 NAMES = {
     'CT-01': 'Shared maintained dispatcher / regeneration / mutation',
