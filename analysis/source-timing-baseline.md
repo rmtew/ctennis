@@ -52,15 +52,22 @@ native timer entropy is separate from the two recorded-entropy reference
 replays. Milestone screenshots, emitted audio and actual input replies are
 retained privately. The completion counter, lifecycle, inputs, score/pose and
 Copper writes are observed externally; no expected state is written to RAM.
-Every Copper publication must use the latest completed prepared epoch and
+Every Copper publication must use the latest completed prepared bank and
 occur outside physical visible rows 44–235. PAL can legitimately present the
 latest of multiple source updates; it must not publish an older epoch.
+Actual COP1LCH/L bus values are combined and compared at COPJMP1 with the
+prepared bank, resolved from the loaded chip-data hunk. Readiness/callback
+counts alone cannot certify this. The native main lifecycle can select the
+permanently prepared title or completed court between callbacks; the observed
+page-selection write is associated independently. A compiled stale-bank write
+after update200 must fail despite unchanged counters and readiness.
 
 Memory is measured from Kickstart Exec's MemList/free chunks, cross-checking
 their sum against each chip MemHeader's free count. Header/list writes are
 watched continuously during the ordinary run. A changed allocation/topology
 leaves peak memory unverified unless accounted for; an unchanged allocation
-establishes the actual peak, including OS and allocated executable/stack.
+establishes the peak from CIA timer start through restarted flight, including
+resident OS and allocated executable/stack. Pre-timer peak is not claimed.
 Executable file size is not a RAM measurement. Cold ADF boot remains CT10.
 
 Four focused `run_physical_input_tests.py --timing-edges` probes put a real
@@ -86,10 +93,13 @@ the six field selections together with the sprite scene, and using that
 snapshot for bank patches, restored all 42 exact comparisons. The source
 fixtures and pixel expectations were retained unchanged.
 
-At the current checkpoint, the final one-player ordinary run passes through
+The final one-player and two-player ordinary runs pass through
 result, returned title, opposite selection and fresh restarted flight: 11,890
-completed updates, 9,753 publications, no deadline violations or visible-line
-commits, and **329,136 bytes peak chip allocation**. Four final direction/action
-boundary probes pass. This is one measured native-entropy run, not CT09
-completion: the two-player ordinary run and final replay/display guardrails
-remain to be run. The progress command therefore keeps CT09 unverified.
+and 23,837 completed updates, 9,753 and 19,689 actual bank publications, no
+deadline violations, wrong/stale banks or visible-line commits, and **329,136
+bytes peak chip allocation from CIA timer start** in both modes. Four final
+direction/action boundary probes pass. Full maintained recorded-entropy replays
+match 13,378/27,037 updates; representative round/result display guards pass
+their existing compiled controls. The delayed stale bank fails at update200.
+Progress evidences this bounded CT09 scope; independent exact-head review,
+original full-match pixel/waveform parity and CT10 delivery remain separate.

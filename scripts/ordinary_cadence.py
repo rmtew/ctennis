@@ -4,6 +4,7 @@ from fractions import Fraction
 import json
 import re
 import shutil
+from run_translated_prng_probe import ASSEMBLER, run as assemble
 
 from build_native_game import build
 from capture_native_presentation import code_symbols
@@ -84,14 +85,26 @@ def chip_memory(read):
             'used_chip_bytes': CHIP_BYTES-sum(r['free'] for r in regions)}
 
 
-def run(mode):
+def run(mode, bank_control=False):
     config, ordinary = build()
-    name = f'ct09-ordinary-{mode}-cadence'
+    name = 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe, listing = directory/'native-application', directory/'native.lst'
     shutil.copy2(ordinary, exe)
     shutil.copy2(ordinary.parent/'native.lst', listing)
+    if bank_control:
+        source = (ROOT/'amiga/gameplay_integration_probe.s').read_text()
+        marker = '        move.l  d0,$dff080'
+        if source.count(marker)!=1:
+            raise ValueError('Ordinary Copper publication instruction changed')
+        # The previous front is now back_copper. Publish that stale physical
+        # bank after update200, leaving readiness/counters/gameplay unchanged.
+        wrapper = directory/'wrong-bank.s'
+        wrapper.write_text(source.replace(marker,
+            '        cmpi.w  #200,simulation_updates\n        bcs.s   bank_control_unchanged\n'
+            '        move.l  back_copper,d0\nbank_control_unchanged:\n'+marker))
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(listing),'-o',str(exe),str(wrapper)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
     if 'refresh_signs' in symbols or 'initial_ram' in symbols:
@@ -100,10 +113,14 @@ def run(mode):
     atomic_json(directory/'clock-contract.json', contract)  # before execution
     failures, checkpoints, inputs, replies, changes = [], {}, [], {}, []
     callbacks, commits, memory_writes = [], [], []
+    preparations = []
+    view_selections = []
     ram, controls = bytearray(256), bytearray(8)
     state = {'lifecycle': 0, 'started': 0, 'completed': 0, 'ready': None,
              'released': False, 'initial_selected': None, 'restart_selected': None,
              'last_commit': 0, 'start': None, 'origin': None, 'pause_pose': None}
+    pointer_bytes = {n: bytearray(4) for n in ('front_copper','back_copper','copper_write_delta','sprite_write_delta','cop1lc')}
+    state.update(title=0, prepared=None, bank_fault_pause=False)
     restarted = 'two' if mode == 'one' else 'one'
     with NativeControlSession(directory) as s, (directory/'events.jsonl').open('w') as raw:
         s.inspect('session_launch', {'binary': config['tools']['copperline'], 'run': str(exe),
@@ -116,11 +133,28 @@ def run(mode):
             raise RuntimeError(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
-            'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready')}
+            'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready',
+            'front_copper','back_copper','copper_write_delta','sprite_write_delta','game_title_display')}
+        # These buffers are in the chip-data hunk, not hunk0. Resolve the
+        # compiled section offsets against the actual LoadSeg hunk addresses.
+        segments = s.inspect('segments.list')['current']
+        if segments[0]['start']!=base:
+            raise ValueError('LoadSeg code base differs from actual hunk list')
+        located = {n:(int(h),int(o,16)) for n,h,o in re.findall(
+            r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing.read_text(),re.M)}
+        banks = {}
+        for n in ('copperlist','copperlist_back','title_copper','sprite0','sprite_back'):
+            h,offset=located[n]
+            if offset>=segments[h]['size']: raise ValueError('Buffer symbol outside loaded hunk')
+            banks[n]=segments[h]['start']+offset
+        pointer_addresses = {n:address[n] for n in pointer_bytes if n!='cop1lc'}
+        pointer_addresses['cop1lc']=0xdff080
         virtual = base+symbols['virtual_memory']+0xc000
         def read(a, n):
             return bytes.fromhex(s.inspect('mem_read', {'addr': a, 'len': n})['data'])
         initial_memory = chip_memory(read)
+        title_initial = read(address['game_title_display'],1)[0]
+        state['title']=title_initial
         ram[:] = read(virtual, 256)
         for port in (1, 2):
             s.inspect('input_set_port', {'port': port, 'device': 'joystick'})
@@ -203,6 +237,12 @@ def run(mode):
             r = message['params']; a, value, size = r['addr'], r['value'], r['size']
             position = r['position']
             if r.get('dropped_events', 0) or r.get('dropped_notifications', 0): fault('telemetry drop')
+            for field, start in pointer_addresses.items():
+                if start<=a and a+size<=start+4:
+                    pointer_bytes[field][a-start:a-start+size]=value.to_bytes(size,'big')
+            if a==address['game_title_display']:
+                state['title']=value
+                view_selections.append({'title':bool(value),'position':position})
             if virtual <= a < virtual+256:
                 ram[a-virtual:a-virtual+size] = value.to_bytes(size, 'big')
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
@@ -223,6 +263,16 @@ def run(mode):
                 on_callback(position)
             elif a == address['display_ready']:
                 state['ready'] = state['started'] if value else None
+                if value:
+                    pointer = int.from_bytes(pointer_bytes['back_copper'],'big')
+                    delta = int.from_bytes(pointer_bytes['copper_write_delta'],'big')
+                    sprite_delta = int.from_bytes(pointer_bytes['sprite_write_delta'],'big')
+                    expected_sprite_delta = banks['sprite_back']-banks['sprite0'] if pointer==banks['copperlist_back'] else 0
+                    if pointer not in (banks['copperlist'],banks['copperlist_back']) or delta!=pointer-banks['copperlist'] or sprite_delta!=expected_sprite_delta:
+                        fault('prepared bank/delta mismatch',pointer=pointer,delta=delta,sprite_delta=sprite_delta)
+                    state['prepared']={'generation':state['started'],'bank':pointer,
+                        'title_at_prepare':bool(state['title']),'position':position}
+                    preparations.append(dict(state['prepared']))
             elif a == 0xdff088 and state['start'] is not None:
                 generation = state['ready']
                 # A frozen menu tick advances simulation but prepares no new
@@ -230,13 +280,26 @@ def run(mode):
                 # invented scene for the latest menu service callback.
                 if generation is None or generation > state['completed'] or generation <= state['last_commit']: fault('stale/unprepared presentation', generation=generation)
                 if generation is not None: state['last_commit'] = generation
-                commits.append({'generation': generation, 'position': position})
+                pointer = int.from_bytes(pointer_bytes['cop1lc'],'big')
+                prepared = state['prepared']
+                # The main lifecycle can explicitly select the permanently
+                # prepared title or the completed court between callbacks.
+                # Observe that page selection independently of scene readiness.
+                expected = banks['title_copper'] if state['title'] else prepared['bank'] if prepared else None
+                if pointer != expected:
+                    fault('published Copper bank',generation=generation,expected_pointer=expected,actual_pointer=pointer)
+                    if bank_control and not state['bank_fault_pause']:
+                        state['bank_fault_pause']=True
+                        send('pause',{})
+                commits.append({'generation': generation, 'position': position,'pointer':pointer,
+                                'prepared':dict(prepared) if prepared else None,
+                                'title_selected':bool(state['title']),'expected_pointer':expected})
             if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 236:
                 fault('visible-line Copper commit', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)
         s.notification_handler = event
-        watches = [{'addr': a, 'len': 2 if n != 'display_ready' else 1, 'access': 'write'} for n, a in address.items()]
+        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
                     {'addr': virtual+0x38, 'len': 0x4d-0x38, 'access': 'write'},
                     {'addr': virtual+0x66, 'len': 1, 'access': 'write'},
@@ -246,7 +309,7 @@ def run(mode):
                     {'addr': initial_memory['execbase']+0x142, 'len': 12, 'access': 'write'}]
         watches += [{'addr': h['header'], 'len': 32, 'access': 'write'} for h in initial_memory['regions']]
         s.inspect('events.subscribe', {'events': ['mmio'], 'mmio': watches})
-        stop = s.inspect('run_until', {'seconds': stop['seconds']+1000})
+        stop = s.inspect('run_until', {'seconds': stop['seconds']+(20 if bank_control else 1000)})
         s.inspect('events.unsubscribe')
         final_memory = chip_memory(read)
         s.notification_handler = None
@@ -256,14 +319,14 @@ def run(mode):
     pending_callback = None
     if callbacks and 'completion' not in callbacks[-1]:
         if (callbacks[-1]['callback'] == state['completed']+1 and stop['reason']=='pause'
-                and checkpoints.get('finished',{}).get('callback') == state['completed']):
+                and (checkpoints.get('finished',{}).get('callback') == state['completed'] or state['bank_fault_pause'])):
             pending_callback = callbacks.pop()
         else:
             fault('unexpected incomplete callback')
     required = ('initial_title', 'first_selection', 'first_release', 'first_play', 'first_flight',
                 'point', 'game', 'pause', 'resume', 'result', 'returned_title', 'restart_title_ready',
                 'restart_selection', 'restart_release', 'restart_play', 'held_blocked', 'fresh_action', 'restarted_flight', 'finished')
-    for label in required:
+    for label in (() if bank_control else required):
         if label not in checkpoints: fault('missing milestone', milestone=label)
     origin = state['start']+(65535-state['origin'])*5 if state['start'] is not None and state['origin'] is not None else None
     maximum_late, maximum_work, minimum_phase = 0, 0, None
@@ -290,6 +353,9 @@ def run(mode):
     atomic_json(capture, {'clock_contract': contract, 'clock_origin_cck': origin, 'callbacks': callbacks,
                          'base': base, 'addresses': address, 'virtual_state': virtual, 'watch_ranges': watches,
                          'timer_start_cck': state['start'], 'timer_origin_count': state['origin'],
+                         'bank_addresses':banks,'prepared_scenes':preparations,
+                         'title_initial':bool(title_initial),'view_selections':view_selections,
+                         'loaded_hunks':segments,
                          'pending_final_callback': pending_callback,
                          'commits': commits, 'lifecycle_changes': changes, 'memory_initial': initial_memory,
                          'memory_final': final_memory, 'memory_writes': memory_writes,
@@ -303,12 +369,21 @@ def run(mode):
               'cadence': {'minimum_phase_cck': minimum_phase, 'maximum_entry_late_cck': maximum_late,
                           'maximum_update_work_cck': maximum_work, 'clock_contract': contract},
               'presentation': {'commits': len(commits), 'latest_prepared_completed_epoch':
-                               not any(f['field']=='stale/unprepared presentation' for f in failures)},
+                               not any(f['field'] in ('stale/unprepared presentation','published Copper bank','prepared bank/delta mismatch') for f in failures),
+                               'actual_pointer_checked':True},
               'memory': {'peak_chip_bytes': final_memory['used_chip_bytes'] if not active_memory_writes else None,
-                         'scope': 'ordinary executable entry through restarted flight, including OS allocation',
+                         'scope': 'CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed',
                          'continuous_allocation_watch': not active_memory_writes, 'cold_disk_boot': 'unverified'},
               'capture': str(capture.relative_to(ROOT)), 'audio_wav': str((directory/'native.wav').relative_to(ROOT)),
               'scope': 'Uninterrupted native ordinary lifecycle/cadence; no original full-match/pixel/waveform parity or ADF gate'}
     atomic_json(ROOT/f'build/tests/{name}-report.json', report)
+    if bank_control:
+        wrong = [f for f in failures if f['field']=='published Copper bank']
+        detected = bool(wrong and wrong[0]['generation']>=200 and any(c['generation']<200 for c in commits))
+        report.update(passed=detected, first_difference=None if detected else {'field':'wrong bank control escaped'},
+                      subject='maintained-native-mutant',detected_failure=wrong[0] if wrong else None,
+                      normal_executable_sha256=__import__('hashlib').sha256(ordinary.read_bytes()).hexdigest(),
+                      scope='Delayed actual stale COP1LC bank; readiness/callback/gameplay counters unchanged. Not complete ordinary acceptance.')
+        atomic_json(ROOT/f'build/tests/{name}-report.json',report)
     print(json.dumps({k: v for k, v in report.items() if k not in ('checkpoints', 'differences')}), flush=True)
     return 0 if report['passed'] else 1

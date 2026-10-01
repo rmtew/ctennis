@@ -12,6 +12,7 @@ from run_regression_tests import native_replay_cases
 from physical_input_reference import CASES as INPUT_CASES
 from maintained_state_contract import MAINTAINED_STATE_CONTRACT, MAINTAINED_SCRATCH_OFFSETS
 from fractions import Fraction
+from bisect import bisect_right
 
 
 REPLAY = native_replay_cases()
@@ -33,7 +34,7 @@ GATES = {
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', *CT05_SCENES, *CT06_SCENES, 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes', 'status-timer-saturation-phase', 'ct06-ordinary-one-restart'],
     'CT-09': ['one-player-match', 'two-player-match', 'ct09-ordinary-one-cadence',
-              'ct09-ordinary-two-cadence', 'ct09-input-timing-edges'],
+              'ct09-ordinary-two-cadence', 'ct09-input-timing-edges','ct09-published-bank-control'],
     'CT-10': [],
 }
 NAMES = {
@@ -168,6 +169,28 @@ def cadence_proof(report, mode, executable_sha):
         if not commits or generations != sorted(set(generations)):
             return False
         if any(c['generation'] > len(rows) or 44 <= c['position']['vpos'] < 236 for c in commits):
+            return False
+        banks = measurement['bank_addresses']
+        preparations = measurement['prepared_scenes']
+        prepared_by_key={(p['generation'],p['bank'],p['position']['cck']):p for p in preparations}
+        prepare_times=[p['position']['cck'] for p in preparations]
+        if prepare_times!=sorted(set(prepare_times)):
+            return False
+        for commit in commits:
+            prepared = commit['prepared']
+            selections=[v for v in measurement['view_selections'] if v['position']['cck']<=commit['position']['cck']]
+            title=selections[-1]['title'] if selections else measurement['title_initial']
+            expected=banks['title_copper'] if title else prepared['bank']
+            index=bisect_right(prepare_times,commit['position']['cck'])-1
+            if (prepared_by_key.get((prepared['generation'],prepared['bank'],prepared['position']['cck']))!=prepared or prepared['generation']!=commit['generation']
+                    or index<0 or preparations[index]!=prepared
+                    or rows[prepared['generation']-1]['completion']['cck']>commit['position']['cck']
+                    or prepared['bank'] not in (banks['copperlist'],banks['copperlist_back'])
+                    or prepared['position']['cck']>=commit['position']['cck']
+                    or commit['title_selected']!=title or commit['pointer']!=expected
+                    or commit['expected_pointer']!=expected):
+                return False
+        if report['presentation'].get('actual_pointer_checked') is not True:
             return False
         if any(str(c['id']) not in measurement['replies'] or 'error' in measurement['replies'][str(c['id'])]
                for c in measurement['inputs']):
@@ -386,7 +409,7 @@ def progress(fresh_since=None):
         if name == 'ct05-r2-first-round':
             evidence[name] = bounded_round_status(report_path(name), fresh_since)
             continue
-        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') or name == 'status-timer-saturation-phase' else 'maintained-native'
+        subject = 'maintained-native-mutant' if name=='ct09-published-bank-control' else 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') or name == 'status-timer-saturation-phase' else 'maintained-native'
         full = name == 'status-timer-saturation-phase' or name in CT06_PHASES or name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
         evidence[name] = status(report_path(name), subject, full, fresh_since)
         if name in CT05_SCENES + CT06_SCENES and evidence[name]['status'] in ('passed', 'failed'):
@@ -537,6 +560,14 @@ def progress(fresh_since=None):
                     or not timing_edge_proof(json.loads(report_path(name).read_text()),sha)):
                 verified=False
                 reasons.append('Four ordinary direction/action boundary edges missing or incompatible')
+            name='ct09-published-bank-control'
+            control=json.loads(report_path(name).read_text()) if evidence[name]['status']=='passed' else {}
+            fault=control.get('detected_failure',{})
+            if (not control.get('passed') or fault.get('field')!='published Copper bank'
+                    or fault.get('generation',0)<200 or fault.get('expected_pointer')==fault.get('actual_pointer')
+                    or control.get('normal_executable_sha256')!=sha):
+                verified=False
+                reasons.append('Actual delayed wrong-bank publication control missing or incompatible')
         if gate == 'CT-10':
             verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
             reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
@@ -551,7 +582,7 @@ def progress(fresh_since=None):
     peak = 'unverified'
     if ordinary_complete:
         peak = {'bytes': max(json.loads(report_path(f'ct09-ordinary-{m}-cadence').read_text())['memory']['peak_chip_bytes'] for m in ('one','two')),
-                'scope': 'two uninterrupted ordinary executable runs, OS and stack included; cold ADF boot unverified'}
+                'scope': 'CIA timer start through restarted flight in both modes; resident OS/allocated stack included; pre-timer and cold ADF boot peak unverified'}
     return {'behavior': {'capabilities': capabilities, 'evidence': evidence, 'supporting_evidence': supporting},
             'runtime_dependencies': architecture,
             'delivery': {'target': TARGET, 'ordinary_target_execution': 'evidenced in uninterrupted ordinary runs' if ordinary_complete else 'evidenced in mode/control checks' if runtime_target else 'unverified',

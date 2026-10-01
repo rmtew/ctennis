@@ -193,7 +193,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-09 — Verify uninterrupted native cadence and complete play
 
-**Status:** active. Earlier full maintained recorded-entropy replays matched 13,378/27,037 updates; final refresh pending. One current uninterrupted native-entropy match passes 11,890 completed updates and measures 329,136-byte peak chip allocation; four final physical edges and 42 original score/status comparisons pass. Two-player ordinary play and final affected guardrails remain unrun, so CT09 remains unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
+**Status:** active; bounded acceptance passed, ready for independent exact-head review, unmerged. Current uninterrupted native-entropy runs complete 11,890/23,837 updates through full match/restart, with actual 9,753/19,689 Copper-bank publications verified and unchanged clock bounds. Full maintained recorded-entropy replays match 13,378/27,037 updates. Four physical edges, affected display guards and actual delayed stale-bank control pass. Peak occupied chip allocation is 329,136 bytes from CIA timer start onward in both modes; pre-timer/cold-boot peak unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
 
 **Verified existing evidence:** CIA-B timing targets 59.922738 Hz; prior long replay and ordinary prefix measured no visible-line Copper commits. **Open verification, not a newly diagnosed defect:** normal execution across all regimes, input latency and complete matches has not passed the final acceptance gate.
 

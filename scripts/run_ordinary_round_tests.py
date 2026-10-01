@@ -288,11 +288,20 @@ def main():
     parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
     parser.add_argument('--audio',action='store_true',help='CT08 ordinary result mute and restart emitted sound')
     parser.add_argument('--cadence',action='store_true',help='CT09 non-stopping ordinary match, clock and chip-memory measurement')
+    parser.add_argument('--bank-control',action='store_true',help='CT09 delayed compiled stale Copper bank control')
     args=parser.parse_args()
     if args.audio and not args.match:parser.error('--audio requires --match')
     if args.early_release and (not args.match or args.mode != 'one'):
         parser.error('--early-release requires --match --mode=one')
     mode=args.mode
+    if args.bank_control:
+        if args.cadence or args.early_release or args.audio:
+            parser.error('--bank-control is a separate bounded compiled control')
+        from ordinary_cadence import run as run_cadence
+        path=ROOT/'build/tests/ct09-published-bank-control-report.json'
+        return tracked_call([path],'ordinary-cadence','maintained-native-mutant','ordinary title',
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_cadence(mode,True),
+                            lambda path,report:[ROOT/'build/tests/ct09-published-bank-control/native-application'])
     if args.cadence:
         if args.early_release or args.audio or not args.match:
             parser.error('--cadence requires --match and records its own audio; no --early-release/--audio')

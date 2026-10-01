@@ -49,10 +49,22 @@ def late_mutation(kind,case,captured):
     # A field bank must be poisoned before the displayed generation is built;
     # the two-player capture can present one bank behind the normal run.
     threshold=generation-2 if kind=='field' else target-1
+    if kind=='field':
+        # Corrupt the prepared selection before its normal patch. Appending
+        # another full patch after every tick creates an unrelated timing
+        # overrun and can leave the intended original raster interval.
+        def field_alter(text):
+            old='        dbra    d7,prepare_scene_fields\n        bsr     patch_score_pointers'
+            if text.count(old)!=1:raise ValueError('Prepared field patch boundary changed')
+            return text.replace(old,'        dbra    d7,prepare_scene_fields\n'
+                f'        cmpi.w  #{threshold},simulation_updates\n        bcs.s   result_field_control_done\n'
+                '        move.b  #1,prepared_field_values+1\nresult_field_control_done:\n'
+                '        bsr     patch_score_pointers')
+        return field_alter
     def alter(text):
         old='game_observe_pre_tail:\n        rts'
         if text.count(old)!=1:raise ValueError('Shared result observation hook no longer unique')
-        body=('        move.b  #1,field_values+1\n        bsr     patch_score_pointers' if kind=='field' else
+        body=('        move.b  #1,prepared_field_values+1\n        bsr     patch_score_pointers' if kind=='field' else
               '        movem.l d0-d1/a0,-(sp)\n        bsr     read_refresh_adapter\n        movem.l (sp)+,d0-d1/a0')
         return text.replace(old,f'game_observe_pre_tail:\n        cmpi.w  #{threshold},simulation_updates\n        bcs.s   result_mutation_done\n'+body+'\nresult_mutation_done:\n        rts')
     return alter

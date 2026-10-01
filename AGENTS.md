@@ -154,3 +154,12 @@ chip free-list/allocation evidence, never executable size. Both complete
 ordinary receipts, physical edges and current full replays are required by
 `scripts/progress.py`; one successful run cannot certify CT09. Disk cold boot,
 adapter retirement and independent delivery validation remain CT10.
+The observer must compare actual COP1LCH/L values at COPJMP1 with the
+completed prepared bank (or permanently prepared title selected by an observed
+main-thread page change). Readiness/counts alone do not prove bank freshness.
+`run_ordinary_round_tests.py --mode=one --bank-control` compiles one delayed
+stale-bank write, preserving counters/readiness, and must detect it before CT09
+can be evidenced. Chip-memory peak currently covers CIA timer start through
+restarted flight; pre-timer/cold-boot peak remains unverified. Display fault
+controls target `prepared_field_values` before its normal patch, so they corrupt
+actual output without adding a second full patch and unrelated scheduling delay.

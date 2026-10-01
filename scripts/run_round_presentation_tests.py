@@ -50,8 +50,10 @@ def mutation(kind, case, reset_generation=None):
             old = '        addi.w  #$80,d0'
             new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   .round_mutation_sprite_done\n        addq.w  #1,d0\n.round_mutation_sprite_done:'
         elif kind == 'field':
-            old = 'simulation_service_observed:'
-            new = old + '\n        cmpi.w  #1334,simulation_updates\n        bcs.s   round_mutation_field_done\n        move.b  #1,field_values+1\n        bsr     patch_score_pointers\nround_mutation_field_done:'
+            old = '        dbra    d7,prepare_scene_fields\n        bsr     patch_score_pointers'
+            new = ('        dbra    d7,prepare_scene_fields\n        cmpi.w  #1334,simulation_updates\n'
+                   '        bcs.s   round_mutation_field_done\n        move.b  #1,prepared_field_values+1\n'
+                   'round_mutation_field_done:\n        bsr     patch_score_pointers')
         elif kind == 'state':
             old = 'game_observe_pre_tail:\n        rts'
             new = 'game_observe_pre_tail:\n        cmpi.w  #1334,simulation_updates\n        bne.s   round_mutation_state_done\n        eori.b  #1,$7c(a5)\nround_mutation_state_done:\n        rts'
