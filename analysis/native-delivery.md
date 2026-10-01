@@ -134,3 +134,18 @@ a historical diagnostic error. Ordinary assembly defines neither flag and the
 executable/ADF hashes above remain unchanged. Common-helper provenance properly
 invalidates earlier receipts; they are not edited or silently promoted. Fresh
 accepted-target reruns are required after this build-helper change.
+
+After the diagnostic repair, nine required commands were freshly rerun: cold
+ADF, both full maintained matches, both uninterrupted ordinary matches, four
+physical timing edges, delayed bank control, ordinary emitted audio and serve
+mutation/restoration. All pass; package hashes remain unchanged. Current
+progress evidences CT10 under the user-approved Copperline target, separately
+recording pending independent exact-head code/runtime review. Older unrerun
+mode-label/13-window/pixel receipts are stale after the helper change, not
+manually upgraded. See [exact aggregate attribution](native-delivery-aggregate.md).
+
+Private Library upload was attempted through the current skill's required
+prepared-upload helper, then retried with authorized sandbox escalation. Both
+failed during initial tools/list, before preparation or byte transfer. Read-only
+connection diagnostics identified proxy tunnel rejection HTTP403. No Library
+IDs were created; local ADF/README and failure evidence remain available.
