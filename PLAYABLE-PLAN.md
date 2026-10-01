@@ -136,7 +136,7 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 ## CT-06 — Finish a match, return to title and restart
 
-**Status:** active, implementation and focused acceptance ready for independent review (2026-10-01 UTC). Not merged or independently verified. **Dependencies:** CT-05.
+**Status:** active, revised implementation and focused acceptance ready for independent exact-head review. The confirmed early-release latch defect at `8dcdcb8` is fixed and runtime-verified locally. Not merged. **Dependencies:** CT-05.
 
 **Resolved boundary:** native result/title/restart state now handles sound requests, return display, shared mode selection and old-action release gating. Complete local scene checks remain separate from ordinary continuous match/restart acceptance; see the evidence record below.
 
@@ -148,7 +148,7 @@ continuous rounds, complete matches or independent-hardware parity. See
 
 **Lightweight validation:** reuse the two existing six-checkpoint result/restart cases and their complete state/pixel/event acceptance. Then carry ordinary/continuous play from fresh mode selection through the result and restarted serve; retain checkpoints rather than all frames. Do not create more equivalent result-scene permutations.
 
-Evidence: both complete maintained match phases match1451/1451; both six-scene windows pass1422 states/42 images each and all six compiled late faults. Ordinary one→two11807 and two→one23753 consecutive callbacks cross match/title/reselection and held-action release/repress through restarted flight. Final executable `80b16463f5673f033241a10333ed38a6157f5d986b54e45f2d75cda5efff56fa`; progress reports CT06 evidenced within this scope with all required reports fresh. Raw scratch diagnostics remain separately red; cadence/full reference match/peak RAM/waveform/ADF/independent validation remain open. See [CT06 evidence](analysis/native-result-restart-presentation.md).
+Evidence: both complete maintained match phases match1451/1451; both six-scene windows pass1422 states/42 images each and all six compiled late faults. Ordinary one→two11807 and two→one23753 consecutive callbacks cross match/title/reselection and held-action release/repress through restarted flight. Revised executable `6312d8c798fd8d3fe1e98e29b2fddbb0d5b529dbc113eed2906f265932febdfc`; additional early-release/repress regression passes11647 consecutive observations with continuously held P2 still blocked and flight12067 without a second release. Progress reports CT06 evidenced within this scope with all required reports fresh. Raw scratch diagnostics remain separately red; cadence/full reference match/peak RAM/waveform/ADF/independent validation remain open. See [CT06 evidence](analysis/native-result-restart-presentation.md).
 
 ## CT-07 — Correct native graphics and remove the display translation bridge
 

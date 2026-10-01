@@ -96,10 +96,11 @@ def run(mode):
     return 0 if report['passed'] else 1
 
 
-def run_match(mode):
+def run_match(mode, early_release=False):
     """Ordinary physical play through award/title/reselection and fresh serve."""
     config, ordinary = build()
-    directory = ROOT / f'build/tests/ct06-ordinary-{mode}-restart'
+    name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart')
+    directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
     shutil.copy2(ordinary, exe)
@@ -116,6 +117,7 @@ def run_match(mode):
     selection_pressed = False
     released_callback = None
     waiting_callback = None
+    action_samples = {}
     with NativeControlSession(directory) as session:
         session.inspect('session_launch', {'binary': config['tools']['copperline'], 'run': str(exe),
             'args': ['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K',
@@ -170,6 +172,38 @@ def run_match(mode):
                 if released_callback is None and callback-checkpoints['restart_selected'] >= 80:
                     session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'release'})
                     released_callback=callback
+            if early_release and 'restart_selected' in checkpoints:
+                elapsed = callback-checkpoints['restart_selected']
+                def action_sample():
+                    return {'callback':callback,'lifecycle':lifecycle,
+                            'raw':list(mem('game_input_bits',2)),
+                            'pressed':list(mem('game_input_pressed',2)),
+                            'released':list(mem('game_input_released',2)),
+                            'latches':list(mem('game_old_action_latches',2)),
+                            'controls':list(mem('game_player_controls',2))}
+                if elapsed == 100:
+                    sample=action_sample()
+                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['latches'] != [16,16]:
+                        raise AssertionError('Early release must start with both old actions held in restart sound')
+                    action_samples['before_release']=sample
+                    checkpoints['early_release']=callback
+                    session.inspect('input_joy',{'port':2,'red':False})
+                elif elapsed == 101:
+                    sample=action_sample()
+                    if lifecycle != 9 or sample['raw'] != [0,16] or sample['released'] != [16,0] or sample['latches'] != [0,16]:
+                        raise AssertionError('Sampled release during restart sound did not retire only P1 latch')
+                    action_samples['sampled_release']=sample
+                    checkpoints['sampled_release']=callback
+                elif elapsed == 140:
+                    if 'sampled_release' not in checkpoints:raise AssertionError('Release was not observed before repress')
+                    checkpoints['early_repress']=callback
+                    session.inspect('input_joy',{'port':2,'red':True})
+                elif elapsed == 141:
+                    sample=action_sample()
+                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['pressed'] != [16,0] or sample['latches'] != [0,16]:
+                        raise AssertionError('Fresh press before play re-latched P1 or released continuously held P2')
+                    action_samples['sampled_repress']=sample
+                    checkpoints['sampled_repress']=callback
             if released_callback is not None and lifecycle == 1:
                 if 'restart_playing' not in checkpoints:
                     checkpoints['restart_playing']=callback
@@ -177,6 +211,21 @@ def run_match(mode):
                         raise AssertionError('Old mode/end/score leaked into restarted match')
                     if mem('game_lower_owner',2) != bytes([0,1]):
                         raise AssertionError('Old player ownership survived reset')
+                if early_release:
+                    if callback > checkpoints['restart_playing']:
+                        sample=action_sample()
+                        if sample['raw'] != [16,16] or sample['latches'] != [0,16] or sample['controls'] != [16,0]:
+                            raise AssertionError('Fresh P1 action masked or continuously held P2 action escaped')
+                        if 'fresh_action_eligible' not in checkpoints:
+                            checkpoints['fresh_action_eligible']=callback
+                            action_samples['playable']=sample
+                        if ram[0x38] and ram[0x66]:
+                            checkpoints['restarted_flight']=callback
+                            snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                            break
+                        if callback-checkpoints['restart_playing'] >= 60:
+                            raise AssertionError('Fresh early repress did not launch without a second release')
+                    continue
                 if waiting_callback is None and ram[0x3a]&0x40:
                     waiting_callback=callback
                 if waiting_callback is not None and 'restart_action' not in checkpoints:
@@ -195,15 +244,18 @@ def run_match(mode):
                     checkpoints['restarted_flight']=callback
                     snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
                     break
-        required=('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight')
+        required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
+                  ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
         if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
     capture=directory/'checkpoints.json';atomic_json(capture,snapshots)
-    report={'case':f'ct06-ordinary-{mode}-restart','subject':'maintained-native','passed':not differences,
+    report={'case':name,'subject':'maintained-native','passed':not differences,
             'first_difference':differences[0] if differences else None,'checkpoints':checkpoints,
             'observed_callbacks':observations,'consecutive_callbacks':True,'start_mode':mode,'restart_mode':restarted_mode,'held_old_actions_verified': 'old_action_blocked' in checkpoints,
             'capture':str(capture.relative_to(ROOT)),
+            'early_release_verified':early_release and 'fresh_action_eligible' in checkpoints,
+            'action_samples':action_samples,
             'scope':'Ordinary uninterrupted physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
-    path=ROOT/f'build/tests/ct06-ordinary-{mode}-restart-report.json';atomic_json(path,report)
+    path=ROOT/f'build/tests/{name}-report.json';atomic_json(path,report)
     print(json.dumps(report),flush=True)
     return 0 if report['passed'] else 1
 
@@ -212,13 +264,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('one','two'), required=True)
     parser.add_argument('--match',action='store_true',help='CT06 ordinary result/title/restarted serve')
+    parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
     args=parser.parse_args()
+    if args.early_release and (not args.match or args.mode != 'one'):
+        parser.error('--early-release requires --match --mode=one')
     mode=args.mode
     if args.match:
-        path=ROOT/f'build/tests/ct06-ordinary-{mode}-restart-report.json'
+        name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart')
+        path=ROOT/f'build/tests/{name}-report.json'
         return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode),
-                            lambda path,report:[ROOT/f'build/tests/ct06-ordinary-{mode}-restart/native-application'])
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release),
+                            lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
     path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',
                         'scripts/run_ordinary_round_tests.py', None, lambda: run(mode),

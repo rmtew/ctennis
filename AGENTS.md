@@ -101,3 +101,10 @@ actually displayed Copper bank, not an assumed front/prepared generation.
 Document diagnostic activation timing separately from normal product changes.
 Final evidence must remain current after all builds; use `scripts/progress.py`
 rather than manually promoting successful but stale reports.
+The focused CT06 review regression is
+`RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match --early-release`.
+It releases P1 during restart sound, verifies a sampled release, represses before
+play and requires advancing flight without a second release. P2 stays held and
+must remain latched/filtered. This is required in addition to the two ordinary
+late-release checks. Latch retirement observes physical sampling in every
+lifecycle; it must not depend on active player assignment.

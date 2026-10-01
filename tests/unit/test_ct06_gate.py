@@ -12,6 +12,30 @@ import progress
 import run_result_presentation_tests as runner
 
 class ResultGateTests(unittest.TestCase):
+    def test_early_release_requires_sampled_release_fresh_press_and_held_p2(self):
+        names=('match_award','returned_title_display','title_ready','restart_selected','early_release',
+               'sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight')
+        points=dict(zip(names,range(100,111)))
+        report={'case':'ct06-ordinary-one-early-release','subject':'maintained-native',
+                'executable_sha256':'ordinary','start_mode':'one','restart_mode':'two',
+                'consecutive_callbacks':True,'early_release_verified':True,
+                'observed_callbacks':200,'checkpoints':points,'action_samples':{
+                    'before_release':{'lifecycle':9,'raw':[16,16],'latches':[16,16]},
+                    'sampled_release':{'callback':points['sampled_release'],'lifecycle':9,
+                        'raw':[0,16],'latches':[0,16],'released':[16,0]},
+                    'sampled_repress':{'callback':points['sampled_repress'],'lifecycle':9,
+                        'raw':[16,16],'latches':[0,16],'pressed':[16,0]},
+                    'playable':{'callback':points['fresh_action_eligible'],'lifecycle':1,
+                        'raw':[16,16],'latches':[0,16],'controls':[16,0]}}}
+        self.assertTrue(progress.early_release_proof(report,'ordinary'))
+        self.assertFalse(progress.early_release_proof(report,'wrong-executable'))
+        for sample,key,value in (('sampled_release','latches',[16,16]),
+                                 ('sampled_repress','pressed',[0,0]),
+                                 ('playable','controls',[16,16]),
+                                 ('playable','callback',points['restarted_flight'])):
+            altered=copy.deepcopy(report);altered['action_samples'][sample][key]=value
+            self.assertFalse(progress.early_release_proof(altered,'ordinary'))
+
     def test_result_media_dependencies_follow_declared_directories(self):
         with patch.object(evidence,'tool_info',return_value=({},set())):
             paths,_=evidence.inputs_for('result-scenes','scripts/run_result_presentation_tests.py',runner.CASES[1])

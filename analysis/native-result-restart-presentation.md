@@ -6,7 +6,8 @@ restart. `amiga/game/result.s` owns that lifecycle; `result_adapter.s` explicitl
 retains the existing audio stream ABI pending CT08. The display bridge remains
 CT07 debt. Ordinary restart clears scores, mode/end state and pending phases.
 Per-player action latches suppress buttons inherited through selection until each
-physical button is released. Normal rally holds and direction input are preserved.
+physical button is released. Latch retirement happens at every physical sample,
+including selection and sound waits. Normal rally holds and direction input are preserved.
 
 The application and replay use the same dispatcher and main/service paths.
 A local phase initializes once from captured original conditions; it does not
@@ -47,6 +48,29 @@ This changes fault activation only, not normal gameplay, reference checkpoints
 or the strict comparison. Sprite faults use the visible selected-court checkpoint
 (result sprites are hidden); extra-refresh faults use the final flight checkpoint.
 
+## Confirmed early-release review defect and focused repair
+
+Independent runtime review of `8dcdcb8` held P1red through choice11446,
+released after11546 and observed the release at11547 during restart sound,
+then repressed after11586. At play12049 through12109, rawP1 remained16,
+latch16 and filtered action0; the ball stayed stationary. The existing late
+release check did not cover a release before active player assignment.
+
+The repair adds one AND instruction in `game_store_pad`: intersect that pad's
+old-action latch with every sampled raw held value. A physical release now
+retires its latch in selection/sound states without assigning controls,
+consuming AI/movement input or dispatching active gameplay.
+
+The existing ordinary runner's focused `--mode=one --match --early-release`
+regression passed11647 consecutive observations. At11547 it independently
+observes raw[0,16], released[16,0], latch[0,16], lifecycle9. Repress at11587
+observes raw[16,16], pressed[16,0], latch[0,16], still lifecycle9. At12050
+controls[16,0] prove fresh P1 eligible and continuously held P2 blocked.
+Advancing flight at12067 requires no second release. These samples and exact
+executable/source/reference/tool/target provenance are in the early-release root
+report. The progress gate requires this receipt as well as both late-release
+ordinary checks; flags alone cannot substitute for the sampled edge evidence.
+
 ## Ordinary target evidence
 
 Both modes start from an ordinary title boot, run continuously through the match
@@ -57,8 +81,17 @@ the ball remains stationary. After releasing both buttons for80 callbacks, a fre
 player1 press launches advancing flight. The existing two commands record only
 actual lifecycle/score checkpoints, checking callback continuity throughout.
 
-The final ordinary executable SHA256 is
+The original reviewed head `8dcdcb8` used ordinary executable SHA256
 `80b16463f5673f033241a10333ed38a6157f5d986b54e45f2d75cda5efff56fa`.
+That head has a confirmed early-release defect despite its late-release checks.
+The revised physical-sampling fix uses ordinary executable SHA256
+`6312d8c798fd8d3fe1e98e29b2fddbb0d5b529dbc113eed2906f265932febdfc`;
+all affected final guards passed and the required receipts are current.
+The two late-release ordinary runs retain11807/23753 consecutive observations
+on this revised executable. The13-window physical guard matches561callbacks,
+rejects its sampler fault and matches the105-update exchanged-end phase. Its
+obsolete `score_gate` observer was repaired to the maintained `game_score_tick`
+entry immediately after input normalization; expected observations are unchanged.
 One→two records11807 consecutive observations; two→one records23753.
 These are ordinary lifecycle/action acceptance, not original full-match parity.
 The actual logs use PAL A500/68000/OCS/512KB chip/no expansion/Kickstart1.3,
@@ -71,13 +104,19 @@ RUST_LOG=info python scripts/run_regression_tests.py --subject=maintained --case
 RUST_LOG=info python scripts/run_regression_tests.py --subject=maintained --case=two-player-match-complete-phase
 RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match
 RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=two --match
+RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match --early-release
 RUST_LOG=info python scripts/progress.py
 ```
+
+The revised final ledger/index/progress are in ignored `build/ct06/release-fix/`.
+The ledger preserves the failed obsolete-boundary invocation and targeted recovery;
+only the two scene receipts invalidated by its imported closure were refreshed.
+The reviewed original head artifacts are preserved under `build/ct06/reviewed-8dcdcb8/`.
 
 Root reports in ignored `build/tests/` contain atomic run state and source,
 executable, reference, tool and exact-target provenance. The focused progress gate
 requires full extent, semantic/raw labels, all three real faults, ordinary start,
-ordered lifecycle, held-action proof and the current ordinary executable. It does
+ordered lifecycle, late-held and early-release action proofs, and the current ordinary executable. It does
 not count translated diagnostics or source integration as runtime acceptance.
 Dependency discovery follows primary media's declared children and the recipe's
 supplemental directories, avoiding an invented absent primary restart child while

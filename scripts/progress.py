@@ -28,7 +28,7 @@ GATES = {
     'CT-03': list(INPUT_CASES) + ['control-ownership', 'p1-accept-one-player', 'p1-accept-two-player'],
     'CT-04': list(REPLAY) + ['p1-accept-one-player', 'p1-accept-two-player'],
     'CT-05': list(CT05_REPLAY) + list(CT05_SCENES) + ['ct05-r2-first-round', 'ct05-ordinary-one-round', 'ct05-ordinary-two-round'],
-    'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart'],
+    'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart', 'ct06-ordinary-one-early-release'],
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix'],
     'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'status-timer-saturation-phase'],
     'CT-09': ['one-player-match', 'two-player-match'],
@@ -146,6 +146,33 @@ def ordinary_restart_proof(report,mode,executable_sha256):
         and report['observed_callbacks']>=values[-1]-values[0]+1)
 
 
+def early_release_proof(report, executable_sha256):
+    names=('match_award','returned_title_display','title_ready','restart_selected',
+           'early_release','sampled_release','early_repress','sampled_repress',
+           'restart_playing','fresh_action_eligible','restarted_flight')
+    points=report.get('checkpoints',{});values=[points.get(n) for n in names]
+    samples=report.get('action_samples',{})
+    expected={'before_release':(9,[16,16],[16,16]),'sampled_release':(9,[0,16],[0,16]),
+              'sampled_repress':(9,[16,16],[0,16]),'playable':(1,[16,16],[0,16])}
+    return (report.get('case')=='ct06-ordinary-one-early-release'
+        and report.get('subject')=='maintained-native'
+        and report.get('executable_sha256')==executable_sha256
+        and report.get('start_mode')=='one' and report.get('restart_mode')=='two'
+        and report.get('consecutive_callbacks') is True and report.get('early_release_verified') is True
+        and all(type(n) is int and n>0 for n in values) and values==sorted(set(values))
+        and type(report.get('observed_callbacks')) is int
+        and report['observed_callbacks']>=values[-1]-values[0]+1
+        and all(samples.get(name,{}).get('lifecycle')==state
+                and samples[name].get('raw')==raw and samples[name].get('latches')==latches
+                for name,(state,raw,latches) in expected.items())
+        and samples['sampled_release'].get('released')==[16,0]
+        and samples['sampled_repress'].get('pressed')==[16,0]
+        and samples['playable'].get('controls')==[16,0]
+        and samples['sampled_release'].get('callback')==points['sampled_release']
+        and samples['sampled_repress'].get('callback')==points['sampled_repress']
+        and samples['playable'].get('callback')==points['fresh_action_eligible'])
+
+
 def progress(fresh_since=None):
     evidence = {}
     for name in sorted(set(n for names in GATES.values() for n in names)):
@@ -248,6 +275,13 @@ def progress(fresh_since=None):
                         or not ordinary_restart_proof(json.loads(report_path(name).read_text()),mode,
                             json.loads(build_path.read_text()).get('executable_sha256'))):
                     verified=False;reasons.append(f'Ordinary {mode}-player match/title/restarted serve missing')
+            name='ct06-ordinary-one-early-release'
+            if (not ordinary or evidence[name]['status']!='passed'
+                    or evidence[name].get('startup')!='ordinary title'
+                    or evidence[name].get('kind')!='ordinary-round'
+                    or not early_release_proof(json.loads(report_path(name).read_text()),
+                        json.loads(build_path.read_text()).get('executable_sha256'))):
+                verified=False;reasons.append('Restart-sound release/repress with continuously held P2 acceptance missing')
             if not all(n in symbols for n in ('game_result_poll','game_restart_begin','game_menu_tick','game_source_tick')):
                 verified=False;reasons.append('Ordinary native result/restart routing unverified')
         if gate in ('CT-07', 'CT-08', 'CT-09', 'CT-10'):

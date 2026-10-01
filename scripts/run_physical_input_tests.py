@@ -88,7 +88,9 @@ def capture(policy, source, rows, mutation=False, label="physical-input"):
                     raise RuntimeError(f'Native reader return not reached: {returned}')
                 values[group] = session.inspect('regs.get')['d'][0] & 255
                 reader_stops.append({'group': group, 'entry': entry, 'return': returned, 'value': values[group]})
-            normalized = session.inspect('run_until', {'pc': base + symbols['score_gate'], 'wait_ms': 50000})
+            # Native scoring follows completed input normalization in the
+            # shared active tick; the translated score_gate no longer exists.
+            normalized = session.inspect('run_until', {'pc': base + symbols['game_score_tick'], 'wait_ms': 50000})
             if normalized['reason'] != 'target' or normalized.get('bridge'):
                 raise RuntimeError(f'Native normalization not reached: {normalized}')
             regs = session.inspect('regs.get')

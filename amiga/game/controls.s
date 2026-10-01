@@ -63,6 +63,9 @@ game_decode_done:
 game_store_pad:
         move.b  (a0),d1
         move.b  d0,(a0)
+; Retire inherited actions on every physical sample, including menu/sound
+; waits. Do not assign player controls or consume gameplay while waiting.
+        and.b   d0,game_old_action_latches-game_input_bits(a0)
         eor.b   d0,d1
         move.b  d1,d2
         and.b   d0,d1
