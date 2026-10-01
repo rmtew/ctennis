@@ -140,3 +140,17 @@ The native sequencer and diagnostic observer are separate; the ordinary executab
 must exclude the source-stream decoder, PSG sink and audio capture import/trace.
 Unmeasured waveform/filter/phase/stereo equivalence, complete ordinary cadence,
 RAM and ADF remain unverified. Do not rerun unrelated suites to fill progress rows.
+
+CT09 uses `run_ordinary_round_tests.py --mode=one --match --cadence` and
+`--mode=two`, with `RUST_LOG=info`. These runs observe CPU bus entry/completion,
+prepared publication and Exec allocation events without callback breakpoints;
+ordinary native timer entropy stays separate from full recorded-entropy
+`one-player-match`/`two-player-match` replays. `run_physical_input_tests.py
+--timing-edges` is a separate four-edge debug-boundary check. Save the clock
+contract before running; see `analysis/source-timing-baseline.md`. Do not loosen
+deadline bounds after a failure, count a pending final callback as complete,
+or demand a new display preparation from a frozen menu tick. Use actual live
+chip free-list/allocation evidence, never executable size. Both complete
+ordinary receipts, physical edges and current full replays are required by
+`scripts/progress.py`; one successful run cannot certify CT09. Disk cold boot,
+adapter retirement and independent delivery validation remain CT10.

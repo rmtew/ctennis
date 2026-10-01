@@ -201,6 +201,14 @@ def _main():
 
 def main():
     import sys
+    if '--timing-edges' in sys.argv:
+        if sys.argv[1:] != ['--timing-edges']:
+            raise ValueError('--timing-edges is a separate four-edge ordinary probe')
+        from input_timing_edges import run as run_edges
+        path=ROOT/'build/tests/ct09-input-timing-edges-report.json'
+        return tracked_call([path],'physical','maintained-native','ordinary title',
+                            'scripts/run_physical_input_tests.py',None,run_edges,
+                            lambda path,report:[ROOT/'build/tests/ct09-input-timing-edges/native-application'])
     if '--help' in sys.argv:
         return _main()
     probe = argparse.ArgumentParser(add_help=False)

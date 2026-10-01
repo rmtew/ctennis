@@ -247,6 +247,10 @@ def inputs_for(kind, runner, case=None):
                 paths.update(manifest_path.parent / item['directory'] / name for name in item['files'])
     if kind == 'live-serve':
         paths.add(ROOT / 'build/reference/source-serve/run_a.tsv')
+    if kind == 'ordinary-cadence':
+        for mode in ('one', 'two'):
+            paths.add(ROOT / f'tests/reference/audio/{mode}-player-match/a/frame-times.tsv')
+            paths.add(ROOT / f'tests/reference/{mode}-player-match.json')
     if kind != 'replay':
         paths.update(ROOT / 'build/reference/source-timing' / name for name in
                      ('sprite-f1310.vram', 'sprite-f1310.ram', 'run_a.tsv'))
@@ -436,8 +440,11 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
             for exe in exes:
                 if kind == 'replay':
                     artifacts.append(Path(str(exe) + '.log'))
-                elif kind in ('mode', 'physical', 'ordinary-round'):
-                    artifacts.append(Path(exe).parent / ('emulator.log' if kind == 'ordinary-round' else 'copperline.log'))
+                elif kind in ('mode', 'physical', 'ordinary-round', 'ordinary-cadence'):
+                    artifacts.append(Path(exe).parent / ('emulator.log' if kind in ('ordinary-round', 'ordinary-cadence') else 'copperline.log'))
+                    if kind == 'ordinary-cadence':
+                        artifacts.extend(p for p in Path(exe).parent.iterdir()
+                                         if p.suffix in ('.png', '.jsonl', '.record', '.json'))
                     if kind == 'mode':
                         artifacts.extend(Path(exe).parent / (r['stage'] + '.png')
                                          for r in report.get('observations', []) if 'pixel_sha256' in r)

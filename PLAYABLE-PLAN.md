@@ -179,7 +179,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-08 — Maintain native sound timing and audible effects
 
-**Status:** active; bounded native audio acceptance passed on the final build; ready for independent exact-head review, not merged. **Dependencies:** CT-07.
+**Status:** verified and merged in [PR9](https://github.com/rmtew/ctennis/pull/9), merge `9e66f80`, after independent source/runtime clearance of exact `4f43ca8`. Bounded audio acceptance only. **Dependencies:** CT-07.
 
 **Baseline correction:** the maintained tail already gated the old decoder on its countdown; the unconditional tail was a separate translated diagnostic. CT08 gives the shared native voice engine ownership of that countdown, preserving two-tick play/wait service. Reproduced first-serve AUD3PER expected1688/actual1687; source-WAV calibration requires amplitude-step14 volume3 rather than2. The ordinary runtime now uses prepared native notes/envelopes and direct Paula registers; captured source cursors and PSG-format traces remain diagnostic-only. See [native audio evidence](analysis/native-audio-regression.md).
 
@@ -193,7 +193,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-09 — Verify uninterrupted native cadence and complete play
 
-**Status:** queued. **Dependencies:** CT-08.
+**Status:** active. Earlier full maintained recorded-entropy replays matched 13,378/27,037 updates; final refresh pending. One current uninterrupted native-entropy match passes 11,890 completed updates and measures 329,136-byte peak chip allocation; four final physical edges and 42 original score/status comparisons pass. Two-player ordinary play and final affected guardrails remain unrun, so CT09 remains unverified. See WORKLOG and the clock contract. **Dependencies:** CT-08.
 
 **Verified existing evidence:** CIA-B timing targets 59.922738 Hz; prior long replay and ordinary prefix measured no visible-line Copper commits. **Open verification, not a newly diagnosed defect:** normal execution across all regimes, input latency and complete matches has not passed the final acceptance gate.
 

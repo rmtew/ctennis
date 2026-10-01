@@ -97,6 +97,7 @@ class NativeControlSession:
         self.directory.mkdir(parents=True, exist_ok=True)
         self.process = None
         self.identifier = 0
+        self.notification_handler = None
 
     def __enter__(self):
         return self
@@ -129,17 +130,30 @@ class NativeControlSession:
                    'input_set_port': 'input.set_port', 'break_add': 'break.add',
                    'break_remove': 'break.remove', 'regs_get': 'regs.get',
                    'custom_dump': 'custom.dump'}
-        self.identifier += 1
-        self.stream.write((json.dumps({'jsonrpc': '2.0', 'id': self.identifier,
-                                     'method': methods.get(method, method), 'params': arguments})+'\n').encode())
-        self.stream.flush()
+        identifier = self.send_async(methods.get(method, method), arguments)
         while True:
             line = self.stream.readline()
             if not line: raise RuntimeError('Control server disconnected')
             reply = json.loads(line)
-            if reply.get('id') != self.identifier: continue
+            if reply.get('id') != identifier:
+                if self.notification_handler is not None:
+                    self.notification_handler(reply)
+                continue
             if 'error' in reply: raise RuntimeError(reply['error'])
             return reply['result']
+
+    def send_async(self, method, arguments=None):
+        """Send an input while run_until is pending, without stopping the guest.
+
+        Its eventual reply is delivered to notification_handler. Keep the pending
+        synchronous request's identifier local: a handler may send more inputs.
+        """
+        self.identifier += 1
+        identifier = self.identifier
+        self.stream.write((json.dumps({'jsonrpc': '2.0', 'id': identifier,
+                                     'method': method, 'params': arguments or {}})+'\n').encode())
+        self.stream.flush()
+        return identifier
 
     def __exit__(self, *_):
         try:
