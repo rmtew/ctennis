@@ -33,6 +33,8 @@ game_score_tick:
 .sample:
         lea     score_sample_fields,a0
         bsr     score_import_fields
+        bsr     game_audio_cue_complete
+        move.b  d0,S_AUDIO_COMPLETE(a4)
         bsr     game_score_resolve
         lea     score_initial_fields,a0
         bsr     score_export_fields
@@ -52,7 +54,7 @@ game_score_tick:
         lea     game_score_state,a4
         btst    #S_EVENT_SOUND,S_EVENT(a4)
         beq.s   .done
-        bsr     assign_sound_stream_4
+        bsr     game_audio_request_cue
 .done:
         movem.l (sp)+,d0-d7/a0-a4
         rts
@@ -87,7 +89,6 @@ score_initial_fields:
         dc.b $77,S_ROUND_GAME_A,$78,S_ROUND_GAME_B,255
 score_sample_fields:
         dc.b $39,S_OUTCOME,$42,S_DISPLAY,$6c,S_TIMER
-        dc.b $a4,S_AUDIO_POSITION,$a5,S_AUDIO_LIMIT
         dc.b $43,S_LOWER_ANIMATION,$44,S_UPPER_ANIMATION,$38,S_FLIGHT
         dc.b $3a,S_LOWER_PHASE,$3b,S_UPPER_PHASE
         dc.b $49,S_LOWER_Y,$4a,S_LOWER_X,$45,S_UPPER_Y,$46,S_UPPER_X

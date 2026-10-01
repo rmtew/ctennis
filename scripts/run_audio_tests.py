@@ -8,6 +8,8 @@ from audio_wave import read_wave, crossing_frequency
 from audio_mute import check_emitted_mute
 from capture_native_presentation import capture
 from run_presentation_tests import ROOT, digest
+from maintained_state_contract import MAINTAINED_STATE_CONTRACT, MAINTAINED_SCRATCH_OFFSETS
+from evidence import tracked_call
 
 
 def source_record(case):
@@ -67,14 +69,11 @@ def compare_audio_value(update, field, expected, actual):
             'expected': expected, 'actual': actual} if expected != actual else None
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute'), default='p2-first-serve-pitch')
-    parser.add_argument('--self-test', action='store_true')
-    args = parser.parse_args()
+def run_case(args):
+    if args.case == 'ct08-effect-classes':
+        return run_effect_classes(args)
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
     report_path = ROOT / f'build/tests/{args.case}-report.json'
-    report_path.unlink(missing_ok=True)
     source, source_directory, reference_sha = source_record(case)
     comparison = case.get('comparison', 'pitch')
     envelope = measured_envelope(source, source_directory, case['source_tone'], 17, 39) if comparison == 'volume' else None
@@ -84,9 +83,10 @@ def main():
         def mutate_output(executable):
             original = executable.read_bytes()
             if comparison == 'pitch':
-                old, new = bytes.fromhex('c6fc01fb'), bytes.fromhex('c6fc01fc')
+                old = (ROOT / 'build/amiga/native-audio/periods.bin').read_bytes()
+                new = b''.join((int.from_bytes(old[n:n+2], 'big') + 1).to_bytes(2, 'big') for n in range(0,len(old),2))
             else:
-                old = bytes.fromhex('403328201914100d0a08060504030200')
+                old = bytes.fromhex('403328201914100d0a08060504030300')
                 changed = bytearray(old)
                 changed[0 if comparison == 'volume' else 15] = 63 if comparison == 'volume' else 1
                 new = bytes(changed)
@@ -96,7 +96,10 @@ def main():
             executable.write_bytes(original.replace(old, new))
         altered = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
                           observe_audio=True, executable_mutator=mutate_output, capture_label=case['name'] + '-mutation')
-        mutation = {'executable_sha256': altered['executable_sha256'],
+        mutation = {'capture_report_path': altered['capture_report_path'],
+                    'capture_report_sha256': digest(Path(altered['capture_report_path'])),
+                    'native_wav': altered['native_wav'],
+                    'executable_sha256': altered['executable_sha256'],
                     'first_period': altered['audio_events'][0]['registers'][f'AUD{case["paula_channel"]}PER'],
                     'volumes': {event['update']: event['registers'][f'AUD{case["paula_channel"]}VOL'] for event in altered['audio_events']}}
         if comparison == 'mute':
@@ -118,7 +121,7 @@ def main():
                              observe_audio=True, executable_mutator=disconnect_waveform,
                              capture_label=case['name'] + '-disconnected')
             disconnected = {'executable_sha256': silent['executable_sha256'],
-                            'capture_report_path': silent['capture_report_path'],
+                            'capture_report_path': silent['capture_report_path'], 'native_wav': silent['native_wav'],
                             'capture_report_sha256': digest(Path(silent['capture_report_path'])),
                             'native_wav_sha256': digest(Path(silent['native_wav'])),
                             'emitted_waveform': check_emitted_mute(case, source, source_directory, silent),
@@ -132,8 +135,10 @@ def main():
     # Rebuild and recapture the normal executable last; no mutation remains in
     # the authoritative report, audio file or executable used by the case.
     captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True, observe_audio=True, capture_label=case['name'])
-    if any(row['state_differences'] for row in captured['observations']):
-        raise ValueError('Native audio replay state differs from source')
+    raw_differences = [difference for row in captured['observations'] for difference in row['state_differences']]
+    semantic_differences = [d for d in raw_differences if d['offset'] not in MAINTAINED_SCRATCH_OFFSETS]
+    if semantic_differences:
+        raise ValueError(f'Native audio replay semantic state differs from source: {semantic_differences[0]}')
     observations, first = [], None
     channel, tone = case['paula_channel'], case['source_tone']
     for native in captured['audio_events']:
@@ -191,11 +196,14 @@ def main():
     fmt, pcm = read_wave(Path(captured['native_wav']))
     start, end = captured['audio_events'][0]['stop']['seconds'] + .005, captured['audio_events'][-1]['stop']['seconds'] - .003
     measured = crossing_frequency(pcm, fmt['sample_rate'], fmt['channels'], start, end)
-    result = {'case': args.case, 'passed': first is None, 'first_difference': first,
+    result = {'case': args.case, 'subject': 'maintained-native', 'startup': 'captured phase',
+              'state_contract': MAINTAINED_STATE_CONTRACT, 'raw_state_differences': raw_differences,
+              'omitted_legacy_scratch_offsets': list(MAINTAINED_SCRATCH_OFFSETS), 'passed': first is None, 'first_difference': first,
               'criterion': case['criterion'], 'scope': case['contract'], 'observations': observations,
               'capture_report_path': captured['capture_report_path'],
               'capture_report_sha256': digest(Path(captured['capture_report_path'])),
               'reference_sha256': reference_sha, 'native_executable_sha256': captured['executable_sha256'],
+              'native_wav': captured['native_wav'],
               'native_wav_sha256': digest(Path(captured['native_wav'])),
               'native_wav_format': fmt, 'measured_native_wave': measured,
               'wave_measurement_scope': 'Diagnostic rising-crossing estimate; no waveform acceptance tolerance inferred.',
@@ -212,6 +220,57 @@ def main():
                       'wave_frequency_hz': measured['frequency_hz']}, indent=2))
     return 0 if result['passed'] else 1
 
+
+def run_effect_classes(args):
+    from audio_effect_classes import inventory, compare_window
+    from evidence import atomic_json
+    case = json.loads((ROOT / 'tests/cases/ct08-effect-classes.json').read_text())
+    recipe = json.loads((ROOT / f"tests/cases/{case['presentation_case']}.json").read_text())
+    source, directory, reference_sha = source_record(case)
+    first, last = recipe['initial_source_update'], recipe['completed_callbacks'][-1]
+    captured = capture((last,), recorded_entropy=True, observe_audio=True, observe_state=True,
+        initial_source_update=first, initial_phase_reference=recipe['initial_phase_reference'],
+        source_case=recipe['source_case'], native_inputs=recipe['inputs'],
+        native_input_schedule=recipe['native_input_schedule'],
+        presentation_reference_directory=recipe['presentation_reference_directory'],
+        capture_label=case['name'])
+    parent = json.loads((ROOT / f"tests/reference/{recipe['source_case']}.json").read_text())
+    measured = measured_envelope(source,directory,2,17,39)
+    levels = {15:0}
+    for row in measured.values():
+        attenuation, level = row['attenuation'],row['nearest_paula_volume']
+        if attenuation in levels and levels[attenuation]!=level:
+            raise ValueError('Original calibrated amplitude is inconsistent')
+        levels[attenuation]=level
+    if set(levels)!=set(range(16)):
+        raise ValueError('Original calibration does not cover all amplitude steps')
+    result = compare_window(captured,parent,source,directory,first,last,levels)
+    result['source_envelope_measurements'] = measured
+    result.update(case=args.case, subject='maintained-native', startup='captured phase',
+        passed=result['first_difference'] is None, state_contract=MAINTAINED_STATE_CONTRACT,
+        omitted_legacy_scratch_offsets=list(MAINTAINED_SCRATCH_OFFSETS),
+        reference_sha256=reference_sha, criterion=case['criterion'], scope=case['contract'],
+        initial_source_update=first, final_source_update=last,
+        interval_inventory=inventory(ROOT,source_record),
+        capture_report_path=captured['capture_report_path'], native_wav=captured['native_wav'],
+        capture_report_sha256=digest(Path(captured['capture_report_path'])),
+        native_executable_sha256=captured['executable_sha256'],
+        native_wav_sha256=digest(Path(captured['native_wav'])),
+        source_wav_sha256=digest(directory/'a/source.wav'), self_test=False)
+    atomic_json(ROOT / f'build/tests/{args.case}-report.json',result)
+    print(json.dumps({k:result[k] for k in ('passed','first_difference','observed_callbacks','due_callbacks','two_tick_countdowns','classes')},indent=2))
+    return 0 if result['passed'] else 1
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--case', choices=('p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes'), default='p2-first-serve-pitch')
+    parser.add_argument('--self-test', action='store_true')
+    args = parser.parse_args()
+    return tracked_call([ROOT / f'build/tests/{args.case}-report.json'], 'audio', 'maintained-native',
+                        'captured phase', 'scripts/run_audio_tests.py', args.case,
+                        lambda: run_case(args),
+                        lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])
 
 if __name__ == '__main__':
     raise SystemExit(main())

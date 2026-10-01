@@ -75,13 +75,7 @@ legacy_export_gameplay:
         move.b  d0,$53(a5)
         tst.b   G_SOUND_EVENT(a4)
         beq   .legacy_export_done
-; Event -> existing audio stream 1FF3, retired with the native sound driver.
-        move.b  #$f2,$a1(a5)
-        move.b  #$1f,$a2(a5)
-        move.b  #9,$a3(a5)
-        clr.b   $a4(a5)
-        move.b  #1,$a5(a5)
-        clr.b   $ae(a5)
+        bsr     game_audio_request_hit
 .legacy_export_done:
         rts
 

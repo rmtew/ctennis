@@ -21,12 +21,7 @@ legacy_active_tick:
 
 legacy_service_tick:
         bsr     irq_counter_prefix
-        move.l  #psg_log,psg_ptr
-        clr.b   psg_count
-        tst.b   $83(a5)
-        bne.s   legacy_audio_wait
-        bsr     audio_tick_adapter
-legacy_audio_wait:
+        bsr     game_audio_tick
         bsr     game_apply_sound
         bra     game_scene_service
 
@@ -70,25 +65,7 @@ legacy_hide_records:
 legacy_mode_ready:
         move.b  #$20,$42(a5)
         move.b  #1,$7c(a5)
-; Initialize ring buffers and envelope timing without copying ROM templates.
-        move.b  #$bc,$80(a5)
-        move.b  #$19,$81(a5)
-        move.b  #2,$82(a5)
-        move.b  #2,$83(a5)
-        lea     $85(a5),a0
-        move.w  #$af,d0
-        moveq   #2,d7
-legacy_init_audio_channel:
-        move.b  d0,(a0)
-        move.b  #$c0,1(a0)
-        move.b  #32,2(a0)
-        move.b  #7,5(a0)
-        move.b  #2,7(a0)
-        move.b  #16,8(a0)
-        move.b  #16,11(a0)
-        adda.w  #14,a0
-        addi.w  #32,d0
-        dbra    d7,legacy_init_audio_channel
+        bsr     game_audio_reset
         bsr     game_scene_reset
         bsr     game_scene_build_players
         rts
@@ -155,4 +132,8 @@ legacy_owner_selected:
         include "amiga/game/round.s"
         include "amiga/game/result.s"
         include "amiga/game/result_adapter.s"
+        endif
+
+        ifd NATIVE_AUDIO
+        include "amiga/game/audio.s"
         endif

@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 
 from audio_wave import read_wave
+from maintained_state_contract import MAINTAINED_SCRATCH_OFFSETS
 
 
 def pcm16_window(path, start, duration):
@@ -27,7 +28,7 @@ def pcm16_window(path, start, duration):
 
 
 def check_emitted_mute(case, source, source_directory, captured):
-    if any(row['state_differences'] for row in captured['observations']):
+    if any(d['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in captured['observations'] for d in row['state_differences']):
         raise ValueError('Mute waveform capture differs from original game state')
     for event in captured['audio_events']:
         original = [row for row in source['timed_events'] if row.get('retained_parent_event') and row.get('callback') == event['update']]

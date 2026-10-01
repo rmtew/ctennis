@@ -15,9 +15,8 @@ game_score_wait_sound:
         btst    #6,S_DISPLAY(a4)
         bne     game_score_return
         bset    #4,S_DISPLAY(a4)
-        move.b  S_AUDIO_POSITION(a4),d0
-        cmp.b   S_AUDIO_LIMIT(a4),d0
-        bne     game_score_return
+        tst.b   S_AUDIO_COMPLETE(a4)
+        beq     game_score_return
         bsr     game_score_new_serve
         move.b  #S_ACTIVE,S_STAGE(a4)
         rts

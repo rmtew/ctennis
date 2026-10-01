@@ -1,4 +1,6 @@
         ifd PRODUCT_REPLAY
+NATIVE_AUDIO equ 1
+NATIVE_AUDIO_OBSERVE equ 1
 NATIVE_GAMEPLAY equ 1
 NATIVE_SCORING equ 1
 NATIVE_SPRITES equ 1
@@ -24,7 +26,13 @@ copy_initial:
         dbra    d7,copy_initial
         ifd PRODUCT_REPLAY
         bsr     game_begin_active
+        ifd PRODUCT_RETURNED_TITLE_WAIT
+; One-time captured initial main-thread wait; never chosen per callback.
+        move.w  #GAME_TITLE_TRANSITION,game_lifecycle
+        st      game_restart_context
+        endif
         bsr     scene_import_capture
+        bsr     game_audio_import_capture
         endif
         clr.w   update_index
         bsr     run_tail
@@ -174,7 +182,13 @@ field_values: dc.b 0,0,0,0,0,1
         even
         endif
         include "amiga/tests/probe_io.i"
+        ifnd PRODUCT_REPLAY
         include "amiga/translated_audio_tick.s"
+        else
+game_audio_write_period:
+game_audio_write_level:
+        rts
+        endif
         ifd PRODUCT_REPLAY
         include "amiga/game/tick.s"
         include "amiga/game/legacy_adapter.s"

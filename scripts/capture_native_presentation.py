@@ -68,6 +68,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     commits = []
     entropy_reads = []
     audio_events = []
+    audio_ticks = []
     field_events = []
     state_events = []
     initial_fields = []
@@ -144,6 +145,10 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                     source_event_differences.append({'update': generation + 1,
                         'boundary': 'native-sound-events', 'field': 'ordered PSG writes',
                         'expected': source['updates'][generation]['psg'], 'actual': list(bytes.fromhex(data))})
+                audio_ticks.append({'update': generation + 1, 'due': int(session.inspect('mem_read', {'addr': base + symbols['game_audio_due'], 'len': 1})['data'], 16),
+                    'wait': int(session.inspect('mem_read', {'addr': base + symbols['game_audio_wait'], 'len': 1})['data'], 16),
+                    'rate': int(session.inspect('mem_read', {'addr': base + symbols['game_audio_rate'], 'len': 1})['data'], 16),
+                    'voices': session.inspect('mem_read', {'addr': base + symbols['game_audio_voices'], 'len': 96})['data'], 'stop': stop})
                 if count or source['updates'][generation]['psg']:
                     audio_events.append({'update': generation + 1, 'psg': data,
                                          'registers': session.inspect('custom_dump')['regs'], 'stop': stop})
@@ -288,7 +293,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
               'refresh_fixture_sha256': digest(directory / 'refresh-signs.bin') if recorded_entropy else None,
               'commits': commits, 'commit_tracking': track_commits,
               'entropy_reads': entropy_reads, 'completed_rasters': completed_rasters,
-              'audio_events': audio_events, 'audio_observed': observe_audio,
+              'audio_events': audio_events, 'audio_ticks': audio_ticks, 'audio_observed': observe_audio,
               'field_events': field_events, 'fields_observed': observe_fields,
               'state_events': state_events, 'state_observed': observe_state,
               'initial_fields': initial_fields,

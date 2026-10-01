@@ -30,7 +30,7 @@ GATES = {
     'CT-05': list(CT05_REPLAY) + list(CT05_SCENES) + ['ct05-r2-first-round', 'ct05-ordinary-one-round', 'ct05-ordinary-two-round'],
     'CT-06': list(CT06_PHASES) + list(CT06_SCENES) + ['ct06-ordinary-one-restart', 'ct06-ordinary-two-restart', 'ct06-ordinary-one-early-release'],
     'CT-07': ['p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', *CT05_SCENES, *CT06_SCENES, 'p1-accept-one-player', 'p1-accept-two-player'],
-    'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'status-timer-saturation-phase'],
+    'CT-08': ['p2-first-serve-pitch', 'p2-first-serve-envelope', 'p2-first-serve-mute', 'ct08-effect-classes', 'status-timer-saturation-phase', 'ct06-ordinary-one-restart'],
     'CT-09': ['one-player-match', 'two-player-match'],
     'CT-10': [],
 }
@@ -197,14 +197,77 @@ def early_release_proof(report, executable_sha256):
         and samples['playable'].get('callback')==points['fresh_action_eligible'])
 
 
+def audio_expected_checks():
+    # Independent frozen event epochs, not the native report's declared counts.
+    path=ROOT/'tests/reference/audio/one-player-match/audio-associations.json'
+    source=json.loads(path.read_text())
+    updates=sorted({e['callback'] for e in source['timed_events'] if e.get('retained_parent_event')
+                    and e.get('context')=='callback' and 11959<e.get('callback',0)<=13378})
+    return [(ordinal,tone) for ordinal in updates for tone in range(3)]
+
+
+def audio_expected_rows(name):
+    recipe=json.loads((ROOT/f'tests/cases/{name}.json').read_text())
+    source=json.loads((ROOT/f"tests/reference/audio/{recipe['source_case']}/audio-associations.json").read_text())
+    events={}
+    for event in source['timed_events']:
+        ordinal=event.get('callback',0)
+        if (event.get('retained_parent_event') and event.get('context')=='callback'
+                and 0<ordinal<=max(recipe['completed_callbacks'])):
+            events[ordinal]=event
+    if recipe.get('comparison')=='mute':return [recipe['mute_update']]
+    return sorted(n for n,e in events.items() if e['tones_after'][recipe['source_tone']]['attenuation']!=15)
+
+
+def audio_proof(report,name):
+    if (report.get('case')!=name or report.get('subject')!='maintained-native' or report.get('passed') is not True
+            or report.get('first_difference') is not None
+            or report.get('state_contract')!=MAINTAINED_STATE_CONTRACT
+            or report.get('omitted_legacy_scratch_offsets')!=list(MAINTAINED_SCRATCH_OFFSETS)
+            or any(d.get('offset') not in MAINTAINED_SCRATCH_OFFSETS for d in report.get('raw_state_differences',[]))):
+        return False
+    if name=='ct08-effect-classes':
+        classes=['intro-a','intro-b','result-a','result-b','ready-cue','strike']
+        emitted=report.get('emitted_classes',[]);checks=report.get('checks',[])
+        return (report.get('initial_source_update')==11959 and report.get('final_source_update')==13381
+            and report.get('observed_callbacks')==1422 and report.get('due_callbacks')==890
+            and report.get('two_tick_countdowns')==530 and report.get('classes')==classes
+            and len(report.get('interval_inventory',[]))==18
+            and sorted(r.get('class') for r in emitted)==sorted(classes+['silence'])
+            and all(r.get('expected_signal')==r.get('actual_signal') for r in emitted)
+            and [(r.get('update'),r.get('tone')) for r in checks]==audio_expected_checks()
+            and all(r.get('expected_volume')==r.get('actual_volume') and
+                    (r.get('expected_period') is None or r['expected_period']==r.get('actual_period')) for r in checks))
+    mutation=report.get('mutation',{});rows=report.get('observations',[])
+    if (report.get('self_test') is not True or not mutation.get('detected_difference')
+            or mutation.get('executable_sha256')==report.get('native_executable_sha256') or not rows
+            or any(r.get('criterion_expected')!=r.get('criterion_actual') or r.get('first_difference') for r in rows)
+            or [r.get('update') for r in rows]!=audio_expected_rows(name)):
+        return False
+    if name=='p2-first-serve-mute':
+        return (report.get('emitted_waveform',{}).get('first_difference') is None
+            and bool(report.get('emitted_waveform',{}).get('checks'))
+            and bool(report.get('disconnected_waveform_mutation',{}).get('emitted_waveform',{}).get('first_difference')))
+    return name in ('p2-first-serve-pitch','p2-first-serve-envelope')
+
+
+def ordinary_audio_proof(report,executable_sha256):
+    emitted=report.get('emitted_audio',[])
+    quiet=next((r for r in report.get('audio_checkpoints',[]) if r.get('lifecycle')==7),{})
+    return (ordinary_restart_proof(report,'one',executable_sha256) and report.get('audio_observed') is True
+        and [(r.get('event'),r.get('expected_signal'),r.get('actual_signal')) for r in emitted]
+            ==[('returned-title',False,False),('restart-intro',True,True)]
+        and all(quiet.get('registers',{}).get(f'AUD{channel}VOL')==0 for channel in (0,1,3)))
+
+
 def progress(fresh_since=None):
     evidence = {}
     for name in sorted(set(n for names in GATES.values() for n in names)):
         if name == 'ct05-r2-first-round':
             evidence[name] = bounded_round_status(report_path(name), fresh_since)
             continue
-        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') else 'maintained-native'
-        full = name in CT06_PHASES or name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
+        subject = 'maintained' if name in REPLAY or name in CT05_REPLAY or name.startswith(('round-', 'deuce-')) or name in CT06_PHASES or name.endswith('-match') or name == 'status-timer-saturation-phase' else 'maintained-native'
+        full = name == 'status-timer-saturation-phase' or name in CT06_PHASES or name in REPLAY or name in CT05_REPLAY or name in ('round-transition', 'one-player-match', 'two-player-match', 'deuce-sequence-phase')
         evidence[name] = status(report_path(name), subject, full, fresh_since)
         if name in CT05_SCENES + CT06_SCENES and evidence[name]['status'] in ('passed', 'failed'):
             report = json.loads(report_path(name).read_text())
@@ -219,13 +282,14 @@ def progress(fresh_since=None):
               'ball/launch': ['game_ball_tick', 'game_derive_launch', 'game_launch_root'],
               'movement': ['game_move_player'], 'AI': ['game_ai_track', 'game_ai_setup'],
               'presentation': ['game_scene_finish_tick', 'game_render_sprites', 'game_scene_update_fields']}
+    native['audio'] = ['game_audio_tick','game_audio_queue','game_audio_write_period','game_audio_write_level','game_audio_cue_complete']
     old = {'serve/contact': ['lower_player_state', 'upper_player_state'],
            'ball/launch': ['ball_flight_update', 'derive_launch_vector', 'triangular_root_step'],
            'movement': ['lower_player_motion_update', 'upper_player_movement'], 'AI': ['predict_ball_intercept', 'direction_ai'],
            'presentation': ['build_player_sprites', 'scoreboard_update', 'irq_vdp_tail', 'shadow_vram', 'copy_cpu_bytes_to_vram_b_count']}
+    old['audio'] = ['audio_tick_adapter','paula_apply_psg_events','assign_sound_stream_4','psg_log','game_audio_import_capture']
     remaining = {'score/lifecycle': ['score_gate', 'scoreboard_update'],
-                 'shared scalar ABI (CT10)': ['virtual_memory'],
-                 'audio': ['audio_tick_adapter']}
+                 'shared scalar ABI (CT10)': ['virtual_memory']}
     architecture = {'ordinary_build': build, 'subsystems': {}}
     for group in native:
         architecture['subsystems'][group] = {'integration': ('native entry points compiled; replaced translated entry points absent'
@@ -329,7 +393,16 @@ def progress(fresh_since=None):
                 if evidence[name]['status'] == 'passed' and not result_scene_proof(json.loads(report_path(name).read_text()), json.loads((ROOT/f'tests/cases/{name}.json').read_text())):
                     verified = False
                     reasons.append(f'{name} complete result pixel/event/fault protection missing')
-        if gate in ('CT-08', 'CT-09', 'CT-10'):
+        if gate == 'CT-08':
+            if not ordinary or not all(n in symbols for n in native['audio']) or any(n in symbols for n in old['audio']):
+                verified=False;reasons.append('Ordinary native voices/direct Paula or runtime bridge retirement unverified')
+            for name in names[:4]:
+                if evidence[name]['status']=='passed' and not audio_proof(json.loads(report_path(name).read_text()),name):
+                    verified=False;reasons.append(f'{name} complete finite audio acceptance missing')
+            name='ct06-ordinary-one-restart'
+            if not ordinary or evidence[name]['status']!='passed' or not ordinary_audio_proof(json.loads(report_path(name).read_text()),json.loads(build_path.read_text()).get('executable_sha256')):
+                verified=False;reasons.append('Ordinary physical result/title/restart audio proof missing')
+        if gate in ('CT-09', 'CT-10'):
             verified = False  # Existing narrow diagnostics are not complete delivery acceptance.
             reasons.append('Direct subsystem/full ordinary delivery acceptance not recorded by this integration')
         capabilities[gate] = {'capability': NAMES[gate], 'acceptance': 'evidenced within stated scope' if verified else 'unverified',

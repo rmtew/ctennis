@@ -96,7 +96,7 @@ def run(mode):
     return 0 if report['passed'] else 1
 
 
-def run_match(mode, early_release=False):
+def run_match(mode, early_release=False, audio=False):
     """Ordinary physical play through award/title/reselection and fresh serve."""
     config, ordinary = build()
     name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart')
@@ -118,10 +118,12 @@ def run_match(mode, early_release=False):
     released_callback = None
     waiting_callback = None
     action_samples = {}
+    audio_checkpoints=[]
     with NativeControlSession(directory) as session:
         session.inspect('session_launch', {'binary': config['tools']['copperline'], 'run': str(exe),
             'args': ['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K',
-                     '--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
+                     '--slow','0','--fast','0','--noaudio',
+                     *(['--audio-wav',str(directory/'native.wav')] if audio else []),config['inputs']['amiga_rom']]})
         stop = session.inspect('run_until', {'seconds':30})
         if stop['reason'] != 'loadseg': raise RuntimeError(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1],16)
@@ -149,6 +151,9 @@ def run_match(mode, early_release=False):
                 raise AssertionError('Ordinary callback continuity lost')
             previous_callback=callback;observations+=1
             state=(lifecycle,tuple(ram[0x40:0x42]))
+            if audio and state != previous:
+                audio_checkpoints.append({'callback':callback,'lifecycle':lifecycle,'seconds':stop['seconds'],
+                    'voices':mem('game_audio_voices',96).hex(), 'registers':session.inspect('custom_dump')['regs']})
             if state != previous:
                 snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
                 previous=state
@@ -247,13 +252,29 @@ def run_match(mode, early_release=False):
         required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
                   ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
         if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
+    emitted=[]
+    if audio:
+        from audio_mute import pcm16_window
+        # Actual returned title resets every voice. The held-selection restart
+        # emits the native intro; this protects ordinary hardware routing.
+        quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)
+        intro=next((r for r in audio_checkpoints if r['lifecycle']==9),None)
+        if quiet is None or intro is None:raise AssertionError('Ordinary audio checkpoints missing')
+        for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-intro',intro,True,.05)]:
+            samples=pcm16_window(directory/'native.wav',row['seconds']+offset,.02)
+            signal=any(c['nonzero_pcm16_samples'] for c in samples['channels'])
+            emitted.append({'event':label,'callback':row['callback'],'expected_signal':wanted,'actual_signal':signal,'samples':samples})
+            if signal!=wanted:differences.append({'field':'ordinary '+label+' emitted audio','expected':wanted,'actual':signal})
+        if any(quiet['registers'][f'AUD{channel}VOL'] for channel in (0,1,3)):
+            differences.append({'field':'ordinary returned-title voice mute'})
     capture=directory/'checkpoints.json';atomic_json(capture,snapshots)
     report={'case':name,'subject':'maintained-native','passed':not differences,
             'first_difference':differences[0] if differences else None,'checkpoints':checkpoints,
             'observed_callbacks':observations,'consecutive_callbacks':True,'start_mode':mode,'restart_mode':restarted_mode,'held_old_actions_verified': 'old_action_blocked' in checkpoints,
             'capture':str(capture.relative_to(ROOT)),
             'early_release_verified':early_release and 'fresh_action_eligible' in checkpoints,
-            'action_samples':action_samples,
+            'action_samples':action_samples, 'audio_observed':audio, 'audio_checkpoints':audio_checkpoints,
+            'emitted_audio':emitted, 'audio_wav':str((directory/'native.wav').relative_to(ROOT)) if audio else None,
             'scope':'Ordinary uninterrupted physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
     path=ROOT/f'build/tests/{name}-report.json';atomic_json(path,report)
     print(json.dumps(report),flush=True)
@@ -265,7 +286,9 @@ def main():
     parser.add_argument('--mode', choices=('one','two'), required=True)
     parser.add_argument('--match',action='store_true',help='CT06 ordinary result/title/restarted serve')
     parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
+    parser.add_argument('--audio',action='store_true',help='CT08 ordinary result mute and restart emitted sound')
     args=parser.parse_args()
+    if args.audio and not args.match:parser.error('--audio requires --match')
     if args.early_release and (not args.match or args.mode != 'one'):
         parser.error('--early-release requires --match --mode=one')
     mode=args.mode
@@ -273,7 +296,7 @@ def main():
         name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart')
         path=ROOT/f'build/tests/{name}-report.json'
         return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release),
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release,args.audio),
                             lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
     path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',

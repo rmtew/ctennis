@@ -81,13 +81,13 @@ game_round_poll:
         move.b  #S_WAIT_SOUND,S_STAGE(a4)
         move.b  #$20,$42(a5)
         bsr     game_scene_redraw_fields
-        bsr     assign_sound_stream_4
+        bsr     game_audio_request_cue
         move.w  #GAME_ROUND_SOUND,game_lifecycle
         bra.s   game_round_done
 .sound:
-        move.b  $a4(a5),d0
-        cmp.b   $a5(a5),d0
-        bne.s   game_round_done
+        bsr     game_audio_cue_complete
+        tst.b   d0
+        beq.s   game_round_done
         move.w  #GAME_PLAYING,game_lifecycle
 game_round_done:
         movem.l (sp)+,d0-d7/a0-a4

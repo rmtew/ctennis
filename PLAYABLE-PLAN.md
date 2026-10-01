@@ -20,7 +20,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is active; CT-08–CT-10 remain queued.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 is active; CT-09–CT-10 remain queued.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -152,9 +152,9 @@ Evidence: both complete maintained match phases match1451/1451; both six-scene w
 
 ## CT-07 — Correct native graphics and remove the display translation bridge
 
-**Status:** active; native scene/animation and direct sprite/Copper field selection implemented; bounded graphics acceptance passed; ready for independent exact-head review, not merged. **Dependencies:** CT-06. Presentation fixes needed for earlier acceptance are made in those items, not deferred artificially.
+**Status:** verified and merged in [PR8](https://github.com/rmtew/ctennis/pull/8), commit ee31dfc, after independent exact-head source/runtime review; bounded graphics acceptance only. **Dependencies:** CT-06. Presentation fixes needed for earlier acceptance are made in those items, not deferred artificially.
 
-**Resolved prerequisite in CT-02:** `upload_sprite_attributes` now uses horizontal origin $80; the previously recorded $6c/20-pixel shift blocked accepted-mode display verification. **Replaced boundary:** maintained native scene primitives and logical field events replace source sprite records and generated scoreboard/VDP/shadow-memory operations; independent review remains pending. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
+**Resolved prerequisite in CT-02:** `upload_sprite_attributes` now uses horizontal origin $80; the previously recorded $6c/20-pixel shift blocked accepted-mode display verification. **Replaced boundary:** maintained native scene primitives and logical field events replace source sprite records and generated scoreboard/VDP/shadow-memory operations; independent exact-head review passed. **Unverified risk:** complete-match rendering/deadlines on independent hardware.
 
 **Targets:** [sprite upload, scoreboard and double buffers](amiga/gameplay_integration_probe.s), [display include](amiga/sprite_probe_display.i), [score patches](amiga/score_copper_patch.i), existing presentation/status/widget/round/result runners.
 
@@ -179,9 +179,9 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-08 — Maintain native sound timing and audible effects
 
-**Status:** queued. **Dependencies:** CT-07. Lifecycle audio requests may be implemented earlier; this item removes remaining sound debt.
+**Status:** active; bounded native audio acceptance passed on the final build; ready for independent exact-head review, not merged. **Dependencies:** CT-07.
 
-**Verified blockers:** live and harness tails call `audio_tick_adapter` unconditionally after the counter prefix even when original countdown reload is two. Recorded first-serve pitch/envelope cases expose a one-period conversion and a low-volume difference; bounded mute is already protected. Runtime still interprets source PSG-oriented streams.
+**Baseline correction:** the maintained tail already gated the old decoder on its countdown; the unconditional tail was a separate translated diagnostic. CT08 gives the shared native voice engine ownership of that countdown, preserving two-tick play/wait service. Reproduced first-serve AUD3PER expected1688/actual1687; source-WAV calibration requires amplitude-step14 volume3 rather than2. The ordinary runtime now uses prepared native notes/envelopes and direct Paula registers; captured source cursors and PSG-format traces remain diagnostic-only. See [native audio evidence](analysis/native-audio-regression.md).
 
 **Targets:** [tail call sites](amiga/gameplay_integration_probe.s), [current sound interpreter](amiga/translated_audio_tick.s), [Paula output](amiga/paula_tone_output.s), [source tail evidence](scripts/source_irq_tail.py), [audio runner](scripts/run_audio_tests.py).
 

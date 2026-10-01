@@ -1,10 +1,12 @@
         section code,code
+NATIVE_AUDIO equ 1
 NATIVE_GAMEPLAY equ 1
 NATIVE_SCORING equ 1
 NATIVE_CONTROLS equ 1
 NATIVE_SPRITES equ 1
 NATIVE_PRESENTATION equ 1
         ifd LIVE_PHASE_START
+NATIVE_AUDIO_OBSERVE equ 1
 NATIVE_SCENE_OBSERVE equ 1
         endif
 SCORE_COPPER_DISPLAY equ 1
@@ -25,6 +27,7 @@ copy_initial_ram:
         move.b  (a0)+,(a1)+
         dbra    d7,copy_initial_ram
         bsr     scene_import_capture
+        bsr     game_audio_import_capture
         else
         bsr     game_begin_title
         endif
@@ -275,7 +278,8 @@ game_apply_sound:
         ifd LONG_GAME_REPLAY
         bsr     log_replay_psg
         endif
-        bra     paula_apply_psg_events
+paula_events_done:
+        rts
 
         ifd LONG_GAME_REPLAY
 ; Log only source score changes and actual native display-bank changes.
@@ -627,8 +631,7 @@ hex_byte:
         move.b  (a1,d0.w),(a0)+
         rts
 
-        include "amiga/translated_audio_tick.s"
-        include "amiga/paula_tone_output.s"
+        include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
         include "amiga/game/tick.s"
         include "amiga/game/legacy_adapter.s"
