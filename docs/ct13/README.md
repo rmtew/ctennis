@@ -32,13 +32,18 @@ Early presses are discarded, inherited holds remain blocked and all action
 sources must release before fresh fire/action can return once to title.
 Title return mutes/resets voices and celebration state and clears the match.
 Normal pause freezes the sequencer, mutes Paula and resumes its prior levels.
+The frozen winner/totals line is cached after first drawing; prompt appearance
+and pause/resume copy it and draw only the prompt to stay within the unchanged
+callback deadline. The initial uncached two-line redraw failed cold-ADF cadence
+and was replaced; that failed receipt is not an acceptance pass.
 
 The tune boundary is three fixed native pointers (melody/bass/harmony), not a
 skin/music framework. To replace the provisional tune after selection, edit
 the three authored scores, align their terminal rests and update manifest
 hashes. Direct-period flag bit5 is documented in the score and is unused by the
 retained records. No new channels, PCM streaming or runtime allocation are
-introduced. There are59 records/944 score bytes and8 bytes of celebration state;
+introduced. There are59 records/944 score bytes,8 bytes of celebration state and a256-byte
+static chip cache for the frozen banner;
 additional code/labels must be measured with the normal post-link chip telemetry.
 Target remains PAL A500/68000/OCS/512KiB chip, zero expansion, legitimate
 Kickstart1.3 and pinned Copperline. Pre-Exec-pool bootstrap memory remains outside

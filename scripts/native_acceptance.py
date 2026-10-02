@@ -29,6 +29,10 @@ def main():
         ['scripts/run_native_inputs.py'],
         *[['scripts/run_native_contracts.py','--case='+case,*(['--self-test'] if case in ('deuce','status-2','status-6','audio-hit') else [])]
           for case in ('deuce','advantage','return-deuce','advantage-game','match-award','status-2','status-3','status-4','status-5','status-6','audio-hit')],
+        ['scripts/run_celebration_tests.py','--winner=blue','--self-test'],
+        ['scripts/run_celebration_tests.py','--winner=red'],
+        ['scripts/run_celebration_tests.py','--winner=blue','--exchanged'],
+        ['scripts/run_celebration_tests.py','--winner=red','--exchanged'],
         ['scripts/run_demo_match_tests.py'],
         ['scripts/run_demo_match_tests.py','--takeover'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=one'],

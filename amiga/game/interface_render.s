@@ -66,6 +66,8 @@ ui_render:
 .win_overlay:
         cmpi.b  #10,d0
         bcs.s   .old_win_overlay
+        cmpi.b  #12,d0
+        bcc.s   .match_cached
         lea     ui_match_blue,a0
         btst    #0,d0
         beq.s   .match_digits
@@ -80,8 +82,22 @@ ui_render:
         move.b  d1,ui_match_blue_b
         move.b  d1,ui_match_red_b
         bsr     ui_text
-        cmpi.b  #12,ui_overlay_kind
-        bcs     .done
+        ; Scores freeze for the celebration. Preserve the first line so prompt
+        ; appearance and pause/resume need only one font line per callback.
+        lea     ui_overlay_plane,a1
+        lea     ui_match_banner,a2
+        moveq   #63,d7
+.match_save:
+        move.l  (a1)+,(a2)+
+        dbra    d7,.match_save
+        bra     .done
+.match_cached:
+        lea     ui_match_banner,a1
+        lea     ui_overlay_plane,a2
+        moveq   #63,d7
+.match_copy:
+        move.l  (a1)+,(a2)+
+        dbra    d7,.match_copy
         lea     ui_overlay_plane+256,a2
         lea     ui_match_continue,a0
         bsr     ui_text
