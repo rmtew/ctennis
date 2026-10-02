@@ -163,3 +163,24 @@ remain required, with no dropped events permitted. Product sources and assets
 are identical to a14e01fb. Continue only the failed observer and commands25–32;
 reuse earlier unchanged-dependency receipts transparently, without a new full
 campaign or a claim that the initial aggregate passed.
+
+## Focused gate failures and recovery
+
+The recovered observer completed the first title window, then reported a PAL
+field digest difference at frame24355 on the second return. Follow-up diagnostic
+captures show court during the excluded transition and the expected title in
+later captures; they do not identify the precise mismatching field. The failure
+remains recorded. Quiet bitmap-watch activation now requires the actual async
+subscription reply to acknowledge every requested range, active MMIO and zero
+drops. The first-publication-plus-two transition exclusion is retained.
+
+Both feedback modes and one-player cold-ADF cadence passed. Two-player cadence
+observed23795callbacks but failed callback23619 after restart into one-player
+mode: entry phase17908.72CCK, completion64916.72CCK. Memory peak341344bytes and
+physical bank publication passed. The scoreboard pointer patcher previously
+rewrote234descriptors if any selected field changed. It now tracks a per-bank
+changed-field mask and updates only relevant dynamic pointers; fixed court/WIN
+restore pointers are written at initial bank setup. No timer, event, trajectory,
+clock bound or hardware publication window changes. Focused actual WIN/status
+pointer controls, the failed cadence case and unattended cycles must establish
+this correction; earlier receipts are retained under their original heads.
