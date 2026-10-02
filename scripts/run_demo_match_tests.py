@@ -1,10 +1,10 @@
 """Finite seeded full-native-match replay and live takeover; no RAM writes."""
 import argparse,hashlib,json,re
 from build_native_game import build
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT,atomic_json
-from run_interface_tests import target_log
+from native_observation import target_log
 
 def load_trajectory(recording_path):
  fixture=ROOT/'tests/fixtures/native-demo'

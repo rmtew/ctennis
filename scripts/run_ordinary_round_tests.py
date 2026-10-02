@@ -6,7 +6,7 @@ import re
 import shutil
 from pathlib import Path
 from build_native_game import build
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT, atomic_json, compile_manifest, tracked_call
 

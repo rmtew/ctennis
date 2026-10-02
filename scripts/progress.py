@@ -185,7 +185,7 @@ def cadence_proof(report, mode, executable_sha, cold_adf=False, interface_flavor
         origin = measurement['timer_start_cck']+(65535-measurement['timer_origin_count'])*5
         if origin != measurement['clock_origin_cck']:
             return False
-        interval = Fraction(contract['source_period_attoseconds']*contract['cck_hz'],10**18)
+        interval = Fraction(contract['interval_16_16']*5,65536)
         for n, row in enumerate(rows,1):
             if row['callback'] != n or row['entry']['cck'] >= row['completion']['cck']:
                 return False

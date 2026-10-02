@@ -1,10 +1,10 @@
 """Bounded ordinary physical play: game-win identity and tally feedback across ends."""
 import argparse,hashlib,json,re
 from build_native_game import build,module_hashes
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT,atomic_json
-from run_interface_tests import target_log
+from native_observation import target_log
 
 
 def run(mode):

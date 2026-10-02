@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from build_native_game import build
 from native_tools import ASSEMBLER,run
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT,atomic_json
 

@@ -1,57 +1,21 @@
 """CT09's finite non-stopping ordinary play measurement, not a reference model."""
-import csv
 from fractions import Fraction
 import json
 import re
 import shutil
-from run_translated_prng_probe import ASSEMBLER, run as assemble
+from native_tools import ASSEMBLER, run as assemble
+from native_clock import clock_contract, INTERVAL_CCK
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
 from build_native_game import build
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT, atomic_json, compile_manifest
 
 CCK_HZ = 3546895
 ECLK_HZ = 709379
 CHIP_BYTES = 524288
-
-
-def clock_contract():
-    periods, extents = [], {}
-    for mode in ('one', 'two'):
-        path = ROOT / f'tests/reference/audio/{mode}-player-match/a/frame-times.tsv'
-        with path.open() as handle:
-            rows = list(csv.DictReader(handle, delimiter='\t'))
-        times = [int(r['seconds']) * 10**18 + int(r['attoseconds']) for r in rows]
-        deltas = set(b-a for a, b in zip(times, times[1:]))
-        if len(deltas) != 1:
-            raise ValueError('Source frame period is not constant')
-        periods.append(deltas.pop())
-        reference = json.loads((ROOT/f'tests/reference/{mode}-player-match.json').read_text())
-        # Start-of-callback frames establish cadence. A pre-tail checkpoint
-        # can cross a video boundary during a long source callback; its frame
-        # label is not a second invocation or a skipped source tick.
-        frames = [reference['initial_callback']['begin_frame']] + [r['begin_frame'] for r in reference['updates']]
-        if any(b-a != 1 for a, b in zip(frames, frames[1:])):
-            raise ValueError('Full source callback cadence is not one update per frame')
-        extents[mode] = {'updates': len(reference['updates']), 'first_frame': frames[0], 'last_frame': frames[-1]}
-    if periods[0] != periods[1]:
-        raise ValueError('Source modes have different frame periods')
-    ticks = Fraction(periods[0] * ECLK_HZ, 10**18)
-    fixed = round(ticks * 65536)
-    return {'source_period_attoseconds': periods[0], 'eclock_hz': ECLK_HZ,
-            'cck_hz': CCK_HZ, 'cck_per_eclock': 5, 'interval_16_16': fixed,
-            'resolution_cck': 1, 'origin_uncertainty_cck': 5,
-            'source_callback_extents': extents,
-            'interval_rounding_error_eclock': '<= N/(2*65536)',
-            'rules': {'entry': 'not before source deadline minus quantization; before next deadline',
-                      'completion': 'before next deadline',
-                      'publication': 'court bank before PAL sprite DMA line25 or late blank >=236; latest completed prepared epoch',
-                      'telemetry': 'zero missing, duplicate or dropped events',
-                      'memory': 'validated Exec chip free list; continuously observe topology/free mutations',
-                      'entropy': 'ordinary native timer; no captured-phase or recorded entropy initialization'}}
 
 
 def chip_memory(read):
@@ -417,15 +381,15 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     maximum_late, maximum_work, minimum_phase = 0, 0, None
     for row in callbacks:
         n = row['callback']
-        ideal = Fraction((n-1)*contract['source_period_attoseconds']*CCK_HZ, 10**18)
+        ideal = (n-1) * INTERVAL_CCK
         allowance = 5+5+Fraction((n-1)*5, 2*65536)  # origin + fractional tick quantization + rounding
         if origin is None or 'completion' not in row:
             fault('missing clock origin/completion'); continue
         phase = row['entry']['cck']-origin-ideal
         completion = row['completion']['cck']-origin-ideal
-        interval = Fraction(contract['source_period_attoseconds']*CCK_HZ, 10**18)
+        interval = INTERVAL_CCK
         if phase < -allowance or phase >= interval+allowance or completion >= interval+allowance:
-            fault('source deadline', measured_callback=n, entry_phase_cck=float(phase), completion_phase_cck=float(completion))
+            fault('native deadline', measured_callback=n, entry_phase_cck=float(phase), completion_phase_cck=float(completion))
         minimum_phase = float(phase) if minimum_phase is None else min(minimum_phase, float(phase))
         maximum_late = max(maximum_late, float(phase))
         maximum_work = max(maximum_work, row['completion']['cck']-row['entry']['cck'])

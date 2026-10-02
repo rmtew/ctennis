@@ -3,10 +3,10 @@ import argparse, hashlib, json, re
 from pathlib import Path
 from build_native_game import build
 from build_native_adf import package
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT, atomic_json
-from run_interface_tests import target_log
+from native_observation import target_log
 
 
 def run(adf=False):

@@ -42,3 +42,9 @@ No untracked input was deleted, moved or committed. Original input/reference/too
 Fresh checks so far: 43 host units PASS without config/ROM; fixture integrity PASS; enhanced build FAIL missing poses; deterministic packaging and Copperline NOT RUN. Progress invocation completes but reports missing/unverified evidence; it does not certify CT11. Existing units still encode historical contracts and are not a transferred native acceptance suite.
 
 Known limits to carry forward: pre-Exec-pool bootstrap RAM unmeasured; whole-game source pixel/waveform/filter/phase/stereo parity unverified; old 99-case aggregate failed and remains historical, not an endless current gate. User WinUAE6.0.2 tally confirmation included512KB slow RAM and is separate from unexpanded Copperline target acceptance. Current baseline WORKLOG reports missing original presentation/audio fixtures; no substitute oracle is synthesized here.
+
+## Approved follow-up
+
+On2026-10-02 at07:02:50UTC the user explicitly approved storing retained native graphics/audio directly in private `rmtew/ctennis` and retiring the original comparison build. This supersedes the pending storage/flavor decisions above and the prior asset-input exclusions for that native set only. Cartridge, Kickstart, source media, executable and ADF exclusions remain. The release worker is preparing a supported Library transfer; wait for its exact ID before importing bytes. No original-input regeneration.
+
+Independent preparation extracts native listing/target validators from historical presentation runners and directly declares the accepted PAL clock in `scripts/native_clock.py`. Menu/demo/feedback and ordinary-cadence imports no longer load translated PRNG or original presentation runners. Current asset absence still blocks assembly, runtime and protection-transfer completion.
