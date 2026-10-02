@@ -22,12 +22,16 @@ def distribution(values, budget):
 
 
 class MetricsObserver:
-    def __init__(self, base, symbols, listing):
+    def __init__(self, base, symbols, listing, title_copper=None):
         self.base, self.symbols = base, symbols
-        self.values = dict(game_lifecycle=0, game_mode=0, game_flight=0, ui_paused=0, ui_demo=0, ui_page=0)
+        self.values = dict(game_lifecycle=0, game_mode=0, game_flight=0, ui_paused=0, ui_demo=0, ui_page=0, game_title_display=0)
         self.rows, self.current, self.pending = [], None, None
         self.dropped = 0
         self.first_title_publication = self.first_complete_title_frame = None
+        self.title_copper=title_copper
+        self.copper_pointer=bytearray(4)
+        self.copper_seen=set()
+        self.title_window_start=None
         self.timer_start = None
         self.timer_origin = None
         self.calls = {}
@@ -46,6 +50,7 @@ class MetricsObserver:
                 for n in (*self.values, 'simulation_started_updates','simulation_updates','simulation_timer_origin')]
         return [{'addr':self.base+self.symbols[n],'len':length,'access':'write'} for n,length in fields]+[
             {'addr':self.return_slot,'len':4,'access':'access'},
+            {'addr':0xdff080,'len':4,'access':'write'},
             {'addr':0xdff088,'len':2,'access':'write'}, {'addr':0xbfde00,'len':1,'access':'write'}]
 
     def profile(self):
@@ -58,25 +63,38 @@ class MetricsObserver:
         if v['game_lifecycle']==6: return 'match-end'
         return 'transition-or-serve'
 
+    def title_selected(self):
+        return (self.title_copper is not None and len(self.copper_seen)==4
+                and int.from_bytes(self.copper_pointer,'big')==self.title_copper
+                and bool(self.values['game_title_display']) and self.values['ui_page']==0)
+
     def observe(self, message):
         method=message.get('method'); r=message.get('params',{})
         self.dropped += r.get('dropped_events',0)+r.get('dropped_notifications',0)
         if method=='event.frame':
             p=r['position']
-            # The first boundary after publication can end a partial frame.
-            # The next boundary ends a whole title frame, with no earlier switch.
-            if (self.first_title_publication and not self.first_complete_title_frame
-                    and p['frame']>=self.first_title_publication['frame']+2):
-                self.first_complete_title_frame=p
+            # Count a complete frame only across a continuously selected,
+            # known title Copper bank. Any switch invalidates the window.
+            if (self.title_window_start and not self.first_complete_title_frame
+                    and self.title_selected() and self.dropped==0
+                    and p['frame']>=self.title_window_start['frame']+2):
+                self.first_complete_title_frame=dict(p, title_copper=self.title_copper,
+                    title_selected_since=dict(self.title_window_start))
             return
         if method!='event.mmio': return
         a,v,p=r['addr'],r['value'],r['position']
         for name in self.values:
             if a==self.base+self.symbols[name]: self.values[name]=v
+        if 0xdff080<=a and a+r['size']<=0xdff084:
+            offset=a-0xdff080
+            self.copper_pointer[offset:offset+r['size']]=v.to_bytes(r['size'],'big')
+            self.copper_seen.update(range(offset,offset+r['size']))
+        if not self.title_selected():self.title_window_start=None
         if a==self.base+self.symbols['simulation_timer_origin']: self.timer_origin=v
         if a==0xbfde00 and v==1 and self.timer_start is None: self.timer_start=p
-        if a==0xdff088 and self.first_title_publication is None and self.values['game_lifecycle']==2:
-            self.first_title_publication=p
+        if a==0xdff088 and self.title_selected():
+            if self.first_title_publication is None:self.first_title_publication=p
+            if self.title_window_start is None:self.title_window_start=p
         if a==self.base+self.symbols['simulation_started_updates']:
             if self.current: raise ValueError('Metrics callback completion missing')
             self.current={'callback':v,'entry':p,'profile':self.profile(),'phases':{}}

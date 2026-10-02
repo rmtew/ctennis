@@ -81,7 +81,12 @@ script start. Those stay null. Assets/control readiness is the actual CIA timer
 start after native initialization; successful first normal selection establishes
 input responsiveness, including the existing workflow's input-delivery wait.
 The first complete displayed title is the second completed frame notification
-after its initial Copper publication, allowing the first to be partial. Disk
+after a verified title Copper publication, allowing the first to be partial.
+The observer requires the actual title Copper pointer, logical title flag and
+menu page to remain selected throughout that window; switching away invalidates
+the window. Completion requires reset, LoadSeg completion, executable entry,
+assets readiness, this scanout proof and successful input milestones. Unsupported
+boot-script/LoadSeg-start milestones may remain null. Disk
 read/seek counters and host launch time remain unavailable.
 
 RAM is whole initialized machine chip usage including resident OS/stack, with
@@ -122,3 +127,23 @@ menu-page construction, and help includes controls/credits. This grouping is
 independent of callback-entry profiles and can include redraws during pause or
 input transitions. Pause-only UI construction is unmeasured; sprite rendering
 and dispatcher distributions retain their observed callback-entry profiles.
+
+`--check` also compares the current report-writer SHA256 explicitly. Writer
+changes require regeneration, even when the raw observations qualify for reuse.
+
+Static generation now reconciles every executable file byte into exclusive
+listing-backed instruction, asset, reserve, table, alignment and hunk metadata
+categories. Unknown gaps, overlaps or mismatched embedded assets fail generation.
+The hunk CODE label includes embedded data and reserves; it is not an instruction
+byte count. Identical asset copies are informational, not validated optimization
+savings. See [the measured size attribution](executable-size.md).
+
+Release ADFs remove only HUNK_SYMBOL records from the already-built development
+executable. Development builds and listing sidecars retain symbols. Packaging
+records both hashes, verifies the embedded release bytes, and preserves loaded
+payloads, memory flags and relocations. Cold ADF observers compare actual loaded
+bytes against the release executable while resolving symbols from the matching
+development listing. Other native checks keep the development executable.
+The report binds both products separately. The earlier symbol-rich baseline is
+retained in `baselines/development-symbols.json` with its original historical
+identity; it does not certify current observer changes.

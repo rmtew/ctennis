@@ -55,7 +55,13 @@ def static_metrics(exe=EXE):
         replay=end[1]-begin[1]
     groups={group:sum(a['bytes'] for a in assets if a['group']==group) for group in ('graphics','audio')}
     groups['replay_loaded_bytes']=replay
-    return {'executable_sha256':digest(exe),'layout':hunk_layout(exe),
+    from native_size import executable_attribution
+    from native_release import strip_symbols
+    release_blob,removed_symbols=strip_symbols(exe.read_bytes())
+    layout=hunk_layout(exe)
+    attribution=executable_attribution(exe,listing,manifest,layout)
+    return {'executable_sha256':digest(exe),'layout':layout,'attribution':attribution,
+            'release':{'executable_sha256':hashlib.sha256(release_blob).hexdigest(),'executable_bytes':len(release_blob),'removed_symbol_bytes':removed_symbols,'loaded_payload_bytes':layout['loaded_payload_bytes'],'policy':'Release ADF omits HUNK_SYMBOL only; development retains symbols.'},
             'executable_budget_bytes':None,'executable_headroom_bytes':None,
             'executable_budget_reason':'No executable-size cap configured; executable bytes are not a RAM allocation or a measured disk-free-space budget.',
             'assets':{'active_incbin_bytes':groups,'files':assets,
@@ -99,6 +105,7 @@ def cold_timing(capture, report):
         return b-a if a is not None and b is not None else None
     return {'stages':stages,'total_reset_to_input_cck':end-reset if end is not None and reset is not None else None,
             'total_reset_to_display_and_input_cck':complete-reset if complete is not None and reset is not None else None,
+            'title_frame_evidence':metrics.get('first_complete_title_frame'),
             'measured_intervals_cck':{'os_boot_plus_loader':interval('reset','loadseg_complete'),
                                       'entry_to_assets_controls_ready':interval('executable_entry','assets_ready'),
                                       'assets_ready_to_complete_display':interval('assets_ready','first_complete_title_frame')},
@@ -179,7 +186,17 @@ def summarize(report):
            'PAL display budget: 70,824 CCK (~19.97 ms). Simulation budget: ~59,191.14 CCK (~16.69 ms).',
            'Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasured.','',
            'UI construction is grouped by page (title = menu; help includes controls/credits), independently of callback-entry profiles; menu-page redraws can occur during pause/input transitions. Pause-only UI construction remains unmeasured.','',
+           f"Release ADF executable: {static.get('release',{}).get('executable_bytes','unmeasured')} bytes; symbol bytes removed: {static.get('release',{}).get('removed_symbol_bytes','unmeasured')}. Development retains symbols.",
            'RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.']
+    attribution=static.get('attribution')
+    if attribution:
+        lines.extend(['','| Mutually exclusive executable category | Bytes |','|---|---:|'])
+        lines.extend(f"| {row['category']} | {row['bytes']:,} |" for row in attribution['categories'])
+        lines.extend([f"| **Exact file total** | **{attribution['accounted_file_bytes']:,}** |",'',
+                      attribution['scope'],
+                      f"Byte-identical incbin payload bytes beyond first copies: {attribution['identical_incbin_duplicate_bytes']:,} B. These remain included in the categories; aliasing safety is unproven.",''])
+    if report.get('cold_loading_issues'):
+        lines.extend(['Cold loading completion issues: '+ '; '.join(report['cold_loading_issues']),''])
     def ms(cck):return f'{cck*1000/3546895:.3f}' if cck is not None else 'unmeasured'
     for name,case in report.get('runtime',{}).items():
         metrics=case.get('metrics')
@@ -256,8 +273,37 @@ def report_identity(report):
                  for name,case in report['runtime'].items()}})
 
 
+def cold_loading_issues(cold):
+    """Required observable milestones; unavailable script/LoadSeg start is allowed."""
+    required=('reset','loadseg_complete','executable_entry','assets_ready',
+              'first_complete_title_frame','input_responsive')
+    stages=cold.get('stages',[]) if isinstance(cold,dict) else []
+    points={};issues=[]
+    for name in required:
+        matches=[s for s in stages if isinstance(s,dict) and s.get('stage')==name]
+        value=matches[0].get('cck') if len(matches)==1 else None
+        if type(value) is not int or value<0:
+            issues.append('Missing/invalid cold milestone: '+name)
+        else:points[name]=value
+    if len(points)==len(required):
+        ordered=[points[n] for n in required[:-1]]
+        if ordered!=sorted(ordered) or points['input_responsive']<points['assets_ready']:
+            issues.append('Cold milestones are out of measured order')
+        if cold.get('total_reset_to_display_and_input_cck')!=max(points['first_complete_title_frame'],points['input_responsive'])-points['reset']:
+            issues.append('Cold total does not match display/input milestones')
+    proof=cold.get('title_frame_evidence') if isinstance(cold,dict) else None
+    since=proof.get('title_selected_since') if isinstance(proof,dict) else None
+    if (not isinstance(since,dict) or type(proof.get('title_copper')) is not int
+            or proof['title_copper']<=0 or type(since.get('cck')) is not int
+            or type(since.get('frame')) is not int or type(proof.get('frame')) is not int
+            or proof['frame']<since['frame']+2 or type(proof.get('cck')) is not int
+            or proof['cck']<=since['cck'] or proof.get('cck')!=points.get('first_complete_title_frame')):
+        issues.append('Continuous loaded-title selection evidence missing/invalid')
+    return issues
+
+
 def generate():
-    static=static_metrics();runtime={name:read_case(name,path,static['executable_sha256']) for name,path in CASES.items()}
+    static=static_metrics();runtime={name:read_case(name,path,static['release']['executable_sha256'] if name=='cold-one' else static['executable_sha256']) for name,path in CASES.items()}
     measurement_inputs={}
     for case in runtime.values():
         if 'provenance' in case:
@@ -268,8 +314,9 @@ def generate():
                 measurement_inputs[path]=sha
     coverage={p:'measured' if any(c.get('metrics',{}).get('profiles',{}).get(p,{}).get('callbacks',0) for c in runtime.values()) else 'unmeasured' for p in PROFILES}
     coverage['celebration']='unavailable in this product; remeasure when implemented'
-    complete=all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration')
-    report={'schema':1,'state':'complete' if complete else 'incomplete','static':static,'runtime':runtime,'coverage':coverage,'measurement_inputs':measurement_inputs,
+    loading_issues=cold_loading_issues(runtime.get('cold-one',{}).get('cold_loading'))
+    complete=not loading_issues and all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration')
+    report={'schema':1,'state':'complete' if complete else 'incomplete','static':static,'runtime':runtime,'coverage':coverage,'measurement_inputs':measurement_inputs,'cold_loading_issues':loading_issues,
             'identity':identity({'executable':static['executable_sha256'],'inputs':static['product_inputs']}),
             'report_generator_sha256':digest(ROOT/'scripts/native_metrics.py'),
             'deltas':{'state':'no previous accepted compatible report'}}
@@ -300,6 +347,10 @@ def main():
         if args.check:
             accepted=json.loads(TRACKED.read_text())
             if accepted.get('state')!='complete':raise ValueError('Accepted metrics are incomplete')
+            if accepted.get('report_generator_sha256')!=digest(ROOT/'scripts/native_metrics.py'):
+                raise ValueError('Report writer changed; regenerate metrics with the current writer')
+            if cold_loading_issues(accepted.get('runtime',{}).get('cold-one',{}).get('cold_loading')):
+                raise ValueError('Accepted cold-loading milestones/evidence are incomplete')
             if report_identity(accepted)!=accepted.get('identity'):raise ValueError('Accepted report identity does not match its data')
             static=static_metrics()
             if static['executable_sha256']!=accepted['static']['executable_sha256']:raise ValueError('Accepted product differs; regenerate metrics')

@@ -62,7 +62,10 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe, listing = directory/'native-application', directory/'native.lst'
-    shutil.copy2(ordinary, exe)
+    # Cold ADF validates the exact stripped release payload; listing remains the
+    # symbol-rich development sidecar for read-only observers.
+    subject=ordinary.parent/'delivery/baseline-rally' if boot_adf else ordinary
+    shutil.copy2(subject, exe)
     shutil.copy2(ordinary.parent/'native.lst', listing)
     if bank_control:
         source = (ROOT/'amiga/main.s').read_text()
@@ -190,7 +193,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             raise ValueError('Cold-reset memory pool differs from actual calibration')
 
         setup_observer=SetupObserver(base,symbols,listing.read_text())
-        metrics_observer=MetricsObserver(base,symbols,listing.read_text())
+        metrics_observer=MetricsObserver(base,symbols,listing.read_text(),title_copper=banks['title_copper'])
         entry_stop=s.inspect('run_until',{'pc':base+symbols['start']})
         entry_regs=s.inspect('regs.get')
         task=int.from_bytes(read(initial_memory['execbase']+0x114,4),'big')
