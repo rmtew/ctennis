@@ -76,7 +76,10 @@ class NativeControlSession:
         self.stream.flush()
         return identifier
 
-    def __exit__(self, *_):
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Preserve the first test failure: buffered notifications received while
+        # shutting down must not replace it with a later secondary assertion.
+        if exc_type is not None:self.notification_handler=None
         try:
             if hasattr(self, 'stream'):
                 self.inspect('shutdown')

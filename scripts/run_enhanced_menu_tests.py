@@ -10,13 +10,13 @@ from native_evidence import ROOT, atomic_json, tracked_call
 from native_observation import target_log
 
 
-def run(adf=False):
+def run(adf=False,help_only=False):
     package_report = package(self_test=True) if adf else None
     config, exe = build(flavor='enhanced'); config = emulator_config()
     symbols = code_symbols((exe.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
-    directory = ROOT/'build/tests'/('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
+    directory = ROOT/'build/tests'/('help-navigation' if help_only else 'enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
     checks = []
     def check(label, actual, expected):
         checks.append({'label': label, 'actual': actual, 'expected': expected})
@@ -50,12 +50,30 @@ def run(adf=False):
         def photo(n):
             path=directory/(n+'.png')
             s.inspect('capture_screenshot',{'path':str(path)})
+            if n in ('menu','returned-title','players-two','help-selected','help-returned','controls-selected'):
+                from native_identity_raster import assert_menu_selection_raster
+                checks.append(assert_menu_selection_raster(path,number('ui_selection'),1+number('ui_player_count')))
             if n in ('menu','returned-title'):
                 from native_identity_raster import assert_title_raster
                 assert_title_raster(path)
+            if n in ('paused','pause-return-selected','confirm-no','confirm-yes','demo-held-entry','demo-take-over-selected'):
+                from native_identity_raster import assert_footer_raster
+                if n=='paused':row=('PAUSED','RESUME','RESUME')
+                elif n=='pause-return-selected':row=('PAUSED','RETURN TO TITLE','RETURN TO TITLE')
+                elif n=='confirm-no':row=('RETURN TO TITLE?','NO - RESUME','NO - RESUME')
+                elif n=='confirm-yes':row=('RETURN TO TITLE?','YES - RETURN TO TITLE','YES - RETURN TO TITLE')
+                else:
+                    first={0:'',2:'A WINS GAME',3:'B WINS GAME',4:'YOUR SERVE'}[number('ui_overlay_kind')]
+                    row=(first,'DEMO - TAKE OVER / EXIT','TAKE OVER' if number('ui_demo_choice') else 'EXIT')
+                checks.append(assert_footer_raster(path,*row))
             if n=='play':
-                from native_identity_raster import assert_mode_raster
+                from native_identity_raster import assert_mode_raster,assert_logo_absent_initial_raster
                 assert_mode_raster(path,2)
+                assert_logo_absent_initial_raster(path)
+        def help_photo(name):
+            path=directory/(name+'.png');s.inspect('capture_screenshot',{'path':str(path)})
+            from native_ui_raster import assert_ui_raster
+            checks.append(assert_ui_raster(path,number('ui_page'),number('ui_player_count'),number('ui_selection'),(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii'),number('ui_help_choice')))
         def frozen():
             return (mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)
                     +mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock'))
@@ -67,19 +85,44 @@ def run(adf=False):
         check('title display chosen',number('game_title_display'),255)
         photo('menu')
         key(0x03);check('3 has no shortcut',number('game_lifecycle',2),2)
-        key(0x4d);check('down selects players',number('ui_selection'),1)
-        key(0x4e);check('right selects two players',number('ui_player_count'),1)
+        edge(0x4d,True);advance(.4);check('held down selects players once',number('ui_selection'),1);edge(0x4d,False)
+        edge(0x4e,True);advance(.4);check('held right selects two players once',number('ui_player_count'),1);edge(0x4e,False)
         photo('players-two')
         key(0x4f);check('left selects one player',number('ui_player_count'),0)
-        key(0x4e);key(0x4d);key(0x44)
-        check('Enter opens Help',number('ui_page'),1);photo('help')
-        key(0x4e);check('right opens Controls',number('ui_page'),2);photo('controls')
-        key(0x4e);check('credits/version page',number('ui_page'),3);photo('credits')
-        key(0x4e);check('right page wrap',number('ui_page'),1)
-        key(0x4f);check('left page wrap',number('ui_page'),3)
-        key(0x45);check('Escape exits page',number('ui_page'),0)
-        key(0x44);check('Enter opens selected Help',number('ui_page'),1)
-        key(0x23);check('action exits page',number('ui_page'),0)
+        key(0x4e);key(0x4d);photo('help-selected');key(0x44)
+        check('Enter opens Help',number('ui_page'),1)
+        check('help defaults NEXT',number('ui_help_choice'),2);help_photo('help-next')
+        edge(0x4e,True);advance(.4)
+        check('right clamps NEXT',number('ui_help_choice'),2)
+        check('right does not page',number('ui_page'),1);edge(0x4e,False)
+        edge(0x44,True);advance(.4)
+        check('held Enter pages once',number('ui_page'),2)
+        check('NEXT persists',number('ui_help_choice'),2);help_photo('scoring-next');edge(0x44,False)
+        key(0x23);check('action advances to controls',number('ui_page'),3);help_photo('controls-next')
+        key(0x44);check('NEXT advances to credits last',number('ui_page'),4);help_photo('credits-next')
+        key(0x44);check('NEXT wraps credits to help',number('ui_page'),1)
+        edge(0x4f,True);advance(.4)
+        check('held left selects EXIT once',number('ui_help_choice'),1)
+        check('left does not page',number('ui_page'),1);help_photo('help-exit');edge(0x4f,False)
+        key(0x4f);check('left selects BACK',number('ui_help_choice'),0)
+        key(0x4f);check('left clamps BACK',number('ui_help_choice'),0)
+        key(0x44);check('BACK wraps help to credits',number('ui_page'),4)
+        check('BACK persists after wrap',number('ui_help_choice'),0);help_photo('credits-back')
+        key(0x23);check('BACK action returns controls',number('ui_page'),3);help_photo('controls-back')
+        key(0x4e);check('right selects EXIT',number('ui_help_choice'),1)
+        key(0x44);check('Enter activates EXIT',number('ui_page'),0);photo('help-returned')
+        key(0x4d);photo('controls-selected');key(0x44)
+        check('Controls entry resets NEXT',number('ui_help_choice'),2)
+        check('Controls entry page',number('ui_page'),3)
+        key(0x45);check('Escape exits regardless of NEXT',number('ui_page'),0)
+        key(0x4c);key(0x44)
+        check('Help reentry defaults NEXT',number('ui_help_choice'),2)
+        key(0x4f);help_photo('help-exit-action')
+        key(0x23);check('action activates EXIT',number('ui_page'),0)
+        if help_only:
+            target_log(directory)
+            report={'passed':True,'checks':checks,'loaded_hunks':loaded,'scope':'Ordinary physical help navigation and exact native scanout','executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
+            atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}));return report
         # Both main-digit and legacy choice retain the ordinary held-release gate.
         edge(0x02,True);advance(1.2)
         check('2 chooses two players',number('game_selected_mode'),1)
@@ -107,11 +150,11 @@ def run(adf=False):
         edge(0x19,False)
         check('P resumes',number('ui_paused'),0)
         check('held action suppressed on resume',number('game_player_controls')&32,0)
-        key(0x45);key(0x4d);key(0x44)
+        key(0x45);edge(0x4d,True);advance(.4);check('held pause navigation selects once',number('ui_selection'),1);edge(0x4d,False);photo('pause-return-selected');key(0x44)
         check('return needs confirmation',number('ui_confirmation'),255)
         check('confirmation stays in game',number('game_lifecycle',2),1);photo('confirm-no')
         key(0x45);check('Escape cancels confirmation',number('ui_confirmation'),0)
-        key(0x4d);key(0x44);key(0x4e);key(0x44)
+        key(0x4d);key(0x44);edge(0x4e,True);advance(.4);check('held confirmation navigation selects YES once',number('ui_selection'),1);edge(0x4e,False);photo('confirm-yes');key(0x44)
         check('confirmed return reaches title',number('game_lifecycle',2),2)
         check('confirmation press consumed',number('ui_selection'),0)
         check('remembers two players',number('ui_player_count'),1)
@@ -129,7 +172,11 @@ def run(adf=False):
         photo('demo-held-entry');advance(.4)
         check('entry-held G does not take over',number('ui_demo'),255)
         edge(0x24,False)
-        s.inspect('input_key',{'rawkey':0x24,'action':'press'})
+        check('demo defaults to EXIT',number('ui_demo_choice'),0)
+        key(0x4f);check('left selects TAKE OVER',number('ui_demo_choice'),1)
+        key(0x4e);check('right selects EXIT',number('ui_demo_choice'),0)
+        key(0x4f);photo('demo-take-over-selected')
+        s.inspect('input_key',{'rawkey':0x44,'action':'press'})
         took_over=False
         for _ in range(12):
             until({'pc':base+symbols['ui_sample']});before=frozen()
@@ -137,26 +184,34 @@ def run(adf=False):
             if not number('ui_demo'):
                 check('takeover preserves game, score, audio and clocks',frozen().hex(),before.hex())
                 took_over=True;break
-        check('fresh G takes over',took_over,True)
+        check('selected Enter takes over',took_over,True)
         until({'pc':base+symbols['native_input_done']})
         check('takeover press is consumed',number('game_player_controls')&32,0)
+        edge(0x44,False)
         advance(.4);photo('takeover')
         check('entry-held W stays physically down',mem('game_keyboard_matrix',128)[0x11],1)
         check('entry-held W cannot cause movement after takeover',number('game_player_controls')&2,0)
         check('takeover continues one-player AI',number('game_mode')&128,0)
-        # Return and prove the alternative P2 action exits rather than taking over.
+        # Return and prove the alternative B action exits rather than taking over.
         key(0x19);key(0x4d);key(0x44);key(0x4e);key(0x44)
         advance(32);check('next demo starts',number('ui_demo'),255)
-        key(0x3a);check('P2 slash exits demo',number('game_lifecycle',2),2)
+        key(0x3a);check('B slash exits demo',number('game_lifecycle',2),2)
         check('other input leaves demo',number('ui_demo'),0)
-        # Same normal takeover path for the physical P1 second joystick button.
+        # Same normal takeover path for the physical A second joystick button.
         advance(32);check('third demo starts',number('ui_demo'),255)
         s.inspect('input_set_port',{'port':2,'device':'joystick'})
-        check('G is still held before fresh joystick takeover',mem('game_keyboard_matrix',128)[0x24],1)
+        check('third demo defaults EXIT',number('ui_demo_choice'),0)
+        edge(0x24,True);check('default G exits demo',number('ui_demo'),0)
+        edge(0x24,False);advance(32);check('fourth demo starts',number('ui_demo'),255)
+        key(0x4f);check('left selects joystick takeover',number('ui_demo_choice'),1)
         s.inspect('input_joy',{'port':2,'blue':True})
-        until({'pc':base+symbols['ui_sample']});before=frozen()
-        until({'pc':base+symbols['ui_input_draw']})
-        check('port2 button2 takes over Blue',number('ui_demo'),0)
+        # A physical control event may arrive after the next pad sample. Observe
+        # bounded real UI samples as for G above; never inject takeover state.
+        for _ in range(12):
+            until({'pc':base+symbols['ui_sample']});before=frozen()
+            until({'pc':base+symbols['ui_input_draw']})
+            if not number('ui_demo'):break
+        check('selected port2 button2 takes over A',number('ui_demo'),0)
         check('joystick takeover preserves complete native state',frozen().hex(),before.hex())
         until({'pc':base+symbols['native_input_done']})
         check('joystick takeover press consumed',number('game_player_controls')&32,0)
@@ -197,8 +252,9 @@ def run(adf=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adf', action='store_true')
+    parser.add_argument('--help-only',action='store_true')
     args = parser.parse_args()
-    path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
+    path = ROOT / 'build/tests' / ('help-navigation' if args.help_only else 'enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
-                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
+                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf,args.help_only),
                  lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])

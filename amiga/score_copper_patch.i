@@ -1,7 +1,7 @@
 ; Select pre-rendered native bitplane banks for the six scoreboard fields.
 ; Patch the inactive Copper list after a changed scoreboard selection.
 patch_score_pointers:
-        movem.l d0-d2/d7/a0-a4,-(sp)
+        movem.l d0-d4/d7/a0-a4,-(sp)
         ; Each inactive list retains its selected banks. Rewriting all SCORE_PATCH_COUNT
         ; descriptors on every PAL publication stalls a source update even
         ; when no field changed. Cache values independently for the two lists.
@@ -12,13 +12,26 @@ patch_score_pointers:
 score_cache_selected:
         move.l  a3,a2
         lea     prepared_field_values(pc),a4
+        ; A changed field does not invalidate unrelated pointers in this bank.
+        ; Fixed court/WIN restore pointers need only the initial bank setup.
+        moveq   #0,d3
+        moveq   #0,d4
+        cmpi.b  #$ff,(a2)
+        bne.s   score_cache_mask
+        moveq   #1,d4
+score_cache_mask:
+        moveq   #0,d2
         moveq   #5,d7
 score_cache_compare:
         move.b  (a4)+,d0
         cmp.b   (a3)+,d0
-        bne.s   score_cache_changed
+        beq.s   score_cache_same
+        bset    d2,d3
+score_cache_same:
+        addq.w  #1,d2
         dbra    d7,score_cache_compare
-        bra.s   score_patch_done
+        tst.b   d3
+        beq     score_patch_done
 score_cache_changed:
         lea     prepared_field_values(pc),a4
         moveq   #5,d7
@@ -37,21 +50,26 @@ patch_next_score_pointer:
         move.w  (a0)+,d1
         cmpi.w  #$ffff,d1
         beq.s   use_fixed_pointer
+        btst    d1,d3
+        beq.s   skip_score_pointer
         moveq   #0,d2
         move.b  0(a4,d1.w),d2
         lsl.w   #2,d2
         move.l  0(a3,d2.w),d0
         bra.s   write_score_pointer
 use_fixed_pointer:
+        tst.b   d4
+        beq.s   skip_score_pointer
         move.l  (a3),d0
 write_score_pointer:
         move.l  d0,d1
         swap    d1
         move.w  d1,(a1)
         move.w  d0,(a2)
+skip_score_pointer:
         dbra    d7,patch_next_score_pointer
 score_patch_done:
-        movem.l (sp)+,d0-d2/d7/a0-a4
+        movem.l (sp)+,d0-d4/d7/a0-a4
         rts
 score_pointer_cache: dcb.b 12,$ff
         even

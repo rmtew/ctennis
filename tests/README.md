@@ -34,8 +34,11 @@ source memory or snapshots. Native hit pitch1688 comes from the approved octave2
 transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels.
 
 Render expectations use immutable native assets and named fields, not expected
-images made by the runtime renderer. Tally crops count actual gold scanout pixels
-against the versioned bank mask (one mark23 logical/46 doubled pixels). Cadence
+images made by the runtime renderer. Complete side-panel crops verify six compact
+WIN words, solid grey remaining rows, Blue/Red earned rows, the white open frame
+and plain retained points/advantage. All0–6 variants, both modes/ends and both
+physical Copper banks are checked by one-time native fixtures, with a compiled
+wrong tally-pointer control. Ordinary awards also verify actual full-panel pixels. Cadence
 observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
 Court publication precedes sprite header DMA at line25 or uses blank>=252; the
 footer extends through251. Accepted clock is11838+14906/65536 PAL E-clock ticks,

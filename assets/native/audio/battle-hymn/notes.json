@@ -1,0 +1,1039 @@
+{
+  "unit_seconds": 0.04,
+  "quarter_units": 12,
+  "bpm": 125,
+  "voices": [
+    [
+      {
+        "start_unit": 0,
+        "duration_units": 18,
+        "midi": 65,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 18,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 24,
+        "duration_units": 9,
+        "midi": 62,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 33,
+        "duration_units": 3,
+        "midi": 65,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 36,
+        "duration_units": 9,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 45,
+        "duration_units": 3,
+        "midi": 72,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 48,
+        "duration_units": 24,
+        "midi": 74,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1510
+      },
+      {
+        "start_unit": 72,
+        "duration_units": 12,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 84,
+        "duration_units": 12,
+        "midi": null,
+        "voice": 0,
+        "level_index": 3
+      },
+      {
+        "start_unit": 96,
+        "duration_units": 18,
+        "midi": 67,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 114,
+        "duration_units": 6,
+        "midi": 69,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2015
+      },
+      {
+        "start_unit": 120,
+        "duration_units": 9,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 129,
+        "duration_units": 3,
+        "midi": 69,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2015
+      },
+      {
+        "start_unit": 132,
+        "duration_units": 9,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 141,
+        "duration_units": 3,
+        "midi": 67,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 144,
+        "duration_units": 24,
+        "midi": 65,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 168,
+        "duration_units": 24,
+        "midi": 62,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 192,
+        "duration_units": 18,
+        "midi": 65,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 210,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 216,
+        "duration_units": 9,
+        "midi": 62,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 225,
+        "duration_units": 3,
+        "midi": 65,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 228,
+        "duration_units": 9,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 237,
+        "duration_units": 3,
+        "midi": 72,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 240,
+        "duration_units": 24,
+        "midi": 74,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1510
+      },
+      {
+        "start_unit": 264,
+        "duration_units": 12,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 276,
+        "duration_units": 6,
+        "midi": null,
+        "voice": 0,
+        "level_index": 3
+      },
+      {
+        "start_unit": 282,
+        "duration_units": 6,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 288,
+        "duration_units": 12,
+        "midi": 72,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 300,
+        "duration_units": 12,
+        "midi": 72,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 312,
+        "duration_units": 12,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 324,
+        "duration_units": 12,
+        "midi": 69,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 2015
+      },
+      {
+        "start_unit": 336,
+        "duration_units": 36,
+        "midi": 70,
+        "voice": 0,
+        "level_index": 3,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 372,
+        "duration_units": 12,
+        "midi": null,
+        "voice": 0,
+        "level_index": 3
+      }
+    ],
+    [
+      {
+        "start_unit": 0,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 12,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 24,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 36,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 48,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 60,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 72,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 84,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 96,
+        "duration_units": 12,
+        "midi": 51,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5700
+      },
+      {
+        "start_unit": 108,
+        "duration_units": 12,
+        "midi": 58,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 120,
+        "duration_units": 12,
+        "midi": 51,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5700
+      },
+      {
+        "start_unit": 132,
+        "duration_units": 12,
+        "midi": 58,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 144,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 156,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 168,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 180,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 192,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 204,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 216,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 228,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 240,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 252,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 264,
+        "duration_units": 12,
+        "midi": 46,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 7609
+      },
+      {
+        "start_unit": 276,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 288,
+        "duration_units": 12,
+        "midi": 51,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5700
+      },
+      {
+        "start_unit": 300,
+        "duration_units": 12,
+        "midi": 58,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 312,
+        "duration_units": 12,
+        "midi": 51,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5700
+      },
+      {
+        "start_unit": 324,
+        "duration_units": 12,
+        "midi": 58,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 336,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 348,
+        "duration_units": 12,
+        "midi": 60,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 3389
+      },
+      {
+        "start_unit": 360,
+        "duration_units": 12,
+        "midi": 53,
+        "voice": 1,
+        "level_index": 6,
+        "paula_period_4byte_wave": 5078
+      },
+      {
+        "start_unit": 372,
+        "duration_units": 12,
+        "midi": null,
+        "voice": 1,
+        "level_index": 6
+      }
+    ],
+    [
+      {
+        "start_unit": 0,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 6,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 12,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 18,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 24,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 30,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 36,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 42,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 48,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 54,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 60,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 66,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 72,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 78,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 84,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 90,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 96,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 102,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 108,
+        "duration_units": 6,
+        "midi": 70,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 114,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 120,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 126,
+        "duration_units": 6,
+        "midi": 70,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 132,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 138,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 144,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 150,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 156,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 162,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 168,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 174,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 180,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 186,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 192,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 198,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 204,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 210,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 216,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 222,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 228,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 234,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 240,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 246,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 252,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 258,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 264,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 270,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 276,
+        "duration_units": 6,
+        "midi": 58,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3804
+      },
+      {
+        "start_unit": 282,
+        "duration_units": 6,
+        "midi": 62,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 3020
+      },
+      {
+        "start_unit": 288,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 294,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 300,
+        "duration_units": 6,
+        "midi": 70,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 306,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 312,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 318,
+        "duration_units": 6,
+        "midi": 70,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1902
+      },
+      {
+        "start_unit": 324,
+        "duration_units": 6,
+        "midi": 63,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2850
+      },
+      {
+        "start_unit": 330,
+        "duration_units": 6,
+        "midi": 67,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2262
+      },
+      {
+        "start_unit": 336,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 342,
+        "duration_units": 6,
+        "midi": 69,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2015
+      },
+      {
+        "start_unit": 348,
+        "duration_units": 6,
+        "midi": 72,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 354,
+        "duration_units": 6,
+        "midi": 65,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2539
+      },
+      {
+        "start_unit": 360,
+        "duration_units": 6,
+        "midi": 69,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 2015
+      },
+      {
+        "start_unit": 366,
+        "duration_units": 6,
+        "midi": 72,
+        "voice": 2,
+        "level_index": 8,
+        "paula_period_4byte_wave": 1695
+      },
+      {
+        "start_unit": 372,
+        "duration_units": 6,
+        "midi": null,
+        "voice": 2,
+        "level_index": 8
+      },
+      {
+        "start_unit": 378,
+        "duration_units": 6,
+        "midi": null,
+        "voice": 2,
+        "level_index": 8
+      }
+    ]
+  ]
+}

@@ -2,8 +2,9 @@
 from PIL import Image
 from native_tools import ROOT
 
-# Frozen merged native palette; a product palette mutation must fail this guard.
-PALETTE = (0x000,0x000,0x2c4,0x6d7,0x55e,0x77f,0x000,0x000,
+# Approved WIN UI palette: removed score decorations release1/3;6 was unused.
+# Court/net colours and logical Blue/Red stay unchanged.
+PALETTE = (0x000,0xe33,0x2c4,0x333,0x55e,0x77f,0x333,0x000,
            0x000,0xf77,0xdc5,0x000,0x000,0xe33,0xccc,0xfff)
 
 
@@ -21,9 +22,9 @@ def status_pixels(variant):
 
 def assert_status_raster(path, variant):
     with Image.open(path) as picture:
-        # PAL active origin x126/y16; status occupies native x80..175/y0..7 (Copper lines44..51).
+        # PAL active origin x126/y16; status occupies native x80..175/y96..103 (Copper lines140..147).
         if picture.size!=(716,285): raise ValueError('Review native PAL viewport dimensions')
-        actual=list(picture.convert('RGB').crop((286,16,478,24)).get_flattened_data())
+        actual=list(picture.convert('RGB').crop((286,112,478,120)).get_flattened_data())
     expected=status_pixels(variant)
     if actual!=expected:
         raise AssertionError({'label':'visible native status raster matches committed bank',

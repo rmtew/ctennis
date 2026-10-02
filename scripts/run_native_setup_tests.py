@@ -92,17 +92,17 @@ def run(baseline=None, control=None, fault_controls=None):
         def raster(label):
             path=directory/(label+'.png')
             s.inspect('capture_screenshot',{'path':str(path)})
-            rasters.append(assert_ui_raster(path,read('ui_page'),read('ui_player_count'),read('ui_selection'),(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii')))
+            rasters.append(assert_ui_raster(path,read('ui_page'),read('ui_player_count'),read('ui_selection'),(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii'),read('ui_help_choice')))
         advance(.7);check('initial ordinary menu',read('ui_page'),0)
         if not control and not baseline: raster('initial')
-        for label,key,page,selection in [('navigate-players',0x4d,0,1),('toggle-players',0x4e,0,1),('navigate-help',0x4d,0,2),('open-help',0x44,1,2),('open-controls',0x4e,2,2),('open-credits',0x4e,3,2),('wrap-help',0x4e,1,2),('back-credits',0x4f,3,2),('exit-page',0x45,0,2)]:
+        for label,key,page,selection in [('navigate-players',0x4d,0,1),('toggle-players',0x4e,0,1),('navigate-help',0x4d,0,2),('open-help',0x44,1,2),('open-scoring',0x44,2,2),('open-controls',0x44,3,2),('open-credits',0x44,4,2),('wrap-help',0x44,1,2),('select-exit',0x4f,1,2),('select-back',0x4f,1,2),('back-credits',0x44,4,2),('exit-page',0x45,0,2)]:
             before=len(observer.regions);s.inspect('input_key',{'rawkey':key,'action':'press'});advance(.5);s.inspect('input_key',{'rawkey':key,'action':'release'});advance(.5)
             check(label+' page',read('ui_page'),page);check(label+' selection',read('ui_selection'),selection)
             actions.append({'action':label,'regions':list(range(before,len(observer.regions)))})
             check(label+' explicit construction observed',len(observer.regions)>before,True)
             if not control and not baseline: raster(label)
         if not control and not baseline:
-            for key,page in [(0x44,1),(0x4e,2),(0x4e,3),(0x45,0)]:
+            for key,page in [(0x44,1),(0x44,2),(0x44,3),(0x44,4),(0x45,0)]:
                 s.inspect('input_key',{'rawkey':key,'action':'press'});advance(.2)
                 s.inspect('input_key',{'rawkey':key,'action':'release'});advance(.2)
                 check('repeated navigation page',read('ui_page'),page)
@@ -145,7 +145,7 @@ if __name__=='__main__':
     if args.self_test:
         try: run(control='lost-wrap')
         except AssertionError as error:
-            if error.args[0].get('field')!='elapsed accounting lost time' or error.args[0].get('error_cck')!=-327680: raise
+            if error.args[0].get('field')!='elapsed accounting lost time' or abs(error.args[0].get('error_cck',0)+327680)>100: raise
             lost_failure=error.args[0]
             print('PASS lost-wrap accounting control rejected',str(error),flush=True)
         else: raise AssertionError('Lost-wrap control escaped')

@@ -1,6 +1,7 @@
 ui_begin_title:
         move.w  #$ffff,ui_overlay_signature
-        st      game_title_display
+        ; Keep the published scene until the complete menu bitmap is ready.
+        clr.b   display_ready
         clr.b   ui_page
         clr.b   ui_selection
         clr.b   ui_paused
@@ -50,30 +51,49 @@ ui_menu_tick:
         eori.b  #1,ui_player_count
         bra     .done
 .open:  subq.b  #1,d0
+        cmpi.b  #2,d0
+        bne.s   .open_page
+        moveq   #3,d0
+.open_page:
         move.b  d0,ui_page
+        move.b  #2,ui_help_choice
         bra     .done
 .start: move.b  ui_player_count,d0
         bra     game_latch_choice
 .pages:
-        move.b  ui_edges,d0
-        andi.b  #UI_ACTION+UI_ESCAPE,d0
-        beq.s   .page_left
-        clr.b   ui_page
-        bra     .done
-.page_left:
+        btst    #5,ui_edges
+        bne.s   .page_exit
         btst    #2,ui_edges
         beq.s   .page_right
-        subq.b  #1,ui_page
-        bne.s   .page_right
-        move.b  #3,ui_page
+        tst.b   ui_help_choice
+        beq.s   .page_right
+        subq.b  #1,ui_help_choice
 .page_right:
         btst    #3,ui_edges
-        beq.s   .done
+        beq.s   .page_action
+        cmpi.b  #2,ui_help_choice
+        beq.s   .page_action
+        addq.b  #1,ui_help_choice
+.page_action:
+        btst    #4,ui_edges
+        beq     .done
+        cmpi.b  #1,ui_help_choice
+        beq.s   .page_exit
+        tst.b   ui_help_choice
+        bne.s   .page_next
+        subq.b  #1,ui_page
+        bne     .done
+        move.b  #4,ui_page
+        bra     .done
+.page_next:
         addq.b  #1,ui_page
-        cmpi.b  #4,ui_page
-        bcs.s   .done
+        cmpi.b  #5,ui_page
+        bcs     .done
         move.b  #1,ui_page
-        bra.s   .done
+        bra     .done
+.page_exit:
+        clr.b   ui_page
+        bra     .done
 .idle:  tst.b   ui_page
         bne.s   .done
         addq.w  #1,ui_idle
@@ -89,6 +109,7 @@ ui_menu_tick:
         move.b  ui_joystick_bits,ui_joystick_entry
         move.b  ui_joystick_bits+1,ui_joystick_entry+1
         st      ui_demo
+        clr.b   ui_demo_choice
         clr.w   ui_demo_remaining
         lea     ui_demo_packets,a0
         move.l  a0,ui_demo_cursor

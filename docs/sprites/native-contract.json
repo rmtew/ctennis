@@ -1,0 +1,235 @@
+{
+  "base": "93bb640700aa5dc407a081104475233321a5dd8d",
+  "poses_sha256": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376",
+  "animations_sha256": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad",
+  "retained_rackets": {
+    "384": "971ac84b0dcb5c4726e890501da64343a243f8fb9144a292b8ed391ab971b839",
+    "768": "fa5fc897632cfc182df78602a0983113a23f64e32ae241bc6dff7dd3eb40550e",
+    "1152": "e11f098df3295fb2b1439480dfaa025e541440d756fe0cb48a0d3f217814c83b",
+    "1536": "6d945e4d30d01ec1a3dcc537c71fefa27c994c57055e48445a430b63a8fc069c",
+    "1920": "ab60f9ee1faedea352663d4a2e4b12caf66202b025ac3d7ddac6a18c4c3e7498",
+    "2048": "afc7b4973846b21e98f44cbc7d57c75146334b675b044ddb2e4d7ffb99924a52",
+    "2432": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca",
+    "4480": "2e0d75b7e0a7072c8885f199d1f4dc36c3463631cc057a027e1a01b88d8fe7d9",
+    "4864": "ed073c4ad9490b8b659ff0969ef19248ed303fbd7eb3ff6bb8c4548048d85c7e",
+    "5248": "bb9a4709a5d0c1527811ffa8939d2bcaf9b7e8a663152328412c74f35649bce9",
+    "6016": "ab05b6fa944530e79e5eb85dd7832564838378483dbd413b9a2d129dc2000963",
+    "6144": "8badfd69a2778a235fd3e423ca67a633ac098e9687a7cff3ac0a0b8bef331079"
+  },
+  "body_bounds": {
+    "128": [
+      3,
+      0,
+      16,
+      16
+    ],
+    "256": [
+      0,
+      0,
+      14,
+      16
+    ],
+    "512": [
+      0,
+      0,
+      14,
+      16
+    ],
+    "640": [
+      0,
+      0,
+      12,
+      16
+    ],
+    "896": [
+      4,
+      0,
+      16,
+      16
+    ],
+    "1024": [
+      0,
+      0,
+      15,
+      16
+    ],
+    "1280": [
+      0,
+      3,
+      16,
+      16
+    ],
+    "1408": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "1664": [
+      1,
+      4,
+      16,
+      16
+    ],
+    "1792": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "2176": [
+      3,
+      4,
+      16,
+      16
+    ],
+    "2304": [
+      2,
+      0,
+      13,
+      16
+    ],
+    "4224": [
+      0,
+      0,
+      13,
+      16
+    ],
+    "4352": [
+      2,
+      0,
+      16,
+      16
+    ],
+    "4608": [
+      2,
+      0,
+      16,
+      16
+    ],
+    "4736": [
+      4,
+      0,
+      16,
+      16
+    ],
+    "4992": [
+      0,
+      0,
+      12,
+      16
+    ],
+    "5120": [
+      1,
+      0,
+      16,
+      16
+    ],
+    "5376": [
+      0,
+      3,
+      16,
+      16
+    ],
+    "5504": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "5760": [
+      0,
+      4,
+      15,
+      16
+    ],
+    "5888": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "6272": [
+      0,
+      4,
+      13,
+      16
+    ],
+    "6400": [
+      3,
+      0,
+      14,
+      16
+    ]
+  },
+  "unchanged_physics": {
+    "amiga/game/gameplay_contact.s": "74e2207300df9f08c332d37048661f0ce6a91c41e6a2a3cd9007f51070acd915",
+    "amiga/game/gameplay_players.s": "8c0b218d342d45710170640bc5ad8ee837c929e811cc52c37d0fe15093a2c60c",
+    "amiga/game/gameplay_ball.s": "0e831e4764543c9b1416c3ffb44fcf9f0cd3b8c815c0061bcb35d49058f37dcd",
+    "assets/interface/demo-inputs.json": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
+    "tests/fixtures/native-demo/trajectory.sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6"
+  },
+  "ab_headers": {
+    "0": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    },
+    "1": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    },
+    "2": {
+      "16": "1d5c05e8a92e45fcfdcea3b9d5ed651f99ce8b1d7f64102b09b80513f3eccc94",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    },
+    "3": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    }
+  },
+  "court_without_logo": {
+    "0": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+    "1": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
+    "2": "bbc082b398ae0e6fcdb7648fb620779d94718212c8df5d3db49525f06fda8d9d",
+    "3": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019"
+  },
+  "scoreboard_rectangles": [
+    [
+      0,
+      40,
+      48,
+      124
+    ],
+    [
+      208,
+      40,
+      256,
+      124
+    ]
+  ],
+  "court_outside_sprite_ui": {
+    "0": "5de26298a4e58be3908772c9fcdf95c653f6a9ca89405e2502e45f5aa61d99a7",
+    "1": "4a68a00f1e3de55602f9991299860065e091821a1aa94611ddfae0dd13af0e3c",
+    "2": "c5745c2117a704b42b3a07279f756ac75b39d8d0b7c6bcad3b03769fb2aab37e",
+    "3": "6f17e33547182ad71ca93ef16f9c7ad2b1be1e88788ac646cbe1688f7d3c26fb"
+  },
+  "plain_point_masks": {
+    "0": "5825b72e7b0abaed068242991f99d3c81ae928fe8d17770c0bf1afb42165ef69",
+    "1": "1027d4ee0358acd7038e215855dbbf0c6d41354b5e3421b00e4308ebe316798f",
+    "2": "8663ea648462b4d32edd20b241ca0a8273cbd5ae9e53365716742ea67d7b8b6c",
+    "3": "aa028bf5ef61fd7af01a694107e87593ef4ed741cd88d4a4c917e4e8bd4fe7af",
+    "4": "de21ad1ab8454653fc3730d8ec0585b2d759e417dedbff913fd079219e48d934",
+    "5": "aa028bf5ef61fd7af01a694107e87593ef4ed741cd88d4a4c917e4e8bd4fe7af",
+    "6": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+  },
+  "retained_score_copper": {
+    "assets/native/court/score-cop-commands.i": "cf259b0926b1f567d63c354fd1d58c501316cf45655573f99a7229716a6338b4",
+    "assets/native/court/score-patch-tables.i": "c3069a96312427c3f58d79d0616a74c4c23718b3b4f22e4eb7936f3322c82968",
+    "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5"
+  },
+  "status_move_retained_copper": {
+    "assets/native/court/score-cop-commands.i": "fd238b246d94120985cd9d67a56b112a8bfbba39a4fb4ba513716d21c2651dc9",
+    "assets/native/court/score-patch-tables.i": "8acbd8a70b5df4451d0ed04201fcee033bc1faea4916cf8c52adb1547142fb83",
+    "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5"
+  }
+}

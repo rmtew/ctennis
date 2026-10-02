@@ -34,7 +34,7 @@ class SetupObserver:
                 if start<=a<start+length: self.pending['gameplay_writes'].append(row)
         if a==self.base+self.symbols['display_ready'] and v and pc==self.end_pc:
             if self.pending is None: raise AssertionError('UI setup completion without entry')
-            self.pending.update(end=p,end_pc=pc,work_cck=p['cck']-self.pending['begin']['cck'],kind=('menu','help','controls','credits')[self.pending['page']])
+            self.pending.update(end=p,end_pc=pc,work_cck=p['cck']-self.pending['begin']['cck'],kind=('menu','help','scoring','controls','credits')[self.pending['page']])
             self.regions.append(self.pending); self.pending=None
     def proposal(self,callbacks,origin):
         rows={r['callback']:r for r in callbacks}; issues=[]; cases=[]; allowed=set()

@@ -7,6 +7,9 @@ game_result_sound:
         moveq   #3,d0
         moveq   #1,d1
         bsr     game_audio_queue
+        moveq   #6,d0
+        moveq   #2,d1
+        bsr     game_audio_queue
         movem.l (sp)+,d0-d1
         rts
 game_start_sound:

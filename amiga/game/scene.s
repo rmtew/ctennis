@@ -35,9 +35,11 @@ game_scene_build_players:
         bsr     game_assign_styles
         lea     G_LOWER(a4),a3
         lea     game_scene_objects+SC_LOWER,a2
+        moveq   #1,d7 ; lower court record
         bsr     game_scene_actor
         lea     G_UPPER(a4),a3
         lea     game_scene_objects+SC_UPPER,a2
+        moveq   #0,d7 ; upper court record
         bsr     game_scene_actor
         movem.l (sp)+,d0-d7/a0-a4
         rts
@@ -51,6 +53,24 @@ game_scene_actor:
 .pose:
         lsl.w   #3,d0
         lea     game_scene_poses,a0
+        ; Recorded demo input owns the same human A controller as live input.
+        ; Resolve logical controller ownership from the mode/end mapping.
+        ; Court-relative AI flags lag end exchange during round pause.
+        ; The next completed scene publishes role and geometry together;
+        ; no player state or clocks are changed.
+        btst    #7,game_mode
+        bne.s   .role_ready ; two human controllers
+        btst    #4,game_mode
+        beq.s   .original_ends
+        tst.w   d7
+        bne.s   .robot ; exchanged: lower is logical B
+        bra.s   .role_ready
+.original_ends:
+        tst.w   d7
+        bne.s   .role_ready ; original: lower is logical A
+.robot:
+        lea     game_scene_robot_poses,a0
+.role_ready:
         adda.w  d0,a0
         move.b  P_Y(a3),d0
         add.b   6(a0),d0
@@ -189,5 +209,6 @@ game_scene_order:
         even
 game_scene_palette: dc.w 0,$fff,$55e,$e33,$000
 game_scene_poses: incbin "assets/native/scene/poses.bin"
+game_scene_robot_poses: incbin "assets/native/scene/robot-poses.bin"
 game_scene_animations: incbin "assets/native/scene/animations.bin"
         even
