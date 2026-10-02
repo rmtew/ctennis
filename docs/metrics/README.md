@@ -110,3 +110,9 @@ tool dependencies and the current report writer, excluding generated reports
 and timestamps. Product identity remains separate. No executable-size cap is
 configured, so executable headroom remains null rather than borrowing the RAM
 budget.
+
+`--check` verifies the report's content identity as well as its dependencies, so
+changed numeric summaries cannot keep a previous identity. When celebration
+lands, register its actual new state in `MetricsObserver.profile()` and replace
+the explicit unavailable declaration in `generate()` before refreshing. The
+baseline report does not certify that future feature.

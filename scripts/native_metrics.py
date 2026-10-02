@@ -227,6 +227,22 @@ def metric_deltas(previous, report):
     return delta
 
 
+def report_identity(report):
+    """Bind numeric evidence/contracts, excluding receipt timestamps/report files."""
+    return identity({'product':report['product_identity'],
+        'static':{k:v for k,v in report['static'].items() if k!='build_receipt_sha256'},
+        'measurement_inputs':report['measurement_inputs'],
+        'writer_sha256':report['report_generator_sha256'],
+        'cases':{name:{'metrics':case.get('metrics'),'memory':case.get('memory'),
+                       'deadlines':case.get('deadlines'),'cold_loading':case.get('cold_loading'),
+                       'target':case.get('provenance',{}).get('target'),
+                       'tools':case.get('provenance',{}).get('tools'),
+                       'tool_sha256':case.get('provenance',{}).get('tool_sha256'),
+                       'command':case.get('provenance',{}).get('command'),
+                       'rom':case.get('provenance',{}).get('kickstart_sha256')}
+                 for name,case in report['runtime'].items()}})
+
+
 def generate():
     static=static_metrics();runtime={name:read_case(name,path,static['executable_sha256']) for name,path in CASES.items()}
     measurement_inputs={}
@@ -245,12 +261,7 @@ def generate():
             'report_generator_sha256':digest(ROOT/'scripts/native_metrics.py'),
             'deltas':{'state':'no previous accepted compatible report'}}
     report['product_identity']=report['identity']
-    report['identity']=identity({'product':report['product_identity'],'measurement_inputs':measurement_inputs,
-        'writer_sha256':report['report_generator_sha256'],
-        'cases':{name:{'metrics':case.get('metrics'),'cold_loading':case.get('cold_loading'),
-                       'target':case.get('provenance',{}).get('target'),
-                       'tools':case.get('provenance',{}).get('tool_sha256'),
-                       'rom':case.get('provenance',{}).get('kickstart_sha256')} for name,case in runtime.items()}})
+    report['identity']=report_identity(report)
     accepted=subprocess.run(['git','show','master:docs/metrics/current.json'],cwd=ROOT,capture_output=True,text=True)
     if accepted.returncode==0:
         previous=json.loads(accepted.stdout)
@@ -276,6 +287,7 @@ def main():
         if args.check:
             accepted=json.loads(TRACKED.read_text())
             if accepted.get('state')!='complete':raise ValueError('Accepted metrics are incomplete')
+            if report_identity(accepted)!=accepted.get('identity'):raise ValueError('Accepted report identity does not match its data')
             static=static_metrics()
             if static['executable_sha256']!=accepted['static']['executable_sha256']:raise ValueError('Accepted product differs; regenerate metrics')
             differences=changed(accepted['measurement_inputs'])

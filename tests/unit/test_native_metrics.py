@@ -9,7 +9,7 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from native_hunk import hunk_layout
 from native_metrics_observation import distribution, MetricsObserver
-from native_metrics import identity, metric_deltas, cold_timing, measurement_status
+from native_metrics import identity, metric_deltas, cold_timing, measurement_status, report_identity
 
 
 class MetricsTests(unittest.TestCase):
@@ -84,3 +84,13 @@ class MetricsTests(unittest.TestCase):
                 self.assertEqual(measurement_status(path)['status'],'failed')
             with patch('native_metrics.status',return_value={'status':'stale','changed_dependencies':['scripts/native_metrics_observation.py']}):
                 self.assertEqual(measurement_status(path)['status'],'stale')
+
+    def test_report_identity_rejects_changed_numbers_but_ignores_receipt_timestamp_identity(self):
+        report={'product_identity':'product','static':{'layout':{'executable_bytes':10},'build_receipt_sha256':'old'},
+                'measurement_inputs':{'source':'hash'},'report_generator_sha256':'writer',
+                'runtime':{'one':{'metrics':{'max_cck':100},'memory':{'free':10},'receipt_sha256':'old'}}}
+        original=report_identity(report)
+        report['runtime']['one']['receipt_sha256']='new';report['static']['build_receipt_sha256']='new'
+        self.assertEqual(report_identity(report),original)
+        report['runtime']['one']['memory']['free']=11
+        self.assertNotEqual(report_identity(report),original)
