@@ -161,3 +161,11 @@ was checked by bounded offline replay; its proof is retained in
 `baselines/title-proof-review.json`. The release run is newly measured; later
 report assembly/`--check` conservatively labels receipt reuse. Full native-gate
 acceptance is separate from completion of these four affected checks.
+
+Cold menu receipts also bind the packaged release executable (including its
+compiled-executable entry and ADF hash); debug executable/listing hashes are
+recorded separately. For focused variant validation, use
+`RUST_LOG=info python scripts/run_enhanced_menu_tests.py --adf --boot-only`.
+Its separate `enhanced-menu-cold-boot-binding/report.json` explicitly excludes
+full menu lifecycle acceptance. A failed full menu receipt is not replaced by
+this bounded check.
