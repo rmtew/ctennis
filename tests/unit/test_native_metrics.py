@@ -8,7 +8,7 @@ import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from native_hunk import hunk_layout
 from native_metrics_observation import distribution, MetricsObserver
-from native_metrics import identity, metric_deltas
+from native_metrics import identity, metric_deltas, cold_timing
 
 
 class MetricsTests(unittest.TestCase):
@@ -55,3 +55,16 @@ class MetricsTests(unittest.TestCase):
         delta=metric_deltas(old,current)
         self.assertEqual(delta['static_bytes']['executable_bytes'],2)
         self.assertEqual(delta['runtime']['one']['state'],'incompatible or unmeasured')
+
+    def test_loading_overlap_is_preserved_and_boot_requires_display_and_input(self):
+        capture={'cold_timing_points':{'reset':{'cck':0},'loadseg_complete':{'cck':100}},
+                 'entry_stop':{'cck':100},'checkpoints':{'first_selection':{'position':{'cck':160}}}}
+        report={'resource_metrics':{'assets_ready_and_controls_initialized':{'cck':120},
+                                   'first_complete_title_frame':{'cck':180}},'adf_sha256':'disk'}
+        result=cold_timing(capture,report)
+        self.assertEqual(result['total_reset_to_input_cck'],160)
+        self.assertEqual(result['total_reset_to_display_and_input_cck'],180)
+        self.assertEqual(result['stages'][-1]['from_previous_listed_milestone_cck'],-20)
+        self.assertEqual(result['measured_intervals_cck']['entry_to_assets_controls_ready'],20)
+        self.assertIsNone(result['stages'][1]['cck'])
+        self.assertIsNone(result['disk_reads'])

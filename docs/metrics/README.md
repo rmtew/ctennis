@@ -91,3 +91,8 @@ unmeasured. Zero other RAM describes the measured unexpanded target. Allocation
 failure results are not instrumented and stay null. Celebration is unavailable
 on this baseline: after its independent polish implementation lands, rebuild and
 refresh affected profiles. Do not inspect another worker's unfinished files.
+
+Input responsiveness may precede full scanout. Milestone differences are signed
+offsets; explicit loader/init/display intervals and the total until both input
+and a complete title are ready preserve that overlap. Initialized-pool boot RAM
+samples are recorded at their actual positions, without extrapolating peaks.

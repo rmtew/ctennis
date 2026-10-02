@@ -85,15 +85,24 @@ def cold_timing(capture, report):
         p=points.get(name)
         cck=p.get('cck') if isinstance(p,dict) else None
         stages.append({'stage':name,'cck':cck,'seconds':cck/3546895 if cck is not None else None,
-                       'from_previous_measured_stage_cck':cck-previous if cck is not None and previous is not None else None})
+                       'from_previous_listed_milestone_cck':cck-previous if cck is not None and previous is not None else None})
         if cck is not None:previous=cck
     reset=points.get('reset',{}).get('cck');end=points.get('input_responsive',{}).get('cck')
+    displayed=(points.get('first_complete_title_frame') or {}).get('cck')
+    complete=max(end,displayed) if end is not None and displayed is not None else None
+    def interval(begin,end):
+        a=(points.get(begin) or {}).get('cck');b=(points.get(end) or {}).get('cck')
+        return b-a if a is not None and b is not None else None
     return {'stages':stages,'total_reset_to_input_cck':end-reset if end is not None and reset is not None else None,
+            'total_reset_to_display_and_input_cck':complete-reset if complete is not None and reset is not None else None,
+            'measured_intervals_cck':{'os_boot_plus_loader':interval('reset','loadseg_complete'),
+                                      'entry_to_assets_controls_ready':interval('executable_entry','assets_ready'),
+                                      'assets_ready_to_complete_display':interval('assets_ready','first_complete_title_frame')},
             'configuration':{'floppy_speed_percent':100,'cold_reset':True,'read_only_adf':True,
                              'adf_sha256':report.get('adf_sha256'),'calibration':'Separate pre-measurement boot locates Exec headers; cold reset starts measured run.'},
             'disk_reads':None,'disk_seeks':None,'disk_count_reason':'Pinned control API does not expose cumulative drive read/seek counters; DMA words are not file reads or seeks.',
             'host_emulator_launch_seconds':None,
-            'scope':'Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait.'}
+            'scope':'Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait. Milestones may overlap: input can respond before a complete title frame. Listed-milestone differences are signed offsets, not invented sequential phase durations; boot complete requires both displayed title and successful input.'}
 
 
 def read_case(name,relative,sha):
@@ -117,13 +126,18 @@ def read_case(name,relative,sha):
     if name in ('cold-one','two'):
         capture=json.loads((ROOT/report['capture']).read_text())
         result['memory']={'at_loadseg':memory_summary(capture['memory_initial']),
-                          'runtime_final':memory_summary(capture['memory_final']),**report['memory'],
+                          'runtime_final':memory_summary(capture['memory_final']),
+                          'cold_boot_samples':[{'position':sample['position'],'memory':memory_summary(sample['memory'])} for sample in capture.get('boot_samples',[])],
+                          **report['memory'],
                           'pre_exec_bootstrap':'unmeasured','allocation_failures':None,
                           'allocation_failure_scope':'No allocator-result observer; product performs no runtime AllocMem calls.'}
         result['deadlines']={'missed_native_callbacks':report.get('resource_missed_deadlines'),
                              'missed_publications_counter':report.get('missed_publications'),
                              'publication_failures':sum('publication' in d['field'] or 'presentation' in d['field'] or 'Copper' in d['field'] for d in report.get('differences',[]))}
         if name=='cold-one':result['cold_loading']=cold_timing(capture,report)
+    if name in ('setup','demo'):
+        result['deadlines']={'missed_publications_counter':report.get('missed_publications'),
+                             'missed_native_callbacks':sum(p['missed_deadlines'] or 0 for p in metrics['profiles'].values())}
     return result
 
 
@@ -156,11 +170,11 @@ def summarize(report):
             lines.extend(['',f"{name}: chip used {final['chip_used_bytes']:,} B; free {final['chip_free_bytes']:,} B; largest block {final['largest_chip_free_block_bytes']:,} B; runtime peak {memory['peak_chip_bytes']} B; cold initialized-pool peak {memory['cold_boot_peak']} B.",
                           f"Deadlines/publications: `{case['deadlines']}`. Allocation failures: unmeasured; pre-Exec bootstrap: unmeasured.",''])
         if 'cold_loading' in case:
-            cold=case['cold_loading'];lines+=['| Cold loading stage | Emulated seconds | From previous measured stage (ms) |','|---|---:|---:|']
+            cold=case['cold_loading'];lines+=['| Cold loading stage | Emulated seconds | Signed offset from previous listed milestone (ms) |','|---|---:|---:|']
             for stage in cold['stages']:
                 seconds=f"{stage['seconds']:.6f}" if stage['seconds'] is not None else 'unmeasured'
-                lines.append(f"| {stage['stage']} | {seconds} | {ms(stage['from_previous_measured_stage_cck'])} |")
-            lines.extend(['',f"Total reset to successful input: {ms(cold['total_reset_to_input_cck'])} ms. Disk reads/seeks and host launch time: unavailable.",cold['scope'],''])
+                lines.append(f"| {stage['stage']} | {seconds} | {ms(stage['from_previous_listed_milestone_cck'])} |")
+            lines.extend(['',f"Total reset to successful input: {ms(cold['total_reset_to_input_cck'])} ms; displayed title and input both ready: {ms(cold['total_reset_to_display_and_input_cck'])} ms. Disk reads/seeks and host launch time: unavailable.",cold['scope'],''])
     lines+=['','Coverage: '+', '.join(f"{p}: {s}" for p,s in report.get('coverage',{}).items()),'',
             'Deltas: '+json.dumps(report.get('deltas',{}),sort_keys=True), '',
             'Refresh hook: after merging new fonts/celebration, run the affected native checks or `RUST_LOG=info python scripts/native_metrics.py --refresh --record`; never copy results from an unfinished branch.','']
@@ -175,6 +189,8 @@ def metric_deltas(previous, report):
         compatible=('metrics' in old and 'metrics' in current and old['metrics']['clock']==current['metrics']['clock']
             and old['metrics']['boundaries']==current['metrics']['boundaries']
             and old['provenance']['target']==current['provenance']['target']
+            and old['provenance'].get('tool_sha256')==current['provenance'].get('tool_sha256')
+            and old['provenance'].get('kickstart_sha256')==current['provenance'].get('kickstart_sha256')
             and {k:v['version'] for k,v in old['provenance']['tools'].items()}=={k:v['version'] for k,v in current['provenance']['tools'].items()})
         if not compatible:
             delta['runtime'][name]={'state':'incompatible or unmeasured'};continue
@@ -205,7 +221,7 @@ def generate():
                 measurement_inputs[path]=sha
     coverage={p:'measured' if any(c.get('metrics',{}).get('profiles',{}).get(p,{}).get('callbacks',0) for c in runtime.values()) else 'unmeasured' for p in PROFILES}
     coverage['celebration']='unavailable in this product; remeasure when implemented'
-    complete=all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values())
+    complete=all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration')
     report={'schema':1,'state':'complete' if complete else 'incomplete','static':static,'runtime':runtime,'coverage':coverage,'measurement_inputs':measurement_inputs,
             'identity':identity({'executable':static['executable_sha256'],'inputs':static['product_inputs']}),
             'deltas':{'state':'no previous accepted compatible report'}}
