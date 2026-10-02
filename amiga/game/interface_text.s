@@ -20,11 +20,11 @@ ui_help4: dc.b 'BOTH AT REAR: DROP SHOT.',0
 ui_help5: dc.b 'POINTS: 15/30/40/GAME.',0
 ui_help6: dc.b 'DEUCE: WIN 2 IN A ROW.',0
 ui_help7: dc.b 'DEMO: LEFT/RIGHT, ACT CHOOSE',0
-ui_control1: dc.b 'BLUE: WASD MOVE / F OR G ACT',0
-ui_control2: dc.b 'RED: ARROWS / . OR / ACT',0
+ui_control1: dc.b 'A: WASD MOVE / F OR G ACT',0
+ui_control2: dc.b 'B: ARROWS / . OR / ACT',0
 ui_control3: dc.b 'KEYPAD 8/4/2/6 / 0 OR . ACT',0
-ui_control4: dc.b 'BLUE JOYSTICK PORT 2',0
-ui_control5: dc.b 'RED JOYSTICK PORT 1',0
+ui_control4: dc.b 'A JOYSTICK PORT 2',0
+ui_control5: dc.b 'B JOYSTICK PORT 1',0
 ui_control6: dc.b 'DEMO: ENTER CHOOSE, ESC EXIT',0
 ui_page1: dc.b 'PAGE 1 / 3',0
 ui_page2: dc.b 'PAGE 2 / 3',0
@@ -33,7 +33,7 @@ ui_page_hint: dc.b 'LEFT/RIGHT PAGE ACTION EXIT',0
 ui_credits: dc.b 'BASELINE RALLY / CREDITS',0
 ui_copyright: dc.b 'SEGA-DERIVED / PRIVATE PORT',0
 ui_version: incbin "build/native/version.bin"
-ui_colours: dc.b 'BLUE AND RED KEEP CONTROLS.',0
+ui_colours: dc.b 'A BLUE / B RED / B AI ROBOT',0
 ui_pause_hint: dc.b 'P OR ESC: PAUSE / RESUME',0
 ui_demo_selector: dc.b 'DEMO - TAKE OVER / EXIT',0
 ui_blue_win: dc.b 'A WINS GAME',0
@@ -43,6 +43,11 @@ ui_tally_text: dc.b 'A '
 ui_tally_blue_digit: dc.b '0'
         dc.b '  B '
 ui_tally_red_digit: dc.b '0',0
+ui_ai_win: dc.b 'B AI WINS GAME',0
+ui_ai_tally_text: dc.b 'A '
+ui_ai_tally_p1_digit: dc.b '0'
+        dc.b '  B AI '
+ui_ai_tally_p2_digit: dc.b '0',0
 ui_paused_text: dc.b 'PAUSED',0
 ui_confirm_text: dc.b 'RETURN TO TITLE?',0
 ui_resume_text: dc.b 'RESUME',0

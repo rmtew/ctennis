@@ -20,3 +20,9 @@ Git history. Builders reject missing/incompatible/undeclared files; they never
 extract or recover from original sources. Version text and demo assembly table
 are generated in ignored build/native from the Git revision and committed native
 input recording. Keep this repository and its assets private.
+
+Classic player replacement: human/robot body masks are newly drawn with built-in
+ImageGen and fitted to retained native pose envelopes, seams and attachment edges.
+White rackets, pose geometry, animation, ball, shadow and court retain their
+Sega-derived provenance. Neither the whole game nor the composite assets are
+claimed clean-room. See ../../docs/sprites/README.md for the fitting/evidence limits.

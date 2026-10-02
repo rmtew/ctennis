@@ -45,6 +45,10 @@ def run(takeover=False):
   for callback in range(30000):
    until({'pc':base+symbols['game_tick_dispatch']});life=num('game_lifecycle',2)
    if life in (6,7,8):break
+   if life==1:
+    from native_player_roles import assert_player_roles
+    roles=assert_player_roles(mem,num)
+    check('demo records human A against AI B', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
    if life!=1:
     s.inspect('step',{'count':1});continue
    until({'pc':base+symbols['game_assignment_done']})
@@ -75,6 +79,8 @@ def run(takeover=False):
       check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
     else:raise AssertionError('Mid-match selected Enter never took over')
     until({'pc':base+symbols['native_input_done']});check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
+    roles=assert_player_roles(mem,num)
+    check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
     state=mem('ui_entropy_state',2);before=mem('game_play_state',60)
     until({'seconds':time+1});check('live entropy stops advancing demo generator',mem('ui_entropy_state',2).hex(),state.hex())
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
@@ -93,6 +99,9 @@ def run(takeover=False):
    check('complete match award reproduced',list(mem('game_games_a',2)),recording['final_games'])
    check('normal match result lifecycle',life,6)
    s.inspect('capture_screenshot',{'path':str(directory/'complete-match.png')})
+   from native_scoreboard_raster import assert_scoreboard_raster
+   scoreboard=assert_scoreboard_raster(directory/'complete-match.png',list(mem('prepared_field_values',2)),recording['final_games'])
+   check('completed match preserves all six authored WIN rows',all(row['matched'] for row in scoreboard),True)
   if not takeover:
    # After the independently frozen full match, retain every actual Copper
    # publication through first-play, returned-title idle and next attract entry.

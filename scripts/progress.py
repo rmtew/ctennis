@@ -9,6 +9,7 @@ RECEIPTS = {
     'package': 'amiga/interfaces/enhanced/delivery/package-report.json',
     'menu-cold': 'tests/enhanced-menu-cold/report.json',
     'inputs': 'tests/native-inputs/report.json',
+    'scoreboard': 'tests/native-scoreboard/report.json',
     'setup-proposal': 'tests/native-setup/report.json',
     'demo': 'tests/demo-full-repeat/report.json',
     'takeover': 'tests/demo-mid-takeover/report.json',
@@ -25,6 +26,12 @@ RECEIPTS = {
 
 
 def acceptance(name, report):
+    if name == 'scoreboard':
+        return (len(report.get('cases', [])) == 28
+                and bool(report.get('compiled_fault_controls'))
+                and all(len({p['bank'] for p in row.get('plane_pointers', [])}) == 2
+                        and len(row.get('raster', [])) == 2
+                        for row in report.get('cases', [])))
     if name == 'package':
         return report.get('embedded_executable_verified') is True and report.get('reproducibility', {}).get('two_clean_builds') is True
     if name == 'demo':

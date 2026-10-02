@@ -67,8 +67,9 @@ def run(adf=False):
                     row=(first,'DEMO - TAKE OVER / EXIT','TAKE OVER' if number('ui_demo_choice') else 'EXIT')
                 checks.append(assert_footer_raster(path,*row))
             if n=='play':
-                from native_identity_raster import assert_mode_raster
+                from native_identity_raster import assert_mode_raster,assert_logo_absent_initial_raster
                 assert_mode_raster(path,2)
+                assert_logo_absent_initial_raster(path)
         def frozen():
             return (mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)
                     +mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock'))
@@ -163,12 +164,12 @@ def run(adf=False):
         check('entry-held W stays physically down',mem('game_keyboard_matrix',128)[0x11],1)
         check('entry-held W cannot cause movement after takeover',number('game_player_controls')&2,0)
         check('takeover continues one-player AI',number('game_mode')&128,0)
-        # Return and prove the alternative P2 action exits rather than taking over.
+        # Return and prove the alternative B action exits rather than taking over.
         key(0x19);key(0x4d);key(0x44);key(0x4e);key(0x44)
         advance(32);check('next demo starts',number('ui_demo'),255)
-        key(0x3a);check('P2 slash exits demo',number('game_lifecycle',2),2)
+        key(0x3a);check('B slash exits demo',number('game_lifecycle',2),2)
         check('other input leaves demo',number('ui_demo'),0)
-        # Same normal takeover path for the physical P1 second joystick button.
+        # Same normal takeover path for the physical A second joystick button.
         advance(32);check('third demo starts',number('ui_demo'),255)
         s.inspect('input_set_port',{'port':2,'device':'joystick'})
         check('third demo defaults EXIT',number('ui_demo_choice'),0)

@@ -105,11 +105,14 @@ ui_render:
         bra     .done
 .old_win_overlay:
         cmpi.b  #4,d0
-        beq.s   .serve_overlay
+        beq     .serve_overlay
         lea     ui_blue_win,a0
         cmpi.b  #2,d0
         beq.s   .win_text
         lea     ui_red_win,a0
+        btst    #7,game_mode
+        bne.s   .win_text
+        lea     ui_ai_win,a0
 .win_text:
         bsr     ui_footer_text
         move.b  game_games_a,d0

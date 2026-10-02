@@ -6,7 +6,7 @@ menu/help/pause and a complete native attract recording with takeover. The old
 comparison build and original-platform tooling are retired; Git history retains
 tracked rollback. CT12 gives the native game its Baseline Rally title, Blue/Red player identity
 and expanded gameplay labels. CT13 adds selected Battle Hymn chiptune and a full-match winner celebration;
-recording extensions remain later scope. See [CT13](docs/ct13/README.md).
+Classic sprites preserve logical A/B ownership with human/robot roles. Recording extensions remain later scope. See [CT13](docs/ct13/README.md).
 
 This private repository includes the approved retained Amiga-native assets.
 They remain Sega-derived; retention/conversion grants no new ownership or public
