@@ -36,7 +36,7 @@ RUST_LOG=info python scripts/native_metrics.py --refresh --require-runtime --rec
 Individual affected checks can be run directly. `--record` creates no commit,
 PR or publication; review and commit `docs/metrics/current.json` and `.md` together.
 Deltas use the previous complete report on local `master`, the last accepted
-baseline; fetch/update that baseline by the normal review process. They compare
+baseline; until a report lands on master, the explicitly preserved latest reviewed snapshot supplies historical deltas. They compare
 runtime only when target, tool versions and measurement boundaries agree.
 
 Report-only/docs-only work reuses proven identical products/configuration:
@@ -93,9 +93,9 @@ RAM is whole initialized machine chip usage including resident OS/stack, with
 free/largest block verified against Exec free lists. Cold peak covers observed
 free-count mutations from initialized pools; pre-Exec bootstrap remains
 unmeasured. Zero other RAM describes the measured unexpanded target. Allocation
-failure results are not instrumented and stay null. Celebration is unavailable
-on this baseline: after its independent polish implementation lands, rebuild and
-refresh affected profiles. Do not inspect another worker's unfinished files.
+failure results are not instrumented and stay null. Celebration is measured in
+the current merged product; future feature changes require affected profile
+refreshes. Do not inspect another worker's unfinished files.
 
 Input responsiveness may precede full scanout. Milestone differences are signed
 offsets; explicit loader/init/display intervals and the total until both input
@@ -117,10 +117,9 @@ configured, so executable headroom remains null rather than borrowing the RAM
 budget.
 
 `--check` verifies the report's content identity as well as its dependencies, so
-changed numeric summaries cannot keep a previous identity. When celebration
-lands, register its actual new state in `MetricsObserver.profile()` and replace
-the explicit unavailable declaration in `generate()` before refreshing. The
-baseline report does not certify that future feature.
+changed numeric summaries cannot keep a previous identity. New lifecycle features require their actual native state in `MetricsObserver.profile()`
+and a measured availability declaration in `generate()` before refreshing. A
+baseline report does not certify a future feature.
 
 UI construction distributions group actual redraws by page: the title row shows
 menu-page construction, and help includes controls/credits. This grouping is
@@ -191,3 +190,5 @@ report yet, the preserved reviewed baseline supplies labeled historical static
 deltas. `--check` verifies that baseline hash as well as current product inputs.
 
 The frozen PR21/PR22 integration preserves the selected LED masks and title geometry. Point banks occupy startup-generated chip BSS, not embedded file bytes; listing-backed BSS extents are reported separately and reconcile with HUNK_BSS. The previous measured product is preserved in baselines/pre-title-score-current.json/.md and its size snapshot. Refresh all four affected metric collectors plus the full cold menu after this product change.
+
+The focused native LED startup check supplies square-startup.json/.md, bound to its exact development executable and frozen-preview contract. Its emulated constructor interval is an ordinary-startup observation; it does not split the cold-ADF entry-to-ready interval. Current metrics cover frozen master f82780dcf9f4be154d912db0b306598a729afe24. Later help wording/title-ball changes require exact-product validation before reuse or remeasurement; these measurements do not certify those changes.
