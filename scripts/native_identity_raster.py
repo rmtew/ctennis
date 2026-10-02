@@ -71,3 +71,24 @@ def assert_footer_raster(path, first, second, selected=None):
         actual=list(picture.convert('RGB').crop((126,208,638,224)).get_flattened_data())
     assert actual==expected,{'label':'centered complete two-row footer raster','first':first,'second':second,'selected':selected,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
     return {'first':first,'second':second,'selected':selected,'matched':True,'pixels':len(actual)}
+
+
+def assert_menu_selection_raster(path, selection, players):
+    """Authored normal instructions and exactly one inverted title-menu row."""
+    font=(ROOT/'assets/native/title/font.bin').read_bytes();plane=bytearray(80*32)
+    entries=[(32,'START GAME'),(40,'PLAYERS: '+str(players)),(48,'HOW TO PLAY'),(56,'CONTROLS'),(72,'UP/DOWN CHOOSE  ACTION OPEN')]
+    for index,(y,text) in enumerate(entries):
+        for column,char in enumerate(text):
+            for row in range(8):
+                byte=font[ord(char)*8+row]
+                if index==selection:byte^=255
+                plane[(y+row)*32+4+column]=byte
+    expected=[]
+    for byte in plane:
+        for bit in range(8):
+            rgb=(255,255,255) if byte&(128>>bit) else (0,0,0)
+            expected.extend((rgb,rgb))
+    with Image.open(path) as picture:
+        actual=list(picture.convert('RGB').crop((126,128,638,208)).get_flattened_data())
+    assert actual==expected,{'label':'full title menu selected inversion and clearing','selection':selection,'players':players,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
+    return {'selection':selection,'players':players,'inverted_menu_matched':True,'pixels':len(actual)}

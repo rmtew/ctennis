@@ -105,6 +105,11 @@ restart/input/publication guards remain. Attract replay still compares the
 frozen10958-tick trajectory without regenerating it.
 
 All bottom messages use the256-pixel court viewport and centered32-cell rows.
+Inversion consistently marks the selected title-menu row (including the current
+player-count choice), pause option, return-confirmation option and demo option.
+Static instructions and game-state messages remain normal. Cached normal pages
+and cleared footer rows remove the previous inversion before each redraw.
+Navigation remains edge-driven: holding a direction never repeats the selection.
 Pause/confirmation and match celebration own both rows. Ordinary demo game-state
 feedback owns row1; row2 always shows `DEMO - TAKE OVER / EXIT`, with only the
 chosen option inverted and EXIT selected by default. Left chooses TAKE OVER,

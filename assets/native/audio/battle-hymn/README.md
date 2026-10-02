@@ -60,7 +60,8 @@ before terminal load, preserving the current rest duration; that bypasses the
 terminal done record on a looping traversal. An engine-level phrase boundary
 must then account for the full384 units. This package does not implement that
 scheduler or alter product lifecycle logic. Host audition sound used edge ramps,
-softened stereo pan and RMS normalization; native rendering is still untested.
+softened stereo pan and RMS normalization. The integrated native capture and
+measured scheduling are described below; they are distinct from that host sound.
 
 ## Historical provenance and primary-source correction
 

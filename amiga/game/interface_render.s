@@ -54,7 +54,7 @@ ui_render:
         lea     ui_yes_text,a0
 .pause_line:
         lea     ui_overlay_plane+256,a2
-        bsr     ui_footer_text
+        bsr     ui_footer_selected
         rts
 .title:
         tst.b   ui_paused
@@ -183,20 +183,37 @@ ui_render:
         lea     ui_players_two,a0
         bsr     ui_text
 .marker:
+        ; The selected existing menu row owns inversion. The cached normal
+        ; page restores every previous highlight before this bounded redraw.
         moveq   #0,d0
         move.b  ui_selection,d0
+        move.w  d0,d1
+        lsl.w   #2,d1
+        lea     ui_menu_lines,a0
+        move.l  (a0,d1.w),a0
+        cmpi.b  #1,d0
+        bne.s   .selected_row
+        tst.b   ui_player_count
+        beq.s   .selected_row
+        lea     ui_players_two,a0
+.selected_row:
         lsl.w   #8,d0
-        lea     title_plane0+144*32-2,a2
+        lea     title_plane0+144*32,a2
         adda.w  d0,a2
-        lea     ui_marker,a0
-        bsr     ui_text
+        bsr     ui_selected_text
 .publish:
         move.b  #1,display_ready
 .done:  rts
 
 ; A0 zero-terminated ASCII (<=28 columns); A2 line origin; D4 plane stride/0.
+ui_selected_text:
+        movem.l d0-d3/d5/d7/a0-a2/a4,-(sp)
+        moveq   #-1,d3
+        bra.s   ui_text_draw
 ui_text:
         movem.l d0-d3/d5/d7/a0-a2/a4,-(sp)
+        moveq   #0,d3
+ui_text_draw:
         addq.l  #4,a2
 .char:
         moveq   #0,d0
@@ -209,6 +226,7 @@ ui_text:
         move.l  a2,a4
 .row:
         move.b  (a1)+,d1
+        eor.b   d3,d1
         move.b  d1,(a4)
         tst.w   d4
         beq.s   .next_row
@@ -226,8 +244,14 @@ ui_text:
 ; A0 ASCII, A2 footer-line origin. Court viewport is32 bytes/256 pixels;
 ; ui_text's four-byte title indent is compensated here, not globally changed.
 ; Constant footer strings must fit32 columns; overlong text is never drawn.
+ui_footer_selected:
+        movem.l d0-d2/a1-a2,-(sp)
+        moveq   #-1,d2
+        bra.s   ui_footer_draw
 ui_footer_text:
         movem.l d0-d2/a1-a2,-(sp)
+        moveq   #0,d2
+ui_footer_draw:
         move.l  a0,a1
         moveq   #0,d0
 .length:
@@ -243,7 +267,12 @@ ui_footer_text:
         lsr.w   #1,d1
         subq.w  #4,d1
         adda.w  d1,a2
+        tst.b   d2
+        bne.s   .selected
         bsr     ui_text
+        bra.s   .done
+.selected:
+        bsr     ui_selected_text
 .done:
         movem.l (sp)+,d0-d2/a1-a2
         rts
