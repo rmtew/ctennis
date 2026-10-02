@@ -53,23 +53,21 @@ game_scene_actor:
 .pose:
         lsl.w   #3,d0
         lea     game_scene_poses,a0
-        ; Presentation only: recorded demo controllers also look robotic.
+        ; Recorded demo input owns the same human A controller as live input.
         ; Resolve logical controller ownership from the mode/end mapping.
         ; Court-relative AI flags lag end exchange during round pause.
         ; The next completed scene publishes role and geometry together;
         ; no player state or clocks are changed.
-        tst.b   ui_demo
-        bne.s   .robot
         btst    #7,game_mode
         bne.s   .role_ready ; two human controllers
         btst    #4,game_mode
         beq.s   .original_ends
         tst.w   d7
-        bne.s   .robot ; exchanged: lower is logical P2
+        bne.s   .robot ; exchanged: lower is logical B
         bra.s   .role_ready
 .original_ends:
         tst.w   d7
-        bne.s   .role_ready ; original: lower is logical P1
+        bne.s   .role_ready ; original: lower is logical A
 .robot:
         lea     game_scene_robot_poses,a0
 .role_ready:

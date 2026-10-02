@@ -1,5 +1,5 @@
 ; Physical pads belong to players, never to screen positions.
-; P1 = connector 2, P2 = connector 1; two-button sticks (red/blue).
+; A = connector 2, B = connector 1; two-button sticks (red/blue).
 ; Held bits: right/up/left/down/action1/action2 = 1/2/4/8/16/32.
 game_init_controls:
         andi.b  #$3f,$bfe201     ; CIA fire pins are inputs

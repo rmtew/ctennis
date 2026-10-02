@@ -168,5 +168,29 @@
     "amiga/game/gameplay_ball.s": "0e831e4764543c9b1416c3ffb44fcf9f0cd3b8c815c0061bcb35d49058f37dcd",
     "assets/interface/demo-inputs.json": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
     "tests/fixtures/native-demo/trajectory.sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6"
+  },
+  "ab_headers": {
+    "0": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    },
+    "1": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    },
+    "2": {
+      "16": "1d5c05e8a92e45fcfdcea3b9d5ed651f99ce8b1d7f64102b09b80513f3eccc94",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    },
+    "3": {
+      "16": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "224": "0ab8a505aacd22642abfed99b47e693c4abf6ef5021311c97e991d9d471460f6"
+    }
+  },
+  "court_without_logo": {
+    "0": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+    "1": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
+    "2": "bbc082b398ae0e6fcdb7648fb620779d94718212c8df5d3db49525f06fda8d9d",
+    "3": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019"
   }
 }

@@ -48,7 +48,7 @@ def run(takeover=False):
    if life==1:
     from native_player_roles import assert_player_roles
     roles=assert_player_roles(mem,num)
-    check('demo native roles are both robots', [row['role'] for row in roles], ['robot','robot'])
+    check('demo records human A against AI B', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
    if life!=1:
     s.inspect('step',{'count':1});continue
    until({'pc':base+symbols['game_assignment_done']})
@@ -75,7 +75,7 @@ def run(takeover=False):
     else:raise AssertionError('Mid-match G never took over')
     until({'pc':base+symbols['native_input_done']});check('takeover action consumed',num('game_player_controls')&32,0)
     roles=assert_player_roles(mem,num)
-    check('takeover P1 human/P2 robot', {row['owner']:row['role'] for row in roles}, {'P1':'human','P2':'robot'})
+    check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
     state=mem('ui_entropy_state',2);before=mem('game_play_state',60)
     until({'seconds':time+1});check('live entropy stops advancing demo generator',mem('ui_entropy_state',2).hex(),state.hex())
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)

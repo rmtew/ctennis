@@ -59,7 +59,7 @@ class ClassicPlayers(unittest.TestCase):
         for path, digest in CONTRACT['unchanged_physics'].items():
             self.assertEqual(hashlib.sha256((ROOT/path).read_bytes()).hexdigest(), digest, path)
 
-    def test_p1_p2_labels_fit_font_and_court_bounds(self):
+    def test_a_b_labels_fit_font_and_court_bounds(self):
         source = (ROOT/'amiga/game/interface_text.s').read_text()
         font = (ROOT/'assets/native/title/font.bin').read_bytes()
         strings = re.findall(r"dc.b '([^']*)'", source)
@@ -68,15 +68,36 @@ class ClassicPlayers(unittest.TestCase):
             for char in set(value)-{' '}:
                 self.assertTrue(any(font[ord(char)*8:ord(char)*8+8]), char)
         self.assertNotRegex(source, r"'(?:DEMO - )?(?:BLUE|RED) WINS")
-        self.assertIn("'P1: WASD MOVE / F OR G ACT'", source)
-        self.assertIn("'P2: ARROWS / . OR / ACT'", source)
+        self.assertIn("'A: WASD MOVE / F OR G ACT'", source)
+        self.assertIn("'B: ARROWS / . OR / ACT'", source)
+        self.assertNotRegex(source, r"'[^']*P[12][^']*'")
+        for name in ('ui_demo_tally_text', 'ui_tally_text', 'ui_ai_tally_text'):
+            block=source[source.index(name+':'):].splitlines()
+            joined=''
+            for line in block:
+                joined+=''.join(re.findall(r"dc.b '([^']*)'", line))
+                if line.rstrip().endswith(',0'):break
+            self.assertLessEqual(len(joined),28,(name,joined))
         planes = [(ROOT/f'assets/native/court/plane{n}.bin').read_bytes() for n in range(4)]
-        for text, left, colour in (('P1', 16, 4), ('P2', 224, 13)):
-            for y in range(16, 32):
-                for x in range(left, left+16):
-                    index = sum(((p[y*32+x//8] >> (7-x%8)) & 1) << n for n,p in enumerate(planes))
-                    on = 20 <= y < 28 and bool(font[ord(text[(x-left)//8])*8+y-20] & (128 >> ((x-left)%8)))
-                    self.assertEqual(index, colour if on else 0)
+        for n,plane in enumerate(planes):
+            for left in (16,224):
+                block=b''.join(plane[y*32+left//8:y*32+left//8+2] for y in range(16,32))
+                self.assertEqual(hashlib.sha256(block).hexdigest(), CONTRACT['ab_headers'][str(n)][str(left)])
+
+    def test_residual_logo_cleared_and_unrelated_court_preserved(self):
+        atlas=(ROOT/'assets/native/scene/sprite-images.bin').read_bytes()
+        self.assertEqual(atlas[28*128:31*128],bytes(3*128))
+        for n in range(4):
+            plane=(ROOT/f'assets/native/court/plane{n}.bin').read_bytes()
+            for y in range(139,144):
+                for x in range(8,39):
+                    self.assertFalse(plane[y*32+x//8] & (128>>(x%8)))
+            # Mask the exact authorized logo/header region when verifying
+            # unrelated court pixels against the independently frozen base.
+            masked=bytearray(plane)
+            for y in range(139,144):
+                for x in range(8,39):masked[y*32+x//8]&=~(128>>(x%8))
+            self.assertEqual(hashlib.sha256(masked).hexdigest(), CONTRACT['court_without_logo'][str(n)])
 
 
 if __name__ == '__main__':

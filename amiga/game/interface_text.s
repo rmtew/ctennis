@@ -21,11 +21,11 @@ ui_help4: dc.b 'BOTH AT REAR: DROP SHOT.',0
 ui_help5: dc.b 'POINTS: 15/30/40/GAME.',0
 ui_help6: dc.b 'DEUCE: WIN 2 IN A ROW.',0
 ui_help7: dc.b '6 GAMES WINS. TALLY: GAMES.',0
-ui_control1: dc.b 'P1: WASD MOVE / F OR G ACT',0
-ui_control2: dc.b 'P2: ARROWS / . OR / ACT',0
+ui_control1: dc.b 'A: WASD MOVE / F OR G ACT',0
+ui_control2: dc.b 'B: ARROWS / . OR / ACT',0
 ui_control3: dc.b 'KEYPAD 8/4/2/6 / 0 OR . ACT',0
-ui_control4: dc.b 'P1 JOYSTICK PORT 2',0
-ui_control5: dc.b 'P2 JOYSTICK PORT 1',0
+ui_control4: dc.b 'A JOYSTICK PORT 2',0
+ui_control5: dc.b 'B JOYSTICK PORT 1',0
 ui_control6: dc.b 'EITHER BUTTON: SERVE / SHOT',0
 ui_page1: dc.b 'PAGE 1 / 3',0
 ui_page2: dc.b 'PAGE 2 / 3',0
@@ -34,28 +34,28 @@ ui_page_hint: dc.b 'LEFT/RIGHT PAGE ACTION EXIT',0
 ui_credits: dc.b 'BASELINE RALLY / CREDITS',0
 ui_copyright: dc.b 'SEGA-DERIVED / PRIVATE PORT',0
 ui_version: incbin "build/native/version.bin"
-ui_colours: dc.b 'P1 BLUE / P2 RED / ROBOT AI',0
+ui_colours: dc.b 'A BLUE / B RED / B AI ROBOT',0
 ui_pause_hint: dc.b 'P OR ESC: PAUSE / RESUME',0
 ui_demo_text: dc.b 'DEMO - G / PORT2 BUTTON2',0
-ui_demo_hint: dc.b 'TAKE OVER P1 / INPUT: MENU',0
-ui_blue_win: dc.b 'P1 WINS GAME',0
-ui_red_win: dc.b 'P2 WINS GAME',0
+ui_demo_hint: dc.b 'TAKE OVER A / INPUT: MENU',0
+ui_blue_win: dc.b 'A WINS GAME',0
+ui_red_win: dc.b 'B WINS GAME',0
 ui_serve_text: dc.b 'YOUR SERVE',0
-ui_demo_blue_win: dc.b 'DEMO - P1 AI WINS GAME',0
-ui_demo_red_win: dc.b 'DEMO - P2 AI WINS GAME',0
-ui_demo_tally_text: dc.b 'P1AI '
+ui_demo_blue_win: dc.b 'DEMO - A WINS GAME',0
+ui_demo_red_win: dc.b 'DEMO - B AI WINS GAME',0
+ui_demo_tally_text: dc.b 'A '
 ui_demo_tally_blue_digit: dc.b '0'
-        dc.b ' P2AI '
+        dc.b ' B AI '
 ui_demo_tally_red_digit: dc.b '0'
         dc.b ' G/BTN2:TAKEOVER',0
-ui_tally_text: dc.b 'P1 '
+ui_tally_text: dc.b 'A '
 ui_tally_blue_digit: dc.b '0'
-        dc.b '  P2 '
+        dc.b '  B '
 ui_tally_red_digit: dc.b '0',0
-ui_ai_win: dc.b 'P2 AI WINS GAME',0
-ui_ai_tally_text: dc.b 'P1 '
+ui_ai_win: dc.b 'B AI WINS GAME',0
+ui_ai_tally_text: dc.b 'A '
 ui_ai_tally_p1_digit: dc.b '0'
-        dc.b '  P2 AI '
+        dc.b '  B AI '
 ui_ai_tally_p2_digit: dc.b '0',0
 ui_paused_text: dc.b 'PAUSED',0
 ui_confirm_text: dc.b 'RETURN TO TITLE?',0

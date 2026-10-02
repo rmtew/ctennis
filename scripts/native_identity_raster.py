@@ -7,16 +7,30 @@ from native_status_raster import PALETTE
 def assert_mode_raster(path, variant):
     planes = [(ROOT/f'assets/native/court/score_bank_mode_{variant}_p{p}.bin').read_bytes() for p in range(4)]
     expected=[]
-    for y in range(8):
-        for x in range(200,256):
-            c=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
-            rgb=tuple(((PALETTE[c]>>s)&15)*17 for s in (8,4,0))
-            expected.extend((rgb,rgb))
+    actual=[]
     with Image.open(path) as picture:
         assert picture.size==(716,285)
-        actual=list(picture.convert('RGB').crop((526,48,638,56)).get_flattened_data())
-    assert actual==expected,{'label':'complete native mode raster','variant':variant,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
+        raster=picture.convert('RGB')
+        # Side labels only: the upper player's legs can cover the centre of
+        # this background bank at Y32 after a game award.
+        for left,right in ((0,48),(208,256)):
+            for y in range(8):
+                for x in range(left,right):
+                    c=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
+                    rgb=tuple(((PALETTE[c]>>s)&15)*17 for s in (8,4,0))
+                    expected.extend((rgb,rgb))
+            actual.extend(raster.crop((126+2*left,48,126+2*right,56)).get_flattened_data())
+    assert actual==expected,{'label':'centred A/B controller-role raster','variant':variant,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
     return {'variant':variant,'matched':True,'pixels':len(actual)}
+
+
+def assert_logo_absent_initial_raster(path):
+    with Image.open(path) as picture:
+        assert picture.size==(716,285)
+        pixels=list(picture.convert('RGB').crop((142,155,204,160)).get_flattened_data())
+    assert all(pixel==(0,0,0) for pixel in pixels), 'residual court logo in initial native scanout'
+    return {'logo_pixels_checked':len(pixels),'absent':True}
+
 
 
 def assert_player_raster(path, exchanged):

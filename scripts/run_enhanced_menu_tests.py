@@ -54,8 +54,9 @@ def run(adf=False):
                 from native_identity_raster import assert_title_raster
                 assert_title_raster(path)
             if n=='play':
-                from native_identity_raster import assert_mode_raster
+                from native_identity_raster import assert_mode_raster,assert_logo_absent_initial_raster
                 assert_mode_raster(path,2)
+                assert_logo_absent_initial_raster(path)
         def frozen():
             return (mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)
                     +mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock'))
@@ -144,19 +145,23 @@ def run(adf=False):
         check('entry-held W stays physically down',mem('game_keyboard_matrix',128)[0x11],1)
         check('entry-held W cannot cause movement after takeover',number('game_player_controls')&2,0)
         check('takeover continues one-player AI',number('game_mode')&128,0)
-        # Return and prove the alternative P2 action exits rather than taking over.
+        # Return and prove the alternative B action exits rather than taking over.
         key(0x19);key(0x4d);key(0x44);key(0x4e);key(0x44)
         advance(32);check('next demo starts',number('ui_demo'),255)
-        key(0x3a);check('P2 slash exits demo',number('game_lifecycle',2),2)
+        key(0x3a);check('B slash exits demo',number('game_lifecycle',2),2)
         check('other input leaves demo',number('ui_demo'),0)
-        # Same normal takeover path for the physical P1 second joystick button.
+        # Same normal takeover path for the physical A second joystick button.
         advance(32);check('third demo starts',number('ui_demo'),255)
         s.inspect('input_set_port',{'port':2,'device':'joystick'})
         check('G is still held before fresh joystick takeover',mem('game_keyboard_matrix',128)[0x24],1)
         s.inspect('input_joy',{'port':2,'blue':True})
-        until({'pc':base+symbols['ui_sample']});before=frozen()
-        until({'pc':base+symbols['ui_input_draw']})
-        check('port2 button2 takes over Blue',number('ui_demo'),0)
+        # Physical event may arrive after the next pad sample. Match the
+        # published CT13 observer's bounded real-input sampling contract.
+        for _ in range(12):
+            until({'pc':base+symbols['ui_sample']});before=frozen()
+            until({'pc':base+symbols['ui_input_draw']})
+            if not number('ui_demo'):break
+        check('port2 button2 takes over A',number('ui_demo'),0)
         check('joystick takeover preserves complete native state',frozen().hex(),before.hex())
         until({'pc':base+symbols['native_input_done']})
         check('joystick takeover press consumed',number('game_player_controls')&32,0)
