@@ -184,3 +184,13 @@ restore pointers are written at initial bank setup. No timer, event, trajectory,
 clock bound or hardware publication window changes. Focused actual WIN/status
 pointer controls, the failed cadence case and unattended cycles must establish
 this correction; earlier receipts are retained under their original heads.
+
+The next observer atbcef6f4 confirmed the ordering problem: title lifecycle and
+an actual title-bank publication preceded the following UI bitmap copy, so a
+quiet watch activated on publication still saw bulk construction and dropped
+3845events atframe24354. Returned title now clears readiness while it is dirty;
+only the completed UI copy selects title and marks it ready. This preserves the
+existing lifecycle/tune/idle timers and first-publication-plus-two field rule,
+and avoids publishing a menu before its complete bitmap exists. Actual title
+bank, field pixels, zero drops, subscription acknowledgements and strict restart
+cadence remain required on this final correction.
