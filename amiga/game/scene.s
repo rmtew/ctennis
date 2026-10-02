@@ -1,12 +1,14 @@
 ; Native scene: two three-part actors, a ball and a court shadow. Eight logical
 ; primitives, independent of hardware channels. Geometry is prepared at tick
 ; end and rendered on the next update; resets can refresh actors immediately.
-O_Y equ 0
-O_X equ 1
-O_FRAME equ 2
-O_COLOUR equ 4
-O_VISIBLE equ 5
-O_SIZE equ 8
+        rsset 0
+O_Y rs.b 1
+O_X rs.b 1
+O_FRAME rs.w 1
+O_COLOUR rs.b 1
+O_VISIBLE rs.b 1
+        rs.b 2 ; reserved bytes6..7
+O_SIZE rs.b 0
 SC_LOWER equ 0
 SC_UPPER equ 3*O_SIZE
 SC_BALL equ 6*O_SIZE
