@@ -84,6 +84,22 @@ def run(adf=False,help_only=False):
         check('ordinary title',number('game_lifecycle',2),2)
         check('title display chosen',number('game_title_display'),255)
         photo('menu')
+        # Exercise the side-figure rows with actual physical input in all eight
+        # mode/selection states. Full scanout guards catch full-row highlight
+        # copies that would erase or turn the blue/red figures white.
+        for players in (1,2):
+            if players==2:
+                key(0x4d);key(0x4e);key(0x4c)
+            check('title role toggle '+str(players),number('ui_player_count'),players-1)
+            for selection in range(4):
+                check('title selection '+str((players,selection)),number('ui_selection'),selection)
+                help_photo('side-menu-'+str(players)+'p-selection-'+str(selection))
+                key(0x4d)
+            check('title navigation wraps '+str(players),number('ui_selection'),0)
+        key(0x4d);key(0x44)
+        check('Mode action toggles back to AI',number('ui_player_count'),0)
+        key(0x4c);key(0x4e)
+        check('right outside Mode preserves roles',number('ui_player_count'),0)
         key(0x03);check('3 has no shortcut',number('game_lifecycle',2),2)
         edge(0x4d,True);advance(.4);check('held down selects players once',number('ui_selection'),1);edge(0x4d,False)
         edge(0x4e,True);advance(.4);check('held right selects two players once',number('ui_player_count'),1);edge(0x4e,False)
