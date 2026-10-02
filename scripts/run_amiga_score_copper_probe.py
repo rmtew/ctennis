@@ -54,10 +54,11 @@ FIELDS = (
     # Native gameplay changes bus contention; a split pointer crossing 64K
     # otherwise reads unrelated data just left of the right point glyph.
     Field("point_b", 1, 224, 40, 2, 2, 7, POINT_TILES, (2,), (0,), 0x99, 26),
-    Field("games_a", 2, 16, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0x3D, 2),
-    # Plane1 pointer writes fit the fetch gap at $9d. Earlier waits can split
-    # the high/low update across a fetch in the exchanged two-player layout.
-    Field("games_b", 3, 224, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0x9D, 26),
+    # Keep BPL2 pointer halves inside the fetch gap. The old waits put PTL
+    # immediately before BPL2 DMA, where Agnus can ignore the Copper write.
+    Field("games_a", 2, 16, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0x3B, 2),
+    # Offset26 deliberately starts at x=208; the next word displays x=224.
+    Field("games_b", 3, 224, 72, 2, 6, 7, GAME_TILES, (1,), (3,), 0x9B, 26),
     # Four planes begin switching at x=64, leaving time before status x=112.
     Field("status", 4, 112, 96, 3, 1, 7, STATUS_TILES, (0, 1, 2, 3), (), 0x51, 8),
     Field("mode", 5, 208, 144, 5, 1, 3, MODE_TILES, (3,), (0, 1, 2), 0x99, 26),
