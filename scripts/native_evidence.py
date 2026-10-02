@@ -243,7 +243,7 @@ def inputs_for(kind, runner, case=None):
         # Kickstart is an emulator input only, never a build/package input.
         paths.add(Path(config.get('inputs', 'amiga_rom', fallback='missing-kickstart')))
         entries.append(('copperline', Path(config.get('tools', 'copperline', fallback='missing-copperline')), ['--version']))
-    if kind in ('native-feedback','native-contract'):
+    if kind in ('native-feedback','native-contract','native-scoreboard','native-demo'):
         import PIL
         from PIL import PngImagePlugin
         lock = json.loads((ROOT / 'tools.lock.json').read_text())

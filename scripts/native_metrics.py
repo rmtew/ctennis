@@ -40,7 +40,7 @@ def static_metrics(exe=EXE):
              if not p.startswith('build/') and p!=str(exe)}
     assets=[]
     for p,sha in manifest['files'].items():
-        if p.startswith('assets/native/') and p.endswith('.bin'):
+        if p.startswith('assets/native/') and p.endswith(('.bin','.s8')):
             assets.append({'path':p,'bytes':(ROOT/p).stat().st_size,'sha256':sha,
                            'group':'audio' if '/audio/' in p else 'graphics'})
     listing=exe.parent/'native.lst'
@@ -61,11 +61,13 @@ def static_metrics(exe=EXE):
     layout=hunk_layout(exe)
     attribution=executable_attribution(exe,listing,manifest,layout)
     return {'executable_sha256':digest(exe),'layout':layout,'attribution':attribution,
+            'features':{'celebration':'game_celebration_present' in symbols},
             'release':{'executable_sha256':hashlib.sha256(release_blob).hexdigest(),'executable_bytes':len(release_blob),'removed_symbol_bytes':removed_symbols,'loaded_payload_bytes':layout['loaded_payload_bytes'],'policy':'Release ADF omits HUNK_SYMBOL only; development retains symbols.'},
             'executable_budget_bytes':None,'executable_headroom_bytes':None,
             'executable_budget_reason':'No executable-size cap configured; executable bytes are not a RAM allocation or a measured disk-free-space budget.',
             'assets':{'active_incbin_bytes':groups,'files':assets,
-                      'generated_ui_pages_bytes':(ROOT/'build/native/ui-pages.bin').stat().st_size,
+                      'generated_ui_pages_bytes':sum((ROOT/p).stat().st_size for p in manifest['files'] if p.startswith('build/native/ui-') and p.endswith('.bin')),
+                      'generated_ui_page_files':{p:(ROOT/p).stat().st_size for p in manifest['files'] if p.startswith('build/native/ui-') and p.endswith('.bin')},
                       'recording_json_bytes':(ROOT/'assets/interface/demo-inputs.json').stat().st_size,
                       'note':'Active retained incbin payloads only; totals overlap loaded hunks. Generated pages and assembled replay are separate. Recording JSON is source storage, not runtime allocation.'},
             'product_inputs':sources,'generated_inputs':{p:sha for p,sha in manifest['files'].items() if p.startswith('build/native/')},
@@ -315,9 +317,10 @@ def generate():
                 if path in measurement_inputs and measurement_inputs[path]!=sha:raise ValueError('Cases disagree on dependency '+path)
                 measurement_inputs[path]=sha
     coverage={p:'measured' if any(c.get('metrics',{}).get('profiles',{}).get(p,{}).get('callbacks',0) for c in runtime.values()) else 'unmeasured' for p in PROFILES}
-    coverage['celebration']='unavailable in this product; remeasure when implemented'
+    if not static.get('features',{}).get('celebration'):
+        coverage['celebration']='unavailable in this product; remeasure when implemented'
     loading_issues=cold_loading_issues(runtime.get('cold-one',{}).get('cold_loading'))
-    complete=not loading_issues and all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration')
+    complete=not loading_issues and all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration' or static.get('features',{}).get('celebration'))
     report={'schema':1,'state':'complete' if complete else 'incomplete','static':static,'runtime':runtime,'coverage':coverage,'measurement_inputs':measurement_inputs,'cold_loading_issues':loading_issues,
             'identity':identity({'executable':static['executable_sha256'],'inputs':static['product_inputs']}),
             'report_generator_sha256':digest(ROOT/'scripts/native_metrics.py'),

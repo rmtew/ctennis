@@ -169,3 +169,14 @@ recorded separately. For focused variant validation, use
 Its separate `enhanced-menu-cold-boot-binding/report.json` explicitly excludes
 full menu lifecycle acceptance. A failed full menu receipt is not replaced by
 this bounded check.
+
+The PR19 integration measures the committed merged product, including the Mac
+menu font, classic/robot poses, five UI cache assets and Battle Hymn celebration.
+`celebration` means observed result lifecycle with the celebration pose active;
+the earlier result entry remains `match-end`. Both profiles retain their actual
+sample counts. Celebration is now required when its code is compiled.
+The former release report is retained in `baselines/pre-pr19-release.json`; it
+does not certify the merged product. Failed menu receipts remain outside Git.
+The menu takeover check waits at most twelve actual UI samples for the physical
+button2 sample, then requires the same demo exit and frozen-state preservation;
+a missing sample or incorrect takeover still fails.

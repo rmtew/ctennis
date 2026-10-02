@@ -14,18 +14,26 @@ def indices(paths,height):
 class IdentityAssets(unittest.TestCase):
     def test_complete_fields_spell_out_labels_and_restore_blank(self):
         font=(ROOT/'assets/native/title/font.bin').read_bytes()
-        for kind,labels in (('status',('','IN','OUT','NET','ACE','FAULT','DOUBLE FAULT')),
-                            ('mode',('DEMO','1 PLAYER','2 PLAYERS'))):
-            for variant,label in enumerate(labels):
-                actual=indices([ROOT/f'assets/native/court/score_bank_{kind}_{variant}_p{p}.bin' for p in range(4)],8)
-                expected=[[0]*256 for _ in range(8)]
-                left=(256-len(label)*8)//2 if kind=='status' else 200
-                cell=8 if kind=='status' else 6
+        for variant,label in enumerate(('', 'IN', 'OUT', 'NET', 'ACE', 'FAULT', 'DOUBLE FAULT')):
+            actual=indices([ROOT/f'assets/native/court/score_bank_status_{variant}_p{p}.bin' for p in range(4)],8)
+            expected=indices([ROOT/f'assets/native/court/plane{p}.bin' for p in range(4)],192)[96:104]
+            if variant:
+                for row in expected:row[80:176]=[0]*96
+            left=(256-len(label)*8)//2
+            for column,char in enumerate(label):
+                for row in range(8):
+                    for bit in range(8):
+                        if font[ord(char)*8+row]&(128>>bit):expected[row][left+column*8+bit]=15
+            self.assertEqual(actual,expected,('status',label))
+        for variant in range(3):
+            actual=indices([ROOT/f'assets/native/court/score_bank_mode_{variant}_p{p}.bin' for p in range(4)],8)
+            expected=[[0]*256 for _ in range(8)]
+            for label,left in (('HUMAN',6),('HUMAN',214) if variant==2 else ('AI',226)):
                 for column,char in enumerate(label):
                     for row in range(8):
                         for bit in range(8):
-                            if font[ord(char)*8+row]&(128>>bit):expected[row][left+column*cell+bit]=15
-                self.assertEqual(actual,expected,(kind,label))
+                            if font[ord(char)*8+row]&(128>>bit):expected[row][left+column*8+bit]=15
+            self.assertEqual(actual,expected,('centred controller roles',variant))
 
     def test_red_point_glyphs_keep_exact_existing_advantage_shapes(self):
         for v in range(7):

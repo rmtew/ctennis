@@ -248,3 +248,13 @@ class MetricsTests(unittest.TestCase):
             output=json.loads((root/'build/metrics/current.json').read_text())
             self.assertEqual(output['state'],'failed')
             self.assertIn('writer changed',output['error'])
+
+    def test_celebration_profile_uses_observed_pose_and_pause_takes_precedence(self):
+        observer,write,frame=self.title_observer()
+        observer.values['game_lifecycle']=6
+        observer.values['game_celebration_pose']=0
+        self.assertEqual(observer.profile(),'match-end')
+        observer.values['game_celebration_pose']=255
+        self.assertEqual(observer.profile(),'celebration')
+        observer.values['ui_paused']=255
+        self.assertEqual(observer.profile(),'pause')

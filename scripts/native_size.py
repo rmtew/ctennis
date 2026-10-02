@@ -55,7 +55,12 @@ def _units(listing):
 
 def _asset_group(path):
     if path=='build/native/ui-pages.bin':return 'pre_rendered_ui_pages'
+    if path=='build/native/ui-title-pages.bin':return 'pre_rendered_title_ui_pages'
+    if path in ('build/native/ui-help-options.bin','build/native/ui-menu-options.bin','build/native/ui-demo-options.bin'):
+        return 'pre_rendered_'+path.rsplit('/',1)[1][3:-4].replace('-','_')
     if path=='build/native/version.bin':return 'build_version_text'
+    if '/audio/battle-hymn/' in path:
+        return 'celebration_period_table' if path.endswith('periods.bin') else 'celebration_square_wave' if path.endswith('square.s8') else 'celebration_scores'
     if '/audio/' in path:
         if '/score-' in path:return 'audio_scores'
         if path.endswith('periods.bin'):return 'audio_period_table'
@@ -64,9 +69,9 @@ def _asset_group(path):
         if '/plane' in path:return 'court_bitplanes'
         for name,category in [('point','score_point_banks'),('games','score_game_banks'),('status','status_banks'),('mode','mode_banks')]:
             if '/score_bank_'+name+'_' in path:return category
-    if '/title/' in path:return 'font' if path.endswith('/font.bin') else 'title_bitplanes'
+    if '/title/' in path:return 'menu_font_mac' if path.endswith('/font-mac.bin') else 'font' if path.endswith('/font.bin') else 'title_bitplanes'
     if '/scene/' in path:
-        return {'sprite-images.bin':'scene_sprite_variants','poses.bin':'scene_pose_table','animations.bin':'scene_animation_table'}[path.rsplit('/',1)[1]]
+        return {'sprite-images.bin':'scene_sprite_variants','poses.bin':'scene_pose_table','robot-poses.bin':'scene_robot_pose_table','animations.bin':'scene_animation_table'}[path.rsplit('/',1)[1]]
     if '/sprites/' in path:return 'initial_hardware_sprites'
     raise ValueError('Undeclared native asset category: '+path)
 

@@ -9,9 +9,11 @@ RECEIPTS = {
     'package': 'amiga/interfaces/enhanced/delivery/package-report.json',
     'menu-cold': 'tests/enhanced-menu-cold/report.json',
     'inputs': 'tests/native-inputs/report.json',
+    'scoreboard': 'tests/native-scoreboard/report.json',
     'setup-proposal': 'tests/native-setup/report.json',
     'demo': 'tests/demo-full-repeat/report.json',
     'takeover': 'tests/demo-mid-takeover/report.json',
+    'attract-cycles': 'tests/attract-two-cycles/report.json',
     'feedback-one': 'tests/enhanced-feedback-one/report.json',
     'feedback-two': 'tests/enhanced-feedback-two/report.json',
     'ordinary-one-cold': 'tests/ct10-adf-one-cadence-enhanced-report.json',
@@ -25,10 +27,22 @@ RECEIPTS = {
 
 
 def acceptance(name, report):
+    if name == 'scoreboard':
+        return (len(report.get('cases', [])) == 28
+                and bool(report.get('compiled_fault_controls'))
+                and all(len({p['bank'] for p in row.get('plane_pointers', [])}) == 2
+                        and len(row.get('raster', [])) == 2
+                        for row in report.get('cases', [])))
     if name == 'package':
         return report.get('embedded_executable_verified') is True and report.get('reproducibility', {}).get('two_clean_builds') is True
     if name == 'demo':
         return report.get('verified_input_ticks') == 10958 and report.get('missed_publications') == 0
+    if name == 'attract-cycles':
+        windows=report.get('windows',[])
+        return (len(windows)==2 and len(report.get('entries',[]))==3 and len(report.get('captures',[]))==8
+                and all(w.get('stable') is True and w.get('unexpected_title_writes')==0
+                        and w.get('publications',0)>0 and w.get('next_entry')
+                        and len(w.get('title_frame_digests',[]))>=1400 for w in windows))
     if name == 'takeover':
         return report.get('verified_input_ticks') == 5480 and report.get('takeover') is True and report.get('missed_publications') == 0
     if name == 'menu-cold':

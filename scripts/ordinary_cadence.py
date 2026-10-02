@@ -8,6 +8,7 @@ from native_tools import ASSEMBLER, run as assemble
 from native_clock import clock_contract, INTERVAL_CCK
 from native_setup_observation import SetupObserver
 from native_metrics_observation import MetricsObserver
+from native_longword_observer import LongwordObserver
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
@@ -122,6 +123,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             cold_timing_points['reset']={k:v for k,v in s.inspect('status').items() if k in ('cck','frame','vpos','hpos','seconds')}
             headers={r['header']:bytearray(32) for r in boot_calibration['regions']}
             free_counts={}
+            free_stores={h:LongwordObserver() for h in headers}
             def boot_event(message, log=True):
                 if log:raw.write(json.dumps(message)+'\n')
                 if message.get('method')!='event.mmio':return
@@ -133,12 +135,14 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     if h<=a and a+n<=h+32:
                         headers[h][a-h:a-h+n]=v.to_bytes(n,'big')
                         data=headers[h]
-                        # Accept a complete low-word store only after the
-                        # actual header's chip pool bounds are initialized.
-                        if (a<=h+30 and a+n>=h+32 and int.from_bytes(data[14:16],'big')&2
+                        # Exec's long RMW stores may write low word FIRST. A
+                        # sample needs both words from the same instruction;
+                        # mixed old/new halves invent64KB allocation changes.
+                        if (h+28<=a and a+n<=h+32 and int.from_bytes(data[14:16],'big')&2
                                 and int.from_bytes(data[20:24],'big')==region['lower']
                                 and int.from_bytes(data[24:28],'big')==region['upper']):
-                            free=int.from_bytes(data[28:32],'big')
+                            free=free_stores[h].write(a-h-28,v,n,row['pc'])
+                            if free is None:continue
                             if free>region['upper']-region['lower']:
                                 failures.append({'field':'invalid boot free-count update'})
                             free_counts[h]=free
@@ -167,7 +171,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         if boot_adf:cold_timing_points['loadseg_complete']=dict(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
-            'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready',
+            'simulation_timer_origin', 'game_lifecycle', 'game_celebration_first_play', 'game_input_bits', 'display_ready',
             'front_copper','back_copper','copper_write_delta','sprite_write_delta','game_title_display')}
         # These buffers are in the chip-data hunk, not hunk0. Resolve the
         # compiled section offsets against the actual LoadSeg hunk addresses.
@@ -262,7 +266,17 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if lifecycle == 6:
                 milestone('result', position)
                 if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])): fault('result before six-game completion')
-            if lifecycle == 7: milestone('returned_title', position)
+            if lifecycle == 6:
+                # Read only at a completed callback. Full completion comes from
+                # actual native duration/level state, never an observer delay.
+                full = state.get('celebration_full',0)
+                if full and 'first_full_play' not in checkpoints:
+                    milestone('first_full_play',position)
+                    action_buttons(False)
+                elif full and n-checkpoints['first_full_play']['callback']>=8 and 'celebration_continue' not in checkpoints:
+                    milestone('celebration_continue',position)
+                    action_buttons(True)
+            if lifecycle == 2 and 'result' in checkpoints: milestone('returned_title', position)
             if lifecycle == 2 and 'result' in checkpoints and state['restart_selected'] is None:
                 milestone('restart_title_ready', position)
                 send('input.key', {'rawkey': selection_key(restarted), 'action': 'press'})
@@ -309,6 +323,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     if a+i in address_fields:native_state[address_fields[a+i]]=v
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
                 controls[a-address['game_input_bits']:a-address['game_input_bits']+size] = value.to_bytes(size, 'big')
+            elif a == address['game_celebration_first_play']:
+                state['celebration_full'] = value
             elif a == address['game_lifecycle']:
                 state['lifecycle'] = value
                 changes.append(r)
@@ -365,7 +381,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 memory_writes.append(r)
         if boot_adf:s.inspect('events.unsubscribe')
         s.notification_handler = event
-        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
+        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display','game_celebration_first_play') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
                     *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
@@ -393,7 +409,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         else:
             fault('unexpected incomplete callback')
     required = ('initial_title', 'first_selection', 'first_release', 'first_play', 'first_flight',
-                'point', 'game', 'pause', 'resume', 'result', 'returned_title', 'restart_title_ready',
+                'point', 'game', 'pause', 'resume', 'result', 'first_full_play', 'celebration_continue', 'returned_title', 'restart_title_ready',
                 'restart_selection', 'restart_release', 'restart_play', 'held_blocked', 'fresh_action', 'restarted_flight', 'finished')
     for label in (() if bank_control else required):
         if label not in checkpoints: fault('missing milestone', milestone=label)
@@ -430,6 +446,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'memory_final': final_memory, 'memory_writes': memory_writes,
                          'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints,'explicit_setup_regions':setup_observer.regions})
     if boot_adf:
+        if any(store.seen for store in free_stores.values()):
+            fault('cold boot allocator incomplete final long store')
         if not boot_allocations or boot_allocations[0]['position']['cck']>=state['start']:
             fault('cold boot allocator observation absent')
         elif boot_allocations[-1]['used_chip_bytes']!=final_memory['used_chip_bytes']:

@@ -1,7 +1,8 @@
         include "amiga/game/audio_state.i"
 ; Shared maintained sequencer. Requests queue a musical phrase without cutting
 ; the current note; completion means its last note was loaded, as the lifecycle
-; requires. The final note still owns its duration and release after completion.
+; requires. AV_DONE remains last-loaded for legacy waits; full phrase completion
+; is separately duration/level-aware via game_audio_phrase_complete.
 game_audio_reset:
         movem.l d0-d7/a0-a3,-(sp)
         lea     game_audio_voices,a0
@@ -71,6 +72,7 @@ game_audio_tick:
         subq.b  #1,game_audio_wait
         bne     .done
         st      game_audio_due
+.voices:
         moveq   #2,d7
         lea     game_audio_voices+2*AV_SIZE,a0
 .voice:
@@ -144,6 +146,10 @@ game_audio_tick:
         add.w   d0,d0
         add.w   d0,d2
         lea     native_audio_periods,a2
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .period_table
+        lea     native_victory_periods,a2
+.period_table:
         move.w  (a2,d2.w),d0
         move.w  d0,AV_PERIOD(a0)
         bsr     game_audio_write_period
@@ -207,6 +213,33 @@ game_audio_tick:
 .next:
         suba.w  #AV_SIZE,a0
         dbra    d7,.voice
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .rearm
+        bsr     game_audio_phrase_complete
+        tst.b   d0
+        beq.s   .rearm
+        ; Notify only after every final duration actually expires. Reload the
+        ; next downbeat in THIS sequencer step, avoiding an extra empty step.
+        st      game_celebration_first_play
+        addq.w  #1,game_celebration_loops
+        bsr     game_result_sound
+        bra     .voices
+.rearm:
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .ordinary_rate
+        ; Game updates are ~59.923Hz, NOT the PAL50 video rate assumed by
+        ; authored .04s score units. A bounded2/3-tick cadence averages2.4
+        ; native ticks/unit (~40.052ms), retaining the intended125BPM pacing.
+        moveq   #2,d0
+        addq.b  #2,game_celebration_audio_fraction
+        cmpi.b  #5,game_celebration_audio_fraction
+        bcs.s   .victory_rate
+        subq.b  #5,game_celebration_audio_fraction
+        moveq   #3,d0
+.victory_rate:
+        move.b  d0,game_audio_wait
+        bra.s   .done
+.ordinary_rate:
         move.b  game_audio_rate,game_audio_wait
 .done:
         movem.l (sp)+,d0-d7/a0-a3
@@ -222,6 +255,28 @@ game_audio_emit_level:
         bra     game_audio_write_level
 
 game_audio_levels: dc.b 64,51,40,32,25,20,16,13,10,8,6,5,4,3,3,0
+; A0 voice, result D0: no final note duration or emitted level remains.
+game_audio_voice_complete:
+        moveq   #0,d0
+        tst.b   AV_DONE(a0)
+        beq.s   .done
+        tst.b   AV_DURATION(a0)
+        bne.s   .done
+        tst.b   AV_LEVEL(a0)
+        bne.s   .done
+        moveq   #1,d0
+.done:  rts
+game_audio_phrase_complete:
+        movem.l d1/a0,-(sp)
+        lea     game_audio_voices,a0
+        moveq   #2,d1
+.voice: bsr     game_audio_voice_complete
+        tst.b   d0
+        beq.s   .done
+        adda.w  #AV_SIZE,a0
+        dbra    d1,.voice
+.done:  movem.l (sp)+,d1/a0
+        rts
         even
 game_audio_voices: dcb.b 3*AV_SIZE,0
 game_audio_rate: dc.b 2

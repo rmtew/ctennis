@@ -1,0 +1,4309 @@
+{
+  "schema": 1,
+  "state": "complete",
+  "static": {
+    "executable_sha256": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c",
+    "layout": {
+      "executable_bytes": 198960,
+      "hunks": [
+        {
+          "file_offset": 36,
+          "index": 0,
+          "kind": "code",
+          "bytes": 40140,
+          "memory": "any"
+        },
+        {
+          "file_offset": 69084,
+          "index": 1,
+          "kind": "data",
+          "bytes": 114540,
+          "memory": "chip"
+        }
+      ],
+      "file_format": {
+        "header_table_bytes": 28,
+        "hunk_headers_and_end_bytes": 24,
+        "relocation_bytes": 9144,
+        "relocations": 2280,
+        "symbol_bytes": 35084,
+        "symbols": 1337,
+        "symbol_name_bytes": 22989,
+        "symbol_name_padding_bytes": 1383,
+        "symbol_framing_bytes": 10712,
+        "debug_bytes": 0
+      },
+      "code_bytes": 40140,
+      "data_bytes": 114540,
+      "bss_bytes": 0,
+      "loaded_payload_bytes": 154680
+    },
+    "attribution": {
+      "schema": 1,
+      "executable_sha256": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c",
+      "accounted_file_bytes": 198960,
+      "reconciled": true,
+      "categories": [
+        {
+          "category": "audio_envelopes",
+          "bytes": 128,
+          "by_hunk": {
+            "0": 128
+          },
+          "by_source": {
+            "assets/native/audio/data.i": 128
+          },
+          "instances": 1
+        },
+        {
+          "category": "audio_period_table",
+          "bytes": 3072,
+          "by_hunk": {
+            "0": 3072
+          },
+          "by_source": {
+            "assets/native/audio/data.i": 3072
+          },
+          "instances": 1
+        },
+        {
+          "category": "audio_scores",
+          "bytes": 2208,
+          "by_hunk": {
+            "0": 2208
+          },
+          "by_source": {
+            "assets/native/audio/data.i": 2208
+          },
+          "instances": 6
+        },
+        {
+          "category": "build_version_text",
+          "bytes": 14,
+          "by_hunk": {
+            "0": 14
+          },
+          "by_source": {
+            "amiga/game/interface_text.s": 14
+          },
+          "instances": 1
+        },
+        {
+          "category": "court_bitplanes",
+          "bytes": 24576,
+          "by_hunk": {
+            "1": 24576
+          },
+          "by_source": {
+            "amiga/display.i": 24576
+          },
+          "instances": 4
+        },
+        {
+          "category": "cpu_instructions",
+          "bytes": 11118,
+          "by_hunk": {
+            "0": 11118
+          },
+          "by_source": {
+            "amiga/main.s": 1456,
+            "amiga/score_copper_patch.i": 118,
+            "amiga/game/controls.s": 326,
+            "amiga/game/paula_output.s": 174,
+            "amiga/game/keyboard.s": 204,
+            "amiga/game/tick.s": 92,
+            "amiga/game/menu.s": 264,
+            "amiga/game/integration.s": 452,
+            "amiga/game/gameplay.s": 52,
+            "amiga/game/gameplay_math.s": 318,
+            "amiga/game/gameplay_ball.s": 644,
+            "amiga/game/gameplay_players.s": 722,
+            "amiga/game/gameplay_contact.s": 540,
+            "amiga/game/gameplay_ai.s": 348,
+            "amiga/game/gameplay_controls.s": 202,
+            "amiga/game/scene.s": 484,
+            "amiga/game/scene_fields.s": 206,
+            "amiga/game/scene_integration.s": 66,
+            "amiga/game/scoring.s": 628,
+            "amiga/game/scoring_integration.s": 204,
+            "amiga/game/round.s": 374,
+            "amiga/game/result.s": 338,
+            "amiga/game/result_audio.s": 78,
+            "amiga/game/audio.s": 668,
+            "amiga/game/interface_input.s": 728,
+            "amiga/game/interface_pause.s": 84,
+            "amiga/game/interface_menu.s": 404,
+            "amiga/game/interface_render.s": 564,
+            "amiga/game/interface_demo.s": 108,
+            "amiga/game/interface_feedback.s": 272
+          },
+          "instances": 2940
+        },
+        {
+          "category": "font",
+          "bytes": 1024,
+          "by_hunk": {
+            "1": 1024
+          },
+          "by_source": {
+            "amiga/game/interface.s": 1024
+          },
+          "instances": 1
+        },
+        {
+          "category": "front_court_and_title_copper_lists",
+          "bytes": 3256,
+          "by_hunk": {
+            "1": 3256
+          },
+          "by_source": {
+            "amiga/display.i": 288,
+            "assets/native/court/score-cop-commands.i": 2832,
+            "assets/native/title/display.i": 136
+          },
+          "instances": 782
+        },
+        {
+          "category": "hunk_header_table",
+          "bytes": 28,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "hunk_payload_alignment_padding",
+          "bytes": 2,
+          "by_hunk": {
+            "0": 2
+          },
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "hunk_record_headers_and_ends",
+          "bytes": 24,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "initial_hardware_sprites",
+          "bytes": 576,
+          "by_hunk": {
+            "1": 576
+          },
+          "by_source": {
+            "amiga/display.i": 576
+          },
+          "instances": 8
+        },
+        {
+          "category": "mode_banks",
+          "bytes": 3072,
+          "by_hunk": {
+            "1": 3072
+          },
+          "by_source": {
+            "assets/native/court/score-bank-data.i": 3072
+          },
+          "instances": 12
+        },
+        {
+          "category": "other_initialized_tables_and_scalars",
+          "bytes": 738,
+          "by_hunk": {
+            "0": 738
+          },
+          "by_source": {
+            "amiga/main.s": 397,
+            "amiga/game/controls.s": 12,
+            "amiga/game/paula_output.s": 6,
+            "amiga/game/keyboard.s": 58,
+            "amiga/game/tick.s": 2,
+            "amiga/game/menu.s": 7,
+            "amiga/game/integration.s": 1,
+            "amiga/game/gameplay_players.s": 77,
+            "amiga/game/scene.s": 35,
+            "amiga/game/scoring.s": 1,
+            "amiga/game/scoring_integration.s": 93,
+            "amiga/game/audio.s": 20,
+            "assets/native/audio/data.i": 24,
+            "amiga/game/state.i": 5
+          },
+          "instances": 142
+        },
+        {
+          "category": "paula_square_wave",
+          "bytes": 4,
+          "by_hunk": {
+            "1": 4
+          },
+          "by_source": {
+            "amiga/main.s": 4
+          },
+          "instances": 1
+        },
+        {
+          "category": "pre_rendered_ui_pages",
+          "bytes": 10240,
+          "by_hunk": {
+            "1": 10240
+          },
+          "by_source": {
+            "amiga/game/interface.s": 10240
+          },
+          "instances": 1
+        },
+        {
+          "category": "relocation_offsets",
+          "bytes": 9120,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "relocation_record_framing",
+          "bytes": 24,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "replay_packets",
+          "bytes": 1110,
+          "by_hunk": {
+            "0": 1110
+          },
+          "by_source": {
+            "build/native/demo-inputs.i": 1110
+          },
+          "instances": 278
+        },
+        {
+          "category": "reserved_back_copper",
+          "bytes": 3120,
+          "by_hunk": {
+            "1": 3120
+          },
+          "by_source": {
+            "amiga/main.s": 3120
+          },
+          "instances": 1
+        },
+        {
+          "category": "reserved_back_sprites",
+          "bytes": 576,
+          "by_hunk": {
+            "1": 576
+          },
+          "by_source": {
+            "amiga/main.s": 576
+          },
+          "instances": 1
+        },
+        {
+          "category": "reserved_native_stack",
+          "bytes": 4096,
+          "by_hunk": {
+            "0": 4096
+          },
+          "by_source": {
+            "amiga/main.s": 4096
+          },
+          "instances": 1
+        },
+        {
+          "category": "reserved_state_and_work_buffers",
+          "bytes": 704,
+          "by_hunk": {
+            "0": 704
+          },
+          "by_source": {
+            "amiga/score_copper_patch.i": 12,
+            "amiga/game/keyboard.s": 128,
+            "amiga/game/gameplay.s": 60,
+            "amiga/game/scene.s": 64,
+            "amiga/game/scene_fields.s": 8,
+            "amiga/game/scoring.s": 28,
+            "amiga/game/audio.s": 96,
+            "amiga/game/interface.s": 300,
+            "amiga/main.s": 8
+          },
+          "instances": 9
+        },
+        {
+          "category": "reserved_ui_overlay",
+          "bytes": 512,
+          "by_hunk": {
+            "1": 512
+          },
+          "by_source": {
+            "amiga/game/interface.s": 512
+          },
+          "instances": 1
+        },
+        {
+          "category": "scene_animation_table",
+          "bytes": 36,
+          "by_hunk": {
+            "0": 36
+          },
+          "by_source": {
+            "amiga/game/scene.s": 36
+          },
+          "instances": 1
+        },
+        {
+          "category": "scene_pose_table",
+          "bytes": 112,
+          "by_hunk": {
+            "0": 112
+          },
+          "by_source": {
+            "amiga/game/scene.s": 112
+          },
+          "instances": 1
+        },
+        {
+          "category": "scene_sprite_variants",
+          "bytes": 8192,
+          "by_hunk": {
+            "0": 8192
+          },
+          "by_source": {
+            "amiga/main.s": 8192
+          },
+          "instances": 1
+        },
+        {
+          "category": "score_game_banks",
+          "bytes": 21504,
+          "by_hunk": {
+            "1": 21504
+          },
+          "by_source": {
+            "assets/native/court/score-bank-data.i": 21504
+          },
+          "instances": 14
+        },
+        {
+          "category": "score_patch_pointer_tables",
+          "bytes": 7604,
+          "by_hunk": {
+            "0": 7604
+          },
+          "by_source": {
+            "assets/native/court/score-patch-tables.i": 7604
+          },
+          "instances": 726
+        },
+        {
+          "category": "score_point_banks",
+          "bytes": 14336,
+          "by_hunk": {
+            "1": 14336
+          },
+          "by_source": {
+            "assets/native/court/score-bank-data.i": 14336
+          },
+          "instances": 28
+        },
+        {
+          "category": "separate_debug_records",
+          "bytes": 0,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "source_alignment_padding",
+          "bytes": 13,
+          "by_hunk": {
+            "0": 13
+          },
+          "by_source": {},
+          "instances": 13
+        },
+        {
+          "category": "status_banks",
+          "bytes": 7168,
+          "by_hunk": {
+            "1": 7168
+          },
+          "by_source": {
+            "assets/native/court/score-bank-data.i": 7168
+          },
+          "instances": 28
+        },
+        {
+          "category": "symbol_name_padding",
+          "bytes": 1383,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "symbol_names",
+          "bytes": 22989,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "symbol_record_framing",
+          "bytes": 10712,
+          "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "title_bitplanes",
+          "bytes": 24576,
+          "by_hunk": {
+            "1": 24576
+          },
+          "by_source": {
+            "assets/native/title/display.i": 24576
+          },
+          "instances": 4
+        },
+        {
+          "category": "ui_text_and_line_pointer_tables",
+          "bytes": 993,
+          "by_hunk": {
+            "0": 993
+          },
+          "by_source": {
+            "amiga/game/interface_text.s": 993
+          },
+          "instances": 56
+        }
+      ],
+      "asset_instances": [
+        {
+          "path": "assets/native/scene/poses.bin",
+          "hunk": 0,
+          "offset": 6784,
+          "bytes": 112,
+          "sha256": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376"
+        },
+        {
+          "path": "assets/native/scene/animations.bin",
+          "hunk": 0,
+          "offset": 6896,
+          "bytes": 36,
+          "sha256": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad"
+        },
+        {
+          "path": "assets/native/audio/score-0.bin",
+          "hunk": 0,
+          "offset": 9766,
+          "bytes": 704,
+          "sha256": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8"
+        },
+        {
+          "path": "assets/native/audio/score-1.bin",
+          "hunk": 0,
+          "offset": 10470,
+          "bytes": 656,
+          "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007"
+        },
+        {
+          "path": "assets/native/audio/score-2.bin",
+          "hunk": 0,
+          "offset": 11126,
+          "bytes": 304,
+          "sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4"
+        },
+        {
+          "path": "assets/native/audio/score-3.bin",
+          "hunk": 0,
+          "offset": 11430,
+          "bytes": 400,
+          "sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e"
+        },
+        {
+          "path": "assets/native/audio/score-4.bin",
+          "hunk": 0,
+          "offset": 11830,
+          "bytes": 128,
+          "sha256": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d"
+        },
+        {
+          "path": "assets/native/audio/score-5.bin",
+          "hunk": 0,
+          "offset": 11958,
+          "bytes": 16,
+          "sha256": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666"
+        },
+        {
+          "path": "assets/native/audio/periods.bin",
+          "hunk": 0,
+          "offset": 11974,
+          "bytes": 3072,
+          "sha256": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc"
+        },
+        {
+          "path": "assets/native/audio/envelopes.bin",
+          "hunk": 0,
+          "offset": 15046,
+          "bytes": 128,
+          "sha256": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4"
+        },
+        {
+          "path": "build/native/version.bin",
+          "hunk": 0,
+          "offset": 19235,
+          "bytes": 14,
+          "sha256": "3185c89d8a3c9d26d39e200bd118a9f7e941ede106051063da393704877fca9b"
+        },
+        {
+          "path": "assets/native/scene/sprite-images.bin",
+          "hunk": 0,
+          "offset": 31946,
+          "bytes": 8192,
+          "sha256": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f"
+        },
+        {
+          "path": "build/native/ui-pages.bin",
+          "hunk": 1,
+          "offset": 0,
+          "bytes": 10240,
+          "sha256": "ed5f8521270bfa61007dc54abf29a2d9112ae791d1ee998d7214097ec8f51a5f"
+        },
+        {
+          "path": "assets/native/title/font.bin",
+          "hunk": 1,
+          "offset": 10240,
+          "bytes": 1024,
+          "sha256": "691d65151c72adfbd63155ec9cea8f8051d83cbac82e3c266c4c0a1731afcdfb"
+        },
+        {
+          "path": "assets/native/court/plane0.bin",
+          "hunk": 1,
+          "offset": 14896,
+          "bytes": 6144,
+          "sha256": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727"
+        },
+        {
+          "path": "assets/native/court/plane1.bin",
+          "hunk": 1,
+          "offset": 21040,
+          "bytes": 6144,
+          "sha256": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602"
+        },
+        {
+          "path": "assets/native/court/plane2.bin",
+          "hunk": 1,
+          "offset": 27184,
+          "bytes": 6144,
+          "sha256": "85debb170c3f9c5b609303e68e94c5b07aaa65f2f4e5ea097999f2ecf8d2ad41"
+        },
+        {
+          "path": "assets/native/court/plane3.bin",
+          "hunk": 1,
+          "offset": 33328,
+          "bytes": 6144,
+          "sha256": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019"
+        },
+        {
+          "path": "assets/native/sprites/sprite0.bin",
+          "hunk": 1,
+          "offset": 39472,
+          "bytes": 72,
+          "sha256": "76bba8590ee1640f5f0e8fe5570ccefdfbc69b439df4b0801170b5d5d1ca7e2d"
+        },
+        {
+          "path": "assets/native/sprites/sprite1.bin",
+          "hunk": 1,
+          "offset": 39544,
+          "bytes": 72,
+          "sha256": "fd6eccdd9071ebc1ea8b9aa1a098d5bc69b23f2a6b3b40d40178545b7146a9c8"
+        },
+        {
+          "path": "assets/native/sprites/sprite2.bin",
+          "hunk": 1,
+          "offset": 39616,
+          "bytes": 72,
+          "sha256": "c5354edfc09b5889779ef7fbb35f9aa72085125b2e6d25022a35b4f9ba077e60"
+        },
+        {
+          "path": "assets/native/sprites/sprite3.bin",
+          "hunk": 1,
+          "offset": 39688,
+          "bytes": 72,
+          "sha256": "1222487aa98a6dc72862fa217f00319903f863ed633b201a79627a5ef4cbc931"
+        },
+        {
+          "path": "assets/native/sprites/sprite4.bin",
+          "hunk": 1,
+          "offset": 39760,
+          "bytes": 72,
+          "sha256": "ee6680681a4e5a706790dece5acaed443adacf2dc3af2071b2c3e2fff8cf3623"
+        },
+        {
+          "path": "assets/native/sprites/sprite5.bin",
+          "hunk": 1,
+          "offset": 39832,
+          "bytes": 72,
+          "sha256": "c4eb1ecb9735bdc41f16d9117903d740a45ad1713e099f24aa53fc1c01bd73aa"
+        },
+        {
+          "path": "assets/native/sprites/sprite6.bin",
+          "hunk": 1,
+          "offset": 39904,
+          "bytes": 72,
+          "sha256": "bcb5c9b664ec0e10fb8f20d131228f818ea519ab8391f5daa13b6c5d28a19ce9"
+        },
+        {
+          "path": "assets/native/sprites/sprite7.bin",
+          "hunk": 1,
+          "offset": 39976,
+          "bytes": 72,
+          "sha256": "971905ba776eae8ba120c70bb729295061e62a6bc54ee5f0b342dee7ae3db939"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_0_p2.bin",
+          "hunk": 1,
+          "offset": 40048,
+          "bytes": 512,
+          "sha256": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_1_p2.bin",
+          "hunk": 1,
+          "offset": 40560,
+          "bytes": 512,
+          "sha256": "8bab2406e2ca5fd2f8ea3f6736bc35186f970aaa93472df091490948dc5c87f5"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_2_p2.bin",
+          "hunk": 1,
+          "offset": 41072,
+          "bytes": 512,
+          "sha256": "ccd7c7016ed7f853d1ba23595b94fb0e99799d99522360b05a55a09602b537ae"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_3_p2.bin",
+          "hunk": 1,
+          "offset": 41584,
+          "bytes": 512,
+          "sha256": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_4_p2.bin",
+          "hunk": 1,
+          "offset": 42096,
+          "bytes": 512,
+          "sha256": "d906aaf822a6359042bab6dfb2167b5ab3590d4fc38dce3433971fdb6870f1de"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_5_p2.bin",
+          "hunk": 1,
+          "offset": 42608,
+          "bytes": 512,
+          "sha256": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_6_p2.bin",
+          "hunk": 1,
+          "offset": 43120,
+          "bytes": 512,
+          "sha256": "34532193f4fa83d4891e99134232ec754e2df1c31f7d19e6d987242996f08bea"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p2.bin",
+          "hunk": 1,
+          "offset": 43632,
+          "bytes": 512,
+          "sha256": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p2.bin",
+          "hunk": 1,
+          "offset": 44144,
+          "bytes": 512,
+          "sha256": "b29dc503ecc6033ec0fcd0d969dfc81be56594a46e109c138222b3c540a13c65"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p2.bin",
+          "hunk": 1,
+          "offset": 44656,
+          "bytes": 512,
+          "sha256": "0b81dad6b861c853770431427ba7999a3d140b75c5e121c03ad4e571b79939c4"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p2.bin",
+          "hunk": 1,
+          "offset": 45168,
+          "bytes": 512,
+          "sha256": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p2.bin",
+          "hunk": 1,
+          "offset": 45680,
+          "bytes": 512,
+          "sha256": "3e42d0fc494d00db7d2b2e09b50f6673f6d54a493202e4121485b401eab4e9ea"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p2.bin",
+          "hunk": 1,
+          "offset": 46192,
+          "bytes": 512,
+          "sha256": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p2.bin",
+          "hunk": 1,
+          "offset": 46704,
+          "bytes": 512,
+          "sha256": "4104024fac37bdca4428f624de0961a406dfdfcf204924cbc4b721ab60cf3b5e"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_0_p1.bin",
+          "hunk": 1,
+          "offset": 47216,
+          "bytes": 1536,
+          "sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_1_p1.bin",
+          "hunk": 1,
+          "offset": 48752,
+          "bytes": 1536,
+          "sha256": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_2_p1.bin",
+          "hunk": 1,
+          "offset": 50288,
+          "bytes": 1536,
+          "sha256": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_3_p1.bin",
+          "hunk": 1,
+          "offset": 51824,
+          "bytes": 1536,
+          "sha256": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_4_p1.bin",
+          "hunk": 1,
+          "offset": 53360,
+          "bytes": 1536,
+          "sha256": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_5_p1.bin",
+          "hunk": 1,
+          "offset": 54896,
+          "bytes": 1536,
+          "sha256": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_6_p1.bin",
+          "hunk": 1,
+          "offset": 56432,
+          "bytes": 1536,
+          "sha256": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_0_p1.bin",
+          "hunk": 1,
+          "offset": 57968,
+          "bytes": 1536,
+          "sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_1_p1.bin",
+          "hunk": 1,
+          "offset": 59504,
+          "bytes": 1536,
+          "sha256": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_2_p1.bin",
+          "hunk": 1,
+          "offset": 61040,
+          "bytes": 1536,
+          "sha256": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_3_p1.bin",
+          "hunk": 1,
+          "offset": 62576,
+          "bytes": 1536,
+          "sha256": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_4_p1.bin",
+          "hunk": 1,
+          "offset": 64112,
+          "bytes": 1536,
+          "sha256": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_5_p1.bin",
+          "hunk": 1,
+          "offset": 65648,
+          "bytes": 1536,
+          "sha256": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_6_p1.bin",
+          "hunk": 1,
+          "offset": 67184,
+          "bytes": 1536,
+          "sha256": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p0.bin",
+          "hunk": 1,
+          "offset": 68720,
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p1.bin",
+          "hunk": 1,
+          "offset": 68976,
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p2.bin",
+          "hunk": 1,
+          "offset": 69232,
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p3.bin",
+          "hunk": 1,
+          "offset": 69488,
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p0.bin",
+          "hunk": 1,
+          "offset": 69744,
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p1.bin",
+          "hunk": 1,
+          "offset": 70000,
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p2.bin",
+          "hunk": 1,
+          "offset": 70256,
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p3.bin",
+          "hunk": 1,
+          "offset": 70512,
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p0.bin",
+          "hunk": 1,
+          "offset": 70768,
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p1.bin",
+          "hunk": 1,
+          "offset": 71024,
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p2.bin",
+          "hunk": 1,
+          "offset": 71280,
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p3.bin",
+          "hunk": 1,
+          "offset": 71536,
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p0.bin",
+          "hunk": 1,
+          "offset": 71792,
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p1.bin",
+          "hunk": 1,
+          "offset": 72048,
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p2.bin",
+          "hunk": 1,
+          "offset": 72304,
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p3.bin",
+          "hunk": 1,
+          "offset": 72560,
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p0.bin",
+          "hunk": 1,
+          "offset": 72816,
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p1.bin",
+          "hunk": 1,
+          "offset": 73072,
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p2.bin",
+          "hunk": 1,
+          "offset": 73328,
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p3.bin",
+          "hunk": 1,
+          "offset": 73584,
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p0.bin",
+          "hunk": 1,
+          "offset": 73840,
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p1.bin",
+          "hunk": 1,
+          "offset": 74096,
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p2.bin",
+          "hunk": 1,
+          "offset": 74352,
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p3.bin",
+          "hunk": 1,
+          "offset": 74608,
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p0.bin",
+          "hunk": 1,
+          "offset": 74864,
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p1.bin",
+          "hunk": 1,
+          "offset": 75120,
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p2.bin",
+          "hunk": 1,
+          "offset": 75376,
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p3.bin",
+          "hunk": 1,
+          "offset": 75632,
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p3.bin",
+          "hunk": 1,
+          "offset": 75888,
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p3.bin",
+          "hunk": 1,
+          "offset": 76144,
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p3.bin",
+          "hunk": 1,
+          "offset": 76400,
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p0.bin",
+          "hunk": 1,
+          "offset": 76656,
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p1.bin",
+          "hunk": 1,
+          "offset": 76912,
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p2.bin",
+          "hunk": 1,
+          "offset": 77168,
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p0.bin",
+          "hunk": 1,
+          "offset": 77424,
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p1.bin",
+          "hunk": 1,
+          "offset": 77680,
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p2.bin",
+          "hunk": 1,
+          "offset": 77936,
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p0.bin",
+          "hunk": 1,
+          "offset": 78192,
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p1.bin",
+          "hunk": 1,
+          "offset": 78448,
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p2.bin",
+          "hunk": 1,
+          "offset": 78704,
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p0.bin",
+          "hunk": 1,
+          "offset": 78960,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p3.bin",
+          "hunk": 1,
+          "offset": 79472,
+          "bytes": 512,
+          "sha256": "b126306a8e878388d3dba338043d913ad9af5ac63a0e14b6970f087e73b353f3"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p0.bin",
+          "hunk": 1,
+          "offset": 79984,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p3.bin",
+          "hunk": 1,
+          "offset": 80496,
+          "bytes": 512,
+          "sha256": "b6f89b19a1958faefa105087aecfaf56dd7768750064192926b95617281f8f3a"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p0.bin",
+          "hunk": 1,
+          "offset": 81008,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p3.bin",
+          "hunk": 1,
+          "offset": 81520,
+          "bytes": 512,
+          "sha256": "23ad9eafcfc918d7c2f9b4c5103268f78ca6baf4753298690038f481444cb625"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p0.bin",
+          "hunk": 1,
+          "offset": 82032,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p3.bin",
+          "hunk": 1,
+          "offset": 82544,
+          "bytes": 512,
+          "sha256": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p0.bin",
+          "hunk": 1,
+          "offset": 83056,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p3.bin",
+          "hunk": 1,
+          "offset": 83568,
+          "bytes": 512,
+          "sha256": "f1fc9031df19232b6bfcfe9cef96b67a197c4c99db168ddb8011fc888d18a6b8"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p0.bin",
+          "hunk": 1,
+          "offset": 84080,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p3.bin",
+          "hunk": 1,
+          "offset": 84592,
+          "bytes": 512,
+          "sha256": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p0.bin",
+          "hunk": 1,
+          "offset": 85104,
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p3.bin",
+          "hunk": 1,
+          "offset": 85616,
+          "bytes": 512,
+          "sha256": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b"
+        },
+        {
+          "path": "assets/native/title/plane0.bin",
+          "hunk": 1,
+          "offset": 89964,
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0"
+        },
+        {
+          "path": "assets/native/title/plane1.bin",
+          "hunk": 1,
+          "offset": 96108,
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0"
+        },
+        {
+          "path": "assets/native/title/plane2.bin",
+          "hunk": 1,
+          "offset": 102252,
+          "bytes": 6144,
+          "sha256": "b13b937dbaabbedd83cdbca30b35f003be4393121027c47062f0f191b54d2d5e"
+        },
+        {
+          "path": "assets/native/title/plane3.bin",
+          "hunk": 1,
+          "offset": 108396,
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0"
+        }
+      ],
+      "padding_instances": [
+        {
+          "hunk": 0,
+          "offset": 1047,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 2223,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 2391,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 2855,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 3145,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 4693,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 6749,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 7869,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 8079,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 15283,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 19561,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 23979,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 24021,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 40138,
+          "bytes": 2,
+          "hex": "4e71"
+        }
+      ],
+      "identical_incbin_payload_groups": [
+        {
+          "sha256": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+          "paths": [
+            "assets/native/court/score_bank_point_a_0_p2.bin",
+            "assets/native/court/score_bank_point_b_0_p2.bin"
+          ],
+          "instances": 2,
+          "bytes_per_instance": 512,
+          "duplicate_bytes_beyond_first": 512
+        },
+        {
+          "sha256": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+          "paths": [
+            "assets/native/court/score_bank_point_a_3_p2.bin",
+            "assets/native/court/score_bank_point_a_5_p2.bin"
+          ],
+          "instances": 2,
+          "bytes_per_instance": 512,
+          "duplicate_bytes_beyond_first": 512
+        },
+        {
+          "sha256": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+          "paths": [
+            "assets/native/court/score_bank_point_b_3_p2.bin",
+            "assets/native/court/score_bank_point_b_5_p2.bin"
+          ],
+          "instances": 2,
+          "bytes_per_instance": 512,
+          "duplicate_bytes_beyond_first": 512
+        },
+        {
+          "sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+          "paths": [
+            "assets/native/court/score_bank_games_a_0_p1.bin",
+            "assets/native/court/score_bank_games_b_0_p1.bin"
+          ],
+          "instances": 2,
+          "bytes_per_instance": 1536,
+          "duplicate_bytes_beyond_first": 1536
+        },
+        {
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+          "paths": [
+            "assets/native/court/score_bank_status_0_p0.bin",
+            "assets/native/court/score_bank_status_0_p1.bin",
+            "assets/native/court/score_bank_status_0_p2.bin",
+            "assets/native/court/score_bank_status_0_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+          "paths": [
+            "assets/native/court/score_bank_status_1_p0.bin",
+            "assets/native/court/score_bank_status_1_p1.bin",
+            "assets/native/court/score_bank_status_1_p2.bin",
+            "assets/native/court/score_bank_status_1_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+          "paths": [
+            "assets/native/court/score_bank_status_2_p0.bin",
+            "assets/native/court/score_bank_status_2_p1.bin",
+            "assets/native/court/score_bank_status_2_p2.bin",
+            "assets/native/court/score_bank_status_2_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+          "paths": [
+            "assets/native/court/score_bank_status_3_p0.bin",
+            "assets/native/court/score_bank_status_3_p1.bin",
+            "assets/native/court/score_bank_status_3_p2.bin",
+            "assets/native/court/score_bank_status_3_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+          "paths": [
+            "assets/native/court/score_bank_status_4_p0.bin",
+            "assets/native/court/score_bank_status_4_p1.bin",
+            "assets/native/court/score_bank_status_4_p2.bin",
+            "assets/native/court/score_bank_status_4_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+          "paths": [
+            "assets/native/court/score_bank_status_5_p0.bin",
+            "assets/native/court/score_bank_status_5_p1.bin",
+            "assets/native/court/score_bank_status_5_p2.bin",
+            "assets/native/court/score_bank_status_5_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+          "paths": [
+            "assets/native/court/score_bank_status_6_p0.bin",
+            "assets/native/court/score_bank_status_6_p1.bin",
+            "assets/native/court/score_bank_status_6_p2.bin",
+            "assets/native/court/score_bank_status_6_p3.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+          "paths": [
+            "assets/native/court/score_bank_mode_0_p3.bin",
+            "assets/native/court/score_bank_mode_0_p0.bin",
+            "assets/native/court/score_bank_mode_0_p1.bin",
+            "assets/native/court/score_bank_mode_0_p2.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+          "paths": [
+            "assets/native/court/score_bank_mode_1_p3.bin",
+            "assets/native/court/score_bank_mode_1_p0.bin",
+            "assets/native/court/score_bank_mode_1_p1.bin",
+            "assets/native/court/score_bank_mode_1_p2.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+          "paths": [
+            "assets/native/court/score_bank_mode_2_p3.bin",
+            "assets/native/court/score_bank_mode_2_p0.bin",
+            "assets/native/court/score_bank_mode_2_p1.bin",
+            "assets/native/court/score_bank_mode_2_p2.bin"
+          ],
+          "instances": 4,
+          "bytes_per_instance": 256,
+          "duplicate_bytes_beyond_first": 768
+        },
+        {
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "paths": [
+            "assets/native/court/score_bank_point_b_0_p0.bin",
+            "assets/native/court/score_bank_point_b_1_p0.bin",
+            "assets/native/court/score_bank_point_b_2_p0.bin",
+            "assets/native/court/score_bank_point_b_3_p0.bin",
+            "assets/native/court/score_bank_point_b_4_p0.bin",
+            "assets/native/court/score_bank_point_b_5_p0.bin",
+            "assets/native/court/score_bank_point_b_6_p0.bin"
+          ],
+          "instances": 7,
+          "bytes_per_instance": 512,
+          "duplicate_bytes_beyond_first": 3072
+        },
+        {
+          "sha256": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+          "paths": [
+            "assets/native/court/score_bank_point_b_3_p3.bin",
+            "assets/native/court/score_bank_point_b_5_p3.bin"
+          ],
+          "instances": 2,
+          "bytes_per_instance": 512,
+          "duplicate_bytes_beyond_first": 512
+        },
+        {
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+          "paths": [
+            "assets/native/title/plane0.bin",
+            "assets/native/title/plane1.bin",
+            "assets/native/title/plane3.bin"
+          ],
+          "instances": 3,
+          "bytes_per_instance": 6144,
+          "duplicate_bytes_beyond_first": 12288
+        }
+      ],
+      "identical_incbin_duplicate_bytes": 26624,
+      "scope": "Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately."
+    },
+    "release": {
+      "executable_sha256": "ead8265319cf5a55a2a6bb1c9a1f9dfc8349f70e7e89af7be5d6bc8ac0b929e5",
+      "executable_bytes": 163876,
+      "removed_symbol_bytes": 35084,
+      "loaded_payload_bytes": 154680,
+      "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols."
+    },
+    "executable_budget_bytes": null,
+    "executable_headroom_bytes": null,
+    "executable_budget_reason": "No executable-size cap configured; executable bytes are not a RAM allocation or a measured disk-free-space budget.",
+    "assets": {
+      "active_incbin_bytes": {
+        "graphics": 105172,
+        "audio": 5408,
+        "replay_loaded_bytes": 1110
+      },
+      "files": [
+        {
+          "path": "assets/native/audio/envelopes.bin",
+          "bytes": 128,
+          "sha256": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/periods.bin",
+          "bytes": 3072,
+          "sha256": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-0.bin",
+          "bytes": 704,
+          "sha256": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-1.bin",
+          "bytes": 656,
+          "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-2.bin",
+          "bytes": 304,
+          "sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-3.bin",
+          "bytes": 400,
+          "sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-4.bin",
+          "bytes": 128,
+          "sha256": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/audio/score-5.bin",
+          "bytes": 16,
+          "sha256": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666",
+          "group": "audio"
+        },
+        {
+          "path": "assets/native/court/plane0.bin",
+          "bytes": 6144,
+          "sha256": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/plane1.bin",
+          "bytes": 6144,
+          "sha256": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/plane2.bin",
+          "bytes": 6144,
+          "sha256": "85debb170c3f9c5b609303e68e94c5b07aaa65f2f4e5ea097999f2ecf8d2ad41",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/plane3.bin",
+          "bytes": 6144,
+          "sha256": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_0_p1.bin",
+          "bytes": 1536,
+          "sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_1_p1.bin",
+          "bytes": 1536,
+          "sha256": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_2_p1.bin",
+          "bytes": 1536,
+          "sha256": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_3_p1.bin",
+          "bytes": 1536,
+          "sha256": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_4_p1.bin",
+          "bytes": 1536,
+          "sha256": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_5_p1.bin",
+          "bytes": 1536,
+          "sha256": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_a_6_p1.bin",
+          "bytes": 1536,
+          "sha256": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_0_p1.bin",
+          "bytes": 1536,
+          "sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_1_p1.bin",
+          "bytes": 1536,
+          "sha256": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_2_p1.bin",
+          "bytes": 1536,
+          "sha256": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_3_p1.bin",
+          "bytes": 1536,
+          "sha256": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_4_p1.bin",
+          "bytes": 1536,
+          "sha256": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_5_p1.bin",
+          "bytes": 1536,
+          "sha256": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_games_b_6_p1.bin",
+          "bytes": 1536,
+          "sha256": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p0.bin",
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p1.bin",
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p2.bin",
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_0_p3.bin",
+          "bytes": 256,
+          "sha256": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p0.bin",
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p1.bin",
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p2.bin",
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_1_p3.bin",
+          "bytes": 256,
+          "sha256": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p0.bin",
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p1.bin",
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p2.bin",
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_mode_2_p3.bin",
+          "bytes": 256,
+          "sha256": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_0_p2.bin",
+          "bytes": 512,
+          "sha256": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_1_p2.bin",
+          "bytes": 512,
+          "sha256": "8bab2406e2ca5fd2f8ea3f6736bc35186f970aaa93472df091490948dc5c87f5",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_2_p2.bin",
+          "bytes": 512,
+          "sha256": "ccd7c7016ed7f853d1ba23595b94fb0e99799d99522360b05a55a09602b537ae",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_3_p2.bin",
+          "bytes": 512,
+          "sha256": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_4_p2.bin",
+          "bytes": 512,
+          "sha256": "d906aaf822a6359042bab6dfb2167b5ab3590d4fc38dce3433971fdb6870f1de",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_5_p2.bin",
+          "bytes": 512,
+          "sha256": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_a_6_p2.bin",
+          "bytes": 512,
+          "sha256": "34532193f4fa83d4891e99134232ec754e2df1c31f7d19e6d987242996f08bea",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p2.bin",
+          "bytes": 512,
+          "sha256": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_0_p3.bin",
+          "bytes": 512,
+          "sha256": "b126306a8e878388d3dba338043d913ad9af5ac63a0e14b6970f087e73b353f3",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p2.bin",
+          "bytes": 512,
+          "sha256": "b29dc503ecc6033ec0fcd0d969dfc81be56594a46e109c138222b3c540a13c65",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_1_p3.bin",
+          "bytes": 512,
+          "sha256": "b6f89b19a1958faefa105087aecfaf56dd7768750064192926b95617281f8f3a",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p2.bin",
+          "bytes": 512,
+          "sha256": "0b81dad6b861c853770431427ba7999a3d140b75c5e121c03ad4e571b79939c4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_2_p3.bin",
+          "bytes": 512,
+          "sha256": "23ad9eafcfc918d7c2f9b4c5103268f78ca6baf4753298690038f481444cb625",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p2.bin",
+          "bytes": 512,
+          "sha256": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_3_p3.bin",
+          "bytes": 512,
+          "sha256": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p2.bin",
+          "bytes": 512,
+          "sha256": "3e42d0fc494d00db7d2b2e09b50f6673f6d54a493202e4121485b401eab4e9ea",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_4_p3.bin",
+          "bytes": 512,
+          "sha256": "f1fc9031df19232b6bfcfe9cef96b67a197c4c99db168ddb8011fc888d18a6b8",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p2.bin",
+          "bytes": 512,
+          "sha256": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_5_p3.bin",
+          "bytes": 512,
+          "sha256": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p0.bin",
+          "bytes": 512,
+          "sha256": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p2.bin",
+          "bytes": 512,
+          "sha256": "4104024fac37bdca4428f624de0961a406dfdfcf204924cbc4b721ab60cf3b5e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_point_b_6_p3.bin",
+          "bytes": 512,
+          "sha256": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p0.bin",
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p1.bin",
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p2.bin",
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_0_p3.bin",
+          "bytes": 256,
+          "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p0.bin",
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p1.bin",
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p2.bin",
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_1_p3.bin",
+          "bytes": 256,
+          "sha256": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p0.bin",
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p1.bin",
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p2.bin",
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_2_p3.bin",
+          "bytes": 256,
+          "sha256": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p0.bin",
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p1.bin",
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p2.bin",
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_3_p3.bin",
+          "bytes": 256,
+          "sha256": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p0.bin",
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p1.bin",
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p2.bin",
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_4_p3.bin",
+          "bytes": 256,
+          "sha256": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p0.bin",
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p1.bin",
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p2.bin",
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_5_p3.bin",
+          "bytes": 256,
+          "sha256": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p0.bin",
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p1.bin",
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p2.bin",
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/court/score_bank_status_6_p3.bin",
+          "bytes": 256,
+          "sha256": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/scene/animations.bin",
+          "bytes": 36,
+          "sha256": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/scene/poses.bin",
+          "bytes": 112,
+          "sha256": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/scene/sprite-images.bin",
+          "bytes": 8192,
+          "sha256": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite0.bin",
+          "bytes": 72,
+          "sha256": "76bba8590ee1640f5f0e8fe5570ccefdfbc69b439df4b0801170b5d5d1ca7e2d",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite1.bin",
+          "bytes": 72,
+          "sha256": "fd6eccdd9071ebc1ea8b9aa1a098d5bc69b23f2a6b3b40d40178545b7146a9c8",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite2.bin",
+          "bytes": 72,
+          "sha256": "c5354edfc09b5889779ef7fbb35f9aa72085125b2e6d25022a35b4f9ba077e60",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite3.bin",
+          "bytes": 72,
+          "sha256": "1222487aa98a6dc72862fa217f00319903f863ed633b201a79627a5ef4cbc931",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite4.bin",
+          "bytes": 72,
+          "sha256": "ee6680681a4e5a706790dece5acaed443adacf2dc3af2071b2c3e2fff8cf3623",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite5.bin",
+          "bytes": 72,
+          "sha256": "c4eb1ecb9735bdc41f16d9117903d740a45ad1713e099f24aa53fc1c01bd73aa",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite6.bin",
+          "bytes": 72,
+          "sha256": "bcb5c9b664ec0e10fb8f20d131228f818ea519ab8391f5daa13b6c5d28a19ce9",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/sprites/sprite7.bin",
+          "bytes": 72,
+          "sha256": "971905ba776eae8ba120c70bb729295061e62a6bc54ee5f0b342dee7ae3db939",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/title/font.bin",
+          "bytes": 1024,
+          "sha256": "691d65151c72adfbd63155ec9cea8f8051d83cbac82e3c266c4c0a1731afcdfb",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/title/plane0.bin",
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/title/plane1.bin",
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/title/plane2.bin",
+          "bytes": 6144,
+          "sha256": "b13b937dbaabbedd83cdbca30b35f003be4393121027c47062f0f191b54d2d5e",
+          "group": "graphics"
+        },
+        {
+          "path": "assets/native/title/plane3.bin",
+          "bytes": 6144,
+          "sha256": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+          "group": "graphics"
+        }
+      ],
+      "generated_ui_pages_bytes": 10240,
+      "recording_json_bytes": 10013,
+      "note": "Active retained incbin payloads only; totals overlap loaded hunks. Generated pages and assembled replay are separate. Recording JSON is source storage, not runtime allocation."
+    },
+    "product_inputs": {
+      "amiga/display.i": "a45db1148348fdbc84ce161ea77323d5ce11307b12fcc5f3bfa5d2f6cc71ce23",
+      "amiga/game/audio.s": "abbd1158e7027a8755b3cef4e78dff3d103b7d508bcbb0383bdc8ab15b19baff",
+      "amiga/game/audio_state.i": "5efb2f761d3eb883889a198f57dff5a710ef04f687cbae5b30c2f004206459e5",
+      "amiga/game/controls.s": "7fdfc72cf1e8ca6d7a9c7407b338e6713021af90c5252afcf59bd75f78475156",
+      "amiga/game/gameplay.s": "1f92a86e0f4b4724dbc1c16445c74f409bd2ccc94561b5b9403b8538c3e304c2",
+      "amiga/game/gameplay_ai.s": "4070f0c4507b77fe0b53017bb0391877dd8b1220f893ce12f15096b20876c777",
+      "amiga/game/gameplay_ball.s": "0e831e4764543c9b1416c3ffb44fcf9f0cd3b8c815c0061bcb35d49058f37dcd",
+      "amiga/game/gameplay_contact.s": "74e2207300df9f08c332d37048661f0ce6a91c41e6a2a3cd9007f51070acd915",
+      "amiga/game/gameplay_controls.s": "146c3058507893fc2973a173b10a37df972816c26f494e4a054dd0b20249ceb6",
+      "amiga/game/gameplay_math.s": "e3de01e5ad2d033910bef8a10a8d5230284f897373e16a54faf59cd3fa766cba",
+      "amiga/game/gameplay_players.s": "8c0b218d342d45710170640bc5ad8ee837c929e811cc52c37d0fe15093a2c60c",
+      "amiga/game/gameplay_state.i": "b689400b724cd1d39c024d82d5ea4ccd7d31448b7180a86cafafbfb140ba1d07",
+      "amiga/game/integration.s": "2c8cf499e2813f1426067472fdfd797025be9611fe18108f0a3676335321c331",
+      "amiga/game/interface.s": "a0aac1191be5c5341f9a5019d2dce48fd895e6ba27184152c8f893d9b1f7fa59",
+      "amiga/game/interface_demo.s": "c16d853484ee07fef5df52e3e45654875835143b27ac11ebf5131716b3d89106",
+      "amiga/game/interface_feedback.s": "ef0f4e915b32b274aeffd6d99518e17d4e5cf30b9122254b92b3285bc923e29f",
+      "amiga/game/interface_input.s": "dda28630a0601ace3233529940fa395de23a0a42a5c0308adb21d94b64dbe742",
+      "amiga/game/interface_menu.s": "4bef910451130eac65850b327b09747859b1831ed1990086c3cdb8389b7f6e4b",
+      "amiga/game/interface_pause.s": "093a1d7b23d39c180a0903bfd08fe4f5b41cf3eebb1967b520cfdd85d9347c47",
+      "amiga/game/interface_render.s": "9d843939e9453ce2a68560dc2cfc0e0042061f73ae645f362ab3ab144589a150",
+      "amiga/game/interface_state.i": "94cab2b09e9ff1dfa267ab17875a40b57ba90dc11fd8d5edf116761ef4a8d1ba",
+      "amiga/game/interface_text.s": "3d3ffd4d84604d891916107ecafae5b9ebd5aa757cbe5bb3c6925cfe1e7cb31c",
+      "amiga/game/keyboard.s": "bf6f51ca899d194c4f1560239abc482fe48c760ec45ce178084a811d8e51281f",
+      "amiga/game/menu.s": "28b1096f59c91a237326a64e9a675cce96c54d9c73205f8e58d18862786cab3a",
+      "amiga/game/paula_output.s": "1d53bd2a4f64e8aca81a232691d0327ab95399f380956cb57f25e4e7820cd7e5",
+      "amiga/game/result.s": "5d25b8dfad37b1c80ceeae497ce32116de84c1847f2bdc211f804aa29936d966",
+      "amiga/game/result_audio.s": "ccc15d32d343d8130d882a4e78c25c41bef6d7201400164896114153cefb81df",
+      "amiga/game/round.s": "e0a1ec461192f7f62fd9eea55f796dcb322d59a3e810aa0c5092187620d5aa68",
+      "amiga/game/scene.s": "387041b5d81132ff3fc7ef7214c8763d903d0f6ae81b886ad4d316cc7f7b65a9",
+      "amiga/game/scene_fields.s": "6ee6bd519a823a5584a84810518d52289f440f1792b5b3b84cbc6d10ff7aa6d1",
+      "amiga/game/scene_integration.s": "4f8e55bf94174a4ab704f1fa7e12ced98a90639a88ddb408e125e6c0adb088ef",
+      "amiga/game/scoring.s": "3801ea17a8c3ff7e442b12c4c98ed88ee867ae735cf52b03083b6070a16b97c6",
+      "amiga/game/scoring_integration.s": "079c32a8b2198377772e7f0f629889ea2bd32656c4b0d79d5aba88f090d02fb0",
+      "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
+      "amiga/game/state.i": "98258d5b3741d55af7afa1d5642140d91ee2be14309286592b6d342584fb7777",
+      "amiga/game/tick.s": "2a370b076365a80808f53b17e978387dda0ceba88f35906101319667ec35e97a",
+      "amiga/main.s": "4a833f34249641e0dcdaac29637ec7bbfcb0a00750d88c9a9ebfea69ae3cc26c",
+      "amiga/score_copper_patch.i": "add57337d04547a76467654568aaa00ee6b5a488247822b73e5863359f4e58be",
+      "assets/native/audio/data.i": "856755ce6fb338d1d78c7c480797b3346a4425bc8bd209cfb5782f09ac6de164",
+      "assets/native/audio/envelopes.bin": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4",
+      "assets/native/audio/periods.bin": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc",
+      "assets/native/audio/score-0.bin": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8",
+      "assets/native/audio/score-1.bin": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007",
+      "assets/native/audio/score-2.bin": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4",
+      "assets/native/audio/score-3.bin": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e",
+      "assets/native/audio/score-4.bin": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d",
+      "assets/native/audio/score-5.bin": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666",
+      "assets/native/court/plane0.bin": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+      "assets/native/court/plane1.bin": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
+      "assets/native/court/plane2.bin": "85debb170c3f9c5b609303e68e94c5b07aaa65f2f4e5ea097999f2ecf8d2ad41",
+      "assets/native/court/plane3.bin": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019",
+      "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5",
+      "assets/native/court/score-cop-commands.i": "cf259b0926b1f567d63c354fd1d58c501316cf45655573f99a7229716a6338b4",
+      "assets/native/court/score-patch-tables.i": "c3069a96312427c3f58d79d0616a74c4c23718b3b4f22e4eb7936f3322c82968",
+      "assets/native/court/score_bank_games_a_0_p1.bin": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+      "assets/native/court/score_bank_games_a_1_p1.bin": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13",
+      "assets/native/court/score_bank_games_a_2_p1.bin": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625",
+      "assets/native/court/score_bank_games_a_3_p1.bin": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9",
+      "assets/native/court/score_bank_games_a_4_p1.bin": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c",
+      "assets/native/court/score_bank_games_a_5_p1.bin": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6",
+      "assets/native/court/score_bank_games_a_6_p1.bin": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4",
+      "assets/native/court/score_bank_games_b_0_p1.bin": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+      "assets/native/court/score_bank_games_b_1_p1.bin": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3",
+      "assets/native/court/score_bank_games_b_2_p1.bin": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c",
+      "assets/native/court/score_bank_games_b_3_p1.bin": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2",
+      "assets/native/court/score_bank_games_b_4_p1.bin": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a",
+      "assets/native/court/score_bank_games_b_5_p1.bin": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b",
+      "assets/native/court/score_bank_games_b_6_p1.bin": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9",
+      "assets/native/court/score_bank_mode_0_p0.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+      "assets/native/court/score_bank_mode_0_p1.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+      "assets/native/court/score_bank_mode_0_p2.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+      "assets/native/court/score_bank_mode_0_p3.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+      "assets/native/court/score_bank_mode_1_p0.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+      "assets/native/court/score_bank_mode_1_p1.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+      "assets/native/court/score_bank_mode_1_p2.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+      "assets/native/court/score_bank_mode_1_p3.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+      "assets/native/court/score_bank_mode_2_p0.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+      "assets/native/court/score_bank_mode_2_p1.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+      "assets/native/court/score_bank_mode_2_p2.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+      "assets/native/court/score_bank_mode_2_p3.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+      "assets/native/court/score_bank_point_a_0_p2.bin": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+      "assets/native/court/score_bank_point_a_1_p2.bin": "8bab2406e2ca5fd2f8ea3f6736bc35186f970aaa93472df091490948dc5c87f5",
+      "assets/native/court/score_bank_point_a_2_p2.bin": "ccd7c7016ed7f853d1ba23595b94fb0e99799d99522360b05a55a09602b537ae",
+      "assets/native/court/score_bank_point_a_3_p2.bin": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+      "assets/native/court/score_bank_point_a_4_p2.bin": "d906aaf822a6359042bab6dfb2167b5ab3590d4fc38dce3433971fdb6870f1de",
+      "assets/native/court/score_bank_point_a_5_p2.bin": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+      "assets/native/court/score_bank_point_a_6_p2.bin": "34532193f4fa83d4891e99134232ec754e2df1c31f7d19e6d987242996f08bea",
+      "assets/native/court/score_bank_point_b_0_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_0_p2.bin": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+      "assets/native/court/score_bank_point_b_0_p3.bin": "b126306a8e878388d3dba338043d913ad9af5ac63a0e14b6970f087e73b353f3",
+      "assets/native/court/score_bank_point_b_1_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_1_p2.bin": "b29dc503ecc6033ec0fcd0d969dfc81be56594a46e109c138222b3c540a13c65",
+      "assets/native/court/score_bank_point_b_1_p3.bin": "b6f89b19a1958faefa105087aecfaf56dd7768750064192926b95617281f8f3a",
+      "assets/native/court/score_bank_point_b_2_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_2_p2.bin": "0b81dad6b861c853770431427ba7999a3d140b75c5e121c03ad4e571b79939c4",
+      "assets/native/court/score_bank_point_b_2_p3.bin": "23ad9eafcfc918d7c2f9b4c5103268f78ca6baf4753298690038f481444cb625",
+      "assets/native/court/score_bank_point_b_3_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_3_p2.bin": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+      "assets/native/court/score_bank_point_b_3_p3.bin": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+      "assets/native/court/score_bank_point_b_4_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_4_p2.bin": "3e42d0fc494d00db7d2b2e09b50f6673f6d54a493202e4121485b401eab4e9ea",
+      "assets/native/court/score_bank_point_b_4_p3.bin": "f1fc9031df19232b6bfcfe9cef96b67a197c4c99db168ddb8011fc888d18a6b8",
+      "assets/native/court/score_bank_point_b_5_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_5_p2.bin": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+      "assets/native/court/score_bank_point_b_5_p3.bin": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+      "assets/native/court/score_bank_point_b_6_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+      "assets/native/court/score_bank_point_b_6_p2.bin": "4104024fac37bdca4428f624de0961a406dfdfcf204924cbc4b721ab60cf3b5e",
+      "assets/native/court/score_bank_point_b_6_p3.bin": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b",
+      "assets/native/court/score_bank_status_0_p0.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+      "assets/native/court/score_bank_status_0_p1.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+      "assets/native/court/score_bank_status_0_p2.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+      "assets/native/court/score_bank_status_0_p3.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+      "assets/native/court/score_bank_status_1_p0.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+      "assets/native/court/score_bank_status_1_p1.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+      "assets/native/court/score_bank_status_1_p2.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+      "assets/native/court/score_bank_status_1_p3.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+      "assets/native/court/score_bank_status_2_p0.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+      "assets/native/court/score_bank_status_2_p1.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+      "assets/native/court/score_bank_status_2_p2.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+      "assets/native/court/score_bank_status_2_p3.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+      "assets/native/court/score_bank_status_3_p0.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+      "assets/native/court/score_bank_status_3_p1.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+      "assets/native/court/score_bank_status_3_p2.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+      "assets/native/court/score_bank_status_3_p3.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+      "assets/native/court/score_bank_status_4_p0.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+      "assets/native/court/score_bank_status_4_p1.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+      "assets/native/court/score_bank_status_4_p2.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+      "assets/native/court/score_bank_status_4_p3.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+      "assets/native/court/score_bank_status_5_p0.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+      "assets/native/court/score_bank_status_5_p1.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+      "assets/native/court/score_bank_status_5_p2.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+      "assets/native/court/score_bank_status_5_p3.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+      "assets/native/court/score_bank_status_6_p0.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+      "assets/native/court/score_bank_status_6_p1.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+      "assets/native/court/score_bank_status_6_p2.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+      "assets/native/court/score_bank_status_6_p3.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+      "assets/native/scene/animations.bin": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad",
+      "assets/native/scene/poses.bin": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376",
+      "assets/native/scene/sprite-images.bin": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f",
+      "assets/native/sprites/sprite0.bin": "76bba8590ee1640f5f0e8fe5570ccefdfbc69b439df4b0801170b5d5d1ca7e2d",
+      "assets/native/sprites/sprite1.bin": "fd6eccdd9071ebc1ea8b9aa1a098d5bc69b23f2a6b3b40d40178545b7146a9c8",
+      "assets/native/sprites/sprite2.bin": "c5354edfc09b5889779ef7fbb35f9aa72085125b2e6d25022a35b4f9ba077e60",
+      "assets/native/sprites/sprite3.bin": "1222487aa98a6dc72862fa217f00319903f863ed633b201a79627a5ef4cbc931",
+      "assets/native/sprites/sprite4.bin": "ee6680681a4e5a706790dece5acaed443adacf2dc3af2071b2c3e2fff8cf3623",
+      "assets/native/sprites/sprite5.bin": "c4eb1ecb9735bdc41f16d9117903d740a45ad1713e099f24aa53fc1c01bd73aa",
+      "assets/native/sprites/sprite6.bin": "bcb5c9b664ec0e10fb8f20d131228f818ea519ab8391f5daa13b6c5d28a19ce9",
+      "assets/native/sprites/sprite7.bin": "971905ba776eae8ba120c70bb729295061e62a6bc54ee5f0b342dee7ae3db939",
+      "assets/native/title/display.i": "22f0644a72dc1a3645fb8fd047381499b322757337cd7179197cc4764d83dde8",
+      "assets/native/title/font.bin": "691d65151c72adfbd63155ec9cea8f8051d83cbac82e3c266c4c0a1731afcdfb",
+      "assets/native/title/plane0.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+      "assets/native/title/plane1.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+      "assets/native/title/plane2.bin": "b13b937dbaabbedd83cdbca30b35f003be4393121027c47062f0f191b54d2d5e",
+      "assets/native/title/plane3.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0"
+    },
+    "generated_inputs": {
+      "build/native/demo-inputs.i": "ac8711ffce813a318e61d33556b997572fbb8f649885ca06c8ae418bd5dc4d14",
+      "build/native/ui-pages.bin": "ed5f8521270bfa61007dc54abf29a2d9112ae791d1ee998d7214097ec8f51a5f",
+      "build/native/version.bin": "3185c89d8a3c9d26d39e200bd118a9f7e941ede106051063da393704877fca9b"
+    },
+    "build_receipt_sha256": "fc8a1521048e549619ef6a55fde3a68e474724ca948374610e4e80212eda7b29"
+  },
+  "runtime": {
+    "cold-one": {
+      "receipt": "build/tests/ct10-adf-one-cadence-enhanced-report.json",
+      "classification": {
+        "status": "passed",
+        "freshness": "reused",
+        "started_utc": "2026-10-02T21:36:36.632745+00:00",
+        "startup": "cold ADF",
+        "subject": "maintained-native",
+        "kind": "ordinary-cadence",
+        "matched": null,
+        "executed": null,
+        "reference": null,
+        "first_difference": null
+      },
+      "receipt_sha256": "c906a2b5d58c77ac6ba82117b0f60c40f2e12732f3d1c378f737d1412b54afae",
+      "metrics": {
+        "schema": 1,
+        "profiles": {
+          "title": {
+            "minimum_deadline_headroom_cck": 18622.137237548828,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 8,
+            "ui_construction_render": {
+              "samples": 2,
+              "typical_median_cck": 29921.0,
+              "p95_cck": 30029,
+              "max_cck": 30029,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 29162.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
+            },
+            "update_including_render": {
+              "samples": 8,
+              "typical_median_cck": 10202.5,
+              "p95_cck": 39824,
+              "max_cck": 39824,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 19367.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 8,
+              "typical_median_cck": 221.0,
+              "p95_cck": 4384,
+              "max_cck": 4384,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 54807.13723754883
+            }
+          },
+          "help": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "one-player-rally": {
+            "minimum_deadline_headroom_cck": 31497.875549316406,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 3507,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 3507,
+              "typical_median_cck": 19970.0,
+              "p95_cck": 21490,
+              "max_cck": 27067,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 32124.137237548828
+            },
+            "render": {
+              "samples": 3507,
+              "typical_median_cck": 4897.0,
+              "p95_cck": 5562,
+              "max_cck": 5624,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 53567.13723754883
+            },
+            "dispatcher": {
+              "samples": 3507,
+              "typical_median_cck": 7422.0,
+              "p95_cck": 8289,
+              "max_cck": 13929,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 45262.13723754883
+            }
+          },
+          "two-player-rally": {
+            "minimum_deadline_headroom_cck": 38001.66540527344,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 1,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 20856.0,
+              "p95_cck": 20856,
+              "max_cck": 20856,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 38335.13723754883
+            },
+            "render": {
+              "samples": 1,
+              "typical_median_cck": 4924.0,
+              "p95_cck": 4924,
+              "max_cck": 4924,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 54267.13723754883
+            },
+            "dispatcher": {
+              "samples": 1,
+              "typical_median_cck": 8416.0,
+              "p95_cck": 8416,
+              "max_cck": 8416,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 50775.13723754883
+            }
+          },
+          "demo": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "pause": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "match-end": {
+            "minimum_deadline_headroom_cck": 42328.12619018555,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 193,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 193,
+              "typical_median_cck": 13571.0,
+              "p95_cck": 15001,
+              "max_cck": 15993,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 43198.13723754883
+            },
+            "render": {
+              "samples": 193,
+              "typical_median_cck": 4884.0,
+              "p95_cck": 5412,
+              "max_cck": 5484,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 53707.13723754883
+            },
+            "dispatcher": {
+              "samples": 193,
+              "typical_median_cck": 959.0,
+              "p95_cck": 2397,
+              "max_cck": 2643,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 56548.13723754883
+            }
+          },
+          "celebration": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          }
+        },
+        "extent": {
+          "completed_callbacks": 11372,
+          "first_entry": {
+            "cck": 73050483,
+            "frame": 1028,
+            "hpos": 67,
+            "seconds": 20.5956147560049,
+            "vpos": 44
+          },
+          "last_completion": {
+            "cck": 746133349,
+            "frame": 10501,
+            "hpos": 12,
+            "seconds": 210.362401198795,
+            "vpos": 118
+          },
+          "pending_callback": null,
+          "dropped_events": 0
+        },
+        "clock": {
+          "cck_hz": 3546895,
+          "simulation_tick_cck": 59191.13723754883,
+          "pal_display_frame_cck": 70824,
+          "pal_display_frame_ms": 19.967887405745024
+        },
+        "boundaries": "Update counter write to completion counter write includes sampling/render/dispatcher. Render and dispatcher: direct BSR first stack-store to RTS last return-word read, including contention; excludes instruction prefix/suffix outside bus boundaries. Dispatcher is not update-minus-render. Profiles use state at callback entry, including input transition callbacks; differing phase sample counts expose calls skipped by a transition. UI construction: explicit clr-ui_dirty to UI-render ready bus writes, only observed redraws (not all idle ticks). Frozen pause ordinarily has no render/dispatcher call; null is intentional.",
+        "host_wallclock": "unmeasured; never used as emulated work",
+        "cpu_busy_vs_bus_wait": "unavailable in this bus-boundary observer",
+        "first_title_publication": {
+          "cck": 73049104,
+          "frame": 1028,
+          "hpos": 50,
+          "seconds": 20.595225965245657,
+          "vpos": 38
+        },
+        "first_complete_title_frame": {
+          "cck": 73194902,
+          "frame": 1030,
+          "hpos": 114,
+          "pc": 97308,
+          "retired_instructions": 9373880,
+          "seconds": 20.636331777512446,
+          "vpos": 54,
+          "title_copper": 226508,
+          "title_selected_since": {
+            "cck": 73049104,
+            "frame": 1028,
+            "hpos": 50,
+            "seconds": 20.595225965245657,
+            "vpos": 38
+          }
+        },
+        "assets_ready_and_controls_initialized": {
+          "cck": 73049648,
+          "frame": 1028,
+          "hpos": 140,
+          "seconds": 20.59537933883016,
+          "vpos": 40
+        }
+      },
+      "provenance": {
+        "startup": "cold ADF",
+        "command": [
+          "scripts/run_ordinary_round_tests.py",
+          "--mode=one",
+          "--match",
+          "--cadence",
+          "--adf"
+        ],
+        "commit": "df400bb8c339e125bac79730c60e1f7b86f7d8d7",
+        "target": {
+          "model": "A500",
+          "cpu": "68000",
+          "chipset": "OCS",
+          "video": "PAL",
+          "chip_bytes": 524288,
+          "slow_bytes": 0,
+          "fast_bytes": 0,
+          "kickstart": "1.3"
+        },
+        "tools": {
+          "python": {
+            "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "version": "Python 3.12.14"
+          },
+          "vasm": {
+            "path": ".tools/vasm/vasmm68k_mot.exe",
+            "version": "vasm 1.9d (c) in 2002-2023 Volker Barthelmann"
+          },
+          "copperline": {
+            "path": ".tools/copperline/squashfs-root/usr/bin/copperline",
+            "version": "copperline 1.0.0-rc.1"
+          }
+        },
+        "external_inputs_sha256": "32261de3b67c52a05423d034747ce844224752395bdba04cb3c35924855f0176",
+        "tool_sha256": {
+          "python": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "vasm": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+          "copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8"
+        },
+        "kickstart_sha256": "1d68ba18412501d2a4b307a0a632b94a50b839c2c7c5ff2df6de2c38b99a921f",
+        "compiled_executables": {
+          "build/tests/ct10-adf-one-cadence-enhanced/native-application": "ead8265319cf5a55a2a6bb1c9a1f9dfc8349f70e7e89af7be5d6bc8ac0b929e5"
+        },
+        "state": "complete",
+        "source_dependency_identity": "ffe2299134d2631c1b3c4ac2d7d107f55c8c2697164a014385ed335ef24ea608"
+      },
+      "memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 256200,
+          "chip_free_bytes": 268088,
+          "largest_chip_free_block_bytes": 266920,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 260208,
+          "chip_free_bytes": 264080,
+          "largest_chip_free_block_bytes": 262912,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [
+          {
+            "position": {
+              "cck": 3594137,
+              "detail": "frame 50",
+              "frame": 50,
+              "hpos": 46,
+              "pc": 16517532,
+              "reason": "target",
+              "retired_instructions": 5396017,
+              "seconds": 1.013319255292305,
+              "vpos": 183
+            },
+            "memory": {
+              "chip_used_bytes": 13336,
+              "chip_free_bytes": 510952,
+              "largest_chip_free_block_bytes": 510952,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 7135844,
+              "detail": "frame 100",
+              "frame": 100,
+              "hpos": 99,
+              "pc": 16527664,
+              "reason": "target",
+              "retired_instructions": 6135131,
+              "seconds": 2.0118565675048177,
+              "vpos": 135
+            },
+            "memory": {
+              "chip_used_bytes": 29576,
+              "chip_free_bytes": 494712,
+              "largest_chip_free_block_bytes": 494688,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 10665036,
+              "detail": "frame 150",
+              "frame": 150,
+              "hpos": 122,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6769935,
+              "seconds": 3.00686544146359,
+              "vpos": 32
+            },
+            "memory": {
+              "chip_used_bytes": 48336,
+              "chip_free_bytes": 475952,
+              "largest_chip_free_block_bytes": 475928,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 14240777,
+              "detail": "frame 200",
+              "frame": 200,
+              "hpos": 159,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6867221,
+              "seconds": 4.014998188556469,
+              "vpos": 134
+            },
+            "memory": {
+              "chip_used_bytes": 52496,
+              "chip_free_bytes": 471792,
+              "largest_chip_free_block_bytes": 471648,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 17777570,
+              "detail": "frame 250",
+              "frame": 250,
+              "hpos": 65,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6899040,
+              "seconds": 5.012150063647218,
+              "vpos": 65
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 21367172,
+              "detail": "frame 300",
+              "frame": 300,
+              "hpos": 116,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6962938,
+              "seconds": 6.024190735840785,
+              "vpos": 228
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 24889160,
+              "detail": "frame 350",
+              "frame": 350,
+              "hpos": 199,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7052148,
+              "seconds": 7.017168537551859,
+              "vpos": 93
+            },
+            "memory": {
+              "chip_used_bytes": 53696,
+              "chip_free_bytes": 470592,
+              "largest_chip_free_block_bytes": 467784,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 28458814,
+              "detail": "frame 400",
+              "frame": 400,
+              "hpos": 51,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7361926,
+              "seconds": 8.023585135731393,
+              "vpos": 169
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 32010144,
+              "detail": "frame 450",
+              "frame": 450,
+              "hpos": 193,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7508274,
+              "seconds": 9.02483552515651,
+              "vpos": 163
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 35558100,
+              "detail": "frame 500",
+              "frame": 500,
+              "hpos": 139,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7665014,
+              "seconds": 10.025134660033634,
+              "vpos": 143
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 39083395,
+              "detail": "frame 550",
+              "frame": 550,
+              "hpos": 124,
+              "pc": 16728366,
+              "reason": "target",
+              "retired_instructions": 7900233,
+              "seconds": 11.019044826531374,
+              "vpos": 23
+            },
+            "memory": {
+              "chip_used_bytes": 263760,
+              "chip_free_bytes": 260528,
+              "largest_chip_free_block_bytes": 260464,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 42669082,
+              "detail": "frame 600",
+              "frame": 600,
+              "hpos": 119,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8142569,
+              "seconds": 12.029981716402656,
+              "vpos": 169
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 46225020,
+              "detail": "frame 650",
+              "frame": 650,
+              "hpos": 102,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8273536,
+              "seconds": 13.032531270308256,
+              "vpos": 184
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 49778226,
+              "detail": "frame 700",
+              "frame": 700,
+              "hpos": 77,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8410452,
+              "seconds": 14.034310573050513,
+              "vpos": 187
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 53326680,
+              "detail": "frame 750",
+              "frame": 750,
+              "hpos": 67,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8564837,
+              "seconds": 15.034750112422273,
+              "vpos": 169
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 56882910,
+              "detail": "frame 800",
+              "frame": 800,
+              "hpos": 115,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8690422,
+              "seconds": 16.037381991854847,
+              "vpos": 185
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 60434982,
+              "detail": "frame 850",
+              "frame": 850,
+              "hpos": 91,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8848007,
+              "seconds": 17.038841578338236,
+              "vpos": 183
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 63985236,
+              "detail": "frame 900",
+              "frame": 900,
+              "hpos": 65,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9000317,
+              "seconds": 18.039788603835184,
+              "vpos": 173
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 67554244,
+              "detail": "frame 950",
+              "frame": 950,
+              "hpos": 179,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9113660,
+              "seconds": 19.046023070883123,
+              "vpos": 245
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 71103879,
+              "detail": "frame 1000",
+              "frame": 1000,
+              "hpos": 215,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9266211,
+              "seconds": 20.046795577540355,
+              "vpos": 232
+            },
+            "memory": {
+              "chip_used_bytes": 257304,
+              "chip_free_bytes": 266984,
+              "largest_chip_free_block_bytes": 266920,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          }
+        ],
+        "peak_chip_bytes": 260208,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "observed",
+        "cold_boot_peak": 322840,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      },
+      "overall_cadence": {
+        "minimum_phase_cck": 221.31011962890625,
+        "maximum_entry_late_cck": 21738.251495361328,
+        "maximum_update_work_cck": 40213
+      },
+      "deadlines": {
+        "missed_native_callbacks": 0,
+        "missed_publications_counter": 0,
+        "publication_failures": 0
+      },
+      "cold_loading": {
+        "stages": [
+          {
+            "stage": "reset",
+            "cck": 0,
+            "seconds": 0.0,
+            "from_previous_listed_milestone_cck": null
+          },
+          {
+            "stage": "boot_script_begins",
+            "cck": null,
+            "seconds": null,
+            "from_previous_listed_milestone_cck": null
+          },
+          {
+            "stage": "loadseg_begin",
+            "cck": null,
+            "seconds": null,
+            "from_previous_listed_milestone_cck": null
+          },
+          {
+            "stage": "loadseg_complete",
+            "cck": 73004746,
+            "seconds": 20.5827198155006,
+            "from_previous_listed_milestone_cck": 73004746
+          },
+          {
+            "stage": "executable_entry",
+            "cck": 73008312,
+            "seconds": 20.583725201901945,
+            "from_previous_listed_milestone_cck": 3566
+          },
+          {
+            "stage": "assets_ready",
+            "cck": 73049648,
+            "seconds": 20.59537933883016,
+            "from_previous_listed_milestone_cck": 41336
+          },
+          {
+            "stage": "first_complete_title_frame",
+            "cck": 73194902,
+            "seconds": 20.636331777512446,
+            "from_previous_listed_milestone_cck": 145254
+          },
+          {
+            "stage": "input_responsive",
+            "cck": 73299233,
+            "seconds": 20.66574651913857,
+            "from_previous_listed_milestone_cck": 104331
+          }
+        ],
+        "total_reset_to_input_cck": 73299233,
+        "total_reset_to_display_and_input_cck": 73299233,
+        "title_frame_evidence": {
+          "cck": 73194902,
+          "frame": 1030,
+          "hpos": 114,
+          "pc": 97308,
+          "retired_instructions": 9373880,
+          "seconds": 20.636331777512446,
+          "vpos": 54,
+          "title_copper": 226508,
+          "title_selected_since": {
+            "cck": 73049104,
+            "frame": 1028,
+            "hpos": 50,
+            "seconds": 20.595225965245657,
+            "vpos": 38
+          }
+        },
+        "measured_intervals_cck": {
+          "os_boot_plus_loader": 73004746,
+          "entry_to_assets_controls_ready": 41336,
+          "assets_ready_to_complete_display": 145254
+        },
+        "configuration": {
+          "floppy_speed_percent": 100,
+          "cold_reset": true,
+          "read_only_adf": true,
+          "adf_sha256": "6d0eccf31da8dc591b3332882783538cc2ab35906c6f268fce84281edc9ad94c",
+          "calibration": "Separate pre-measurement boot locates Exec headers; cold reset starts measured run."
+        },
+        "disk_reads": null,
+        "disk_seeks": null,
+        "disk_count_reason": "Pinned control API does not expose cumulative drive read/seek counters; DMA words are not file reads or seeks.",
+        "host_emulator_launch_seconds": null,
+        "scope": "Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait. Milestones may overlap: input can respond before a complete title frame. Listed-milestone differences are signed offsets, not invented sequential phase durations; boot complete requires both displayed title and successful input."
+      }
+    },
+    "two": {
+      "receipt": "build/tests/ct09-ordinary-two-cadence-enhanced-report.json",
+      "classification": {
+        "status": "passed",
+        "freshness": "reused",
+        "started_utc": "2026-10-02T21:40:43.392674+00:00",
+        "startup": "ordinary title",
+        "subject": "maintained-native",
+        "kind": "ordinary-cadence",
+        "matched": null,
+        "executed": null,
+        "reference": null,
+        "first_difference": null
+      },
+      "receipt_sha256": "09b8c7fc48cd61cfef80403204604fbafa47b78c291ca44747177db3724aece7",
+      "metrics": {
+        "schema": 1,
+        "profiles": {
+          "title": {
+            "minimum_deadline_headroom_cck": 15286.011688232422,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 5,
+            "ui_construction_render": {
+              "samples": 2,
+              "typical_median_cck": 31741.0,
+              "p95_cck": 33736,
+              "max_cck": 33736,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 25455.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
+            },
+            "update_including_render": {
+              "samples": 5,
+              "typical_median_cck": 12473.0,
+              "p95_cck": 43516,
+              "max_cck": 43516,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 15675.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 5,
+              "typical_median_cck": 220.0,
+              "p95_cck": 4399,
+              "max_cck": 4399,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 54792.13723754883
+            }
+          },
+          "help": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "one-player-rally": {
+            "minimum_deadline_headroom_cck": 37793.83068847656,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 1,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 19864.0,
+              "p95_cck": 19864,
+              "max_cck": 19864,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 39327.13723754883
+            },
+            "render": {
+              "samples": 1,
+              "typical_median_cck": 4773.0,
+              "p95_cck": 4773,
+              "max_cck": 4773,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 54418.13723754883
+            },
+            "dispatcher": {
+              "samples": 1,
+              "typical_median_cck": 7683.0,
+              "p95_cck": 7683,
+              "max_cck": 7683,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 51508.13723754883
+            }
+          },
+          "two-player-rally": {
+            "minimum_deadline_headroom_cck": 32237.67822265625,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 9262,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 9262,
+              "typical_median_cck": 19845.0,
+              "p95_cck": 21378,
+              "max_cck": 26290,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 32901.13723754883
+            },
+            "render": {
+              "samples": 9262,
+              "typical_median_cck": 4898.0,
+              "p95_cck": 5545,
+              "max_cck": 5624,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 53567.13723754883
+            },
+            "dispatcher": {
+              "samples": 9262,
+              "typical_median_cck": 7309.0,
+              "p95_cck": 8178,
+              "max_cck": 13054,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 46137.13723754883
+            }
+          },
+          "demo": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "pause": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "match-end": {
+            "minimum_deadline_headroom_cck": 43389.48727416992,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 193,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 193,
+              "typical_median_cck": 13267.0,
+              "p95_cck": 14805,
+              "max_cck": 15099,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 44092.13723754883
+            },
+            "render": {
+              "samples": 193,
+              "typical_median_cck": 4498.0,
+              "p95_cck": 5057,
+              "max_cck": 5068,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 54123.13723754883
+            },
+            "dispatcher": {
+              "samples": 193,
+              "typical_median_cck": 961.0,
+              "p95_cck": 2366,
+              "max_cck": 2543,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 56648.13723754883
+            }
+          },
+          "celebration": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          }
+        },
+        "extent": {
+          "completed_callbacks": 23316,
+          "first_entry": {
+            "cck": 21995024,
+            "frame": 309,
+            "hpos": 86,
+            "seconds": 6.201205279547322,
+            "vpos": 177
+          },
+          "last_completion": {
+            "cck": 1402057030,
+            "frame": 19733,
+            "hpos": 156,
+            "seconds": 395.29138302656264,
+            "vpos": 33
+          },
+          "pending_callback": {
+            "callback": 23317,
+            "entry": {
+              "cck": 1402095231,
+              "frame": 19733,
+              "hpos": 221,
+              "seconds": 395.30215329182283,
+              "vpos": 201
+            },
+            "profile": "one-player-rally",
+            "phases": {}
+          },
+          "dropped_events": 0
+        },
+        "clock": {
+          "cck_hz": 3546895,
+          "simulation_tick_cck": 59191.13723754883,
+          "pal_display_frame_cck": 70824,
+          "pal_display_frame_ms": 19.967887405745024
+        },
+        "boundaries": "Update counter write to completion counter write includes sampling/render/dispatcher. Render and dispatcher: direct BSR first stack-store to RTS last return-word read, including contention; excludes instruction prefix/suffix outside bus boundaries. Dispatcher is not update-minus-render. Profiles use state at callback entry, including input transition callbacks; differing phase sample counts expose calls skipped by a transition. UI construction: explicit clr-ui_dirty to UI-render ready bus writes, only observed redraws (not all idle ticks). Frozen pause ordinarily has no render/dispatcher call; null is intentional.",
+        "host_wallclock": "unmeasured; never used as emulated work",
+        "cpu_busy_vs_bus_wait": "unavailable in this bus-boundary observer",
+        "first_title_publication": {
+          "cck": 21993724,
+          "frame": 309,
+          "hpos": 148,
+          "seconds": 6.200838761790242,
+          "vpos": 171
+        },
+        "first_complete_title_frame": {
+          "cck": 1371086830,
+          "frame": 19297,
+          "hpos": 20,
+          "pc": 131218,
+          "retired_instructions": 186811871,
+          "seconds": 386.5597459186133,
+          "vpos": 69,
+          "title_copper": 259628,
+          "title_selected_since": {
+            "cck": 1370986852,
+            "frame": 19295,
+            "hpos": 149,
+            "seconds": 386.53155844759993,
+            "vpos": 254
+          }
+        },
+        "assets_ready_and_controls_initialized": {
+          "cck": 21994173,
+          "frame": 309,
+          "hpos": 143,
+          "seconds": 6.200965351384803,
+          "vpos": 173
+        }
+      },
+      "provenance": {
+        "startup": "ordinary title",
+        "command": [
+          "scripts/run_ordinary_round_tests.py",
+          "--mode=two",
+          "--match",
+          "--cadence"
+        ],
+        "commit": "df400bb8c339e125bac79730c60e1f7b86f7d8d7",
+        "target": {
+          "model": "A500",
+          "cpu": "68000",
+          "chipset": "OCS",
+          "video": "PAL",
+          "chip_bytes": 524288,
+          "slow_bytes": 0,
+          "fast_bytes": 0,
+          "kickstart": "1.3"
+        },
+        "tools": {
+          "python": {
+            "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "version": "Python 3.12.14"
+          },
+          "vasm": {
+            "path": ".tools/vasm/vasmm68k_mot.exe",
+            "version": "vasm 1.9d (c) in 2002-2023 Volker Barthelmann"
+          },
+          "copperline": {
+            "path": ".tools/copperline/squashfs-root/usr/bin/copperline",
+            "version": "copperline 1.0.0-rc.1"
+          }
+        },
+        "external_inputs_sha256": "32261de3b67c52a05423d034747ce844224752395bdba04cb3c35924855f0176",
+        "tool_sha256": {
+          "python": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "vasm": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+          "copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8"
+        },
+        "kickstart_sha256": "1d68ba18412501d2a4b307a0a632b94a50b839c2c7c5ff2df6de2c38b99a921f",
+        "compiled_executables": {
+          "build/tests/ct09-ordinary-two-cadence-enhanced/native-application": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c"
+        },
+        "state": "complete",
+        "source_dependency_identity": "ffe2299134d2631c1b3c4ac2d7d107f55c8c2697164a014385ed335ef24ea608"
+      },
+      "memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 289936,
+          "chip_free_bytes": 234352,
+          "largest_chip_free_block_bytes": 233800,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 293944,
+          "chip_free_bytes": 230344,
+          "largest_chip_free_block_bytes": 229792,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [],
+        "peak_chip_bytes": 293944,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "unverified",
+        "cold_boot_peak": null,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      },
+      "overall_cadence": {
+        "minimum_phase_cck": 221.26388549804688,
+        "maximum_entry_late_cck": 21999.961151123047,
+        "maximum_update_work_cck": 43516
+      },
+      "deadlines": {
+        "missed_native_callbacks": 0,
+        "missed_publications_counter": 0,
+        "publication_failures": 0
+      }
+    },
+    "setup": {
+      "receipt": "build/tests/native-setup/report.json",
+      "classification": {
+        "status": "passed",
+        "freshness": "reused",
+        "started_utc": "2026-10-02T21:47:52.669033+00:00",
+        "startup": "ordinary title",
+        "subject": "maintained-native",
+        "kind": "native-setup",
+        "matched": null,
+        "executed": null,
+        "reference": null,
+        "first_difference": null
+      },
+      "receipt_sha256": "f28a7887dd281fd2e818f578545094d4f1e3930cd6058ff67ae9e1bc080fc421",
+      "metrics": {
+        "schema": 1,
+        "profiles": {
+          "title": {
+            "minimum_deadline_headroom_cck": 15083.369720458984,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 1237,
+            "ui_construction_render": {
+              "samples": 7,
+              "typical_median_cck": 33616.0,
+              "p95_cck": 33638,
+              "max_cck": 33638,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 25553.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
+            },
+            "update_including_render": {
+              "samples": 1237,
+              "typical_median_cck": 7694.0,
+              "p95_cck": 7714,
+              "max_cck": 43801,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 15390.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 1237,
+              "typical_median_cck": 219.0,
+              "p95_cck": 221,
+              "max_cck": 36012,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 23179.137237548828
+            }
+          },
+          "help": {
+            "minimum_deadline_headroom_cck": 16522.753356933594,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 372,
+            "ui_construction_render": {
+              "samples": 8,
+              "typical_median_cck": 29232.0,
+              "p95_cck": 29351,
+              "max_cck": 29351,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 29840.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
+            },
+            "update_including_render": {
+              "samples": 372,
+              "typical_median_cck": 7667.5,
+              "p95_cck": 7692,
+              "max_cck": 41964,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 17227.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 372,
+              "typical_median_cck": 195.0,
+              "p95_cck": 199,
+              "max_cck": 33881,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 25310.137237548828
+            }
+          },
+          "one-player-rally": {
+            "minimum_deadline_headroom_cck": 36527.55908203125,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 31,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 31,
+              "typical_median_cck": 19924.0,
+              "p95_cck": 21458,
+              "max_cck": 21884,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37307.13723754883
+            },
+            "render": {
+              "samples": 30,
+              "typical_median_cck": 4913.0,
+              "p95_cck": 5578,
+              "max_cck": 5585,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 53606.13723754883
+            },
+            "dispatcher": {
+              "samples": 30,
+              "typical_median_cck": 7320.0,
+              "p95_cck": 8140,
+              "max_cck": 8214,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 50977.13723754883
+            }
+          },
+          "two-player-rally": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "demo": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "pause": {
+            "minimum_deadline_headroom_cck": 14601.694549560547,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 88,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 88,
+              "typical_median_cck": 7513.0,
+              "p95_cck": 8333,
+              "max_cck": 44336,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 14855.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 1,
+              "typical_median_cck": 220.0,
+              "p95_cck": 220,
+              "max_cck": 220,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 58971.13723754883
+            }
+          },
+          "match-end": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "celebration": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          }
+        },
+        "extent": {
+          "completed_callbacks": 1933,
+          "first_entry": {
+            "cck": 21993017,
+            "frame": 309,
+            "hpos": 122,
+            "seconds": 6.200639432517737,
+            "vpos": 168
+          },
+          "last_completion": {
+            "cck": 136369828,
+            "frame": 1919,
+            "hpos": 32,
+            "seconds": 38.44766422462464,
+            "vpos": 101
+          },
+          "pending_callback": null,
+          "dropped_events": 0
+        },
+        "clock": {
+          "cck_hz": 3546895,
+          "simulation_tick_cck": 59191.13723754883,
+          "pal_display_frame_cck": 70824,
+          "pal_display_frame_ms": 19.967887405745024
+        },
+        "boundaries": "Update counter write to completion counter write includes sampling/render/dispatcher. Render and dispatcher: direct BSR first stack-store to RTS last return-word read, including contention; excludes instruction prefix/suffix outside bus boundaries. Dispatcher is not update-minus-render. Profiles use state at callback entry, including input transition callbacks; differing phase sample counts expose calls skipped by a transition. UI construction: explicit clr-ui_dirty to UI-render ready bus writes, only observed redraws (not all idle ticks). Frozen pause ordinarily has no render/dispatcher call; null is intentional.",
+        "host_wallclock": "unmeasured; never used as emulated work",
+        "cpu_busy_vs_bus_wait": "unavailable in this bus-boundary observer",
+        "first_title_publication": null,
+        "first_complete_title_frame": null,
+        "assets_ready_and_controls_initialized": {
+          "cck": 21992163,
+          "frame": 309,
+          "hpos": 176,
+          "seconds": 6.2003986585450095,
+          "vpos": 164
+        }
+      },
+      "provenance": {
+        "startup": "ordinary title",
+        "command": [
+          "scripts/run_native_setup_tests.py"
+        ],
+        "commit": "df400bb8c339e125bac79730c60e1f7b86f7d8d7",
+        "target": {
+          "model": "A500",
+          "cpu": "68000",
+          "chipset": "OCS",
+          "video": "PAL",
+          "chip_bytes": 524288,
+          "slow_bytes": 0,
+          "fast_bytes": 0,
+          "kickstart": "1.3"
+        },
+        "tools": {
+          "python": {
+            "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "version": "Python 3.12.14"
+          },
+          "vasm": {
+            "path": ".tools/vasm/vasmm68k_mot.exe",
+            "version": "vasm 1.9d (c) in 2002-2023 Volker Barthelmann"
+          },
+          "copperline": {
+            "path": ".tools/copperline/squashfs-root/usr/bin/copperline",
+            "version": "copperline 1.0.0-rc.1"
+          }
+        },
+        "external_inputs_sha256": "32261de3b67c52a05423d034747ce844224752395bdba04cb3c35924855f0176",
+        "tool_sha256": {
+          "python": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "vasm": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+          "copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8"
+        },
+        "kickstart_sha256": "1d68ba18412501d2a4b307a0a632b94a50b839c2c7c5ff2df6de2c38b99a921f",
+        "compiled_executables": {
+          "build/amiga/interfaces/enhanced/baseline-rally": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c"
+        },
+        "state": "complete",
+        "source_dependency_identity": "ffe2299134d2631c1b3c4ac2d7d107f55c8c2697164a014385ed335ef24ea608"
+      },
+      "deadlines": {
+        "missed_publications_counter": 0,
+        "missed_named_profile_deadlines": 0,
+        "missed_native_callbacks": 0,
+        "scope": "Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured."
+      }
+    },
+    "demo": {
+      "receipt": "build/tests/demo-full-repeat/report.json",
+      "classification": {
+        "status": "passed",
+        "freshness": "reused",
+        "started_utc": "2026-10-02T21:48:35.285404+00:00",
+        "startup": "ordinary title",
+        "subject": "maintained-native",
+        "kind": "native-demo",
+        "matched": null,
+        "executed": null,
+        "reference": null,
+        "first_difference": null
+      },
+      "receipt_sha256": "116ed469f4984a0368c60a0485c544bc8f3f898bfca9bec57c931c42f20eb1b2",
+      "metrics": {
+        "schema": 1,
+        "profiles": {
+          "title": {
+            "minimum_deadline_headroom_cck": 18879.137237548828,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 1800,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 1800,
+              "typical_median_cck": 7694.0,
+              "p95_cck": 7712,
+              "max_cck": 39553,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 19638.137237548828
+            },
+            "render": null,
+            "dispatcher": {
+              "samples": 1800,
+              "typical_median_cck": 219.0,
+              "p95_cck": 221,
+              "max_cck": 5958,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 53233.13723754883
+            }
+          },
+          "help": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "one-player-rally": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "two-player-rally": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "demo": {
+            "minimum_deadline_headroom_cck": 17970.344451904297,
+            "missed_deadlines": 0,
+            "state": "measured",
+            "callbacks": 11703,
+            "ui_construction_render": null,
+            "update_including_render": {
+              "samples": 11703,
+              "typical_median_cck": 18985.0,
+              "p95_cck": 21322,
+              "max_cck": 40426,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 18765.137237548828
+            },
+            "render": {
+              "samples": 11638,
+              "typical_median_cck": 4894.0,
+              "p95_cck": 5567,
+              "max_cck": 27810,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 31381.137237548828
+            },
+            "dispatcher": {
+              "samples": 11703,
+              "typical_median_cck": 5805.0,
+              "p95_cck": 8028,
+              "max_cck": 14103,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 45088.13723754883
+            }
+          },
+          "pause": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "match-end": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          },
+          "celebration": {
+            "minimum_deadline_headroom_cck": null,
+            "missed_deadlines": null,
+            "state": "unmeasured",
+            "callbacks": 0,
+            "ui_construction_render": null,
+            "update_including_render": null,
+            "render": null,
+            "dispatcher": null
+          }
+        },
+        "extent": {
+          "completed_callbacks": 13503,
+          "first_entry": {
+            "cck": 21993017,
+            "frame": 309,
+            "hpos": 122,
+            "seconds": 6.200639432517737,
+            "vpos": 168
+          },
+          "last_completion": {
+            "cck": 821208613,
+            "frame": 11558,
+            "hpos": 20,
+            "seconds": 231.5288761014916,
+            "vpos": 5
+          },
+          "pending_callback": {
+            "callback": 13504,
+            "entry": {
+              "cck": 821250666,
+              "frame": 11558,
+              "hpos": 78,
+              "seconds": 231.54073238705968,
+              "vpos": 190
+            },
+            "profile": "demo",
+            "phases": {
+              "render": 4907
+            }
+          },
+          "dropped_events": 0
+        },
+        "clock": {
+          "cck_hz": 3546895,
+          "simulation_tick_cck": 59191.13723754883,
+          "pal_display_frame_cck": 70824,
+          "pal_display_frame_ms": 19.967887405745024
+        },
+        "boundaries": "Update counter write to completion counter write includes sampling/render/dispatcher. Render and dispatcher: direct BSR first stack-store to RTS last return-word read, including contention; excludes instruction prefix/suffix outside bus boundaries. Dispatcher is not update-minus-render. Profiles use state at callback entry, including input transition callbacks; differing phase sample counts expose calls skipped by a transition. UI construction: explicit clr-ui_dirty to UI-render ready bus writes, only observed redraws (not all idle ticks). Frozen pause ordinarily has no render/dispatcher call; null is intentional.",
+        "host_wallclock": "unmeasured; never used as emulated work",
+        "cpu_busy_vs_bus_wait": "unavailable in this bus-boundary observer",
+        "first_title_publication": null,
+        "first_complete_title_frame": null,
+        "assets_ready_and_controls_initialized": {
+          "cck": 21992163,
+          "frame": 309,
+          "hpos": 176,
+          "seconds": 6.2003986585450095,
+          "vpos": 164
+        }
+      },
+      "provenance": {
+        "startup": "ordinary title",
+        "command": [
+          "scripts/run_demo_match_tests.py"
+        ],
+        "commit": "df400bb8c339e125bac79730c60e1f7b86f7d8d7",
+        "target": {
+          "model": "A500",
+          "cpu": "68000",
+          "chipset": "OCS",
+          "video": "PAL",
+          "chip_bytes": 524288,
+          "slow_bytes": 0,
+          "fast_bytes": 0,
+          "kickstart": "1.3"
+        },
+        "tools": {
+          "python": {
+            "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "version": "Python 3.12.14"
+          },
+          "vasm": {
+            "path": ".tools/vasm/vasmm68k_mot.exe",
+            "version": "vasm 1.9d (c) in 2002-2023 Volker Barthelmann"
+          },
+          "copperline": {
+            "path": ".tools/copperline/squashfs-root/usr/bin/copperline",
+            "version": "copperline 1.0.0-rc.1"
+          }
+        },
+        "external_inputs_sha256": "32261de3b67c52a05423d034747ce844224752395bdba04cb3c35924855f0176",
+        "tool_sha256": {
+          "python": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "vasm": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+          "copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8"
+        },
+        "kickstart_sha256": "1d68ba18412501d2a4b307a0a632b94a50b839c2c7c5ff2df6de2c38b99a921f",
+        "compiled_executables": {
+          "build/amiga/interfaces/enhanced/baseline-rally": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c"
+        },
+        "state": "complete",
+        "source_dependency_identity": "ffe2299134d2631c1b3c4ac2d7d107f55c8c2697164a014385ed335ef24ea608"
+      },
+      "deadlines": {
+        "missed_publications_counter": 0,
+        "missed_named_profile_deadlines": 0,
+        "missed_native_callbacks": null,
+        "scope": "Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured."
+      }
+    }
+  },
+  "coverage": {
+    "title": "measured",
+    "help": "measured",
+    "one-player-rally": "measured",
+    "two-player-rally": "measured",
+    "demo": "measured",
+    "pause": "measured",
+    "match-end": "measured",
+    "celebration": "unavailable in this product; remeasure when implemented"
+  },
+  "measurement_inputs": {
+    "amiga/display.i": "a45db1148348fdbc84ce161ea77323d5ce11307b12fcc5f3bfa5d2f6cc71ce23",
+    "amiga/game/audio.s": "abbd1158e7027a8755b3cef4e78dff3d103b7d508bcbb0383bdc8ab15b19baff",
+    "amiga/game/audio_state.i": "5efb2f761d3eb883889a198f57dff5a710ef04f687cbae5b30c2f004206459e5",
+    "amiga/game/controls.s": "7fdfc72cf1e8ca6d7a9c7407b338e6713021af90c5252afcf59bd75f78475156",
+    "amiga/game/gameplay.s": "1f92a86e0f4b4724dbc1c16445c74f409bd2ccc94561b5b9403b8538c3e304c2",
+    "amiga/game/gameplay_ai.s": "4070f0c4507b77fe0b53017bb0391877dd8b1220f893ce12f15096b20876c777",
+    "amiga/game/gameplay_ball.s": "0e831e4764543c9b1416c3ffb44fcf9f0cd3b8c815c0061bcb35d49058f37dcd",
+    "amiga/game/gameplay_contact.s": "74e2207300df9f08c332d37048661f0ce6a91c41e6a2a3cd9007f51070acd915",
+    "amiga/game/gameplay_controls.s": "146c3058507893fc2973a173b10a37df972816c26f494e4a054dd0b20249ceb6",
+    "amiga/game/gameplay_math.s": "e3de01e5ad2d033910bef8a10a8d5230284f897373e16a54faf59cd3fa766cba",
+    "amiga/game/gameplay_players.s": "8c0b218d342d45710170640bc5ad8ee837c929e811cc52c37d0fe15093a2c60c",
+    "amiga/game/gameplay_state.i": "b689400b724cd1d39c024d82d5ea4ccd7d31448b7180a86cafafbfb140ba1d07",
+    "amiga/game/integration.s": "2c8cf499e2813f1426067472fdfd797025be9611fe18108f0a3676335321c331",
+    "amiga/game/interface.s": "a0aac1191be5c5341f9a5019d2dce48fd895e6ba27184152c8f893d9b1f7fa59",
+    "amiga/game/interface_demo.s": "c16d853484ee07fef5df52e3e45654875835143b27ac11ebf5131716b3d89106",
+    "amiga/game/interface_feedback.s": "ef0f4e915b32b274aeffd6d99518e17d4e5cf30b9122254b92b3285bc923e29f",
+    "amiga/game/interface_input.s": "dda28630a0601ace3233529940fa395de23a0a42a5c0308adb21d94b64dbe742",
+    "amiga/game/interface_menu.s": "4bef910451130eac65850b327b09747859b1831ed1990086c3cdb8389b7f6e4b",
+    "amiga/game/interface_pause.s": "093a1d7b23d39c180a0903bfd08fe4f5b41cf3eebb1967b520cfdd85d9347c47",
+    "amiga/game/interface_render.s": "9d843939e9453ce2a68560dc2cfc0e0042061f73ae645f362ab3ab144589a150",
+    "amiga/game/interface_state.i": "94cab2b09e9ff1dfa267ab17875a40b57ba90dc11fd8d5edf116761ef4a8d1ba",
+    "amiga/game/interface_text.s": "3d3ffd4d84604d891916107ecafae5b9ebd5aa757cbe5bb3c6925cfe1e7cb31c",
+    "amiga/game/keyboard.s": "bf6f51ca899d194c4f1560239abc482fe48c760ec45ce178084a811d8e51281f",
+    "amiga/game/menu.s": "28b1096f59c91a237326a64e9a675cce96c54d9c73205f8e58d18862786cab3a",
+    "amiga/game/paula_output.s": "1d53bd2a4f64e8aca81a232691d0327ab95399f380956cb57f25e4e7820cd7e5",
+    "amiga/game/result.s": "5d25b8dfad37b1c80ceeae497ce32116de84c1847f2bdc211f804aa29936d966",
+    "amiga/game/result_audio.s": "ccc15d32d343d8130d882a4e78c25c41bef6d7201400164896114153cefb81df",
+    "amiga/game/round.s": "e0a1ec461192f7f62fd9eea55f796dcb322d59a3e810aa0c5092187620d5aa68",
+    "amiga/game/scene.s": "387041b5d81132ff3fc7ef7214c8763d903d0f6ae81b886ad4d316cc7f7b65a9",
+    "amiga/game/scene_fields.s": "6ee6bd519a823a5584a84810518d52289f440f1792b5b3b84cbc6d10ff7aa6d1",
+    "amiga/game/scene_integration.s": "4f8e55bf94174a4ab704f1fa7e12ced98a90639a88ddb408e125e6c0adb088ef",
+    "amiga/game/scoring.s": "3801ea17a8c3ff7e442b12c4c98ed88ee867ae735cf52b03083b6070a16b97c6",
+    "amiga/game/scoring_integration.s": "079c32a8b2198377772e7f0f629889ea2bd32656c4b0d79d5aba88f090d02fb0",
+    "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
+    "amiga/game/state.i": "98258d5b3741d55af7afa1d5642140d91ee2be14309286592b6d342584fb7777",
+    "amiga/game/tick.s": "2a370b076365a80808f53b17e978387dda0ceba88f35906101319667ec35e97a",
+    "amiga/main.s": "4a833f34249641e0dcdaac29637ec7bbfcb0a00750d88c9a9ebfea69ae3cc26c",
+    "amiga/score_copper_patch.i": "add57337d04547a76467654568aaa00ee6b5a488247822b73e5863359f4e58be",
+    "assets/interface/demo-inputs.json": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
+    "assets/interface/small-font-additions.json": "fa5f28102756796004e57681c6a2e3cc64d5e4a4b4809387f6b4a12ab423ffe6",
+    "assets/native/README.md": "a964897c581eaf0af26f7682d04db7440995dd45d9900f83c58b8d39c5458c36",
+    "assets/native/audio/data.i": "856755ce6fb338d1d78c7c480797b3346a4425bc8bd209cfb5782f09ac6de164",
+    "assets/native/audio/envelopes.bin": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4",
+    "assets/native/audio/periods.bin": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc",
+    "assets/native/audio/score-0.bin": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8",
+    "assets/native/audio/score-1.bin": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007",
+    "assets/native/audio/score-2.bin": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4",
+    "assets/native/audio/score-3.bin": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e",
+    "assets/native/audio/score-4.bin": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d",
+    "assets/native/audio/score-5.bin": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666",
+    "assets/native/court/plane0.bin": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+    "assets/native/court/plane1.bin": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
+    "assets/native/court/plane2.bin": "85debb170c3f9c5b609303e68e94c5b07aaa65f2f4e5ea097999f2ecf8d2ad41",
+    "assets/native/court/plane3.bin": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019",
+    "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5",
+    "assets/native/court/score-cop-commands.i": "cf259b0926b1f567d63c354fd1d58c501316cf45655573f99a7229716a6338b4",
+    "assets/native/court/score-patch-tables.i": "c3069a96312427c3f58d79d0616a74c4c23718b3b4f22e4eb7936f3322c82968",
+    "assets/native/court/score_bank_games_a_0_p1.bin": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+    "assets/native/court/score_bank_games_a_1_p1.bin": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13",
+    "assets/native/court/score_bank_games_a_2_p1.bin": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625",
+    "assets/native/court/score_bank_games_a_3_p1.bin": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9",
+    "assets/native/court/score_bank_games_a_4_p1.bin": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c",
+    "assets/native/court/score_bank_games_a_5_p1.bin": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6",
+    "assets/native/court/score_bank_games_a_6_p1.bin": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4",
+    "assets/native/court/score_bank_games_b_0_p1.bin": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d",
+    "assets/native/court/score_bank_games_b_1_p1.bin": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3",
+    "assets/native/court/score_bank_games_b_2_p1.bin": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c",
+    "assets/native/court/score_bank_games_b_3_p1.bin": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2",
+    "assets/native/court/score_bank_games_b_4_p1.bin": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a",
+    "assets/native/court/score_bank_games_b_5_p1.bin": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b",
+    "assets/native/court/score_bank_games_b_6_p1.bin": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9",
+    "assets/native/court/score_bank_mode_0_p0.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+    "assets/native/court/score_bank_mode_0_p1.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+    "assets/native/court/score_bank_mode_0_p2.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+    "assets/native/court/score_bank_mode_0_p3.bin": "06a8d12c884458a13167849919ef2ac75e401bb6d3d43ee280fd1dd9188540f3",
+    "assets/native/court/score_bank_mode_1_p0.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+    "assets/native/court/score_bank_mode_1_p1.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+    "assets/native/court/score_bank_mode_1_p2.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+    "assets/native/court/score_bank_mode_1_p3.bin": "cbb67b70015f3a5b49538f4c70e89bf54a5c0a6287e1105761d3306746be2db3",
+    "assets/native/court/score_bank_mode_2_p0.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+    "assets/native/court/score_bank_mode_2_p1.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+    "assets/native/court/score_bank_mode_2_p2.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+    "assets/native/court/score_bank_mode_2_p3.bin": "7ffe5c58e868ad073ffe9c36849704f91dda3b6b917e9f1dbcba4d5066f4b155",
+    "assets/native/court/score_bank_point_a_0_p2.bin": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+    "assets/native/court/score_bank_point_a_1_p2.bin": "8bab2406e2ca5fd2f8ea3f6736bc35186f970aaa93472df091490948dc5c87f5",
+    "assets/native/court/score_bank_point_a_2_p2.bin": "ccd7c7016ed7f853d1ba23595b94fb0e99799d99522360b05a55a09602b537ae",
+    "assets/native/court/score_bank_point_a_3_p2.bin": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+    "assets/native/court/score_bank_point_a_4_p2.bin": "d906aaf822a6359042bab6dfb2167b5ab3590d4fc38dce3433971fdb6870f1de",
+    "assets/native/court/score_bank_point_a_5_p2.bin": "e4f5b28409286bd7c061ad1b29568d108d52984c58283715332fc846a698e3e4",
+    "assets/native/court/score_bank_point_a_6_p2.bin": "34532193f4fa83d4891e99134232ec754e2df1c31f7d19e6d987242996f08bea",
+    "assets/native/court/score_bank_point_b_0_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_0_p2.bin": "b0d63afcb2878507870185589b8f3cf32adeaf138ef3d7d97178bc389bc18109",
+    "assets/native/court/score_bank_point_b_0_p3.bin": "b126306a8e878388d3dba338043d913ad9af5ac63a0e14b6970f087e73b353f3",
+    "assets/native/court/score_bank_point_b_1_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_1_p2.bin": "b29dc503ecc6033ec0fcd0d969dfc81be56594a46e109c138222b3c540a13c65",
+    "assets/native/court/score_bank_point_b_1_p3.bin": "b6f89b19a1958faefa105087aecfaf56dd7768750064192926b95617281f8f3a",
+    "assets/native/court/score_bank_point_b_2_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_2_p2.bin": "0b81dad6b861c853770431427ba7999a3d140b75c5e121c03ad4e571b79939c4",
+    "assets/native/court/score_bank_point_b_2_p3.bin": "23ad9eafcfc918d7c2f9b4c5103268f78ca6baf4753298690038f481444cb625",
+    "assets/native/court/score_bank_point_b_3_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_3_p2.bin": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+    "assets/native/court/score_bank_point_b_3_p3.bin": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+    "assets/native/court/score_bank_point_b_4_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_4_p2.bin": "3e42d0fc494d00db7d2b2e09b50f6673f6d54a493202e4121485b401eab4e9ea",
+    "assets/native/court/score_bank_point_b_4_p3.bin": "f1fc9031df19232b6bfcfe9cef96b67a197c4c99db168ddb8011fc888d18a6b8",
+    "assets/native/court/score_bank_point_b_5_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_5_p2.bin": "ad36fbfe2a40a69fab19216447f9f017382115811f21c25b770cabd13e8efe72",
+    "assets/native/court/score_bank_point_b_5_p3.bin": "91dc1bc909babddfb4a67757015422c8745b13db5dcf96f2741112ada0e86004",
+    "assets/native/court/score_bank_point_b_6_p0.bin": "8010dc984e7c1d2b1cbec3e97ba72c3ffd9b0ef45ebfa832a13b32add0b8aa5d",
+    "assets/native/court/score_bank_point_b_6_p2.bin": "4104024fac37bdca4428f624de0961a406dfdfcf204924cbc4b721ab60cf3b5e",
+    "assets/native/court/score_bank_point_b_6_p3.bin": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b",
+    "assets/native/court/score_bank_status_0_p0.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+    "assets/native/court/score_bank_status_0_p1.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+    "assets/native/court/score_bank_status_0_p2.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+    "assets/native/court/score_bank_status_0_p3.bin": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+    "assets/native/court/score_bank_status_1_p0.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+    "assets/native/court/score_bank_status_1_p1.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+    "assets/native/court/score_bank_status_1_p2.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+    "assets/native/court/score_bank_status_1_p3.bin": "343b39be4b83af43a0f9e379de9f85c5798d31f63c472b2add3fca06d7f013b4",
+    "assets/native/court/score_bank_status_2_p0.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+    "assets/native/court/score_bank_status_2_p1.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+    "assets/native/court/score_bank_status_2_p2.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+    "assets/native/court/score_bank_status_2_p3.bin": "bf4c4bf7e69459a98a01bca52eb7851d1edcea3dbd35d6a085c0c21c607437a7",
+    "assets/native/court/score_bank_status_3_p0.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+    "assets/native/court/score_bank_status_3_p1.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+    "assets/native/court/score_bank_status_3_p2.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+    "assets/native/court/score_bank_status_3_p3.bin": "b111819d6b5f37e3831b66a15b2e87ee69f0bd81752cb923d96d3f679121b83e",
+    "assets/native/court/score_bank_status_4_p0.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+    "assets/native/court/score_bank_status_4_p1.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+    "assets/native/court/score_bank_status_4_p2.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+    "assets/native/court/score_bank_status_4_p3.bin": "3b6219e38874ae248281c6f7ed01a42fa5b23864a638ca6bfd89957b6f1d9e01",
+    "assets/native/court/score_bank_status_5_p0.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+    "assets/native/court/score_bank_status_5_p1.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+    "assets/native/court/score_bank_status_5_p2.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+    "assets/native/court/score_bank_status_5_p3.bin": "e95d1dcde858c49f6ce2d7fe3dfeb75c508a62c2a6bfbf1dfbf5edb2910a1ebe",
+    "assets/native/court/score_bank_status_6_p0.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+    "assets/native/court/score_bank_status_6_p1.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+    "assets/native/court/score_bank_status_6_p2.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+    "assets/native/court/score_bank_status_6_p3.bin": "9683a7321abd5fb8b79b2c06d7355b75232a2c36dd709fe30b0fb2d9f70eac01",
+    "assets/native/manifest.json": "7687970aff91b31f8c637c8ad26071b51a24bb6126f650fd237a797793dede18",
+    "assets/native/scene/animations.bin": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad",
+    "assets/native/scene/poses.bin": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376",
+    "assets/native/scene/sprite-images.bin": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f",
+    "assets/native/sprites/sprite0.bin": "76bba8590ee1640f5f0e8fe5570ccefdfbc69b439df4b0801170b5d5d1ca7e2d",
+    "assets/native/sprites/sprite1.bin": "fd6eccdd9071ebc1ea8b9aa1a098d5bc69b23f2a6b3b40d40178545b7146a9c8",
+    "assets/native/sprites/sprite2.bin": "c5354edfc09b5889779ef7fbb35f9aa72085125b2e6d25022a35b4f9ba077e60",
+    "assets/native/sprites/sprite3.bin": "1222487aa98a6dc72862fa217f00319903f863ed633b201a79627a5ef4cbc931",
+    "assets/native/sprites/sprite4.bin": "ee6680681a4e5a706790dece5acaed443adacf2dc3af2071b2c3e2fff8cf3623",
+    "assets/native/sprites/sprite5.bin": "c4eb1ecb9735bdc41f16d9117903d740a45ad1713e099f24aa53fc1c01bd73aa",
+    "assets/native/sprites/sprite6.bin": "bcb5c9b664ec0e10fb8f20d131228f818ea519ab8391f5daa13b6c5d28a19ce9",
+    "assets/native/sprites/sprite7.bin": "971905ba776eae8ba120c70bb729295061e62a6bc54ee5f0b342dee7ae3db939",
+    "assets/native/title/display.i": "22f0644a72dc1a3645fb8fd047381499b322757337cd7179197cc4764d83dde8",
+    "assets/native/title/font.bin": "691d65151c72adfbd63155ec9cea8f8051d83cbac82e3c266c4c0a1731afcdfb",
+    "assets/native/title/plane0.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+    "assets/native/title/plane1.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+    "assets/native/title/plane2.bin": "b13b937dbaabbedd83cdbca30b35f003be4393121027c47062f0f191b54d2d5e",
+    "assets/native/title/plane3.bin": "fd9243e1ba57263ed469c3bdbd7ade6ec5254e7ed924a9f5737fa44749933cc0",
+    "config.local.ini": "5ec477a699c5c7fffcad64a70b5ffdf40a1786a0b99ca4fa10eecad5ef6cec14",
+    "scripts/audio_wave.py": "d6f17c5827752a53c926f77d264c6eb477a95b6ae3f5a120d860812da581b78a",
+    "scripts/build_native_adf.py": "618894fbb6f18a302b8bda0b7837aaff1d646ccfdb9cf65929bbc1a7ebf1e6c4",
+    "scripts/build_native_game.py": "67cb908c41718cc19054638b62ecf55835bcf06b2da614979b3bd319533bd63c",
+    "scripts/copperline_test_session.py": "eb1f99ea74e97f73519c490a3257fa854277fb48d81588690da11d48bb59f44f",
+    "scripts/native_assets.py": "d52b11cf6d10429683f6c87ca3ff12ae1ce65c0f93bb30d0c4b18133072f0701",
+    "scripts/native_audio_checks.py": "3d71b172363498203ad9c6822d63cddad6c8a0d85a298d051eb07f7387a4a97b",
+    "scripts/native_clock.py": "ac0d83a921b27cd1c0d9f6e46901b8ab3cb7f11140c49043e072f1797da6d5df",
+    "scripts/native_evidence.py": "362271876236f6418d0e9f0469ea462ebf64680f3572a7ae2fa903d3de62849e",
+    "scripts/native_hunk.py": "7c5e7b31bca82af439fc46346da80478439adae2d2917306265bd6b55a93ec40",
+    "scripts/native_metrics_observation.py": "29e3a85f1088b5e4d51f49af5b089dcd3b130021e632e279aa9ab95dcc2ab3a2",
+    "scripts/native_observation.py": "a6cee227f8bcbbc19dba0fad26d1c36ac54d09b739a1b31d7abe83a7596da4eb",
+    "scripts/native_release.py": "9fb46d492de649006058e339d88f1d80d44d1962bcf3f9c7de8a25456bea4568",
+    "scripts/native_setup_observation.py": "65313a6f831752fc940dd0fa50e4df4bef7c416be10a89c6a66fa2023d0106a0",
+    "scripts/native_size.py": "47089248cf3f7611619b1bf1cedbc28ba13ee00b2343675af90638b0263dbc1c",
+    "scripts/native_state_observation.py": "879a3a13aa4334b2d481715d87146b038095c9ef2d07b45492f1d84c36ccd28e",
+    "scripts/native_tools.py": "336a943f578df80d61c122793ccbd54b6e6bf7131a3de72581ba96b834131100",
+    "scripts/native_ui_pages.py": "90ca31632061a74ec2026700a92aed058237e6b9b922b46a5ff9acd57e357b7e",
+    "scripts/native_ui_raster.py": "f0c20cf122469c3b51edae48a75f163557c3cc4aa2a544618b0866f3b5f1b67d",
+    "scripts/ordinary_cadence.py": "8ade5c58dce068ad2d84d06f6c6bd2ebaa92a794a28e85eb00abbee10e60c716",
+    "scripts/record_demo_inputs.py": "b184f60ce6b00a18119f1e5cdb39a6404459c84b52fe47cb64a55fa70f264f7e",
+    "scripts/run_demo_match_tests.py": "c0364fa392ed4f8de281516a588037a56afb25bc935bb26fd1a193be90ad7219",
+    "scripts/run_native_setup_tests.py": "b074bfb514a61306fddc2185f81226e8f5a488d3fa713fb5b790daf7349e4f48",
+    "scripts/run_ordinary_round_tests.py": "956473c92490697fe4ee233e92a4d063d59c4ecab449e6631b1696215901fd3f",
+    "tests/fixtures/native-demo/README.md": "71d8aadc2cabe747baf835cda2affbbf676c224cd228893ad0813e627bd37f32",
+    "tests/fixtures/native-demo/manifest.json": "3f9b5a458c2310a12cdda0faf2ae06fc9c58e23834d8bec547e21747ec78720c",
+    "tests/fixtures/native-demo/trajectory.sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6",
+    "tools.lock.json": "61b7c792b1e80fd62303dfbedbca1114b4beac9c6fbdccc8b7f855c27d87f93e"
+  },
+  "cold_loading_issues": [],
+  "identity": "2dd4e5c571ce765c989e09ed08ad74372ee8d1b495ec90da0aeafe0efeb5a24d",
+  "report_generator_sha256": "212c358acfcf3eaa65d6d0a4c3c59079059302d5cdb4948eaa35e0ce812b4e21",
+  "deltas": {
+    "state": "no previous accepted compatible report"
+  },
+  "product_identity": "510c9671c5f1829dcd51fb3d251719f696b49dda194cf7b194ae2a5cd901a3d4"
+}

@@ -11,9 +11,18 @@ The manifest declares every file's format, size and hash. Original imported hash
 CT12 intentionally replaces title lettering, removes the logo, expands status/mode
 labels with the existing native font, and adds Red point glyph high planes while
 preserving original digit/advantage shapes. The logical player palette and score
-indicators change; court fills, player poses, animation masks and audio remain
-retained. See [CT12 visual review](../../docs/ct12/README.md). Stale conversion reports and diagnostic maps are retired in
+indicators change; court fills, player poses, animation masks and other audio remain
+retained. CT13 removes the old victory score-2/3 inputs and adds the independently
+arranged historical Battle Hymn chorus in audio/battle-hymn/; its isolated
+period bank, accompaniment and mathematical four-byte square are independently
+authored. Retained effect pitch/envelope data remain unchanged. No rights-clearance or public-redistribution claim is made. See [CT12 visual review](../../docs/ct12/README.md). Stale conversion reports and diagnostic maps are retired in
 Git history. Builders reject missing/incompatible/undeclared files; they never
 extract or recover from original sources. Version text and demo assembly table
 are generated in ignored build/native from the Git revision and committed native
 input recording. Keep this repository and its assets private.
+
+Classic player replacement: human/robot body masks are newly drawn with built-in
+ImageGen and fitted to retained native pose envelopes, seams and attachment edges.
+White rackets, pose geometry, animation, ball, shadow and court retain their
+Sega-derived provenance. Neither the whole game nor the composite assets are
+claimed clean-room. See ../../docs/sprites/README.md for the fitting/evidence limits.

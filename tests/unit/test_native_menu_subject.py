@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_enhanced_menu_tests import execution_subject
+from run_enhanced_menu_tests import execution_subject, sampled_joystick_takeover
 
 class MenuSubjectTests(unittest.TestCase):
     def test_release_boot_binding_and_stale_package_debug_rejection(self):
@@ -30,3 +30,16 @@ class MenuSubjectTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'ADF'):execution_subject(dev,report)
                 adf.write_bytes(b'packaged release');dev.write_bytes(b'wrong')
                 with self.assertRaisesRegex(ValueError,'debug source'):execution_subject(dev,report)
+
+    def test_takeover_waits_for_physical_sample_and_keeps_state_assertion(self):
+        from unittest.mock import Mock
+        until=Mock();number=Mock(side_effect=[0,255,32,0])
+        rows=sampled_joystick_takeover(until,number,lambda:b'unchanged',1,2)
+        self.assertEqual([r['physical_p1_bits'] for r in rows],[0,32])
+        self.assertEqual(until.call_count,4)
+        with self.assertRaisesRegex(AssertionError,'did not take over'):
+            sampled_joystick_takeover(until,Mock(side_effect=[32,255]),lambda:b'unchanged',1,2)
+        with self.assertRaisesRegex(AssertionError,'changed native state'):
+            sampled_joystick_takeover(until,Mock(side_effect=[32,0]),Mock(side_effect=[b'a',b'b']),1,2)
+        with self.assertRaisesRegex(AssertionError,'bounded'):
+            sampled_joystick_takeover(until,Mock(side_effect=[0,255]*2),lambda:b'unchanged',1,2,limit=2)

@@ -13,7 +13,7 @@ U_SELECTION rs.b 1
 U_PLAYER_COUNT rs.b 1
 U_EDGES rs.b 1
 U_DIRTY rs.b 1
-U__PADDING rs.b 1
+U_DEMO_CHOICE rs.b 1 ;0 EXIT (default),1 TAKE OVER
 U_DEMO_CURSOR rs.l 1
 U_DEMO_REMAINING rs.w 1
 U_DEMO_MASK rs.b 1
@@ -28,7 +28,9 @@ U_JOYSTICK_PREVIOUS rs.b 2
 U_JOYSTICK_PRESSED rs.b 2
 U_JOYSTICK_ENTRY rs.b 2
 U_ENTROPY rs.w 1
+U_HELP_CHOICE rs.w 1 ; byte0 BACK=0 EXIT=1 NEXT=2; padding preserves alignment
 U_SIZE rs.b 0
+ui_help_choice equ ui_state+U_HELP_CHOICE
 ui_previous_keys equ ui_state+U_PREVIOUS_KEYS
 ui_saved_volumes equ ui_state+U_SAVED_VOLUMES
 ui_overlay_signature equ ui_state+U_OVERLAY_SIGNATURE
@@ -42,6 +44,7 @@ ui_selection equ ui_state+U_SELECTION
 ui_player_count equ ui_state+U_PLAYER_COUNT
 ui_edges equ ui_state+U_EDGES
 ui_dirty equ ui_state+U_DIRTY
+ui_demo_choice equ ui_state+U_DEMO_CHOICE
 ui_demo_cursor equ ui_state+U_DEMO_CURSOR
 ui_demo_remaining equ ui_state+U_DEMO_REMAINING
 ui_demo_mask equ ui_state+U_DEMO_MASK

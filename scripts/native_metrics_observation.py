@@ -25,6 +25,7 @@ class MetricsObserver:
     def __init__(self, base, symbols, listing, title_copper=None):
         self.base, self.symbols = base, symbols
         self.values = dict(game_lifecycle=0, game_mode=0, game_flight=0, ui_paused=0, ui_demo=0, ui_page=0, game_title_display=0)
+        if 'game_celebration_pose' in symbols:self.values['game_celebration_pose']=0
         self.rows, self.current, self.pending = [], None, None
         self.dropped = 0
         self.first_title_publication = self.first_complete_title_frame = None
@@ -60,7 +61,8 @@ class MetricsObserver:
         if v['game_lifecycle']==2: return 'help' if v['ui_page'] else 'title'
         if v['game_lifecycle']==1 and v['game_flight']:
             return 'two-player-rally' if v['game_mode']&128 else 'one-player-rally'
-        if v['game_lifecycle']==6: return 'match-end'
+        if v['game_lifecycle']==6:
+            return 'celebration' if v.get('game_celebration_pose') else 'match-end'
         return 'transition-or-serve'
 
     def title_selected(self):

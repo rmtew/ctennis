@@ -297,10 +297,7 @@ scoreboard_selection_done:
         rts
 game_show_returned_title:
         bsr     prepare_title_display
-        st      game_title_display
-        rts
-game_show_returned_court:
-        clr.b   game_title_display
+        ; ui_render selects title only after the complete menu copy.
         rts
 game_clear_returned_status:
         clr.b   field_values+4
@@ -580,7 +577,8 @@ game_scene_images: incbin "assets/native/scene/sprite-images.bin"
         even
         include "assets/native/court/score-bank-data.i"
         even
-paula_square: dc.b $7f,$7f,$81,$81
+; Authored mathematical four-byte square; identical bytes preserve effect timbre.
+paula_square: incbin "assets/native/audio/battle-hymn/square.s8"
         even
 copperlist_back: dcb.b copperlist_end-copperlist,0
 sprite_back: dcb.b 8*72,0
