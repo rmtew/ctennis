@@ -6,6 +6,7 @@ import re
 import shutil
 from native_tools import ASSEMBLER, run as assemble
 from native_clock import clock_contract, INTERVAL_CCK
+from native_setup_observation import SetupObserver
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
@@ -184,6 +185,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         if boot_adf and [r['header'] for r in initial_memory['regions']]!=list(headers):
             raise ValueError('Cold-reset memory pool differs from actual calibration')
 
+        setup_observer=SetupObserver(base,symbols,listing.read_text())
         entry_stop=s.inspect('run_until',{'pc':base+symbols['start']})
         entry_regs=s.inspect('regs.get')
         task=int.from_bytes(read(initial_memory['execbase']+0x114,4),'big')
@@ -282,6 +284,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if boot_adf:boot_event(message,log=False)
             r = message['params']; a, value, size = r['addr'], r['value'], r['size']
             position = r['position']
+            setup_observer.observe(r)
             if r.get('dropped_events', 0) or r.get('dropped_notifications', 0): fault('telemetry drop')
             for field, start in pointer_addresses.items():
                 if start<=a and a+size<=start+4:
@@ -358,6 +361,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     {'addr': 0xbfdf00, 'len': 1, 'access': 'write'},
                     {'addr': initial_memory['execbase']+0x142, 'len': 12, 'access': 'write'}]
         watches += [{'addr': h['header'], 'len': 32, 'access': 'write'} for h in initial_memory['regions']]
+        watches += setup_observer.watches()
         s.inspect('events.subscribe', {'events': ['mmio'], 'mmio': watches})
         stop = s.inspect('run_until', {'seconds': stop['seconds']+(20 if bank_control else 1000)})
         s.inspect('events.unsubscribe')
@@ -410,7 +414,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'pending_final_callback': pending_callback,
                          'commits': commits, 'lifecycle_changes': changes, 'memory_initial': initial_memory,
                          'memory_final': final_memory, 'memory_writes': memory_writes,
-                         'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints})
+                         'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints,'explicit_setup_regions':setup_observer.regions})
     if boot_adf:
         if not boot_allocations or boot_allocations[0]['position']['cck']>=state['start']:
             fault('cold boot allocator observation absent')
@@ -433,6 +437,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'scope': 'CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed',
                          'continuous_allocation_watch': not active_memory_writes, 'cold_disk_boot': 'observed' if boot_adf else 'unverified','cold_boot_peak':max((r['used_chip_bytes'] for r in boot_allocations),default=None),
                          'cold_boot_peak_scope':'first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified'},
+              'phase_contract_proposal':setup_observer.proposal(callbacks,origin) if origin is not None else {'diagnostic_passed':False,'issues':['missing clock origin']},
               'capture': str(capture.relative_to(ROOT)), 'audio_wav': str((directory/'native.wav').relative_to(ROOT)),
               'loaded_executable_verified':all(c['matched'] for c in loaded_checks),
               'adf':str(boot_adf.relative_to(ROOT)) if boot_adf else None,'adf_sha256':adf_sha,

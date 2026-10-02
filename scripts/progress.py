@@ -9,6 +9,7 @@ RECEIPTS = {
     'package': 'amiga/interfaces/enhanced/delivery/package-report.json',
     'menu-cold': 'tests/enhanced-menu-cold/report.json',
     'inputs': 'tests/native-inputs/report.json',
+    'setup-proposal': 'tests/native-setup/report.json',
     'demo': 'tests/demo-full-repeat/report.json',
     'takeover': 'tests/demo-mid-takeover/report.json',
     'feedback-one': 'tests/enhanced-feedback-one/report.json',
@@ -46,10 +47,14 @@ def acceptance(name, report):
     if name == 'bank-control':
         return report.get('detected_failure', {}).get('field') == 'published Copper bank'
     if name == 'restart-audio-early':
-        return report.get('early_release_verified') is True and report.get('audio_observed') is True and len(report.get('emitted_audio', [])) == 2
+        return report.get('early_release_verified') is True and report.get('audio_observed') is True and len(report.get('emitted_audio', [])) == 3 and bool(report.get('compiled_fault_controls'))
+    if name == 'setup-proposal':
+        return report.get('phase_contract_proposal', {}).get('diagnostic_passed') is True
     if name == 'inputs':
         return len(report.get('checks', [])) >= 11
     if name in ('deuce','status-2','audio-hit') and not report.get('compiled_fault_controls'):
+        return False
+    if name.startswith('status-') and (len(report.get('status_raster', [])) != 2 or not all(row.get('matched') is True and row.get('published_scene', {}).get('completed') is True for row in report.get('status_raster', []))):
         return False
     return report.get('case') == name and bool(report.get('observations'))
 

@@ -121,7 +121,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
         source = directory/'held-main.s'
         source.write_text((ROOT/'amiga/main.s').read_text().replace('include "amiga/game/controls.s"',
             'include "'+str(fault)+'"'))
-        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(listing),'-o',str(exe),str(source)])
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(source)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
     checkpoints, differences = {}, []
@@ -242,9 +242,11 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
                         if 'fresh_action_eligible' not in checkpoints:
                             checkpoints['fresh_action_eligible']=callback
                             action_samples['playable']=sample
-                        if native_state['game_flight'] and native_state['game_step']:
+                        if native_state['game_flight'] and native_state['game_step'] and 'restarted_flight' not in checkpoints:
                             checkpoints['restarted_flight']=callback
+                            audio_checkpoints.append({'callback':callback,'lifecycle':lifecycle,'seconds':stop['seconds'],'event':'fresh-serve'})
                             snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
+                        if 'restarted_flight' in checkpoints and callback-checkpoints['restarted_flight'] >= (6 if audio else 0):
                             break
                         if callback-checkpoints['restart_playing'] >= 60:
                             raise AssertionError('Fresh early repress did not launch without a second release')
@@ -275,11 +277,12 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
     if audio:
         from native_audio_checks import pcm16_window
         # Actual returned-title reset is silent. Enhanced reselection starts the
-        # ordinary new-match sound, rather than legacy restart lifecycle9.
+        # actual fresh-serve sound; enhanced reselection has no legacy intro.
         quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)
-        intro=next((r for r in audio_checkpoints if r['lifecycle']==1 and r['callback'] >= checkpoints['restart_playing']),None)
-        if quiet is None or intro is None:raise AssertionError('Ordinary audio checkpoints missing')
-        for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-intro',intro,True,.05)]:
+        intro=next((r for r in audio_checkpoints if r.get('event')=='fresh-serve'),None)
+        reset=next((r for r in audio_checkpoints if r['lifecycle']==1 and r['callback'] >= checkpoints['restart_playing']),None)
+        if quiet is None or intro is None or reset is None:raise AssertionError('Ordinary audio checkpoints missing')
+        for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-cleanup',reset,False,.01),('restart-serve',intro,True,.02)]:
             samples=pcm16_window(directory/'native.wav',row['seconds']+offset,.02)
             signal=any(c['nonzero_pcm16_samples'] for c in samples['channels'])
             emitted.append({'event':label,'callback':row['callback'],'expected_signal':wanted,'actual_signal':signal,'samples':samples})
@@ -357,7 +360,8 @@ def main():
         def action():
             result = run_match(mode,args.early_release,args.audio,flavor)
             if args.self_test:
-                if not args.early_release or result: raise ValueError('Fault control requires passing enhanced early-release run')
+                if not args.early_release: raise ValueError('Fault control requires enhanced early-release run')
+                # Audio outcome stays independent: the held-input control still runs if it fails.
                 report = json.loads(path.read_text())
                 try:
                     run_match(mode,True,args.audio,flavor,held_fault=True)

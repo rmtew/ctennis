@@ -46,3 +46,27 @@ extent. Failed/interrupted latest runs supersede older passes. `progress.py`
 reads these receipts without running tests; missing/stale/partial/wrong-subject
 results cannot certify acceptance. See risks for unmeasured claims. Historical
 aggregate failures are available in Git history, not an active gate or archive.
+
+The CT11 focused observer uses the native update entry to inspect the preceding
+completed update, including enhanced title/menu callbacks. It verifies old-score
+cleanup, opposite-mode reselection, exact early release/repress packets and
+independent held-player exclusion; emitted audio is checked at returned-title
+reset, enhanced restart cleanup and the actual fresh serve (no legacy intro).
+`--self-test` compiles an actual skipped latch-retirement instruction and requires
+the retained release assertion to catch it.
+
+Status2–5 fixtures verify loaded hunks, scalar duration, actual completed
+publication/bank association, and full384-pixel visible/expired glyph crops.
+The 24x8 region at native112,96 is decoded independently from the four committed
+256-byte status planes and frozen merged OCS palette. A wrong native status-bank
+pointer control leaves scalars intact but must fail pixels. Fixtures explicitly
+select the enhanced Copper layout, matching the maintained application.
+
+`run_native_setup_tests.py` measures cold menu, navigation, player toggles, Help,
+Controls, Credits, page wraps and exit at explicit UI dirty-clear/ready instruction
+boundaries. Every other callback retains strict timing; gameplay/score writes
+inside construction are rejected. The phase-aware contract is a proposal only,
+with raw failures preserved. Current Help/Controls sampling can lose a complete
+16-bit timer wrap; bounded recovery FAILS on both merged baseline and CT11.
+See [verification issues](../docs/ct11/verification-issues.md). No observer rebase
+or product timing change conceals that result.

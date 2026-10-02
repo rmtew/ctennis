@@ -53,7 +53,13 @@ def run(case, mutant=False):
     fixture = directory / 'fixture.s'
     source = source.replace(startup, init)
     if mutant:
-        if case == 'audio-hit':
+        if mutant == 'pointer':
+            marker = '        include "assets/native/court/score-patch-tables.i"'
+            tables = (ROOT/'assets/native/court/score-patch-tables.i').read_text()
+            for plane in range(4): tables = tables.replace(f'score_bank_status_{status}_p{plane}',f'score_bank_status_0_p{plane}')
+            fault_path = directory/'fault-score-tables.i'; fault_path.write_text(tables)
+            source = source.replace(marker,f'        include "{fault_path}"')
+        elif case == 'audio-hit':
             marker = '        include "amiga/game/paula_output.s"'
             fault = (ROOT / 'amiga/game/paula_output.s').read_text()
             if mutant == 'pitch':
@@ -72,7 +78,7 @@ def run(case, mutant=False):
             source = source.replace(marker, marker + f'        cmpi.w #{threshold},simulation_updates\n        bcs.s contract_fault_wait\n        move.b #{value},{field}\ncontract_fault_wait:\n')
     fixture.write_text(source)
     executable, listing = directory / 'native-fixture', directory / 'native.lst'
-    assemble([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-L', str(listing),
+    assemble([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', '-DENHANCED_INTERFACE=1', '-L', str(listing),
               '-o', str(executable), str(fixture)])
     compile_manifest(executable, listing)
     symbols = code_symbols(listing.read_text())
@@ -85,6 +91,9 @@ def run(case, mutant=False):
         if stop['reason'] != 'loadseg':
             raise RuntimeError(stop)
         base = int(re.search(r'first hunk \$([0-9a-fA-F]+)', stop['detail'])[1], 16)
+        from native_hunk import loaded_hunks
+        loaded=loaded_hunks(executable,session.inspect('segments.list')['current'],lambda a,n: bytes.fromhex(session.inspect('mem_read',{'addr':a,'len':n})['data']))
+        if not loaded or not all(row['matched'] for row in loaded): raise AssertionError('Native contract loaded bytes differ')
         def read(name, size=1):
             return list(bytes.fromhex(session.inspect('mem_read', {'addr': base+symbols[name], 'len': size})['data']))
         def check(label, actual, expected):
@@ -92,10 +101,42 @@ def run(case, mutant=False):
             if actual != expected:
                 raise AssertionError(checks[-1])
         session.inspect('run_until', {'pc': base + symbols['main_loop']})
+        raster_checks = []
+        association = {'fields':bytearray(read('prepared_field_values',6)), 'started':0, 'completed':0,
+                       'back':bytearray(read('back_copper',4)), 'cop':bytearray(4), 'ready':None, 'published':None, 'publications':[]}
+        if case.startswith('status-'):
+            def observe(message):
+                if message.get('method') != 'event.mmio': return
+                row=message['params']; address=row['addr']; size=row['size']; value=row['value']
+                if row.get('dropped_events',0) or row.get('dropped_notifications',0): raise AssertionError('Status publication telemetry lost')
+                for name,buffer in [('prepared_field_values','fields'),('back_copper','back')]:
+                    begin=base+symbols[name]
+                    if begin<=address and address+size<=begin+len(association[buffer]):
+                        association[buffer][address-begin:address-begin+size]=value.to_bytes(size,'big')
+                if address==base+symbols['simulation_started_updates']: association['started']=value
+                if address==base+symbols['display_ready'] and value:
+                    association['ready']={'bank':int.from_bytes(association['back'],'big'),'generation':association['started'],
+                        'fields':list(association['fields']),'completed':False}
+                if address==base+symbols['simulation_updates']:
+                    association['completed']=value
+                    if association['ready'] and association['ready']['generation']==value: association['ready']['completed']=True
+                if 0xdff080<=address and address+size<=0xdff084:
+                    association['cop'][address-0xdff080:address-0xdff080+size]=value.to_bytes(size,'big')
+                if address==0xdff088 and association['started']:
+                    prepared=association['ready']; pointer=int.from_bytes(association['cop'],'big')
+                    check('status published bank belongs to completed prepared scene',bool(prepared and prepared['completed'] and prepared['bank']==pointer),True)
+                    check('status publication stays before sprite DMA or late blank',row['position']['vpos']<25 or row['position']['vpos']>=252,True)
+                    association['published']=dict(prepared,position=row['position'],actual_pointer=pointer,visible_frame=row['position']['frame']+(1 if row['position']['vpos']>=252 else 0))
+                    association['publications'].append(association['published'])
+            session.notification_handler=observe
+            session.inspect('events.subscribe',{'events':['mmio'],'mmio':[
+                {'addr':base+symbols[name],'len':length,'access':'write'} for name,length in
+                [('prepared_field_values',6),('back_copper',4),('simulation_started_updates',2),('simulation_updates',2),('display_ready',1)]]+
+                [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]})
         pc = base + symbols['game_scene_service' if case=='audio-hit' else 'game_observe_pre_tail']
         session.inspect('break_add', {'kind': 'pc', 'addr': pc})
         seen = []
-        for tick in range(34 if case.startswith('status-') else 20 if case=='audio-hit' else 3):
+        for tick in range(38 if case.startswith('status-') else 20 if case=='audio-hit' else 3):
             stop = session.inspect('run_until', {'seconds': 60})
             if stop['pc'] != pc:
                 raise RuntimeError(stop)
@@ -120,6 +161,31 @@ def run(case, mutant=False):
                 seen[-1].update(seconds=stop['seconds'], period=regs['AUD3PER'], volume=regs['AUD3VOL'])
             else:
                 check('status visible until native saturation expiry', field[4], status if tick < 31 else 0)
+                if tick in (13,37):
+                    variant=status if tick==13 else 0
+                    completed=[row for row in association['publications'] if row['visible_frame']<=stop['frame']-1]
+                    published=completed[-1] if completed else None
+                    current=association['published']
+                    check('visible status selection belongs to published completed scene',published['fields'][4] if published else None,variant)
+                    regs=session.inspect('custom_dump')['regs']
+                    check('status screenshot uses actual published physical Copper bank',regs['COP1LCH']*65536+regs['COP1LCL'],current['actual_pointer'])
+                    check('current and completed status frames select same stable bank content',current['fields'][4],variant)
+                    photo=directory/('visible.png' if variant else 'expired.png')
+                    session.inspect('capture_screenshot',{'path':str(photo)})
+                    locations={name:(int(h),int(o,16)) for name,h,o in re.findall(r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing.read_text(),re.M)}
+                    segments=session.inspect('segments.list')['current']
+                    def located(name):
+                        h,o=locations[name]; return segments[h]['start']+o
+                    delta=current['actual_pointer']-located('copperlist')
+                    pointers={}
+                    for plane in range(4):
+                        hi=located(f'score_cop_{120+plane}_hi')+2+delta
+                        lo=located(f'score_cop_{120+plane}_lo')+2+delta
+                        words=bytes.fromhex(session.inspect('mem_read',{'addr':hi,'len':2})['data'])+bytes.fromhex(session.inspect('mem_read',{'addr':lo,'len':2})['data'])
+                        pointers[str(plane)]={'actual':int.from_bytes(words,'big'),'expected':located(f'score_bank_status_{variant}_p{plane}')}
+                    atomic_json(photo.with_suffix('.json'),{'completed_scene':published,'current_published':current,'rendered_frame':stop['frame']-1,'status_plane_pointers':pointers})
+                    from native_status_raster import assert_status_raster
+                    raster_checks.append(dict(assert_status_raster(photo,variant),published_scene=published,rendered_frame=stop['frame']-1,screenshot=str(photo.relative_to(ROOT))))
             session.inspect('step', {'count': 1})
         session.inspect('capture_screenshot', {'path': str(directory / 'final.png')})
     target_log(directory)
@@ -129,6 +195,7 @@ def run(case, mutant=False):
         check('native hit emitted audible signal', any(row['nonzero_pcm16_samples'] for row in audible['channels']), True)
     report = {'passed': True, 'case': case, 'checks': checks, 'observations': seen,
               'executable_sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
+              'status_raster':raster_checks,'loaded_hunks':loaded,
               'fixture_initialization': 'once at native startup; subsequent actual dispatcher ticks, no state writes',
               'scope': 'Local native scoring/status/render-field contracts, not uninterrupted ordinary play'}
     atomic_json(directory / 'report.json', report)
@@ -146,12 +213,12 @@ if __name__ == '__main__':
         if args.self_test:
             report = json.loads(path.read_text())
             controls = []
-            for mutation in ('pitch','envelope') if args.case=='audio-hit' else (True,):
+            for mutation in ('pitch','envelope') if args.case=='audio-hit' else (True,'pointer') if args.case.startswith('status-') else (True,):
                 try:
                     run(args.case, mutant=mutation)
                 except AssertionError as error:
                     detail = error.args[0]
-                    wanted = ('native hit pitch at actual Paula channel3' if mutation=='pitch' else
+                    wanted = 'visible native status raster matches committed bank' if mutation=='pointer' else ('native hit pitch at actual Paula channel3' if mutation=='pitch' else
                               'native hit envelope at actual Paula channel3') if args.case=='audio-hit' else (
                               'status visible until native saturation expiry' if args.case.startswith('status-') else
                               'render point/game fields follow scorer')

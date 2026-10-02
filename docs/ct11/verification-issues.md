@@ -19,3 +19,24 @@ The inherited `game_observe_pre_tail` hook is skipped by the enhanced title/menu
 The focused observer uses `simulation_update`, the uniform boundary after the previous update has completed and before the next sampler. Consecutive native counters include every menu callback. Release/repress happens during selection-held lifecycle3 while the physical selection key remains held: release at30, sample31, repress50, sample51, selection release80. Existing exact raw/pressed/released/latch packets and independent continuously-held-P2 exclusion are retained. Owner assignment is checked after the first active update, because selection itself only changes lifecycle. Audio checks retain returned-title mute and emitted ordinary new-match sound after enhanced reselection; this is not a claim about a legacy restart intro.
 
 A private compiled control skips actual held-action retirement during selection. The unchanged release assertion must detect the stale latch. Product code/assets are not modified. Final focused outcomes and exact head are recorded in PR16; title cadence failures remain open.
+
+## Representative UI setup measurement exposes timer-wrap debt
+
+The targeted observer identifies only the actual `ui_render` dirty-clear instruction through its ready write, with exact CCK boundaries and gameplay/score write watches. Menu navigation, player-count changes, Help, Controls, Credits, page wrapping and page exit are measured separately. No general title-lifecycle exemption exists.
+
+The review-only candidate bounds are four native ticks for a menu rebuild and eight for a page rebuild, with at most six/ten subsequent non-advancing recovery callbacks. These are explicit responsiveness envelopes, not exact observed durations or adopted acceptance. Measured menu regions are about190000CCK; Help about359000, Controls324000, Credits291000. The proposal preserves all raw deadline failures and applies the existing clock/publication rules to every other callback and all advancing gameplay.
+
+The proposal itself FAILS bounded recovery for the longer page changes. The 16-bit free-running timer spans327680CCK; Help's complete update exceeds that sampling range. Subsequent callbacks retain a whole-wrap wall-time deficit rather than draining it. After the tested sequence the deficit is approximately three wraps. Rebasing the observer would conceal this loss. A separate setup clock domain or product timer fix requires explicit review; neither is implemented, and no phase diagnostic is promoted to aggregate acceptance.
+
+The same bounded menu/help sequence on the frozen merged baseline artifact also
+fails recovery at callbacks223,277,331,391,446 and506 and ends about three timer
+wraps behind. Baseline comparison is a native executable diagnostic, not an
+original-system oracle. No baseline assets or source media are added to the
+maintained tree. Final measured bounds/cases are attached to PR16.
+
+The enhanced restart audio contract distinguishes cleanup silence from sound
+caused by a fresh serve. Native enhanced reselection calls `game_new_match`,
+which resets voices and does not queue the legacy startup pair. Returned-title
+and restart-cleanup windows remain strictly silent; the fresh-serve window must
+emit native sound. All intervening update counters remain consecutive, including
+six post-serve capture updates. No product audio change is made.
