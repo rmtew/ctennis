@@ -29,10 +29,11 @@ cop_spr6h: dc.w $0138,0
 cop_spr7h: dc.w $013c,0
            dc.w $013e,0
 
-        ; Retained native background palette, rounded
-        ; to the Amiga's four-bit RGB components.
-        dc.w $0180,$000,$0182,$000,$0184,$2c4,$0186,$6d7
-        dc.w $0188,$55e,$018a,$77f,$018c,$000,$018e,$000
+        ; Removed score decorations release indices1/3;6 was unused.
+        ; A ghost6 -> Blue4, B ghost3 -> Red1 toggle only existing plane1.
+        ; Light-blue5/net-grey14 and all court colours remain retained.
+        dc.w $0180,$000,$0182,$e33,$0184,$2c4,$0186,$333
+        dc.w $0188,$55e,$018a,$77f,$018c,$333,$018e,$000
         dc.w $0190,$000,$0192,$f77,$0194,$dc5,$0196,$000
         dc.w $0198,$000,$019a,$e33,$019c,$ccc,$019e,$fff
         ; Sprite pairs 0/1, 2/3, 4/5, 6/7. Colour zero is transparent.

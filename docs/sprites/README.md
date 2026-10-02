@@ -74,6 +74,39 @@ Frozen court tests verify every unrelated court pixel is byte-identical to the
 original base. HUMAN/AI headers replace the obsolete mode row in every variant,
 including demo; their visible glyph centres lie within half a pixel of A/B.
 
+## WIN score panels
+
+Plain point/advantage masks retain the original native glyph pixels in the
+16-pixel numeric field, with the surrounding hearts removed. GAME and the green
+rails are removed. Exactly six WIN words occupy native Y72..118 at an8-row
+pitch. Existing font columns are packed with a one-pixel gap, giving15-pixel
+words at X17..31 and225..239; there is no font resampling or invented glyph.
+The first n words use logical Blue/Red and the rest solid dim neutral grey333.
+White frames span X12..36 and220..244 at Y68, with sides throughY123 and an
+open bottom. All artwork stays within the existing side panels.
+
+Removing the old decorations frees playfield indices1/3, previously confined
+to these panels. Allocate1=Red e33,3=grey333 and unused6=grey333. A ghost6→Blue4
+and B ghost3→Red1 both toggle only existing plane1. Retain light-blue5=77f for
+net edges and all court/net/sprite colours. No new bitmap plane, bank, pointer,
+Copper command, memory allocation or product instruction is required. All three
+score Copper include files remain byte-identical. The seven48-row banks per
+side preserve white frame pixels and every other plane1 court pixel.
+
+`author_win_columns.py` is an offline native UI authoring record, not a build
+generator. `native-contract.json` independently freezes the original plain
+point masks and every court pixel outside the exact authorized score/logo
+rectangles. Host checks cover every point/tally0–6, grey/earned glyphs, palette
+scope, blank surroundings and open frames. Target fixtures additionally inspect
+actual scanout, both physical banks and all selected/restore pointers; a compiled
+wrong tally-pointer control must leave scalar scores intact and fail pixels.
+
+The authoritative implementation specification came from the parent after it
+visually reviewed the conceptual sheet. That Library sheet could not be
+materialized locally and was never locally inspected. It is not a pixel-exact
+asset; no concept pixels were imported. Final fit is the actual native artwork
+and target scanout, which the parent can compare during review.
+
 The supplied screenshot `libfile_c028265956f881918e08414bcc6a44c4` was resolved
 through Library, but two current-helper materialization attempts failed with
 `library file transfer failed: download failed`. The authorized-file fallback

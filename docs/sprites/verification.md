@@ -38,29 +38,33 @@ Kickstart1.3. Recovered locked vasm1.9d and official Copperline1.0.0-rc.1 using
 the documented CT12 procedure; hashes match the existing locks. No cartridge
 extraction or alternate emulator/compiler was used.
 
-## Newly selected scoreboard: pending, not implemented
+## Approved WIN scoreboard implementation
 
-The later approved design is six dim grey WIN words per logical player,
-earned words in Blue/Red, clean numeric points and a thin white border across
-the top and both sides, open at the bottom. This supersedes hearts, GAME and
-green rails. It is not present in these native assets or preview images.
+The authoritative native UI specification is now implemented: six always-visible
+WIN rows per player, earned Blue/Red and remaining dim grey333; plain retained
+point/advantage glyphs; white top/sides with padding and no bottom; black background.
+Hearts, GAME and green rails are removed. A/B headings and controller-role labels
+are retained. The same panels, court geometry, scoring rules and footer are used.
 
-The selected source `libfile_dd1161148de481918a8b2aab8a07c1e6` resolves through
-Library, but two fresh current-helper downloads failed with
-`library file transfer failed: download failed`. Its pixels have not been
-inspected. The supplied earlier screenshot has the separately documented
-materialization failure. Do not claim either reference was inspected.
+No additional bitmap data, bank, plane, Copper command, allocation or product
+instruction is required. Indices1/3 are released by the removed score decorations;
+unused6 supplies the other grey. A6→4 and B3→1 each toggle existing plane1. Net
+gradient index5=77f, court/net/sprite colours and all Copper pointer/fetch/restore
+include bytes are preserved. Frozen host contracts cover all0–6 variants, exact
+original point glyphs and every court pixel outside the authorized panels/logo.
 
-Hardware audit found a possible fit preserving the existing 4-plane playfield,
-7 variants per side,48-row game banks and Copper pointer/fetch timings.
-Unused indices6/7 could hold dim grey; Blue4 remains unchanged. Index5 occurs
-only in the authorized scoreboard region and could become a duplicate Red for
-earned B WIN words. Thus A6→4 and B7→5 both toggle only the already switched
-plane1. Numeric points and all static index5 pixels must be refitted/audited
-before accepting this allocation. This is a feasibility finding, not tested
-or implemented artwork. Preserve white frame bits in every bank and verify
-all0–6 transitions, both presentation banks, end exchange, point/advantage,
-expiry/stale-pixel and fault guards before proposing integration.
+31 host tests and native asset validation pass. The first native fixture has
+passed full-panel scanout and all242 selected/fixed-restore pointers in both
+physical Copper banks. Full28-case/modes/ends acceptance and its compiled
+wrong-pointer control are being run; final exact-head gate results remain pending.
+These new results do not inherit the earlier sprite checkpoint's replay passes.
 
-CT13 owns the footer selector/layout and celebration lifecycle. Master is
-unchanged. No merge or public publication is authorized by this receipt.
+The selected concept source libfile_dd1161148de481918a8b2aab8a07c1e6 could not be
+materialized locally. The parent inspected it and supplied the complete native
+implementation specification, explicitly confirming it is a concept with final
+pixel fitting required. No concept pixels are imported and no local inspection
+is claimed. The parent will compare the actual native render during review.
+
+CT13 retains footer/selector and celebration lifecycle ownership. No merge or
+public publication has occurred. Parent will create the draftPR; denied PR
+creation will not be repeated.

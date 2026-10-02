@@ -192,5 +192,39 @@
     "1": "d7e4cf03fd81d91c647a4c2876ce9f519e1d2376b7d259a33fc35d44eda04602",
     "2": "bbc082b398ae0e6fcdb7648fb620779d94718212c8df5d3db49525f06fda8d9d",
     "3": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019"
+  },
+  "scoreboard_rectangles": [
+    [
+      0,
+      40,
+      48,
+      124
+    ],
+    [
+      208,
+      40,
+      256,
+      124
+    ]
+  ],
+  "court_outside_sprite_ui": {
+    "0": "5de26298a4e58be3908772c9fcdf95c653f6a9ca89405e2502e45f5aa61d99a7",
+    "1": "4a68a00f1e3de55602f9991299860065e091821a1aa94611ddfae0dd13af0e3c",
+    "2": "c5745c2117a704b42b3a07279f756ac75b39d8d0b7c6bcad3b03769fb2aab37e",
+    "3": "6f17e33547182ad71ca93ef16f9c7ad2b1be1e88788ac646cbe1688f7d3c26fb"
+  },
+  "plain_point_masks": {
+    "0": "5825b72e7b0abaed068242991f99d3c81ae928fe8d17770c0bf1afb42165ef69",
+    "1": "1027d4ee0358acd7038e215855dbbf0c6d41354b5e3421b00e4308ebe316798f",
+    "2": "8663ea648462b4d32edd20b241ca0a8273cbd5ae9e53365716742ea67d7b8b6c",
+    "3": "aa028bf5ef61fd7af01a694107e87593ef4ed741cd88d4a4c917e4e8bd4fe7af",
+    "4": "de21ad1ab8454653fc3730d8ec0585b2d759e417dedbff913fd079219e48d934",
+    "5": "aa028bf5ef61fd7af01a694107e87593ef4ed741cd88d4a4c917e4e8bd4fe7af",
+    "6": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+  },
+  "retained_score_copper": {
+    "assets/native/court/score-cop-commands.i": "cf259b0926b1f567d63c354fd1d58c501316cf45655573f99a7229716a6338b4",
+    "assets/native/court/score-patch-tables.i": "c3069a96312427c3f58d79d0616a74c4c23718b3b4f22e4eb7936f3322c82968",
+    "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5"
   }
 }

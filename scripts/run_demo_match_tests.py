@@ -89,6 +89,9 @@ def run(takeover=False):
    check('complete match award reproduced',list(mem('game_games_a',2)),recording['final_games'])
    check('normal match result lifecycle',life,6)
    s.inspect('capture_screenshot',{'path':str(directory/'complete-match.png')})
+   from native_scoreboard_raster import assert_scoreboard_raster
+   scoreboard = assert_scoreboard_raster(directory/'complete-match.png', list(mem('prepared_field_values',2)), recording['final_games'])
+   check('completed match preserves all six authored WIN rows', all(row['matched'] for row in scoreboard), True)
   deadlines=num('missed_presentation_deadlines',2)
  target_log(directory)
  report={'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}

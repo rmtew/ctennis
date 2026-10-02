@@ -58,17 +58,12 @@ def run(mode):
             from native_identity_raster import assert_player_raster,assert_mode_raster
             identity=assert_player_raster(photo,flipped)
             assert_mode_raster(photo,1 if mode=='one' else 2)
-            with Image.open(photo) as image:
-                raster = image.convert('RGB')
-                for side, count, x, column in [('a',current[0],16,2),('b',current[1],224,28)]:
-                    bank = (ROOT / f'assets/native/court/score_bank_games_{side}_{count}_p1.bin').read_bytes()
-                    expected_gold = 2 * sum(value.bit_count() for row in range(48) for value in bank[row*32+column:row*32+column+2])
-                    crop = raster.crop((126+2*x,88,126+2*(x+16),136))
-                    actual_gold = sum(number for number, colour in crop.getcolors(1536) if colour==(221,204,85))
-                    check('actual '+side+' tally raster matches versioned native bank',actual_gold,expected_gold)
+            from native_scoreboard_raster import assert_scoreboard_raster
+            scoreboard = assert_scoreboard_raster(photo, list(mem('game_point_a',2)), current)
+            check('actual A/B tally raster matches authored WIN columns', all(row['matched'] for row in scoreboard), True)
             rows.append({'games':current,'winner':('Blue','Red')[winner],'exchanged':flipped,
                          'callback':num('simulation_updates',2),'screenshot':str(photo.relative_to(ROOT)),
-                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity,'roles':roles})
+                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity,'roles':roles,'scoreboard':scoreboard})
             games=current
             if len(rows)==2:break
         check('two ordinary game awards observed',len(rows),2)

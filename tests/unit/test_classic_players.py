@@ -92,12 +92,13 @@ class ClassicPlayers(unittest.TestCase):
             for y in range(139,144):
                 for x in range(8,39):
                     self.assertFalse(plane[y*32+x//8] & (128>>(x%8)))
-            # Mask the exact authorized logo/header region when verifying
+            # Mask the exact authorized logo/scoreboard regions when verifying
             # unrelated court pixels against the independently frozen base.
             masked=bytearray(plane)
-            for y in range(139,144):
-                for x in range(8,39):masked[y*32+x//8]&=~(128>>(x%8))
-            self.assertEqual(hashlib.sha256(masked).hexdigest(), CONTRACT['court_without_logo'][str(n)])
+            for left,top,right,bottom in CONTRACT['scoreboard_rectangles']+[[8,139,39,144]]:
+                for y in range(top,bottom):
+                    for x in range(left,right):masked[y*32+x//8]&=~(128>>(x%8))
+            self.assertEqual(hashlib.sha256(masked).hexdigest(), CONTRACT['court_outside_sprite_ui'][str(n)])
 
 
 if __name__ == '__main__':
