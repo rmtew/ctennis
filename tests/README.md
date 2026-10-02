@@ -73,3 +73,10 @@ accounting; a separate delayed construction must fail raw deadlines while the
 unmodified32-bit timer accounts for the complete wrap. Both restore the normal
 executable before final acceptance. See the follow-on report in
 [verification issues](../docs/ct11/verification-issues.md).
+
+Resource reporting is part of the existing checks and the finite gate. Builds
+regenerate static sizes without emulation; record the compact accepted JSON and
+readable summary alongside reviewed changes. For docs-only identical-product
+reuse and the affected four-check refresh, see
+[resource report workflow](../docs/metrics/README.md). Missing/stale/incomplete
+metrics do not establish runtime coverage or a fresh green result.

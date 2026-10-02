@@ -40,6 +40,7 @@ def main():
         ['scripts/run_native_setup_tests.py','--self-test'],
         ['scripts/build_native_adf.py','--self-test'],
     ]
+    commands.append(['scripts/native_metrics.py','--require-runtime'])
     report = {'commit': head, 'started_utc': started, 'state': 'incomplete', 'passed': False,
               'commands': [], 'original_inputs_absent_in_checkout': True}
     path = directory / 'report.json'

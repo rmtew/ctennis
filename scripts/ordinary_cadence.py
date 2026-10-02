@@ -7,6 +7,7 @@ import shutil
 from native_tools import ASSEMBLER, run as assemble
 from native_clock import clock_contract, INTERVAL_CCK
 from native_setup_observation import SetupObserver
+from native_metrics_observation import MetricsObserver
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
@@ -100,6 +101,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         boot_samples=[]
         boot_allocations=[]
         boot_calibration=None
+        cold_timing_points={}
         if boot_adf:
             args += ['--floppy-drives','1','--floppy-speed','100']
         else:
@@ -114,6 +116,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             boot_calibration=chip_memory(boot_read)
             s.inspect('break.remove',{'id':catch['id']})
             s.inspect('machine.reset',{'kind':'cold'})
+            cold_timing_points['reset']={k:v for k,v in s.inspect('status').items() if k in ('cck','frame','vpos','hpos','seconds')}
             headers={r['header']:bytearray(32) for r in boot_calibration['regions']}
             free_counts={}
             def boot_event(message, log=True):
@@ -158,6 +161,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         else:
             stop=s.inspect('run_until',{'seconds':30})
         if stop['reason']!='loadseg':raise RuntimeError(stop)
+        if boot_adf:cold_timing_points['loadseg_complete']=dict(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
             'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready',
@@ -186,6 +190,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             raise ValueError('Cold-reset memory pool differs from actual calibration')
 
         setup_observer=SetupObserver(base,symbols,listing.read_text())
+        metrics_observer=MetricsObserver(base,symbols,listing.read_text())
         entry_stop=s.inspect('run_until',{'pc':base+symbols['start']})
         entry_regs=s.inspect('regs.get')
         task=int.from_bytes(read(initial_memory['execbase']+0x114,4),'big')
@@ -276,6 +281,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 send('pause', {})  # the only stop after entry, at completed acceptance
         def event(message):
             raw.write(json.dumps(message, separators=(',', ':'))+'\n')
+            metrics_observer.observe(message)
             if 'id' in message:
                 replies[str(message['id'])] = message
                 if 'error' in message: fault('asynchronous control error', error=message['error'])
@@ -362,10 +368,12 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     {'addr': initial_memory['execbase']+0x142, 'len': 12, 'access': 'write'}]
         watches += [{'addr': h['header'], 'len': 32, 'access': 'write'} for h in initial_memory['regions']]
         watches += setup_observer.watches()
-        s.inspect('events.subscribe', {'events': ['mmio'], 'mmio': watches})
+        watches += metrics_observer.watches()
+        s.inspect('events.subscribe', {'events': ['mmio','frame'], 'frame_interval':1, 'mmio': watches})
         stop = s.inspect('run_until', {'seconds': stop['seconds']+(20 if bank_control else 1000)})
         s.inspect('events.unsubscribe')
         final_memory = chip_memory(read)
+        read_deadline_bytes=read(base+symbols['missed_presentation_deadlines'],2)
         s.notification_handler = None
     target_log(directory)
     # Live commands are serviced at an emulator boundary. Our final pause may
@@ -409,7 +417,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'base': base, 'addresses': address, 'native_fields':native_fields, 'watch_ranges': watches,
                          'timer_start_cck': state['start'], 'timer_origin_count': state['origin'],
                          'bank_addresses':banks,'prepared_scenes':preparations,
-                         'title_initial':bool(title_initial),'view_selections':view_selections,
+                         'cold_timing_points':cold_timing_points,'title_initial':bool(title_initial),'view_selections':view_selections,
                          'loaded_hunks':segments,'loaded_executable_checks':loaded_checks,'launch':launch,'entry_stack':entry_stack,'entry_stop':entry_stop,'boot_samples':boot_samples,'boot_allocations':boot_allocations,'boot_calibration':boot_calibration,
                          'pending_final_callback': pending_callback,
                          'commits': commits, 'lifecycle_changes': changes, 'memory_initial': initial_memory,
@@ -422,7 +430,10 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             fault('cold boot allocator final count differs from actual free list')
     if boot_adf and __import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest()!=adf_sha:
         fault('ADF changed during execution')
-    report = {'case': name, 'subject': 'maintained-native', 'passed': not failures,
+    report = {'resource_metrics':metrics_observer.result(setup_observer.regions),
+              'resource_missed_deadlines':sum(d['field']=='native deadline' for d in failures),
+              'missed_publications':int.from_bytes(read_deadline_bytes,'big'),
+              'case': name, 'subject': 'maintained-native', 'passed': not failures,
               'first_difference': failures[0] if failures else None, 'differences': failures,
               'start_mode': mode, 'restart_mode': restarted, 'startup': 'cold ADF' if boot_adf else 'ordinary title',
               'entropy': 'ordinary native timer', 'uninterrupted': True, 'callback_breakpoints': 0,

@@ -5,6 +5,7 @@ from native_tools import ROOT,emulator_config
 from build_native_game import build
 from native_observation import code_symbols,target_log
 from native_setup_observation import SetupObserver
+from native_metrics_observation import MetricsObserver
 from native_evidence import atomic_json,tracked_call
 from copperline_test_session import NativeControlSession
 
@@ -37,9 +38,11 @@ def run(baseline=None, control=None, fault_controls=None):
         stop=s.inspect('run_until',{'seconds':30});assert stop['reason']=='loadseg',stop
         base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16); clock={'start':None,'origin':None,'started':0,'completed':0,'lifecycle':0,'cop':bytearray(4)}
         observer=SetupObserver(base,symbols,listing)
+        metrics=MetricsObserver(base,symbols,listing)
         accounting_pc=None if baseline else base+int(re.search(r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*add.l\s+d1,simulation_phase',listing,re.M)[1],16)
         accounting={'phase':11838,'position':None,'samples':[],'bytes':bytearray(4),'seen':set(),'count':0,'maximum_error_cck':0,'maximum_elapsed_cck':0}
         def event(message):
+            metrics.observe(message)
             if message.get('method')!='event.mmio':return
             r=message['params'];a=r['addr'];v=r['value'];size=r['size'];p=r['position']
             if r.get('dropped_events',0) or r.get('dropped_notifications',0):raise AssertionError('Setup telemetry dropped')
@@ -79,7 +82,8 @@ def run(baseline=None, control=None, fault_controls=None):
                 assert p['vpos']<25 or p['vpos']>=252,'Title publication outside retained blank window'
         s.notification_handler=event
         watches=observer.watches()+[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in [('game_lifecycle',2),('simulation_timer_origin',2),('simulation_started_updates',2),('simulation_updates',2),('display_ready',1),('simulation_phase',4)]]+[{'addr':0xbfdf00 if baseline else 0xbfde00,'len':1,'access':'write'},{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
-        s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
+        watches+=metrics.watches()
+        s.inspect('events.subscribe',{'events':['mmio','frame'],'mmio':watches})
         time=stop['seconds']
         def advance(t):
             nonlocal time
@@ -124,12 +128,13 @@ def run(baseline=None, control=None, fault_controls=None):
             key(0x24);advance(.3)
             check('fresh action advances flight after UI',bool(read('game_flight') and read('game_step')),True)
         s.inspect('events.unsubscribe')
+        missed_publications=int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['missed_presentation_deadlines'],'len':2})['data']),'big')
     target_log(directory)
     # At the end a callback may be pending; retain and label it, never promote it.
     pending=callbacks.pop() if callbacks and 'completion' not in callbacks[-1] else None
     origin=clock['start']+(65535-clock['origin'])*5
     diagnostic=observer.proposal(callbacks,origin)
-    report={'passed':True,'subject':'maintained-native','rasters':rasters,'elapsed_accounting_count':accounting['count'],'maximum_accounting_error_cck':accounting['maximum_error_cck'],'maximum_accounted_elapsed_cck':accounting['maximum_elapsed_cck'],'compiled_fault_controls':fault_controls or [],'elapsed_accounting_samples':accounting['samples'],'checked_callbacks':len(callbacks),'pending_final_callback':pending,'checks':checks,'actions':actions,'publications':publications,'phase_contract_proposal':diagnostic,'raw_all_callback_deadline_passed':not diagnostic['raw_deadline_failures'],'scope':'Uninterrupted strict UI cadence/elapsed accounting, repeated navigation/idle and representative scanout; historical proposal retained diagnostically with no exemption','executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
+    report={'missed_publications':missed_publications,'resource_metrics':metrics.result(observer.regions),'passed':True,'subject':'maintained-native','rasters':rasters,'elapsed_accounting_count':accounting['count'],'maximum_accounting_error_cck':accounting['maximum_error_cck'],'maximum_accounted_elapsed_cck':accounting['maximum_elapsed_cck'],'compiled_fault_controls':fault_controls or [],'elapsed_accounting_samples':accounting['samples'],'checked_callbacks':len(callbacks),'pending_final_callback':pending,'checks':checks,'actions':actions,'publications':publications,'phase_contract_proposal':diagnostic,'raw_all_callback_deadline_passed':not diagnostic['raw_deadline_failures'],'scope':'Uninterrupted strict UI cadence/elapsed accounting, repeated navigation/idle and representative scanout; historical proposal retained diagnostically with no exemption','executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
     if not control and not baseline: assert report['raw_all_callback_deadline_passed'],diagnostic['raw_deadline_failures']
     atomic_json(directory/'report.json',report);atomic_json(directory/'measurement.json',{'callbacks':callbacks,'origin_cck':origin,'regions':observer.regions,'publications':publications})
     print(json.dumps({'measurements_passed':True,'phase_proposal_diagnostic_passed':diagnostic['diagnostic_passed'],'setup_cases':[{k:r[k] for k in ('kind','work_cck','bound_cck','catchup_callbacks')} for r in diagnostic['setup_cases']],'strict_failures':diagnostic['strict_nonsetup_failures'],'issues':diagnostic['issues']}),flush=True)

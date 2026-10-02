@@ -4,6 +4,7 @@ import argparse,hashlib,json,re
 from build_native_game import build
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
+from native_metrics_observation import MetricsObserver
 from native_evidence import ROOT,atomic_json,tracked_call
 from native_observation import target_log
 
@@ -34,6 +35,9 @@ def run(takeover=False):
   s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
   stop=s.inspect('run_until',{'seconds':30});assert stop['reason']=='loadseg',stop
   base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16);time=stop['seconds']
+  metrics=MetricsObserver(base,symbols,(exe.parent/'native.lst').read_text())
+  s.notification_handler=metrics.observe
+  s.inspect('events.subscribe',{'events':['mmio','frame'],'mmio':metrics.watches()})
   def until(args):
    nonlocal time
    stop=s.inspect('run_until',args);time=stop['seconds'];return stop
@@ -85,7 +89,7 @@ def run(takeover=False):
    s.inspect('capture_screenshot',{'path':str(directory/'complete-match.png')})
   deadlines=num('missed_presentation_deadlines',2)
  target_log(directory)
- report={'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
+ report={'resource_metrics':metrics.result(),'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
  atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'takeover':takeover,'input_ticks':index,'flight_side_changes':contacts,'missed_publications':deadlines}))
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
