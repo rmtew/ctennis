@@ -334,9 +334,9 @@ def generate():
         previous=json.loads(accepted.stdout)
         if previous.get('schema')==1 and previous.get('state')=='complete':
             report['deltas']=metric_deltas(previous,report)
-    elif (ROOT/'docs/metrics/baselines/pre-pr19-release.json').is_file():
+    elif (ROOT/'docs/metrics/baselines/pre-title-score-current.json').is_file():
         # Explicit historical comparison until master has an accepted report.
-        baseline=ROOT/'docs/metrics/baselines/pre-pr19-release.json'
+        baseline=ROOT/'docs/metrics/baselines/pre-title-score-current.json'
         previous=json.loads(baseline.read_text())
         if previous.get('schema')==1 and previous.get('state')=='complete':
             report['deltas']=metric_deltas(previous,report)

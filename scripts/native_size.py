@@ -65,6 +65,7 @@ def _asset_group(path):
         if '/score-' in path:return 'audio_scores'
         if path.endswith('periods.bin'):return 'audio_period_table'
         if path.endswith('envelopes.bin'):return 'audio_envelopes'
+    if path=='assets/native/court/square-led-definitions.bin':return 'square_led_construction_definitions'
     if '/court/' in path:
         if '/plane' in path:return 'court_bitplanes'
         for name,category in [('point','score_point_banks'),('games','score_game_banks'),('status','status_banks'),('mode','mode_banks')]:
@@ -81,15 +82,25 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
     listing=listing_path.read_text();units=_units(listing)
     symbols={name:int(offset,16) for name,offset in re.findall(r'^([A-Za-z_][\w]*)\s+(?:\d\d|E):([0-9A-Fa-f]{8})\s*$',listing,re.M)}
     categories=defaultdict(lambda:{'bytes':0,'by_hunk':defaultdict(int),'by_source':defaultdict(int),'instances':0})
-    asset_instances=[];padding_instances=[];source_lines={}
+    asset_instances=[];padding_instances=[];source_lines={};bss_instances=[]
     def add(category,size,hunk=None,source=None):
         categories[category]['bytes']+=size;categories[category]['instances']+=1
         if hunk is not None:categories[category]['by_hunk'][str(hunk)]+=size
         if source is not None:categories[category]['by_source'][source]+=size
     for hunk in layout['hunks']:
-        if hunk['kind']=='bss':continue # Declared RAM, no payload bytes in this file.
         rows=sorted((u for u in units if u['hunk']==hunk['index']),key=lambda u:u['start'])
         if not rows or rows[0]['start']!=0:raise ValueError('Native listing does not cover hunk start')
+        if hunk['kind']=='bss':
+            for index,unit in enumerate(rows):
+                stop=rows[index+1]['start'] if index+1<len(rows) else hunk['bytes']
+                body=re.sub(r'^[\w.]+:\s*','',unit['statement']).strip()
+                token,expression=body.split(None,1)
+                if token not in ('ds.b','ds.w','ds.l'):raise ValueError('Unsupported BSS declaration')
+                size=_count(expression,symbols)*{'b':1,'w':2,'l':4}[token[-1]]
+                if size!=stop-unit['start']:raise ValueError('BSS declaration does not reconcile')
+                bss_instances.append({'category':'startup_generated_point_banks' if unit['source']=='amiga/square_score_storage.i' else 'reserved_bss',
+                    'source':unit['source'],'hunk':hunk['index'],'offset':unit['start'],'bytes':size,'file_bytes':0})
+            continue
         for index,unit in enumerate(rows):
             stop=rows[index+1]['start'] if index+1<len(rows) else hunk['bytes']
             available=stop-unit['start']
@@ -163,4 +174,5 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
             'reconciled':True,'categories':rows,'asset_instances':asset_instances,'padding_instances':padding_instances,
             'identical_incbin_payload_groups':repeated,
             'identical_incbin_duplicate_bytes':sum(g['duplicate_bytes_beyond_first'] for g in repeated),
+            'bss_instances':bss_instances,'bss_ram_bytes':sum(r['bytes'] for r in bss_instances),
             'scope':'Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately.'}

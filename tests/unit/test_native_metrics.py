@@ -33,6 +33,20 @@ class MetricsTests(unittest.TestCase):
                 self.assertEqual(hunk_layout(exe)['hunks'][0]['memory'],'chip')
         with self.assertRaisesRegex(ValueError,'Truncated'):strip_symbols(original[:-1])
 
+    def test_bss_attribution_is_ram_only_and_rejects_bad_extent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            exe=Path(directory)/'game';listing=Path(directory)/'game.lst'
+            words=[1011,0,1,0,0,0x40000002,1003,2,1010]
+            exe.write_bytes(struct.pack('>'+len(words)*'I',*words))
+            listing.write_text('Source: "amiga/square_score_storage.i"\n00:00000000 00 3: score_bank_point_a_0_p2: ds.b 8\n')
+            result=executable_attribution(exe,listing,{'files':{}})
+            self.assertEqual(result['bss_ram_bytes'],8)
+            self.assertEqual(result['bss_instances'][0]['file_bytes'],0)
+            self.assertEqual(result['bss_instances'][0]['category'],'startup_generated_point_banks')
+            self.assertEqual(result['accounted_file_bytes'],len(exe.read_bytes()))
+            listing.write_text(listing.read_text().replace('ds.b 8','ds.b 4'))
+            with self.assertRaisesRegex(ValueError,'BSS declaration'):executable_attribution(exe,listing,{'files':{}})
+
     def test_size_attribution_reconciles_instructions_reserves_and_nop_padding(self):
         with tempfile.TemporaryDirectory() as directory:
             exe=Path(directory)/'game'; listing=Path(directory)/'game.lst'

@@ -189,3 +189,5 @@ deltas require matching observer definitions for runtime statistics; a profile
 split cannot silently be compared as the same scene. If master has no metrics
 report yet, the preserved reviewed baseline supplies labeled historical static
 deltas. `--check` verifies that baseline hash as well as current product inputs.
+
+The frozen PR21/PR22 integration preserves the selected LED masks and title geometry. Point banks occupy startup-generated chip BSS, not embedded file bytes; listing-backed BSS extents are reported separately and reconcile with HUNK_BSS. The previous measured product is preserved in baselines/pre-title-score-current.json/.md and its size snapshot. Refresh all four affected metric collectors plus the full cold menu after this product change.
