@@ -850,8 +850,10 @@ reproduces all captured native input boundaries through the six-game result;
 `--takeover` joins halfway through and verifies preserved state/consumed G/live
 entropy/AI continuation. `scripts/record_demo_inputs.py` is the private offline
 ordinary-native physical-input performer/recorder, not a shipped replay importer.
-The observer trajectory under `build/tests/demo-full-recording` is required for
-local repeatability checks; it is not committed and does not substitute for the
-missing historical original-platform picture/audio references. The committed
+The canonical native recording hashes are committed under
+`tests/fixtures/native-demo`; the checksum/provenance manifest binds the input
+recording. A fresh checkout needs no private trajectory receipt. This fixture
+does not substitute for missing historical original-platform picture/audio
+references. The committed
 schema2 input table carries seed/version/clock metadata and a complete match;
 no five-second loop remains. See [interface evidence](../analysis/enhanced-interface.md).

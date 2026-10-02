@@ -58,4 +58,3 @@ ui_feedback:
         move.b  game_games_b,ui_last_games+1
         clr.w   ui_win_ticks
         rts
-

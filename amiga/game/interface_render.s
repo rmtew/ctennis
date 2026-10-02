@@ -193,4 +193,3 @@ ui_text:
         bra.s   .char
 .done:  movem.l (sp)+,d0-d3/d5/d7/a0-a2/a4
         rts
-

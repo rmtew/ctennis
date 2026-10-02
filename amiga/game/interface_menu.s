@@ -96,4 +96,3 @@ ui_menu_tick:
         bra     game_latch_choice
 .done:  bsr     ui_render
         rts
-

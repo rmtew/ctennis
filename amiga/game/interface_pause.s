@@ -16,4 +16,3 @@ ui_return_title:
         move.b  ui_player_count,game_selected_mode
         move.b  #1,display_ready
         rts
-

@@ -1,14 +1,28 @@
 """Finite seeded full-native-match replay and live takeover; no RAM writes."""
 import argparse,hashlib,json,re
-from build_native_game import build,module_hashes
+from build_native_game import build
 from capture_native_presentation import code_symbols
 from copperline_test_session import NativeControlSession
 from evidence import ROOT,atomic_json
 from run_interface_tests import target_log
 
+def load_trajectory(recording_path):
+ fixture=ROOT/'tests/fixtures/native-demo'
+ manifest=json.loads((fixture/'manifest.json').read_text())
+ payload=(fixture/'trajectory.sha256').read_bytes()
+ assert manifest['schema']==1 and manifest['encoding']=='one lowercase SHA256 hexadecimal digest per line'
+ assert len(payload)==manifest['payload_bytes']==manifest['frames']*65
+ assert hashlib.sha256(payload).hexdigest()==manifest['payload_sha256'],'Canonical trajectory fixture checksum mismatch'
+ assert hashlib.sha256(recording_path.read_bytes()).hexdigest()==manifest['recording_sha256'],'Recording does not match canonical trajectory'
+ expected=payload.decode('ascii').splitlines()
+ assert len(expected)==manifest['frames'] and all(re.fullmatch('[0-9a-f]{64}',value) for value in expected)
+ assert hashlib.sha256(b''.join(bytes.fromhex(value) for value in expected)).hexdigest()==manifest['normalized_raw_digest_sha256']
+ return expected,manifest
+
 def run(takeover=False):
  config,exe=build(flavor='enhanced');compiled_modules=json.loads((exe.parent/'build-report.json').read_text())['native_modules'];symbols=code_symbols((exe.parent/'native.lst').read_text())
- recording=json.loads((ROOT/'assets/interface/demo-inputs.json').read_text());expected=json.loads((ROOT/'build/tests/demo-full-recording/digests.json').read_text())
+ recording_path=ROOT/'assets/interface/demo-inputs.json'
+ recording=json.loads(recording_path.read_text());expected,fixture_manifest=load_trajectory(recording_path)
  assert recording['schema']==2 and len(expected)==recording['frames']
  assert recording['entropy_version']=='galois16-b400-v1' and 0<recording['seed']<65536 and recording['initial_game_random']==0
  directory=ROOT/('build/tests/demo-mid-takeover' if takeover else 'build/tests/demo-full-repeat');checks=[];awards=[];seen_games=[0,0];index=0;contacts=0;previous_side=None
@@ -70,7 +84,7 @@ def run(takeover=False):
    s.inspect('capture_screenshot',{'path':str(directory/'complete-match.png')})
   deadlines=num('missed_presentation_deadlines',2)
  target_log(directory)
- report={'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256((ROOT/'assets/interface/demo-inputs.json').read_bytes()).hexdigest(),'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
+ report={'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
  atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'takeover':takeover,'input_ticks':index,'flight_side_changes':contacts,'missed_publications':deadlines}))
 if __name__=='__main__':
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--takeover',action='store_true');run(parser.parse_args().takeover)
