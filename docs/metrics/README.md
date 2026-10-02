@@ -153,3 +153,11 @@ initial title scanout proof before pressing its physical mode key. This adds
 only an observation wait, not a product change. A scanout window beginning
 after initial successful selection is rejected as a returned title, so later
 match/title transitions cannot masquerade as the boot milestone.
+
+The reviewed symbol-removal comparison is in
+[release-loading-comparison.md](release-loading-comparison.md) and its JSON,
+bound to both report/ADF/executable hashes. The historical title scanout point
+was checked by bounded offline replay; its proof is retained in
+`baselines/title-proof-review.json`. The release run is newly measured; later
+report assembly/`--check` conservatively labels receipt reuse. Full native-gate
+acceptance is separate from completion of these four affected checks.

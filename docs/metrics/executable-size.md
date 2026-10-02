@@ -1,6 +1,6 @@
 # Measured executable size attribution
 
-Static attribution only. Executable and assets are unchanged. Local observer changes need affected validation before a new complete runtime report.
+Static attribution only. Executable and assets are unchanged. Corrected observers have fresh affected validation in current.json.
 
 Executable SHA256: `e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c`.
 
@@ -64,4 +64,4 @@ Original tile/pattern/color representations reconstruct displays; they do not se
 
 `python scripts/native_metrics.py --require-runtime` regenerates attribution in ignored `build/metrics/current.json` and its readable summary. Normal native builds also generate static attribution. Unknown gaps, overlaps, listing-byte mismatches or incbin mismatches fail generation. This snapshot binds executable, listing, manifest, tool lock and reader hashes.
 
-Release-only symbol removal is now implemented: 198,960 → 163,876 bytes, saving 35,084 bytes (17.6%). Development symbols remain available. No deduplication, compression or gameplay change was performed. Current runtime generation correctly remains incomplete after observer edits. Static accounting does not recertify the historical runtime baseline.
+Release-only symbol removal is now implemented: 198,960 → 163,876 bytes, saving 35,084 bytes (17.6%). Development symbols remain available. No deduplication, compression or gameplay change was performed. Fresh runtime evidence is in current.json. Historical baseline evidence remains separate; see release-loading-comparison.md for the bounded before/after measurement.

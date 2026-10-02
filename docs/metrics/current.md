@@ -18,14 +18,61 @@ Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasur
 
 UI construction is grouped by page (title = menu; help includes controls/credits), independently of callback-entry profiles; menu-page redraws can occur during pause/input transitions. Pause-only UI construction remains unmeasured.
 
+Release ADF executable: 163876 bytes; symbol bytes removed: 35084. Development retains symbols.
 RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.
+
+| Mutually exclusive executable category | Bytes |
+|---|---:|
+| audio_envelopes | 128 |
+| audio_period_table | 3,072 |
+| audio_scores | 2,208 |
+| build_version_text | 14 |
+| court_bitplanes | 24,576 |
+| cpu_instructions | 11,118 |
+| font | 1,024 |
+| front_court_and_title_copper_lists | 3,256 |
+| hunk_header_table | 28 |
+| hunk_payload_alignment_padding | 2 |
+| hunk_record_headers_and_ends | 24 |
+| initial_hardware_sprites | 576 |
+| mode_banks | 3,072 |
+| other_initialized_tables_and_scalars | 738 |
+| paula_square_wave | 4 |
+| pre_rendered_ui_pages | 10,240 |
+| relocation_offsets | 9,120 |
+| relocation_record_framing | 24 |
+| replay_packets | 1,110 |
+| reserved_back_copper | 3,120 |
+| reserved_back_sprites | 576 |
+| reserved_native_stack | 4,096 |
+| reserved_state_and_work_buffers | 704 |
+| reserved_ui_overlay | 512 |
+| scene_animation_table | 36 |
+| scene_pose_table | 112 |
+| scene_sprite_variants | 8,192 |
+| score_game_banks | 21,504 |
+| score_patch_pointer_tables | 7,604 |
+| score_point_banks | 14,336 |
+| separate_debug_records | 0 |
+| source_alignment_padding | 13 |
+| status_banks | 7,168 |
+| symbol_name_padding | 1,383 |
+| symbol_names | 22,989 |
+| symbol_record_framing | 10,712 |
+| title_bitplanes | 24,576 |
+| ui_text_and_line_pointer_tables | 993 |
+| **Exact file total** | **198,960** |
+
+Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately.
+Byte-identical incbin payload bytes beyond first copies: 26,624 B. These remain included in the categories; aliasing safety is unproven.
+
 
 | Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |
 |---|---:|---:|---:|---:|---:|
-| cold-one / title | 6 | 3.511 / 11.165 / 11.165 | unmeasured / 8.407 | 1.240 | 5.523 / 5.347 |
-| cold-one / one-player-rally | 3507 | 5.632 / 6.057 / 7.651 | 1.588 / unmeasured | 3.929 | 9.037 / 8.867 |
-| cold-one / two-player-rally | 1 | 5.493 / 5.493 / 5.493 | 1.345 / unmeasured | 2.030 | 11.195 / 11.121 |
-| cold-one / match-end | 193 | 3.826 / 4.227 / 4.593 | 1.565 / unmeasured | 0.779 | 12.095 / 11.871 |
+| cold-one / title | 8 | 2.876 / 11.228 / 11.228 | unmeasured / 8.466 | 1.236 | 5.460 / 5.250 |
+| cold-one / one-player-rally | 3507 | 5.630 / 6.059 / 7.631 | 1.586 / unmeasured | 3.927 | 9.057 / 8.880 |
+| cold-one / two-player-rally | 1 | 5.880 / 5.880 / 5.880 | 1.388 / unmeasured | 2.373 | 10.808 / 10.714 |
+| cold-one / match-end | 193 | 3.826 / 4.229 / 4.509 | 1.546 / unmeasured | 0.745 | 12.179 / 11.934 |
 
 cold-one: chip used 260,208 B; free 264,080 B; largest block 262,912 B; runtime peak 260208 B; cold initialized-pool peak 322840 B.
 Deadlines/publications: `{'missed_native_callbacks': 0, 'missed_publications_counter': 0, 'publication_failures': 0}`. Allocation failures: unmeasured; pre-Exec bootstrap: unmeasured.
@@ -35,13 +82,13 @@ Deadlines/publications: `{'missed_native_callbacks': 0, 'missed_publications_cou
 | reset | 0.000000 | unmeasured |
 | boot_script_begins | unmeasured | unmeasured |
 | loadseg_begin | unmeasured | unmeasured |
-| loadseg_complete | 24.738865 | 24738.865 |
-| executable_entry | 24.740379 | 1.515 |
-| assets_ready | 24.752147 | 11.768 |
-| first_complete_title_frame | 24.786953 | 34.805 |
-| input_responsive | 24.789238 | 2.286 |
+| loadseg_complete | 20.582720 | 20582.720 |
+| executable_entry | 20.583725 | 1.005 |
+| assets_ready | 20.595379 | 11.654 |
+| first_complete_title_frame | 20.636332 | 40.952 |
+| input_responsive | 20.665747 | 29.415 |
 
-Total reset to successful input: 24789.238 ms; displayed title and input both ready: 24789.238 ms. Disk reads/seeks and host launch time: unavailable.
+Total reset to successful input: 20665.747 ms; displayed title and input both ready: 20665.747 ms. Disk reads/seeks and host launch time: unavailable.
 Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait. Milestones may overlap: input can respond before a complete title frame. Listed-milestone differences are signed offsets, not invented sequential phase durations; boot complete requires both displayed title and successful input.
 
 

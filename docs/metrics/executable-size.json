@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "state": "complete static attribution; current observer runtime validation pending",
+  "state": "complete static attribution; fresh runtime evidence is current.json",
   "executable_sha256": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c",
   "loaded_hunks": {
     "executable_bytes": 198960,
@@ -45,7 +45,7 @@
     "generated_inputs_identity": "894bdc149fba5056b0e329ad7e2e2ab2e88e785345428f4d27eeaab68e72a87a",
     "attribution_reader_sha256": "47089248cf3f7611619b1bf1cedbc28ba13ee00b2343675af90638b0263dbc1c",
     "hunk_reader_sha256": "7c5e7b31bca82af439fc46346da80478439adae2d2917306265bd6b55a93ec40",
-    "command": "python scripts/native_metrics.py --require-runtime (static succeeds; runtime incomplete after observer changes)"
+    "command": "RUST_LOG=info python scripts/native_metrics.py --refresh --require-runtime --record; python scripts/build_native_adf.py --self-test; python scripts/native_metrics.py --require-runtime --record; python scripts/native_metrics.py --check"
   },
   "categories": [
     {
@@ -774,5 +774,483 @@
     "claimed_16kb_is_not_measured_file": true,
     "cartridge_not_build_dependency": true
   },
-  "scope": "Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately."
+  "scope": "Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately.",
+  "release": {
+    "executable_sha256": "ead8265319cf5a55a2a6bb1c9a1f9dfc8349f70e7e89af7be5d6bc8ac0b929e5",
+    "executable_bytes": 163876,
+    "removed_symbol_bytes": 35084,
+    "loaded_payload_bytes": 154680,
+    "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols.",
+    "layout": {
+      "executable_bytes": 163876,
+      "hunks": [
+        {
+          "file_offset": 36,
+          "index": 0,
+          "kind": "code",
+          "bytes": 40140,
+          "memory": "any"
+        },
+        {
+          "file_offset": 49332,
+          "index": 1,
+          "kind": "data",
+          "bytes": 114540,
+          "memory": "chip"
+        }
+      ],
+      "file_format": {
+        "header_table_bytes": 28,
+        "hunk_headers_and_end_bytes": 24,
+        "relocation_bytes": 9144,
+        "relocations": 2280,
+        "symbol_bytes": 0,
+        "symbols": 0,
+        "symbol_name_bytes": 0,
+        "symbol_name_padding_bytes": 0,
+        "symbol_framing_bytes": 0,
+        "debug_bytes": 0
+      },
+      "code_bytes": 40140,
+      "data_bytes": 114540,
+      "bss_bytes": 0,
+      "loaded_payload_bytes": 154680
+    },
+    "exclusive_categories": [
+      {
+        "category": "audio_envelopes",
+        "bytes": 128,
+        "by_hunk": {
+          "0": 128
+        },
+        "by_source": {
+          "assets/native/audio/data.i": 128
+        },
+        "instances": 1
+      },
+      {
+        "category": "audio_period_table",
+        "bytes": 3072,
+        "by_hunk": {
+          "0": 3072
+        },
+        "by_source": {
+          "assets/native/audio/data.i": 3072
+        },
+        "instances": 1
+      },
+      {
+        "category": "audio_scores",
+        "bytes": 2208,
+        "by_hunk": {
+          "0": 2208
+        },
+        "by_source": {
+          "assets/native/audio/data.i": 2208
+        },
+        "instances": 6
+      },
+      {
+        "category": "build_version_text",
+        "bytes": 14,
+        "by_hunk": {
+          "0": 14
+        },
+        "by_source": {
+          "amiga/game/interface_text.s": 14
+        },
+        "instances": 1
+      },
+      {
+        "category": "court_bitplanes",
+        "bytes": 24576,
+        "by_hunk": {
+          "1": 24576
+        },
+        "by_source": {
+          "amiga/display.i": 24576
+        },
+        "instances": 4
+      },
+      {
+        "category": "cpu_instructions",
+        "bytes": 11118,
+        "by_hunk": {
+          "0": 11118
+        },
+        "by_source": {
+          "amiga/main.s": 1456,
+          "amiga/score_copper_patch.i": 118,
+          "amiga/game/controls.s": 326,
+          "amiga/game/paula_output.s": 174,
+          "amiga/game/keyboard.s": 204,
+          "amiga/game/tick.s": 92,
+          "amiga/game/menu.s": 264,
+          "amiga/game/integration.s": 452,
+          "amiga/game/gameplay.s": 52,
+          "amiga/game/gameplay_math.s": 318,
+          "amiga/game/gameplay_ball.s": 644,
+          "amiga/game/gameplay_players.s": 722,
+          "amiga/game/gameplay_contact.s": 540,
+          "amiga/game/gameplay_ai.s": 348,
+          "amiga/game/gameplay_controls.s": 202,
+          "amiga/game/scene.s": 484,
+          "amiga/game/scene_fields.s": 206,
+          "amiga/game/scene_integration.s": 66,
+          "amiga/game/scoring.s": 628,
+          "amiga/game/scoring_integration.s": 204,
+          "amiga/game/round.s": 374,
+          "amiga/game/result.s": 338,
+          "amiga/game/result_audio.s": 78,
+          "amiga/game/audio.s": 668,
+          "amiga/game/interface_input.s": 728,
+          "amiga/game/interface_pause.s": 84,
+          "amiga/game/interface_menu.s": 404,
+          "amiga/game/interface_render.s": 564,
+          "amiga/game/interface_demo.s": 108,
+          "amiga/game/interface_feedback.s": 272
+        },
+        "instances": 2940
+      },
+      {
+        "category": "font",
+        "bytes": 1024,
+        "by_hunk": {
+          "1": 1024
+        },
+        "by_source": {
+          "amiga/game/interface.s": 1024
+        },
+        "instances": 1
+      },
+      {
+        "category": "front_court_and_title_copper_lists",
+        "bytes": 3256,
+        "by_hunk": {
+          "1": 3256
+        },
+        "by_source": {
+          "amiga/display.i": 288,
+          "assets/native/court/score-cop-commands.i": 2832,
+          "assets/native/title/display.i": 136
+        },
+        "instances": 782
+      },
+      {
+        "category": "hunk_header_table",
+        "bytes": 28,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "hunk_payload_alignment_padding",
+        "bytes": 2,
+        "by_hunk": {
+          "0": 2
+        },
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "hunk_record_headers_and_ends",
+        "bytes": 24,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "initial_hardware_sprites",
+        "bytes": 576,
+        "by_hunk": {
+          "1": 576
+        },
+        "by_source": {
+          "amiga/display.i": 576
+        },
+        "instances": 8
+      },
+      {
+        "category": "mode_banks",
+        "bytes": 3072,
+        "by_hunk": {
+          "1": 3072
+        },
+        "by_source": {
+          "assets/native/court/score-bank-data.i": 3072
+        },
+        "instances": 12
+      },
+      {
+        "category": "other_initialized_tables_and_scalars",
+        "bytes": 738,
+        "by_hunk": {
+          "0": 738
+        },
+        "by_source": {
+          "amiga/main.s": 397,
+          "amiga/game/controls.s": 12,
+          "amiga/game/paula_output.s": 6,
+          "amiga/game/keyboard.s": 58,
+          "amiga/game/tick.s": 2,
+          "amiga/game/menu.s": 7,
+          "amiga/game/integration.s": 1,
+          "amiga/game/gameplay_players.s": 77,
+          "amiga/game/scene.s": 35,
+          "amiga/game/scoring.s": 1,
+          "amiga/game/scoring_integration.s": 93,
+          "amiga/game/audio.s": 20,
+          "assets/native/audio/data.i": 24,
+          "amiga/game/state.i": 5
+        },
+        "instances": 142
+      },
+      {
+        "category": "paula_square_wave",
+        "bytes": 4,
+        "by_hunk": {
+          "1": 4
+        },
+        "by_source": {
+          "amiga/main.s": 4
+        },
+        "instances": 1
+      },
+      {
+        "category": "pre_rendered_ui_pages",
+        "bytes": 10240,
+        "by_hunk": {
+          "1": 10240
+        },
+        "by_source": {
+          "amiga/game/interface.s": 10240
+        },
+        "instances": 1
+      },
+      {
+        "category": "relocation_offsets",
+        "bytes": 9120,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "relocation_record_framing",
+        "bytes": 24,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "replay_packets",
+        "bytes": 1110,
+        "by_hunk": {
+          "0": 1110
+        },
+        "by_source": {
+          "build/native/demo-inputs.i": 1110
+        },
+        "instances": 278
+      },
+      {
+        "category": "reserved_back_copper",
+        "bytes": 3120,
+        "by_hunk": {
+          "1": 3120
+        },
+        "by_source": {
+          "amiga/main.s": 3120
+        },
+        "instances": 1
+      },
+      {
+        "category": "reserved_back_sprites",
+        "bytes": 576,
+        "by_hunk": {
+          "1": 576
+        },
+        "by_source": {
+          "amiga/main.s": 576
+        },
+        "instances": 1
+      },
+      {
+        "category": "reserved_native_stack",
+        "bytes": 4096,
+        "by_hunk": {
+          "0": 4096
+        },
+        "by_source": {
+          "amiga/main.s": 4096
+        },
+        "instances": 1
+      },
+      {
+        "category": "reserved_state_and_work_buffers",
+        "bytes": 704,
+        "by_hunk": {
+          "0": 704
+        },
+        "by_source": {
+          "amiga/score_copper_patch.i": 12,
+          "amiga/game/keyboard.s": 128,
+          "amiga/game/gameplay.s": 60,
+          "amiga/game/scene.s": 64,
+          "amiga/game/scene_fields.s": 8,
+          "amiga/game/scoring.s": 28,
+          "amiga/game/audio.s": 96,
+          "amiga/game/interface.s": 300,
+          "amiga/main.s": 8
+        },
+        "instances": 9
+      },
+      {
+        "category": "reserved_ui_overlay",
+        "bytes": 512,
+        "by_hunk": {
+          "1": 512
+        },
+        "by_source": {
+          "amiga/game/interface.s": 512
+        },
+        "instances": 1
+      },
+      {
+        "category": "scene_animation_table",
+        "bytes": 36,
+        "by_hunk": {
+          "0": 36
+        },
+        "by_source": {
+          "amiga/game/scene.s": 36
+        },
+        "instances": 1
+      },
+      {
+        "category": "scene_pose_table",
+        "bytes": 112,
+        "by_hunk": {
+          "0": 112
+        },
+        "by_source": {
+          "amiga/game/scene.s": 112
+        },
+        "instances": 1
+      },
+      {
+        "category": "scene_sprite_variants",
+        "bytes": 8192,
+        "by_hunk": {
+          "0": 8192
+        },
+        "by_source": {
+          "amiga/main.s": 8192
+        },
+        "instances": 1
+      },
+      {
+        "category": "score_game_banks",
+        "bytes": 21504,
+        "by_hunk": {
+          "1": 21504
+        },
+        "by_source": {
+          "assets/native/court/score-bank-data.i": 21504
+        },
+        "instances": 14
+      },
+      {
+        "category": "score_patch_pointer_tables",
+        "bytes": 7604,
+        "by_hunk": {
+          "0": 7604
+        },
+        "by_source": {
+          "assets/native/court/score-patch-tables.i": 7604
+        },
+        "instances": 726
+      },
+      {
+        "category": "score_point_banks",
+        "bytes": 14336,
+        "by_hunk": {
+          "1": 14336
+        },
+        "by_source": {
+          "assets/native/court/score-bank-data.i": 14336
+        },
+        "instances": 28
+      },
+      {
+        "category": "separate_debug_records",
+        "bytes": 0,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 1
+      },
+      {
+        "category": "source_alignment_padding",
+        "bytes": 13,
+        "by_hunk": {
+          "0": 13
+        },
+        "by_source": {},
+        "instances": 13
+      },
+      {
+        "category": "status_banks",
+        "bytes": 7168,
+        "by_hunk": {
+          "1": 7168
+        },
+        "by_source": {
+          "assets/native/court/score-bank-data.i": 7168
+        },
+        "instances": 28
+      },
+      {
+        "category": "symbol_name_padding",
+        "bytes": 0,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 0
+      },
+      {
+        "category": "symbol_names",
+        "bytes": 0,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 0
+      },
+      {
+        "category": "symbol_record_framing",
+        "bytes": 0,
+        "by_hunk": {},
+        "by_source": {},
+        "instances": 0
+      },
+      {
+        "category": "title_bitplanes",
+        "bytes": 24576,
+        "by_hunk": {
+          "1": 24576
+        },
+        "by_source": {
+          "assets/native/title/display.i": 24576
+        },
+        "instances": 4
+      },
+      {
+        "category": "ui_text_and_line_pointer_tables",
+        "bytes": 993,
+        "by_hunk": {
+          "0": 993
+        },
+        "by_source": {
+          "amiga/game/interface_text.s": 993
+        },
+        "instances": 56
+      }
+    ]
+  }
 }
