@@ -1,0 +1,47 @@
+{
+  "source_vram_sha256": "9e86e6103f17060bd5f7649cfdd96d23047f1f422152e6a57fe28d1fcf84bb4f",
+  "background_colours": [
+    0,
+    2,
+    3,
+    4,
+    5,
+    9,
+    10,
+    13,
+    14,
+    15
+  ],
+  "bitplane_bytes": 24576,
+  "source_sprite_slots": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9
+  ],
+  "pair_source_colours": [
+    [
+      15,
+      4
+    ],
+    [
+      4,
+      15
+    ],
+    [
+      15,
+      13
+    ],
+    [
+      13,
+      1
+    ]
+  ],
+  "sprite_bytes": 576,
+  "sprite_pattern_rows_sha256": "5f857895017e8040124062ce9fac64932eb63a505ee5b6a0fdd28cf6ab79c489",
+  "output": "/workspace/ctennis/build/amiga/sprite-probe"
+}
