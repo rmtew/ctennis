@@ -104,3 +104,9 @@ remain hash-identical. The report marks that reuse and binds its current writer
 hash separately. An observer edit, missing artifact or later failed receipt
 never receives this exception. This prevents report-format fixes from creating
 a duplicate emulator campaign.
+
+Report identity binds product, measured extents/statistics, observer/config/ROM/
+tool dependencies and the current report writer, excluding generated reports
+and timestamps. Product identity remains separate. No executable-size cap is
+configured, so executable headroom remains null rather than borrowing the RAM
+budget.

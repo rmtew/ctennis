@@ -56,6 +56,8 @@ def static_metrics(exe=EXE):
     groups={group:sum(a['bytes'] for a in assets if a['group']==group) for group in ('graphics','audio')}
     groups['replay_loaded_bytes']=replay
     return {'executable_sha256':digest(exe),'layout':hunk_layout(exe),
+            'executable_budget_bytes':None,'executable_headroom_bytes':None,
+            'executable_budget_reason':'No executable-size cap configured; executable bytes are not a RAM allocation or a measured disk-free-space budget.',
             'assets':{'active_incbin_bytes':groups,'files':assets,
                       'generated_ui_pages_bytes':(ROOT/'build/native/ui-pages.bin').stat().st_size,
                       'recording_json_bytes':(ROOT/'assets/interface/demo-inputs.json').stat().st_size,
@@ -164,6 +166,7 @@ def summarize(report):
            '| Executable | Code | Data | BSS | Loaded payload |','|---:|---:|---:|---:|---:|',
            '| '+' | '.join(str(layout.get(k,'unmeasured')) for k in ('executable_bytes','code_bytes','data_bytes','bss_bytes','loaded_payload_bytes'))+' |','',
            f"Asset bytes: {static.get('assets',{}).get('active_incbin_bytes',{})}. These overlap loaded hunks.",'',
+           'Executable-size budget/headroom: unmeasured (no cap configured); size is not RAM.','',
            'Timing uses elapsed emulated colour clocks, including chip-bus waits; host time is unavailable.',
            'PAL display budget: 70,824 CCK (~19.97 ms). Simulation budget: ~59,191.14 CCK (~16.69 ms).',
            'Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasured.','',
@@ -241,6 +244,13 @@ def generate():
             'identity':identity({'executable':static['executable_sha256'],'inputs':static['product_inputs']}),
             'report_generator_sha256':digest(ROOT/'scripts/native_metrics.py'),
             'deltas':{'state':'no previous accepted compatible report'}}
+    report['product_identity']=report['identity']
+    report['identity']=identity({'product':report['product_identity'],'measurement_inputs':measurement_inputs,
+        'writer_sha256':report['report_generator_sha256'],
+        'cases':{name:{'metrics':case.get('metrics'),'cold_loading':case.get('cold_loading'),
+                       'target':case.get('provenance',{}).get('target'),
+                       'tools':case.get('provenance',{}).get('tool_sha256'),
+                       'rom':case.get('provenance',{}).get('kickstart_sha256')} for name,case in runtime.items()}})
     accepted=subprocess.run(['git','show','master:docs/metrics/current.json'],cwd=ROOT,capture_output=True,text=True)
     if accepted.returncode==0:
         previous=json.loads(accepted.stdout)
