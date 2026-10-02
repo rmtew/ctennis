@@ -299,9 +299,6 @@ game_show_returned_title:
         bsr     prepare_title_display
         st      game_title_display
         rts
-game_show_returned_court:
-        clr.b   game_title_display
-        rts
 game_clear_returned_status:
         clr.b   field_values+4
         bra     patch_score_pointers

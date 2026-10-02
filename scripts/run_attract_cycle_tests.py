@@ -1,5 +1,6 @@
 """Two unattended native attract cycles: actual bank publications and title pixels."""
 import argparse,hashlib,json,re
+from PIL import Image
 from build_native_game import build
 from copperline_test_session import NativeControlSession
 from native_tools import ROOT,emulator_config
@@ -21,13 +22,40 @@ def run():
         def address(n):
             h,offset=located[n];return segments[h]['start']+offset
         title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back')}
-        # Observe the complete menu/hint area, rather than startup's bulk
-        # branding initialization, which can exceed CCP's4096-event queue.
-        # Branding pixels are independently checked in all eight scanouts.
-        planes=[(address(f'title_plane{i}')+144*32,48*32) for i in range(4)]
+        # Let ordinary startup finish without a callback stop, then watch
+        # every title bitmap/control byte through both result/idle windows.
+        # This avoids startup's bulk branding writes filling the4096 queue.
+        s.inspect('run_until',{'seconds':stop['seconds']+1})
+        initial=directory/'initial-title.png'
+        s.inspect('capture.screenshot',{'path':str(initial)})
+        assert_title_raster(initial);assert_menu_selection_raster(initial,0,1)
+        with Image.open(initial) as image:
+            assert image.size==(716,285)
+            expected_digest=0xcbf29ce484222325
+            for byte in image.convert('RGBA').tobytes():
+                expected_digest=((expected_digest^byte)*0x100000001b3)&0xffffffffffffffff
+        expected_digest=f'{expected_digest:016x}'
+        planes=[(address(f'title_plane{i}'),192*32) for i in range(4)]
+        controls=[(title,address('title_plane0')-title)]
         state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,pointer=bytearray(4))
         fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','display_ready')}
         def event(message):
+            if message.get('method')=='event.frame':
+                r=message['params']
+                assert not r.get('dropped_notifications',0),'Title frame telemetry dropped'
+                if windows and windows[-1]['next_entry'] is None:
+                    window=windows[-1];first=window.get('first_title_publication_frame')
+                    frame=r['position']['frame']
+                    # A capture describes the preceding completed scan. Begin
+                    # after the first wholly title-owned visible field.
+                    if first is not None and frame>=first+2:
+                        digest=r.get('digest',{})
+                        assert digest.get('width')==716 and digest.get('height')==285
+                        assert digest.get('digest')==expected_digest,{'label':'continuous actual title field changed','frame':frame,'actual':digest,'expected':expected_digest}
+                        samples=window['title_frame_digests']
+                        if samples:assert frame==samples[-1]['frame']+1,'Title frame observation gap'
+                        samples.append(dict(frame=frame,digest=digest['digest'],position=r['position']))
+                return
             if message.get('method')!='event.mmio':return
             r=message['params'];a=r['addr'];v=r['value'];size=r['size'];p=r['position'];n=fields.get(a)
             assert not r.get('dropped_events',0) and not r.get('dropped_notifications',0),{'label':'Attract telemetry dropped','position':p,'dropped_events':r.get('dropped_events',0),'dropped_notifications':r.get('dropped_notifications',0)}
@@ -48,7 +76,9 @@ def run():
                 if v:
                     entry=dict(callback=state['started'],position=p,idle=state['idle']);entries.append(entry)
                     check('automatic attract enters after full title idle',state['idle'],1800)
-                    if windows:windows[-1]['next_entry']=entry
+                    if windows:
+                        windows[-1]['next_entry']=entry
+                        s.send_async('events.subscribe',{'events':['frame'],'frame_interval':50,'frame_digest':False})
             elif n=='game_lifecycle':
                 state['life']=v
                 assert v not in (7,8),'Attract reached superseded intermediate title/court lifecycle'
@@ -57,11 +87,12 @@ def run():
                     check('automatic return follows actual first-play completion',state['first'] is not None,True)
                     check('exact full native phrase before unattended return',state['first']['callback']-state['award']['callback'],926)
                     check('one completed phrase before unattended return',state['loops'],1)
-                    windows.append(dict(award=state['award'],first_play=state['first'],returned=dict(callback=state['completed'],position=p),next_entry=None,publications=0,stable=False,unexpected_title_writes=0))
+                    windows.append(dict(award=state['award'],first_play=state['first'],returned=dict(callback=state['completed'],position=p),next_entry=None,publications=0,stable=False,unexpected_title_writes=0,title_frame_digests=[],first_title_publication_frame=None))
+                    s.send_async('events.subscribe',{'events':['frame'],'frame_interval':1,'frame_digest':True})
                     state['award']=None
             elif n=='display_ready' and v and windows and windows[-1]['next_entry'] is None and state['life']==2 and not state['dirty']:
                 windows[-1]['stable']=True
-            if any(start<=a<a+size<=start+length for start,length in planes):
+            if any(start<=a<a+size<=start+length for start,length in planes+controls):
                 if windows and windows[-1]['next_entry'] is None and windows[-1]['stable']:
                     windows[-1]['unexpected_title_writes']+=1
                     raise AssertionError('Quiet menu bitmap changed after completed menu construction')
@@ -74,10 +105,14 @@ def run():
                 if windows and windows[-1]['next_entry'] is None:
                     check('every returned-title publication selects actual title bank',pointer,title)
                     windows[-1]['publications']+=1
+                    if windows[-1]['first_title_publication_frame'] is None:windows[-1]['first_title_publication_frame']=p['frame']
                 publications.append(dict(pointer=pointer,position=p,lifecycle=state['life'],demo=state['demo']))
+        def read(n,length=1):return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':length})['data']),'big')
+        state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2))
+        regs=s.inspect('custom_dump')['regs'];state['pointer']=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big'))
         s.notification_handler=event
         watches=[{'addr':a,'len':1 if n in ('ui_demo','ui_dirty','game_celebration_first_play','display_ready') else 2,'access':'write'} for a,n in fields.items()]
-        watches += [{'addr':a,'len':length,'access':'write'} for a,length in planes]
+        watches += [{'addr':a,'len':length,'access':'write'} for a,length in planes+controls]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
         s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
         # No injected state, keyboard/pad actions, seeded fixture or callback stops.
@@ -85,6 +120,7 @@ def run():
         check('two unattended result-to-title cycles',len(windows),2)
         check('third attract starts after second idle',len(entries),3)
         for cycle,window in enumerate(windows,1):
+            check('every PAL title field checked continuously',len(window['title_frame_digests'])>=1400,True)
             check('title construction completed',window['stable'],True)
             check('title actual bank publications observed',window['publications']>0,True)
             check('no hidden quiet menu bitmap mutation',window['unexpected_title_writes'],0)
@@ -95,7 +131,7 @@ def run():
                 assert_title_raster(path);assert_menu_selection_raster(path,0,1)
     target_log(directory)
     report=dict(passed=True,checks=checks,windows=windows,entries=entries,publications=publications,captures=[str(p.relative_to(ROOT)) for p in captures],
-                executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),scope='Two uninterrupted ordinary unattended cycles through selected tune, actual title COP1LC/blank publications, immutable idle menu bitmap and eight authored-font scanouts; no physical inputs/state writes or hardware parity claim')
+                executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),scope='Two uninterrupted ordinary unattended cycles through selected tune, actual title COP1LC/blank publications, continuous full-title bitmap/control write watch, every PAL title field digest and eight authored-font scanouts; invariant full-field digest anchored to independently checked ordinary startup title; no physical inputs/state writes or hardware parity claim')
     atomic_json(directory/'report.json',report);print(json.dumps(dict(passed=True,cycles=len(windows),entries=len(entries),publications=len(publications),title_frames=len(captures))))
 
 

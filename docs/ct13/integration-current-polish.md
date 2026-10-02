@@ -122,3 +122,29 @@ Raw actual screenshots remain private underbuild/tests/help-navigation and
 build/tests/native-setup. User-facing preview uses716x537TV aspect from the
 716x285raw field; it is exact nearest-row presentation scaling, not redrawn
 or generated content. No full combined campaign or master merge occurred.
+
+## Source freeze and combined candidate
+
+Parent froze product sources atUI1c03090, sprites2912501 and font9beb616 plus
+approved integration changes. Tests-only CT13 handoff6e43e7c5ee4a7b39d513b9124f5a614375da4883
+was merged with its history; its four changed files contain no product delta.
+The legacy .title_wait path now returns directly to title at its existing timer
+boundary. Its deliberate returned-court rendering/mode/intro sequence and unused
+court-display hook are removed. Modern human celebration/full-play/fresh-fire and
+unattended first-complete-phrase return are unchanged.
+
+The imported two-cycle observer now starts after ordinary initialization and
+watches the entire title bitmap and Copper control block, every actual COP1LC
+publication, and every PAL field during both returned-title idle windows.
+Frame digests must equal the independently font/mask-checked initial title;
+sequence gaps or unexpected bitmap/control writes fail. The first wholly
+returned-title field is identified from actual bank publication. No runtime
+state or input is injected. Eight actual title rasters and three automatic
+entries remain checked, together with exact926-tick first phrase and1800-tick
+idle per cycle. This tightens the author's helper to the combined pixel extent.
+
+Help/navigation clean-head checks at5a4c0fd passed43 physical assertions and
+2136 strict setup callbacks with no source changes during either run. The same
+Library image now has version2, showing page1/4 with NEXT selected at716x537TV
+aspect. This evidence predates the neutral legacy-path cleanup; final combined
+acceptance runs once at the published frozen candidate, with no master merge.

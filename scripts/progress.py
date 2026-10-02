@@ -41,7 +41,8 @@ def acceptance(name, report):
         windows=report.get('windows',[])
         return (len(windows)==2 and len(report.get('entries',[]))==3 and len(report.get('captures',[]))==8
                 and all(w.get('stable') is True and w.get('unexpected_title_writes')==0
-                        and w.get('publications',0)>0 and w.get('next_entry') for w in windows))
+                        and w.get('publications',0)>0 and w.get('next_entry')
+                        and len(w.get('title_frame_digests',[]))>=1400 for w in windows))
     if name == 'takeover':
         return report.get('verified_input_ticks') == 5480 and report.get('takeover') is True and report.get('missed_publications') == 0
     if name == 'menu-cold':

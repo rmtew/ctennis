@@ -24,6 +24,7 @@ def main():
     commands = [
         ['-m','unittest','discover','-s','tests/unit','-q'],
         ['scripts/native_assets.py'],
+        ['assets/interface/font-mac/extract.py'],
         ['scripts/build_native_adf.py','--self-test'],
         ['scripts/run_enhanced_menu_tests.py','--adf'],
         ['scripts/run_native_inputs.py'],

@@ -67,14 +67,9 @@ game_result_poll:
 .title_wait:
         cmpi.b  #$ff,game_serve_clock
         bne     game_round_done
-        bsr     game_show_returned_court
-        move.b  #4,game_mode
-        move.b  #$83,game_score_flags
-        move.b  #$20,game_display
-        bsr     game_render_sprites
-        bsr     game_result_redraw
-        bsr     game_audio_request_cue
-        move.w  #GAME_TITLE_SOUND,game_lifecycle
+        ; Legacy transition also returns directly to the title. It must
+        ; never publish a court or trigger another intro after title return.
+        bsr     ui_return_title
         bra     game_round_done
 .title_sound:
         bsr     game_audio_cue_complete
