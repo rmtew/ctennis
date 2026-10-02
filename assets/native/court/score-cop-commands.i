@@ -1,3 +1,43 @@
+        ; CT12 status: full row at native y0, restore all planes.
+        dc.w $2c01,$fffe
+score_cop_224_hi: dc.w $00e0,0
+score_cop_224_lo: dc.w $00e2,0
+score_cop_225_hi: dc.w $00e4,0
+score_cop_225_lo: dc.w $00e6,0
+score_cop_226_hi: dc.w $00e8,0
+score_cop_226_lo: dc.w $00ea,0
+score_cop_227_hi: dc.w $00ec,0
+score_cop_227_lo: dc.w $00ee,0
+        dc.w $3401,$fffe
+score_cop_228_hi: dc.w $00e0,0
+score_cop_228_lo: dc.w $00e2,0
+score_cop_229_hi: dc.w $00e4,0
+score_cop_229_lo: dc.w $00e6,0
+score_cop_230_hi: dc.w $00e8,0
+score_cop_230_lo: dc.w $00ea,0
+score_cop_231_hi: dc.w $00ec,0
+score_cop_231_lo: dc.w $00ee,0
+        ; CT12 mode: full row at native y32, restore all planes.
+        dc.w $4c01,$fffe
+score_cop_232_hi: dc.w $00e0,0
+score_cop_232_lo: dc.w $00e2,0
+score_cop_233_hi: dc.w $00e4,0
+score_cop_233_lo: dc.w $00e6,0
+score_cop_234_hi: dc.w $00e8,0
+score_cop_234_lo: dc.w $00ea,0
+score_cop_235_hi: dc.w $00ec,0
+score_cop_235_lo: dc.w $00ee,0
+        dc.w $5401,$fffe
+score_cop_237_hi: dc.w $00e4,0
+score_cop_237_lo: dc.w $00e6,0
+score_cop_238_hi: dc.w $00e8,0
+score_cop_238_lo: dc.w $00ea,0
+        ; Red logical B point glyphs: high planes for native rows40..55.
+        dc.w $5401,$fffe
+score_cop_240_hi: dc.w $00e0,0
+score_cop_240_lo: dc.w $00e2,0
+score_cop_241_hi: dc.w $00ec,0
+score_cop_241_lo: dc.w $00ee,0
         ifd ENHANCED_INTERFACE
         dc.w $544d,$fffe
         else
@@ -270,6 +310,11 @@ score_cop_46_lo: dc.w $00ea,0
         dc.w $63d1,$fffe
 score_cop_47_hi: dc.w $00e8,0
 score_cop_47_lo: dc.w $00ea,0
+        dc.w $6401,$fffe
+score_cop_242_hi: dc.w $00e0,0
+score_cop_242_lo: dc.w $00e2,0
+score_cop_243_hi: dc.w $00ec,0
+score_cop_243_lo: dc.w $00ee,0
         ifd ENHANCED_INTERFACE
         dc.w $744b,$fffe
         else

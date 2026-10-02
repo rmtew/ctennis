@@ -35,7 +35,7 @@ def _build(flavor="enhanced"):
     from native_ui_pages import prepare as prepare_ui_pages
     prepare_ui_pages(version.read_bytes())
     display.mkdir(parents=True, exist_ok=True)
-    executable = display / f"ctennis-{flavor}"
+    executable = display / "baseline-rally"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(display / "native.lst"), "-o",
          str(executable), "amiga/main.s"])
     compile_manifest(executable, display / "native.lst")

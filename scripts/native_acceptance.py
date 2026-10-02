@@ -27,8 +27,8 @@ def main():
         ['scripts/build_native_adf.py','--self-test'],
         ['scripts/run_enhanced_menu_tests.py','--adf'],
         ['scripts/run_native_inputs.py'],
-        *[['scripts/run_native_contracts.py','--case='+case,*(['--self-test'] if case in ('deuce','status-2','audio-hit') else [])]
-          for case in ('deuce','advantage','return-deuce','advantage-game','match-award','status-2','status-3','status-4','status-5','audio-hit')],
+        *[['scripts/run_native_contracts.py','--case='+case,*(['--self-test'] if case in ('deuce','status-2','status-6','audio-hit') else [])]
+          for case in ('deuce','advantage','return-deuce','advantage-game','match-award','status-2','status-3','status-4','status-5','status-6','audio-hit')],
         ['scripts/run_demo_match_tests.py'],
         ['scripts/run_demo_match_tests.py','--takeover'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=one'],
@@ -65,8 +65,8 @@ def main():
     report.update(state='complete',completed_utc=dt.datetime.now(dt.timezone.utc).isoformat(),
                   passed=status['passed'] and unchanged, native_status=status, head_unchanged=unchanged,
                   artifacts={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
-                             for p in (ROOT/'build/amiga/interfaces/enhanced/ctennis-enhanced',
-                                       ROOT/'build/amiga/interfaces/enhanced/delivery/ctennis-enhanced.adf')})
+                             for p in (ROOT/'build/amiga/interfaces/enhanced/baseline-rally',
+                                       ROOT/'build/amiga/interfaces/enhanced/delivery/baseline-rally.adf')})
     atomic_json(path, report)
     print(json.dumps({'passed':report['passed'],'commit':head,'artifacts':report['artifacts'],'report':str(path)}),flush=True)
     return 0 if report['passed'] else 1

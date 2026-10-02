@@ -47,7 +47,7 @@ def run(case, mutant=False):
         init += '        bsr game_audio_request_hit\n'
     else:
         status = int(case.removeprefix('status-'))
-        if status not in (2, 3, 4, 5):
+        if status not in (1, 2, 3, 4, 5, 6):
             raise ValueError('Unknown native contract')
         init += f'        move.b #{128 | status},game_display\n        move.b #224,game_status_clock\n'
     fixture = directory / 'fixture.s'
@@ -179,8 +179,8 @@ def run(case, mutant=False):
                     delta=current['actual_pointer']-located('copperlist')
                     pointers={}
                     for plane in range(4):
-                        hi=located(f'score_cop_{120+plane}_hi')+2+delta
-                        lo=located(f'score_cop_{120+plane}_lo')+2+delta
+                        hi=located(f'score_cop_{224+plane}_hi')+2+delta
+                        lo=located(f'score_cop_{224+plane}_lo')+2+delta
                         words=bytes.fromhex(session.inspect('mem_read',{'addr':hi,'len':2})['data'])+bytes.fromhex(session.inspect('mem_read',{'addr':lo,'len':2})['data'])
                         pointers[str(plane)]={'actual':int.from_bytes(words,'big'),'expected':located(f'score_bank_status_{variant}_p{plane}')}
                     atomic_json(photo.with_suffix('.json'),{'completed_scene':published,'current_published':current,'rendered_frame':stop['frame']-1,'status_plane_pointers':pointers})
@@ -204,7 +204,7 @@ def run(case, mutant=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--case', choices=(*SCORING, 'status-2', 'status-3', 'status-4', 'status-5', 'audio-hit'), required=True)
+    parser.add_argument('--case', choices=(*SCORING, 'status-1', 'status-2', 'status-3', 'status-4', 'status-5', 'status-6', 'audio-hit'), required=True)
     parser.add_argument('--self-test', action='store_true', help='One compiled late field fault at unchanged normal checkpoints')
     args = parser.parse_args()
     path = ROOT / 'build/tests/native-contracts' / args.case / 'report.json'

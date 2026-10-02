@@ -330,7 +330,7 @@ def main():
         from ordinary_cadence import run as run_cadence
         from build_native_adf import package
         path=ROOT/f'build/tests/ct10-adf-{mode}-cadence-{suffix}-report.json'
-        adf=ROOT/f'build/amiga/interfaces/{flavor}/delivery/ctennis-{flavor}.adf'
+        adf=ROOT/f'build/amiga/interfaces/{flavor}/delivery/baseline-rally.adf'
         def run_boot():
             package(flavor=flavor)
             return run_cadence(mode,False,adf,flavor,args.keyboard)

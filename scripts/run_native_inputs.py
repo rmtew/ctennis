@@ -68,4 +68,4 @@ def run():
 if __name__ == '__main__':
     path = ROOT/'build/tests/native-inputs/report.json'
     tracked_call([path], 'native-inputs', 'maintained-native', 'ordinary title',
-        'scripts/run_native_inputs.py', None, run, lambda path,report:[ROOT/'build/amiga/interfaces/enhanced/ctennis-enhanced'])
+        'scripts/run_native_inputs.py', None, run, lambda path,report:[ROOT/'build/amiga/interfaces/enhanced/baseline-rally'])

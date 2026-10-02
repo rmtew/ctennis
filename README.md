@@ -1,11 +1,11 @@
-# Native Champion Tennis for Amiga
+# Baseline Rally for Amiga
 
 The maintained enhanced game runs on PAL A500/68000/OCS with512KB chip RAM and
 no expansion. It includes native controls, gameplay/scoring, graphics/audio,
 menu/help/pause and a complete native attract recording with takeover. The old
 comparison build and original-platform tooling are retired; Git history retains
-tracked rollback. Later branding, Red palette, music/celebration and recording
-features remain outside CT11.
+tracked rollback. CT12 gives the native game its Baseline Rally title, Blue/Red player identity
+and expanded gameplay labels. Music/celebration and recording remain later scope.
 
 This private repository includes the approved retained Amiga-native assets.
 They remain Sega-derived; retention/conversion grants no new ownership or public
@@ -31,7 +31,8 @@ RUST_LOG=info python scripts/build_native_adf.py --self-test
 ```
 
 Outputs remain ignored/private under `build/amiga/interfaces/enhanced/`.
-The disk contains the native executable and startup sequence, never Kickstart.
+The disk label, executable and startup command are `baseline-rally`; the package
+is `baseline-rally.adf`. The disk never contains Kickstart.
 Asset validation rejects missing/corrupt/undeclared inputs. Only version text and
 the committed native input recording's assembly table are generated at build time.
 No cartridge extraction, source emulation or translation fallback exists.

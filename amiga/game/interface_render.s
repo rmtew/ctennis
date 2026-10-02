@@ -69,7 +69,7 @@ ui_render:
         lea     ui_demo_blue_win,a0
         cmpi.b  #8,d0
         beq.s   .win_text
-        lea     ui_demo_pink_win,a0
+        lea     ui_demo_red_win,a0
         bra.s   .win_text
 .human_win:
         cmpi.b  #4,d0
@@ -77,7 +77,7 @@ ui_render:
         lea     ui_blue_win,a0
         cmpi.b  #2,d0
         beq.s   .win_text
-        lea     ui_pink_win,a0
+        lea     ui_red_win,a0
 .win_text:
         bsr     ui_text
         move.b  game_games_a,d0
@@ -86,8 +86,8 @@ ui_render:
         move.b  d0,ui_demo_tally_blue_digit
         move.b  game_games_b,d0
         addi.b  #'0',d0
-        move.b  d0,ui_tally_pink_digit
-        move.b  d0,ui_demo_tally_pink_digit
+        move.b  d0,ui_tally_red_digit
+        move.b  d0,ui_demo_tally_red_digit
         lea     ui_overlay_plane+256,a2
         lea     ui_tally_text,a0
         tst.b   ui_demo

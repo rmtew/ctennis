@@ -2,7 +2,7 @@
 ; Patch the inactive Copper list after a changed scoreboard selection.
 patch_score_pointers:
         movem.l d0-d2/d7/a0-a4,-(sp)
-        ; Each inactive list retains its selected banks. Rewriting all 224
+        ; Each inactive list retains its selected banks. Rewriting all SCORE_PATCH_COUNT
         ; descriptors on every PAL publication stalls a source update even
         ; when no field changed. Cache values independently for the two lists.
         lea     score_pointer_cache(pc),a3

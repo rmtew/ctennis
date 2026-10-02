@@ -31,7 +31,7 @@ def run(adf=False):
         s.inspect('session_launch', launch)
         if adf:
             s.inspect('media.floppy.insert', {'drive':0,'path':str(ROOT/package_report['adf']), 'write_protected':True})
-            catch=s.inspect('break_add',{'kind':'loadseg','name':'ctennis'})
+            catch=s.inspect('break_add',{'kind':'loadseg','name':'baseline-rally'})
             s.inspect('machine.reset', {'kind':'cold'})
         stop = s.inspect('run_until', {'seconds':120 if adf else 30})
         if stop['reason'] != 'loadseg': raise RuntimeError(stop)
@@ -47,7 +47,15 @@ def run(adf=False):
         def edge(k,held):
             s.inspect('input_key',{'rawkey':k,'action':'press' if held else 'release'});advance()
         def key(k): edge(k,True);edge(k,False)
-        def photo(n): s.inspect('capture_screenshot',{'path':str(directory/(n+'.png'))})
+        def photo(n):
+            path=directory/(n+'.png')
+            s.inspect('capture_screenshot',{'path':str(path)})
+            if n in ('menu','returned-title'):
+                from native_identity_raster import assert_title_raster
+                assert_title_raster(path)
+            if n=='play':
+                from native_identity_raster import assert_mode_raster
+                assert_mode_raster(path,2)
         def frozen():
             return (mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)
                     +mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock'))
@@ -193,4 +201,4 @@ if __name__ == '__main__':
     path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
                  'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
-                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/ctennis-enhanced'])
+                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])

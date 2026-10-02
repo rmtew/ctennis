@@ -1,10 +1,11 @@
 # Native Amiga development
 
-Maintain the enhanced native game for PAL A500,68000,OCS,512KB chip,zero slow/fast
+Maintain Baseline Rally, the enhanced native game for PAL A500,68000,OCS,512KB chip,zero slow/fast
 RAM and legitimate separately configured Kickstart1.3 testing. Read README.md,
 tests/README.md and docs/ct11/risks.md before choosing a change. Keep one concrete
-item active. CT12–16 branding/palette/music/celebration/recording features are later
-scope. Current CT11 is whole-repository native independence; independent review
+item active. CT12 branding/palette/readability is implemented on its draft branch, preserving
+CT11 independence and focused native UI timing. CT13 music/celebration requires
+user audition; CT14+ recording/save/seek remains later scope. Independent review
 precedes merge. Do not change master or rewrite history.
 
 Runtime lives in amiga/main.s and amiga/game/. Tests exercise the actual native

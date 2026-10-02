@@ -159,4 +159,4 @@ if __name__=='__main__':
                   for name in ('lost-wrap','ui-overrun')]
         print('PASS UI overrun rejected; whole wrap accounted without observer reset',flush=True)
     path=ROOT/'build/tests/native-setup/report.json'
-    tracked_call([path],'native-setup','maintained-native','ordinary title','scripts/run_native_setup_tests.py',None,lambda:run(fault_controls=controls),lambda p,r:[ROOT/'build/amiga/interfaces/enhanced/ctennis-enhanced'])
+    tracked_call([path],'native-setup','maintained-native','ordinary title','scripts/run_native_setup_tests.py',None,lambda:run(fault_controls=controls),lambda p,r:[ROOT/'build/amiga/interfaces/enhanced/baseline-rally'])

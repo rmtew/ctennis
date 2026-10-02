@@ -9,7 +9,7 @@ def assert_ui_raster(path,page,players,selection,version):
            1:[(112,4,'HOW TO PLAY'),(120,4,'MOVE TO BALL: AUTO RETURNS.'),
               (136,4,'CONTACT, BOTH AT NET: LOB.')],
            2:[(112,4,'CONTROLS'),(128,4,'BLUE: WASD MOVE / F OR G ACT')],
-           3:[(112,4,'CHAMPION TENNIS / CREDITS'),(128,4,version)]}[page]
+           3:[(112,4,'BASELINE RALLY / CREDITS'),(128,4,version)]}[page]
     font=(ROOT/'assets/native/title/font.bin').read_bytes()
     with Image.open(path) as picture:
         assert picture.size==(716,285),'Native PAL viewport changed'

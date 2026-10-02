@@ -107,7 +107,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         s.inspect('session_launch',launch)
         if boot_adf:
             s.inspect('media.floppy.insert',{'drive':0,'path':str(boot_adf),'write_protected':True})
-            catch=s.inspect('break.add',{'kind':'loadseg','name':'ctennis'})
+            catch=s.inspect('break.add',{'kind':'loadseg','name':'baseline-rally'})
             calibrated_stop=s.inspect('run_until',{'seconds':120})
             if calibrated_stop['reason']!='loadseg':raise RuntimeError('ADF calibration did not load product')
             def boot_read(a,n):return bytes.fromhex(s.inspect('mem_read',{'addr':a,'len':n})['data'])
@@ -142,7 +142,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             s.notification_handler=boot_event
             s.inspect('events.subscribe',{'events':['mmio'],'mmio':[
                 {'addr':h,'len':32,'access':'write'} for h in headers]})
-            catch=s.inspect('break.add',{'kind':'loadseg','name':'ctennis'})
+            catch=s.inspect('break.add',{'kind':'loadseg','name':'baseline-rally'})
             # Read-only samples during boot are lower-bound observations, not
             # an unobserved transient allocation peak. Play is uninterrupted.
             for frame in range(1,6000):
