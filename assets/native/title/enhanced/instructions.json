@@ -1,0 +1,13 @@
+{
+  "lines": [
+    "1 ONE PLAYER / 2 TWO PLAYERS",
+    "P1 WASD MOVE  RED F BLUE G",
+    "P2 ARROWS MOVE RED . BLUE /",
+    "KEYPAD 8/4/2/6 MOVE RED0 BLUE.",
+    "JOYSTICKS P1 PORT2 P2 PORT1",
+    "DELETE / TAB ALSO SELECT"
+  ],
+  "first_row": 144,
+  "font_additions_sha256": "fa5f28102756796004e57681c6a2e3cc64d5e4a4b4809387f6b4a12ab423ffe6",
+  "source_sha256": "ce43938ee1461b234c59cd8036bcc0a4966857c033a45beb81b7d20898e1dc16"
+}
