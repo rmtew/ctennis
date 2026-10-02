@@ -87,3 +87,10 @@ Next action: run the finite native gate at the committed draft head, including
 strict one/two-player/cold-ADF cadence,10958-tick replay/takeover, actual completed
 bank/publication, input/restart/audio, and the two timing controls. Parent review
 and merge remain separate; CT12 cosmetics are not started.
+
+The focused observer also retains the same uninterrupted origin through physical
+start after UI, fresh advancing serve, pause, confirmed return, reselection and
+fresh restarted flight. It honours the unchanged64-callback selection delay;
+there is no phase start or input/state injection. Timing controls have separate
+structured artifact records containing actual mutated executables and sources,
+matching the existing receipt finalizer rather than unverified name-only flags.

@@ -64,7 +64,7 @@ select the enhanced Copper layout, matching the maintained application.
 
 `run_native_setup_tests.py --self-test` retains the continuous timer origin and
 requires every raw callback to meet the existing deadline. It measures all
-menu/help/controls/credits construction, repeated navigation and15-second idle,
+menu/help/controls/credits construction, repeated navigation,15-second idle and start/pause/return/restart,
 checks representative actual scanout against the committed font and retained
 layout, and independently compares native elapsed additions to wall CCK.
 The diagnostic phase proposal is retained for historical comparison; it grants

@@ -18,17 +18,19 @@ def run(baseline=None, control=None, fault_controls=None):
         from native_tools import ASSEMBLER, run as command
         source=(ROOT/'amiga/game/interface_render.s').read_text()
         delayed=source.replace('        clr.b   ui_dirty', '        clr.b   ui_dirty\n        move.w  #65535,d7\n.ui_overrun:\n        nop\n        dbra    d7,.ui_overrun')
-        path=ROOT/'build/native/ui-render-control.s'; path.write_text(delayed)
+        control_directory=ROOT/('build/tests/native-setup-'+control)
+        control_directory.mkdir(parents=True,exist_ok=True)
+        path=control_directory/'render.s'; path.write_text(delayed)
         main=(ROOT/'amiga/main.s').read_text()
         if control=='lost-wrap':
             main=main.replace('        add.l   d1,simulation_phase','        andi.l  #$ffff,d1\n        add.l   d1,simulation_phase')
-        interface=(ROOT/'amiga/game/interface.s').read_text().replace('amiga/game/interface_render.s','build/native/ui-render-control.s')
-        (ROOT/'build/native/ui-interface-control.s').write_text(interface)
-        main=main.replace('amiga/game/interface.s','build/native/ui-interface-control.s')
-        (ROOT/'build/native/ui-main-control.s').write_text(main)
-        exe=exe.parent/('setup-'+control)
-        command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(exe.parent/'setup-control.lst'),'-o',str(exe),'build/native/ui-main-control.s'])
-    config=emulator_config();listing=(exe.parent/('setup-control.lst' if control else 'native.lst')).read_text();symbols=code_symbols(listing)
+        interface=(ROOT/'amiga/game/interface.s').read_text().replace('amiga/game/interface_render.s',str(path.relative_to(ROOT)))
+        interface_path=control_directory/'interface.s'; interface_path.write_text(interface)
+        main=main.replace('amiga/game/interface.s',str(interface_path.relative_to(ROOT)))
+        main_path=control_directory/'main.s'; main_path.write_text(main)
+        exe=control_directory/'ctennis-control'
+        command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(exe.parent/'native.lst'),'-o',str(exe),str(main_path.relative_to(ROOT))])
+    config=emulator_config();listing=(exe.parent/'native.lst').read_text();symbols=code_symbols(listing)
     directory=ROOT/('build/tests/native-setup-baseline' if baseline else 'build/tests/native-setup'+('-'+control if control else ''));callbacks=[];publications=[];checks=[];actions=[]
     with NativeControlSession(directory) as s:
         s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
@@ -99,12 +101,28 @@ def run(baseline=None, control=None, fault_controls=None):
             actions.append({'action':label,'regions':list(range(before,len(observer.regions)))})
             check(label+' explicit construction observed',len(observer.regions)>before,True)
             if not control and not baseline: raster(label)
-        if not control:
+        if not control and not baseline:
             for key,page in [(0x44,1),(0x4e,2),(0x4e,3),(0x45,0)]:
                 s.inspect('input_key',{'rawkey':key,'action':'press'});advance(.2)
                 s.inspect('input_key',{'rawkey':key,'action':'release'});advance(.2)
                 check('repeated navigation page',read('ui_page'),page)
             advance(15) # Continuous idle below the30-second attract threshold.
+            def key(raw):
+                s.inspect('input_key',{'rawkey':raw,'action':'press'});advance(.12)
+                s.inspect('input_key',{'rawkey':raw,'action':'release'});advance(.12)
+            def lifecycle():
+                return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['game_lifecycle'],'len':2})['data']),'big')
+            key(0x01);advance(1.2);check('start after UI reaches active lifecycle',lifecycle(),1)
+            key(0x24);advance(.3)
+            check('fresh action advances flight after UI',bool(read('game_flight') and read('game_step')),True)
+            key(0x19);check('pause after UI',read('ui_paused'),255)
+            advance(.5)
+            key(0x4d);key(0x44);check('return asks confirmation',read('ui_confirmation'),255)
+            key(0x4e);key(0x44);check('return after UI reaches title',lifecycle(),2)
+            advance(.3);raster('returned-title')
+            key(0x01);advance(1.2);check('restart after UI reaches active lifecycle',lifecycle(),1)
+            key(0x24);advance(.3)
+            check('fresh action advances flight after UI',bool(read('game_flight') and read('game_step')),True)
         s.inspect('events.unsubscribe')
     target_log(directory)
     # At the end a callback may be pending; retain and label it, never promote it.
@@ -128,13 +146,17 @@ if __name__=='__main__':
         try: run(control='lost-wrap')
         except AssertionError as error:
             if error.args[0].get('field')!='elapsed accounting lost time' or error.args[0].get('error_cck')!=-327680: raise
+            lost_failure=error.args[0]
             print('PASS lost-wrap accounting control rejected',str(error),flush=True)
         else: raise AssertionError('Lost-wrap control escaped')
         run(control='ui-overrun')
         fault=json.loads((ROOT/'build/tests/native-setup-ui-overrun/report.json').read_text())
         assert not fault['raw_all_callback_deadline_passed'],'UI overrun control escaped strict deadlines'
         assert any(row['elapsed_cck']>327680 for row in fault['elapsed_accounting_samples']),'Wrap control did not span one whole wrap'
-        controls=['lost-wrap','ui-overrun']
+        controls=[{'name':name,'artifact_directory':'build/tests/native-setup-'+name,
+                   'executable_sha256':hashlib.sha256((ROOT/('build/tests/native-setup-'+name)/'ctennis-control').read_bytes()).hexdigest(),
+                   'detected_failure':lost_failure if name=='lost-wrap' else {'field':'raw callback deadline','failures':len(fault['phase_contract_proposal']['raw_deadline_failures'])}}
+                  for name in ('lost-wrap','ui-overrun')]
         print('PASS UI overrun rejected; whole wrap accounted without observer reset',flush=True)
     path=ROOT/'build/tests/native-setup/report.json'
     tracked_call([path],'native-setup','maintained-native','ordinary title','scripts/run_native_setup_tests.py',None,lambda:run(fault_controls=controls),lambda p,r:[ROOT/'build/amiga/interfaces/enhanced/ctennis-enhanced'])

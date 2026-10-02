@@ -51,7 +51,7 @@ def acceptance(name, report):
     if name == 'setup-proposal':
         return (report.get('raw_all_callback_deadline_passed') is True
                 and bool(report.get('elapsed_accounting_samples'))
-                and report.get('compiled_fault_controls') == ['lost-wrap','ui-overrun'])
+                and [c.get('name') for c in report.get('compiled_fault_controls', [])] == ['lost-wrap','ui-overrun'])
     if name == 'inputs':
         return len(report.get('checks', [])) >= 11
     if name in ('deuce','status-2','audio-hit') and not report.get('compiled_fault_controls'):
