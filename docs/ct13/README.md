@@ -85,6 +85,7 @@ RUST_LOG=info python scripts/run_native_contracts.py --case=match-award
 RUST_LOG=info python scripts/run_enhanced_menu_tests.py --adf
 RUST_LOG=info python scripts/run_demo_match_tests.py
 RUST_LOG=info python scripts/run_demo_match_tests.py --takeover
+RUST_LOG=info python scripts/run_attract_cycle_tests.py
 RUST_LOG=info python scripts/run_enhanced_feedback_tests.py --mode=one
 RUST_LOG=info python scripts/run_enhanced_feedback_tests.py --mode=two
 RUST_LOG=info python scripts/run_ordinary_round_tests.py --mode=one --match --cadence --adf
@@ -135,7 +136,12 @@ Mid-match takeover checks exact native state at the confirmation sample and
 consumption of the held selector direction as well as the confirming action.
 Full demo replay then observes actual COP1LC/COPJMP publications through the
 complete tune, automatic return, full idle and next demo; four title scanouts
-and the next demo raster check pixels as well as lifecycle counters.
+and the next demo raster check pixels as well as lifecycle counters. A separate
+no-input/no-injection two-cycle run checks every title COP1LC/COPJMP publication,
+retained sprite/header blank windows, absence of subsequent quiet-title bitmap
+writes and eight actual title/menu scanouts until the next automatic selection.
+The active celebration never enters legacy intermediate title states7/8; cue
+completion returns directly once, preserving30-second idle before the next demo.
 
 The later approved native-size A/B human/robot+racket title preview and HUMAN VS
 AI/HUMAN VS HUMAN captions depend on the separate sprite branch and belong to
