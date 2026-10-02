@@ -1,3 +1,4 @@
+from native_tools import emulator_config
 from native_state_observation import read_native_state
 """Focused CT05 ordinary physical-input proof: first game, pause, next serve."""
 import argparse
@@ -6,13 +7,13 @@ import re
 import shutil
 from pathlib import Path
 from build_native_game import build
-from native_observation import code_symbols
+from native_observation import code_symbols, target_log
 from copperline_test_session import NativeControlSession
 from native_evidence import ROOT, atomic_json, compile_manifest, tracked_call
 
 
 def run(mode, flavor="enhanced"):
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     directory = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
@@ -99,7 +100,7 @@ def run(mode, flavor="enhanced"):
 
 def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
     """Ordinary physical play through award/title/reselection and fresh serve."""
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart') + '-' + flavor
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
@@ -253,9 +254,10 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
         required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
                   ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
         if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
+    target_log(directory)
     emitted=[]
     if audio:
-        from audio_mute import pcm16_window
+        from native_audio_checks import pcm16_window
         # Actual returned title resets every voice. The held-selection restart
         # emits the native intro; this protects ordinary hardware routing.
         quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)

@@ -1,8 +1,0 @@
-{
-  "name": "ct08-effect-classes",
-  "reference": "tests/reference/audio/manifest.json",
-  "source_case": "one-player-match",
-  "presentation_case": "p1-one-player-result-restart-scenes",
-  "criterion": "One retained result/title/restart window exercises all six native score requests, silence and the two-tick wait. Compare actual Paula registers after every sound event against independent original frequency/amplitude steps, consecutive native state and due cadence. Require actual emitted sound and silence. Original interval inventory groups duplicate serve/return/point/round requests without declaring full match waveform equivalence.",
-  "contract": "Finite native effect classes and result/restart scheduling, captured initial phase; ordinary lifecycle guard reported separately. No byte-identical waveform/filter/phase requirement."
-}

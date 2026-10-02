@@ -1,13 +1,12 @@
 """Assemble the maintained native game from explicitly prepared private assets."""
 
-import configparser
 import hashlib
 import json
 import sys
 import subprocess
 from pathlib import Path
 
-from native_tools import ROOT, ASSEMBLER, run
+from native_tools import ROOT, ASSEMBLER, run, verify_build_tools
 from native_evidence import tracked_call, compile_manifest
 
 
@@ -23,29 +22,28 @@ def _build(flavor="enhanced"):
     if flavor != "enhanced":
         raise ValueError("Only the maintained enhanced interface is supported")
     display = ROOT / "build/amiga/interfaces" / flavor
-    config = configparser.ConfigParser(interpolation=None)
-    config.read(ROOT / 'config.local.ini', encoding='utf-8')
-    if not ASSEMBLER.is_file():
-        raise FileNotFoundError(ASSEMBLER)
+    verify_build_tools()
     defines=["-DENHANCED_INTERFACE=1"] if flavor == "enhanced" else []
+    from native_assets import prepare
+    prepare()
     if flavor == "enhanced":
         revision = run(["git", "rev-parse", "--short=7", "HEAD"]).strip()
         dirty = subprocess.run(["git", "diff", "--quiet", "HEAD"], cwd=ROOT).returncode != 0
-        version = ROOT / 'build/amiga/title/enhanced/version.bin'
+        version = ROOT / 'build/native/version.bin'
         version.parent.mkdir(parents=True, exist_ok=True)
         version.write_bytes((f"BUILD {revision}" + (" + LOCAL" if dirty else "")).encode('ascii') + b"\0")
     display.mkdir(parents=True, exist_ok=True)
     executable = display / f"ctennis-{flavor}"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(display / "native.lst"), "-o",
-         str(executable), "amiga/gameplay_integration_probe.s"])
+         str(executable), "amiga/main.s"])
     compile_manifest(executable, display / "native.lst")
-    report = {"subject": "maintained-native", "interface_flavor": flavor, "entry_point": "game_source_tick",
+    report = {"subject": "maintained-native", "interface_flavor": flavor, "entry_point": "game_tick_dispatch",
               "startup": "native title",
               "native_modules": module_hashes(),
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "executable": str(executable)}
     (display / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
-    return config, executable
+    return None, executable
 
 
 def build(flavor="enhanced"):

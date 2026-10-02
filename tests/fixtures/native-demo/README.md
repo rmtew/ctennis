@@ -12,7 +12,7 @@ verifies text and normalized digest-stream checksums before comparing every
 native input boundary. This repository fixture replaces the private-build receipt
 dependency mentioned in earlier interface documentation.
 
-With normal private native build prerequisites already prepared, run:
+With pinned tools installed, versioned native assets build directly from checkout. Run:
 
 ```sh
 RUST_LOG=info python scripts/run_demo_match_tests.py

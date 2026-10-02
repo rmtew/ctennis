@@ -4,26 +4,15 @@ game_begin_title:
         move.w  #GAME_TITLE,game_lifecycle
         clr.b   game_selection_keys
         clr.b   game_restart_context
-        ifnd ENHANCED_INTERFACE
-        clr.b   game_selected_mode
-        endif
-        ifd ENHANCED_INTERFACE
         bsr     ui_begin_title
-        endif
         clr.w   game_accept_count
         rts
 
 game_menu_tick:
-        ifd ENHANCED_INTERFACE
         cmpi.w  #GAME_TITLE,game_lifecycle
         beq     ui_menu_tick
-        endif
         cmpi.w  #GAME_TITLE,game_lifecycle
-        ifd ENHANCED_INTERFACE
         bne     game_wait_release
-        else
-        bne.s   game_wait_release
-        endif
         tst.b   game_selection_keys
         beq     game_menu_return
         moveq   #0,d0
@@ -31,7 +20,6 @@ game_menu_tick:
         beq.s   game_latch_choice
         moveq   #1,d0
 game_latch_choice:
-        ifd ENHANCED_INTERFACE
         tst.b   ui_demo
         bne.s   ui_keep_player_count
         move.b  d0,ui_player_count
@@ -40,7 +28,6 @@ ui_keep_player_count:
         bsr     game_latch_old_actions
         move.w  (sp)+,d0
         clr.b   game_title_display
-        endif
         move.b  d0,game_selected_mode
         bsr     game_new_match
         tst.b   game_restart_context
@@ -52,9 +39,7 @@ ui_keep_player_count:
         move.b  d0,field_values+5
         bra.s   game_choice_ready
 game_restart_choice:
-        ifd NATIVE_CONTROLS
         bsr     game_latch_old_actions
-        endif
         clr.b   game_lower_phase
         clr.b   game_upper_phase
         clr.b   game_score_flags

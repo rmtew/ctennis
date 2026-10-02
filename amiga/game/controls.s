@@ -18,11 +18,9 @@ game_p1_blue:
         bne.s   game_p1_store
         ori.b   #32,d0
 game_p1_store:
-        ifd ENHANCED_INTERFACE
         moveq   #0,d3
         bsr     ui_filter_joystick
         bsr     game_merge_keyboard
-        endif
         lea     game_input_bits,a0
         bsr.s   game_store_pad
         move.w  $dff00a,d0
@@ -36,11 +34,9 @@ game_p2_blue:
         bne.s   game_p2_store
         ori.b   #32,d0
 game_p2_store:
-        ifd ENHANCED_INTERFACE
         moveq   #1,d3
         bsr     ui_filter_joystick
         bsr     game_merge_keyboard
-        endif
         lea     game_input_bits+1,a0
         bsr.s   game_store_pad
 input_ready:

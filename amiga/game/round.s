@@ -1,6 +1,6 @@
 ; Shared main-path round lifecycle. Poll between callbacks, never from a
 ; captured callback kind. Scoring owns the service mode; tail clocks/audio
-; continue while gameplay is paused. Presentation/audio remain temporary ABI.
+; continue while gameplay is paused. Presentation/audio remain native integration fields.
 game_round_poll:
         movem.l d0-d7/a0-a4,-(sp)
         tst.b   game_restart_context
@@ -30,9 +30,6 @@ game_round_poll:
         btst    #6,S_MODE(a4)
         bne     game_result_begin
         move.w  #GAME_ROUND_PAUSE,game_lifecycle
-        ifd NATIVE_SCENE_OBSERVE
-        move.b  #$81,$02(a5)
-        endif
         move.b  S_MODE(a4),d0
         andi.b  #$d7,d0
         move.b  d0,d1

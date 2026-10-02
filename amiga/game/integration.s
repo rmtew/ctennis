@@ -12,15 +12,10 @@ game_service_tail:
         bsr     game_advance_clocks
         bsr     game_audio_tick
         bsr     game_apply_sound
-        ifd NATIVE_SCENE_OBSERVE
-        bsr     capture_export_state
-        endif
         bra     game_scene_service
 
 game_new_match:
-        ifd NATIVE_SCORING
         clr.b   game_score_initialized
-        endif
         move.b  d0,game_new_mode
         lea     game_play_state,a0
         moveq   #G_SIZE-1,d7
@@ -32,16 +27,11 @@ game_new_match:
 .clear_score:
         clr.b   (a0)+
         dbra    d7,.clear_score
-        ifd ENHANCED_INTERFACE
         bsr     ui_seed_entropy
-        endif
         clr.b   game_directions
         clr.b   game_actions
         clr.b   game_status_clock
         clr.b   game_aux_clock
-        ifd NATIVE_SCENE_OBSERVE
-        bsr     capture_reset_match
-        endif
         move.b  #194,game_court_y
         move.b  #194,game_court_x
         move.b  #1,game_shadow_colour
@@ -77,12 +67,8 @@ input_update:
         move.b  d0,d1
         lsr.b   #7,d0
         lsr.b   #4,d1
-        ifd NATIVE_CONTROLS
         bsr     game_assign_players
-        ifd ENHANCED_INTERFACE
         bsr     ui_playback
-        endif
-        endif
         clr.b   game_directions
         clr.b   game_actions
         btst    #2,game_mode
@@ -103,25 +89,19 @@ input_update:
 native_input_done:
         rts
 
-        ifd NATIVE_GAMEPLAY
         include "amiga/game/gameplay.s"
-        include "amiga/game/gameplay_adapter.s"
+        include "amiga/game/gameplay_controls.s"
         include "amiga/game/scene.s"
         include "amiga/game/scene_fields.s"
-        include "amiga/game/scene_adapter.s"
-        endif
+        include "amiga/game/scene_integration.s"
 
-        ifd NATIVE_SCORING
         include "amiga/game/scoring.s"
-        include "amiga/game/scoring_adapter.s"
+        include "amiga/game/scoring_integration.s"
         include "amiga/game/round.s"
         include "amiga/game/result.s"
-        include "amiga/game/result_adapter.s"
-        endif
+        include "amiga/game/result_audio.s"
 
-        ifd NATIVE_AUDIO
         include "amiga/game/audio.s"
-        endif
 
 ; Primary tick wraps modulo256; six independently reset clocks saturate255.
 game_advance_clocks:

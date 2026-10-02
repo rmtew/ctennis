@@ -22,7 +22,7 @@ ui_playback:
         move.b  ui_demo_mask,game_player_controls
         ; P2 exclusion and native AI continue through the existing one-player path.
 .done:  rts
-        include "build/amiga/title/enhanced/demo-inputs.i"
+        include "build/native/demo-inputs.i"
 
 
 ; Version1 native entropy source: 16-bit maximal-period Galois LFSR.

@@ -39,9 +39,6 @@ game_scene_build_players:
         lea     G_UPPER(a4),a3
         lea     game_scene_objects+SC_UPPER,a2
         bsr     game_scene_actor
-        ifd NATIVE_SCENE_OBSERVE
-        bsr     scene_observe_players
-        endif
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
@@ -145,9 +142,6 @@ game_scene_finish_tick:
         clr.b   O_COLOUR(a2)
 .shadow_visible:
         bsr     game_scene_visibility
-        ifd NATIVE_SCENE_OBSERVE
-        bsr     scene_observe_ball
-        endif
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
@@ -194,9 +188,6 @@ game_scene_order:
         dc.b 0,1,2,3,4,5,6,7
         even
 game_scene_palette: dc.w 0,$fff,$55e,$c5b,$000
-game_scene_poses: incbin "build/amiga/native-scene/poses.bin"
-game_scene_animations: incbin "build/amiga/native-scene/animations.bin"
+game_scene_poses: incbin "assets/native/scene/poses.bin"
+game_scene_animations: incbin "assets/native/scene/animations.bin"
         even
-        ifd NATIVE_SCENE_OBSERVE
-        include "amiga/tests/scene_observation.s"
-        endif

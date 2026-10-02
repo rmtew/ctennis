@@ -1,9 +1,10 @@
+from native_tools import emulator_config
 """Finite seeded full-native-match replay and live takeover; no RAM writes."""
 import argparse,hashlib,json,re
 from build_native_game import build
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from native_evidence import ROOT,atomic_json
+from native_evidence import ROOT,atomic_json,tracked_call
 from native_observation import target_log
 
 def load_trajectory(recording_path):
@@ -20,7 +21,7 @@ def load_trajectory(recording_path):
  return expected,manifest
 
 def run(takeover=False):
- config,exe=build(flavor='enhanced');compiled_modules=json.loads((exe.parent/'build-report.json').read_text())['native_modules'];symbols=code_symbols((exe.parent/'native.lst').read_text())
+ config,exe=build(flavor='enhanced'); config = emulator_config();compiled_modules=json.loads((exe.parent/'build-report.json').read_text())['native_modules'];symbols=code_symbols((exe.parent/'native.lst').read_text())
  recording_path=ROOT/'assets/interface/demo-inputs.json'
  recording=json.loads(recording_path.read_text());expected,fixture_manifest=load_trajectory(recording_path)
  assert recording['schema']==2 and len(expected)==recording['frames']
@@ -42,7 +43,7 @@ def run(takeover=False):
   until({'pc':base+symbols['ui_seed_entropy']});check('ordinary title idle starts seeded demo',num('ui_demo'),255)
   s.inspect('step',{'count':1});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
   for callback in range(30000):
-   until({'pc':base+symbols['game_source_tick']});life=num('game_lifecycle',2)
+   until({'pc':base+symbols['game_tick_dispatch']});life=num('game_lifecycle',2)
    if life in (6,7,8):break
    if life!=1:
     s.inspect('step',{'count':1});continue
@@ -86,5 +87,11 @@ def run(takeover=False):
  target_log(directory)
  report={'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
  atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'takeover':takeover,'input_ticks':index,'flight_side_changes':contacts,'missed_publications':deadlines}))
-if __name__=='__main__':
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--takeover',action='store_true');run(parser.parse_args().takeover)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--takeover', action='store_true')
+    args = parser.parse_args()
+    path = ROOT / 'build/tests' / ('demo-mid-takeover' if args.takeover else 'demo-full-repeat') / 'report.json'
+    tracked_call([path], 'native-demo', 'maintained-native', 'ordinary title',
+                 'scripts/run_demo_match_tests.py', None, lambda: run(args.takeover),
+                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/ctennis-enhanced'])

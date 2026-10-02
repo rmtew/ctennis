@@ -1,7 +1,0 @@
-{
-  "name": "p1-advantage-fields-phase",
-  "parent_reference": "tests/reference/two-player-match.json",
-  "initial_source_update": 9584,
-  "updates": 12,
-  "purpose": "Reachable original start before advantage point award; do not inject intermediate selectors or state."
-}

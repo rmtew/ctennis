@@ -1,9 +1,0 @@
-{
-  "name": "p1-first-round-scenes",
-  "source_case": "one-player-match",
-  "initial_source_update": 1203,
-  "initial_phase_reference": "tests/reference/one-player-round-lower-complete-phase.json",
-  "completed_callbacks": [1208, 1335, 1468, 1471],
-  "inputs": [{"port": 2, "red": true}],
-  "contract": "Initialize once before the first game award; compare the stable tally, reset pause, final paused frame and resumed gameplay through actual native hardware. Preserve all consecutive state differences and actual event-consumption discrepancies. Expected pixels are verified original captures; tail-only frame endpoints require explicit callback-kind and captured-SAT association. This does not inject source main-thread writes, implement round transitions or establish whole-match presentation."
-}

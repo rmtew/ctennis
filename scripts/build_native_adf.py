@@ -1,7 +1,7 @@
 """Package the private maintained executable as a reproducible Kickstart1.x ADF.
 
-Requires explicit prepare_native_assets.py output. No cartridge is packaged.
-All output is ignored and must stay private because it contains original assets.
+Consumes explicit versioned native inputs. No source media is packaged.
+Outputs stay ignored and private, following retained asset provenance.
 """
 import os,sys,json,hashlib,subprocess
 from pathlib import Path
@@ -11,6 +11,10 @@ from native_evidence import atomic_json,tracked_call
 
 OUT=ROOT/'build/amiga/ctennis-delivery'
 def _package(flavor):
+    from importlib.metadata import distributions
+    versions = [d.version for d in distributions(path=[str(ROOT/'.tools/python')]) if d.metadata['Name'].lower()=='amitools']
+    if versions != ['0.8.1']:
+        raise ValueError('Install pinned amitools0.8.1 into .tools/python')
     out=ROOT/"build/amiga/interfaces"/flavor/"delivery"
     _,executable=build(flavor=flavor)
     out.mkdir(parents=True,exist_ok=True)

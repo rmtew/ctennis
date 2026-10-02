@@ -28,10 +28,6 @@ game_audio_reset:
         addq.w  #1,d7
         cmpi.w  #3,d7
         bne.s   .voice
-        ifd NATIVE_AUDIO_OBSERVE
-        bsr     audio_observer_reset
-        bsr     game_audio_export_capture
-        endif
         movem.l (sp)+,d0-d7/a0-a3
         rts
 ; D0=clip, D1=voice. Preserve all registers for native gameplay/lifecycle callers.
@@ -48,9 +44,6 @@ game_audio_queue:
         clr.b   AV_CURSOR(a0)
         clr.b   AV_DONE(a0)
         clr.b   AV_RELEASE(a0)
-        ifd NATIVE_AUDIO_OBSERVE
-        bsr     game_audio_export_capture
-        endif
         movem.l (sp)+,d0-d2/a0-a1
         rts
 game_audio_request_cue:
@@ -71,13 +64,9 @@ game_audio_cue_complete:
         moveq   #0,d0
         move.b  game_audio_voices+2*AV_SIZE+AV_DONE,d0
         rts
-; Own countdown: one decrement per shared source tick in play AND service waits.
+; Own countdown: one decrement per shared native tick in play AND service waits.
 game_audio_tick:
         movem.l d0-d7/a0-a3,-(sp)
-        ifd NATIVE_AUDIO_OBSERVE
-        clr.b   psg_count
-        move.l  #psg_log,psg_ptr
-        endif
         clr.b   game_audio_due
         subq.b  #1,game_audio_wait
         bne     .done
@@ -158,9 +147,6 @@ game_audio_tick:
         move.w  (a2,d2.w),d0
         move.w  d0,AV_PERIOD(a0)
         bsr     game_audio_write_period
-        ifd NATIVE_AUDIO_OBSERVE
-        bsr     game_audio_observe_pitch
-        endif
 .initial_level:
         moveq   #15,d0
         btst    #0,d6
@@ -223,18 +209,12 @@ game_audio_tick:
         dbra    d7,.voice
         move.b  game_audio_rate,game_audio_wait
 .done:
-        ifd NATIVE_AUDIO_OBSERVE
-        bsr     game_audio_export_capture
-        endif
         movem.l (sp)+,d0-d7/a0-a3
         rts
 ; Native envelope step -> calibrated hardware amplitude. Diagnostics observe
 ; the emitted musical level, but never control it or feed the hardware sink.
 game_audio_emit_level:
         andi.w  #15,d0
-        ifd NATIVE_AUDIO_OBSERVE
-        bsr     game_audio_observe_level
-        endif
         lea     game_audio_levels,a2
         move.b  (a2,d0.w),d0
         andi.w  #255,d0
@@ -249,7 +229,4 @@ game_audio_wait: dc.b 2
 game_audio_transpose: dc.b 0
 game_audio_due: dc.b 0
         even
-        include "build/amiga/native-audio/data.i"
-        ifd NATIVE_AUDIO_OBSERVE
-        include "amiga/tests/audio_observer.s"
-        endif
+        include "assets/native/audio/data.i"

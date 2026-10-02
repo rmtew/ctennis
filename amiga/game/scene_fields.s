@@ -1,5 +1,4 @@
-; Native display events. A typed scalar packet enters at the temporary game
-; ABI; this code selects six native field banks, never tiles/VRAM/VDP registers.
+; Native display events select six versioned native field banks.
         rsset 0
 D_FLAGS rs.b 1
 D_TIMER rs.b 1
@@ -14,10 +13,6 @@ D_SIZE rs.b 0
 game_scene_update_fields:
         movem.l d0-d7/a0-a4,-(sp)
         bsr     scene_collect_fields
-        ifd NATIVE_SCENE_OBSERVE
-        move.b  D_FLAGS(a0),score_flags_before
-        move.b  D_TIMER(a0),status_timer_before
-        endif
         clr.b   score_dirty
         lea     game_display_state,a0
         move.b  D_FLAGS(a0),d0
@@ -81,14 +76,6 @@ game_scene_draw_scores:
 ; Native Copper/title requests are explicit lifecycle hooks. The old pending
 ; register flag is retired and has no display consumer in the product.
 game_scene_service:
-        ifd NATIVE_SCENE_OBSERVE
-        bclr    #7,$02(a5) ; raw diagnostic serialization only
-        endif
         rts
         even
 game_display_state: dcb.b D_SIZE,0
-        ifd NATIVE_SCENE_OBSERVE
-score_flags_before: dc.b 0
-status_timer_before: dc.b 0
-        even
-        endif

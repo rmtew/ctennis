@@ -1,14 +1,16 @@
+from native_tools import emulator_config
 """Bounded ordinary physical play: game-win identity and tally feedback across ends."""
 import argparse,hashlib,json,re
+from PIL import Image
 from build_native_game import build,module_hashes
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from native_evidence import ROOT,atomic_json
+from native_evidence import ROOT,atomic_json,tracked_call
 from native_observation import target_log
 
 
 def run(mode):
-    config,exe=build(flavor='enhanced')
+    config,exe=build(flavor='enhanced'); config = emulator_config()
     symbols=code_symbols((exe.parent/'native.lst').read_text())
     directory=ROOT/f'build/tests/enhanced-feedback-{mode}'
     rows=[];checks=[]
@@ -48,6 +50,14 @@ def run(mode):
             check('Pink style stays on physical player',mem('game_play_state',60)[19],2 if flipped else 3)
             photo=directory/f'game-{sum(current)}-{("blue","pink")[winner]}.png'
             s.inspect('capture_screenshot',{'path':str(photo)})
+            with Image.open(photo) as image:
+                raster = image.convert('RGB')
+                for side, count, x, column in [('a',current[0],16,2),('b',current[1],224,28)]:
+                    bank = (ROOT / f'assets/native/court/score_bank_games_{side}_{count}_p1.bin').read_bytes()
+                    expected_gold = 2 * sum(value.bit_count() for row in range(48) for value in bank[row*32+column:row*32+column+2])
+                    crop = raster.crop((126+2*x,88,126+2*(x+16),136))
+                    actual_gold = sum(number for number, colour in crop.getcolors(1536) if colour==(221,204,85))
+                    check('actual '+side+' tally raster matches versioned native bank',actual_gold,expected_gold)
             rows.append({'games':current,'winner':('Blue','Pink')[winner],'exchanged':flipped,
                          'callback':num('simulation_updates',2),'screenshot':str(photo.relative_to(ROOT)),
                          'overlay_kind':num('ui_overlay_kind')})
@@ -63,6 +73,11 @@ def run(mode):
     atomic_json(directory/'report.json',report)
     print(json.dumps({'passed':True,'awards':rows,'missed_publications':failures}))
 
-if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--mode',choices=('one','two'),required=True)
-    run(parser.parse_args().mode)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--mode', choices=('one', 'two'), required=True)
+    args = parser.parse_args()
+    path = ROOT / f'build/tests/enhanced-feedback-{args.mode}/report.json'
+    tracked_call([path], 'native-feedback', 'maintained-native', 'ordinary title',
+                 'scripts/run_enhanced_feedback_tests.py', None, lambda: run(args.mode),
+                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/ctennis-enhanced'])

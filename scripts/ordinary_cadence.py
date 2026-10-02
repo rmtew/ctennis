@@ -1,3 +1,4 @@
+from native_tools import emulator_config
 """CT09's finite non-stopping ordinary play measurement, not a reference model."""
 from fractions import Fraction
 import json
@@ -9,7 +10,7 @@ from native_clock import clock_contract, INTERVAL_CCK
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
 from build_native_game import build
-from native_observation import code_symbols
+from native_observation import code_symbols, target_log
 from copperline_test_session import NativeControlSession
 from native_evidence import ROOT, atomic_json, compile_manifest
 
@@ -52,7 +53,7 @@ def chip_memory(read):
 
 
 def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=False):
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     adf_sha=__import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest() if boot_adf else None
     name = f'ct10-adf-{mode}-cadence' if boot_adf else 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
     name += '-' + flavor + ('-keyboard' if keyboard else '')
@@ -62,7 +63,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     shutil.copy2(ordinary, exe)
     shutil.copy2(ordinary.parent/'native.lst', listing)
     if bank_control:
-        source = (ROOT/'amiga/gameplay_integration_probe.s').read_text()
+        source = (ROOT/'amiga/main.s').read_text()
         marker = '        move.l  d0,$dff080'
         if source.count(marker)!=1:
             raise ValueError('Ordinary Copper publication instruction changed')
@@ -340,10 +341,10 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 commits.append({'generation': generation, 'position': position,'pointer':pointer,
                                 'prepared':dict(prepared) if prepared else None,
                                 'title_selected':bool(state['title']),'expected_pointer':expected})
-            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 236:
+            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 252:
                 fault('visible-line Copper commit', position=position)
             if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
-                    and not state['title'] and 25 <= position['vpos'] < 236):
+                    and not state['title'] and 25 <= position['vpos'] < 252):
                 fault('court bank publication after sprite header DMA starts', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)
@@ -362,6 +363,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         s.inspect('events.unsubscribe')
         final_memory = chip_memory(read)
         s.notification_handler = None
+    target_log(directory)
     # Live commands are serviced at an emulator boundary. Our final pause may
     # arrive after the next update entered. Preserve that unfinished suffix,
     # never call it a completed update or accept a gap inside the checked run.

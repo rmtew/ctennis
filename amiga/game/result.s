@@ -32,9 +32,6 @@ game_result_poll:
         clr.b   game_display
         clr.b   game_serve_clock
         bsr     game_show_returned_title
-        ifd NATIVE_SCENE_OBSERVE
-        move.b  #$83,$02(a5)
-        endif
         st      game_restart_context
         move.w  #GAME_TITLE_TRANSITION,game_lifecycle
         bra     game_round_done
@@ -44,9 +41,6 @@ game_result_poll:
         bsr     game_show_returned_court
         move.b  #4,game_mode
         move.b  #$83,game_score_flags
-        ifd NATIVE_SCENE_OBSERVE
-        move.b  #$81,$02(a5)
-        endif
         move.b  #$20,game_display
         bsr     game_render_sprites
         bsr     game_result_redraw
@@ -57,12 +51,7 @@ game_result_poll:
         bsr     game_audio_cue_complete
         tst.b   d0
         beq     game_round_done
-        ifd ENHANCED_INTERFACE
         bsr     ui_return_title
-        else
-        move.w  #GAME_TITLE,game_lifecycle
-        bsr     game_menu_tick
-        endif
         bra     game_round_done
 .restart_sound:
         bsr     game_pair_sound_complete

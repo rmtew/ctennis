@@ -14,3 +14,7 @@
 /cfg/
 /snap/
 __pycache__/
+
+# Explicitly approved retained native inputs in the private repository
+!/assets/native/**/*.bin
+/a.out

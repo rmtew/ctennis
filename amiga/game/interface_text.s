@@ -33,7 +33,7 @@ ui_page3: dc.b 'PAGE 3 / 3',0
 ui_page_hint: dc.b 'LEFT/RIGHT PAGE ACTION EXIT',0
 ui_credits: dc.b 'CHAMPION TENNIS / CREDITS',0
 ui_copyright: dc.b '(C)1983 SEGA / NATIVE PORT',0
-ui_version: incbin "build/amiga/title/enhanced/version.bin"
+ui_version: incbin "build/native/version.bin"
 ui_colours: dc.b 'BLUE AND PINK KEEP CONTROLS.',0
 ui_pause_hint: dc.b 'P OR ESC: PAUSE / RESUME',0
 ui_demo_text: dc.b 'DEMO - G / PORT2 BUTTON2',0

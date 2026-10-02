@@ -7,7 +7,7 @@ UI_RIGHT equ 8
 UI_ACTION equ 16
 UI_ESCAPE equ 32
 UI_PAUSE equ 64
-UI_IDLE_TICKS equ 1800 ; 30.04 seconds at the unchanged source callback rate
+UI_IDLE_TICKS equ 1800 ; 30.04 seconds at the unchanged native callback rate
 
         include "amiga/game/interface_state.i"
         include "amiga/game/interface_input.s"
@@ -20,6 +20,6 @@ UI_IDLE_TICKS equ 1800 ; 30.04 seconds at the unchanged source callback rate
         even
 ui_state: dcb.b U_SIZE,0
         section display_data,data,chip
-ui_font: incbin "build/amiga/title/enhanced/font.bin"
+ui_font: incbin "assets/native/title/font.bin"
 ui_overlay_plane: dcb.b 512,0
         section code,code

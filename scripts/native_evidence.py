@@ -214,7 +214,7 @@ def status(path, subject=None, full=False, fresh_since=None, interface_flavor=No
         return {'status':'stale','freshness':'incompatible','reason':'Interface flavor mismatch or unverified'}
     if subject and meta.get('subject') != subject:
         return {'status': 'stale', 'freshness': 'incompatible', 'reason': 'Subject mismatch'}
-    if subject == 'maintained' and meta.get('kind') == 'replay' and report.get('entry_point') != 'game_source_tick':
+    if subject == 'maintained' and meta.get('kind') == 'replay' and report.get('entry_point') != 'game_tick_dispatch':
         return {'status': 'stale', 'freshness': 'incompatible', 'reason': 'Maintained dispatcher entry point missing'}
     if full and (report.get('full_replay_executed') is not True or
                  report.get('updates') != report.get('reference_updates')
@@ -230,8 +230,8 @@ def status(path, subject=None, full=False, fresh_since=None, interface_flavor=No
             'first_difference': report.get('first_difference')}
 
 def inputs_for(kind, runner, case=None):
-    paths = python_inputs(ROOT / runner) | assembly_inputs(ROOT / 'amiga/gameplay_integration_probe.s')
-    paths |= {ROOT / 'scripts/native_evidence.py', Path(sys.executable), ASSEMBLER}
+    paths = python_inputs(ROOT / runner) | assembly_inputs(ROOT / 'amiga/main.s')
+    paths |= {ROOT / 'scripts/native_evidence.py', ROOT / 'tools.lock.json', Path(sys.executable), ASSEMBLER}
     paths.update((ROOT / 'assets').rglob('*'))
     paths.update((ROOT / 'tests/fixtures/native-demo').rglob('*'))
     tools = {}
@@ -243,6 +243,15 @@ def inputs_for(kind, runner, case=None):
         # Kickstart is an emulator input only, never a build/package input.
         paths.add(Path(config.get('inputs', 'amiga_rom', fallback='missing-kickstart')))
         entries.append(('copperline', Path(config.get('tools', 'copperline', fallback='missing-copperline')), ['--version']))
+    if kind == 'native-feedback':
+        import PIL
+        from PIL import PngImagePlugin
+        lock = json.loads((ROOT / 'tools.lock.json').read_text())
+        if PIL.__version__ != lock['pillow_version']:
+            raise ValueError('Use pinned Pillow ' + lock['pillow_version'])
+        paths.update(Path(PIL.__file__).parent.rglob('*.py'))
+        paths.update(Path(PIL.__file__).parent.glob('*.so'))
+        tools['pillow'] = {'version': PIL.__version__, 'path': key(Path(PIL.__file__).parent)}
     if kind == 'native-package':
         paths.update((ROOT / '.tools/python').rglob('*.py'))
         paths.update((ROOT / '.tools/python').glob('amitools-*.dist-info/METADATA'))
@@ -282,6 +291,10 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
             for directory in {Path(path).parent, *(exe.parent for exe in exes)}:
                 artifacts.extend(p for p in directory.iterdir() if p.is_file()
                                  and p.suffix in ('.png', '.log', '.jsonl', '.record', '.wav'))
+            for control in report.get('compiled_fault_controls', []):
+                directory = ROOT / control['artifact_directory']
+                directory.resolve().relative_to((ROOT / 'build').resolve())
+                artifacts.extend(p for p in directory.rglob('*') if p.is_file())
             if len(manifests) == 1:
                 report.setdefault('executable_sha256', manifests[0]['executable_sha256'])
             if kind == 'build':

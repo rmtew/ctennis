@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "python_version": "3.12.14",
+  "vasm_version": "1.9d",
+  "vasm_sha256": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+  "amitools_version": "0.8.1",
+  "copperline_version": "1.0.0-rc.1",
+  "copperline_source_commit": "e65a958",
+  "target": "PAL A500 68000 OCS 512KB chip zero expansion Kickstart1.3",
+  "pillow_version": "12.3.0"
+}
