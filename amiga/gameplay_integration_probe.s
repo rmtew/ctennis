@@ -55,6 +55,18 @@ patch_pointers:
         move.w  d0,4(a2)
         dbra    d7,patch_pointers
         bsr     patch_score_pointers
+        ifd ENHANCED_INTERFACE
+        lea     ui_overlay_pointer0+2,a2
+        move.l  #ui_overlay_plane,d0
+        moveq   #3,d7
+ui_init_overlay:
+        move.l  d0,d1
+        swap    d1
+        move.w  d1,(a2)
+        move.w  d0,4(a2)
+        addq.l  #8,a2
+        dbra    d7,ui_init_overlay
+        endif
         lea     copperlist,a0
         lea     copperlist_back,a1
         move.w  #(copperlist_end-copperlist)/2-1,d7
@@ -97,7 +109,14 @@ copy_back_copper:
         move.w  d0,last_timer_count
         move.w  d0,simulation_timer_origin
 main_loop:
+        ifd ENHANCED_INTERFACE
+        tst.b   ui_paused
+        bne.s   ui_skip_round_poll
+        endif
         bsr     game_round_poll
+        ifd ENHANCED_INTERFACE
+ui_skip_round_poll:
+        endif
         bsr     game_poll_keyboard
         bsr     poll_presentation
         bsr     read_sim_timer
@@ -139,7 +158,12 @@ read_sim_timer_again:
 poll_presentation:
         move.w  $dff006,d0
         andi.w  #$ff00,d0
+        ifd ENHANCED_INTERFACE
+        ; The UI footer is visible through251; late blank starts at252.
+        cmpi.w  #$fc00,d0
+        else
         cmpi.w  #$ec00,d0
+        endif
         bcc.s   presentation_blank
         ; Sprite POS/CTL DMA starts before the visible bitplane window.
         ; Publish with one line of margin before its line25 header fetch;
@@ -175,7 +199,12 @@ presentation_selected:
         andi.w  #$ff00,d0
         cmpi.w  #$2c00,d0
         bcs.s   presentation_commit_in_blank
+        ifd ENHANCED_INTERFACE
+        ; The UI footer is visible through251; late blank starts at252.
+        cmpi.w  #$fc00,d0
+        else
         cmpi.w  #$ec00,d0
+        endif
         bcc.s   presentation_commit_in_blank
         addq.w  #1,missed_presentation_deadlines
 presentation_commit_in_blank:
@@ -233,6 +262,11 @@ simulation_update:
         ; update entry/completion without stopping or tracing each instruction.
         addq.w  #1,simulation_started_updates
         bsr     sample_amiga_joystick
+        ifd ENHANCED_INTERFACE
+        bsr     ui_sample
+        tst.b   ui_paused
+        bne     ui_frozen_update
+        endif
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne.s   simulation_menu
         bsr     game_render_sprites
@@ -244,6 +278,11 @@ simulation_update:
         endif
         rts
 
+        ifd ENHANCED_INTERFACE
+ui_frozen_update:
+        addq.w  #1,simulation_updates
+        rts
+        endif
 simulation_menu:
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
         bcs.s   simulation_service_tick
@@ -377,6 +416,22 @@ replay_no_log:
 ; port samples a changing native timer bit, mixed with the existing game PRNG.
 ; A replay build can instead supply the source's recorded sign at each update.
 read_refresh_adapter:
+        ifd ENHANCED_INTERFACE
+        ifd DEMO_RECORDING
+        move.l  d1,-(sp)
+        bsr     ui_demo_entropy
+        move.l  (sp)+,d1
+        rts
+        else
+        tst.b   ui_demo
+        beq.s   refresh_live_entropy
+        move.l  d1,-(sp)
+        bsr     ui_demo_entropy
+        move.l  (sp)+,d1
+        rts
+refresh_live_entropy:
+        endif
+        endif
         ifd LONG_GAME_REPLAY
         movem.l d1/a0,-(sp)
         moveq   #0,d1
@@ -678,6 +733,9 @@ hex_byte:
         include "amiga/game/keyboard.s"
         include "amiga/game/tick.s"
         include "amiga/game/integration.s"
+        ifd ENHANCED_INTERFACE
+        include "amiga/game/interface.s"
+        endif
 
         even
 dos_entry_sp: dc.l 0

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "encoding": "one lowercase SHA256 hexadecimal digest per line",
+  "frames": 10958,
+  "payload_bytes": 712270,
+  "payload_sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6",
+  "recording_sha256": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
+  "original_capture_json_sha256": "9f2d642e2c36c1361514c8f72e9649fea0d249f03daf737252a061548079666a",
+  "original_capture_metadata_sha256": "3b67bcd47a4bcc6834dfcc3b3d20ea336f755d96964796f908b1039745dcb236",
+  "capture_executable_sha256": "3ab37135d846b15268c18be08e1643ae11e2dc5d69b4772c899854448a3b5f0b",
+  "capture_date_utc": "2026-10-02",
+  "capture_workflow": "scripts/record_demo_inputs.py; private DEMO_RECORDING executable; ordinary boot/title/one-player start; physical joystick performer; read-only game_assignment_done boundary",
+  "digest_preimage": "game_play_state[0:60] + game_score_state[0:28] + ui_entropy_state[0:2], bytes in native address order",
+  "entropy_version": "galois16-b400-v1",
+  "seed": 44257,
+  "initial_game_random": 0,
+  "target": "PAL A500 68000 OCS 512KB chip no expansion Kickstart1.3",
+  "final_games": [
+    0,
+    6
+  ],
+  "provenance": "Lossless auditable text repacking of preserved original recording digests.json; not generated from the replay under test. Physical packets verified identical to original capture metadata. Stores hashes only, no ROM, image/audio assets, world snapshots or proprietary original-platform fixtures.",
+  "normalized_raw_digest_sha256": "7cf04e024ee5dcd190720ec3619f42b425693a7f4acaccd0c0795d8ab9a61d83"
+}

@@ -4,6 +4,7 @@ import configparser
 import hashlib
 import json
 import sys
+import subprocess
 from pathlib import Path
 
 from native_tools import ROOT, ASSEMBLER, run
@@ -28,6 +29,12 @@ def _build(phase_start=False, flavor="enhanced"):
     if not ASSEMBLER.is_file():
         raise FileNotFoundError(ASSEMBLER)
     defines=["-DENHANCED_INTERFACE=1"] if flavor == "enhanced" else []
+    if flavor == "enhanced":
+        revision = run(["git", "rev-parse", "--short=7", "HEAD"]).strip()
+        dirty = subprocess.run(["git", "diff", "--quiet", "HEAD"], cwd=ROOT).returncode != 0
+        version = ROOT / 'build/amiga/title/enhanced/version.bin'
+        version.parent.mkdir(parents=True, exist_ok=True)
+        version.write_bytes((f"BUILD {revision}" + (" + LOCAL" if dirty else "")).encode('ascii') + b"\0")
     if phase_start:
         cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
         # Explicit diagnostic phase, never the ordinary application's startup.

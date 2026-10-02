@@ -32,6 +32,9 @@ game_new_match:
 .clear_score:
         clr.b   (a0)+
         dbra    d7,.clear_score
+        ifd ENHANCED_INTERFACE
+        bsr     ui_seed_entropy
+        endif
         clr.b   game_directions
         clr.b   game_actions
         clr.b   game_status_clock
@@ -76,6 +79,9 @@ input_update:
         lsr.b   #4,d1
         ifd NATIVE_CONTROLS
         bsr     game_assign_players
+        ifd ENHANCED_INTERFACE
+        bsr     ui_playback
+        endif
         endif
         clr.b   game_directions
         clr.b   game_actions

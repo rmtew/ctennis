@@ -829,3 +829,31 @@ For scope review, see [TEST-MANIFEST.md](TEST-MANIFEST.md) and the maintained [t
 
 
 The [manifest review](../analysis/test-manifest-review.md) corrects test-subject and coverage claims. The manifest now shows known-red acceptance strength and matched/executed/reference extents. C19/C20/C21 are proposed improvements to existing suite assurance, not additional scenario-count targets. Original-byte conformance and maintained observable gameplay acceptance must be distinguished.
+
+
+## Enhanced menu extension
+
+Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py` for the finite
+ordinary physical-input menu/pages/pause/demo/takeover cases, or add `--adf`
+for the real-speed cold-DF0 route and actual relocated executable checks.
+Run `RUST_LOG=info python scripts/run_enhanced_feedback_tests.py --mode=two`
+for ordinary game awards and colour/tally feedback across an end exchange;
+`--mode=one` observes the natural one-player AI path. These scripts do not
+write game state or import original snapshots. Reports/screenshots remain
+ignored under `build/tests/enhanced-*`; they do not promote historical gates.
+Original assets and ROMs remain private prerequisites. The final ordinary
+executable excludes the recording utility and source/debug capture machinery.
+
+
+Seeded full-match attract acceptance: `RUST_LOG=info python scripts/run_demo_match_tests.py`
+reproduces all captured native input boundaries through the six-game result;
+`--takeover` joins halfway through and verifies preserved state/consumed G/live
+entropy/AI continuation. `scripts/record_demo_inputs.py` is the private offline
+ordinary-native physical-input performer/recorder, not a shipped replay importer.
+The canonical native recording hashes are committed under
+`tests/fixtures/native-demo`; the checksum/provenance manifest binds the input
+recording. A fresh checkout needs no private trajectory receipt. This fixture
+does not substitute for missing historical original-platform picture/audio
+references. The committed
+schema2 input table carries seed/version/clock metadata and a complete match;
+no five-second loop remains. See [interface evidence](../analysis/enhanced-interface.md).
