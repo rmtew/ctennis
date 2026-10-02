@@ -20,8 +20,10 @@ def prepare(version):
                 plane[offset]|=byte>>shift
                 if shift:plane[offset+1]|=(byte<<(8-shift))&255
     menu_names=lines('ui_menu_lines')
-    menu_width=max(len(text[name]) for name in menu_names+['ui_players_two'])*8
+    menu_width=max(len(text[name]) for name in menu_names)*8
     menu_left=(256-menu_width)//2
+    # Runtime selection copies only these eight bytes, preserving side figures.
+    if (menu_left,menu_width)!=(96,64):raise ValueError('Title menu must fit native x96..159')
     output = bytearray()
     title_menu=None
     layouts={
@@ -41,7 +43,7 @@ def prepare(version):
     for page,label in enumerate(('ui_menu_lines','ui_help_lines','ui_help_lines','ui_control_lines','ui_credit_lines')):
         plane=bytearray(116*32)
         if page==0:
-            entries=[(69+i*11,name,menu_left) for i,name in enumerate(menu_names)]
+            entries=[(38+i*11,name,menu_left) for i,name in enumerate(menu_names)]
         elif page in layouts:
             heading={1:'ui_how',2:'ui_scoring',3:'ui_controls'}[page]
             entries=[(0,heading,16)]
@@ -58,7 +60,7 @@ def prepare(version):
             if x<16 or x+len(value)*8>240:raise ValueError('Unsafe help/menu margin: '+name)
             draw(plane,y,x,value)
         if page==0:
-            for x,value in [(80,'A'),(168,'B'),(120,'VS')]:draw(plane,24,x,value)
+            for x,value in [(44,'A'),(204,'B'),(120,'VS')]:draw(plane,16,x,value)
             title_menu=bytes(plane)
         else:
             count=text['ui_page'+str(page)]
@@ -78,10 +80,10 @@ def prepare(version):
         navigation.extend(plane)
     (ROOT/'build/native/ui-help-options.bin').write_bytes(navigation)
 
-    # Five selected menu rows; normal captions are in the colour-page caches.
+    # Four selected menu rows, shared by both modes; roles live under A/B.
     # All rows share the exact pixel edge of the widest menu/highlight block.
     menu=bytearray()
-    for name,inverted in [(name,True) for name in menu_names]+[('ui_players_two',True)]:
+    for name,inverted in [(name,True) for name in menu_names]:
         plane=bytearray(256);draw(plane,0,menu_left,text[name],inverted);menu.extend(plane)
     (ROOT/'build/native/ui-menu-options.bin').write_bytes(menu)
 
@@ -111,7 +113,7 @@ def prepare(version):
     figures=bytearray()
     for both_human in (False,True):
         planes=[bytearray(32*32) for _ in range(4)]
-        for x,pose,table,colour in [(76,7,human,4),(164,0,human if both_human else robot,13)]:
+        for x,pose,table,colour in [(40,7,human,4),(200,0,human if both_human else robot,13)]:
             data=table[pose*8:pose*8+8]
             offsets=[int.from_bytes(data[n:n+2],'big') for n in (0,2,4)]
             dy=int.from_bytes(data[6:7],'big',signed=True);dx=int.from_bytes(data[7:8],'big',signed=True)
@@ -127,9 +129,9 @@ def prepare(version):
                                 else:planes[n][address]&=~flag
         for n in range(4):
             combined=bytearray(title_menu)
-            combined[36*32:68*32]=planes[n]
-            if both_human:
-                combined[80*32:88*32]=bytes(8*32)
-                draw(combined,80,menu_left,text['ui_players_two'])
+            # Figures share menu scanlines, so retain the central text pixels.
+            for offset,value in enumerate(planes[n]):combined[38*32+offset]|=value
+            for centre,role in [(48,'ui_role_human'),(208,'ui_role_human' if both_human else 'ui_role_ai')]:
+                draw(combined,26,centre-len(text[role])*4,text[role])
             figures.extend(combined)
     (ROOT/'build/native/ui-title-pages.bin').write_bytes(figures)
