@@ -8,11 +8,11 @@ def assert_ui_raster(path,page,players,selection,version):
         from native_identity_raster import assert_menu_selection_raster
         result=assert_menu_selection_raster(path,selection,players+1)
         return {'page':0,'checked_pixels':result['pixels'],'matched':True,'selection':selection,'players':players+1}
-    lines={1:[(112,4,'HOW TO PLAY'),(120,4,'MOVE TO BALL: AUTO RETURNS.'),
-              (136,4,'CONTACT, BOTH AT NET: LOB.')],
-           2:[(112,4,'CONTROLS'),(128,4,'A: WASD MOVE / F OR G ACT')],
-           3:[(112,4,'BASELINE RALLY / CREDITS'),(128,4,version)]}[page]
-    font=(ROOT/'assets/native/title/font.bin').read_bytes()
+    lines={1:[(96,2,'How to play'),(106,2,'Move to ball: auto return.'),
+              (126,2,'At net: both actions lob.')],
+           2:[(96,2,'Controls'),(106,2,'A: WASD MOVE / F OR G ACT')],
+           3:[(96,2,'BASELINE RALLY / CREDITS'),(116,2,version)]}[page]
+    font=(ROOT/'assets/native/title/font-mac.bin').read_bytes()
     with Image.open(path) as picture:
         assert picture.size==(716,285),'Native PAL viewport changed'
         picture=picture.convert('RGB')

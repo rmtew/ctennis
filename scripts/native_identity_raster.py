@@ -88,24 +88,30 @@ def assert_footer_raster(path, first, second, selected=None):
 
 
 def assert_menu_selection_raster(path, selection, players):
-    """Authored normal instructions and exactly one inverted title-menu row."""
-    font=(ROOT/'assets/native/title/font.bin').read_bytes()
-    canvas=[[False]*256 for _ in range(80)]
-    # HOW TO PLAY is the widest authored11-cell row:88 pixels, x84..171.
-    # All four entries share x84, including their inverted selection bar.
-    entries=[(32,'START GAME'),(40,'PLAYERS: '+str(players)),(48,'HOW TO PLAY'),(56,'CONTROLS')]
-    for index,(y,text) in enumerate(entries):
-        for column,char in enumerate(text):
+    """Independent title specification: ASCII, native ready masks and colours."""
+    font=(ROOT/'assets/native/title/font-mac.bin').read_bytes()
+    canvas=[[0]*256 for _ in range(96)]
+    entries=[(49,'Start game'),(60,'Human vs Human' if players==2 else 'Human vs AI'),(71,'How to play'),(82,'Controls')]
+    def text(y,x,value,inverted=False):
+        for column,char in enumerate(value):
             for row in range(8):
                 byte=font[ord(char)*8+row]
-                for bit in range(8):
-                    canvas[y+row][84+column*8+bit]=bool(byte&(128>>bit)) ^ (index==selection)
+                for bit in range(8):canvas[y+row][x+column*8+bit]=15 if bool(byte&(128>>bit)) ^ inverted else 0
+    for index,(y,value) in enumerate(entries):text(y,72,value,index==selection)
+    for x,value in [(80,'A'),(168,'B'),(120,'VS')]:text(4,x,value)
+    atlas=(ROOT/'assets/native/scene/sprite-images.bin').read_bytes()
+    for x,colour,parts in [(76,4,[(5376,0,0),(5504,0,16),(2432,0,0)]),(164,13,[(1280 if players==2 else 8192,0,0),(1408 if players==2 else 8320,0,16),(1536,0,8)])]:
+        for index,(offset,dx,dy) in enumerate(parts):
+            for row in range(16):
+                mask=int.from_bytes(atlas[offset+row*4:offset+row*4+2],'big')
+                for bit in range(16):
+                    if mask&(32768>>bit):canvas[16+dy+row][x+dx+bit]=15 if index==2 else colour
+    palette=(0x000,0x000,0x2c4,0x6d7,0x55e,0x77f,0,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)
     expected=[]
     for row in canvas:
-        for ink in row:
-            rgb=(255,255,255) if ink else (0,0,0)
-            expected.extend((rgb,rgb))
+        for colour in row:
+            rgb=tuple(((palette[colour]>>shift)&15)*17 for shift in (8,4,0));expected.extend((rgb,rgb))
     with Image.open(path) as picture:
-        actual=list(picture.convert('RGB').crop((126,128,638,208)).get_flattened_data())
-    assert actual==expected,{'label':'full title menu selected inversion and clearing','selection':selection,'players':players,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
+        actual=list(picture.convert('RGB').crop((126,112,638,208)).get_flattened_data())
+    assert actual==expected,{'label':'full title native figures and menu','selection':selection,'players':players,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
     return {'selection':selection,'players':players,'inverted_menu_matched':True,'pixels':len(actual)}

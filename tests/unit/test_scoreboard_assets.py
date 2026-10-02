@@ -44,8 +44,16 @@ class ScoreboardAssets(unittest.TestCase):
                 self.assertEqual(actual, scoreboard_pixels(side, variant, variant), (side, variant))
 
     def test_copper_fetch_slots_and_pointer_restores_are_byte_identical(self):
-        for path, digest in CONTRACT['retained_score_copper'].items():
-            self.assertEqual(hashlib.sha256((ROOT/path).read_bytes()).hexdigest(), digest, path)
+        for path, digest in CONTRACT['status_move_retained_copper'].items():
+            source=(ROOT/path).read_text()
+            if path.endswith('score-cop-commands.i'):
+                source=source[source.index('        ; CT12 mode:'):]
+            elif path.endswith('score-patch-tables.i'):
+                source=re.sub(r'SCORE_PATCH_COUNT equ \d+','SCORE_PATCH_COUNT equ STATUS_MOVED',source)
+                for i in list(range(224,232))+[120,121,122,123]+list(range(125,156,4))+list(range(127,156,4)):
+                    source=re.sub(r'        dc.l score_cop_'+str(i)+r'_hi\+2[^\n]+\n        dc.w [^\n]+\n','',source)
+                    source=re.sub(r'score_pointer_table_'+str(i)+r':[^\n]+\n','',source)
+            self.assertEqual(hashlib.sha256(source.encode()).hexdigest(),digest,path)
 
     def test_palette_changes_are_score_only_and_match_native_copper(self):
         source = (ROOT / 'amiga/display.i').read_text()

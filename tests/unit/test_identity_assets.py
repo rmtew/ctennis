@@ -16,7 +16,9 @@ class IdentityAssets(unittest.TestCase):
         font=(ROOT/'assets/native/title/font.bin').read_bytes()
         for variant,label in enumerate(('', 'IN', 'OUT', 'NET', 'ACE', 'FAULT', 'DOUBLE FAULT')):
             actual=indices([ROOT/f'assets/native/court/score_bank_status_{variant}_p{p}.bin' for p in range(4)],8)
-            expected=[[0]*256 for _ in range(8)]
+            expected=indices([ROOT/f'assets/native/court/plane{p}.bin' for p in range(4)],192)[96:104]
+            if variant:
+                for row in expected:row[80:176]=[0]*96
             left=(256-len(label)*8)//2
             for column,char in enumerate(label):
                 for row in range(8):

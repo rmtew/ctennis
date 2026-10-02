@@ -1,25 +1,27 @@
 ui_menu_lines: dc.l ui_start,ui_players_one,ui_how,ui_controls
 ui_pages: dc.l ui_help_lines,ui_control_lines,ui_credit_lines
 ui_help_lines:
-        dc.l ui_how,ui_help1,ui_help2,ui_help3,ui_help4,ui_help5,ui_help6,ui_help7,ui_page1,ui_page_hint
+        dc.l ui_how,ui_help1,ui_help2,ui_help3,ui_help4,ui_help5,ui_help6,ui_help7,ui_page_hint
 ui_control_lines:
-        dc.l ui_controls,ui_empty,ui_control1,ui_control2,ui_control3,ui_control4,ui_control5,ui_control6,ui_page2,ui_page_hint
+        dc.l ui_controls,ui_control1,ui_control2,ui_control3,ui_control4,ui_control5,ui_control6,ui_page2,ui_page_hint
 ui_credit_lines:
-        dc.l ui_credits,ui_copyright,ui_version,ui_colours,ui_empty,ui_pause_hint,ui_empty,ui_empty,ui_page3,ui_page_hint
-ui_start: dc.b 'START GAME',0
-ui_players_one: dc.b 'PLAYERS: 1',0
-ui_players_two: dc.b 'PLAYERS: 2',0
-ui_how: dc.b 'HOW TO PLAY',0
-ui_controls: dc.b 'CONTROLS',0
+        dc.l ui_credits,ui_copyright,ui_version,ui_colours,ui_pause_hint,ui_font_credit,ui_font_archive,ui_page3,ui_page_hint
+ui_font_credit: dc.b 'Font-Mac - creator unknown',0
+ui_font_archive: dc.b 'Archive: ianhan/BitmapFonts',0
+ui_start: dc.b 'Start game',0
+ui_players_one: dc.b 'Human vs AI',0
+ui_players_two: dc.b 'Human vs Human',0
+ui_how: dc.b 'How to play',0
+ui_controls: dc.b 'Controls',0
 ui_marker: dc.b '*',0
 ui_empty: dc.b 0
-ui_help1: dc.b 'MOVE TO BALL: AUTO RETURNS.',0
-ui_help2: dc.b 'EITHER ACTION: SERVE / SHOT.',0
-ui_help3: dc.b 'CONTACT, BOTH AT NET: LOB.',0
-ui_help4: dc.b 'BOTH AT REAR: DROP SHOT.',0
-ui_help5: dc.b 'POINTS: 15/30/40/GAME.',0
-ui_help6: dc.b 'DEUCE: WIN 2 IN A ROW.',0
-ui_help7: dc.b 'DEMO: LEFT/RIGHT, ACT CHOOSE',0
+ui_help1: dc.b 'Move to ball: auto return.',0
+ui_help2: dc.b 'Either action: serve / shot.',0
+ui_help3: dc.b 'At net: both actions lob.',0
+ui_help4: dc.b 'At rear: both drop shot.',0
+ui_help5: dc.b 'Points: 15/30/40/game.',0
+ui_help6: dc.b 'Deuce: win two in a row.',0
+ui_help7: dc.b 'Six games wins the match.',0
 ui_control1: dc.b 'A: WASD MOVE / F OR G ACT',0
 ui_control2: dc.b 'B: ARROWS / . OR / ACT',0
 ui_control3: dc.b 'KEYPAD 8/4/2/6 / 0 OR . ACT',0

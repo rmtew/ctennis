@@ -179,10 +179,11 @@ def run(case, mutant=False):
                     delta=current['actual_pointer']-located('copperlist')
                     pointers={}
                     for plane in range(4):
-                        hi=located(f'score_cop_{224+plane}_hi')+2+delta
-                        lo=located(f'score_cop_{224+plane}_lo')+2+delta
+                        hi=located(f'score_cop_{120+plane}_hi')+2+delta
+                        lo=located(f'score_cop_{120+plane}_lo')+2+delta
                         words=bytes.fromhex(session.inspect('mem_read',{'addr':hi,'len':2})['data'])+bytes.fromhex(session.inspect('mem_read',{'addr':lo,'len':2})['data'])
                         pointers[str(plane)]={'actual':int.from_bytes(words,'big'),'expected':located(f'score_bank_status_{variant}_p{plane}')}
+                    for plane,pointer in pointers.items():check('actual net status plane '+plane+' pointer',pointer['actual'],pointer['expected'])
                     atomic_json(photo.with_suffix('.json'),{'completed_scene':published,'current_published':current,'rendered_frame':stop['frame']-1,'status_plane_pointers':pointers})
                     from native_status_raster import assert_status_raster
                     raster_checks.append(dict(assert_status_raster(photo,variant),published_scene=published,rendered_frame=stop['frame']-1,screenshot=str(photo.relative_to(ROOT))))

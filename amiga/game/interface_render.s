@@ -155,15 +155,15 @@ ui_render:
         ; planes. Dynamic menu choice remains the same native font drawing.
         moveq   #0,d0
         move.b  ui_page,d0
-        mulu.w  #80*32,d0
+        mulu.w  #96*32,d0
         lea     ui_cached_pages,a3
         adda.l  d0,a3
-        lea     title_plane0+112*32,a2
+        lea     title_plane0+96*32,a2
         moveq   #3,d6
 .copy_plane:
         move.l  a3,a0
         move.l  a2,a1
-        move.w  #80*32/32-1,d7
+        move.w  #96*32/32-1,d7
 .copy_word:
         move.l  (a0)+,(a1)+
         move.l  (a0)+,(a1)+
@@ -179,17 +179,18 @@ ui_render:
         dbra    d6,.copy_plane
         tst.b   ui_page
         bne.s   .publish
+        bsr     ui_title_preview
         tst.b   ui_player_count
         beq.s   .selection
         lea     ui_menu_options+5*256,a0
-        lea     title_plane0+152*32,a2
+        lea     title_plane0+156*32,a2
         bsr     ui_menu_row_copy
 .selection:
         moveq   #0,d0
         move.b  ui_selection,d0
         move.w  d0,d1
-        lsl.w   #8,d1
-        lea     title_plane0+144*32,a2
+        mulu.w  #11*32,d1
+        lea     title_plane0+145*32,a2
         adda.w  d1,a2
         cmpi.b  #1,d0
         bne.s   .selected_row
@@ -239,6 +240,10 @@ ui_text_draw:
         beq.s   .done
         lsl.w   #3,d0
         lea     ui_font,a1
+        cmpi.w  #GAME_TITLE,game_lifecycle
+        bne.s   .font_ready
+        lea     ui_menu_font,a1
+.font_ready:
         adda.w  d0,a1
         moveq   #7,d7
         move.l  a2,a4
@@ -293,4 +298,23 @@ ui_footer_draw:
         bsr     ui_selected_text
 .done:
         movem.l (sp)+,d0-d2/a1-a2
+        rts
+
+; Copy the explicit menu-owned title masks, independent of gameplay state.
+ui_title_preview:
+        lea     ui_title_figures,a0
+        tst.b   ui_player_count
+        beq.s   .ready
+        adda.w  #4096,a0
+.ready:
+        lea     title_plane0+112*32,a1
+        moveq   #3,d6
+.plane:
+        move.w  #255,d7
+.copy:
+        move.l  (a0)+,(a1)+
+        dbra    d7,.copy
+        adda.w  #6144-1024,a1
+        bsr     ui_construction_sample
+        dbra    d6,.plane
         rts

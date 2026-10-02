@@ -71,7 +71,7 @@ class ClassicPlayers(unittest.TestCase):
         self.assertIn("'A: WASD MOVE / F OR G ACT'", source)
         self.assertIn("'B: ARROWS / . OR / ACT'", source)
         self.assertNotRegex(source, r"'[^']*P[12][^']*'")
-        for name in ('ui_demo_tally_text', 'ui_tally_text', 'ui_ai_tally_text'):
+        for name in ('ui_demo_selector', 'ui_tally_text', 'ui_ai_tally_text'):
             block=source[source.index(name+':'):].splitlines()
             joined=''
             for line in block:

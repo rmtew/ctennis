@@ -226,5 +226,10 @@
     "assets/native/court/score-cop-commands.i": "cf259b0926b1f567d63c354fd1d58c501316cf45655573f99a7229716a6338b4",
     "assets/native/court/score-patch-tables.i": "c3069a96312427c3f58d79d0616a74c4c23718b3b4f22e4eb7936f3322c82968",
     "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5"
+  },
+  "status_move_retained_copper": {
+    "assets/native/court/score-cop-commands.i": "fd238b246d94120985cd9d67a56b112a8bfbba39a4fb4ba513716d21c2651dc9",
+    "assets/native/court/score-patch-tables.i": "8acbd8a70b5df4451d0ed04201fcee033bc1faea4916cf8c52adb1547142fb83",
+    "assets/native/court/score-bank-data.i": "63e458e721009fca41c55d8d2e34b404012aed8870792f98e7e0845062da25c5"
   }
 }
