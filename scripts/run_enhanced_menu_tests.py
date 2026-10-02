@@ -10,10 +10,30 @@ from native_evidence import ROOT, atomic_json, tracked_call
 from native_observation import target_log
 
 
+def execution_subject(development, package_report=None):
+    """Bind execution to packaged bytes, keeping debug symbols as a sidecar."""
+    sha=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
+    debug={'executable':str(development.relative_to(ROOT)),
+           'executable_sha256':sha(development),
+           'listing':str((development.parent/'native.lst').relative_to(ROOT)),
+           'listing_sha256':sha(development.parent/'native.lst')}
+    if package_report is None:return development,debug
+    if debug['executable_sha256']!=package_report['release']['development_executable_sha256']:
+        raise ValueError('Menu debug source differs from packaged development product')
+    executable=ROOT/package_report['executable']
+    if sha(executable)!=package_report['executable_sha256']:
+        raise ValueError('Menu release executable differs from package')
+    if sha(ROOT/package_report['adf'])!=package_report['adf_sha256']:
+        raise ValueError('Menu ADF differs from package')
+    return executable,debug
+
+
 def run(adf=False):
     package_report = package(self_test=True) if adf else None
     config, exe = build(flavor='enhanced'); config = emulator_config()
-    symbols = code_symbols((exe.parent/'native.lst').read_text())
+    development=exe
+    exe,debug_source=execution_subject(development,package_report)
+    symbols = code_symbols((development.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
     directory = ROOT/'build/tests'/('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
@@ -183,12 +203,16 @@ def run(adf=False):
         check('Start game uses remembered player count',number('game_selected_mode'),1)
         check('Enter starts ordinary gameplay',number('game_lifecycle',2),1)
     target_log(directory)
-    report = {'passed':True,'interface_flavor':'enhanced','startup':'cold ADF' if adf else 'ordinary executable',
+    # Fail if execution/debug/package files changed while the harness ran.
+    final_exe,final_debug=execution_subject(development,package_report)
+    if final_exe!=exe or final_debug!=debug_source:raise ValueError('Menu product changed during execution')
+    report = {'executable':str(exe.relative_to(ROOT)),'debug_symbol_source':debug_source,'passed':True,'interface_flavor':'enhanced','startup':'cold ADF' if adf else 'ordinary executable',
               'checks':checks,'target':'Copperline 1.0.0-rc.1 PAL A500 68000 OCS 512KB chip/no expansion/Kickstart1.3',
               'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),
               'native_modules':__import__('build_native_game').module_hashes(),
               'input_recording_sha256':hashlib.sha256((ROOT/'assets/interface/demo-inputs.json').read_bytes()).hexdigest(),
               'loaded_hunks':loaded,
+              'adf':package_report['adf'] if adf else None,
               'adf_sha256':package_report['adf_sha256'] if adf else None,
               'scope':'Finite ordinary physical inputs; no game-state writes, source initialization or full-match parity'}
     atomic_json(directory/'report.json',report)
@@ -201,4 +225,4 @@ if __name__ == '__main__':
     path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
                  'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
-                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])
+                 lambda path, report: [ROOT / report['executable']])
