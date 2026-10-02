@@ -48,6 +48,11 @@ def run(mode):
             check('Red tally after award',num('ui_tally_red_digit'),48+current[1])
             check('Blue style stays on physical player',mem('game_play_state',60)[9],3 if flipped else 2)
             check('Red style stays on physical player',mem('game_play_state',60)[19],2 if flipped else 3)
+            from native_player_roles import assert_player_roles
+            s.inspect('run_until',{'pc':base+symbols['game_scene_prepared']})
+            roles=assert_player_roles(mem,num)
+            check('native controller roles after award', sorted(row['role'] for row in roles),
+                  ['human','robot'] if mode=='one' else ['human','human'])
             photo=directory/f'game-{sum(current)}-{("blue","red")[winner]}.png'
             s.inspect('capture_screenshot',{'path':str(photo)})
             from native_identity_raster import assert_player_raster,assert_mode_raster
@@ -63,7 +68,7 @@ def run(mode):
                     check('actual '+side+' tally raster matches versioned native bank',actual_gold,expected_gold)
             rows.append({'games':current,'winner':('Blue','Red')[winner],'exchanged':flipped,
                          'callback':num('simulation_updates',2),'screenshot':str(photo.relative_to(ROOT)),
-                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity})
+                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity,'roles':roles})
             games=current
             if len(rows)==2:break
         check('two ordinary game awards observed',len(rows),2)

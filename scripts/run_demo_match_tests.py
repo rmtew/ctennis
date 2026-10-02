@@ -45,6 +45,10 @@ def run(takeover=False):
   for callback in range(30000):
    until({'pc':base+symbols['game_tick_dispatch']});life=num('game_lifecycle',2)
    if life in (6,7,8):break
+   if life==1:
+    from native_player_roles import assert_player_roles
+    roles=assert_player_roles(mem,num)
+    check('demo native roles are both robots', [row['role'] for row in roles], ['robot','robot'])
    if life!=1:
     s.inspect('step',{'count':1});continue
    until({'pc':base+symbols['game_assignment_done']})
@@ -70,6 +74,8 @@ def run(takeover=False):
       check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
     else:raise AssertionError('Mid-match G never took over')
     until({'pc':base+symbols['native_input_done']});check('takeover action consumed',num('game_player_controls')&32,0)
+    roles=assert_player_roles(mem,num)
+    check('takeover P1 human/P2 robot', {row['owner']:row['role'] for row in roles}, {'P1':'human','P2':'robot'})
     state=mem('ui_entropy_state',2);before=mem('game_play_state',60)
     until({'seconds':time+1});check('live entropy stops advancing demo generator',mem('ui_entropy_state',2).hex(),state.hex())
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)

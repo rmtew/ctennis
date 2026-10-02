@@ -8,7 +8,7 @@ def assert_ui_raster(path,page,players,selection,version):
               (144+selection*8,2,'*')],
            1:[(112,4,'HOW TO PLAY'),(120,4,'MOVE TO BALL: AUTO RETURNS.'),
               (136,4,'CONTACT, BOTH AT NET: LOB.')],
-           2:[(112,4,'CONTROLS'),(128,4,'BLUE: WASD MOVE / F OR G ACT')],
+           2:[(112,4,'CONTROLS'),(128,4,'P1: WASD MOVE / F OR G ACT')],
            3:[(112,4,'BASELINE RALLY / CREDITS'),(128,4,version)]}[page]
     font=(ROOT/'assets/native/title/font.bin').read_bytes()
     with Image.open(path) as picture:

@@ -5,7 +5,7 @@
   "validated_transfer_sha256": "389445af6b85a39a6f6fb7f938a0e6277f6681d9187f39f56823bc3bc2867f63",
   "destination": "PRIVATE rmtew/ctennis repository; user-approved retained native graphics/audio",
   "approval_reference": "User y,2026-10-02 07:02:50UTC, Sentinel_933773b0be50819191f1c322462f8a96",
-  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs.",
+  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs. Classic human/robot body masks are ImageGen-authored and fitted to retained pose bounds/seams; white rackets, poses, ball/shadow retain Sega-derived provenance. P1/P2 court labels use the retained native font.",
   "files": [
     {
       "path": "assets/native/audio/data.i",
@@ -75,14 +75,14 @@
     },
     {
       "path": "assets/native/scene/sprite-images.bin",
-      "size_bytes": 8192,
-      "sha256": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f",
+      "size_bytes": 11264,
+      "sha256": "6aab311ae6bb681333ca794356013524d65292f84812095416b4c742d36164f0",
       "imported_sha256": "8c3ebad689d1bc738124ff4bf6cf9880191f8258269a4e3665767e543a230e7f"
     },
     {
       "path": "assets/native/court/plane0.bin",
       "size_bytes": 6144,
-      "sha256": "434a1ac023c6e0ce41b646f2dda6daf8c8b2fd4ea6d4b7140722da7304978727",
+      "sha256": "1b8f5ae19b289f67f79ff65ea2fb281bac28bfbf73414deeeb88a0acf1cff8c8",
       "imported_sha256": "f24d9e1105f7c30aa6f2422646e67d6ce56548220ed14269631cbcd82fb3b853"
     },
     {
@@ -94,13 +94,13 @@
     {
       "path": "assets/native/court/plane2.bin",
       "size_bytes": 6144,
-      "sha256": "85debb170c3f9c5b609303e68e94c5b07aaa65f2f4e5ea097999f2ecf8d2ad41",
+      "sha256": "6cb3ce78d0cab67989481d61aa86ad89e37f5c9eb335806f1cc145f4f3e808fd",
       "imported_sha256": "0789bdff7d5f5eff57a0684b6f8b8c5959e06419c3627051325c89d266b9e0db"
     },
     {
       "path": "assets/native/court/plane3.bin",
       "size_bytes": 6144,
-      "sha256": "b187a1813f5044f7c3d2b1b77e7d68f9cec2f93696586571b5d2d7d53d668019",
+      "sha256": "b9a111f5b46bd64b86c09736757d719dd20ae288eb96a0c169592fe7200c62a8",
       "imported_sha256": "65473a3502a7539261aafded728d071cf9d682f33d11adbc5f9b17ea3b399569"
     },
     {
@@ -696,6 +696,11 @@
       "authored_revision": "CT12 Red point glyph high planes; retained exact glyph/advantage shapes",
       "size_bytes": 512,
       "sha256": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b"
+    },
+    {
+      "path": "assets/native/scene/robot-poses.bin",
+      "size_bytes": 112,
+      "sha256": "044bb1c5b8b96182a5844d09fc2e8537b896f747d097a71144ce7ef12cf62363"
     }
   ],
   "formats": {

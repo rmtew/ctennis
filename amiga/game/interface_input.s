@@ -143,6 +143,9 @@ ui_demo_g:
         beq.s   ui_demo_other
         ; P1 only: G / connector2 button2. Consume until physical release.
         clr.b   ui_demo
+        ; Refit presentation roles before this callback prepares its sprite
+        ; bank. Preserve all player coordinates, gameplay bytes and clocks.
+        bsr     game_scene_build_players
         bsr     game_latch_old_actions
         clr.b   ui_edges
         bra     ui_input_draw

@@ -4,8 +4,10 @@ The maintained enhanced game runs on PAL A500/68000/OCS with512KB chip RAM and
 no expansion. It includes native controls, gameplay/scoring, graphics/audio,
 menu/help/pause and a complete native attract recording with takeover. The old
 comparison build and original-platform tooling are retired; Git history retains
-tracked rollback. CT12 gives the native game its Baseline Rally title, Blue/Red player identity
-and expanded gameplay labels. Music/celebration and recording remain later scope.
+tracked rollback. CT12 gives the native game its Baseline Rally title and readable native labels.
+The Classic sprite branch uses stable P1/P2 names with Blue/Red visual cues;
+human/robot bodies follow controller ownership through end exchange and demo
+takeover. Celebration is developed separately; recording remains later scope.
 
 This private repository includes the approved retained Amiga-native assets.
 They remain Sega-derived; retention/conversion grants no new ownership or public

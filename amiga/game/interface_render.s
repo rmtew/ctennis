@@ -73,23 +73,32 @@ ui_render:
         bra.s   .win_text
 .human_win:
         cmpi.b  #4,d0
-        beq.s   .serve_overlay
+        beq     .serve_overlay
         lea     ui_blue_win,a0
         cmpi.b  #2,d0
         beq.s   .win_text
         lea     ui_red_win,a0
+        btst    #7,game_mode
+        bne.s   .win_text
+        lea     ui_ai_win,a0
 .win_text:
         bsr     ui_text
         move.b  game_games_a,d0
         addi.b  #'0',d0
         move.b  d0,ui_tally_blue_digit
         move.b  d0,ui_demo_tally_blue_digit
+        move.b  d0,ui_ai_tally_p1_digit
         move.b  game_games_b,d0
         addi.b  #'0',d0
         move.b  d0,ui_tally_red_digit
         move.b  d0,ui_demo_tally_red_digit
+        move.b  d0,ui_ai_tally_p2_digit
         lea     ui_overlay_plane+256,a2
         lea     ui_tally_text,a0
+        btst    #7,game_mode
+        bne.s   .tally_mode_ready
+        lea     ui_ai_tally_text,a0
+.tally_mode_ready:
         tst.b   ui_demo
         beq.s   .tally_text
         lea     ui_demo_tally_text,a0
