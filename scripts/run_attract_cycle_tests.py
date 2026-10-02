@@ -51,7 +51,11 @@ def run():
                     if first is not None and frame>=first+2:
                         digest=r.get('digest',{})
                         assert digest.get('width')==716 and digest.get('height')==285
-                        assert digest.get('digest')==expected_digest,{'label':'continuous actual title field changed','frame':frame,'actual':digest,'expected':expected_digest}
+                        if digest.get('digest')!=expected_digest:
+                            failure=directory/f'cycle-{len(windows)}-changed-field-{frame}.png'
+                            s.inspect('capture.screenshot',{'path':str(failure)})
+                            atomic_json(directory/'changed-field.json',dict(frame=frame,digest=digest,expected=expected_digest,window=window,state=state,capture=str(failure),custom=s.inspect('custom_dump')))
+                            raise AssertionError({'label':'continuous actual title field changed','frame':frame,'actual':digest,'expected':expected_digest,'capture':str(failure)})
                         samples=window['title_frame_digests']
                         if samples:assert frame==samples[-1]['frame']+1,'Title frame observation gap'
                         samples.append(dict(frame=frame,digest=digest['digest'],position=r['position']))
