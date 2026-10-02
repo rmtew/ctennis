@@ -50,3 +50,29 @@ both controller modes, both ends and both physical Copper banks with actual pane
 scanout, completed-bank association and selected/restore pointer checks. It also
 rejects the retained wrong WIN-pointer control. This is a focused scoreboard
 change; no unrelated full native acceptance or WinUAE campaign is claimed.
+
+## Focused receipt
+
+Tested product commit `ea9bc6f05fdf3384de7a4b35da2cee381a0cb9e5`, based on PR19
+`bcef6f4b3184b17e58648c3c72ff973c393cbfb3`. A later documentation-only commit
+records these results; it introduces no further product changes.
+
+- 36 host tests and94 versioned inputs passed.
+- All28 generated512-byte banks matched the selected preview and retained court
+ pixels. The compiled wrong advantage position was rejected.
+- All28 mode/end/point/tally fixtures passed56 actual scanout comparisons, both
+ physical Copper banks and every selected/restore pointer; zero missed
+ publications. The wrong WIN-pointer control was rejected with552 wrong pixels.
+- Constructor elapsed time:21.159ms on the pinned native target, before the game
+ clock starts. This is measured emulator time, not a host drawing estimate.
+- Clean executable:248492 ->235108 bytes, saving13384 bytes. SHA256 of selected
+ executable: `327bf081502bc132ae08010d4958b6f7faec87bb606288e3cdd4038c7b67d3ba`.
+- Loaded hunk payload:202112 ->202420 bytes (+308). Validated Exec free lists at
+ first ordinary main-loop entry measured341376 ->341688 chip bytes used (+312,
+ including allocation/loader effects). This is an initialized-startup sample,
+ not a whole-session/bootstrap peak claim.
+
+The original field capture was visually inspected. Exact counts/hashes and fault
+controls are in [the compact receipt](square-led-verification.json). Raw emulator
+reports/captures and executables remain ignored under `build/tests/`. No remote
+branch, PR or merge was created by this change.
