@@ -224,18 +224,12 @@ ui_render:
         move.b  ui_selection,d0
         move.w  d0,d1
         mulu.w  #11*32,d1
-        lea     title_plane0+145*32,a2
+        lea     title_plane0+114*32,a2
         adda.w  d1,a2
-        cmpi.b  #1,d0
-        bne.s   .selected_row
-        tst.b   ui_player_count
-        beq.s   .selected_row
-        moveq   #4,d0
-.selected_row:
         lsl.w   #8,d0
         lea     ui_menu_options,a0
         adda.w  d0,a0
-        bsr     ui_menu_row_copy
+        bsr     ui_title_row_copy
         bra.s   .publish
 .page_selection:
         moveq   #0,d0
@@ -249,6 +243,28 @@ ui_render:
         st      game_title_display
         move.b  #1,display_ready
 .done:  rts
+
+; A0 cached256-byte title row, A2 first title-plane row. Only x96..159
+; belongs to the central menu; copying a full row would erase/recolour the
+; flanking Classic figures. Both modes share the same four selected captions.
+ui_title_row_copy:
+        movem.l d1/d7/a0-a3,-(sp)
+        move.l  a0,a3
+        moveq   #3,d1
+.plane:
+        move.l  a3,a0
+        move.l  a2,a1
+        moveq   #7,d7
+.row:
+        move.l  12(a0),12(a1)
+        move.l  16(a0),16(a1)
+        adda.w  #32,a0
+        adda.w  #32,a1
+        dbra    d7,.row
+        adda.w  #6144,a2
+        dbra    d1,.plane
+        movem.l (sp)+,d1/d7/a0-a3
+        rts
 
 ; A0 cached256-byte menu row, A2 matching first title-plane row. Copy the
 ; same independently authored normal/inverted pixels to all four planes.
