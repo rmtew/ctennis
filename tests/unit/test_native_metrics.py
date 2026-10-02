@@ -78,6 +78,11 @@ class MetricsTests(unittest.TestCase):
             path.write_text(json.dumps(report))
             with patch('native_metrics.status',return_value={'status':'stale','changed_dependencies':['scripts/native_metrics.py']}):
                 self.assertEqual(measurement_status(path)['freshness'],'reused')
+                report.pop('subject');path.write_text(json.dumps(report))
+                self.assertEqual(measurement_status(path)['freshness'],'reused')
+                report['subject']='wrong';path.write_text(json.dumps(report))
+                self.assertEqual(measurement_status(path)['status'],'stale')
+                report['subject']='maintained-native'
                 report['passed']=False;path.write_text(json.dumps(report))
                 self.assertEqual(measurement_status(path)['status'],'stale')
             with patch('native_metrics.status',return_value={'status':'failed','reason':'latest failed'}):

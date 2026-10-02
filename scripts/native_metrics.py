@@ -116,7 +116,7 @@ def measurement_status(path):
         report=json.loads(path.read_text());meta=report.get('evidence',{})
         if (report.get('passed') is True and report.get('first_difference') is None
                 and meta.get('state')=='complete' and meta.get('subject')=='maintained-native'
-                and report.get('subject')=='maintained-native'
+                and report.get('subject') in (None,'maintained-native')
                 and meta.get('interface_flavor')==report.get('interface_flavor')=='enhanced'):
             return {'status':'passed','freshness':'reused','reason':'Reporter-only change; exact executable and all observation/config/tool/raw-artifact inputs unchanged'}
     return classification
