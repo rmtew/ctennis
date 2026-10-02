@@ -1,6 +1,10 @@
         section display_data,data,chip
 copperlist:
+        ifd ENHANCED_INTERFACE
+        dc.w $008e,$2c81,$0090,$fcc1
+        else
         dc.w $008e,$2c81,$0090,$ecc1
+        endif
         ifd ENHANCED_INTERFACE
         dc.w $0092,$0048,$0094,$00c0
         else
@@ -55,6 +59,15 @@ cop_spr_pair3_c2: dc.w $01bc,$000
         ifd SCORE_COPPER_DISPLAY
 score_cop_commands:
         include "build/amiga/score-copper-probe/score-cop-commands.i"
+        endif
+        ifd ENHANCED_INTERFACE
+        ; Separate footer after the court: no score-bank offsets or waits change.
+        dc.w $ec01,$fffe
+ui_overlay_pointer0: dc.w $00e0,0,$00e2,0
+ui_overlay_pointer1: dc.w $00e4,0,$00e6,0
+ui_overlay_pointer2: dc.w $00e8,0,$00ea,0
+ui_overlay_pointer3: dc.w $00ec,0,$00ee,0
+        dc.w $019e,$fff
         endif
         dc.w $ffff,$fffe
 copperlist_end:

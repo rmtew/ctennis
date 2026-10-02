@@ -37,7 +37,21 @@ class ResultGateTests(unittest.TestCase):
             self.assertFalse(progress.early_release_proof(altered,'ordinary'))
 
     def test_result_media_dependencies_follow_declared_directories(self):
-        with patch.object(evidence,'tool_info',return_value=({},set())):
+        # The graph contract must also run in a source-only checkout. This is
+        # in-memory dependency metadata, not fabricated source pixels/audio.
+        primary=evidence.ROOT/'tests/reference/presentation/manifest.json'
+        declared=json.dumps({'references': {
+            'one-player-match': {'manifest':'one-player-match/manifest.json'},
+            'two-player-match': {'manifest':'two-player-match/manifest.json'}}})
+        original_read=Path.read_text
+        original_is_file=Path.is_file
+        def read_manifest(path,*args,**kwargs):
+            return declared if path==primary else original_read(path,*args,**kwargs)
+        def manifest_exists(path):
+            return path==primary or original_is_file(path)
+        with patch.object(evidence,'tool_info',return_value=({},set())), \
+             patch.object(Path,'read_text',read_manifest), \
+             patch.object(Path,'is_file',manifest_exists):
             paths,_=evidence.inputs_for('result-scenes','scripts/run_result_presentation_tests.py',runner.CASES[1])
         names={evidence.key(path) for path in paths}
         self.assertNotIn('tests/reference/presentation/two-player-restart-complete/manifest.json',names)

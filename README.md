@@ -34,11 +34,17 @@ cases and retained reports do not establish ordinary full-match or complete
 hardware acceptance. See the [worklog](WORKLOG.md) for the current item and one
 next action.
 
-Controls: Delete selects one player; Tab selects two. Player 1 uses joystick
-connector 2, player 2 connector 1, with four directions and red/blue actions.
-Two-button sticks are required for both actions; no keyboard substitute for a
-missing second button is assigned. Pads remain attached to their players after
-an end exchange. In one-player mode connector 1 does not control the opponent.
+Enhanced builds start at a menu with Start game, Players1/2, How to play and
+Controls. Use up/down to select, an action or Enter to open, and left/right to
+change player count or turn help pages. Main1/2 and Delete/Tab remain immediate
+starts. Blue uses WASD with F/G; Pink uses cursor keys with period/slash or
+keypad8/4/2/6 with0/decimal. Blue's joystick is connector2; Pink's is connector1.
+Either action serves or selects the special shot; ordinary returns are automatic
+by position. P or Escape pauses; returning to title requires confirmation.
+After30seconds idle, recorded ordinary inputs start a one-player DEMO. G or
+Blue's joystick button2 takes over Blue; other fresh supported inputs return to
+title. There is no key3 shortcut. See [interface details](analysis/enhanced-interface.md).
+Explicit `--interface=original` preserves the original comparison build.
 
 Use `RUST_LOG=info python scripts/progress.py` to check current local evidence
 before and after focused work. It reports behavior extents, compiled runtime

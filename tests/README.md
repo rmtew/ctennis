@@ -829,3 +829,17 @@ For scope review, see [TEST-MANIFEST.md](TEST-MANIFEST.md) and the maintained [t
 
 
 The [manifest review](../analysis/test-manifest-review.md) corrects test-subject and coverage claims. The manifest now shows known-red acceptance strength and matched/executed/reference extents. C19/C20/C21 are proposed improvements to existing suite assurance, not additional scenario-count targets. Original-byte conformance and maintained observable gameplay acceptance must be distinguished.
+
+
+## Enhanced menu extension
+
+Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py` for the finite
+ordinary physical-input menu/pages/pause/demo/takeover cases, or add `--adf`
+for the real-speed cold-DF0 route and actual relocated executable checks.
+Run `RUST_LOG=info python scripts/run_enhanced_feedback_tests.py --mode=two`
+for ordinary game awards and colour/tally feedback across an end exchange;
+`--mode=one` observes the natural one-player AI path. These scripts do not
+write game state or import original snapshots. Reports/screenshots remain
+ignored under `build/tests/enhanced-*`; they do not promote historical gates.
+Original assets and ROMs remain private prerequisites. The final ordinary
+executable excludes the recording utility and source/debug capture machinery.

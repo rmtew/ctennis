@@ -76,6 +76,9 @@ input_update:
         lsr.b   #4,d1
         ifd NATIVE_CONTROLS
         bsr     game_assign_players
+        ifd ENHANCED_INTERFACE
+        bsr     ui_playback
+        endif
         endif
         clr.b   game_directions
         clr.b   game_actions

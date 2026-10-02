@@ -61,6 +61,8 @@ keyboard_enhanced_store:
         move.b  #1,0(a0,d1.w)
         bra.s   .selection
 .up:    clr.b   0(a0,d1.w)
+        lea     ui_keyboard_entry_keys,a1
+        clr.b   0(a1,d1.w)
 .selection:
         move.b  $01(a0),d0      ; main 1
         or.b    $46(a0),d0      ; Delete
@@ -73,6 +75,8 @@ keyboard_enhanced_store:
 
 ; D0 pad bits, D3 logical player index. Combine before game_store_pad.
 game_merge_keyboard:
+        move.l  a3,-(sp)
+        lea     ui_keyboard_entry_keys,a3
         lea     game_keyboard_mapping,a1
         lea     game_keyboard_matrix,a2
 .loop:  moveq   #0,d1
@@ -87,9 +91,12 @@ game_merge_keyboard:
         move.b  (a1)+,d2
         tst.b   0(a2,d1.w)
         beq.s   .loop
+        tst.b   0(a3,d1.w)
+        bne.s   .loop
         or.b    d2,d0
         bra.s   .loop
-.done:  rts
+.done:  move.l  (sp)+,a3
+        rts
 ; key, player, held mask: right/up/left/down/red/blue =1/2/4/8/16/32.
 game_keyboard_mapping:
         dc.b $11,0,2,$20,0,4,$21,0,8,$22,0,1,$23,0,16,$24,0,32

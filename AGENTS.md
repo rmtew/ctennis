@@ -220,8 +220,21 @@ gameplay/lifecycle/audio logic identical; interface conditionals are confined to
 layout, raw keyboard input and offline title assets. Use separately named
 flavor executable/ADF/report/capture paths and require compiled flavor identity
 when reading evidence. Preserve the verified CT10 delivery directory and
-immutable original media. Do not implement attract/tutorial or unrelated game
-features. `RUST_LOG=info python scripts/progress.py --interface=enhanced` records
+immutable original media. The later approved menu/help/attract/pause extension is documented below;
+do not add unrelated game features. `RUST_LOG=info python scripts/progress.py --interface=enhanced` records
 this follow-on separately from historical CT gates; never manually cross-credit
 original receipts to enhanced acceptance. The small font additions are authored
 source; original glyphs and generated assets stay private/ignored.
+
+### Approved 2026-10-02 interface extension
+
+Richard explicitly approved the menu, paged help/controls/credits, recorded-input
+attract/takeover, pause/return confirmation and colour feedback extension in
+`analysis/enhanced-interface.md`. This authorization supersedes the historical
+no-attract scope. Keep UI state/modules separate and leave scoring, rules,
+tally-bank logic and difficulty unchanged. Preserve original comparison bytes,
+private assets and distinct enhanced artifacts. `run_enhanced_menu_tests.py`
+provides finite physical-input acceptance and a cold-ADF route;
+`run_enhanced_feedback_tests.py` observes ordinary games across an end exchange.
+Their receipts are separate from historical CT/follow-on gates. Draft PR only;
+parent retains independent review, tally-fix integration and merge authority.

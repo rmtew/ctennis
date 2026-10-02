@@ -3,7 +3,8 @@
 This follow-on preserves the shared maintained gameplay. The normal builder
 selects the enhanced interface; `--interface=original` is the immutable-layout
 comparison aid. Both choices use the same game, lifecycle, scoring and audio.
-There is no attract mode or tutorial.
+The later approved menu/pause/attract extension is documented below; the
+checkpoint sections retain their original narrower scope.
 
 ## Build and private output
 
@@ -146,3 +147,81 @@ sprite fault is detected at each exact requested scene. The progress proof
 rejects the preceding-generation receipt. Other reports are retained evidence
 at the reviewed head; conservative helper fingerprints may mark them stale
 after this diagnostic change. They were not rewritten or broadly rerun.
+
+## Approved menu, help and gameplay-interface extension (2026-10-02)
+
+Richard approved this extension after the preceding comparison-interface scope.
+It supersedes the earlier statement excluding attract/tutorial work. The original
+flavor still preserves the exact executable bytes; enhanced remains the default.
+The implementation is isolated in `amiga/game/interface*.s` and the typed
+`interface_state.i` record. Scoring, physics, AI, and tally-bank routines are
+unchanged. `interface_feedback.s` only reads the logical game cells.
+
+The title offers Start game, Players 1/2, How to play and Controls. Up/down
+select, either action or Enter activates, and left/right toggle Players. Main
+1/2 and Delete/Tab still immediately start the chosen mode. Help, Controls and
+Credits share three pages, left/right wrap and either action or Escape exits.
+Player count survives title returns and the one-player demo. Credits display
+an actual build revision, with `+ LOCAL` for tracked working-tree changes.
+The help rules were checked against the manual scan supplied in this session:
+automatic returns by position; either action serves and selects the special
+lob near the net/drop from the rear; 15/30/40/game, deuce/advantage, and six games
+to win. The supplied web URLs returned403 here; the attached scan resolved
+that rules-text blocker. No difficulty or rule changes are introduced.
+
+Blue is logical player1 (native style2, palette `$55e`); Pink is logical player2
+(style3, `$c5b`). Their controls remain attached to identity after exchanging
+ends. Controls are presented as movement and serve/shot purposes. Both actions
+have the same game meaning. Existing court A/B artwork is preserved; new text
+uses Blue/Pink. Read-only feedback reports either colour winning a game and the
+updated numeric tally; YOUR SERVE appears only while a human is waiting to serve.
+The independent tally-bank investigation remains separate.
+
+Attract begins after1800 idle title callbacks (30.04seconds at the unchanged
+59.922738Hz source rate), followed by the ordinary64-callback selection gate.
+There is no demo hotkey and key3 has no assigned behavior. The demo uses normal
+`game_new_match` and the same native input dispatcher/gameplay/scoring/render/audio.
+`assets/interface/demo-inputs.json` holds300 frames of run-length encoded physical
+port2 packets, measured during ordinary native play on the original comparison
+executable. `record_demo_inputs.py` is an offline ordinary-input recorder; no
+capture import, source-machine RAM or test harness enters runtime. Input playback
+is deterministic by gameplay callback; native timer entropy remains ordinary.
+One-player AI continues naturally. The short recording loops until takeover,
+input exit, or the ordinary result/title lifecycle.
+
+DEMO explicitly offers G / port2 button2 to take over Blue. Only player1 owns
+takeover; player2 slash/keypad decimal are ordinary fresh-input exits to title.
+The takeover press is consumed by the existing per-player action latch until
+physical release. Score, ball, players, clocks and audio are preserved at the
+handover; the next normal gameplay tick advances them. Physical keyboard/pad
+edges are sampled before playback, and keyboard/joystick sources are observed separately before their OR.
+Entry-held controls are filtered until their own physical release, including
+after takeover; a fresh joystick button2 remains eligible while G is entry-held. Other fresh supported gameplay/menu input returns to title and
+consumes the event.
+
+P or Escape pauses live/round/result court states. PAUSED provides Resume and
+Return to title; return requires an explicit Yes confirmation, defaulting to No.
+Paused simulation callbacks continue sampling physical input but skip native
+game clocks, gameplay, scoring, sequencer and round/result polling. Paula is
+muted using its actual native voice levels (write-only hardware volumes are not
+read by the game), then restored on resume; held actions are latched until release.
+The free-running scheduling timer and keyboard handshake continue, preventing
+an elapsed-time catch-up or lost key release on resume.
+
+The footer is a separate16-row,512-byte white bitmap, fetched after the192-row
+court. It appends Copper commands after all existing score commands and changes
+only the enhanced display stop and late-blank publication threshold (252 rather
+than236; the sprite-safe early cutoff24 is unchanged). It neither changes score-bank offsets nor
+writes to tally assets. Both Copper buffers receive the same initialized footer
+pointers. Title text uses the existing native bitplanes and a private offline
+font; the sole new committed glyph is the authored selection star.
+
+Exact integration touchpoints for the tally worker: `controls.s` observes/filter
+raw joystick sources before keyboard OR; `keyboard.s` retires entry-held keys
+on real releases and filters them during keyboard merge; `menu.s` delegates enhanced
+selection/remembered count; `integration.s` calls `ui_playback` after normal
+player assignment; `result.s` returns enhanced results to the title menu;
+`gameplay_integration_probe.s` samples UI, gates pause polling/ticks, initializes
+footer pointers and includes UI modules; `sprite_probe_display.i` appends the
+footer after the score command include. `score_copper_patch.i`, scoring modules,
+round rules, and the score asset generator are untouched.

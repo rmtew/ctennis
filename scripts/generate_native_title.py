@@ -53,6 +53,20 @@ def generate():
         for col,c in enumerate(line):
             for dy,bits in enumerate(glyphs[c]):
                 for p in planes: p[(144+row*8+dy)*32+x+col]=bits
+    # Private native font: glyph bytes are offline assets, never committed.
+    font = bytearray(128*8)
+    for c, rows in glyphs.items():
+        if ord(c)<128: font[ord(c)*8:ord(c)*8+8] = bytes(rows)
+    (out/'enhanced').mkdir(parents=True,exist_ok=True)
+    (out/'enhanced/font.bin').write_bytes(font)
+    recording = json.loads((ROOT/'assets/interface/demo-inputs.json').read_text())
+    packets = recording['packets']
+    if sum(n for n, mask in packets) != recording['frames'] or any(
+            type(n) is not int or not 0<n<65536 or type(mask) is not int or not 0<=mask<64
+            for n, mask in packets):
+        raise ValueError('Invalid ordinary physical input recording')
+    (out/'enhanced/demo-inputs.i').write_text('ui_demo_packets:\n'+''.join(
+        f'        dc.w {n},{mask}\n' for n,mask in packets)+'        dc.w 0\n')
     for flavor, data in [('original', original), ('enhanced', planes)]:
         directory=out if flavor=='original' else out/'enhanced'
         directory.mkdir(parents=True,exist_ok=True)

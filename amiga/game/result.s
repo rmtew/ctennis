@@ -57,8 +57,12 @@ game_result_poll:
         bsr     game_audio_cue_complete
         tst.b   d0
         beq     game_round_done
+        ifd ENHANCED_INTERFACE
+        bsr     ui_return_title
+        else
         move.w  #GAME_TITLE,game_lifecycle
         bsr     game_menu_tick
+        endif
         bra     game_round_done
 .restart_sound:
         bsr     game_pair_sound_complete
