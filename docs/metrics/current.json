@@ -859,7 +859,7 @@
       "build/native/ui-pages.bin": "ed5f8521270bfa61007dc54abf29a2d9112ae791d1ee998d7214097ec8f51a5f",
       "build/native/version.bin": "3185c89d8a3c9d26d39e200bd118a9f7e941ede106051063da393704877fca9b"
     },
-    "build_receipt_sha256": "9befff36c37368b227adc66819d4161f783e560cab1313b48725e00815db5e14"
+    "build_receipt_sha256": "6cbe5a863cea8c87ccfe9de698b420dd1c165827f33e78beee6e10025ecd3e92"
   },
   "runtime": {
     "cold-one": {
@@ -884,7 +884,8 @@
               "p95_cck": 29817,
               "max_cck": 29817,
               "budget_cck": 59191.13723754883,
-              "minimum_headroom_cck": 29374.137237548828
+              "minimum_headroom_cck": 29374.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
             },
             "update_including_render": {
               "samples": 6,
@@ -1800,7 +1801,8 @@
               "p95_cck": 33736,
               "max_cck": 33736,
               "budget_cck": 59191.13723754883,
-              "minimum_headroom_cck": 25455.137237548828
+              "minimum_headroom_cck": 25455.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
             },
             "update_including_render": {
               "samples": 5,
@@ -2126,7 +2128,8 @@
               "p95_cck": 33638,
               "max_cck": 33638,
               "budget_cck": 59191.13723754883,
-              "minimum_headroom_cck": 25553.137237548828
+              "minimum_headroom_cck": 25553.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
             },
             "update_including_render": {
               "samples": 1237,
@@ -2157,7 +2160,8 @@
               "p95_cck": 29351,
               "max_cck": 29351,
               "budget_cck": 59191.13723754883,
-              "minimum_headroom_cck": 29840.137237548828
+              "minimum_headroom_cck": 29840.137237548828,
+              "scope": "Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution."
             },
             "update_including_render": {
               "samples": 372,
@@ -2813,8 +2817,8 @@
     "tests/fixtures/native-demo/trajectory.sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6",
     "tools.lock.json": "61b7c792b1e80fd62303dfbedbca1114b4beac9c6fbdccc8b7f855c27d87f93e"
   },
-  "identity": "a7577a89d15f6e6df914868d7a62090a1cfe6d5085059e091ca00c836d2b3e8b",
-  "report_generator_sha256": "06021104b8b0ed1591fc4126c7a71c43aeb4dc7f3bcef0e98d27e3f629366732",
+  "identity": "519f4b2a8454611e59570efa790370727874f12c2e6c7bf5e244150f10fecdd9",
+  "report_generator_sha256": "e1323ef1afe1edfa42b3fea7f2cda7c2fcec7bf68bbcb2922ebdb3b27fbed704",
   "deltas": {
     "state": "no previous accepted compatible report"
   },

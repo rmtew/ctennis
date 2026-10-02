@@ -16,9 +16,11 @@ Timing uses elapsed emulated colour clocks, including chip-bus waits; host time 
 PAL display budget: 70,824 CCK (~19.97 ms). Simulation budget: ~59,191.14 CCK (~16.69 ms).
 Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasured.
 
+UI construction is grouped by page (title = menu; help includes controls/credits), independently of callback-entry profiles; menu-page redraws can occur during pause/input transitions. Pause-only UI construction remains unmeasured.
+
 RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.
 
-| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |
+| Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |
 |---|---:|---:|---:|---:|---:|
 | cold-one / title | 6 | 3.511 / 11.165 / 11.165 | unmeasured / 8.407 | 1.240 | 5.523 / 5.347 |
 | cold-one / one-player-rally | 3507 | 5.632 / 6.057 / 7.651 | 1.588 / unmeasured | 3.929 | 9.037 / 8.867 |
@@ -43,7 +45,7 @@ Total reset to successful input: 24789.238 ms; displayed title and input both re
 Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait. Milestones may overlap: input can respond before a complete title frame. Listed-milestone differences are signed offsets, not invented sequential phase durations; boot complete requires both displayed title and successful input.
 
 
-| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |
+| Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |
 |---|---:|---:|---:|---:|---:|
 | two / title | 5 | 3.517 / 12.269 / 12.269 | unmeasured / 9.511 | 1.240 | 4.419 / 4.310 |
 | two / one-player-rally | 1 | 5.600 / 5.600 / 5.600 | 1.346 / unmeasured | 2.166 | 11.088 / 10.655 |
@@ -54,7 +56,7 @@ two: chip used 293,944 B; free 230,344 B; largest block 229,792 B; runtime peak 
 Deadlines/publications: `{'missed_native_callbacks': 0, 'missed_publications_counter': 0, 'publication_failures': 0}`. Allocation failures: unmeasured; pre-Exec bootstrap: unmeasured.
 
 
-| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |
+| Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |
 |---|---:|---:|---:|---:|---:|
 | setup / title | 1237 | 2.169 / 2.175 / 12.349 | unmeasured / 9.484 | 10.153 | 4.339 / 4.253 |
 | setup / help | 372 | 2.162 / 2.169 / 11.831 | unmeasured / 8.275 | 9.552 | 4.857 / 4.658 |
@@ -64,7 +66,7 @@ Deadlines/publications: `{'missed_native_callbacks': 0, 'missed_publications_cou
 setup deadlines/publications: `{'missed_publications_counter': 0, 'missed_named_profile_deadlines': 0, 'missed_native_callbacks': 0, 'scope': 'Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured.'}`.
 
 
-| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |
+| Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |
 |---|---:|---:|---:|---:|---:|
 | demo / title | 1800 | 2.169 / 2.174 / 11.151 | unmeasured / unmeasured | 1.680 | 5.537 / 5.323 |
 | demo / demo | 11703 | 5.353 / 6.011 / 11.398 | 7.841 / unmeasured | 3.976 | 5.291 / 5.067 |
