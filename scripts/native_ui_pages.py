@@ -23,6 +23,7 @@ def prepare(version):
     menu_width=max(len(text[name]) for name in menu_names+['ui_players_two'])*8
     menu_left=(256-menu_width)//2
     output = bytearray()
+    title_menu=None
     for page, label in enumerate(('ui_menu_lines','ui_help_lines','ui_control_lines','ui_credit_lines')):
         plane = bytearray(96*32)
         entries = [(49+i*11, name, menu_left) for i,name in enumerate(lines(label))] if page==0 else [(i*10,name,16) for i,name in enumerate(lines(label))]
@@ -33,7 +34,8 @@ def prepare(version):
             draw(plane,y,x,value)
         if page==0:
             for x,value in [(80,"A"),(168,"B"),(120,"VS")]:draw(plane,4,x,value)
-        output.extend(plane)
+        if page==0:title_menu=bytes(plane)
+        else:output.extend(plane)
     path=ROOT/'build/native/ui-pages.bin'
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_bytes(output)
@@ -84,5 +86,8 @@ def prepare(version):
                                 flag=128>>((px+bit)%8)
                                 if index&(1<<n):planes[n][address]|=flag
                                 else:planes[n][address]&=~flag
-        figures.extend(b''.join(planes))
-    (ROOT/'build/native/ui-title-figures.bin').write_bytes(figures)
+        for n in range(4):
+            combined=bytearray(title_menu)
+            combined[16*32:48*32]=planes[n]
+            figures.extend(combined)
+    (ROOT/'build/native/ui-title-pages.bin').write_bytes(figures)

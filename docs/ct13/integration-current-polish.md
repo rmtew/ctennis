@@ -47,3 +47,39 @@ e65a9584ccd0c86e678661ed5d2c18622da63fd4. AppImage SHA256
 Portable mode uses ignored .tools. External supplied Kickstart only; no cartridge
 was opened or used. An api.github.com curl request failed CONNECT403; official
 GitHub clone and release download succeeded without escalation or proxy changes.
+
+## Focused follow-up
+
+Ordinary menu/input passed89 checks, including actual full title scanout with
+both B roles, pause/confirmation inversion, selector isolation and physical
+keyboard/joystick takeover. Strict native setup then detected excess work from
+a separate figure copy; that intermediate check failed and was superseded.
+Baking complete coloured title pages reduces runtime to one copy per plane.
+The latest strict setup check passed all callbacks, repeated menu/help/controls/
+credits/idle/start/pause/return/restart, with no deadline failures or catchup
+callbacks. This uses13KB more static chip cache than the intermediate layout;
+combined memory acceptance remains pending. No deadline exemption was added.
+
+DOUBLE FAULT passed108 checks including full actual pixels, net restoration,
+31-tick expiry, completed bank association and physical plane pointers.
+Compiled wrong-field and wrong-pointer controls were detected. These focused
+runs used e0df7b4 plus the documented local copy optimization; final clean-head
+build/package hashes are in ignored build reports. Ordinary menu passed before
+the copy optimization; strict setup rechecked the optimized title/page pixels.
+
+Commands:
+- python -m unittest discover -s tests/unit -q
+- python scripts/native_assets.py
+- python assets/interface/font-mac/extract.py --text 'Start game' --text 'Font-Mac - creator unknown'
+- RUST_LOG=info python scripts/build_native_game.py
+- RUST_LOG=info python scripts/build_native_adf.py --self-test
+- RUST_LOG=info python scripts/run_enhanced_menu_tests.py
+- RUST_LOG=info python scripts/run_native_setup_tests.py
+- RUST_LOG=info python scripts/run_native_contracts.py --case status-6 --self-test
+
+Remaining finite combined gate after final core freeze: memory and physical
+publication across ordinary game/celebration, both modes/poses, WIN0–6/reset,
+canonical trajectory and intentional celebration-tail updates, two unattended
+full demo cycles and proof of no court flash after returned title. The pending
+parent-relayed legacy title/court/title fix is not presumed present or cleared.
+No release readiness, master merge, public release or full-source parity claim.

@@ -21,7 +21,7 @@ UI_IDLE_TICKS equ 1800 ; 30.04 seconds at the unchanged native callback rate
 ui_state: dcb.b U_SIZE,0
         section display_data,data,chip
 ui_cached_pages: incbin "build/native/ui-pages.bin"
-ui_title_figures: incbin "build/native/ui-title-figures.bin"
+ui_title_pages: incbin "build/native/ui-title-pages.bin"
 ui_menu_font: incbin "assets/native/title/font-mac.bin"
 ui_font: incbin "assets/native/title/font.bin"
 ui_overlay_plane: dcb.b 512,0
