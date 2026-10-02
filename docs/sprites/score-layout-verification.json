@@ -1,0 +1,103 @@
+{
+  "tested_product_commit": "552458aedca9803fb94ccfa8b9c6b5fbf3d523d9",
+  "base_master_commit": "21c370f0a614a4ea58f3efdb5c9fea41a5959b0e",
+  "target": "PAL A500 68000 OCS 512KB chip zero slow/fast Kickstart1.3",
+  "host_tests_passed": 37,
+  "validated_inputs": 94,
+  "startup_generated_banks": 28,
+  "startup_seconds": 0.021160197863201446,
+  "startup_wrong_advantage_control": {
+    "detected": true,
+    "failure": {
+      "label": "startup banks match selected square preview",
+      "bank": "score_bank_point_a_4_p2",
+      "different_bytes": 24
+    },
+    "executable_sha256": "3262fbed62975117b828563b8da9142a9a0be51a36aac5dd8602df7fb1d3960e"
+  },
+  "scoreboard_cases": 28,
+  "scoreboard_native_captures": 56,
+  "both_copper_banks_and_all_pointer_descriptors_checked": true,
+  "zero_missed_publications": true,
+  "scoreboard_wrong_win_control": {
+    "detected": true,
+    "failure": {
+      "label": "independent native scoreboard raster",
+      "detail": "{'label': 'visible native scoreboard raster matches authored specification', 'side': 'a', 'point': 6, 'games': 6, 'different_pixels': 552}"
+    },
+    "unchanged_tally": [
+      6,
+      0
+    ],
+    "artifact_directory": "build/tests/native-scoreboard/6-0-0/wrong-tally-pointer",
+    "executable_sha256": "2d7ba7c9ce2cb0c04fcae68c9dc08ba422e9f931c5d2744521a1186e6d45a6ad"
+  },
+  "ordinary_physical_input_starts": [
+    {
+      "two_players": false,
+      "screenshot_sha256": "ffcc0c5d1c81096bca4d794409a2f2ee5ee019f2a4eb3c1e0b664dd5a1d63880",
+      "input": "ordinary title; Enter"
+    },
+    {
+      "two_players": true,
+      "screenshot_sha256": "cb4f807b83528be5dbfc388e657e847745aa628e6d5d41ac11de5cafe951f6c0",
+      "input": "ordinary title; Down, Right, Up, Enter"
+    }
+  ],
+  "preview": {
+    "library_file_id": "libfile_7a650b8165548191bd91c5bb5a03dcef",
+    "version": 1,
+    "filename": "baseline-rally-framed-square-scores.png",
+    "dimensions": [
+      1500,
+      1030
+    ],
+    "sha256": "85dda4d426dd3df9d11cc55a55c4123f54fb5aed9b450573ec184e4c4939b039",
+    "content": "Actual native fixed-column captures; ordinary one-player court at716x537 from716x285, native-pixel closeups, all seven original masks in both colours, two-player label"
+  },
+  "cost": {
+    "base_executable_bytes": 248480,
+    "selected_executable_bytes": 235356,
+    "saved_executable_bytes": 13124,
+    "base_hunk_payload_bytes": 202104,
+    "selected_hunk_payload_bytes": 202480,
+    "point_bank_bytes_unchanged": 14336,
+    "palette_entries_added": 0
+  },
+  "selected_executable_sha256": "031c5cde44970e9feee22451a96aedcc91c327ba49af897a0f05fd4f6eb3f01e",
+  "reference_access": "Local Library screenshot materialization failed; parent actual screenshot inspection supplied. Fresh local native captures inspected.",
+  "not_run": [
+    "unrelated full native acceptance",
+    "WinUAE campaign"
+  ],
+  "reused_status6_evidence": {
+    "tested_product_commit": "0ce30f56f15f0f7fd39ad57d2a003f795e03ce9d",
+    "reason": "Fixed-column correction leaves every status bank, frame/Copper command and role/WIN pixel unchanged.",
+    "status6_checks": 112,
+    "status6_native_raster_checks": 2,
+    "status6_controls": [
+      {
+        "detected": true,
+        "failure": {
+          "label": "status visible until native saturation expiry",
+          "actual": 2,
+          "expected": 0
+        },
+        "artifact_directory": "build/tests/native-contracts/status-6/mutant-True",
+        "executable_sha256": "73e86b3b2b198a75f55e6b71dc8e647ecb7e23136abf22595d03f473b5a42852"
+      },
+      {
+        "detected": true,
+        "failure": {
+          "label": "visible native status raster matches committed bank",
+          "variant": 6,
+          "different_pixels": 1082
+        },
+        "artifact_directory": "build/tests/native-contracts/status-6/mutant-pointer",
+        "executable_sha256": "58ca452648e6207fded83e545c851f4eb5137e3d0c0f1a26553feaef5e02b466"
+      }
+    ]
+  },
+  "point_placement": "All seven original selected masks restored exactly; fixed tens/units; no per-value ink centring; original single-A placement.",
+  "single_zero_units_equal_30_40": true
+}

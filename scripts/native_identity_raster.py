@@ -12,14 +12,15 @@ def assert_mode_raster(path, variant):
         assert picture.size==(716,285)
         raster=picture.convert('RGB')
         # Side labels only: the upper player's legs can cover the centre of
-        # this background bank at Y32 after a game award.
+        # this background bank at Y34 after a game award.
         for left,right in ((0,48),(208,256)):
+            expected.extend([(0,0,0)]*(2*(right-left)*2))  # two blank native rows below A/B
             for y in range(8):
                 for x in range(left,right):
                     c=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
                     rgb=tuple(((PALETTE[c]>>s)&15)*17 for s in (8,4,0))
                     expected.extend((rgb,rgb))
-            actual.extend(raster.crop((126+2*left,48,126+2*right,56)).get_flattened_data())
+            actual.extend(raster.crop((126+2*left,48,126+2*right,58)).get_flattened_data())
     assert actual==expected,{'label':'centred A/B controller-role raster','variant':variant,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
     return {'variant':variant,'matched':True,'pixels':len(actual)}
 

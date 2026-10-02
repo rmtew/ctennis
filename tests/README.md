@@ -35,8 +35,8 @@ transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels
 
 Render expectations use immutable native assets and named fields, not expected
 images made by the runtime renderer. Complete side-panel crops verify six compact
-WIN words, solid grey remaining rows, Blue/Red earned rows, the white open frame
-and plain retained points/advantage. All0–6 variants, both modes/ends and both
+WIN words, solid grey remaining rows, Blue/Red earned rows, the stacked closed white frames
+and the selected square LED points/advantage. All0–6 variants, both modes/ends and both
 physical Copper banks are checked by one-time native fixtures, with a compiled
 wrong tally-pointer control. Ordinary awards also verify actual full-panel pixels. Cadence
 observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
@@ -76,3 +76,20 @@ accounting; a separate delayed construction must fail raw deadlines while the
 unmodified32-bit timer accounts for the complete wrap. Both restore the normal
 executable before final acceptance. See the follow-on report in
 [verification issues](../docs/ct11/verification-issues.md).
+
+Square LED point banks are constructed once by the native startup entry. Run
+`python scripts/run_native_square_startup.py --self-test` to compare every byte
+of all28 generated strips with the frozen selected-preview masks plus the
+unchanged court background, measure construction time before the simulation
+clock starts, and reject a compiled wrong advantage position. The masks in
+`docs/sprites/square-led-contract.json` were sampled from the user-selected
+preview before native implementation; tests/build must never regenerate them.
+`run_native_scoreboard_tests.py --self-test` additionally verifies these banks
+and actual complete panel scanout in all28 mode/end/variant fixtures.
+
+The requested stacked-frame layout uses role labels at native y34, score cells at
+y48, and borders at y43/68/123. The point cells have four native blank pixels to
+every border. Score glyphs retain their selected shapes and fixed tens/units positions within
+the cells; a single0 has a blank tens cell. The scoreboard fixtures also check the two-row gap below A/B and both
+HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
+white frame pixel while the full-width status strips are active.

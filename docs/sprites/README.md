@@ -147,3 +147,10 @@ extraction, substitute tools or packaged ROM is involved.
 Final native verification results are recorded in verification.md; they apply
 only to the exact committed head named there. Do not infer combined CT13
 acceptance from sprite-branch results.
+
+## Selected square LED point scores
+
+The later square LED selection replaces only the point-number/single-A masks.
+See [implementation and evidence](square-led.md). The earlier retained-point
+paragraphs above describe the previous checkpoint; A/B headers, WIN rows,
+colours, Copper timing and scoring semantics remain unchanged.
