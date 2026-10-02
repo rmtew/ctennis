@@ -21,13 +21,16 @@ def run():
         def address(n):
             h,offset=located[n];return segments[h]['start']+offset
         title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back')}
-        planes=[(address(f'title_plane{i}'),6144) for i in range(4)]
+        # Observe the complete menu/hint area, rather than startup's bulk
+        # branding initialization, which can exceed CCP's4096-event queue.
+        # Branding pixels are independently checked in all eight scanouts.
+        planes=[(address(f'title_plane{i}')+144*32,48*32) for i in range(4)]
         state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,pointer=bytearray(4))
         fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','display_ready')}
         def event(message):
             if message.get('method')!='event.mmio':return
             r=message['params'];a=r['addr'];v=r['value'];size=r['size'];p=r['position'];n=fields.get(a)
-            assert not r.get('dropped_events',0) and not r.get('dropped_notifications',0),'Attract telemetry dropped'
+            assert not r.get('dropped_events',0) and not r.get('dropped_notifications',0),{'label':'Attract telemetry dropped','position':p,'dropped_events':r.get('dropped_events',0),'dropped_notifications':r.get('dropped_notifications',0)}
             if n=='simulation_started_updates':state['started']=v
             elif n=='simulation_updates':
                 state['completed']=v
@@ -61,7 +64,7 @@ def run():
             if any(start<=a<a+size<=start+length for start,length in planes):
                 if windows and windows[-1]['next_entry'] is None and windows[-1]['stable']:
                     windows[-1]['unexpected_title_writes']+=1
-                    raise AssertionError('Quiet title bitmap changed after completed menu construction')
+                    raise AssertionError('Quiet menu bitmap changed after completed menu construction')
             if 0xdff080<=a and a+size<=0xdff084:state['pointer'][a-0xdff080:a-0xdff080+size]=v.to_bytes(size,'big')
             if a==0xdff088:
                 pointer=int.from_bytes(state['pointer'],'big')
@@ -84,7 +87,7 @@ def run():
         for cycle,window in enumerate(windows,1):
             check('title construction completed',window['stable'],True)
             check('title actual bank publications observed',window['publications']>0,True)
-            check('no hidden quiet title bitmap mutation',window['unexpected_title_writes'],0)
+            check('no hidden quiet menu bitmap mutation',window['unexpected_title_writes'],0)
             elapsed=window['next_entry']['position']['seconds']-window['returned']['position']['seconds']
             check('retained bounded 30-second title idle',29.9<elapsed<30.2,True)
             for offset in (4,600,1200,1790):
@@ -92,7 +95,7 @@ def run():
                 assert_title_raster(path);assert_menu_selection_raster(path,0,1)
     target_log(directory)
     report=dict(passed=True,checks=checks,windows=windows,entries=entries,publications=publications,captures=[str(p.relative_to(ROOT)) for p in captures],
-                executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),scope='Two uninterrupted ordinary unattended cycles through selected tune, actual title COP1LC/blank publications, immutable idle title bitmap and eight authored-font scanouts; no physical inputs/state writes or hardware parity claim')
+                executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),scope='Two uninterrupted ordinary unattended cycles through selected tune, actual title COP1LC/blank publications, immutable idle menu bitmap and eight authored-font scanouts; no physical inputs/state writes or hardware parity claim')
     atomic_json(directory/'report.json',report);print(json.dumps(dict(passed=True,cycles=len(windows),entries=len(entries),publications=len(publications),title_frames=len(captures))))
 
 

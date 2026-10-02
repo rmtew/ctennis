@@ -138,7 +138,7 @@ Full demo replay then observes actual COP1LC/COPJMP publications through the
 complete tune, automatic return, full idle and next demo; four title scanouts
 and the next demo raster check pixels as well as lifecycle counters. A separate
 no-input/no-injection two-cycle run checks every title COP1LC/COPJMP publication,
-retained sprite/header blank windows, absence of subsequent quiet-title bitmap
+retained sprite/header blank windows, absence of subsequent quiet-menu bitmap
 writes and eight actual title/menu scanouts until the next automatic selection.
 The active celebration never enters legacy intermediate title states7/8; cue
 completion returns directly once, preserving30-second idle before the next demo.
