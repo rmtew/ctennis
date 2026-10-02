@@ -32,6 +32,8 @@ def _build(flavor="enhanced"):
         version = ROOT / 'build/native/version.bin'
         version.parent.mkdir(parents=True, exist_ok=True)
         version.write_bytes((f"BUILD {revision}" + (" + LOCAL" if dirty else "")).encode('ascii') + b"\0")
+    from native_ui_pages import prepare as prepare_ui_pages
+    prepare_ui_pages(version.read_bytes())
     display.mkdir(parents=True, exist_ok=True)
     executable = display / f"ctennis-{flavor}"
     run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(display / "native.lst"), "-o",

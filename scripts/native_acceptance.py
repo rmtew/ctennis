@@ -37,7 +37,7 @@ def main():
         ['scripts/run_ordinary_round_tests.py','--mode=two','--match','--cadence'],
         ['scripts/run_ordinary_round_tests.py','--mode=one','--bank-control'],
         ['scripts/run_ordinary_round_tests.py','--mode=one','--match','--early-release','--audio','--self-test'],
-        ['scripts/run_native_setup_tests.py'],
+        ['scripts/run_native_setup_tests.py','--self-test'],
         ['scripts/build_native_adf.py','--self-test'],
     ]
     report = {'commit': head, 'started_utc': started, 'state': 'incomplete', 'passed': False,

@@ -49,7 +49,9 @@ def acceptance(name, report):
     if name == 'restart-audio-early':
         return report.get('early_release_verified') is True and report.get('audio_observed') is True and len(report.get('emitted_audio', [])) == 3 and bool(report.get('compiled_fault_controls'))
     if name == 'setup-proposal':
-        return report.get('phase_contract_proposal', {}).get('diagnostic_passed') is True
+        return (report.get('raw_all_callback_deadline_passed') is True
+                and bool(report.get('elapsed_accounting_samples'))
+                and [c.get('name') for c in report.get('compiled_fault_controls', [])] == ['lost-wrap','ui-overrun'])
     if name == 'inputs':
         return len(report.get('checks', [])) >= 11
     if name in ('deuce','status-2','audio-hit') and not report.get('compiled_fault_controls'):

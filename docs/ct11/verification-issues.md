@@ -54,3 +54,43 @@ The parent will manage a finite follow-on timing repair before cosmetic polish:
 3. Repeat the bounded menu/help sequence and then the relevant gameplay cadence checks, demonstrating accounted elapsed time and bounded recovery without changing observer origins or hiding failures. Reuse existing fixtures and observers rather than introducing a large framework.
 
 This is follow-on scope, not an implemented CT11 fix or an adopted timing budget. The documentation-only disposition commit does not rerun runtime tests or promote earlier evidence to a new-head runtime pass.
+
+## Timing follow-on implementation checkpoint (2026-10-02 UTC)
+
+Branch `fix/native-ui-timing` starts at merged CT11
+`ba779c213cb2176619db1104f7842f6b5a9ceacc`. The focused product change cascades
+CIA-B timer A (E-clock low word) into timer B (underflow high word), reads a
+stable32-bit down-counter and accumulates unsigned elapsed deltas. The existing
+11838+14906/65536 clock, fractional phase, update dispatch and observer origin
+remain continuous. Keyboard acknowledgement reads the new low-word address.
+
+Static menu/page strings are baked at build time from their existing authored
+assembly declarations and committed font into four identical-white-plane
+2560-byte images (10240 added chip bytes). Construction copies the selected
+image into all four existing title planes, sampling the clock and real keyboard
+between bounded plane copies, then draws only dynamic menu choice/count and
+marks the completed display ready. Overlay font writes use direct native plane
+offsets. No new gameplay, scoring, audio or publication policy is introduced.
+
+Dirty-worktree focused checkpoint: the retained ten-transition sequence plus
+four repeated page changes and15 seconds of continuous idle passes every raw
+deadline, with menu work30003–33963CCK and page work29403–29488CCK. No epoch
+reset, setup waiver or recovery exemption is used. Representative actual PAL
+scanout matches committed glyphs at their retained coordinates. A delayed UI
+control crosses a complete16-bit wrap and fails raw cadence while elapsed
+accounting remains correct. Restoring16-bit masking is independently rejected
+with exactly327680CCK lost elapsed time. These checkpoint observations are not
+final exact-head delivery acceptance; final commands/hashes/results belong to
+the draft PR and ignored fresh-checkout receipts.
+
+Next action: run the finite native gate at the committed draft head, including
+strict one/two-player/cold-ADF cadence,10958-tick replay/takeover, actual completed
+bank/publication, input/restart/audio, and the two timing controls. Parent review
+and merge remain separate; CT12 cosmetics are not started.
+
+The focused observer also retains the same uninterrupted origin through physical
+start after UI, fresh advancing serve, pause, confirmed return, reselection and
+fresh restarted flight. It honours the unchanged64-callback selection delay;
+there is no phase start or input/state injection. Timing controls have separate
+structured artifact records containing actual mutated executables and sources,
+matching the existing receipt finalizer rather than unverified name-only flags.
