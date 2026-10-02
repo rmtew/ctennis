@@ -29,4 +29,6 @@ def assert_status_raster(path, variant):
     if actual!=expected:
         raise AssertionError({'label':'visible native status raster matches committed bank',
             'variant':variant,'different_pixels':sum(a!=b for a,b in zip(actual,expected))})
-    return {'variant':variant,'pixels':len(actual),'asset_planes':4,'matched':True}
+    from native_scoreboard_raster import assert_score_frames_raster
+    frames=assert_score_frames_raster(path)
+    return {'variant':variant,'pixels':len(actual),'asset_planes':4,'matched':True,'frames':frames}

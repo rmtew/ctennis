@@ -1,5 +1,5 @@
-        ; CT12 mode: full row at native y32, restore all planes.
-        dc.w $4c01,$fffe
+        ; CT12 mode: full row at native y34, restore all planes.
+        dc.w $4e01,$fffe
 score_cop_232_hi: dc.w $00e0,0
 score_cop_232_lo: dc.w $00e2,0
 score_cop_233_hi: dc.w $00e4,0
@@ -8,290 +8,294 @@ score_cop_234_hi: dc.w $00e8,0
 score_cop_234_lo: dc.w $00ea,0
 score_cop_235_hi: dc.w $00ec,0
 score_cop_235_lo: dc.w $00ee,0
-        dc.w $5401,$fffe
+        dc.w $5601,$fffe
 score_cop_237_hi: dc.w $00e4,0
 score_cop_237_lo: dc.w $00e6,0
 score_cop_238_hi: dc.w $00e8,0
 score_cop_238_lo: dc.w $00ea,0
-        ; Red logical B point glyphs: high planes for native rows40..55.
-        dc.w $5401,$fffe
+score_cop_244_hi: dc.w $00e0,0
+score_cop_244_lo: dc.w $00e2,0
+score_cop_245_hi: dc.w $00ec,0
+score_cop_245_lo: dc.w $00ee,0
+        ; Red logical B point glyphs: high planes for native rows48..63.
+        dc.w $5c01,$fffe
 score_cop_240_hi: dc.w $00e0,0
 score_cop_240_lo: dc.w $00e2,0
 score_cop_241_hi: dc.w $00ec,0
 score_cop_241_lo: dc.w $00ee,0
         ifd ENHANCED_INTERFACE
-        dc.w $544d,$fffe
-        else
-        dc.w $543d,$fffe
-        endif
-score_cop_0_hi: dc.w $00e8,0
-score_cop_0_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $54a9,$fffe
-        else
-        dc.w $5499,$fffe
-        endif
-score_cop_1_hi: dc.w $00e8,0
-score_cop_1_lo: dc.w $00ea,0
-        dc.w $54d1,$fffe
-score_cop_2_hi: dc.w $00e8,0
-score_cop_2_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $554d,$fffe
-        else
-        dc.w $553d,$fffe
-        endif
-score_cop_3_hi: dc.w $00e8,0
-score_cop_3_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $55a9,$fffe
-        else
-        dc.w $5599,$fffe
-        endif
-score_cop_4_hi: dc.w $00e8,0
-score_cop_4_lo: dc.w $00ea,0
-        dc.w $55d1,$fffe
-score_cop_5_hi: dc.w $00e8,0
-score_cop_5_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $564d,$fffe
-        else
-        dc.w $563d,$fffe
-        endif
-score_cop_6_hi: dc.w $00e8,0
-score_cop_6_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $56a9,$fffe
-        else
-        dc.w $5699,$fffe
-        endif
-score_cop_7_hi: dc.w $00e8,0
-score_cop_7_lo: dc.w $00ea,0
-        dc.w $56d1,$fffe
-score_cop_8_hi: dc.w $00e8,0
-score_cop_8_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $574d,$fffe
-        else
-        dc.w $573d,$fffe
-        endif
-score_cop_9_hi: dc.w $00e8,0
-score_cop_9_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $57a9,$fffe
-        else
-        dc.w $5799,$fffe
-        endif
-score_cop_10_hi: dc.w $00e8,0
-score_cop_10_lo: dc.w $00ea,0
-        dc.w $57d1,$fffe
-score_cop_11_hi: dc.w $00e8,0
-score_cop_11_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $584d,$fffe
-        else
-        dc.w $583d,$fffe
-        endif
-score_cop_12_hi: dc.w $00e8,0
-score_cop_12_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $58a9,$fffe
-        else
-        dc.w $5899,$fffe
-        endif
-score_cop_13_hi: dc.w $00e8,0
-score_cop_13_lo: dc.w $00ea,0
-        dc.w $58d1,$fffe
-score_cop_14_hi: dc.w $00e8,0
-score_cop_14_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $594d,$fffe
-        else
-        dc.w $593d,$fffe
-        endif
-score_cop_15_hi: dc.w $00e8,0
-score_cop_15_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $59a9,$fffe
-        else
-        dc.w $5999,$fffe
-        endif
-score_cop_16_hi: dc.w $00e8,0
-score_cop_16_lo: dc.w $00ea,0
-        dc.w $59d1,$fffe
-score_cop_17_hi: dc.w $00e8,0
-score_cop_17_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $5a4d,$fffe
-        else
-        dc.w $5a3d,$fffe
-        endif
-score_cop_18_hi: dc.w $00e8,0
-score_cop_18_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $5aa9,$fffe
-        else
-        dc.w $5a99,$fffe
-        endif
-score_cop_19_hi: dc.w $00e8,0
-score_cop_19_lo: dc.w $00ea,0
-        dc.w $5ad1,$fffe
-score_cop_20_hi: dc.w $00e8,0
-score_cop_20_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $5b4d,$fffe
-        else
-        dc.w $5b3d,$fffe
-        endif
-score_cop_21_hi: dc.w $00e8,0
-score_cop_21_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
-        dc.w $5ba9,$fffe
-        else
-        dc.w $5b99,$fffe
-        endif
-score_cop_22_hi: dc.w $00e8,0
-score_cop_22_lo: dc.w $00ea,0
-        dc.w $5bd1,$fffe
-score_cop_23_hi: dc.w $00e8,0
-score_cop_23_lo: dc.w $00ea,0
-        ifd ENHANCED_INTERFACE
         dc.w $5c4d,$fffe
         else
         dc.w $5c3d,$fffe
         endif
-score_cop_24_hi: dc.w $00e8,0
-score_cop_24_lo: dc.w $00ea,0
+score_cop_0_hi: dc.w $00e8,0
+score_cop_0_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5ca9,$fffe
         else
         dc.w $5c99,$fffe
         endif
-score_cop_25_hi: dc.w $00e8,0
-score_cop_25_lo: dc.w $00ea,0
+score_cop_1_hi: dc.w $00e8,0
+score_cop_1_lo: dc.w $00ea,0
         dc.w $5cd1,$fffe
-score_cop_26_hi: dc.w $00e8,0
-score_cop_26_lo: dc.w $00ea,0
+score_cop_2_hi: dc.w $00e8,0
+score_cop_2_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5d4d,$fffe
         else
         dc.w $5d3d,$fffe
         endif
-score_cop_27_hi: dc.w $00e8,0
-score_cop_27_lo: dc.w $00ea,0
+score_cop_3_hi: dc.w $00e8,0
+score_cop_3_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5da9,$fffe
         else
         dc.w $5d99,$fffe
         endif
-score_cop_28_hi: dc.w $00e8,0
-score_cop_28_lo: dc.w $00ea,0
+score_cop_4_hi: dc.w $00e8,0
+score_cop_4_lo: dc.w $00ea,0
         dc.w $5dd1,$fffe
-score_cop_29_hi: dc.w $00e8,0
-score_cop_29_lo: dc.w $00ea,0
+score_cop_5_hi: dc.w $00e8,0
+score_cop_5_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5e4d,$fffe
         else
         dc.w $5e3d,$fffe
         endif
-score_cop_30_hi: dc.w $00e8,0
-score_cop_30_lo: dc.w $00ea,0
+score_cop_6_hi: dc.w $00e8,0
+score_cop_6_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5ea9,$fffe
         else
         dc.w $5e99,$fffe
         endif
-score_cop_31_hi: dc.w $00e8,0
-score_cop_31_lo: dc.w $00ea,0
+score_cop_7_hi: dc.w $00e8,0
+score_cop_7_lo: dc.w $00ea,0
         dc.w $5ed1,$fffe
-score_cop_32_hi: dc.w $00e8,0
-score_cop_32_lo: dc.w $00ea,0
+score_cop_8_hi: dc.w $00e8,0
+score_cop_8_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5f4d,$fffe
         else
         dc.w $5f3d,$fffe
         endif
-score_cop_33_hi: dc.w $00e8,0
-score_cop_33_lo: dc.w $00ea,0
+score_cop_9_hi: dc.w $00e8,0
+score_cop_9_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $5fa9,$fffe
         else
         dc.w $5f99,$fffe
         endif
-score_cop_34_hi: dc.w $00e8,0
-score_cop_34_lo: dc.w $00ea,0
+score_cop_10_hi: dc.w $00e8,0
+score_cop_10_lo: dc.w $00ea,0
         dc.w $5fd1,$fffe
-score_cop_35_hi: dc.w $00e8,0
-score_cop_35_lo: dc.w $00ea,0
+score_cop_11_hi: dc.w $00e8,0
+score_cop_11_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $604d,$fffe
         else
         dc.w $603d,$fffe
         endif
-score_cop_36_hi: dc.w $00e8,0
-score_cop_36_lo: dc.w $00ea,0
+score_cop_12_hi: dc.w $00e8,0
+score_cop_12_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $60a9,$fffe
         else
         dc.w $6099,$fffe
         endif
-score_cop_37_hi: dc.w $00e8,0
-score_cop_37_lo: dc.w $00ea,0
+score_cop_13_hi: dc.w $00e8,0
+score_cop_13_lo: dc.w $00ea,0
         dc.w $60d1,$fffe
-score_cop_38_hi: dc.w $00e8,0
-score_cop_38_lo: dc.w $00ea,0
+score_cop_14_hi: dc.w $00e8,0
+score_cop_14_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $614d,$fffe
         else
         dc.w $613d,$fffe
         endif
-score_cop_39_hi: dc.w $00e8,0
-score_cop_39_lo: dc.w $00ea,0
+score_cop_15_hi: dc.w $00e8,0
+score_cop_15_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $61a9,$fffe
         else
         dc.w $6199,$fffe
         endif
-score_cop_40_hi: dc.w $00e8,0
-score_cop_40_lo: dc.w $00ea,0
+score_cop_16_hi: dc.w $00e8,0
+score_cop_16_lo: dc.w $00ea,0
         dc.w $61d1,$fffe
-score_cop_41_hi: dc.w $00e8,0
-score_cop_41_lo: dc.w $00ea,0
+score_cop_17_hi: dc.w $00e8,0
+score_cop_17_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $624d,$fffe
         else
         dc.w $623d,$fffe
         endif
-score_cop_42_hi: dc.w $00e8,0
-score_cop_42_lo: dc.w $00ea,0
+score_cop_18_hi: dc.w $00e8,0
+score_cop_18_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $62a9,$fffe
         else
         dc.w $6299,$fffe
         endif
-score_cop_43_hi: dc.w $00e8,0
-score_cop_43_lo: dc.w $00ea,0
+score_cop_19_hi: dc.w $00e8,0
+score_cop_19_lo: dc.w $00ea,0
         dc.w $62d1,$fffe
-score_cop_44_hi: dc.w $00e8,0
-score_cop_44_lo: dc.w $00ea,0
+score_cop_20_hi: dc.w $00e8,0
+score_cop_20_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $634d,$fffe
         else
         dc.w $633d,$fffe
         endif
-score_cop_45_hi: dc.w $00e8,0
-score_cop_45_lo: dc.w $00ea,0
+score_cop_21_hi: dc.w $00e8,0
+score_cop_21_lo: dc.w $00ea,0
         ifd ENHANCED_INTERFACE
         dc.w $63a9,$fffe
         else
         dc.w $6399,$fffe
         endif
+score_cop_22_hi: dc.w $00e8,0
+score_cop_22_lo: dc.w $00ea,0
+        dc.w $63d1,$fffe
+score_cop_23_hi: dc.w $00e8,0
+score_cop_23_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $644d,$fffe
+        else
+        dc.w $643d,$fffe
+        endif
+score_cop_24_hi: dc.w $00e8,0
+score_cop_24_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $64a9,$fffe
+        else
+        dc.w $6499,$fffe
+        endif
+score_cop_25_hi: dc.w $00e8,0
+score_cop_25_lo: dc.w $00ea,0
+        dc.w $64d1,$fffe
+score_cop_26_hi: dc.w $00e8,0
+score_cop_26_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $654d,$fffe
+        else
+        dc.w $653d,$fffe
+        endif
+score_cop_27_hi: dc.w $00e8,0
+score_cop_27_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $65a9,$fffe
+        else
+        dc.w $6599,$fffe
+        endif
+score_cop_28_hi: dc.w $00e8,0
+score_cop_28_lo: dc.w $00ea,0
+        dc.w $65d1,$fffe
+score_cop_29_hi: dc.w $00e8,0
+score_cop_29_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $664d,$fffe
+        else
+        dc.w $663d,$fffe
+        endif
+score_cop_30_hi: dc.w $00e8,0
+score_cop_30_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $66a9,$fffe
+        else
+        dc.w $6699,$fffe
+        endif
+score_cop_31_hi: dc.w $00e8,0
+score_cop_31_lo: dc.w $00ea,0
+        dc.w $66d1,$fffe
+score_cop_32_hi: dc.w $00e8,0
+score_cop_32_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $674d,$fffe
+        else
+        dc.w $673d,$fffe
+        endif
+score_cop_33_hi: dc.w $00e8,0
+score_cop_33_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $67a9,$fffe
+        else
+        dc.w $6799,$fffe
+        endif
+score_cop_34_hi: dc.w $00e8,0
+score_cop_34_lo: dc.w $00ea,0
+        dc.w $67d1,$fffe
+score_cop_35_hi: dc.w $00e8,0
+score_cop_35_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $684d,$fffe
+        else
+        dc.w $683d,$fffe
+        endif
+score_cop_36_hi: dc.w $00e8,0
+score_cop_36_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $68a9,$fffe
+        else
+        dc.w $6899,$fffe
+        endif
+score_cop_37_hi: dc.w $00e8,0
+score_cop_37_lo: dc.w $00ea,0
+        dc.w $68d1,$fffe
+score_cop_38_hi: dc.w $00e8,0
+score_cop_38_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $694d,$fffe
+        else
+        dc.w $693d,$fffe
+        endif
+score_cop_39_hi: dc.w $00e8,0
+score_cop_39_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $69a9,$fffe
+        else
+        dc.w $6999,$fffe
+        endif
+score_cop_40_hi: dc.w $00e8,0
+score_cop_40_lo: dc.w $00ea,0
+        dc.w $69d1,$fffe
+score_cop_41_hi: dc.w $00e8,0
+score_cop_41_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $6a4d,$fffe
+        else
+        dc.w $6a3d,$fffe
+        endif
+score_cop_42_hi: dc.w $00e8,0
+score_cop_42_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $6aa9,$fffe
+        else
+        dc.w $6a99,$fffe
+        endif
+score_cop_43_hi: dc.w $00e8,0
+score_cop_43_lo: dc.w $00ea,0
+        dc.w $6ad1,$fffe
+score_cop_44_hi: dc.w $00e8,0
+score_cop_44_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $6b4d,$fffe
+        else
+        dc.w $6b3d,$fffe
+        endif
+score_cop_45_hi: dc.w $00e8,0
+score_cop_45_lo: dc.w $00ea,0
+        ifd ENHANCED_INTERFACE
+        dc.w $6ba9,$fffe
+        else
+        dc.w $6b99,$fffe
+        endif
 score_cop_46_hi: dc.w $00e8,0
 score_cop_46_lo: dc.w $00ea,0
-        dc.w $63d1,$fffe
+        dc.w $6bd1,$fffe
 score_cop_47_hi: dc.w $00e8,0
 score_cop_47_lo: dc.w $00ea,0
-        dc.w $6401,$fffe
+        dc.w $6c01,$fffe
 score_cop_242_hi: dc.w $00e0,0
 score_cop_242_lo: dc.w $00e2,0
 score_cop_243_hi: dc.w $00ec,0

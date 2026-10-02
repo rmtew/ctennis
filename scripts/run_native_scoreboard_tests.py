@@ -15,6 +15,8 @@ from native_evidence import atomic_json, compile_manifest, tracked_call
 from native_observation import code_symbols, target_log
 from native_tools import ROOT, ASSEMBLER, emulator_config, run as assemble
 from native_scoreboard_raster import assert_scoreboard_raster
+from native_square_scores import assert_generated_point_banks
+from native_identity_raster import assert_mode_raster
 
 
 def run_case(variant, two, exchanged, mutant=False):
@@ -82,6 +84,7 @@ def run_case(variant, two, exchanged, mutant=False):
         loaded = loaded_hunks(executable, segments, raw)
         check('fixture loaded bytes match compiled hunks', bool(loaded) and all(row['matched'] for row in loaded), True)
         stop = session.inspect('run_until', {'pc': base+symbols['main_loop']})
+        generated_banks = assert_generated_point_banks(raw, located)
         start_time = stop['seconds']
         association = {'fields': bytearray(read('prepared_field_values', 6)),
                        'back': bytearray(read('back_copper', 4)), 'cop': bytearray(4),
@@ -136,6 +139,7 @@ def run_case(variant, two, exchanged, mutant=False):
             session.inspect('capture_screenshot', {'path': str(photo)})
             try:
                 result = assert_scoreboard_raster(photo, points, games)
+                assert_mode_raster(photo, 2 if two else 1)
             except AssertionError as error:
                 # Normalize only a raster rejection, allowing the self-test to
                 # distinguish it from scalar, pointer or telemetry failures.
@@ -165,7 +169,7 @@ def run_case(variant, two, exchanged, mutant=False):
     target_log(directory)
     report = {'passed': True, 'points': points, 'games': games, 'two_players': two, 'exchanged': exchanged,
               'checks': checks, 'raster': raster, 'publications': publications, 'plane_pointers': pointer_checks,
-              'loaded_hunks': loaded, 'executable_sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
+              'loaded_hunks': loaded, 'generated_point_banks': generated_banks, 'executable_sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
               'fixture_initialization': 'compiled once at startup; subsequent native ticks; no intermediate RAM writes'}
     atomic_json(directory/'report.json', report)
     print(f'scoreboard {variant}/{int(two)}/{int(exchanged)} PASS', flush=True)
