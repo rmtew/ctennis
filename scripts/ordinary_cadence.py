@@ -300,7 +300,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             elif a == address['game_lifecycle']:
                 state['lifecycle'] = value
                 changes.append(r)
-            elif a == 0xbfdf00 and value == 1: state['start'] = position['cck']
+            elif a == 0xbfde00 and value == 1: state['start'] = position['cck']
             elif a == address['simulation_timer_origin']: state['origin'] = value
             elif a == address['simulation_started_updates']:
                 if value != state['started']+1 or state['completed'] != state['started']: fault('start sequence')
@@ -358,7 +358,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
                     {'addr': 0xdff088, 'len': 2, 'access': 'write'},
-                    {'addr': 0xbfdf00, 'len': 1, 'access': 'write'},
+                    {'addr': 0xbfde00, 'len': 1, 'access': 'write'},
                     {'addr': initial_memory['execbase']+0x142, 'len': 12, 'access': 'write'}]
         watches += [{'addr': h['header'], 'len': 32, 'access': 'write'} for h in initial_memory['regions']]
         watches += setup_observer.watches()

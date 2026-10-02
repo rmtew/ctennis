@@ -62,11 +62,14 @@ The 24x8 region at native112,96 is decoded independently from the four committed
 pointer control leaves scalars intact but must fail pixels. Fixtures explicitly
 select the enhanced Copper layout, matching the maintained application.
 
-`run_native_setup_tests.py` measures cold menu, navigation, player toggles, Help,
-Controls, Credits, page wraps and exit at explicit UI dirty-clear/ready instruction
-boundaries. Every other callback retains strict timing; gameplay/score writes
-inside construction are rejected. The phase-aware contract is a proposal only,
-with raw failures preserved. Current Help/Controls sampling can lose a complete
-16-bit timer wrap; bounded recovery FAILS on both merged baseline and CT11.
-See [verification issues](../docs/ct11/verification-issues.md). No observer rebase
-or product timing change conceals that result.
+`run_native_setup_tests.py --self-test` retains the continuous timer origin and
+requires every raw callback to meet the existing deadline. It measures all
+menu/help/controls/credits construction, repeated navigation and15-second idle,
+checks representative actual scanout against the committed font and retained
+layout, and independently compares native elapsed additions to wall CCK.
+The diagnostic phase proposal is retained for historical comparison; it grants
+no exemption. A compiled lost-wrap mask must lose exactly327680CCK and fail
+accounting; a separate delayed construction must fail raw deadlines while the
+unmodified32-bit timer accounts for the complete wrap. Both restore the normal
+executable before final acceptance. See the follow-on report in
+[verification issues](../docs/ct11/verification-issues.md).

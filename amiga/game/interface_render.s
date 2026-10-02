@@ -19,9 +19,9 @@ ui_render:
         move.w  d1,ui_overlay_signature
         lea     ui_overlay_plane,a2
         moveq   #0,d4
-        move.w  #511,d7
+        move.w  #512/4-1,d7
 .clear_overlay:
-        clr.b   (a2)+
+        clr.l   (a2)+
         dbra    d7,.clear_overlay
         tst.b   ui_paused
         beq.s   .title
@@ -106,35 +106,42 @@ ui_render:
         tst.b   ui_dirty
         beq     .done
         clr.b   ui_dirty
-        lea     title_plane0+112*32,a2
-        moveq   #3,d6
-.clear_plane:
-        move.w  #80*32-1,d7
-        move.l  a2,a1
-.clear_row:
-        clr.b   (a1)+
-        dbra    d7,.clear_row
-        adda.w  #6144,a2
-        dbra    d6,.clear_plane
-        move.w  #6144,d4
+        ; Static authored pages are baked once at build time. Copy one
+        ; identical white plane to all four destinations, sampling between
+        ; planes. Dynamic menu choice remains the same native font drawing.
         moveq   #0,d0
         move.b  ui_page,d0
-        bne.s   .page
-        lea     ui_menu_lines,a3
-        lea     title_plane0+144*32,a2
+        mulu.w  #80*32,d0
+        lea     ui_cached_pages,a3
+        adda.l  d0,a3
+        lea     title_plane0+112*32,a2
         moveq   #3,d6
-.menu_line:
-        move.l  (a3)+,a0
-        cmpi.b  #2,d6
-        bne.s   .menu_draw
-        lea     ui_players_one,a0
+.copy_plane:
+        move.l  a3,a0
+        move.l  a2,a1
+        move.w  #80*32/32-1,d7
+.copy_word:
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        dbra    d7,.copy_word
+        bsr     ui_construction_sample
+        adda.w  #6144,a2
+        dbra    d6,.copy_plane
+        tst.b   ui_page
+        bne.s   .publish
+        move.w  #6144,d4
         tst.b   ui_player_count
-        beq.s   .menu_draw
+        beq.s   .marker
+        lea     title_plane0+152*32,a2
         lea     ui_players_two,a0
-.menu_draw:
         bsr     ui_text
-        adda.w  #256,a2
-        dbra    d6,.menu_line
+.marker:
         moveq   #0,d0
         move.b  ui_selection,d0
         lsl.w   #8,d0
@@ -142,22 +149,6 @@ ui_render:
         adda.w  d0,a2
         lea     ui_marker,a0
         bsr     ui_text
-        lea     title_plane0+184*32,a2
-        lea     ui_menu_hint,a0
-        bsr     ui_text
-        bra.s   .publish
-.page:
-        subq.w  #1,d0
-        lsl.w   #2,d0
-        lea     ui_pages,a0
-        move.l  0(a0,d0.w),a3
-        lea     title_plane0+112*32,a2
-        moveq   #9,d6
-.page_line:
-        move.l  (a3)+,a0
-        bsr     ui_text
-        adda.w  #256,a2
-        dbra    d6,.page_line
 .publish:
         move.b  #1,display_ready
 .done:  rts
@@ -177,16 +168,13 @@ ui_text:
         move.l  a2,a4
 .row:
         move.b  (a1)+,d1
-        move.l  a4,d2
-        moveq   #3,d5
-.plane:
-        ; Keep glyph pointer A1, use A4 temporarily for destination.
-        move.l  a4,-(sp)
-        move.l  d2,a4
         move.b  d1,(a4)
-        move.l  (sp)+,a4
-        add.l   d4,d2
-        dbra    d5,.plane
+        tst.w   d4
+        beq.s   .next_row
+        move.b  d1,6144(a4)
+        move.b  d1,12288(a4)
+        move.b  d1,18432(a4)
+.next_row:
         adda.w  #32,a4
         dbra    d7,.row
         addq.l  #1,a2

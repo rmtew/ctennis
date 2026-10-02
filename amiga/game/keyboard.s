@@ -3,7 +3,7 @@
 game_poll_keyboard:
         tst.b   keyboard_ack
         beq.s   keyboard_receive
-        move.w  last_timer_count,d0
+        move.w  last_timer_count+2,d0
         sub.w   keyboard_ack_timer,d0
         neg.w   d0
         cmpi.w  #70,d0
@@ -23,7 +23,7 @@ keyboard_receive:
         bra     keyboard_handshake
 keyboard_handshake:
         bset    #6,$bfee01
-        move.w  last_timer_count,keyboard_ack_timer
+        move.w  last_timer_count+2,keyboard_ack_timer
         move.b  #1,keyboard_ack
 keyboard_return:
         rts

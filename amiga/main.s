@@ -62,14 +62,22 @@ copy_back_copper:
         bclr    #6,$bfee01
         bsr     game_init_controls
         bsr     paula_tone_init
+        ; CIA-B A is the low E-clock word; B counts A underflows.
+        ; Start the high word first, so the continuous epoch loses no carry.
+        move.b  #0,$bfde00
         move.b  #0,$bfdf00
+        move.b  #$ff,$bfd400
+        move.b  #$ff,$bfd500
         move.b  #$ff,$bfd600
         move.b  #$ff,$bfd700
-        move.b  #$10,$bfdf00
-        move.b  #$01,$bfdf00
+        move.b  #$50,$bfdf00
+        move.b  #$51,$bfdf00
+        move.b  #$10,$bfde00
+        move.b  #$01,$bfde00
         bsr     read_sim_timer
-        move.w  d0,last_timer_count
+        move.l  d0,last_timer_count
         move.w  d0,simulation_timer_origin
+        st      simulation_timer_running
 main_loop:
         tst.b   ui_paused
         bne.s   ui_skip_round_poll
@@ -77,12 +85,7 @@ main_loop:
 ui_skip_round_poll:
         bsr     game_poll_keyboard
         bsr     poll_presentation
-        bsr     read_sim_timer
-        move.w  last_timer_count,d1
-        move.w  d0,last_timer_count
-        sub.w   d0,d1
-        andi.l  #$ffff,d1
-        add.l   d1,simulation_phase
+        bsr     account_sim_timer
         move.l  simulation_phase,d0
         cmp.l   simulation_interval,d0
         bcs.s   main_loop
@@ -96,20 +99,51 @@ simulation_interval_ready:
         bsr     simulation_update
         bra     main_loop
 
-; CIA-B timer B free-runs at the PAL E-clock, independent of display vblank.
-; Its elapsed ticks drive the 59.922738 Hz native simulation cadence.
+; Stable high/low/high read of the cascaded down-counter. Retry if either
+; byte of B or the A->B carry changes during the read.
 read_sim_timer:
 read_sim_timer_again:
         moveq   #0,d0
         move.b  $bfd700,d0
         lsl.w   #8,d0
         move.b  $bfd600,d0
-        move.b  $bfd700,d2
-        move.w  d0,d1
-        lsr.w   #8,d1
-        cmp.b   d1,d2
+        move.w  d0,d2
+        swap    d0
+        move.b  $bfd500,d0
+        lsl.w   #8,d0
+        move.b  $bfd400,d0
+        move.w  d0,d3
+        move.b  $bfd500,d1
+        lsr.w   #8,d0
+        cmp.b   d0,d1
+        bne.s   read_sim_timer_again
+        move.w  d3,d0
+        moveq   #0,d1
+        move.b  $bfd700,d1
+        lsl.w   #8,d1
+        move.b  $bfd600,d1
+        cmp.w   d1,d2
         bne.s   read_sim_timer_again
         rts
+
+account_sim_timer:
+        bsr     read_sim_timer
+        move.l  last_timer_count,d1
+        move.l  d0,last_timer_count
+        sub.l   d0,d1
+        add.l   d1,simulation_phase
+        rts
+
+; Construction yields to the real clock and keyboard between bounded planes.
+; Never dispatch gameplay or publish a partially completed scene here.
+ui_construction_sample:
+        tst.b   simulation_timer_running
+        beq.s   .done
+        movem.l d0-d7/a0-a6,-(sp)
+        bsr     account_sim_timer
+        bsr     game_poll_keyboard
+        movem.l (sp)+,d0-d7/a0-a6
+.done:  rts
 
 ; Simulation prepares an inactive Copper list and sprite bank. The display
 ; commit changes only COP1LC; preparation of the next back list can run later.
@@ -472,7 +506,9 @@ simulation_phase:   dc.l SIM_INTERVAL_WHOLE
 simulation_interval: dc.l SIM_INTERVAL_WHOLE
 simulation_fraction: dc.w 0
 simulation_timer_origin: dc.w 0
-last_timer_count:  dc.w 0
+last_timer_count:  dc.l 0
+simulation_timer_running: dc.b 0
+        even
 blank_seen:        dc.b 0
 display_ready:     dc.b 0
         even
