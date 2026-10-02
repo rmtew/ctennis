@@ -53,11 +53,38 @@ gradient index5=77f, court/net/sprite colours and all Copper pointer/fetch/resto
 include bytes are preserved. Frozen host contracts cover all0–6 variants, exact
 original point glyphs and every court pixel outside the authorized panels/logo.
 
-31 host tests and native asset validation pass. The first native fixture has
-passed full-panel scanout and all242 selected/fixed-restore pointers in both
-physical Copper banks. Full28-case/modes/ends acceptance and its compiled
-wrong-pointer control are being run; final exact-head gate results remain pending.
-These new results do not inherit the earlier sprite checkpoint's replay passes.
+At3a4e094 the fresh28-case native scoreboard gate passed, including two stable
+full-panel captures per case, both physical Copper banks, all242 selected/fixed
+restore pointers and a compiled wrong-pointer control with unchanged score
+scalars. The control failed exactly552 doubled pixels for six incorrect A rows.
+Pillow12.3.0 and its input files are pinned in the receipt. Ordinary one/two-player
+feedback passed full-panel pixels and human/robot ownership through end exchange.
+The10958-tick frozen replay and5480-tick takeover also passed at this WIN checkpoint,
+both with zero missed publications. These are new results, not inherited passes.
+
+A separate focused physical pause/quit/title/opposite-mode restart check passed
+both A6→0 and B6→0. Two stable captures per case showed every WIN row grey, both
+points/tallies zero and HUMAN labels on both sides; no RAM writes or new builds.
+Script/report/captures remain ignored under build/tests/native-scoreboard-reset.
+
+The initial full gate at3a4e094 failed only its cold-boot allocator observer after
+completing all ordinary match/restart milestones and meeting every timing/
+publication assertion. Raw68000 writes proved mh_Free's lowword fad8 arrived
+before highword0003. Sampling the lowword immediately mixed in oldhigh0004 and
+invented a65536-byte discrepancy. The actual header/freechain contained260824
+free bytes, using263464 bytes. The corrected test-only observer waits for all4
+bytes from the same instruction in either bus order and rejects incomplete
+mutations; the final free-chain agreement assertion remains intact.
+Independent raw-trace review found902 eligible writes,451 complete stores and
+no pending halves, with corrected cold-boot peak267016 bytes. Four focused
+collector regressions and35 total host tests pass. No product code, allocation,
+memory limit or timing guard was changed by this fix.
+
+The final corrective gate runs at the committed clean head recorded in
+build/acceptance/report.json; that receipt and the worker's final handoff are
+authoritative for completion/checked extent. An earlier failed gate must never
+be cited as an aggregate pass. Combined CT13/title integration requires its own
+verification.
 
 The selected concept source libfile_dd1161148de481918a8b2aab8a07c1e6 could not be
 materialized locally. The parent inspected it and supplied the complete native

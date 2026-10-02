@@ -7,6 +7,7 @@ import shutil
 from native_tools import ASSEMBLER, run as assemble
 from native_clock import clock_contract, INTERVAL_CCK
 from native_setup_observation import SetupObserver
+from native_longword_observer import LongwordObserver
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
@@ -116,6 +117,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             s.inspect('machine.reset',{'kind':'cold'})
             headers={r['header']:bytearray(32) for r in boot_calibration['regions']}
             free_counts={}
+            free_stores={h:LongwordObserver() for h in headers}
             def boot_event(message, log=True):
                 if log:raw.write(json.dumps(message)+'\n')
                 if message.get('method')!='event.mmio':return
@@ -127,12 +129,14 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     if h<=a and a+n<=h+32:
                         headers[h][a-h:a-h+n]=v.to_bytes(n,'big')
                         data=headers[h]
-                        # Accept a complete low-word store only after the
-                        # actual header's chip pool bounds are initialized.
-                        if (a<=h+30 and a+n>=h+32 and int.from_bytes(data[14:16],'big')&2
+                        # Exec's long RMW stores may write low word FIRST. A
+                        # sample needs both words from the same instruction;
+                        # mixed old/new halves invent64KB allocation changes.
+                        if (h+28<=a and a+n<=h+32 and int.from_bytes(data[14:16],'big')&2
                                 and int.from_bytes(data[20:24],'big')==region['lower']
                                 and int.from_bytes(data[24:28],'big')==region['upper']):
-                            free=int.from_bytes(data[28:32],'big')
+                            free=free_stores[h].write(a-h-28,v,n,row['pc'])
+                            if free is None:continue
                             if free>region['upper']-region['lower']:
                                 failures.append({'field':'invalid boot free-count update'})
                             free_counts[h]=free
@@ -416,6 +420,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'memory_final': final_memory, 'memory_writes': memory_writes,
                          'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints,'explicit_setup_regions':setup_observer.regions})
     if boot_adf:
+        if any(store.seen for store in free_stores.values()):
+            fault('cold boot allocator incomplete final long store')
         if not boot_allocations or boot_allocations[0]['position']['cck']>=state['start']:
             fault('cold boot allocator observation absent')
         elif boot_allocations[-1]['used_chip_bytes']!=final_memory['used_chip_bytes']:
