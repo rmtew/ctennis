@@ -98,16 +98,30 @@ def run(mode, flavor="enhanced"):
     return 0 if report['passed'] else 1
 
 
-def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
+def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fault=False):
     """Ordinary physical play through award/title/reselection and fresh serve."""
     config, ordinary = build(flavor=flavor); config = emulator_config()
     name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart') + '-' + flavor
+    if held_fault: name += '-held-fault'
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
     shutil.copy2(ordinary, exe)
     listing = directory / 'native.lst'
     shutil.copy2(ordinary.parent / 'native.lst', listing)
+    if held_fault:
+        from native_tools import ASSEMBLER, run as assemble
+        controls = (ROOT/'amiga/game/controls.s').read_text()
+        marker = '        and.b   d0,game_old_action_latches-game_input_bits(a0)'
+        if controls.count(marker) != 1: raise ValueError('Native action retirement instruction changed')
+        fault = directory/'held-controls.s'
+        fault.write_text(controls.replace(marker,
+            '        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle\n'
+            '        beq.s   held_fault_no_retirement\n'+marker+'\nheld_fault_no_retirement:'))
+        source = directory/'held-main.s'
+        source.write_text((ROOT/'amiga/main.s').read_text().replace('include "amiga/game/controls.s"',
+            'include "'+str(fault)+'"'))
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(listing),'-o',str(exe),str(source)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
     checkpoints, differences = {}, []
@@ -140,7 +154,8 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
         for port in (1,2):
             session.inspect('input_set_port',{'port':port,'device':'joystick'})
             session.inspect('input_joy',{'port':port,'red':True})
-        pc = base+symbols['game_observe_pre_tail']
+        # Uniform boundary follows every completed native update, including menus.
+        pc = base+symbols['simulation_update']
         session.inspect('break_add',{'kind':'pc','addr':pc})
         deadline = stop['seconds']+1000
         for index in range(40000):
@@ -188,26 +203,26 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                             'released':list(mem('game_input_released',2)),
                             'latches':list(mem('game_old_action_latches',2)),
                             'controls':list(mem('game_player_controls',2))}
-                if elapsed == 100:
+                if elapsed == 30:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['latches'] != [16,16]:
-                        raise AssertionError('Early release must start with both old actions held in restart sound')
+                    if lifecycle != 3 or sample['raw'] != [16,16] or sample['latches'] != [16,16]:
+                        raise AssertionError('Early release must start with both old actions held in enhanced held selection')
                     action_samples['before_release']=sample
                     checkpoints['early_release']=callback
                     session.inspect('input_joy',{'port':2,'red':False})
-                elif elapsed == 101:
+                elif elapsed == 31:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [0,16] or sample['released'] != [16,0] or sample['latches'] != [0,16]:
-                        raise AssertionError('Sampled release during restart sound did not retire only P1 latch')
+                    if lifecycle != 3 or sample['raw'] != [0,16] or sample['released'] != [16,0] or sample['latches'] != [0,16]:
+                        raise AssertionError('Sampled release during enhanced held selection did not retire only P1 latch')
                     action_samples['sampled_release']=sample
                     checkpoints['sampled_release']=callback
-                elif elapsed == 140:
+                elif elapsed == 50:
                     if 'sampled_release' not in checkpoints:raise AssertionError('Release was not observed before repress')
                     checkpoints['early_repress']=callback
                     session.inspect('input_joy',{'port':2,'red':True})
-                elif elapsed == 141:
+                elif elapsed == 51:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['pressed'] != [16,0] or sample['latches'] != [0,16]:
+                    if lifecycle != 3 or sample['raw'] != [16,16] or sample['pressed'] != [16,0] or sample['latches'] != [0,16]:
                         raise AssertionError('Fresh press before play re-latched P1 or released continuously held P2')
                     action_samples['sampled_repress']=sample
                     checkpoints['sampled_repress']=callback
@@ -216,8 +231,9 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                     checkpoints['restart_playing']=callback
                     if bool(native_state['game_mode']&128) != (restarted_mode=='two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])) or native_state['game_mode']&0x70:
                         raise AssertionError('Old mode/end/score leaked into restarted match')
-                    if mem('game_lower_owner',2) != bytes([0,1]):
-                        raise AssertionError('Old player ownership survived reset')
+                # Selection changes lifecycle before the first active tick assigns owners.
+                if callback == checkpoints['restart_playing']+1 and mem('game_lower_owner',2) != bytes([0,1]):
+                    raise AssertionError('Old player ownership survived reset')
                 if early_release:
                     if callback > checkpoints['restart_playing']:
                         sample=action_sample()
@@ -258,10 +274,10 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
     emitted=[]
     if audio:
         from native_audio_checks import pcm16_window
-        # Actual returned title resets every voice. The held-selection restart
-        # emits the native intro; this protects ordinary hardware routing.
+        # Actual returned-title reset is silent. Enhanced reselection starts the
+        # ordinary new-match sound, rather than legacy restart lifecycle9.
         quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)
-        intro=next((r for r in audio_checkpoints if r['lifecycle']==9),None)
+        intro=next((r for r in audio_checkpoints if r['lifecycle']==1 and r['callback'] >= checkpoints['restart_playing']),None)
         if quiet is None or intro is None:raise AssertionError('Ordinary audio checkpoints missing')
         for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-intro',intro,True,.05)]:
             samples=pcm16_window(directory/'native.wav',row['seconds']+offset,.02)
@@ -278,7 +294,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
             'early_release_verified':early_release and 'fresh_action_eligible' in checkpoints,
             'action_samples':action_samples, 'audio_observed':audio, 'audio_checkpoints':audio_checkpoints,
             'emitted_audio':emitted, 'audio_wav':str((directory/'native.wav').relative_to(ROOT)) if audio else None,
-            'scope':'Ordinary uninterrupted physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
+            'scope':'Consecutive native update-boundary observations with physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
     path=ROOT/f'build/tests/{name}-report.json';atomic_json(path,report)
     print(json.dumps(report),flush=True)
     return 0 if report['passed'] else 1
@@ -287,6 +303,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('one','two'), required=True)
+    parser.add_argument('--self-test',action='store_true',help='Detect compiled held-action retirement fault in enhanced early-release observer')
     parser.add_argument('--match',action='store_true',help='CT06 ordinary result/title/restarted serve')
     parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
     parser.add_argument('--audio',action='store_true',help='CT08 ordinary result mute and restart emitted sound')
@@ -337,8 +354,25 @@ def main():
     if args.match:
         name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart') + '-' + flavor
         path=ROOT/f'build/tests/{name}-report.json'
+        def action():
+            result = run_match(mode,args.early_release,args.audio,flavor)
+            if args.self_test:
+                if not args.early_release or result: raise ValueError('Fault control requires passing enhanced early-release run')
+                report = json.loads(path.read_text())
+                try:
+                    run_match(mode,True,args.audio,flavor,held_fault=True)
+                except AssertionError as error:
+                    wanted = 'Sampled release during enhanced held selection did not retire only P1 latch'
+                    if str(error) != wanted: raise
+                    fault_directory = ROOT/f'build/tests/{name}-held-fault'
+                    report['compiled_fault_controls'] = [{'detected':True,'failure':wanted,
+                        'artifact_directory':str(fault_directory.relative_to(ROOT)),
+                        'executable_sha256':__import__('hashlib').sha256((fault_directory/'native-application').read_bytes()).hexdigest()}]
+                    atomic_json(path,report)
+                else: raise AssertionError('Real held-action retirement fault escaped')
+            return result
         return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release,args.audio,flavor),
+                            'scripts/run_ordinary_round_tests.py',None,action,
                             lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
     path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',
