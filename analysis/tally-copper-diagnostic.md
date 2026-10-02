@@ -6,6 +6,17 @@ tallies on WinUAE 6.0.2 (2025.12.21), including a fresh cycle-exact Full run,
 with PAL OCS 68000, 512 KB chip and 512 KB slow RAM. Configuration is not an
 established cause. The absent GAME marker is also not independently explained.
 
+## User follow-up
+
+The user subsequently reports that a win is added to the tally column and
+that the end of the match plays music, then returns to the menu. The user
+also observes early, buggy demo behavior and explicitly assigns that to the
+other worker, outside this tally repair's scope. This is user-reported runtime
+validation of the visible behavior. No fresh artifact hash was supplied with
+that follow-up, so it does not independently establish which exact executable
+was running, both tally sides, or the DMA collision mechanism. No menu/demo
+code is added or changed here; this branch remains unmerged.
+
 ## Minimal candidate
 
 Only games_a/games_b WAIT positions in the existing offline Copper generator
