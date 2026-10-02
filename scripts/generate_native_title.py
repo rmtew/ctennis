@@ -30,13 +30,43 @@ def generate():
             index=(colour>>4 if pattern&(128>>(x%8)) else colour&15)
             for n,p in enumerate(planes):
                 if index&(1<<n): p[y*32+x//8]|=128>>(x%8)
-    for n,p in enumerate(planes): (out/f'plane{n}.bin').write_bytes(p)
-    commands=['title_copper:', '        dc.w $008e,$2c81,$0090,$ecc1,$0092,$0038,$0094,$00b0',
-              '        dc.w $0100,$4200,$0102,0,$0104,0,$0108,0,$010a,0']
-    for n in range(4): commands.append(f'title_pointer{n}: dc.w ${0xe0+4*n:04x},0,${0xe2+4*n:04x},0')
-    for n in range(16): commands.append(f'        dc.w ${0x180+2*n:04x},${PALETTE.get(n,0):03x}')
-    commands.append('        dc.w $ffff,$fffe')
-    for n in range(4): commands.append(f'title_plane{n}: incbin "build/amiga/title/plane{n}.bin"')
-    (out/'display.i').write_text('\n'.join(commands)+'\n')
+    # Original output is byte-preserved; enhanced artwork is a separate offline
+    # product asset. The logo/copyright above the instruction rows is retained.
+    original = [bytes(p) for p in planes]
+    glyphs = {c: list(vram[0x3000 + n*8:0x3008 + n*8])
+              for n,c in enumerate("012389=/©ABCDEFGHIKLMNOPRSTUVY", 0x44)}
+    additions = json.loads((ROOT/'assets/interface/small-font-additions.json').read_text())
+    if any(len(rows)!=8 or any(type(b)!=int or not 0<=b<=255 for b in rows)
+           for rows in additions.values()):
+        raise ValueError('Small font glyph must contain eight byte rows')
+    glyphs.update(additions);glyphs[' '] = [0]*8
+    lines = ["1 ONE PLAYER / 2 TWO PLAYERS",
+             "P1 WASD MOVE  RED F BLUE G",
+             "P2 ARROWS MOVE RED . BLUE /",
+             "KEYPAD 8/4/2/6 MOVE RED0 BLUE.",
+             "JOYSTICKS P1 PORT2 P2 PORT1",
+             "DELETE / TAB ALSO SELECT"]
+    for p in planes: p[144*32:] = bytes(48*32)
+    for row,line in enumerate(lines):
+        if len(line)>32: raise ValueError('Title instruction exceeds picture width')
+        x=(32-len(line))//2
+        for col,c in enumerate(line):
+            for dy,bits in enumerate(glyphs[c]):
+                for p in planes: p[(144+row*8+dy)*32+x+col]=bits
+    for flavor, data in [('original', original), ('enhanced', planes)]:
+        directory=out if flavor=='original' else out/'enhanced'
+        directory.mkdir(parents=True,exist_ok=True)
+        for n,p in enumerate(data): (directory/f'plane{n}.bin').write_bytes(p)
+        start,stop=(0x38,0xb0) if flavor=='original' else (0x48,0xc0)
+        commands=['title_copper:', f'        dc.w $008e,$2c81,$0090,$ecc1,$0092,${start:04x},$0094,${stop:04x}',
+                  '        dc.w $0100,$4200,$0102,0,$0104,0,$0108,0,$010a,0']
+        for n in range(4): commands.append(f'title_pointer{n}: dc.w ${0xe0+4*n:04x},0,${0xe2+4*n:04x},0')
+        for n in range(16): commands.append(f'        dc.w ${0x180+2*n:04x},${PALETTE.get(n,0):03x}')
+        commands.append('        dc.w $ffff,$fffe')
+        for n in range(4): commands.append(f'title_plane{n}: incbin "{directory.relative_to(ROOT)}/plane{n}.bin"')
+        (directory/'display.i').write_text('\n'.join(commands)+'\n')
+    (out/'enhanced/instructions.json').write_text(json.dumps({'lines':lines,'first_row':144,
+        'font_additions_sha256':hashlib.sha256((ROOT/'assets/interface/small-font-additions.json').read_bytes()).hexdigest(),
+        'source_sha256':expected},indent=2)+'\n')
 
 if __name__=='__main__': generate()

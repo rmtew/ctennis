@@ -87,10 +87,11 @@ def chip_memory(read):
             'used_chip_bytes': CHIP_BYTES-sum(r['free'] for r in regions)}
 
 
-def run(mode, bank_control=False, boot_adf=None):
-    config, ordinary = build()
+def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=False):
+    config, ordinary = build(flavor=flavor)
     adf_sha=__import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest() if boot_adf else None
     name = f'ct10-adf-{mode}-cadence' if boot_adf else 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
+    name += '-' + flavor + ('-keyboard' if keyboard else '')
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe, listing = directory/'native-application', directory/'native.lst'
@@ -107,7 +108,7 @@ def run(mode, bank_control=False, boot_adf=None):
         wrapper.write_text(source.replace(marker,
             '        cmpi.w  #200,simulation_updates\n        bcs.s   bank_control_unchanged\n'
             '        move.l  back_copper,d0\nbank_control_unchanged:\n'+marker))
-        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(listing),'-o',str(exe),str(wrapper)])
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000',*(['-DENHANCED_INTERFACE=1'] if flavor=='enhanced' else []),'-L',str(listing),'-o',str(exe),str(wrapper)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
     if 'refresh_signs' in symbols or 'initial_ram' in symbols:
@@ -234,6 +235,13 @@ def run(mode, bank_control=False, boot_adf=None):
             ident = s.send_async(method, params)
             inputs.append({'id': ident, 'method': method, 'params': params,
                            'observed_callback': state['completed']})
+        def action_buttons(held):
+            if keyboard:
+                for key in (0x23,0x39):send('input.key',{'rawkey':key,'action':'press' if held else 'release'})
+            else:
+                for port in (1,2):send('input.joy',{'port':port,'red':held})
+        def selection_key(chosen):
+            return (0x01 if chosen=='one' else 0x02) if keyboard else (0x46 if chosen=='one' else 0x42)
         def milestone(label, position):
             if label in checkpoints:
                 return
@@ -251,16 +259,16 @@ def run(mode, bank_control=False, boot_adf=None):
                                  flight=ram[0x38], controls=controls.hex())
             if lifecycle == 2 and state['initial_selected'] is None:
                 milestone('initial_title', position)
-                send('input.key', {'rawkey': 0x46 if mode == 'one' else 0x42, 'action': 'press'})
+                send('input.key', {'rawkey': selection_key(mode), 'action': 'press'})
                 state['initial_selected'] = n
             if lifecycle == 3 and 'first_selection' not in checkpoints:
                 milestone('first_selection', position)
             if 'first_selection' in checkpoints and 'first_release' not in checkpoints and n-checkpoints['first_selection']['callback'] >= 80:
                 milestone('first_release', position)
-                send('input.key', {'rawkey': 0x46 if mode == 'one' else 0x42, 'action': 'release'})
+                send('input.key', {'rawkey': selection_key(mode), 'action': 'release'})
             if lifecycle == 1 and 'first_play' not in checkpoints:
                 milestone('first_play', position)
-                for port in (1, 2): send('input.joy', {'port': port, 'red': True})
+                action_buttons(True)
             if lifecycle == 1 and ram[0x38] and ram[0x66]:
                 milestone('restarted_flight' if 'restart_play' in checkpoints else 'first_flight', position)
             if any(ram[0x3e:0x40]): milestone('point', position)
@@ -279,23 +287,23 @@ def run(mode, bank_control=False, boot_adf=None):
             if lifecycle == 7: milestone('returned_title', position)
             if lifecycle == 2 and 'result' in checkpoints and state['restart_selected'] is None:
                 milestone('restart_title_ready', position)
-                send('input.key', {'rawkey': 0x42 if restarted == 'two' else 0x46, 'action': 'press'})
+                send('input.key', {'rawkey': selection_key(restarted), 'action': 'press'})
                 state['restart_selected'] = n
             if state['restart_selected'] is not None and lifecycle == 3:
                 milestone('restart_selection', position)
                 if bool(ram[0x3d]&128) != (restarted == 'two') or any(ram[0x3e:0x42]): fault('restart mode/score')
                 if n-checkpoints['restart_selection']['callback'] >= 80 and 'restart_release' not in checkpoints:
                     milestone('restart_release', position)
-                    send('input.key', {'rawkey': 0x42 if restarted == 'two' else 0x46, 'action': 'release'})
+                    send('input.key', {'rawkey': selection_key(restarted), 'action': 'release'})
             if state['restart_selected'] is not None and lifecycle == 1:
                 milestone('restart_play', position)
                 if 'held_blocked' not in checkpoints and n-checkpoints['restart_play']['callback'] >= 80:
                     if ram[0x38] or any(ram[0x3e:0x42]) or any(v&0x30 for v in controls[6:8]): fault('held old action escaped')
                     milestone('held_blocked', position)
-                    for port in (1, 2): send('input.joy', {'port': port, 'red': False})
+                    action_buttons(False)
                 if 'held_blocked' in checkpoints and n-checkpoints['held_blocked']['callback'] >= 80 and 'fresh_action' not in checkpoints:
                     milestone('fresh_action', position)
-                    for port in (1, 2): send('input.joy', {'port': port, 'red': True})
+                    action_buttons(True)
             if 'restarted_flight' in checkpoints and 'finished' not in checkpoints:
                 milestone('finished', position)
                 send('pause', {})  # the only stop after entry, at completed acceptance

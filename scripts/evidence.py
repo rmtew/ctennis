@@ -201,6 +201,7 @@ def inputs_for(kind, runner, case=None):
                  ('rom-blocks.def', 'rom-symbols.def', 'rom-comments.tsv', 'rom-literal-operands.tsv'))
     entry = ROOT / ('amiga/tests/simulation_harness.s' if kind == 'replay' else 'amiga/gameplay_integration_probe.s')
     paths |= assembly_inputs(entry)
+    paths.update((ROOT/'assets/interface').glob('*.json'))
     if kind == 'replay':
         # Names reported mismatches; compared offsets remain in the case recipe.
         paths.add(ROOT / 'tests/state-fields.json')
@@ -314,7 +315,8 @@ def compile_manifest(executable, listing):
             assets |= recovered
     symbols = sorted(re.findall(r'^([A-Za-z_][\w]*)\s+\d\d:[0-9A-Fa-f]{8}\s*$', text, re.M))
     value = {'files': snapshot(sources | assets | {Path(executable), Path(listing)}),
-             'executable': key(executable), 'executable_sha256': digest(executable), 'symbols': symbols}
+             'executable': key(executable), 'executable_sha256': digest(executable), 'symbols': symbols,
+             'interface_flavor': 'enhanced' if 'game_enhanced_interface' in symbols else 'original'}
     atomic_json(str(executable) + '.compile.json', value)
     return value
 
@@ -342,6 +344,13 @@ class ReportRun:
         files.update(snapshot(artifacts))
         meta['files'] = files
         meta['compiled_executables'] = {m['executable']: m['executable_sha256'] for m in compiled}
+        flavors = {m.get('interface_flavor') for m in compiled}
+        if len(flavors)==1 and None not in flavors:
+            flavor=next(iter(flavors))
+            if report.get('interface_flavor',flavor)!=flavor:
+                report=dict(report,passed=False,evidence_error='Compiled interface flavor mismatch')
+            report=dict(report,interface_flavor=flavor)
+            meta['interface_flavor']=flavor
         if self.meta['kind'] in ('build','phase-build'):
             report = dict(report, compiled_symbols=[s for m in compiled for s in m['symbols']])
         meta['changed_during_run'] = changed(files)
@@ -355,7 +364,7 @@ class ReportRun:
                               'evidence': dict(self.meta, state=state, completed_utc=now())})
 
 
-def status(path, subject=None, full=False, fresh_since=None):
+def status(path, subject=None, full=False, fresh_since=None, interface_flavor=None):
     """Read-only classification; no existing report is upgraded/rebaselined."""
     path = Path(path)
     if not path.exists():
@@ -402,6 +411,9 @@ def status(path, subject=None, full=False, fresh_since=None):
         return {'status': 'stale', 'freshness': 'incompatible', 'reason': 'Recorded subject disagrees with result'}
     if report.get('executable_sha256') not in meta['compiled_executables'].values():
         return {'status': 'stale', 'freshness': 'unverified', 'reason': 'Executable provenance mismatch'}
+    if interface_flavor and (meta.get('interface_flavor') != interface_flavor
+                             or report.get('interface_flavor') != interface_flavor):
+        return {'status':'stale','freshness':'incompatible','reason':'Interface flavor mismatch or unverified'}
     if subject and meta.get('subject') != subject:
         return {'status': 'stale', 'freshness': 'incompatible', 'reason': 'Subject mismatch'}
     if subject == 'maintained' and meta.get('kind') == 'replay' and report.get('entry_point') != 'game_source_tick':
@@ -437,7 +449,7 @@ def tracked_call(reports, kind, subject, startup, runner, case, action, executab
         for path in transaction.reports:
             report = json.loads(path.read_text())
             artifacts = []
-            for name in ('capture', 'screenshot', 'gif', 'audio_wav', 'scored_screenshot','adf','startup_sequence'):
+            for name in ('capture', 'screenshot', 'gif', 'audio_wav', 'scored_screenshot','accepted_mode_screenshot','adf','startup_sequence'):
                 value = report.get(name)
                 if isinstance(value, str):
                     artifacts.append(ROOT / value)

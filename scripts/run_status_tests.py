@@ -106,7 +106,7 @@ def check(case, expected, contract, captured, glyphs):
 
 
 def run(case, contract, glyphs, self_test):
-    path = ROOT / f'build/tests/{case["name"]}-report.json'
+    path = ROOT / f'build/tests/{case["name"]}-{case.get("interface_flavor","original")}-report.json'
     path.unlink(missing_ok=True)
     expected, proof = reference(case)
     def obtain(kind=None):
@@ -114,7 +114,8 @@ def run(case, contract, glyphs, self_test):
             track_commits=True, completed_rasters=True, observe_fields=True,
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
-            capture_label=case['name'] + (f'-{kind}' if kind else ''),
+            capture_label=case['name']+'-'+case.get('interface_flavor','original') + (f'-{kind}' if kind else ''),
+            interface_flavor=case.get('interface_flavor','original'),
             source_mutator=mutation(kind) if kind else None,
             source_case=case['source_case'], native_inputs=case['inputs'],
             observe_state=case.get('observe_state', False))
@@ -163,14 +164,18 @@ def run_cli():
     parser.add_argument('--case', choices=CASES)
     parser.add_argument('--all', action='store_true')
     parser.add_argument('--self-test', action='store_true')
+    parser.add_argument('--interface',choices=('original','enhanced'),default='original')
     args = parser.parse_args()
     if args.all == bool(args.case):
         parser.error('Select --all or one --case')
     contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
+    if args.interface=='enhanced':
+        contract['amiga_active_rectangle']=[v+64 if i in (0,2) else v for i,v in enumerate(contract['amiga_active_rectangle'])]
     _, glyphs = catalog()
     passed = []
     for name in CASES if args.all else (args.case,):
         case = json.loads((ROOT / f'tests/cases/{name}.json').read_text())
+        case['interface_flavor']=args.interface
         passed.append(run(case, contract, glyphs['status'], args.self_test))
     return 0 if all(passed) else 1
 
@@ -179,12 +184,13 @@ def main():
     from evidence import tracked_call
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--case')
+    parser.add_argument('--interface',choices=('original','enhanced'),default='original')
     parser.add_argument('--all', action='store_true')
     args, _ = parser.parse_known_args()
     if args.all == bool(args.case) or args.case and args.case not in CASES:
         return run_cli()
     names = (args.case,) if args.case else CASES
-    paths = [ROOT / f'build/tests/{name}-report.json' for name in names]
+    paths = [ROOT / f'build/tests/{name}-{args.interface}-report.json' for name in names]
     return tracked_call(paths, 'presentation', 'maintained-native', 'captured status lifecycle phase',
                         'scripts/run_status_tests.py', args.case or list(names), run_cli,
                         lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])

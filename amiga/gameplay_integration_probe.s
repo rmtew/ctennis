@@ -484,7 +484,11 @@ prepare_scene_fields:
         move.b  d2,2(a2)
         moveq   #0,d0
         move.b  O_X(a0),d0
+        ifd ENHANCED_INTERFACE
+        addi.w  #$a0,d0
+        else
         addi.w  #$80,d0
+        endif
         move.w  d0,d1
         lsr.w   #1,d1
         move.b  d1,1(a2)
@@ -785,4 +789,8 @@ sprite_back: dcb.b 8*72,0
         endif
 
         even
+        ifd ENHANCED_INTERFACE
+        include "build/amiga/title/enhanced/display.i"
+        else
         include "build/amiga/title/display.i"
+        endif

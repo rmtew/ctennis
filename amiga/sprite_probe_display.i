@@ -1,7 +1,11 @@
         section display_data,data,chip
 copperlist:
         dc.w $008e,$2c81,$0090,$ecc1
+        ifd ENHANCED_INTERFACE
+        dc.w $0092,$0048,$0094,$00c0
+        else
         dc.w $0092,$0038,$0094,$00b0
+        endif
         dc.w $0100,$4200,$0102,$0000,$0104,$0024
         dc.w $0108,$0000,$010a,$0000
 cop_bpl0h: dc.w $00e0,0

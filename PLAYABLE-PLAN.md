@@ -1,4 +1,4 @@
-<!-- CT10 repair checkpoint: all six affected guards and final accepted-target checks pass with current machine evidence; exact-head independent source/runtime review and merge authorization remain pending. Primary media/upper checkpoint unchanged; separate original generation4131 raster supplement verified. See newest WORKLOG and analysis/native-delivery-review-regressions.md. -->
+<!-- CT10 independently verified and merged at 9a59c6c; approved enhanced-interface follow-on is active and separately reviewable. See newest WORKLOG and analysis/enhanced-interface.md. -->
 # Playable native A500 implementation queue
 
 ## Decision and scope
@@ -21,7 +21,7 @@ Repository review base: [f5de85f](https://github.com/rmtew/ctennis/commit/f5de85
 
 ## How to use this queue
 
-Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 and CT-09 are verified and merged; CT-10 is active with final delivery gates still open.
+Statuses: **ready** (prerequisites met, not started), **queued**, **active**, **blocked**, **verified**. CT-01 is verified and merged; CT-02 is verified with ordinary title/physical-choice evidence (see WORKLOG.md). CT-03 is verified with focused physical-control evidence; CT-04 is verified with bounded native gameplay evidence; CT-05 is verified and merged; CT-06 is verified and merged; CT-07 is verified and merged; CT-08 and CT-09 are verified and merged; CT-10 is independently verified and merged; private file delivery remains separately blocked.
 
 At session start read AGENTS.md and the latest WORKLOG.md entry, select the first unfinished item whose dependencies are met, and state one concrete next change. At session end leave either a product change with focused evidence, a precisely isolated blocker with a reproduction, or a verified milestone. Test creation, extra captures, increased case counts, and repeating an unchanged baseline alone are not progress.
 
@@ -208,7 +208,7 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## CT-10 — Remove residual scaffolding and deliver the bootable ADF
 
-**Status:** local delivery acceptance ready; independent exact-head runtime review pending in [draft PR11](https://github.com/rmtew/ctennis/pull/11), source `be7dda6` (native game code unchanged from `c828126`). User-approved Copperline target; no second emulator requirement. Diagnostic logging repair passes all three affected probes, ordinary executable/ADF unchanged. Nine required accepted-target commands freshly pass after the common-helper change; machine progress evidences CT10 within that scope. Aggregate remains failed with [exact attribution](analysis/native-delivery-aggregate.md), including unresolved local diagnostic observations. Private Library upload is blocked before preparation by helper proxy CONNECT403; no Library IDs. Pre-pool RAM usage remains unmeasured. No merge/final independent review claim. **Dependencies:** CT-09.
+**Status:** independently verified and merged in [PR11](https://github.com/rmtew/ctennis/pull/11), exact reviewed head `d8e0a47`, master `9a59c6c2f7fe0e4642e02f1835049bcdd5f716a9` (2026-10-02 UTC). Independent source/runtime acceptance corroborated all17 finite commands,41units,8receipt controls and18freshreports. The six demonstrated delivery regressions were repaired, including exact original4131 hardware5430/pixel5432 association and sprite-safe court publication. See the latest CT10 WORKLOG entry and [repair evidence](analysis/native-delivery-review-regressions.md). The historical aggregate remains failed outside this scoped acceptance. User-approved Copperline is sufficient; pre-pool RAM remains unmeasured. Private Library upload is blocked by proxy CONNECT403, and the GitHub connector has no release/asset write; no private assets were uploaded. **Dependencies:** CT-09.
 
 **Resolved native dependency:** the ordinary product now uses subsystem-owned native state and clocks, with generated routines/register macros/source memory and snapshots excluded. Explicit private asset preparation and isolated native assembly/ADF packaging are implemented. Remaining verification is current Copperline acceptance and independent exact-head code/runtime review; pre-pool bootstrap RAM usage is unmeasured.
 
@@ -232,4 +232,17 @@ not full reference match/cadence/RAM/ADF/independent hardware proof. See
 
 ## Progress record
 
-WORKLOG.md holds the newest session entry. Use the AGENTS.md template. Each entry names one item, before/after visible capability, actual product files, checks run on the final build, checks reused/not run, the unresolved blocker and one next action. Update this document's status only with linked evidence; this initial plan has no verified product items.
+WORKLOG.md holds the newest session entry. Use the AGENTS.md template. Each entry names one item, before/after visible capability, actual product files, checks run on the final build, checks reused/not run, the unresolved blocker and one next action. Update this document's status only with linked evidence; current statuses above reflect subsequent verified product work; initial-plan evidence remains separately labelled.
+
+
+## Approved interface follow-on (2026-10-02 UTC)
+
+**Status:** local acceptance evidenced; review-ready, unmerged; separate from the
+completed CT01–CT10 queue. Richard approved
+the shared compile-time original/enhanced interface design. Enhanced is the
+normal build default: centered fetch/sprites/score timing, physical keyboard
+controls alongside joysticks, and offline readable title instructions with
+small-font completion. Original remains a comparison aid. See
+[finite interface acceptance](analysis/enhanced-interface.md). This item requires
+its own exact-head review and draft PR; no merge or attract/tutorial work is
+authorized by its local evidence.

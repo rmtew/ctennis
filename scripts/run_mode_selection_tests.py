@@ -43,7 +43,7 @@ def reference(case, frame):
 
 
 def capture(case, kind=None):
-    config, ordinary=build()
+    config, ordinary=build(flavor="original")
     directory=ROOT/f'build/tests/{case["name"]}-{kind or "normal"}';directory.mkdir(parents=True,exist_ok=True)
     exe=directory/'native-application'
     command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-L',str(directory/'native.lst'),'-o',str(exe),case['native_source']])
@@ -203,7 +203,7 @@ def _run(case_name,self_test=False):
             changed=capture(case,kind)
             if changed['passed']: raise AssertionError(f'Actual {kind} mutation escaped')
             mutants.append({'kind':kind,'detected':True,'first_difference':changed['first_difference']})
-        build()  # restore ordinary executable after compiled variants
+        build(flavor="original")  # restore the explicitly original comparison executable
     normal.update(self_test=self_test,hardware_mutations=mutants)
     (ROOT/f'build/tests/{case_name}-report.json').write_text(json.dumps(normal,indent=2)+'\n')
     print(json.dumps({'case':case_name,'passed':normal['passed'],'differences':normal['differences'],'mutants':len(mutants)}),flush=True)
