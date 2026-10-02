@@ -51,16 +51,16 @@ def run(mode, flavor="enhanced"):
         for index in range(6000):
             stop = s.inspect('run_until', {'seconds': deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target', 'breakpoint'): raise RuntimeError(stop)
-            ram = read_native_state(s,base,symbols)
+            native_state = read_native_state(s,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle', 2), 'big')
             stage = mem('game_score_state', 1)[0]
-            games = sum(ram[0x40:0x42])
+            games = sum(bytes([native_state['game_games_a'], native_state['game_games_b']]))
             row = {'callback': int.from_bytes(mem('simulation_updates', 2), 'big') + 1,
-                   'lifecycle': lifecycle, 'scoring_stage': stage, 'ram': ram.hex()}
+                   'lifecycle': lifecycle, 'scoring_stage': stage, 'state': dict(native_state)}
             if last_callback is not None and row['callback'] != last_callback + 1:
                 raise AssertionError('Ordinary callback observation is not consecutive')
             last_callback = row['callback']
-            if bool(ram[0x3d] & 0x80) != (mode == 'two'):
+            if bool(native_state['game_mode'] & 0x80) != (mode == 'two'):
                 differences.append({'field': 'physical mode selection', 'callback': row['callback']})
             rows.append(row)
             if games != previous_games:
@@ -71,14 +71,14 @@ def run(mode, flavor="enhanced"):
             if lifecycle in (4, 5):
                 if award is None: differences.append({'field': 'pause before game award'})
                 if paused is None: paused = row['callback']
-                pose = ram[0x45:0x4d]
+                pose = bytes([native_state['game_upper_y'], native_state['game_upper_x'], native_state['game_upper_image'], native_state['game_upper_colour'], native_state['game_lower_y'], native_state['game_lower_x'], native_state['game_lower_image'], native_state['game_lower_colour']])
                 if frozen is None: frozen = pose
                 if pose != frozen: differences.append({'field': 'player moved during round pause', 'callback': row['callback']})
-                if games != 1 or any(ram[0x3e:0x40]):
+                if games != 1 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])):
                     differences.append({'field': 'score changed during round pause', 'callback': row['callback']})
             elif paused is not None and lifecycle == 1:
                 if resumed is None: resumed = row['callback']
-                if stage == 1 and ram[0x38] and ram[0x66]:
+                if stage == 1 and native_state['game_flight'] and native_state['game_step']:
                     completed = row['callback']
                     break
         if not all((award, paused, resumed, completed)):
@@ -145,26 +145,26 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
         for index in range(40000):
             stop = session.inspect('run_until',{'seconds':deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target','breakpoint'): raise RuntimeError(stop)
-            ram = read_native_state(session,base,symbols)
+            native_state = read_native_state(session,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle',2),'big')
             callback = int.from_bytes(mem('simulation_updates',2),'big')+1
             if previous_callback is not None and callback != previous_callback+1:
                 raise AssertionError('Ordinary callback continuity lost')
             previous_callback=callback;observations+=1
-            state=(lifecycle,tuple(ram[0x40:0x42]))
+            state=(lifecycle,tuple(bytes([native_state['game_games_a'], native_state['game_games_b']])))
             if audio and state != previous:
                 audio_checkpoints.append({'callback':callback,'lifecycle':lifecycle,'seconds':stop['seconds'],
                     'voices':mem('game_audio_voices',96).hex(), 'registers':session.inspect('custom_dump')['regs']})
             if state != previous:
-                snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                 previous=state
             if lifecycle == 6 and 'match_award' not in checkpoints:
-                if max(ram[0x40:0x42]) != 6 or any(ram[0x3e:0x40]):
+                if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])):
                     raise AssertionError('Result before six-game award / nonzero points')
                 checkpoints['match_award']=callback
                 # Deliberately keep both old action buttons held across the menu.
             if lifecycle == 7 and 'returned_title_display' not in checkpoints:
-                if any(ram[0x3d:0x42]): raise AssertionError('Old mode/score leaked into title reset')
+                if any(bytes([native_state['game_mode'], native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): raise AssertionError('Old mode/score leaked into title reset')
                 checkpoints['returned_title_display']=callback
             if lifecycle == 2 and 'match_award' in checkpoints and not selection_pressed:
                 checkpoints['title_ready']=callback
@@ -173,7 +173,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
             if selection_pressed and lifecycle == 3:
                 if 'restart_selected' not in checkpoints:
                     checkpoints['restart_selected']=callback
-                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]):
+                    if bool(native_state['game_mode']&128) != (restarted_mode=='two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])):
                         raise AssertionError('Chosen restart mode/score not fresh')
                 if released_callback is None and callback-checkpoints['restart_selected'] >= 80:
                     session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'release'})
@@ -213,7 +213,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
             if released_callback is not None and lifecycle == 1:
                 if 'restart_playing' not in checkpoints:
                     checkpoints['restart_playing']=callback
-                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]) or ram[0x3d]&0x70:
+                    if bool(native_state['game_mode']&128) != (restarted_mode=='two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])) or native_state['game_mode']&0x70:
                         raise AssertionError('Old mode/end/score leaked into restarted match')
                     if mem('game_lower_owner',2) != bytes([0,1]):
                         raise AssertionError('Old player ownership survived reset')
@@ -225,17 +225,17 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                         if 'fresh_action_eligible' not in checkpoints:
                             checkpoints['fresh_action_eligible']=callback
                             action_samples['playable']=sample
-                        if ram[0x38] and ram[0x66]:
+                        if native_state['game_flight'] and native_state['game_step']:
                             checkpoints['restarted_flight']=callback
-                            snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                            snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                             break
                         if callback-checkpoints['restart_playing'] >= 60:
                             raise AssertionError('Fresh early repress did not launch without a second release')
                     continue
-                if waiting_callback is None and ram[0x3a]&0x40:
+                if waiting_callback is None and native_state['game_lower_phase']&0x40:
                     waiting_callback=callback
                 if waiting_callback is not None and 'restart_action' not in checkpoints:
-                    if ram[0x38] or any(ram[0x3e:0x42]): raise AssertionError('Restart launched without fresh action')
+                    if native_state['game_flight'] or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): raise AssertionError('Restart launched without fresh action')
                     if 'old_action_blocked' not in checkpoints and callback-waiting_callback >= 80:
                         if mem('game_input_bits',2) != bytes([16,16]):
                             raise AssertionError('Old physical actions were not still held')
@@ -246,9 +246,9 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                     elif 'old_action_blocked' in checkpoints and callback-checkpoints['old_action_blocked'] >= 80:
                         checkpoints['restart_action']=callback
                         session.inspect('input_joy',{'port':2,'red':True})
-                elif 'restart_action' in checkpoints and ram[0x38] and ram[0x66]:
+                elif 'restart_action' in checkpoints and native_state['game_flight'] and native_state['game_step']:
                     checkpoints['restarted_flight']=callback
-                    snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                    snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                     break
         required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
                   ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))

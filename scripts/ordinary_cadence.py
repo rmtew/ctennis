@@ -83,7 +83,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     callbacks, commits, memory_writes = [], [], []
     preparations = []
     view_selections = []
-    ram, controls = bytearray(256), bytearray(8)
+    native_state, controls = {}, bytearray(8)
     state = {'lifecycle': 0, 'started': 0, 'completed': 0, 'ready': None,
              'released': False, 'initial_selected': None, 'restart_selected': None,
              'last_commit': 0, 'start': None, 'origin': None, 'pause_pose': None}
@@ -175,7 +175,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         pointer_addresses = {n:address[n] for n in pointer_bytes if n!='cop1lc'}
         pointer_addresses['cop1lc']=0xdff080
         native_fields=field_addresses(base,symbols)
-        native_offsets={address:offset for offset,address in native_fields.items()}
+        address_fields={address:name for name,address in native_fields.items()}
         def read(a, n):
             return bytes.fromhex(s.inspect('mem_read', {'addr': a, 'len': n})['data'])
         loaded_checks=loaded_hunks(exe,segments,read)
@@ -192,7 +192,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
 
         title_initial = read(address['game_title_display'],1)[0]
         state['title']=title_initial
-        ram[:] = read_native_state(s,base,symbols)
+        native_state.update(read_native_state(s,base,symbols))
         for port in (1, 2):
             s.inspect('input_set_port', {'port': port, 'device': 'joystick'})
         def send(method, params):
@@ -210,7 +210,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if label in checkpoints:
                 return
             checkpoints[label] = {'callback': state['completed'], 'position': position,
-                                  'lifecycle': state['lifecycle'], 'ram': ram.hex(),
+                                  'lifecycle': state['lifecycle'], 'state': dict(native_state),
                                   'controls': controls.hex()}
             send('capture.screenshot', {'path': str(directory/(label+'.png'))})
             send('custom.dump', {})
@@ -219,8 +219,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 failures.append({'field': field, 'callback': state['completed'], **details})
         def on_callback(position):
             n, lifecycle = state['completed'], state['lifecycle']
-            callbacks[-1].update(lifecycle=lifecycle, score=list(ram[0x3e:0x42]),
-                                 flight=ram[0x38], controls=controls.hex())
+            callbacks[-1].update(lifecycle=lifecycle, score=list(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])),
+                                 flight=native_state['game_flight'], controls=controls.hex())
             if lifecycle == 2 and state['initial_selected'] is None:
                 milestone('initial_title', position)
                 send('input.key', {'rawkey': selection_key(mode), 'action': 'press'})
@@ -233,13 +233,13 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if lifecycle == 1 and 'first_play' not in checkpoints:
                 milestone('first_play', position)
                 action_buttons(True)
-            if lifecycle == 1 and ram[0x38] and ram[0x66]:
+            if lifecycle == 1 and native_state['game_flight'] and native_state['game_step']:
                 milestone('restarted_flight' if 'restart_play' in checkpoints else 'first_flight', position)
-            if any(ram[0x3e:0x40]): milestone('point', position)
-            if any(ram[0x40:0x42]): milestone('game', position)
+            if any(bytes([native_state['game_point_a'], native_state['game_point_b']])): milestone('point', position)
+            if any(bytes([native_state['game_games_a'], native_state['game_games_b']])): milestone('game', position)
             if lifecycle in (4, 5):
                 milestone('pause', position)
-                pose = ram[0x45:0x4d].hex()
+                pose = bytes([native_state['game_upper_y'], native_state['game_upper_x'], native_state['game_upper_image'], native_state['game_upper_colour'], native_state['game_lower_y'], native_state['game_lower_x'], native_state['game_lower_image'], native_state['game_lower_colour']]).hex()
                 if state['pause_pose'] is None: state['pause_pose'] = pose
                 elif state['pause_pose'] != pose: fault('movement during round pause')
             else:
@@ -247,7 +247,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 state['pause_pose'] = None
             if lifecycle == 6:
                 milestone('result', position)
-                if max(ram[0x40:0x42]) != 6 or any(ram[0x3e:0x40]): fault('result before six-game completion')
+                if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])): fault('result before six-game completion')
             if lifecycle == 7: milestone('returned_title', position)
             if lifecycle == 2 and 'result' in checkpoints and state['restart_selected'] is None:
                 milestone('restart_title_ready', position)
@@ -255,14 +255,14 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 state['restart_selected'] = n
             if state['restart_selected'] is not None and lifecycle == 3:
                 milestone('restart_selection', position)
-                if bool(ram[0x3d]&128) != (restarted == 'two') or any(ram[0x3e:0x42]): fault('restart mode/score')
+                if bool(native_state['game_mode']&128) != (restarted == 'two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): fault('restart mode/score')
                 if n-checkpoints['restart_selection']['callback'] >= 80 and 'restart_release' not in checkpoints:
                     milestone('restart_release', position)
                     send('input.key', {'rawkey': selection_key(restarted), 'action': 'release'})
             if state['restart_selected'] is not None and lifecycle == 1:
                 milestone('restart_play', position)
                 if 'held_blocked' not in checkpoints and n-checkpoints['restart_play']['callback'] >= 80:
-                    if ram[0x38] or any(ram[0x3e:0x42]) or any(v&0x30 for v in controls[6:8]): fault('held old action escaped')
+                    if native_state['game_flight'] or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])) or any(v&0x30 for v in controls[6:8]): fault('held old action escaped')
                     milestone('held_blocked', position)
                     action_buttons(False)
                 if 'held_blocked' in checkpoints and n-checkpoints['held_blocked']['callback'] >= 80 and 'fresh_action' not in checkpoints:
@@ -288,9 +288,9 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if a==address['game_title_display']:
                 state['title']=value
                 view_selections.append({'title':bool(value),'position':position})
-            if any(a+i in native_offsets for i in range(size)):
+            if any(a+i in address_fields for i in range(size)):
                 for i,v in enumerate(value.to_bytes(size,'big')):
-                    if a+i in native_offsets:ram[native_offsets[a+i]]=v
+                    if a+i in address_fields:native_state[address_fields[a+i]]=v
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
                 controls[a-address['game_input_bits']:a-address['game_input_bits']+size] = value.to_bytes(size, 'big')
             elif a == address['game_lifecycle']:
@@ -351,7 +351,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         s.notification_handler = event
         watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
-                    *[{'addr':a,'len':1,'access':'write'} for offset,a in native_fields.items() if 0x38<=offset<0x4d or offset==0x66],
+                    *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
                     {'addr': 0xdff088, 'len': 2, 'access': 'write'},
                     {'addr': 0xbfdf00, 'len': 1, 'access': 'write'},
