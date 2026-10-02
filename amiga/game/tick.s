@@ -1,6 +1,4 @@
-; Maintained native lifecycle and source-rate dispatcher, shared by live/replay.
-; No source PC/callback kind selects this state. CT-05 owns round transitions.
-; Native state is shared directly; source-format serialization is test-only.
+; Native lifecycle dispatcher shared by live play and seeded attract playback.
 GAME_SERVICE equ 0
 GAME_PLAYING equ 1
 GAME_TITLE equ 2
@@ -14,13 +12,11 @@ GAME_RESTART_SOUND equ 9
 GAME_RESTART_SERVE_SOUND equ 10
 
 game_begin_active:
-        ifd NATIVE_SCORING
         clr.b   game_score_initialized
-        endif
         move.w  #GAME_PLAYING,game_lifecycle
         rts
 
-game_source_tick:
+game_tick_dispatch:
         cmpi.w  #GAME_TITLE,game_lifecycle
         beq     game_returned_title_tick
         cmpi.w  #GAME_SELECTION_HELD,game_lifecycle
@@ -29,9 +25,6 @@ game_source_tick:
         bne.s   game_service_tick
         bsr     game_active_tick
 game_service_tick:
-        ifd NATIVE_SCENE_OBSERVE
-        bsr     capture_export_state
-        endif
         bsr     game_observe_pre_tail
         bra     game_service_tail
 

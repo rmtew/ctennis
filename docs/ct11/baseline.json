@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "baseline_commit": "50ef76227a72e137c37efe29502cf60b1d4590d4",
+  "baseline_tree": "7c51f4848cf3f0a69a726887ec8c6885a15a92f9",
+  "rollback_check": {
+    "path": "amiga/game/interface_demo.s",
+    "git_show_equals_working_file": true,
+    "sha256": "8e0c681c62e33df899c3ab1f0467707becece8798e7271db8e5a7e2a29d371ee"
+  },
+  "artifact_hash_status": "Recorded merged WORKLOG evidence only; artifacts unavailable here, not freshly verified. BUILD text embeds revision so rebuilding merge may intentionally change enhanced bytes.",
+  "recorded_release_artifacts": {
+    "source_commit": "840e3ff491cb0df7a7db552145b86d0483f6bdbe",
+    "enhanced_exe": "5d7fcfecc52d931a1466e13fc93945a66c1cd16ad2da6bb9fb69471a234600f7",
+    "enhanced_adf": "1e0a0b1396bbf77ccb82da2de043263bc4b729284b092aa76ab37817b210b3b0",
+    "original_exe": "1d7421946c8e3de8fbf7ccc7b5bff95ee68d83017ea237a47fc74d0104812829",
+    "original_adf": "7f6dcacb2746d2c3fe6c60bbd0faa6845539d8b9ed63303ff51f1daad822dad6"
+  },
+  "tool": {
+    "vasm_sha256": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
+    "vasm_version": "1.9d",
+    "python": "Python 3.12.14"
+  },
+  "untracked_policy": "No irreplaceable untracked inputs moved/deleted. Existing source/release checkout remains untouched; original inputs are unnecessary and absent in the fresh gate checkout.",
+  "native_asset_import": {
+    "asset_commit": "26aa157de91c2bda23f84f632ad8e46194739b06",
+    "validated_files": 96,
+    "current_runtime_inputs": 92,
+    "binary_bytes": "unchanged; native include paths relocated; four stale metadata files retired",
+    "storage_approval": "private repository,2026-10-02 07:02:50UTC"
+  },
+  "neutral_cutover_equality": {
+    "baseline_commit": "50ef76227a72e137c37efe29502cf60b1d4590d4",
+    "baseline_executable_sha256": "c8dcaf04d63b593d4669ad72c47998c605e7de4360c66910d21048853f359548",
+    "byte_equality": true,
+    "comparison": "Fixed BUILD50ef762 and inverse two symbol renames for comparison only; code/data/relocations/BSS unchanged. Normal build preserves native names and actual revision label.",
+    "native_symbol_equality_under_aliases": true,
+    "symbols": 1259,
+    "limit": "Verified before removal of unreachable comparison-keyboard fallback. Final executable additionally removes that dead block, renames two symbols and embeds actual head; final-head runtime/loaded-byte gates are separate."
+  }
+}

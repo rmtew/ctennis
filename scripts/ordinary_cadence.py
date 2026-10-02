@@ -1,57 +1,23 @@
+from native_tools import emulator_config
 """CT09's finite non-stopping ordinary play measurement, not a reference model."""
-import csv
 from fractions import Fraction
 import json
 import re
 import shutil
-from run_translated_prng_probe import ASSEMBLER, run as assemble
+from native_tools import ASSEMBLER, run as assemble
+from native_clock import clock_contract, INTERVAL_CCK
+from native_setup_observation import SetupObserver
 
 from native_state_observation import field_addresses, read_native_state
 from native_hunk import loaded_hunks
 from build_native_game import build
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols, target_log
 from copperline_test_session import NativeControlSession
-from evidence import ROOT, atomic_json, compile_manifest
+from native_evidence import ROOT, atomic_json, compile_manifest
 
 CCK_HZ = 3546895
 ECLK_HZ = 709379
 CHIP_BYTES = 524288
-
-
-def clock_contract():
-    periods, extents = [], {}
-    for mode in ('one', 'two'):
-        path = ROOT / f'tests/reference/audio/{mode}-player-match/a/frame-times.tsv'
-        with path.open() as handle:
-            rows = list(csv.DictReader(handle, delimiter='\t'))
-        times = [int(r['seconds']) * 10**18 + int(r['attoseconds']) for r in rows]
-        deltas = set(b-a for a, b in zip(times, times[1:]))
-        if len(deltas) != 1:
-            raise ValueError('Source frame period is not constant')
-        periods.append(deltas.pop())
-        reference = json.loads((ROOT/f'tests/reference/{mode}-player-match.json').read_text())
-        # Start-of-callback frames establish cadence. A pre-tail checkpoint
-        # can cross a video boundary during a long source callback; its frame
-        # label is not a second invocation or a skipped source tick.
-        frames = [reference['initial_callback']['begin_frame']] + [r['begin_frame'] for r in reference['updates']]
-        if any(b-a != 1 for a, b in zip(frames, frames[1:])):
-            raise ValueError('Full source callback cadence is not one update per frame')
-        extents[mode] = {'updates': len(reference['updates']), 'first_frame': frames[0], 'last_frame': frames[-1]}
-    if periods[0] != periods[1]:
-        raise ValueError('Source modes have different frame periods')
-    ticks = Fraction(periods[0] * ECLK_HZ, 10**18)
-    fixed = round(ticks * 65536)
-    return {'source_period_attoseconds': periods[0], 'eclock_hz': ECLK_HZ,
-            'cck_hz': CCK_HZ, 'cck_per_eclock': 5, 'interval_16_16': fixed,
-            'resolution_cck': 1, 'origin_uncertainty_cck': 5,
-            'source_callback_extents': extents,
-            'interval_rounding_error_eclock': '<= N/(2*65536)',
-            'rules': {'entry': 'not before source deadline minus quantization; before next deadline',
-                      'completion': 'before next deadline',
-                      'publication': 'court bank before PAL sprite DMA line25 or late blank >=236; latest completed prepared epoch',
-                      'telemetry': 'zero missing, duplicate or dropped events',
-                      'memory': 'validated Exec chip free list; continuously observe topology/free mutations',
-                      'entropy': 'ordinary native timer; no captured-phase or recorded entropy initialization'}}
 
 
 def chip_memory(read):
@@ -88,7 +54,7 @@ def chip_memory(read):
 
 
 def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=False):
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     adf_sha=__import__('hashlib').sha256(boot_adf.read_bytes()).hexdigest() if boot_adf else None
     name = f'ct10-adf-{mode}-cadence' if boot_adf else 'ct09-published-bank-control' if bank_control else f'ct09-ordinary-{mode}-cadence'
     name += '-' + flavor + ('-keyboard' if keyboard else '')
@@ -98,7 +64,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     shutil.copy2(ordinary, exe)
     shutil.copy2(ordinary.parent/'native.lst', listing)
     if bank_control:
-        source = (ROOT/'amiga/gameplay_integration_probe.s').read_text()
+        source = (ROOT/'amiga/main.s').read_text()
         marker = '        move.l  d0,$dff080'
         if source.count(marker)!=1:
             raise ValueError('Ordinary Copper publication instruction changed')
@@ -119,7 +85,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     callbacks, commits, memory_writes = [], [], []
     preparations = []
     view_selections = []
-    ram, controls = bytearray(256), bytearray(8)
+    native_state, controls = {}, bytearray(8)
     state = {'lifecycle': 0, 'started': 0, 'completed': 0, 'ready': None,
              'released': False, 'initial_selected': None, 'restart_selected': None,
              'last_commit': 0, 'start': None, 'origin': None, 'pause_pose': None}
@@ -211,7 +177,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         pointer_addresses = {n:address[n] for n in pointer_bytes if n!='cop1lc'}
         pointer_addresses['cop1lc']=0xdff080
         native_fields=field_addresses(base,symbols)
-        native_offsets={address:offset for offset,address in native_fields.items()}
+        address_fields={address:name for name,address in native_fields.items()}
         def read(a, n):
             return bytes.fromhex(s.inspect('mem_read', {'addr': a, 'len': n})['data'])
         loaded_checks=loaded_hunks(exe,segments,read)
@@ -219,6 +185,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         if boot_adf and [r['header'] for r in initial_memory['regions']]!=list(headers):
             raise ValueError('Cold-reset memory pool differs from actual calibration')
 
+        setup_observer=SetupObserver(base,symbols,listing.read_text())
         entry_stop=s.inspect('run_until',{'pc':base+symbols['start']})
         entry_regs=s.inspect('regs.get')
         task=int.from_bytes(read(initial_memory['execbase']+0x114,4),'big')
@@ -228,7 +195,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
 
         title_initial = read(address['game_title_display'],1)[0]
         state['title']=title_initial
-        ram[:] = read_native_state(s,base,symbols)
+        native_state.update(read_native_state(s,base,symbols))
         for port in (1, 2):
             s.inspect('input_set_port', {'port': port, 'device': 'joystick'})
         def send(method, params):
@@ -246,7 +213,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if label in checkpoints:
                 return
             checkpoints[label] = {'callback': state['completed'], 'position': position,
-                                  'lifecycle': state['lifecycle'], 'ram': ram.hex(),
+                                  'lifecycle': state['lifecycle'], 'state': dict(native_state),
                                   'controls': controls.hex()}
             send('capture.screenshot', {'path': str(directory/(label+'.png'))})
             send('custom.dump', {})
@@ -255,8 +222,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 failures.append({'field': field, 'callback': state['completed'], **details})
         def on_callback(position):
             n, lifecycle = state['completed'], state['lifecycle']
-            callbacks[-1].update(lifecycle=lifecycle, score=list(ram[0x3e:0x42]),
-                                 flight=ram[0x38], controls=controls.hex())
+            callbacks[-1].update(lifecycle=lifecycle, score=list(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])),
+                                 flight=native_state['game_flight'], controls=controls.hex())
             if lifecycle == 2 and state['initial_selected'] is None:
                 milestone('initial_title', position)
                 send('input.key', {'rawkey': selection_key(mode), 'action': 'press'})
@@ -269,13 +236,13 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if lifecycle == 1 and 'first_play' not in checkpoints:
                 milestone('first_play', position)
                 action_buttons(True)
-            if lifecycle == 1 and ram[0x38] and ram[0x66]:
+            if lifecycle == 1 and native_state['game_flight'] and native_state['game_step']:
                 milestone('restarted_flight' if 'restart_play' in checkpoints else 'first_flight', position)
-            if any(ram[0x3e:0x40]): milestone('point', position)
-            if any(ram[0x40:0x42]): milestone('game', position)
+            if any(bytes([native_state['game_point_a'], native_state['game_point_b']])): milestone('point', position)
+            if any(bytes([native_state['game_games_a'], native_state['game_games_b']])): milestone('game', position)
             if lifecycle in (4, 5):
                 milestone('pause', position)
-                pose = ram[0x45:0x4d].hex()
+                pose = bytes([native_state['game_upper_y'], native_state['game_upper_x'], native_state['game_upper_image'], native_state['game_upper_colour'], native_state['game_lower_y'], native_state['game_lower_x'], native_state['game_lower_image'], native_state['game_lower_colour']]).hex()
                 if state['pause_pose'] is None: state['pause_pose'] = pose
                 elif state['pause_pose'] != pose: fault('movement during round pause')
             else:
@@ -283,7 +250,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 state['pause_pose'] = None
             if lifecycle == 6:
                 milestone('result', position)
-                if max(ram[0x40:0x42]) != 6 or any(ram[0x3e:0x40]): fault('result before six-game completion')
+                if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])): fault('result before six-game completion')
             if lifecycle == 7: milestone('returned_title', position)
             if lifecycle == 2 and 'result' in checkpoints and state['restart_selected'] is None:
                 milestone('restart_title_ready', position)
@@ -291,14 +258,14 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 state['restart_selected'] = n
             if state['restart_selected'] is not None and lifecycle == 3:
                 milestone('restart_selection', position)
-                if bool(ram[0x3d]&128) != (restarted == 'two') or any(ram[0x3e:0x42]): fault('restart mode/score')
+                if bool(native_state['game_mode']&128) != (restarted == 'two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): fault('restart mode/score')
                 if n-checkpoints['restart_selection']['callback'] >= 80 and 'restart_release' not in checkpoints:
                     milestone('restart_release', position)
                     send('input.key', {'rawkey': selection_key(restarted), 'action': 'release'})
             if state['restart_selected'] is not None and lifecycle == 1:
                 milestone('restart_play', position)
                 if 'held_blocked' not in checkpoints and n-checkpoints['restart_play']['callback'] >= 80:
-                    if ram[0x38] or any(ram[0x3e:0x42]) or any(v&0x30 for v in controls[6:8]): fault('held old action escaped')
+                    if native_state['game_flight'] or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])) or any(v&0x30 for v in controls[6:8]): fault('held old action escaped')
                     milestone('held_blocked', position)
                     action_buttons(False)
                 if 'held_blocked' in checkpoints and n-checkpoints['held_blocked']['callback'] >= 80 and 'fresh_action' not in checkpoints:
@@ -317,6 +284,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if boot_adf:boot_event(message,log=False)
             r = message['params']; a, value, size = r['addr'], r['value'], r['size']
             position = r['position']
+            setup_observer.observe(r)
             if r.get('dropped_events', 0) or r.get('dropped_notifications', 0): fault('telemetry drop')
             for field, start in pointer_addresses.items():
                 if start<=a and a+size<=start+4:
@@ -324,9 +292,9 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if a==address['game_title_display']:
                 state['title']=value
                 view_selections.append({'title':bool(value),'position':position})
-            if any(a+i in native_offsets for i in range(size)):
+            if any(a+i in address_fields for i in range(size)):
                 for i,v in enumerate(value.to_bytes(size,'big')):
-                    if a+i in native_offsets:ram[native_offsets[a+i]]=v
+                    if a+i in address_fields:native_state[address_fields[a+i]]=v
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
                 controls[a-address['game_input_bits']:a-address['game_input_bits']+size] = value.to_bytes(size, 'big')
             elif a == address['game_lifecycle']:
@@ -376,10 +344,10 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 commits.append({'generation': generation, 'position': position,'pointer':pointer,
                                 'prepared':dict(prepared) if prepared else None,
                                 'title_selected':bool(state['title']),'expected_pointer':expected})
-            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 236:
+            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 252:
                 fault('visible-line Copper commit', position=position)
             if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
-                    and not state['title'] and 25 <= position['vpos'] < 236):
+                    and not state['title'] and 25 <= position['vpos'] < 252):
                 fault('court bank publication after sprite header DMA starts', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)
@@ -387,17 +355,19 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         s.notification_handler = event
         watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
-                    *[{'addr':a,'len':1,'access':'write'} for offset,a in native_fields.items() if 0x38<=offset<0x4d or offset==0x66],
+                    *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
                     {'addr': 0xdff088, 'len': 2, 'access': 'write'},
                     {'addr': 0xbfdf00, 'len': 1, 'access': 'write'},
                     {'addr': initial_memory['execbase']+0x142, 'len': 12, 'access': 'write'}]
         watches += [{'addr': h['header'], 'len': 32, 'access': 'write'} for h in initial_memory['regions']]
+        watches += setup_observer.watches()
         s.inspect('events.subscribe', {'events': ['mmio'], 'mmio': watches})
         stop = s.inspect('run_until', {'seconds': stop['seconds']+(20 if bank_control else 1000)})
         s.inspect('events.unsubscribe')
         final_memory = chip_memory(read)
         s.notification_handler = None
+    target_log(directory)
     # Live commands are serviced at an emulator boundary. Our final pause may
     # arrive after the next update entered. Preserve that unfinished suffix,
     # never call it a completed update or accept a gap inside the checked run.
@@ -417,15 +387,15 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
     maximum_late, maximum_work, minimum_phase = 0, 0, None
     for row in callbacks:
         n = row['callback']
-        ideal = Fraction((n-1)*contract['source_period_attoseconds']*CCK_HZ, 10**18)
+        ideal = (n-1) * INTERVAL_CCK
         allowance = 5+5+Fraction((n-1)*5, 2*65536)  # origin + fractional tick quantization + rounding
         if origin is None or 'completion' not in row:
             fault('missing clock origin/completion'); continue
         phase = row['entry']['cck']-origin-ideal
         completion = row['completion']['cck']-origin-ideal
-        interval = Fraction(contract['source_period_attoseconds']*CCK_HZ, 10**18)
+        interval = INTERVAL_CCK
         if phase < -allowance or phase >= interval+allowance or completion >= interval+allowance:
-            fault('source deadline', measured_callback=n, entry_phase_cck=float(phase), completion_phase_cck=float(completion))
+            fault('native deadline', measured_callback=n, entry_phase_cck=float(phase), completion_phase_cck=float(completion))
         minimum_phase = float(phase) if minimum_phase is None else min(minimum_phase, float(phase))
         maximum_late = max(maximum_late, float(phase))
         maximum_work = max(maximum_work, row['completion']['cck']-row['entry']['cck'])
@@ -444,7 +414,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'pending_final_callback': pending_callback,
                          'commits': commits, 'lifecycle_changes': changes, 'memory_initial': initial_memory,
                          'memory_final': final_memory, 'memory_writes': memory_writes,
-                         'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints})
+                         'inputs': inputs, 'replies': replies, 'stop': stop, 'checkpoints': checkpoints,'explicit_setup_regions':setup_observer.regions})
     if boot_adf:
         if not boot_allocations or boot_allocations[0]['position']['cck']>=state['start']:
             fault('cold boot allocator observation absent')
@@ -467,6 +437,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                          'scope': 'CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed',
                          'continuous_allocation_watch': not active_memory_writes, 'cold_disk_boot': 'observed' if boot_adf else 'unverified','cold_boot_peak':max((r['used_chip_bytes'] for r in boot_allocations),default=None),
                          'cold_boot_peak_scope':'first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified'},
+              'phase_contract_proposal':setup_observer.proposal(callbacks,origin) if origin is not None else {'diagnostic_passed':False,'issues':['missing clock origin']},
               'capture': str(capture.relative_to(ROOT)), 'audio_wav': str((directory/'native.wav').relative_to(ROOT)),
               'loaded_executable_verified':all(c['matched'] for c in loaded_checks),
               'adf':str(boot_adf.relative_to(ROOT)) if boot_adf else None,'adf_sha256':adf_sha,

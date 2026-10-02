@@ -1,19 +1,20 @@
+from native_tools import emulator_config
 """Offline native full-match input recorder; ships no world snapshots or capture machinery."""
 import sys,re,json,hashlib,shutil
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from build_native_game import build
 from native_tools import ASSEMBLER,run
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT,atomic_json
+from native_evidence import ROOT,atomic_json
 
 def record():
- config,ordinary=build(flavor='enhanced');directory=ROOT/'build/tests/demo-full-recording';directory.mkdir(parents=True,exist_ok=True)
+ config,ordinary=build(flavor='enhanced'); config = emulator_config();directory=ROOT/'build/tests/demo-full-recording';directory.mkdir(parents=True,exist_ok=True)
  exe=directory/'native-recording';listing=directory/'native.lst'
  # Offline-only build selects the same seeded entropy provider. UI demo stays off;
  # normal physical input and normal title/start are exercised without playback.
- run([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-DDEMO_RECORDING=1','-L',str(listing),'-o',str(exe),'amiga/gameplay_integration_probe.s'])
+ run([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-DDEMO_RECORDING=1','-L',str(listing),'-o',str(exe),'amiga/main.s'])
  symbols=code_symbols(listing.read_text());rows=[];digests=[];awards=[];lastgames=[0,0];lastmask=None
  with NativeControlSession(directory) as s:
   s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
@@ -27,7 +28,7 @@ def record():
   s.inspect('input_set_port',{'port':2,'device':'joystick'})
   started=None
   for tick in range(30000):
-   stop=s.inspect('run_until',{'pc':base+symbols['game_source_tick']});time=stop['seconds']
+   stop=s.inspect('run_until',{'pc':base+symbols['game_tick_dispatch']});time=stop['seconds']
    life=int.from_bytes(mem('game_lifecycle',2),'big')
    if life in (6,7,8):break
    if life!=1:

@@ -1,1 +1,0 @@
-/* The upstream files include unistd.h but do not use its declarations. */

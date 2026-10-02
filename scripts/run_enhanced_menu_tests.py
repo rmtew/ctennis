@@ -1,17 +1,18 @@
+from native_tools import emulator_config
 """Finite ordinary physical-input acceptance of the enhanced menu and lifecycle."""
 import argparse, hashlib, json, re
 from pathlib import Path
 from build_native_game import build
 from build_native_adf import package
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT, atomic_json
-from run_interface_tests import target_log
+from native_evidence import ROOT, atomic_json, tracked_call
+from native_observation import target_log
 
 
 def run(adf=False):
     package_report = package(self_test=True) if adf else None
-    config, exe = build(flavor='enhanced')
+    config, exe = build(flavor='enhanced'); config = emulator_config()
     symbols = code_symbols((exe.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
@@ -185,6 +186,11 @@ def run(adf=False):
     atomic_json(directory/'report.json',report)
     print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}))
 
-if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--adf',action='store_true')
-    run(parser.parse_args().adf)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--adf', action='store_true')
+    args = parser.parse_args()
+    path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
+    tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
+                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
+                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/ctennis-enhanced'])

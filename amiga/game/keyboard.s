@@ -16,31 +16,11 @@ keyboard_receive:
         move.b  $bfec01,d0
         not.b   d0
         ror.b   #1,d0
-        ifd ENHANCED_INTERFACE
         moveq   #0,d1
-        endif
         move.b  d0,d1
         andi.b  #$7f,d1
-        ifd ENHANCED_INTERFACE
         bsr     keyboard_enhanced_store
         bra     keyboard_handshake
-        endif
-        cmpi.b  #$46,d1
-        beq.s   keyboard_one
-        cmpi.b  #$42,d1
-        bne.s   keyboard_handshake
-        moveq   #2,d1
-        bra.s   keyboard_store
-keyboard_one:
-        moveq   #1,d1
-keyboard_store:
-        btst    #7,d0
-        beq.s   keyboard_down
-        not.b   d1
-        and.b   d1,game_selection_keys
-        bra.s   keyboard_handshake
-keyboard_down:
-        or.b    d1,game_selection_keys
 keyboard_handshake:
         bset    #6,$bfee01
         move.w  last_timer_count,keyboard_ack_timer
@@ -51,7 +31,6 @@ keyboard_ack: dc.b 0
         even
 keyboard_ack_timer: dc.w 0
 
-        ifd ENHANCED_INTERFACE
 ; Raw Amiga positions (US legends), not host key symbols. One byte per key
 ; preserves independent aliases and simultaneous release transitions.
 keyboard_enhanced_store:
@@ -106,4 +85,3 @@ game_keyboard_mapping:
         even
 game_enhanced_interface:
 game_keyboard_matrix: dcb.b 128,0
-        endif

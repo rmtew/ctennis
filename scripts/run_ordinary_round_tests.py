@@ -1,3 +1,4 @@
+from native_tools import emulator_config
 from native_state_observation import read_native_state
 """Focused CT05 ordinary physical-input proof: first game, pause, next serve."""
 import argparse
@@ -6,13 +7,13 @@ import re
 import shutil
 from pathlib import Path
 from build_native_game import build
-from capture_native_presentation import code_symbols
+from native_observation import code_symbols, target_log
 from copperline_test_session import NativeControlSession
-from evidence import ROOT, atomic_json, compile_manifest, tracked_call
+from native_evidence import ROOT, atomic_json, compile_manifest, tracked_call
 
 
 def run(mode, flavor="enhanced"):
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     directory = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
@@ -51,16 +52,16 @@ def run(mode, flavor="enhanced"):
         for index in range(6000):
             stop = s.inspect('run_until', {'seconds': deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target', 'breakpoint'): raise RuntimeError(stop)
-            ram = read_native_state(s,base,symbols)
+            native_state = read_native_state(s,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle', 2), 'big')
             stage = mem('game_score_state', 1)[0]
-            games = sum(ram[0x40:0x42])
+            games = sum(bytes([native_state['game_games_a'], native_state['game_games_b']]))
             row = {'callback': int.from_bytes(mem('simulation_updates', 2), 'big') + 1,
-                   'lifecycle': lifecycle, 'scoring_stage': stage, 'ram': ram.hex()}
+                   'lifecycle': lifecycle, 'scoring_stage': stage, 'state': dict(native_state)}
             if last_callback is not None and row['callback'] != last_callback + 1:
                 raise AssertionError('Ordinary callback observation is not consecutive')
             last_callback = row['callback']
-            if bool(ram[0x3d] & 0x80) != (mode == 'two'):
+            if bool(native_state['game_mode'] & 0x80) != (mode == 'two'):
                 differences.append({'field': 'physical mode selection', 'callback': row['callback']})
             rows.append(row)
             if games != previous_games:
@@ -71,14 +72,14 @@ def run(mode, flavor="enhanced"):
             if lifecycle in (4, 5):
                 if award is None: differences.append({'field': 'pause before game award'})
                 if paused is None: paused = row['callback']
-                pose = ram[0x45:0x4d]
+                pose = bytes([native_state['game_upper_y'], native_state['game_upper_x'], native_state['game_upper_image'], native_state['game_upper_colour'], native_state['game_lower_y'], native_state['game_lower_x'], native_state['game_lower_image'], native_state['game_lower_colour']])
                 if frozen is None: frozen = pose
                 if pose != frozen: differences.append({'field': 'player moved during round pause', 'callback': row['callback']})
-                if games != 1 or any(ram[0x3e:0x40]):
+                if games != 1 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])):
                     differences.append({'field': 'score changed during round pause', 'callback': row['callback']})
             elif paused is not None and lifecycle == 1:
                 if resumed is None: resumed = row['callback']
-                if stage == 1 and ram[0x38] and ram[0x66]:
+                if stage == 1 and native_state['game_flight'] and native_state['game_step']:
                     completed = row['callback']
                     break
         if not all((award, paused, resumed, completed)):
@@ -97,16 +98,30 @@ def run(mode, flavor="enhanced"):
     return 0 if report['passed'] else 1
 
 
-def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
+def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fault=False):
     """Ordinary physical play through award/title/reselection and fresh serve."""
-    config, ordinary = build(flavor=flavor)
+    config, ordinary = build(flavor=flavor); config = emulator_config()
     name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart') + '-' + flavor
+    if held_fault: name += '-held-fault'
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
     shutil.copy2(ordinary, exe)
     listing = directory / 'native.lst'
     shutil.copy2(ordinary.parent / 'native.lst', listing)
+    if held_fault:
+        from native_tools import ASSEMBLER, run as assemble
+        controls = (ROOT/'amiga/game/controls.s').read_text()
+        marker = '        and.b   d0,game_old_action_latches-game_input_bits(a0)'
+        if controls.count(marker) != 1: raise ValueError('Native action retirement instruction changed')
+        fault = directory/'held-controls.s'
+        fault.write_text(controls.replace(marker,
+            '        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle\n'
+            '        beq.s   held_fault_no_retirement\n'+marker+'\nheld_fault_no_retirement:'))
+        source = directory/'held-main.s'
+        source.write_text((ROOT/'amiga/main.s').read_text().replace('include "amiga/game/controls.s"',
+            'include "'+str(fault)+'"'))
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(source)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
     checkpoints, differences = {}, []
@@ -139,32 +154,33 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
         for port in (1,2):
             session.inspect('input_set_port',{'port':port,'device':'joystick'})
             session.inspect('input_joy',{'port':port,'red':True})
-        pc = base+symbols['game_observe_pre_tail']
+        # Uniform boundary follows every completed native update, including menus.
+        pc = base+symbols['simulation_update']
         session.inspect('break_add',{'kind':'pc','addr':pc})
         deadline = stop['seconds']+1000
         for index in range(40000):
             stop = session.inspect('run_until',{'seconds':deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target','breakpoint'): raise RuntimeError(stop)
-            ram = read_native_state(session,base,symbols)
+            native_state = read_native_state(session,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle',2),'big')
             callback = int.from_bytes(mem('simulation_updates',2),'big')+1
             if previous_callback is not None and callback != previous_callback+1:
                 raise AssertionError('Ordinary callback continuity lost')
             previous_callback=callback;observations+=1
-            state=(lifecycle,tuple(ram[0x40:0x42]))
+            state=(lifecycle,tuple(bytes([native_state['game_games_a'], native_state['game_games_b']])))
             if audio and state != previous:
                 audio_checkpoints.append({'callback':callback,'lifecycle':lifecycle,'seconds':stop['seconds'],
                     'voices':mem('game_audio_voices',96).hex(), 'registers':session.inspect('custom_dump')['regs']})
             if state != previous:
-                snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                 previous=state
             if lifecycle == 6 and 'match_award' not in checkpoints:
-                if max(ram[0x40:0x42]) != 6 or any(ram[0x3e:0x40]):
+                if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])):
                     raise AssertionError('Result before six-game award / nonzero points')
                 checkpoints['match_award']=callback
                 # Deliberately keep both old action buttons held across the menu.
             if lifecycle == 7 and 'returned_title_display' not in checkpoints:
-                if any(ram[0x3d:0x42]): raise AssertionError('Old mode/score leaked into title reset')
+                if any(bytes([native_state['game_mode'], native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): raise AssertionError('Old mode/score leaked into title reset')
                 checkpoints['returned_title_display']=callback
             if lifecycle == 2 and 'match_award' in checkpoints and not selection_pressed:
                 checkpoints['title_ready']=callback
@@ -173,7 +189,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
             if selection_pressed and lifecycle == 3:
                 if 'restart_selected' not in checkpoints:
                     checkpoints['restart_selected']=callback
-                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]):
+                    if bool(native_state['game_mode']&128) != (restarted_mode=='two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])):
                         raise AssertionError('Chosen restart mode/score not fresh')
                 if released_callback is None and callback-checkpoints['restart_selected'] >= 80:
                     session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'release'})
@@ -187,36 +203,37 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                             'released':list(mem('game_input_released',2)),
                             'latches':list(mem('game_old_action_latches',2)),
                             'controls':list(mem('game_player_controls',2))}
-                if elapsed == 100:
+                if elapsed == 30:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['latches'] != [16,16]:
-                        raise AssertionError('Early release must start with both old actions held in restart sound')
+                    if lifecycle != 3 or sample['raw'] != [16,16] or sample['latches'] != [16,16]:
+                        raise AssertionError('Early release must start with both old actions held in enhanced held selection')
                     action_samples['before_release']=sample
                     checkpoints['early_release']=callback
                     session.inspect('input_joy',{'port':2,'red':False})
-                elif elapsed == 101:
+                elif elapsed == 31:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [0,16] or sample['released'] != [16,0] or sample['latches'] != [0,16]:
-                        raise AssertionError('Sampled release during restart sound did not retire only P1 latch')
+                    if lifecycle != 3 or sample['raw'] != [0,16] or sample['released'] != [16,0] or sample['latches'] != [0,16]:
+                        raise AssertionError('Sampled release during enhanced held selection did not retire only P1 latch')
                     action_samples['sampled_release']=sample
                     checkpoints['sampled_release']=callback
-                elif elapsed == 140:
+                elif elapsed == 50:
                     if 'sampled_release' not in checkpoints:raise AssertionError('Release was not observed before repress')
                     checkpoints['early_repress']=callback
                     session.inspect('input_joy',{'port':2,'red':True})
-                elif elapsed == 141:
+                elif elapsed == 51:
                     sample=action_sample()
-                    if lifecycle != 9 or sample['raw'] != [16,16] or sample['pressed'] != [16,0] or sample['latches'] != [0,16]:
+                    if lifecycle != 3 or sample['raw'] != [16,16] or sample['pressed'] != [16,0] or sample['latches'] != [0,16]:
                         raise AssertionError('Fresh press before play re-latched P1 or released continuously held P2')
                     action_samples['sampled_repress']=sample
                     checkpoints['sampled_repress']=callback
             if released_callback is not None and lifecycle == 1:
                 if 'restart_playing' not in checkpoints:
                     checkpoints['restart_playing']=callback
-                    if bool(ram[0x3d]&128) != (restarted_mode=='two') or any(ram[0x3e:0x42]) or ram[0x3d]&0x70:
+                    if bool(native_state['game_mode']&128) != (restarted_mode=='two') or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])) or native_state['game_mode']&0x70:
                         raise AssertionError('Old mode/end/score leaked into restarted match')
-                    if mem('game_lower_owner',2) != bytes([0,1]):
-                        raise AssertionError('Old player ownership survived reset')
+                # Selection changes lifecycle before the first active tick assigns owners.
+                if callback == checkpoints['restart_playing']+1 and mem('game_lower_owner',2) != bytes([0,1]):
+                    raise AssertionError('Old player ownership survived reset')
                 if early_release:
                     if callback > checkpoints['restart_playing']:
                         sample=action_sample()
@@ -225,17 +242,19 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                         if 'fresh_action_eligible' not in checkpoints:
                             checkpoints['fresh_action_eligible']=callback
                             action_samples['playable']=sample
-                        if ram[0x38] and ram[0x66]:
+                        if native_state['game_flight'] and native_state['game_step'] and 'restarted_flight' not in checkpoints:
                             checkpoints['restarted_flight']=callback
-                            snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                            audio_checkpoints.append({'callback':callback,'lifecycle':lifecycle,'seconds':stop['seconds'],'event':'fresh-serve'})
+                            snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
+                        if 'restarted_flight' in checkpoints and callback-checkpoints['restarted_flight'] >= (6 if audio else 0):
                             break
                         if callback-checkpoints['restart_playing'] >= 60:
                             raise AssertionError('Fresh early repress did not launch without a second release')
                     continue
-                if waiting_callback is None and ram[0x3a]&0x40:
+                if waiting_callback is None and native_state['game_lower_phase']&0x40:
                     waiting_callback=callback
                 if waiting_callback is not None and 'restart_action' not in checkpoints:
-                    if ram[0x38] or any(ram[0x3e:0x42]): raise AssertionError('Restart launched without fresh action')
+                    if native_state['game_flight'] or any(bytes([native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): raise AssertionError('Restart launched without fresh action')
                     if 'old_action_blocked' not in checkpoints and callback-waiting_callback >= 80:
                         if mem('game_input_bits',2) != bytes([16,16]):
                             raise AssertionError('Old physical actions were not still held')
@@ -246,22 +265,24 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
                     elif 'old_action_blocked' in checkpoints and callback-checkpoints['old_action_blocked'] >= 80:
                         checkpoints['restart_action']=callback
                         session.inspect('input_joy',{'port':2,'red':True})
-                elif 'restart_action' in checkpoints and ram[0x38] and ram[0x66]:
+                elif 'restart_action' in checkpoints and native_state['game_flight'] and native_state['game_step']:
                     checkpoints['restarted_flight']=callback
-                    snapshots.append({'callback':callback,'lifecycle':lifecycle,'ram':ram.hex()})
+                    snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                     break
         required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
                   ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
         if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
+    target_log(directory)
     emitted=[]
     if audio:
-        from audio_mute import pcm16_window
-        # Actual returned title resets every voice. The held-selection restart
-        # emits the native intro; this protects ordinary hardware routing.
+        from native_audio_checks import pcm16_window
+        # Actual returned-title reset is silent. Enhanced reselection starts the
+        # actual fresh-serve sound; enhanced reselection has no legacy intro.
         quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)
-        intro=next((r for r in audio_checkpoints if r['lifecycle']==9),None)
-        if quiet is None or intro is None:raise AssertionError('Ordinary audio checkpoints missing')
-        for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-intro',intro,True,.05)]:
+        intro=next((r for r in audio_checkpoints if r.get('event')=='fresh-serve'),None)
+        reset=next((r for r in audio_checkpoints if r['lifecycle']==1 and r['callback'] >= checkpoints['restart_playing']),None)
+        if quiet is None or intro is None or reset is None:raise AssertionError('Ordinary audio checkpoints missing')
+        for label,row,wanted,offset in [('returned-title',quiet,False,.01),('restart-cleanup',reset,False,.01),('restart-serve',intro,True,.02)]:
             samples=pcm16_window(directory/'native.wav',row['seconds']+offset,.02)
             signal=any(c['nonzero_pcm16_samples'] for c in samples['channels'])
             emitted.append({'event':label,'callback':row['callback'],'expected_signal':wanted,'actual_signal':signal,'samples':samples})
@@ -276,7 +297,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
             'early_release_verified':early_release and 'fresh_action_eligible' in checkpoints,
             'action_samples':action_samples, 'audio_observed':audio, 'audio_checkpoints':audio_checkpoints,
             'emitted_audio':emitted, 'audio_wav':str((directory/'native.wav').relative_to(ROOT)) if audio else None,
-            'scope':'Ordinary uninterrupted physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
+            'scope':'Consecutive native update-boundary observations with physical play through result/title/opposite mode/restarted advancing serve; no reference full-match/cadence/pixel parity'}
     path=ROOT/f'build/tests/{name}-report.json';atomic_json(path,report)
     print(json.dumps(report),flush=True)
     return 0 if report['passed'] else 1
@@ -285,13 +306,14 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('one','two'), required=True)
+    parser.add_argument('--self-test',action='store_true',help='Detect compiled held-action retirement fault in enhanced early-release observer')
     parser.add_argument('--match',action='store_true',help='CT06 ordinary result/title/restarted serve')
     parser.add_argument('--early-release',action='store_true',help='Focused CT06 one→two restart-sound release/repress edge')
     parser.add_argument('--audio',action='store_true',help='CT08 ordinary result mute and restart emitted sound')
     parser.add_argument('--cadence',action='store_true',help='CT09 non-stopping ordinary match, clock and chip-memory measurement')
     parser.add_argument('--adf',action='store_true',help='CT10 cold boot packaged ADF, then existing uninterrupted cadence/lifecycle acceptance')
     parser.add_argument('--bank-control',action='store_true',help='CT09 delayed compiled stale Copper bank control')
-    parser.add_argument("--interface",choices=("original","enhanced"),default="enhanced")
+    parser.add_argument("--interface",choices=("enhanced",),default="enhanced")
     parser.add_argument("--keyboard",action="store_true",help="Use actual raw keyboard mode/fire events for the existing cadence lifecycle")
     args=parser.parse_args()
     if args.keyboard and (not args.cadence or args.interface!="enhanced"):
@@ -335,8 +357,26 @@ def main():
     if args.match:
         name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart') + '-' + flavor
         path=ROOT/f'build/tests/{name}-report.json'
+        def action():
+            result = run_match(mode,args.early_release,args.audio,flavor)
+            if args.self_test:
+                if not args.early_release: raise ValueError('Fault control requires enhanced early-release run')
+                # Audio outcome stays independent: the held-input control still runs if it fails.
+                report = json.loads(path.read_text())
+                try:
+                    run_match(mode,True,args.audio,flavor,held_fault=True)
+                except AssertionError as error:
+                    wanted = 'Sampled release during enhanced held selection did not retire only P1 latch'
+                    if str(error) != wanted: raise
+                    fault_directory = ROOT/f'build/tests/{name}-held-fault'
+                    report['compiled_fault_controls'] = [{'detected':True,'failure':wanted,
+                        'artifact_directory':str(fault_directory.relative_to(ROOT)),
+                        'executable_sha256':__import__('hashlib').sha256((fault_directory/'native-application').read_bytes()).hexdigest()}]
+                    atomic_json(path,report)
+                else: raise AssertionError('Real held-action retirement fault escaped')
+            return result
         return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release,args.audio,flavor),
+                            'scripts/run_ordinary_round_tests.py',None,action,
                             lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
     path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',

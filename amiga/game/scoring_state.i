@@ -1,5 +1,5 @@
 ; Native scoring owns the point/game cells, service mode and scoring stage.
-; Presentation, gameplay and audio observations enter through the temporary ABI.
+; Presentation, gameplay and audio observations enter through the native integration fields.
         rsset 0
 S_STAGE rs.b 1
 S_AI rs.b 1

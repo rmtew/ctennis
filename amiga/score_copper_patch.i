@@ -2,7 +2,6 @@
 ; Patch the inactive Copper list after a changed scoreboard selection.
 patch_score_pointers:
         movem.l d0-d2/d7/a0-a4,-(sp)
-        ifd DOUBLE_BUFFER_DISPLAY
         ; Each inactive list retains its selected banks. Rewriting all 224
         ; descriptors on every PAL publication stalls a source update even
         ; when no field changed. Cache values independently for the two lists.
@@ -26,21 +25,14 @@ score_cache_changed:
 score_cache_copy:
         move.b  (a4)+,(a2)+
         dbra    d7,score_cache_copy
-        endif
         lea     score_patch_descriptors(pc),a0
-        ifd DOUBLE_BUFFER_DISPLAY
         lea     prepared_field_values(pc),a4
-        else
-        lea     field_values(pc),a4
-        endif
         move.w  #SCORE_PATCH_COUNT-1,d7
 patch_next_score_pointer:
         move.l  (a0)+,a1
         move.l  (a0)+,a2
-        ifd DOUBLE_BUFFER_DISPLAY
         adda.l  copper_write_delta,a1
         adda.l  copper_write_delta,a2
-        endif
         move.l  (a0)+,a3
         move.w  (a0)+,d1
         cmpi.w  #$ffff,d1
@@ -61,7 +53,5 @@ write_score_pointer:
 score_patch_done:
         movem.l (sp)+,d0-d2/d7/a0-a4
         rts
-        ifd DOUBLE_BUFFER_DISPLAY
 score_pointer_cache: dcb.b 12,$ff
         even
-        endif
