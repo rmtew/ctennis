@@ -158,7 +158,7 @@ ui_render:
         tst.b   d0
         beq.s   .menu_cache
         subq.w  #1,d0
-        mulu.w  #96*32,d0
+        mulu.w  #116*32,d0
         lea     ui_cached_pages,a3
         adda.l  d0,a3
         bra.s   .cache_ready
@@ -166,15 +166,41 @@ ui_render:
         lea     ui_title_pages,a3
         tst.b   ui_player_count
         beq.s   .cache_ready
-        adda.w  #4*96*32,a3
+        adda.w  #4*116*32,a3
 .cache_ready:
-        lea     title_plane0+96*32,a2
+        lea     title_plane0+76*32,a2
         moveq   #3,d6
 .copy_plane:
         move.l  a3,a0
         move.l  a2,a1
-        move.w  #96*32/32-1,d7
+        ; Unroll each128-byte block to keep the full-page return callback
+        ; under the unchanged deadline without extra chip caches.
+        move.w  #116*32/128-1,d7
 .copy_word:
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
         move.l  (a0)+,(a1)+
         move.l  (a0)+,(a1)+
         move.l  (a0)+,(a1)+
@@ -188,16 +214,11 @@ ui_render:
         adda.w  #6144,a2
         tst.b   ui_page
         bne.s   .same_plane
-        adda.w  #96*32,a3
+        adda.w  #116*32,a3
 .same_plane:
         dbra    d6,.copy_plane
         tst.b   ui_page
-        bne.s   .publish
-        tst.b   ui_player_count
-        beq.s   .selection
-        lea     ui_menu_options+5*256,a0
-        lea     title_plane0+156*32,a2
-        bsr     ui_menu_row_copy
+        bne.s   .page_selection
 .selection:
         moveq   #0,d0
         move.b  ui_selection,d0
@@ -214,6 +235,15 @@ ui_render:
         lsl.w   #8,d0
         lea     ui_menu_options,a0
         adda.w  d0,a0
+        bsr     ui_menu_row_copy
+        bra.s   .publish
+.page_selection:
+        moveq   #0,d0
+        move.b  ui_help_choice,d0
+        lsl.w   #8,d0
+        lea     ui_help_options,a0
+        adda.w  d0,a0
+        lea     title_plane0+182*32,a2
         bsr     ui_menu_row_copy
 .publish:
         move.b  #1,display_ready

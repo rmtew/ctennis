@@ -83,3 +83,42 @@ canonical trajectory and intentional celebration-tail updates, two unattended
 full demo cycles and proof of no court flash after returned title. The pending
 parent-relayed legacy title/court/title fix is not presumed present or cleared.
 No release readiness, master merge, public release or full-source parity claim.
+
+## Approved help navigation and columns
+
+The follow-up user request replaces the old instruction sentence with one centred
+BACK / EXIT / NEXT row at nativey182..189. Words begin atx48/112/176, with equal
+32-pixel gaps. NEXT is inverted/default on entry; left/right clamps selection;
+Enter or either action activates; Escape exits. BACK/NEXT wrap and preserve the
+selected action across page changes. Re-entry resets NEXT. Main title hotkeys
+and remembered human/AI choice remain intact.
+
+Pages are now1How to play,2Scoring and demo,3Controls,4Credits. Splitting the
+rules preserves their meaning and native8x8 Font-Mac size while fitting explicit
+wrapped explanations. Leading labels share safex16; right explanations end at
+safex240, occupy at most112pixels and leave at least32pixels between columns.
+Rows have2pixels leading; title/body/count/navigation remain separate. Heading
+starts atnativey76, body rowsy88..165, centred page county168..175, navigation
+y182..189; no text extends beyond the192-row title viewport. Credits remain last
+with the exact Font-Mac/archive attribution. Build-time tables validate column
+widths, wrapped row heights, margins and glyph coverage. No layout engine or
+new gameplay state is introduced; one padded UI-only navigation word is added.
+
+Focused physical help navigation passed43 assertions, including defaults, all
+three actions, boundary clamping, held/repeated controls, both wrap directions,
+Enter/Escape and full actual page/blank/navigation pixels. Strict setup passed
+with no raw deadline failures, preserving continuous timer accounting, repeated
+navigation/idle/start/pause/return/restart and exact title/page scanout. Initial
+larger copies failed at return-to-title; normal two-human captions are now baked
+into existing colour pages and copy loops use128-byte blocks. No timing bound
+or clock rule was relaxed. Static UI cache increase relative to48cf4e0 is11264
+bytes; full combined memory acceptance remains pending after core source freeze.
+
+Commands added/updated:
+- RUST_LOG=info python scripts/run_enhanced_menu_tests.py --help-only
+- RUST_LOG=info python scripts/run_native_setup_tests.py
+
+Raw actual screenshots remain private underbuild/tests/help-navigation and
+build/tests/native-setup. User-facing preview uses716x537TV aspect from the
+716x285raw field; it is exact nearest-row presentation scaling, not redrawn
+or generated content. No full combined campaign or master merge occurred.

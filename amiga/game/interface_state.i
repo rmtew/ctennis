@@ -28,7 +28,9 @@ U_JOYSTICK_PREVIOUS rs.b 2
 U_JOYSTICK_PRESSED rs.b 2
 U_JOYSTICK_ENTRY rs.b 2
 U_ENTROPY rs.w 1
+U_HELP_CHOICE rs.w 1 ; byte0 BACK=0 EXIT=1 NEXT=2; padding preserves alignment
 U_SIZE rs.b 0
+ui_help_choice equ ui_state+U_HELP_CHOICE
 ui_previous_keys equ ui_state+U_PREVIOUS_KEYS
 ui_saved_volumes equ ui_state+U_SAVED_VOLUMES
 ui_overlay_signature equ ui_state+U_OVERLAY_SIGNATURE

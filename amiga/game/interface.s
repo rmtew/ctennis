@@ -26,6 +26,7 @@ ui_menu_font: incbin "assets/native/title/font-mac.bin"
 ui_font: incbin "assets/native/title/font.bin"
 ui_overlay_plane: dcb.b 512,0
 ui_match_banner: dcb.b 256,0
+ui_help_options: incbin "build/native/ui-help-options.bin"
 ui_menu_options: incbin "build/native/ui-menu-options.bin"
 ui_demo_options: incbin "build/native/ui-demo-options.bin"
         section code,code

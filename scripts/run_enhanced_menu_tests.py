@@ -10,13 +10,13 @@ from native_evidence import ROOT, atomic_json, tracked_call
 from native_observation import target_log
 
 
-def run(adf=False):
+def run(adf=False,help_only=False):
     package_report = package(self_test=True) if adf else None
     config, exe = build(flavor='enhanced'); config = emulator_config()
     symbols = code_symbols((exe.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
-    directory = ROOT/'build/tests'/('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
+    directory = ROOT/'build/tests'/('help-navigation' if help_only else 'enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
     checks = []
     def check(label, actual, expected):
         checks.append({'label': label, 'actual': actual, 'expected': expected})
@@ -70,6 +70,10 @@ def run(adf=False):
                 from native_identity_raster import assert_mode_raster,assert_logo_absent_initial_raster
                 assert_mode_raster(path,2)
                 assert_logo_absent_initial_raster(path)
+        def help_photo(name):
+            path=directory/(name+'.png');s.inspect('capture_screenshot',{'path':str(path)})
+            from native_ui_raster import assert_ui_raster
+            checks.append(assert_ui_raster(path,number('ui_page'),number('ui_player_count'),number('ui_selection'),(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii'),number('ui_help_choice')))
         def frozen():
             return (mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)
                     +mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock'))
@@ -86,15 +90,39 @@ def run(adf=False):
         photo('players-two')
         key(0x4f);check('left selects one player',number('ui_player_count'),0)
         key(0x4e);key(0x4d);photo('help-selected');key(0x44)
-        check('Enter opens Help',number('ui_page'),1);photo('help')
-        key(0x4e);check('right opens Controls',number('ui_page'),2);photo('controls')
-        key(0x4e);check('credits/version page',number('ui_page'),3);photo('credits')
-        key(0x4e);check('right page wrap',number('ui_page'),1)
-        key(0x4f);check('left page wrap',number('ui_page'),3)
-        key(0x45);check('Escape exits page',number('ui_page'),0);photo('help-returned')
-        key(0x4d);photo('controls-selected');key(0x4c)
-        key(0x44);check('Enter opens selected Help',number('ui_page'),1)
-        key(0x23);check('action exits page',number('ui_page'),0)
+        check('Enter opens Help',number('ui_page'),1)
+        check('help defaults NEXT',number('ui_help_choice'),2);help_photo('help-next')
+        edge(0x4e,True);advance(.4)
+        check('right clamps NEXT',number('ui_help_choice'),2)
+        check('right does not page',number('ui_page'),1);edge(0x4e,False)
+        edge(0x44,True);advance(.4)
+        check('held Enter pages once',number('ui_page'),2)
+        check('NEXT persists',number('ui_help_choice'),2);help_photo('scoring-next');edge(0x44,False)
+        key(0x23);check('action advances to controls',number('ui_page'),3);help_photo('controls-next')
+        key(0x44);check('NEXT advances to credits last',number('ui_page'),4);help_photo('credits-next')
+        key(0x44);check('NEXT wraps credits to help',number('ui_page'),1)
+        edge(0x4f,True);advance(.4)
+        check('held left selects EXIT once',number('ui_help_choice'),1)
+        check('left does not page',number('ui_page'),1);help_photo('help-exit');edge(0x4f,False)
+        key(0x4f);check('left selects BACK',number('ui_help_choice'),0)
+        key(0x4f);check('left clamps BACK',number('ui_help_choice'),0)
+        key(0x44);check('BACK wraps help to credits',number('ui_page'),4)
+        check('BACK persists after wrap',number('ui_help_choice'),0);help_photo('credits-back')
+        key(0x23);check('BACK action returns controls',number('ui_page'),3);help_photo('controls-back')
+        key(0x4e);check('right selects EXIT',number('ui_help_choice'),1)
+        key(0x44);check('Enter activates EXIT',number('ui_page'),0);photo('help-returned')
+        key(0x4d);photo('controls-selected');key(0x44)
+        check('Controls entry resets NEXT',number('ui_help_choice'),2)
+        check('Controls entry page',number('ui_page'),3)
+        key(0x45);check('Escape exits regardless of NEXT',number('ui_page'),0)
+        key(0x4c);key(0x44)
+        check('Help reentry defaults NEXT',number('ui_help_choice'),2)
+        key(0x4f);help_photo('help-exit-action')
+        key(0x23);check('action activates EXIT',number('ui_page'),0)
+        if help_only:
+            target_log(directory)
+            report={'passed':True,'checks':checks,'loaded_hunks':loaded,'scope':'Ordinary physical help navigation and exact native scanout','executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
+            atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}));return report
         # Both main-digit and legacy choice retain the ordinary held-release gate.
         edge(0x02,True);advance(1.2)
         check('2 chooses two players',number('game_selected_mode'),1)
@@ -224,8 +252,9 @@ def run(adf=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adf', action='store_true')
+    parser.add_argument('--help-only',action='store_true')
     args = parser.parse_args()
-    path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
+    path = ROOT / 'build/tests' / ('help-navigation' if args.help_only else 'enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
-                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
+                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf,args.help_only),
                  lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])
