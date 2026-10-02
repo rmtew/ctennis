@@ -64,6 +64,29 @@ ui_render:
         bsr     ui_text
         bra     .done
 .win_overlay:
+        cmpi.b  #10,d0
+        bcs.s   .old_win_overlay
+        lea     ui_match_blue,a0
+        btst    #0,d0
+        beq.s   .match_digits
+        lea     ui_match_red,a0
+.match_digits:
+        move.b  game_games_a,d1
+        addi.b  #'0',d1
+        move.b  d1,ui_match_blue_a
+        move.b  d1,ui_match_red_a
+        move.b  game_games_b,d1
+        addi.b  #'0',d1
+        move.b  d1,ui_match_blue_b
+        move.b  d1,ui_match_red_b
+        bsr     ui_text
+        cmpi.b  #12,ui_overlay_kind
+        bcs     .done
+        lea     ui_overlay_plane+256,a2
+        lea     ui_match_continue,a0
+        bsr     ui_text
+        bra     .done
+.old_win_overlay:
         cmpi.b  #8,d0
         bcs.s   .human_win
         lea     ui_demo_blue_win,a0

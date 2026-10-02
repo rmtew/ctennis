@@ -1,7 +1,8 @@
         include "amiga/game/audio_state.i"
 ; Shared maintained sequencer. Requests queue a musical phrase without cutting
 ; the current note; completion means its last note was loaded, as the lifecycle
-; requires. The final note still owns its duration and release after completion.
+; requires. AV_DONE remains last-loaded for legacy waits; full phrase completion
+; is separately duration/level-aware via game_audio_phrase_complete.
 game_audio_reset:
         movem.l d0-d7/a0-a3,-(sp)
         lea     game_audio_voices,a0
@@ -131,6 +132,11 @@ game_audio_tick:
         beq.s   .pitch
         move.b  3(a1),AV_NOTE_OCTAVE(a0)
 .pitch:
+        btst    #5,d6
+        beq.s   .indexed_pitch
+        move.w  12(a1),d0
+        bra.s   .write_pitch
+.indexed_pitch:
         moveq   #0,d2
         move.b  AV_NOTE_OCTAVE(a0),d2
         andi.w  #7,d2
@@ -145,6 +151,7 @@ game_audio_tick:
         add.w   d0,d2
         lea     native_audio_periods,a2
         move.w  (a2,d2.w),d0
+.write_pitch:
         move.w  d0,AV_PERIOD(a0)
         bsr     game_audio_write_period
 .initial_level:
@@ -222,6 +229,28 @@ game_audio_emit_level:
         bra     game_audio_write_level
 
 game_audio_levels: dc.b 64,51,40,32,25,20,16,13,10,8,6,5,4,3,3,0
+; A0 voice, result D0: no final note duration or emitted level remains.
+game_audio_voice_complete:
+        moveq   #0,d0
+        tst.b   AV_DONE(a0)
+        beq.s   .done
+        tst.b   AV_DURATION(a0)
+        bne.s   .done
+        tst.b   AV_LEVEL(a0)
+        bne.s   .done
+        moveq   #1,d0
+.done:  rts
+game_audio_phrase_complete:
+        movem.l d1/a0,-(sp)
+        lea     game_audio_voices,a0
+        moveq   #2,d1
+.voice: bsr     game_audio_voice_complete
+        tst.b   d0
+        beq.s   .done
+        adda.w  #AV_SIZE,a0
+        dbra    d1,.voice
+.done:  movem.l (sp)+,d1/a0
+        rts
         even
 game_audio_voices: dcb.b 3*AV_SIZE,0
 game_audio_rate: dc.b 2

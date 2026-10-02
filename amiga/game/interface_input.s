@@ -133,6 +133,8 @@ ui_input_pad_action:
         beq.s   ui_input_dispatch
         ori.b   #UI_ACTION,ui_edges
 ui_input_dispatch:
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        beq     ui_demo_input_done
         tst.b   ui_demo
         beq.s   ui_demo_input_done
         btst    #5,ui_joystick_pressed

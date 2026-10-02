@@ -58,4 +58,13 @@ ui_resume_text: dc.b 'RESUME',0
 ui_return_text: dc.b 'RETURN TO TITLE',0
 ui_no_text: dc.b 'NO - RESUME',0
 ui_yes_text: dc.b 'YES - RETURN TO TITLE',0
+ui_match_blue: dc.b 'BLUE WINS  BLUE '
+ui_match_blue_a: dc.b '0'
+        dc.b ' RED '
+ui_match_blue_b: dc.b '0',0
+ui_match_red: dc.b 'RED WINS   BLUE '
+ui_match_red_a: dc.b '0'
+        dc.b ' RED '
+ui_match_red_b: dc.b '0',0
+ui_match_continue: dc.b 'PRESS FIRE TO CONTINUE',0
         even

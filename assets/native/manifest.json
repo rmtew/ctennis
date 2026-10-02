@@ -5,12 +5,12 @@
   "validated_transfer_sha256": "389445af6b85a39a6f6fb7f938a0e6277f6681d9187f39f56823bc3bc2867f63",
   "destination": "PRIVATE rmtew/ctennis repository; user-approved retained native graphics/audio",
   "approval_reference": "User y,2026-10-02 07:02:50UTC, Sentinel_933773b0be50819191f1c322462f8a96",
-  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs.",
+  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs. CT13 removes superseded Sega-derived victory score-2/3 from active inputs and supplies independently composed provisional Warm Fanfare. Other retained assets keep their stated provenance.",
   "files": [
     {
       "path": "assets/native/audio/data.i",
-      "size_bytes": 733,
-      "sha256": "856755ce6fb338d1d78c7c480797b3346a4425bc8bd209cfb5782f09ac6de164",
+      "size_bytes": 677,
+      "sha256": "db1b45b3ec93c6b4068ecde1815788517b7085b0e345c52dff81813ad49f2247",
       "imported_sha256": "02d009ea4ccd4e5d00ce47e6f4b05d7b5cff2b0deb2aec848ea35cdbb76bd03b"
     },
     {
@@ -36,18 +36,6 @@
       "size_bytes": 656,
       "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007",
       "imported_sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007"
-    },
-    {
-      "path": "assets/native/audio/score-2.bin",
-      "size_bytes": 304,
-      "sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4",
-      "imported_sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4"
-    },
-    {
-      "path": "assets/native/audio/score-3.bin",
-      "size_bytes": 400,
-      "sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e",
-      "imported_sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e"
     },
     {
       "path": "assets/native/audio/score-4.bin",
@@ -696,6 +684,12 @@
       "authored_revision": "CT12 Red point glyph high planes; retained exact glyph/advantage shapes",
       "size_bytes": 512,
       "sha256": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b"
+    },
+    {
+      "path": "assets/native/audio/fanfare.i",
+      "provenance": "Original CT13 Warm Fanfare score; independent composition, analytic Paula periods; no imported melody or sample.",
+      "size_bytes": 3218,
+      "sha256": "8c7d7bc7139cf19d5708b6e8e62f1f8f0d22a0cdc809f2aaacc511f7b0392c9f"
     }
   ],
   "formats": {

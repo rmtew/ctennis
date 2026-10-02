@@ -2,6 +2,17 @@
 ui_feedback:
         tst.b   ui_paused
         bne     .done
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .ordinary
+        move.b  game_celebration_winner,d0
+        addi.b  #10,d0
+        tst.b   game_celebration_first_play
+        beq.s   .celebrate
+        addq.b  #2,d0
+.celebrate:
+        move.b  d0,ui_overlay_kind
+        bra     .done
+.ordinary:
         clr.b   ui_overlay_kind
         cmpi.w  #GAME_TITLE,game_lifecycle
         beq     .reset

@@ -154,8 +154,12 @@ def run(adf=False):
         s.inspect('input_set_port',{'port':2,'device':'joystick'})
         check('G is still held before fresh joystick takeover',mem('game_keyboard_matrix',128)[0x24],1)
         s.inspect('input_joy',{'port':2,'blue':True})
-        until({'pc':base+symbols['ui_sample']});before=frozen()
-        until({'pc':base+symbols['ui_input_draw']})
+        # A physical control event may arrive after the next pad sample. Observe
+        # bounded real UI samples as for G above; never inject takeover state.
+        for _ in range(12):
+            until({'pc':base+symbols['ui_sample']});before=frozen()
+            until({'pc':base+symbols['ui_input_draw']})
+            if not number('ui_demo'):break
         check('port2 button2 takes over Blue',number('ui_demo'),0)
         check('joystick takeover preserves complete native state',frozen().hex(),before.hex())
         until({'pc':base+symbols['native_input_done']})
