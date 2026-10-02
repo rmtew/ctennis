@@ -209,3 +209,19 @@ publication must precede sprite header DMA at physical line25 or be in late
 blank, not merely precede bitplanes at44. Preserve those distinctions in both
 live observation and receipt validation; rerun an affected result/title guard
 when changing the shared captured-phase observer.
+
+
+## Approved enhanced-interface follow-on
+
+Normal native builds default to `--interface=enhanced`; use explicit
+`--interface=original` for comparison. Read
+[interface scope and acceptance](analysis/enhanced-interface.md). Keep shared
+gameplay/lifecycle/audio logic identical; interface conditionals are confined to
+layout, raw keyboard input and offline title assets. Use separately named
+flavor executable/ADF/report/capture paths and require compiled flavor identity
+when reading evidence. Preserve the verified CT10 delivery directory and
+immutable original media. Do not implement attract/tutorial or unrelated game
+features. `RUST_LOG=info python scripts/progress.py --interface=enhanced` records
+this follow-on separately from historical CT gates; never manually cross-credit
+original receipts to enhanced acceptance. The small font additions are authored
+source; original glyphs and generated assets stay private/ignored.

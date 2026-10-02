@@ -73,6 +73,17 @@ def presentation_proof(report, recipe):
                 and bool(raster.get('generation'))
                 and all(r.get('offset') in MAINTAINED_SCRATCH_OFFSETS for r in raw))
     checks = report.get('checks', [])
+    if recipe['name']=='p1-upper-serve' and report.get('interface_flavor')=='enhanced':
+        rows=checks + report.get('hardware_mutation',{}).get('checks',[])
+        if any(r.get('raster',{}).get('requested_generation')!=r.get('requested_callback')
+               or type(r.get('raster',{}).get('wait_horizon_callback')) is not int
+               or r['raster']['wait_horizon_callback'] < r.get('requested_callback',0)
+               or r.get('raster',{}).get('generation',{}).get('prepared_after_callback')!=r.get('requested_callback')
+               or r.get('source',{}).get('generation')!=r.get('requested_callback')
+               or r.get('requested_callback')==4131 and (r.get('source',{}).get('hardware_frames')!=[5430]
+                                                         or r.get('source',{}).get('pixel_frames')!=[5432])
+               for r in rows):
+            return False
     expected = [(c,f) for c in recipe['completed_callbacks'] for f in recipe['fields']]
     return ([(r.get('requested_callback'), r.get('field')) for r in checks] == expected
             and all(r.get('first_difference') is None and r.get('raster', {}).get('generation') for r in checks)
@@ -110,11 +121,15 @@ def status_lifecycle_proof(report, recipe):
                     and m.get('executable_sha256') != report.get('executable_sha256') for m in mutations))
 
 
-def cadence_proof(report, mode, executable_sha, cold_adf=False):
+def cadence_proof(report, mode, executable_sha, cold_adf=False, interface_flavor=None, keyboard=False):
     """Validate the finite ordinary receipt, never promote replay counts to CT09."""
     from ordinary_cadence import clock_contract
+    expected_case=f'ct10-adf-{mode}-cadence' if cold_adf else f'ct09-ordinary-{mode}-cadence'
+    if interface_flavor:
+        expected_case+='-'+interface_flavor+('-keyboard' if keyboard else '')
+        if report.get('interface_flavor')!=interface_flavor:return False
     if (report.get('passed') is not True or report.get('first_difference') is not None
-            or report.get('case') != (f'ct10-adf-{mode}-cadence' if cold_adf else f'ct09-ordinary-{mode}-cadence')
+            or report.get('case') != expected_case
             or report.get('subject') != 'maintained-native' or report.get('start_mode') != mode
             or report.get('restart_mode') != ('two' if mode == 'one' else 'one')
             or report.get('startup') != ('cold ADF' if cold_adf else 'ordinary title') or report.get('entropy') != 'ordinary native timer'
@@ -679,8 +694,97 @@ def progress(fresh_since=None):
             'scope': 'Retained reports checked against current dependencies; integration symbols are not runtime acceptance. No percentages or file-size RAM estimate.'}
 
 
+def interface_positions_proof(report, exchanged=False):
+    try:
+        values={name:bytes.fromhex(report['observations'][name])
+                for name in ('before','after','reverse','waiting','flight')}
+        if any(len(v)!=256 for v in values.values()):return False
+        before,after,reverse=(values[n] for n in ('before','after','reverse'))
+        p1,p2=(0x46,0x4a) if exchanged else (0x4a,0x46)
+        if not after[p1]<before[p1] or not reverse[p1]>after[p1]:return False
+        two=exchanged or report.get('mode')=='two'
+        if two and (not after[p2]>before[p2] or not reverse[p2]<after[p2]):return False
+        if bool(before[0x3d]&0x80)!=two:return False
+        return not bool(values['waiting'][0x38] and values['waiting'][0x66]) and bool(values['flight'][0x38] and values['flight'][0x66])
+    except (KeyError,TypeError,ValueError):return False
+
+
+def interface_progress(flavor, fresh_since=None):
+    """Finite follow-on view. Never cross-credit another interface's receipts."""
+    root=ROOT/'build/amiga/interfaces'/flavor
+    names=['interface-one-enhanced','interface-two-enhanced','interface-exchanged-enhanced'] if flavor=='enhanced' else []
+    names += [f'{case}-{flavor}' for case in ('p1-moving-prefix','p1-upper-serve','p1-score-status-prefix')]
+    if flavor=='enhanced':
+        names += [f'p1-status-{n}-lifecycle-enhanced' for n in range(2,6)]
+        names += ['ct10-adf-one-cadence-enhanced-keyboard','ct09-ordinary-two-cadence-enhanced-keyboard',
+                  'ct09-published-bank-control-enhanced']
+    else:names += ['ct09-ordinary-one-cadence-original']
+    reports={name:status(ROOT/f'build/tests/{name}-report.json',
+                         'maintained-native-mutant' if 'bank-control' in name else 'maintained-native',
+                         fresh_since=fresh_since,interface_flavor=flavor) for name in names}
+    build_status=status(root/'build-report.json','maintained-native',fresh_since=fresh_since,interface_flavor=flavor)
+    package_status=status(root/'delivery/package-report.json','maintained-native',fresh_since=fresh_since,interface_flavor=flavor)
+    executable=json.loads((root/'build-report.json').read_text()).get('executable_sha256') if build_status['status']=='passed' else None
+    for name,value in reports.items():
+        if value['status']!='passed':continue
+        report=json.loads((ROOT/f'build/tests/{name}-report.json').read_text())
+        valid=True
+        if name.startswith('p1-'):
+            case=name.removesuffix('-'+flavor)
+            recipe=json.loads((ROOT/f'tests/cases/{case}.json').read_text())
+            valid=status_lifecycle_proof(report,recipe) if '-lifecycle' in case else presentation_proof(report,recipe)
+            if case=='p1-upper-serve':
+                mutant=report.get('hardware_mutation') or {}
+                valid=valid and (mutant.get('detected_at_all_checkpoints') is True
+                    and mutant.get('executable_sha256')!=report.get('executable_sha256')
+                    and [r.get('requested_callback') for r in mutant.get('checks',[])]==recipe['completed_callbacks']
+                    and all(r.get('first_difference') for r in mutant.get('checks',[])))
+        elif 'cadence' in name:
+            mode='two' if '-two-' in name else 'one'
+            valid=cadence_proof(report,mode,executable,name.startswith('ct10-'),flavor,name.endswith('-keyboard'))
+        elif 'bank-control' in name:
+            fault=report.get('detected_failure',{})
+            valid=(fault.get('field')=='published Copper bank' and fault.get('generation',0)>=200
+                   and fault.get('expected_pointer')!=fault.get('actual_pointer')
+                   and report.get('normal_executable_sha256')==executable)
+            valid=valid and (report.get('subject')=='maintained-native-mutant' and report.get('passed') is True
+                   and report.get('executable_sha256')!=executable
+                   and report.get('presentation',{}).get('actual_pointer_checked') is True
+                   and report.get('presentation',{}).get('latest_prepared_completed_epoch') is False)
+        elif name.startswith('interface-'):
+            checks=report.get('checks',[])
+            labels={r.get('label') for r in checks}
+            if name=='interface-exchanged-enhanced':
+                valid=(interface_positions_proof(report,True) and report.get('startup')=='captured exchanged-end phase'
+                       and report.get('initial_source_callback')==2672
+                       and {'exchanged logical owners','P1 upper reverses','P2 lower reverses',
+                            'P2 keypad blue launches its own serve'}<=labels
+                       and all(r.get('actual')==r.get('expected') for r in checks))
+                if not valid:reports[name]=dict(value,status='failed',reason='Local exchanged keyboard ownership missing')
+                continue
+            valid=(interface_positions_proof(report) and report.get('mode')==name.split('-')[1]
+                   and report.get('startup')=='ordinary title' and report.get('executable_sha256')==executable
+                   and {'intended title raster','accepted original mode label','held selection accepted once','P1 reverses',
+                        'all six keypad aliases','P1 keyboard blue launches serve',
+                        'legacy alias keeps selection held','keyboard release retains joystick action',
+                        'opposing horizontal packet','opposing vertical packet'}<=labels
+                   and all(r.get('actual')==r.get('expected') for r in checks))
+        if not valid:reports[name]=dict(value,status='failed',reason='Declared interface acceptance extent not established')
+    package=json.loads((root/'delivery/package-report.json').read_text()) if package_status['status']=='passed' else {}
+    reproducible=(package.get('executable_sha256')==executable and package.get('embedded_executable_verified') is True
+                  and package.get('reproducibility',{}).get('two_clean_builds') is True
+                  and package.get('reproducibility',{}).get('first_adf_sha256')==package.get('adf_sha256')
+                  and package.get('reproducibility',{}).get('second_adf_sha256')==package.get('adf_sha256'))
+    ready=build_status['status']=='passed' and reproducible and all(r['status']=='passed' for r in reports.values())
+    return {'interface_flavor':flavor,'acceptance':'evidenced within stated scope' if ready else 'unverified',
+            'build':build_status,'package':package_status,'package_reproducibility_verified':reproducible,
+            'reports':reports,'scope':'Interface follow-on only; immutable original oracle, shared gameplay and independent review remain separately scoped',
+            'limitations':[] if ready else ['Required interface-specific receipts/extent/reproducibility missing, stale or failed']}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--interface',choices=('original','enhanced'),default='enhanced')
     parser.add_argument('--fresh-since', help='ISO UTC/session timestamp; older compatible executions are labelled reused')
     args = parser.parse_args()
     if args.fresh_since:
@@ -695,6 +799,7 @@ def main():
     atomic_json(output, {'state': 'incomplete', 'started_utc': now()})
     try:
         result = progress(args.fresh_since)
+        result['interface_follow_on']=interface_progress(args.interface,args.fresh_since)
         report_paths = {report_path(n) for names in GATES.values() for n in names}
         report_paths.update(ROOT/'build/amiga/gameplay-integration'/n
                             for n in ('build-report.json', 'serve-report.json'))
@@ -702,6 +807,9 @@ def main():
             'generated_utc': now(), 'fresh_since': args.fresh_since,
             'sources': snapshot(python_inputs(Path(__file__).resolve())),
             'reports': snapshot(report_paths),
+            'interface_reports':snapshot([ROOT/f'build/tests/{n}-report.json' for n in result['interface_follow_on']['reports']]
+                +[ROOT/f'build/amiga/interfaces/{args.interface}/build-report.json',
+                  ROOT/f'build/amiga/interfaces/{args.interface}/delivery/package-report.json']),
             'scope': 'Snapshot view; rerun this command before trusting current gates.'}
         result['state'] = 'complete'
         atomic_json(output, result)

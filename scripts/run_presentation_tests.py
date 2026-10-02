@@ -156,6 +156,8 @@ def build_native(case, directory, recorded_refresh=False, initial_source_update=
         wrapper = directory / 'native-captured-phase.s'
         wrapper.write_text(original.replace(marker, f'incbin "{initial_path.as_posix()}"'))
         source = str(wrapper)
+    if case.get('interface_flavor','original') == 'enhanced':
+        defines.append('-DENHANCED_INTERFACE=1')
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000', *defines,
          '-L', str(directory / 'native.lst'), '-o', str(executable), source])
     from evidence import compile_manifest
@@ -182,7 +184,9 @@ def player_placement(case, contract, self_test):
             mapped = map_source_palette(rgb.crop(ACTIVE_AREA), contract)
             if mapped.crop(region).tobytes() != expected.crop(region).tobytes():
                 raise ValueError('Placement region is not invariant across the declared source window')
-    captured = capture((case['completed_callbacks'],),track_commits=True,completed_rasters=True)
+    captured = capture((case['completed_callbacks'],),track_commits=True,completed_rasters=True,
+                       capture_label=case['name']+'-'+case.get('interface_flavor','original'),
+                       interface_flavor=case.get('interface_flavor','original'))
     observed = captured['observations'][0]
     if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
         raise ValueError('Placement precondition failed: native simulation differs from source')
@@ -217,7 +221,7 @@ def player_placement(case, contract, self_test):
               'case_sha256': digest(ROOT / f'tests/cases/{case["name"]}.json'),
               'scope': case['contract'], 'source_window': case['source_frames'],
               'region': region, 'self_test': self_test, 'native_observation': observed, 'capture_report_path':captured['capture_report_path']}
-    (ROOT / f'build/tests/{case["name"]}-report.json').write_text(json.dumps(report, indent=2) + '\n')
+    (ROOT / f'build/tests/{case["name"]}-{case.get("interface_flavor","original")}-report.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
     return 0 if report['passed'] else 1
 
@@ -237,9 +241,11 @@ def generation_sequence(case, contract, self_test):
         return source_generation(generation)
     if case['source_case'] != 'one-player-match' or case['inputs'] != [{'port': 2, 'red': True}]:
         raise ValueError('Generation adapter supports the frozen R1 held-fire prefix')
+    exact_generations = tuple(case['completed_callbacks']) if case['name']=='p1-upper-serve' and case.get('interface_flavor')=='enhanced' else ()
     captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
                        track_commits=True, completed_rasters=True, initial_source_update=case.get('initial_source_update', 0),
-                       initial_phase_reference=case.get('initial_phase_reference'), capture_label=case['name'])
+                       initial_phase_reference=case.get('initial_phase_reference'), capture_label=case['name']+'-'+case.get('interface_flavor','original'),
+                       interface_flavor=case.get('interface_flavor','original'), required_raster_generations=exact_generations)
     checks, first = [], None
     for observed in captured['observations']:
         if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
@@ -248,10 +254,17 @@ def generation_sequence(case, contract, self_test):
         if not raster['generation']:
             raise ValueError('No simulated presentation generation for requested checkpoint')
         generation = raster['generation']['prepared_after_callback']
+        if exact_generations and generation != observed['completed_callbacks']:
+            raise ValueError('Upper-serve raster does not prove the requested generation')
         source, association = original_generation(generation)
         expected = map_source_palette(source, contract)
         with Image.open(raster['capture']['path']) as picture:
             actual = native_picture(picture, contract)
+            if case.get('interface_flavor')=='enhanced':
+                for side, rectangle in [('left',(62,16,126,208)),('right',(638,16,702,208))]:
+                    margin=picture.crop(rectangle).convert('RGB')
+                    if any(pixel!=(0,0,0) for pixel in margin.get_flattened_data()):
+                        first=first or {'update':generation,'field':f'{side} centered margin','expected':'black'}
         for field in case['fields']:
             region = tuple(case['regions'][field]) if field in case.get('regions', {}) else FIELDS[field] if field != 'whole_display' else (0, 0, 256, 192)
             wanted, seen = expected.crop(region), actual.crop(region)
@@ -273,9 +286,10 @@ def generation_sequence(case, contract, self_test):
                            'first_difference': difference})
     hardware_mutation = None
     if self_test and case.get('initial_source_update'):
+        origin=0xa0 if case.get('interface_flavor')=='enhanced' else 0x80
         def move_sprite_one_pixel(executable):
             code = executable.read_bytes()
-            old, new = bytes.fromhex('06400080'), bytes.fromhex('06400081')
+            old, new = bytes.fromhex(f'0640{origin:04x}'), bytes.fromhex(f'0640{origin+1:04x}')
             if code.count(old) != 1:
                 raise ValueError('Native sprite origin instruction changed')
             executable.write_bytes(code.replace(old, new))
@@ -283,7 +297,8 @@ def generation_sequence(case, contract, self_test):
             track_commits=True, completed_rasters=True,
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
-            executable_mutator=move_sprite_one_pixel, capture_label=case['name'] + '-mutation')
+            executable_mutator=move_sprite_one_pixel, capture_label=case['name']+'-'+case.get('interface_flavor','original') + '-mutation',
+            interface_flavor=case.get('interface_flavor','original'), required_raster_generations=exact_generations)
         changed_checks = []
         for observed in changed_capture['observations']:
             if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
@@ -304,7 +319,7 @@ def generation_sequence(case, contract, self_test):
                     raise AssertionError('Actual sprite-position mutation was not detected')
                 changed_checks.append({'requested_callback': observed['completed_callbacks'],
                     'first_difference': difference, 'source': association, 'raster': raster})
-        hardware_mutation = {'instruction': 'ADDI.W #$80,D0 changed to #$81 in test executable',
+        hardware_mutation = {'instruction': f'ADDI.W #{origin},D0 changed to #{origin+1} in test executable',
             'executable_sha256': changed_capture['executable_sha256'], 'checks': changed_checks,
             'simulation_unchanged': True, 'detected_at_all_checkpoints': True}
     report = {'case': case['name'], 'subject':'maintained-native', 'state_contract':MAINTAINED_STATE_CONTRACT,
@@ -323,7 +338,7 @@ def generation_sequence(case, contract, self_test):
               'native_provenance': {key: captured[key] for key in ('native_source', 'native_source_sha256',
                   'emulator_sha256', 'bridge_sha256', 'kickstart_sha256', 'reference_sha256', 'refresh_fixture_sha256')},
               'entropy_reads': captured['entropy_reads']}
-    (ROOT / f'build/tests/{case["name"]}-report.json').write_text(json.dumps(report, indent=2) + '\n')
+    (ROOT / f'build/tests/{case["name"]}-{case.get("interface_flavor","original")}-report.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({'case': case['name'], 'passed': first is None, 'first_difference': first, 'checks': len(checks)}, indent=2))
     return 0 if first is None else 1
 
@@ -333,13 +348,19 @@ def run_cli():
     parser.add_argument('--case', choices=('p1-title', 'p1-upper-player-placement',
                         'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'), default='p1-title')
     parser.add_argument('--self-test', action='store_true')
+    parser.add_argument('--interface', choices=('original','enhanced'), default='original')
     args = parser.parse_args()
     if args.case == 'p1-title':
+        if args.interface!='original':
+            parser.error('Enhanced title is verified by run_interface_tests.py --mode=one/--mode=two')
         from run_mode_selection_tests import run as run_mode
         return 0 if run_mode(args.case, args.self_test) else 1
     case = json.loads((ROOT / f'tests/cases/{args.case}.json').read_text())
+    case['interface_flavor']=args.interface
     contract = json.loads((ROOT / 'tests/cases/presentation.json').read_text())
-    report_path = ROOT / f'build/tests/{args.case}-report.json'
+    if args.interface=='enhanced':
+        contract['amiga_active_rectangle']=[v+64 if i in (0,2) else v for i,v in enumerate(contract['amiga_active_rectangle'])]
+    report_path = ROOT / f'build/tests/{args.case}-{args.interface}-report.json'
     report_path.unlink(missing_ok=True)
     if args.case == 'p1-upper-player-placement':
         return player_placement(case, contract, args.self_test)
@@ -351,12 +372,13 @@ def main():
     from evidence import tracked_call
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--case', default='p1-title')
+    parser.add_argument('--interface', choices=('original','enhanced'), default='original')
     args, _ = parser.parse_known_args()
     if args.case == 'p1-title':
         return run_cli()
     if args.case not in ('p1-upper-player-placement', 'p1-moving-prefix', 'p1-score-status-prefix', 'p1-upper-serve'):
         return run_cli()
-    path = ROOT / f'build/tests/{args.case}-report.json'
+    path = ROOT / f'build/tests/{args.case}-{args.interface}-report.json'
     return tracked_call([path], 'presentation', 'maintained-native', 'captured presentation phase',
                         'scripts/run_presentation_tests.py', args.case, run_cli,
                         lambda path, report: [Path(report['capture_report_path']).parent / 'native-application'])

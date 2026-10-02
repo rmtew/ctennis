@@ -171,7 +171,9 @@ def make_copper_and_patch_tables():
             # Restore status plane 1 after the left game tally and before the text.
             events.append((64, status, (1,), status.wait, 8))
         for _, field, planes, wait, byte_offset in sorted(events):
-            commands.append(f"        dc.w ${y + RASTER_TOP:02x}{wait:02x},$fffe")
+            commands.extend(["        ifd ENHANCED_INTERFACE",
+                f"        dc.w ${y + RASTER_TOP:02x}{wait + 0x10:02x},$fffe",
+                "        else", f"        dc.w ${y + RASTER_TOP:02x}{wait:02x},$fffe", "        endif"])
             for plane in planes:
                 emit_pointer(plane, field, y, byte_offset)
         commands.append(f"        dc.w ${y + RASTER_TOP:02x}d1,$fffe")

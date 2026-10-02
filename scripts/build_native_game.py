@@ -19,12 +19,15 @@ def module_hashes():
             for p in sorted(p for p in (ROOT / "amiga/game").iterdir() if p.suffix in (".s", ".i"))}
 
 
-def _build(phase_start=False):
+def _build(phase_start=False, flavor="enhanced"):
+    if flavor not in ("original", "enhanced"):
+        raise ValueError("Unknown interface flavor")
+    display = ROOT / "build/amiga/interfaces" / flavor
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     if not ASSEMBLER.is_file():
         raise FileNotFoundError(ASSEMBLER)
-    defines=[]
+    defines=["-DENHANCED_INTERFACE=1"] if flavor == "enhanced" else []
     if phase_start:
         cartridge = Path(config["inputs"]["cartridge"]).read_bytes()
         # Explicit diagnostic phase, never the ordinary application's startup.
@@ -35,25 +38,26 @@ def _build(phase_start=False):
                          if row['event']=='checkpoint' and int(row['frame'])==1299)
         ram=bytearray(initial);irq_tail_06b1(ram,rom=cartridge)
         (OUT/'live-initial-ram.bin').write_bytes(ram)
-        defines=['-DLIVE_PHASE_START=1','-DCOPPERLINE_LOG=1']
-    DISPLAY.mkdir(parents=True, exist_ok=True)
-    executable = DISPLAY / "gameplay-integration"
-    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(DISPLAY / "native.lst"), "-o",
+        defines += ['-DLIVE_PHASE_START=1','-DCOPPERLINE_LOG=1']
+    display.mkdir(parents=True, exist_ok=True)
+    executable = display / f"ctennis-{flavor}"
+    run([str(ASSEMBLER), "-Fhunkexe", "-kick1hunks", "-m68000", *defines, "-L", str(display / "native.lst"), "-o",
          str(executable), "amiga/gameplay_integration_probe.s"])
-    compile_manifest(executable, DISPLAY / "native.lst")
-    report = {"subject": "maintained-native", "entry_point": "game_source_tick",
+    compile_manifest(executable, display / "native.lst")
+    report = {"subject": "maintained-native", "interface_flavor": flavor, "entry_point": "game_source_tick",
               "startup": "captured diagnostic phase" if phase_start else "native title",
               "native_modules": module_hashes(),
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "executable": str(executable)}
-    (DISPLAY / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    (display / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
     return config, executable
 
 
-def build(phase_start=False):
-    return tracked_call([DISPLAY / 'build-report.json'], 'phase-build' if phase_start else 'build', 'maintained-native',
+def build(phase_start=False, flavor="enhanced"):
+    display = ROOT / "build/amiga/interfaces" / flavor
+    return tracked_call([display / 'build-report.json'], 'phase-build' if phase_start else 'build', 'maintained-native',
                         'captured phase' if phase_start else 'ordinary title',
-                        'scripts/build_native_game.py', None, lambda: _build(phase_start),
+                        'scripts/build_native_game.py', None, lambda: _build(phase_start, flavor),
                         lambda path, report: [Path(report['executable'])])
 
 
@@ -61,5 +65,7 @@ if __name__ == "__main__":
     import argparse
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase-start", action="store_true", help="Explicit captured diagnostic phase; ordinary builds start at title")
-    build(parser.parse_args().phase_start)
-    print((DISPLAY / "build-report.json").read_text())
+    parser.add_argument("--interface", choices=("original", "enhanced"), default="enhanced")
+    args = parser.parse_args()
+    build(args.phase_start, args.interface)
+    print((ROOT / "build/amiga/interfaces" / args.interface / "build-report.json").read_text())

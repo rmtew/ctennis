@@ -19,7 +19,7 @@ def code_symbols(listing):
             re.findall(r'^([A-Za-z_][\w]*)\s+00:([0-9A-Fa-f]{8})\s*$', listing, re.M)}
 
 
-def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False, strict_source_events=True, presentation_reference_directory='tests/reference/presentation', native_input_schedule=None):
+def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False, track_commits=False, completed_rasters=False, observe_audio=False, executable_mutator=None, initial_source_update=0, initial_phase_reference=None, capture_label=None, source_mutator=None, observe_fields=False, source_case='one-player-match', native_inputs=None, observe_state=False, observe_initial_fields=False, strict_source_events=True, presentation_reference_directory='tests/reference/presentation', native_input_schedule=None, interface_flavor="original", required_raster_generations=()):
     config = configparser.ConfigParser(interpolation=None)
     config.read(ROOT / 'config.local.ini', encoding='utf-8')
     directory = ROOT / ('build/tests/native-presentation-recorded' if recorded_entropy else 'build/tests/native-presentation-alignment')
@@ -34,6 +34,7 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     if source_case not in ('one-player-match', 'two-player-match', 'one-player-restart-complete', 'two-player-restart-complete'):
         raise ValueError('Unsupported source parent')
     case['source_case'] = source_case
+    case['interface_flavor']=interface_flavor
     if native_inputs is None:
         native_inputs = [{'port': 2, 'red': True}]
     if (not native_inputs or len({row.get('port') for row in native_inputs}) != len(native_inputs)
@@ -58,6 +59,9 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
     frozen = json.loads((ROOT / f'{presentation_reference_directory}/{source_case}/manifest.json').read_text())
     if digest(source_path) != frozen['parent_reference_sha256']:
         raise ValueError('Source simulation reference changed relative to frozen presentation capture')
+    if (not set(required_raster_generations) <= set(targets)
+            or required_raster_generations and not completed_rasters):
+        raise ValueError('Exact raster generations require declared completed-raster targets')
     if list(targets) != sorted(set(targets)) or not targets or targets[0] < initial_source_update or targets[-1] > len(source['updates']):
         raise ValueError('Callback targets must be unique, increasing and inside the source replay')
     executable = build_native(case, directory, recorded_refresh=recorded_entropy, initial_source_update=initial_source_update, source_mutator=source_mutator)
@@ -270,8 +274,13 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                     # A fast first phase callback can finish in the blank already
                     # observed before its scene was ready. Wait for its first
                     # actual publication AND completed scanout, not the prior frame.
-                    if any(event['visible_frame'] <= stop['frame'] - 1 for event in commits):
-                        break
+                    completed = [event for event in commits if event['visible_frame'] <= stop['frame'] - 1]
+                    if completed:
+                        actual_generation = completed[-1]['prepared_after_callback']
+                        if target not in required_raster_generations or actual_generation == target:
+                            break
+                        if actual_generation > target:
+                            raise RuntimeError(f'Requested generation {target} missed; completed raster is {actual_generation}')
                     if stop['frame'] >= raster_deadline:
                         raise RuntimeError('No completed published scene within three frames')
                 if stop['reason'] != 'target' or stop['vpos'] != 0 or stop.get('bridge'):
@@ -282,6 +291,10 @@ def capture(targets=(0, 17, 18, 63, 134, 135, 136, 166), recorded_entropy=False,
                 observations[-1]['native_scene_at_raster'] = scene_snapshot()
                 observations[-1]['completed_raster'] = {'stop': stop, 'rendered_frame': rendered_frame,
                     'generation': visible[-1] if visible else None, 'capture': raster}
+                if target in required_raster_generations:
+                    observations[-1]['completed_raster']['requested_generation'] = target
+                    observations[-1]['completed_raster']['wait_horizon_callback'] = int(session.inspect('mem_read',
+                        {'addr': base + symbols['simulation_updates'], 'len': 2})['data'], 16)
             print(f'callback {count}: {len(differences)} state differences, beam {stop["vpos"]}:{stop["hpos"]}', flush=True)
         log = Path(launch['log']).read_text(encoding='utf-8', errors='replace')
         for marker in ('cpu=M68000', 'cpu_clock=7.09MHz', 'chip_ram=512K', 'fast_ram=0K',

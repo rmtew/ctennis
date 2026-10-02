@@ -39,6 +39,22 @@ class FreshnessTests(unittest.TestCase):
                                            'executable': str(self.exe), 'executable_sha256': digest(self.exe)}])
         return run
 
+    def test_interface_flavors_cannot_cross_credit(self):
+        run=self.start()
+        result=dict(passed=True,subject='maintained',entry_point='game_source_tick',
+                    executable_sha256=digest(self.exe),updates=200,reference_updates=200,
+                    updates_matched=200,full_replay_executed=True,first_difference=None)
+        compiled=dict(files=snapshot([self.exe]),symbols=['game_enhanced_interface'],
+                      executable=str(self.exe),executable_sha256=digest(self.exe),interface_flavor='enhanced')
+        run.finalize(self.report,result,[compiled])
+        self.assertEqual(status(self.report,interface_flavor='enhanced')['status'],'passed')
+        self.assertEqual(status(self.report,interface_flavor='original')['status'],'stale')
+        run=self.start()
+        run.finalize(self.report,dict(result,interface_flavor='original'),[compiled])
+        self.assertEqual(status(self.report)['status'],'failed')
+        self.complete()
+        self.assertEqual(status(self.report,interface_flavor='enhanced')['status'],'stale')
+
     def test_unchanged_reused_and_fresh_execution(self):
         run = self.complete()
         self.assertEqual(status(self.report, 'maintained', full=True)['freshness'], 'reused')

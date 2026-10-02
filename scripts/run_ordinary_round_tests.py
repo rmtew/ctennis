@@ -11,9 +11,9 @@ from copperline_test_session import NativeControlSession
 from evidence import ROOT, atomic_json, compile_manifest, tracked_call
 
 
-def run(mode):
-    config, ordinary = build()
-    directory = ROOT / f'build/tests/ct05-ordinary-{mode}-round'
+def run(mode, flavor="enhanced"):
+    config, ordinary = build(flavor=flavor)
+    directory = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
     shutil.copy2(ordinary, exe)
@@ -83,7 +83,7 @@ def run(mode):
                     break
         if not all((award, paused, resumed, completed)):
             differences.append({'field': 'ordinary first game and subsequent advancing serve not completed'})
-    path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-report.json'
+    path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}-report.json'
     capture = directory / 'observations.json'
     atomic_json(capture, rows)
     report = {'case': f'ct05-ordinary-{mode}-round', 'passed': not differences,
@@ -97,10 +97,10 @@ def run(mode):
     return 0 if report['passed'] else 1
 
 
-def run_match(mode, early_release=False, audio=False):
+def run_match(mode, early_release=False, audio=False, flavor="enhanced"):
     """Ordinary physical play through award/title/reselection and fresh serve."""
-    config, ordinary = build()
-    name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart')
+    config, ordinary = build(flavor=flavor)
+    name = f'ct06-ordinary-{mode}-' + ('early-release' if early_release else 'restart') + '-' + flavor
     directory = ROOT / f'build/tests/{name}'
     directory.mkdir(parents=True, exist_ok=True)
     exe = directory / 'native-application'
@@ -291,7 +291,13 @@ def main():
     parser.add_argument('--cadence',action='store_true',help='CT09 non-stopping ordinary match, clock and chip-memory measurement')
     parser.add_argument('--adf',action='store_true',help='CT10 cold boot packaged ADF, then existing uninterrupted cadence/lifecycle acceptance')
     parser.add_argument('--bank-control',action='store_true',help='CT09 delayed compiled stale Copper bank control')
+    parser.add_argument("--interface",choices=("original","enhanced"),default="enhanced")
+    parser.add_argument("--keyboard",action="store_true",help="Use actual raw keyboard mode/fire events for the existing cadence lifecycle")
     args=parser.parse_args()
+    if args.keyboard and (not args.cadence or args.interface!="enhanced"):
+        parser.error("--keyboard requires --cadence --interface=enhanced")
+    flavor=args.interface
+    suffix=flavor+('-keyboard' if args.keyboard else '')
     if args.audio and not args.match:parser.error('--audio requires --match')
     if args.early_release and (not args.match or args.mode != 'one'):
         parser.error('--early-release requires --match --mode=one')
@@ -301,41 +307,41 @@ def main():
             parser.error('--adf requires --match --cadence and is distinct from compiled controls')
         from ordinary_cadence import run as run_cadence
         from build_native_adf import package
-        path=ROOT/f'build/tests/ct10-adf-{mode}-cadence-report.json'
-        adf=ROOT/'build/amiga/ctennis-delivery/ctennis.adf'
+        path=ROOT/f'build/tests/ct10-adf-{mode}-cadence-{suffix}-report.json'
+        adf=ROOT/f'build/amiga/interfaces/{flavor}/delivery/ctennis-{flavor}.adf'
         def run_boot():
-            package()
-            return run_cadence(mode,False,adf)
+            package(flavor=flavor)
+            return run_cadence(mode,False,adf,flavor,args.keyboard)
         return tracked_call([path],'ordinary-cadence','maintained-native','cold ADF',
                             'scripts/run_ordinary_round_tests.py',None,run_boot,
-                            lambda path,report:[ROOT/f'build/tests/ct10-adf-{mode}-cadence/native-application'])
+                            lambda path,report:[ROOT/f'build/tests/ct10-adf-{mode}-cadence-{suffix}/native-application'])
     if args.bank_control:
         if args.cadence or args.early_release or args.audio:
             parser.error('--bank-control is a separate bounded compiled control')
         from ordinary_cadence import run as run_cadence
-        path=ROOT/'build/tests/ct09-published-bank-control-report.json'
+        path=ROOT/f'build/tests/ct09-published-bank-control-{suffix}-report.json'
         return tracked_call([path],'ordinary-cadence','maintained-native-mutant','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_cadence(mode,True),
-                            lambda path,report:[ROOT/'build/tests/ct09-published-bank-control/native-application'])
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_cadence(mode,True,flavor=flavor,keyboard=args.keyboard),
+                            lambda path,report:[ROOT/f'build/tests/ct09-published-bank-control-{suffix}/native-application'])
     if args.cadence:
         if args.early_release or args.audio or not args.match:
             parser.error('--cadence requires --match and records its own audio; no --early-release/--audio')
         from ordinary_cadence import run as run_cadence
-        name=f'ct09-ordinary-{mode}-cadence'
+        name=f'ct09-ordinary-{mode}-cadence-{suffix}'
         path=ROOT/f'build/tests/{name}-report.json'
         return tracked_call([path],'ordinary-cadence','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_cadence(mode),
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_cadence(mode,flavor=flavor,keyboard=args.keyboard),
                             lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
     if args.match:
-        name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart')
+        name=f'ct06-ordinary-{mode}-' + ('early-release' if args.early_release else 'restart') + '-' + flavor
         path=ROOT/f'build/tests/{name}-report.json'
         return tracked_call([path],'ordinary-round','maintained-native','ordinary title',
-                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release,args.audio),
+                            'scripts/run_ordinary_round_tests.py',None,lambda:run_match(mode,args.early_release,args.audio,flavor),
                             lambda path,report:[ROOT/f'build/tests/{name}/native-application'])
-    path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-report.json'
+    path = ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}-report.json'
     return tracked_call([path], 'ordinary-round', 'maintained-native', 'ordinary title',
-                        'scripts/run_ordinary_round_tests.py', None, lambda: run(mode),
-                        lambda path, report: [ROOT / f'build/tests/ct05-ordinary-{mode}-round/native-application'])
+                        'scripts/run_ordinary_round_tests.py', None, lambda: run(mode,flavor),
+                        lambda path, report: [ROOT / f'build/tests/ct05-ordinary-{mode}-round-{flavor}/native-application'])
 
 if __name__ == '__main__':
     raise SystemExit(main())
