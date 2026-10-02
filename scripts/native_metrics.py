@@ -136,6 +136,9 @@ def read_case(name,relative,sha):
     metrics=report.get('resource_metrics')
     if not metrics or metrics['extent']['dropped_events'] or not metrics['extent']['completed_callbacks']:
         result['classification']={'status':'incomplete','reason':'Resource phase extent absent/dropped'};return result
+    for profile,data in metrics['profiles'].items():
+        if data.get('ui_construction_render'):
+            data['ui_construction_render']['scope']='Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution.'
     result.update(metrics=metrics, provenance={'startup':meta['startup'],'command':meta['command'],'commit':meta.get('commit'),
                   'target':meta['target'],'tools':meta['tools'], 'dependencies':{p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/')) and p!='scripts/native_metrics.py'},
                   'external_inputs_sha256':identity({p:sha for p,sha in meta['files'].items() if p.startswith('/') or p.startswith('.tools/')}),
@@ -175,6 +178,7 @@ def summarize(report):
            'Timing uses elapsed emulated colour clocks, including chip-bus waits; host time is unavailable.',
            'PAL display budget: 70,824 CCK (~19.97 ms). Simulation budget: ~59,191.14 CCK (~16.69 ms).',
            'Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasured.','',
+           'UI construction is grouped by page (title = menu; help includes controls/credits), independently of callback-entry profiles; menu-page redraws can occur during pause/input transitions. Pause-only UI construction remains unmeasured.','',
            'RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.']
     def ms(cck):return f'{cck*1000/3546895:.3f}' if cck is not None else 'unmeasured'
     for name,case in report.get('runtime',{}).items():
@@ -182,7 +186,7 @@ def summarize(report):
         if not metrics:
             lines.append(f"| {name}: {case['classification']['status']} | | | | | |")
             continue
-        lines.extend(['','| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |',
+        lines.extend(['','| Case / profile | Samples | Update median / p95 / max ms | Sprite render / UI page construction max ms | Dispatcher max ms | Work / deadline headroom ms |',
                       '|---|---:|---:|---:|---:|---:|'])
         for profile,data in metrics['profiles'].items():
             update=data['update_including_render']

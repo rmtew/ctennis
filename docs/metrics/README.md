@@ -116,3 +116,9 @@ changed numeric summaries cannot keep a previous identity. When celebration
 lands, register its actual new state in `MetricsObserver.profile()` and replace
 the explicit unavailable declaration in `generate()` before refreshing. The
 baseline report does not certify that future feature.
+
+UI construction distributions group actual redraws by page: the title row shows
+menu-page construction, and help includes controls/credits. This grouping is
+independent of callback-entry profiles and can include redraws during pause or
+input transitions. Pause-only UI construction is unmeasured; sprite rendering
+and dispatcher distributions retain their observed callback-entry profiles.
