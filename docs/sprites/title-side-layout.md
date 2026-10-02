@@ -1,11 +1,19 @@
 # Side-player title menu
 
 Local implementation based on master `21c370f0a614a4ea58f3efdb5c9fea41a5959b0e`.
-The approved side-player layout is implemented. Selected racket-framed logo B
-remains pending: Library reference `libfile_438da231867481919e64be545e2c3253`
-could not be materialized in this executor, and image read returned no pixels.
-The existing BASELINE RALLY title and title palette are retained unchanged.
-No substitute artwork is included.
+The approved side-player layout and native B adaptation are implemented. The
+user attached the selected three-concept image directly after Library transfer
+failed; the actual B pixels were visually inspected before adaptation. Its
+paired blue/red rackets, white BASELINE, blue RALLY with a white edge, and central
+ball are preserved. Hand-authored block lettering and simplified racket strings
+fit the native header; the ball uses the existing gold-yellow palette slot.
+This is an intentional pixel adaptation, not a claim of exact artwork resampling.
+The native preview was displayed before committing the adaptation.
+
+`author_title_logo_b.py` documents the reproducible native authoring. Only the
+first76 rows of the existing four6144-byte planes change; all lower pixels and
+the complete title palette remain byte-identical. Logo artwork ends at y75,
+leaving16 blank rows before labels at y92. There is no extra bitmap allocation.
 
 ## Native geometry and ownership
 
@@ -42,19 +50,22 @@ byte-identical to the base commit; no gameplay role state is used to bake art.
   passed all three existing identity-asset checks.
 - `python3 scripts/native_assets.py` validated all 121 immutable inputs.
 - The implementation-cache preview matched every native pixel in all eight
-  states of the previously approved standalone layout preview. The existing
-  title raster also matched. These are host/static checks, not emulator scanout.
+  states of the previously approved standalone layout preview. The full native B
+  title region also matched its versioned planes in the host preview. These are host/static checks, not emulator scanout.
 - The ordinary physical-input suite now visits all eight states, captures each
   complete menu, checks wraparound, Mode action toggling, and an irrelevant right
   press outside Mode. Run `RUST_LOG=info python3 scripts/run_enhanced_menu_tests.py
   --help-only` and the focused native setup timing check when tools are available.
 
-Native build attempted but blocked before assembly by missing pinned
-`.tools/vasm/vasmm68k_mot.exe`. Copperline/configuration are also absent here.
-Physical input, native raster, executable footprint and target timing tests were
-therefore not run. No full native acceptance claim is made.
+Pinned tools were recovered through the procedure in ../ct12/checkpoint.md:
+vasm commit685a87e reproduced the locked SHA256, and the official Copperline
+AppImage matched e69e732f...89ce5. Native assembly now passes. The earlier
+missing-tool blocker is resolved. Focused native input/scanout and setup timing
+results are recorded separately under ignored build/tests; consult their exact
+commit/input hashes. No full native acceptance claim is made.
 
 Preview display follows the project's PAL presentation: constructed raw field
 716x285 with title origin (126,16), native X doubled, then nearest-neighbour
 display at 716x537 (4:3). This is not a square-pixel enlargement of the 256x192
-active title crop. The preview explicitly labels the B artwork as pending.
+active title crop. The preview identifies the fitted B artwork and distinguishes host cache renders
+from actual emulator scanout.

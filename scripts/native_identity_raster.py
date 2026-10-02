@@ -49,21 +49,19 @@ def assert_player_raster(path, exchanged):
 
 
 def assert_title_raster(path):
-    font=(ROOT/'assets/native/title/font.bin').read_bytes()
+    # Compare actual scanout to the versioned, reviewed native logo planes;
+    # these are authored assets, never goldens regenerated from the runtime.
+    planes=[(ROOT/f'assets/native/title/plane{n}.bin').read_bytes() for n in range(4)]
+    colours={0:(0,0,0),4:(85,85,238),10:(221,204,85),13:(238,51,51),15:(255,255,255)}
+    expected=[]
+    for y in range(76):
+        for x in range(256):
+            index=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
+            expected.extend([colours[index]]*2)
     with Image.open(path) as picture:
-        raster=picture.convert('RGB')
-        for text,x,y in (('BASELINE',64,16),('RALLY',88,48)):
-            expected=[]
-            for row in range(16):
-                for c in text:
-                    byte=font[ord(c)*8+row//2]
-                    for bit in range(8):
-                        rgb=(85,85,238) if byte&(128>>bit) else (0,0,0)
-                        expected.extend([rgb]*4)
-            left=126+2*x
-            actual=list(raster.crop((left,16+y,left+len(text)*32,32+y)).get_flattened_data())
-            assert actual==expected,{'label':'actual native Baseline Rally title','text':text}
-    return {'title':'Baseline Rally','matched':True}
+        actual=list(picture.convert('RGB').crop((126,16,638,92)).get_flattened_data())
+    assert actual==expected,{'label':'complete native racket-framed B title','different_pixels':sum(a!=b for a,b in zip(actual,expected))}
+    return {'title':'Baseline Rally / B','matched':True,'pixels':len(actual)}
 
 
 def assert_footer_raster(path, first, second, selected=None):
