@@ -180,3 +180,12 @@ does not certify the merged product. Failed menu receipts remain outside Git.
 The menu takeover check waits at most twelve actual UI samples for the physical
 button2 sample, then requires the same demo exit and frozen-state preservation;
 a missing sample or incorrect takeover still fails.
+
+Current merged-product byte attribution is regenerated in executable-size.json
+and .md; integration-comparison.json/.md compare the historical stripped product
+with the freshly measured merged product. The older release-loading-comparison
+is explicitly historical and names its retained baseline report. Native report
+deltas require matching observer definitions for runtime statistics; a profile
+split cannot silently be compared as the same scene. If master has no metrics
+report yet, the preserved reviewed baseline supplies labeled historical static
+deltas. `--check` verifies that baseline hash as well as current product inputs.

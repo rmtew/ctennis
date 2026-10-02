@@ -1,67 +1,65 @@
-# Measured executable size attribution
+# Current executable size attribution
 
-Static attribution only. Executable and assets are unchanged. Corrected observers have fresh affected validation in current.json.
+Committed merged product: development **248,480 B**, release **211,920 B**. Release removes only **36,560 B** of HUNK_SYMBOL metadata. Loaded payload is **202,104 B**, unchanged by stripping.
 
-Executable SHA256: `e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c`.
+Development SHA256: `0240658feac160753239ca9bfdbed30858b56049ecf68f0a8647d5158bd26ea9`.
+Release SHA256: `783bd53c737cab5497d46752f3e95f3acad0ba791570b2b6d547aa64480939f9`.
 
-Every file byte is counted exactly once. CODE 40,140 and DATA 114,540 contain these categories; do not add hunk totals again. BSS is 0. Loaded payload is 154,680 bytes and metadata 44,280.
+Every file byte is counted once below. CODE/DATA are containing views and include assets/tables/reserves; only the instruction row is CPU instructions. Fonts, Battle Hymn scores/periods/waveform, robot poses and every active UI cache are included.
 
-| Exclusive category | Bytes |
-| --- | ---: |
-| audio envelopes | 128 |
-| audio period table | 3,072 |
-| audio scores | 2,208 |
-| build version text | 14 |
-| court bitplanes | 24,576 |
-| cpu instructions | 11,118 |
-| font | 1,024 |
-| front court and title copper lists | 3,256 |
-| hunk header table | 28 |
-| hunk payload alignment padding | 2 |
-| hunk record headers and ends | 24 |
-| initial hardware sprites | 576 |
-| mode banks | 3,072 |
-| other initialized tables and scalars | 738 |
-| paula square wave | 4 |
-| pre rendered ui pages | 10,240 |
-| relocation offsets | 9,120 |
-| relocation record framing | 24 |
-| replay packets | 1,110 |
-| reserved back copper | 3,120 |
-| reserved back sprites | 576 |
-| reserved native stack | 4,096 |
-| reserved state and work buffers | 704 |
-| reserved ui overlay | 512 |
-| scene animation table | 36 |
-| scene pose table | 112 |
-| scene sprite variants | 8,192 |
-| score game banks | 21,504 |
-| score patch pointer tables | 7,604 |
-| score point banks | 14,336 |
-| separate debug records | 0 |
-| source alignment padding | 13 |
-| status banks | 7,168 |
-| symbol name padding | 1,383 |
-| symbol names | 22,989 |
-| symbol record framing | 10,712 |
-| title bitplanes | 24,576 |
-| ui text and line pointer tables | 993 |
-| **Total** | **198,960** |
+| Exclusive category | Development bytes | Release bytes |
+| --- | ---: | ---: |
+| audio envelopes | 128 | 128 |
+| audio period table | 3,072 | 3,072 |
+| audio scores | 1,504 | 1,504 |
+| build version text | 14 | 14 |
+| celebration period table | 3,072 | 3,072 |
+| celebration scores | 2,112 | 2,112 |
+| celebration square wave | 4 | 4 |
+| court bitplanes | 24,576 | 24,576 |
+| cpu instructions | 12,186 | 12,186 |
+| font | 1,024 | 1,024 |
+| front court and title copper lists | 3,184 | 3,184 |
+| hunk header table | 28 | 28 |
+| hunk record headers and ends | 24 | 24 |
+| initial hardware sprites | 576 | 576 |
+| menu font mac | 1,024 | 1,024 |
+| mode banks | 3,072 | 3,072 |
+| other initialized tables and scalars | 750 | 750 |
+| pre rendered demo options | 512 | 512 |
+| pre rendered help options | 768 | 768 |
+| pre rendered menu options | 1,280 | 1,280 |
+| pre rendered title ui pages | 29,696 | 29,696 |
+| pre rendered ui pages | 14,848 | 14,848 |
+| relocation offsets | 9,740 | 9,740 |
+| relocation record framing | 24 | 24 |
+| replay packets | 1,110 | 1,110 |
+| reserved back copper | 3,048 | 3,048 |
+| reserved back sprites | 576 | 576 |
+| reserved native stack | 4,096 | 4,096 |
+| reserved state and work buffers | 962 | 962 |
+| reserved ui overlay | 512 | 512 |
+| scene animation table | 36 | 36 |
+| scene pose table | 112 | 112 |
+| scene robot pose table | 112 | 112 |
+| scene sprite variants | 11,264 | 11,264 |
+| score game banks | 21,504 | 21,504 |
+| score patch pointer tables | 7,972 | 7,972 |
+| score point banks | 14,336 | 14,336 |
+| separate debug records | 0 | 0 |
+| source alignment padding | 14 | 14 |
+| status banks | 7,168 | 7,168 |
+| symbol name padding | 1,503 | 0 |
+| symbol names | 23,889 | 0 |
+| symbol record framing | 11,168 | 0 |
+| title bitplanes | 24,576 | 24,576 |
+| ui text and line pointer tables | 1,304 | 1,304 |
+| **Total** | **248,480** | **211,920** |
 
-CPU instructions include operand extensions. CODE also embeds assets, tables and reserves. Symbols contain 22,989 name bytes, 1,383 padding and 10,712 framing bytes (1,337 symbols). Relocations contain 9,120 offset bytes and 24 framing bytes (2,280 offsets). No HUNK_DEBUG record is emitted. Reserves are file-backed dcb storage, not BSS. Final CODE padding is a 2-byte NOP (`4e71`); source alignment adds 13 bytes.
+Hunk CODE 49,564 B; DATA 152,540 B; BSS 0 B. Symbols/relocations/framing are separate file metadata. Reserved dcb storage is file-backed, not BSS. No separate HUNK_DEBUG record is emitted.
 
-Identical embedded copies contribute 26,624 bytes beyond first copies. This is measured duplication, not validated savings; sharing requires separate correctness work. The JSON lists each group.
+Identical embedded asset copies contribute 22,528 bytes beyond first copies. This is informational duplication, not validated aliasing/compression savings.
 
-## Original comparison
+The supplied original cartridge measured 8,192 bytes (SHA256 `19bb6647f14ef50f976e8d0a06d389f06b2e700d54a54fb1734d3140f9745ad1`), not the claimed16KB. It is not a build/metrics dependency. Original compact tile/pattern/color representations differ from expanded Amiga planes, masks, UI caches and two prepared sprite variants; no original per-component ROM allocation is inferred.
 
-The supplied cartridge is **8,192 bytes**, not 16,384; SHA256 `19bb6647f14ef50f976e8d0a06d389f06b2e700d54a54fb1734d3140f9745ad1`. It is not a build/metrics dependency. No original component allocation is inferred from its size.
-
-Native storage uses expanded Amiga representations. Each title/court screen uses four 32-byte-wide planes over 192 rows (24,576 bytes). Score/status/mode banks retain prepared masks across values and planes. Four cached UI pages add 10,240 bytes alongside a 1,024-byte font and strings. The 64 scene images retain two prepared 64-byte Amiga sprite variants each (8,192 bytes), versus 2,048 bytes of monochrome pixels for those logical images. That 4:1 representation ratio does not establish an original ROM component allocation.
-
-Original tile/pattern/color representations reconstruct displays; they do not serialize full Amiga bitplanes, working banks, AmigaOS metadata or our UI/audio/replay implementation. Historical generator source at `50ef76227a72e137c37efe29502cf60b1d4590d4` documents the conversions; no historical generator was executed for this measurement.
-
-## Reproduction and limits
-
-`python scripts/native_metrics.py --require-runtime` regenerates attribution in ignored `build/metrics/current.json` and its readable summary. Normal native builds also generate static attribution. Unknown gaps, overlaps, listing-byte mismatches or incbin mismatches fail generation. This snapshot binds executable, listing, manifest, tool lock and reader hashes.
-
-Release-only symbol removal is now implemented: 198,960 → 163,876 bytes, saving 35,084 bytes (17.6%). Development symbols remain available. No deduplication, compression or gameplay change was performed. Fresh runtime evidence is in current.json. Historical baseline evidence remains separate; see release-loading-comparison.md for the bounded before/after measurement.
+Regenerate static attribution with the ordinary native build or `python scripts/native_metrics.py --require-runtime --record`. Unknown gaps, overlaps, listing/asset mismatches fail generation. Current runtime evidence is in current.json/.md. Pre-PR19 size reports are preserved under baselines/; the historical stripping comparison does not certify this merged product.

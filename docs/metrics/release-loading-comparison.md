@@ -1,6 +1,6 @@
-# Release loading comparison
+# Historical pre-PR19 release loading comparison
 
-Historical symbol-rich before versus fresh stripped-release after, on the same pinned unexpanded PAL A500 configuration and cold read-only ADF at 100% disk speed. All figures are emulated seconds, not host wallclock.
+Historical symbol-rich before versus historically measured stripped-release after, on the same pinned unexpanded PAL A500 configuration and cold read-only ADF at 100% disk speed. All figures are emulated seconds, not host wallclock.
 
 | Milestone | Before (s) | After (s) | After − before (s) |
 | --- | ---: | ---: | ---: |
@@ -23,3 +23,5 @@ Before ADF: `ffc168c34df52d0f4294718edd61cec3b603c3136f15d447e18b817a8530ed02`.
 After ADF: `6d0eccf31da8dc591b3332882783538cc2ab35906c6f268fce84281edc9ad94c`.
 
 Exact report/receipt/config/tool hashes and CCK differences are in the adjacent JSON. The ordinary metrics generator produces the current source report; this comparison is a bounded review snapshot against the preserved historical baseline. No significance estimate or optimization beyond symbol removal is inferred.
+
+Both reports are historical and retained under baselines/. This comparison does not certify the current merged product; see current.md and integration-comparison.md.

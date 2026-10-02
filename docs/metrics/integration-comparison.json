@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "state": "historical pre-PR19 release versus newly measured merged product; both use stripping",
+  "before_report": "docs/metrics/baselines/pre-pr19-release.json",
+  "before_report_sha256": "fc6136389b5a7912105b6434235eab47eb25d96159e6be022a3dabc4f1657786",
+  "after_report": "docs/metrics/current.json",
+  "after_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede",
+  "before_product_sha256": "e81fe61be19e28cb585f4c0f5808ebc96aa038d77a5f6667780e14f79f30f46c",
+  "after_product_sha256": "0240658feac160753239ca9bfdbed30858b56049ecf68f0a8647d5158bd26ea9",
+  "before_release_sha256": "ead8265319cf5a55a2a6bb1c9a1f9dfc8349f70e7e89af7be5d6bc8ac0b929e5",
+  "after_release_sha256": "783bd53c737cab5497d46752f3e95f3acad0ba791570b2b6d547aa64480939f9",
+  "before_adf_sha256": "6d0eccf31da8dc591b3332882783538cc2ab35906c6f268fce84281edc9ad94c",
+  "after_adf_sha256": "c7781fdb10c1dd5b15c4a0a06749b0411a6e40b4f40911e62d234a26c42b22d9",
+  "static_bytes": {
+    "executable_bytes": {
+      "before": 198960,
+      "after": 248480,
+      "delta": 49520
+    },
+    "code_bytes": {
+      "before": 40140,
+      "after": 49564,
+      "delta": 9424
+    },
+    "data_bytes": {
+      "before": 114540,
+      "after": 152540,
+      "delta": 38000
+    },
+    "bss_bytes": {
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    "loaded_payload_bytes": {
+      "before": 154680,
+      "after": 202104,
+      "delta": 47424
+    },
+    "release_executable_bytes": {
+      "before": 163876,
+      "after": 211920,
+      "delta": 48044
+    }
+  },
+  "cold_stages": [
+    {
+      "stage": "reset",
+      "before_cck": 0,
+      "after_cck": 0,
+      "delta_cck": 0,
+      "before_seconds": 0.0,
+      "after_seconds": 0.0,
+      "delta_seconds": 0.0
+    },
+    {
+      "stage": "boot_script_begins",
+      "before_cck": null,
+      "after_cck": null,
+      "delta_cck": null,
+      "before_seconds": null,
+      "after_seconds": null,
+      "delta_seconds": null
+    },
+    {
+      "stage": "loadseg_begin",
+      "before_cck": null,
+      "after_cck": null,
+      "delta_cck": null,
+      "before_seconds": null,
+      "after_seconds": null,
+      "delta_seconds": null
+    },
+    {
+      "stage": "loadseg_complete",
+      "before_cck": 73004746,
+      "after_cck": 87914122,
+      "delta_cck": 14909376,
+      "before_seconds": 20.5827198155006,
+      "after_seconds": 24.78622062395419,
+      "delta_seconds": 4.20350080845359
+    },
+    {
+      "stage": "executable_entry",
+      "before_cck": 73008312,
+      "after_cck": 87917692,
+      "delta_cck": 14909380,
+      "before_seconds": 20.583725201901945,
+      "after_seconds": 24.78722713810248,
+      "delta_seconds": 4.203501936200535
+    },
+    {
+      "stage": "assets_ready",
+      "before_cck": 73049648,
+      "after_cck": 87960663,
+      "delta_cck": 14911015,
+      "before_seconds": 20.59537933883016,
+      "after_seconds": 24.79934224159441,
+      "delta_seconds": 4.20396290276425
+    },
+    {
+      "stage": "first_complete_title_frame",
+      "before_cck": 73194902,
+      "after_cck": 88111067,
+      "delta_cck": 14916165,
+      "before_seconds": 20.636331777512446,
+      "after_seconds": 24.841746654468203,
+      "delta_seconds": 4.205414876955757
+    },
+    {
+      "stage": "input_responsive",
+      "before_cck": 73299233,
+      "after_cck": 88210386,
+      "delta_cck": 14911153,
+      "before_seconds": 20.66574651913857,
+      "after_seconds": 24.869748329172417,
+      "delta_seconds": 4.204001810033848
+    }
+  ],
+  "cold_runtime_ram_delta": {
+    "chip_used_bytes": 47424,
+    "chip_free_bytes": -47424,
+    "largest_chip_free_block_bytes": -47424
+  },
+  "cold_peak_comparison": "Not subtracted: integration adopts complete-longword allocation observation; historical peak boundary is not equivalent. Current peak is measured independently.",
+  "profile_comparison": "Not subtracted across old result/celebration split. Both bound reports retain their actual extents; current celebration is newly measured.",
+  "scope": "Actual emulated time. Added Mac font/classic robot/Battle Hymn/UI caches change the product; these differences are not isolated symbol-stripping savings. OS boot/loader remain combined; read/relocation subphases, disk counters and host launch time remain unavailable."
+}

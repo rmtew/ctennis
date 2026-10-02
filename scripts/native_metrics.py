@@ -237,6 +237,8 @@ def metric_deltas(previous, report):
         old=previous['runtime'].get(name,{})
         compatible=('metrics' in old and 'metrics' in current and old['metrics']['clock']==current['metrics']['clock']
             and old['metrics']['boundaries']==current['metrics']['boundaries']
+            and previous.get('measurement_inputs',{}).get('scripts/native_metrics_observation.py') is not None
+            and previous['measurement_inputs']['scripts/native_metrics_observation.py']==report.get('measurement_inputs',{}).get('scripts/native_metrics_observation.py')
             and old['provenance']['target']==current['provenance']['target']
             and old['provenance'].get('startup')==current['provenance'].get('startup')
             and old['provenance'].get('tool_sha256')==current['provenance'].get('tool_sha256')
@@ -332,6 +334,14 @@ def generate():
         previous=json.loads(accepted.stdout)
         if previous.get('schema')==1 and previous.get('state')=='complete':
             report['deltas']=metric_deltas(previous,report)
+    elif (ROOT/'docs/metrics/baselines/pre-pr19-release.json').is_file():
+        # Explicit historical comparison until master has an accepted report.
+        baseline=ROOT/'docs/metrics/baselines/pre-pr19-release.json'
+        previous=json.loads(baseline.read_text())
+        if previous.get('schema')==1 and previous.get('state')=='complete':
+            report['deltas']=metric_deltas(previous,report)
+            report['deltas'].update(state='historical reviewed baseline; master has no accepted metrics report',
+                previous_report=str(baseline.relative_to(ROOT)),previous_report_sha256=digest(baseline))
     return report
 
 
@@ -357,6 +367,9 @@ def main():
             if cold_loading_issues(accepted.get('runtime',{}).get('cold-one',{}).get('cold_loading')):
                 raise ValueError('Accepted cold-loading milestones/evidence are incomplete')
             if report_identity(accepted)!=accepted.get('identity'):raise ValueError('Accepted report identity does not match its data')
+            baseline=accepted.get('deltas',{}).get('previous_report')
+            if baseline and digest(ROOT/baseline)!=accepted['deltas'].get('previous_report_sha256'):
+                raise ValueError('Historical comparison report changed; regenerate metrics')
             static=static_metrics()
             if static['executable_sha256']!=accepted['static']['executable_sha256']:raise ValueError('Accepted product differs; regenerate metrics')
             differences=changed(accepted['measurement_inputs'])

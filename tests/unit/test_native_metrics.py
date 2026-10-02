@@ -229,7 +229,7 @@ class MetricsTests(unittest.TestCase):
                     value=copy.deepcopy(template)
                     if name=='cold-one':value['cold_loading']=copy.deepcopy(loading)
                     return value
-                with patch('native_metrics.static_metrics',return_value=static),patch('native_metrics.read_case',side_effect=case),patch('native_metrics.subprocess.run') as accepted:
+                with tempfile.TemporaryDirectory() as directory,patch('native_metrics.ROOT',Path(directory)),patch('native_metrics.static_metrics',return_value=static),patch('native_metrics.read_case',side_effect=case),patch('native_metrics.subprocess.run') as accepted:
                     accepted.return_value.returncode=1
                     report=generate()
                 self.assertEqual(report['state'],'complete' if missing is None else 'incomplete')
@@ -258,3 +258,8 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(observer.profile(),'celebration')
         observer.values['ui_paused']=255
         self.assertEqual(observer.profile(),'pause')
+
+    def test_runtime_deltas_require_matching_observer_definition(self):
+        old={'identity':'old','static':{'layout':{'executable_bytes':10}},'measurement_inputs':{'scripts/native_metrics_observation.py':'old'},'runtime':{'case':{'metrics':{'clock':1,'boundaries':'bus'},'provenance':{'target':'PAL','startup':'cold','tools':{}}}}}
+        current={'static':{'layout':{'executable_bytes':12}},'measurement_inputs':{'scripts/native_metrics_observation.py':'new'},'runtime':copy.deepcopy(old['runtime'])}
+        self.assertEqual(metric_deltas(old,current)['runtime']['case']['state'],'incompatible or unmeasured')

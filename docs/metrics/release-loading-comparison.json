@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "state": "historical before, fresh completed after; not a repeated statistical campaign",
+  "state": "Historical pre-PR19 symbol-removal comparison; not current merged-product acceptance",
   "baseline_report": "docs/metrics/baselines/development-symbols.json",
   "baseline_report_sha256": "e9364a546b6d178e0618eb3b375eec6ba689a95b61d32994a5c56121746af1ed",
-  "after_report": "docs/metrics/current.json",
+  "after_report": "docs/metrics/baselines/pre-pr19-release.json",
   "after_report_sha256": "fc6136389b5a7912105b6434235eab47eb25d96159e6be022a3dabc4f1657786",
   "after_receipt": "build/tests/ct10-adf-one-cadence-enhanced-report.json",
   "after_receipt_sha256": "c906a2b5d58c77ac6ba82117b0f60c40f2e12732f3d1c378f737d1412b54afae",
