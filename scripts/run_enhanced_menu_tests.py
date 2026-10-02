@@ -28,7 +28,7 @@ def execution_subject(development, package_report=None):
     return executable,debug
 
 
-def run(adf=False):
+def run(adf=False,boot_only=False):
     package_report = package(self_test=True) if adf else None
     config, exe = build(flavor='enhanced'); config = emulator_config()
     development=exe
@@ -36,7 +36,7 @@ def run(adf=False):
     symbols = code_symbols((development.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
-    directory = ROOT/'build/tests'/('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
+    directory = ROOT/'build/tests'/(('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')+('-boot-binding' if boot_only else ''))
     checks = []
     def check(label, actual, expected):
         checks.append({'label': label, 'actual': actual, 'expected': expected})
@@ -86,6 +86,9 @@ def run(adf=False):
         check('ordinary title',number('game_lifecycle',2),2)
         check('title display chosen',number('game_title_display'),255)
         photo('menu')
+        if boot_only:
+            write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only)
+            return
         key(0x03);check('3 has no shortcut',number('game_lifecycle',2),2)
         key(0x4d);check('down selects players',number('ui_selection'),1)
         key(0x4e);check('right selects two players',number('ui_player_count'),1)
@@ -203,6 +206,9 @@ def run(adf=False):
         check('Start game uses remembered player count',number('game_selected_mode'),1)
         check('Enter starts ordinary gameplay',number('game_lifecycle',2),1)
     target_log(directory)
+    write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only)
+
+def write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only):
     # Fail if execution/debug/package files changed while the harness ran.
     final_exe,final_debug=execution_subject(development,package_report)
     if final_exe!=exe or final_debug!=debug_source:raise ValueError('Menu product changed during execution')
@@ -214,15 +220,19 @@ def run(adf=False):
               'loaded_hunks':loaded,
               'adf':package_report['adf'] if adf else None,
               'adf_sha256':package_report['adf_sha256'] if adf else None,
-              'scope':'Finite ordinary physical inputs; no game-state writes, source initialization or full-match parity'}
+              'complete_menu_sequence':not boot_only,
+              'scope':'Boot binding/title only; no menu lifecycle acceptance' if boot_only else 'Finite ordinary physical inputs; no game-state writes, source initialization or full-match parity'}
     atomic_json(directory/'report.json',report)
     print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adf', action='store_true')
+    parser.add_argument('--boot-only',action='store_true',help='Only loaded release/debug binding and initial title; no full menu acceptance')
     args = parser.parse_args()
-    path = ROOT / 'build/tests' / ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
+    if args.boot_only and not args.adf:parser.error('--boot-only requires --adf')
+    path = ROOT / 'build/tests' / (('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary')+('-boot-binding' if args.boot_only else '')) / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
-                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf),
+                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf,args.boot_only),
                  lambda path, report: [ROOT / report['executable']])
