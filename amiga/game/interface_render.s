@@ -246,6 +246,7 @@ ui_render:
         lea     title_plane0+182*32,a2
         bsr     ui_menu_row_copy
 .publish:
+        st      game_title_display
         move.b  #1,display_ready
 .done:  rts
 
