@@ -97,7 +97,11 @@ Extended existing finite native demo/full replay/takeover and ordinary feedback
 checks to inspect actual native scene frames, owner colours and positions in
 both modes/end exchange. The full replay still checks the independently frozen
 10958 input-tick trajectory; no golden was regenerated. These extended target
-checks have **not run** in this environment.
+checks ran at `f4e1b69`: full frozen replay (10958 ticks) and mid-demo takeover
+(5480 ticks) passed with zero missed publications. The broader gate was
+intentionally interrupted during the first ordinary-feedback check after the
+scoreboard scope changed. Two-player feedback and combined CT13 acceptance
+remain outstanding; this is not a complete native-gate pass.
 
 Initial setup failure is resolved. The CT12 recovery procedure rebuilt vasm1.9d
 from Leffmann/vasm commit685a87e5ed14285350ccdb6581c9771bc8df6c7d with the exact
