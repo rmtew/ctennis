@@ -3,7 +3,12 @@
 Six games now retain the final court and logical winner/totals instead of
 automatically returning to title. After a bounded 48-tick celebration pause,
 the loser/ball/shadow disappear and the winner moves to their own half's visual
-centre, raises the racket and bounces upward by zero, one or two pixels. Blue/Red
+centre, raises the racket and bounces upward by zero, one or two pixels.
+Celebration reuses native pose4 for the lower actor and pose11 for the upper
+actor; no pose/sprite asset is added. Anchors are X120/Y125 (lower) and X120/Y52
+(upper), with the existing pose offsets and three-part16x32 actor geometry.
+Future replacement sprites must preserve those anchors and cover these two
+explicit raised-racket pose indices. Blue/Red
 identity follows logical score ownership through exchanged ends. The text is
 ordinary native label data; future P1/P2 naming or sprites are separate scope.
 Individual game-win feedback remains the existing short feedback.
