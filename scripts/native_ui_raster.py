@@ -4,9 +4,11 @@ from native_tools import ROOT
 
 
 def assert_ui_raster(path,page,players,selection,version):
-    lines={0:[(144,4,'START GAME'),(152,4,'PLAYERS: '+str(players+1)),
-              (144+selection*8,2,'*')],
-           1:[(112,4,'HOW TO PLAY'),(120,4,'MOVE TO BALL: AUTO RETURNS.'),
+    if page==0:
+        from native_identity_raster import assert_menu_selection_raster
+        result=assert_menu_selection_raster(path,selection,players+1)
+        return {'page':0,'checked_pixels':result['pixels'],'matched':True,'selection':selection,'players':players+1}
+    lines={1:[(112,4,'HOW TO PLAY'),(120,4,'MOVE TO BALL: AUTO RETURNS.'),
               (136,4,'CONTACT, BOTH AT NET: LOB.')],
            2:[(112,4,'CONTROLS'),(128,4,'BLUE: WASD MOVE / F OR G ACT')],
            3:[(112,4,'BASELINE RALLY / CREDITS'),(128,4,version)]}[page]

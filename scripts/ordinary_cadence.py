@@ -160,7 +160,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         if stop['reason']!='loadseg':raise RuntimeError(stop)
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
-            'simulation_timer_origin', 'game_lifecycle', 'game_input_bits', 'display_ready',
+            'simulation_timer_origin', 'game_lifecycle', 'game_celebration_first_play', 'game_input_bits', 'display_ready',
             'front_copper','back_copper','copper_write_delta','sprite_write_delta','game_title_display')}
         # These buffers are in the chip-data hunk, not hunk0. Resolve the
         # compiled section offsets against the actual LoadSeg hunk addresses.
@@ -251,7 +251,17 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
             if lifecycle == 6:
                 milestone('result', position)
                 if max(bytes([native_state['game_games_a'], native_state['game_games_b']])) != 6 or any(bytes([native_state['game_point_a'], native_state['game_point_b']])): fault('result before six-game completion')
-            if lifecycle == 7: milestone('returned_title', position)
+            if lifecycle == 6:
+                # Read only at a completed callback. Full completion comes from
+                # actual native duration/level state, never an observer delay.
+                full = state.get('celebration_full',0)
+                if full and 'first_full_play' not in checkpoints:
+                    milestone('first_full_play',position)
+                    action_buttons(False)
+                elif full and n-checkpoints['first_full_play']['callback']>=8 and 'celebration_continue' not in checkpoints:
+                    milestone('celebration_continue',position)
+                    action_buttons(True)
+            if lifecycle == 2 and 'result' in checkpoints: milestone('returned_title', position)
             if lifecycle == 2 and 'result' in checkpoints and state['restart_selected'] is None:
                 milestone('restart_title_ready', position)
                 send('input.key', {'rawkey': selection_key(restarted), 'action': 'press'})
@@ -297,6 +307,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     if a+i in address_fields:native_state[address_fields[a+i]]=v
             elif address['game_input_bits'] <= a < address['game_input_bits']+8:
                 controls[a-address['game_input_bits']:a-address['game_input_bits']+size] = value.to_bytes(size, 'big')
+            elif a == address['game_celebration_first_play']:
+                state['celebration_full'] = value
             elif a == address['game_lifecycle']:
                 state['lifecycle'] = value
                 changes.append(r)
@@ -353,7 +365,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 memory_writes.append(r)
         if boot_adf:s.inspect('events.unsubscribe')
         s.notification_handler = event
-        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display') else 2, 'access': 'write'} for n, a in address.items()]
+        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display','game_celebration_first_play') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
                     *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
@@ -379,7 +391,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         else:
             fault('unexpected incomplete callback')
     required = ('initial_title', 'first_selection', 'first_release', 'first_play', 'first_flight',
-                'point', 'game', 'pause', 'resume', 'result', 'returned_title', 'restart_title_ready',
+                'point', 'game', 'pause', 'resume', 'result', 'first_full_play', 'celebration_continue', 'returned_title', 'restart_title_ready',
                 'restart_selection', 'restart_release', 'restart_play', 'held_blocked', 'fresh_action', 'restarted_flight', 'finished')
     for label in (() if bank_control else required):
         if label not in checkpoints: fault('missing milestone', milestone=label)

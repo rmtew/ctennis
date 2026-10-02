@@ -89,6 +89,7 @@ ui_menu_tick:
         move.b  ui_joystick_bits,ui_joystick_entry
         move.b  ui_joystick_bits+1,ui_joystick_entry+1
         st      ui_demo
+        clr.b   ui_demo_choice
         clr.w   ui_demo_remaining
         lea     ui_demo_packets,a0
         move.l  a0,ui_demo_cursor

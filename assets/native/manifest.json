@@ -1,16 +1,16 @@
 {
   "schema": 2,
-  "kind": "retained-native-build-assets",
+  "kind": "retained-native-build-assets-with-authored-victory-score",
   "source_commit": "50ef76227a72e137c37efe29502cf60b1d4590d4",
   "validated_transfer_sha256": "389445af6b85a39a6f6fb7f938a0e6277f6681d9187f39f56823bc3bc2867f63",
   "destination": "PRIVATE rmtew/ctennis repository; user-approved retained native graphics/audio",
   "approval_reference": "User y,2026-10-02 07:02:50UTC, Sentinel_933773b0be50819191f1c322462f8a96",
-  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs.",
+  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs. CT13 removes superseded Sega-derived victory score-2/3 from active inputs and supplies the user-selected independently arranged historical Battle Hymn chorus, with independent waveform, accompaniment and period table. Other retained assets keep their stated provenance.",
   "files": [
     {
       "path": "assets/native/audio/data.i",
-      "size_bytes": 733,
-      "sha256": "856755ce6fb338d1d78c7c480797b3346a4425bc8bd209cfb5782f09ac6de164",
+      "size_bytes": 946,
+      "sha256": "0a25a3fe44645606897eb3f00ab1699856ce9f633590ca534459519c0a1d1b24",
       "imported_sha256": "02d009ea4ccd4e5d00ce47e6f4b05d7b5cff2b0deb2aec848ea35cdbb76bd03b"
     },
     {
@@ -36,18 +36,6 @@
       "size_bytes": 656,
       "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007",
       "imported_sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007"
-    },
-    {
-      "path": "assets/native/audio/score-2.bin",
-      "size_bytes": 304,
-      "sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4",
-      "imported_sha256": "554a863b1ccebf6525f6e9b3a309e7f18db5a03aa8d0459ca2f5e19d11678dd4"
-    },
-    {
-      "path": "assets/native/audio/score-3.bin",
-      "size_bytes": 400,
-      "sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e",
-      "imported_sha256": "6f4ca2f636fa969a307668744aaa95e1dc27fd882bb719746f87aaa54c463b2e"
     },
     {
       "path": "assets/native/audio/score-4.bin",
@@ -696,6 +684,42 @@
       "authored_revision": "CT12 Red point glyph high planes; retained exact glyph/advantage shapes",
       "size_bytes": 512,
       "sha256": "75eeb962e98d4ab405accf1c054a8b43b18c34282e146e4ed83627c45a3ce40b"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/arpeggio.bin",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 1040,
+      "sha256": "1c32ecd5946e2084c467c76d242444c8b20e6c895d2ff67dc7d1896105936ce3"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/bass.bin",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 528,
+      "sha256": "bf672e20ff1770500ae39139767c3dc4394b96537fab6fb926076cf0e1e5a983"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/melody.bin",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 544,
+      "sha256": "213adac7d272354ee85df9016712e60606dfff61f63a1a3eb94c9fa5aed2db09"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/notes.json",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 22983,
+      "sha256": "5197126dbda95975a981ff1185b7a91dc8ee54b9e79fd8ad147c36eb151bf032"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/periods.bin",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 3072,
+      "sha256": "0000dc668c0629fc1b7e7324efa43530627a2606161e4a736e7b5861b1011043"
+    },
+    {
+      "path": "assets/native/audio/battle-hymn/square.s8",
+      "provenance": "Independent authored Battle Hymn score/accompaniment/waveform/period table; primary melody and correction attribution in battle-hymn/README.md.",
+      "size_bytes": 4,
+      "sha256": "fa2d8cad18316c1a0ba76223767a55049d0438e5a547d1f181ebb06e5d7476eb"
     }
   ],
   "formats": {

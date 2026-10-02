@@ -179,11 +179,18 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
                     raise AssertionError('Result before six-game award / nonzero points')
                 checkpoints['match_award']=callback
                 # Deliberately keep both old action buttons held across the menu.
-            if lifecycle == 7 and 'returned_title_display' not in checkpoints:
-                if any(bytes([native_state['game_mode'], native_state['game_point_a'], native_state['game_point_b'], native_state['game_games_a'], native_state['game_games_b']])): raise AssertionError('Old mode/score leaked into title reset')
-                checkpoints['returned_title_display']=callback
+            # CT13 intentionally waits for a full cue, physical release and fresh fire.
+            if lifecycle == 6 and mem('game_celebration_first_play',1)[0]:
+                if 'first_full_play' not in checkpoints:
+                    checkpoints['first_full_play']=callback
+                    for port in (1,2):session.inspect('input_joy',{'port':port,'red':False})
+                elif callback-checkpoints['first_full_play'] >= 8 and 'celebration_continue' not in checkpoints:
+                    if not mem('game_celebration_armed',1)[0]:raise AssertionError('Celebration did not arm after release')
+                    checkpoints['celebration_continue']=callback
+                    for port in (1,2):session.inspect('input_joy',{'port':port,'red':True})
             if lifecycle == 2 and 'match_award' in checkpoints and not selection_pressed:
                 checkpoints['title_ready']=callback
+                if any(bytes([native_state['game_point_a'],native_state['game_point_b'],native_state['game_games_a'],native_state['game_games_b']])):raise AssertionError('CT13 title return did not clear score')
                 session.inspect('input_key',{'rawkey':0x42 if restarted_mode=='two' else 0x46,'action':'press'})
                 selection_pressed=True
             if selection_pressed and lifecycle == 3:
@@ -269,8 +276,8 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
                     checkpoints['restarted_flight']=callback
                     snapshots.append({'callback':callback,'lifecycle':lifecycle,'state':dict(native_state)})
                     break
-        required=(('match_award','returned_title_display','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
-                  ('match_award','returned_title_display','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
+        required=(('match_award','first_full_play','celebration_continue','title_ready','restart_selected','early_release','sampled_release','early_repress','sampled_repress','restart_playing','fresh_action_eligible','restarted_flight') if early_release else
+                  ('match_award','first_full_play','celebration_continue','title_ready','restart_selected','restart_playing','old_action_blocked','restart_action','restarted_flight'))
         if any(k not in checkpoints for k in required):differences.append({'field':'Ordinary match/title/restarted serve incomplete','checkpoints':checkpoints})
     target_log(directory)
     emitted=[]
@@ -278,7 +285,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
         from native_audio_checks import pcm16_window
         # Actual returned-title reset is silent. Enhanced reselection starts the
         # actual fresh-serve sound; enhanced reselection has no legacy intro.
-        quiet=next((r for r in audio_checkpoints if r['lifecycle']==7),None)
+        quiet=next((r for r in audio_checkpoints if r['lifecycle']==2),None)
         intro=next((r for r in audio_checkpoints if r.get('event')=='fresh-serve'),None)
         reset=next((r for r in audio_checkpoints if r['lifecycle']==1 and r['callback'] >= checkpoints['restart_playing']),None)
         if quiet is None or intro is None or reset is None:raise AssertionError('Ordinary audio checkpoints missing')

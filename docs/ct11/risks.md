@@ -16,4 +16,4 @@
   unexpanded target gate. No new WinUAE claim is made.
 - CT11 intentionally retained its native artwork/audio/game behavior. CT12 now
   covers branding/logo removal, Red identity and readable native labels; see
-  ../ct12/README.md. New music/celebration and recording/save/seek remain later scope.
+  ../ct12/README.md. CT13 adds selected independently arranged historical victory music and celebration; recording/save/seek remains later scope.
