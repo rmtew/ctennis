@@ -27,8 +27,13 @@ def _build(flavor="enhanced"):
     from native_assets import prepare
     prepare()
     if flavor == "enhanced":
-        revision = run(["git", "rev-parse", "--short=7", "HEAD"]).strip()
-        dirty = subprocess.run(["git", "diff", "--quiet", "HEAD"], cwd=ROOT).returncode != 0
+        # Report/docs commits must not alter the executable solely via its label.
+        # The displayed revision names the latest commit touching product inputs.
+        version_paths=['amiga','assets','tools.lock.json','scripts/build_native_game.py',
+                       'scripts/native_assets.py','scripts/native_ui_pages.py','scripts/native_tools.py',
+                       'scripts/record_demo_inputs.py']
+        revision = run(['git','log','-1','--format=%h','--abbrev=7','HEAD','--',*version_paths]).strip()
+        dirty = subprocess.run(['git','diff','--quiet','HEAD','--',*version_paths], cwd=ROOT).returncode != 0
         version = ROOT / 'build/native/version.bin'
         version.parent.mkdir(parents=True, exist_ok=True)
         version.write_bytes((f"BUILD {revision}" + (" + LOCAL" if dirty else "")).encode('ascii') + b"\0")
@@ -50,10 +55,14 @@ def _build(flavor="enhanced"):
 
 def build(flavor="enhanced"):
     display = ROOT / "build/amiga/interfaces" / flavor
-    return tracked_call([display / 'build-report.json'], 'build', 'maintained-native',
+    result = tracked_call([display / 'build-report.json'], 'build', 'maintained-native',
                         'ordinary title',
                         'scripts/build_native_game.py', None, lambda: _build(flavor),
                         lambda path, report: [Path(report['executable'])])
+    from native_metrics import static_metrics
+    from native_evidence import atomic_json
+    atomic_json(ROOT/'build/metrics/static.json', static_metrics(result[1]))
+    return result
 
 
 if __name__ == "__main__":

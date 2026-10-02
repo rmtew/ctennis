@@ -77,6 +77,12 @@ unmodified32-bit timer accounts for the complete wrap. Both restore the normal
 executable before final acceptance. See the follow-on report in
 [verification issues](../docs/ct11/verification-issues.md).
 
+Resource reporting is part of the existing checks and the finite gate. Builds
+regenerate static sizes without emulation; record the compact accepted JSON and
+readable summary alongside reviewed changes. For docs-only identical-product
+reuse and the affected four-check refresh, see
+[resource report workflow](../docs/metrics/README.md). Missing/stale/incomplete
+metrics do not establish runtime coverage or a fresh green result.
 Square LED point banks are constructed once by the native startup entry. Run
 `python scripts/run_native_square_startup.py --self-test` to compare every byte
 of all28 generated strips with the frozen selected-preview masks plus the

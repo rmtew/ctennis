@@ -10,13 +10,49 @@ from native_evidence import ROOT, atomic_json, tracked_call
 from native_observation import target_log
 
 
-def run(adf=False,help_only=False):
+def execution_subject(development, package_report=None):
+    """Bind execution to packaged bytes, keeping debug symbols as a sidecar."""
+    sha=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
+    debug={'executable':str(development.relative_to(ROOT)),
+           'executable_sha256':sha(development),
+           'listing':str((development.parent/'native.lst').relative_to(ROOT)),
+           'listing_sha256':sha(development.parent/'native.lst')}
+    if package_report is None:return development,debug
+    if debug['executable_sha256']!=package_report['release']['development_executable_sha256']:
+        raise ValueError('Menu debug source differs from packaged development product')
+    executable=ROOT/package_report['executable']
+    if sha(executable)!=package_report['executable_sha256']:
+        raise ValueError('Menu release executable differs from package')
+    if sha(ROOT/package_report['adf'])!=package_report['adf_sha256']:
+        raise ValueError('Menu ADF differs from package')
+    return executable,debug
+
+
+def sampled_joystick_takeover(until,number,frozen,sample_pc,draw_pc,limit=12):
+    """Wait for the actual physical poll; retain takeover/state assertions."""
+    rows=[]
+    for index in range(limit):
+        until({'pc':sample_pc});before=frozen()
+        bits=number('ui_joystick_bits')
+        until({'pc':draw_pc});demo=number('ui_demo')
+        rows.append({'sample':index+1,'physical_p1_bits':bits,'demo_after_input':demo})
+        if bits&32:
+            if demo!=0:raise AssertionError('Sampled physical button2 did not take over')
+            if frozen()!=before:raise AssertionError('Joystick takeover changed native state during UI input')
+            return rows
+        if demo!=255:raise AssertionError('Demo takeover without sampled physical button2')
+    raise AssertionError('Physical button2 was not sampled within bounded takeover wait')
+
+
+def run(adf=False,boot_only=False,help_only=False):
     package_report = package(self_test=True) if adf else None
     config, exe = build(flavor='enhanced'); config = emulator_config()
-    symbols = code_symbols((exe.parent/'native.lst').read_text())
+    development=exe
+    exe,debug_source=execution_subject(development,package_report)
+    symbols = code_symbols((development.parent/'native.lst').read_text())
     for forbidden in ('initial_ram','captured_state','refresh_signs','game_audio_import_capture','scene_import_capture','psg_log'):
         if forbidden in symbols: raise ValueError('Ordinary executable contains diagnostic machinery: '+forbidden)
-    directory = ROOT/'build/tests'/('help-navigation' if help_only else 'enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')
+    directory = ROOT/'build/tests'/('help-navigation' if help_only else ('enhanced-menu-cold' if adf else 'enhanced-menu-ordinary')+('-boot-binding' if boot_only else ''))
     checks = []
     def check(label, actual, expected):
         checks.append({'label': label, 'actual': actual, 'expected': expected})
@@ -84,6 +120,9 @@ def run(adf=False,help_only=False):
         check('ordinary title',number('game_lifecycle',2),2)
         check('title display chosen',number('game_title_display'),255)
         photo('menu')
+        if boot_only:
+            write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only)
+            return
         # Exercise the side-figure rows with actual physical input in all eight
         # mode/selection states. Full scanout guards catch full-row highlight
         # copies that would erase or turn the blue/red figures white.
@@ -136,9 +175,8 @@ def run(adf=False,help_only=False):
         key(0x4f);help_photo('help-exit-action')
         key(0x23);check('action activates EXIT',number('ui_page'),0)
         if help_only:
-            target_log(directory)
-            report={'passed':True,'checks':checks,'loaded_hunks':loaded,'scope':'Ordinary physical help navigation and exact native scanout','executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
-            atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}));return report
+            write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only,help_only=True)
+            return
         # Both main-digit and legacy choice retain the ordinary held-release gate.
         edge(0x02,True);advance(1.2)
         check('2 chooses two players',number('game_selected_mode'),1)
@@ -221,14 +259,11 @@ def run(adf=False,help_only=False):
         edge(0x24,False);advance(32);check('fourth demo starts',number('ui_demo'),255)
         key(0x4f);check('left selects joystick takeover',number('ui_demo_choice'),1)
         s.inspect('input_joy',{'port':2,'blue':True})
-        # A physical control event may arrive after the next pad sample. Observe
-        # bounded real UI samples as for G above; never inject takeover state.
-        for _ in range(12):
-            until({'pc':base+symbols['ui_sample']});before=frozen()
-            until({'pc':base+symbols['ui_input_draw']})
-            if not number('ui_demo'):break
+        takeover_samples=sampled_joystick_takeover(until,number,frozen,
+            base+symbols['ui_sample'],base+symbols['ui_input_draw'])
+        checks.append({'label':'physical button2 sampled before takeover assertion',
+                       'actual':takeover_samples,'expected':'fresh sampled button2 clears demo and preserves native state'})
         check('selected port2 button2 takes over A',number('ui_demo'),0)
-        check('joystick takeover preserves complete native state',frozen().hex(),before.hex())
         until({'pc':base+symbols['native_input_done']})
         check('joystick takeover press consumed',number('game_player_controls')&32,0)
         s.inspect('input_joy',{'port':2,'blue':False});advance(.2)
@@ -254,23 +289,35 @@ def run(adf=False,help_only=False):
         check('Start game uses remembered player count',number('game_selected_mode'),1)
         check('Enter starts ordinary gameplay',number('game_lifecycle',2),1)
     target_log(directory)
-    report = {'passed':True,'interface_flavor':'enhanced','startup':'cold ADF' if adf else 'ordinary executable',
+    write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only)
+
+def write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only,help_only=False):
+    # Fail if execution/debug/package files changed while the harness ran.
+    final_exe,final_debug=execution_subject(development,package_report)
+    if final_exe!=exe or final_debug!=debug_source:raise ValueError('Menu product changed during execution')
+    report = {'executable':str(exe.relative_to(ROOT)),'debug_symbol_source':debug_source,'passed':True,'interface_flavor':'enhanced','startup':'cold ADF' if adf else 'ordinary executable',
               'checks':checks,'target':'Copperline 1.0.0-rc.1 PAL A500 68000 OCS 512KB chip/no expansion/Kickstart1.3',
               'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),
               'native_modules':__import__('build_native_game').module_hashes(),
               'input_recording_sha256':hashlib.sha256((ROOT/'assets/interface/demo-inputs.json').read_bytes()).hexdigest(),
               'loaded_hunks':loaded,
+              'adf':package_report['adf'] if adf else None,
               'adf_sha256':package_report['adf_sha256'] if adf else None,
-              'scope':'Finite ordinary physical inputs; no game-state writes, source initialization or full-match parity'}
+              'complete_menu_sequence':not (boot_only or help_only),
+              'scope':'Help navigation only; no full menu lifecycle acceptance' if help_only else 'Boot binding/title only; no menu lifecycle acceptance' if boot_only else 'Finite ordinary physical inputs; no game-state writes, source initialization or full-match parity'}
     atomic_json(directory/'report.json',report)
     print(json.dumps({'passed':True,'checks':len(checks),'report':str(directory/'report.json')}))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adf', action='store_true')
+    parser.add_argument('--boot-only',action='store_true',help='Only loaded release/debug binding and initial title; no full menu acceptance')
     parser.add_argument('--help-only',action='store_true')
     args = parser.parse_args()
-    path = ROOT / 'build/tests' / ('help-navigation' if args.help_only else 'enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary') / 'report.json'
+    if args.help_only and args.boot_only:parser.error('--help-only and --boot-only are distinct scopes')
+    if args.boot_only and not args.adf:parser.error('--boot-only requires --adf')
+    path = ROOT / 'build/tests' / ('help-navigation' if args.help_only else ('enhanced-menu-cold' if args.adf else 'enhanced-menu-ordinary')+('-boot-binding' if args.boot_only else '')) / 'report.json'
     tracked_call([path], 'native-menu', 'maintained-native', 'cold ADF' if args.adf else 'ordinary title',
-                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf,args.help_only),
-                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])
+                 'scripts/run_enhanced_menu_tests.py', None, lambda: run(args.adf,args.boot_only,args.help_only),
+                 lambda path, report: [ROOT / report['executable']])

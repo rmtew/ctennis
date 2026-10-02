@@ -47,10 +47,12 @@ def main():
         ['scripts/run_native_setup_tests.py','--self-test'],
         ['scripts/build_native_adf.py','--self-test'],
     ]
+    commands.append(['scripts/native_metrics.py','--require-runtime'])
     report = {'commit': head, 'started_utc': started, 'state': 'incomplete', 'passed': False,
               'commands': [], 'original_inputs_absent_in_checkout': True}
     path = directory / 'report.json'
     atomic_json(path, report)
+    atomic_json(ROOT/'build/metrics/current.json',{'schema':1,'state':'incomplete','reason':'Native gate in progress; older metrics are not a fresh pass'})
     for i, args in enumerate(commands):
         command = [sys.executable, *args]
         name = f'{i:02d}-{Path(args[0]).stem}'
@@ -64,6 +66,7 @@ def main():
         if result.returncode:
             report.update(state='failed', first_failure=report['commands'][-1])
             atomic_json(path, report)
+            atomic_json(ROOT/'build/metrics/current.json',{'schema':1,'state':'failed','first_failure':report['commands'][-1]})
             print('FAILED; see',report['commands'][-1]['log'],flush=True)
             return result.returncode
         print('PASS', name, flush=True)

@@ -7,7 +7,7 @@ import os,sys,json,hashlib,subprocess
 from pathlib import Path
 from native_tools import ROOT,run
 from build_native_game import build
-from native_evidence import atomic_json,tracked_call
+from native_evidence import atomic_json,tracked_call,compile_manifest
 
 def _package(flavor):
     from importlib.metadata import distributions
@@ -17,6 +17,11 @@ def _package(flavor):
     out=ROOT/"build/amiga/interfaces"/flavor/"delivery"
     _,executable=build(flavor=flavor)
     out.mkdir(parents=True,exist_ok=True)
+    from native_release import release_executable
+    development=executable
+    executable=out/'baseline-rally'
+    release=release_executable(development,executable)
+    compile_manifest(executable,development.parent/'native.lst')
     startup=out/'startup-sequence';startup.write_bytes(b'baseline-rally\n')
     adf=out/'baseline-rally.adf'
     adf.unlink(missing_ok=True) # format must start from a clean filesystem
@@ -48,6 +53,7 @@ def _package(flavor):
             'executable_sha256':hashlib.sha256(executable.read_bytes()).hexdigest(),
             'adf':str(adf.relative_to(ROOT)),'adf_sha256':hashlib.sha256(adf.read_bytes()).hexdigest(),
             'startup_sequence':str(startup.relative_to(ROOT)),
+            'release':release,'development_executable':str(development.relative_to(ROOT)),
             'amitools_version':'0.8.1','command':command,'output':r.stdout+r.stderr,
             'scope':'Package only; cold boot and independent target not implied'}
     atomic_json(out/'package-report.json',report)

@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "state": "historical pre-title/score release versus newly measured frozen product; both use stripping",
+  "before_report": "docs/metrics/baselines/pre-title-score-current.json",
+  "before_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede",
+  "after_report": "docs/metrics/current.json",
+  "after_report_sha256": "150f14455fcff0d29370a3981156535d6da2106010bad2153d975022ea41a964",
+  "before_product_sha256": "0240658feac160753239ca9bfdbed30858b56049ecf68f0a8647d5158bd26ea9",
+  "after_product_sha256": "045bf76b5553886b9463aa161346c11508ff6437b6b422fd88ffe27dbb6216a8",
+  "before_release_sha256": "783bd53c737cab5497d46752f3e95f3acad0ba791570b2b6d547aa64480939f9",
+  "after_release_sha256": "0b6932d08ddbf012a0a2a793a3039cbbea4e0f2ce46f3efb9b1d02ad627f4303",
+  "before_adf_sha256": "c7781fdb10c1dd5b15c4a0a06749b0411a6e40b4f40911e62d234a26c42b22d9",
+  "after_adf_sha256": "d554cb296577c33d48fb1e838ed244da7e40f6c75d8b6092b6940a2968d15289",
+  "static_bytes": {
+    "executable_bytes": {
+      "before": 248480,
+      "after": 235180,
+      "delta": -13300
+    },
+    "code_bytes": {
+      "before": 49564,
+      "after": 49932,
+      "delta": 368
+    },
+    "data_bytes": {
+      "before": 152540,
+      "after": 137980,
+      "delta": -14560
+    },
+    "bss_bytes": {
+      "before": 0,
+      "after": 14336,
+      "delta": 14336
+    },
+    "loaded_payload_bytes": {
+      "before": 202104,
+      "after": 202248,
+      "delta": 144
+    },
+    "release_executable_bytes": {
+      "before": 211920,
+      "after": 197812,
+      "delta": -14108
+    }
+  },
+  "cold_stages": [
+    {
+      "stage": "reset",
+      "before_cck": 0,
+      "after_cck": 0,
+      "delta_cck": 0,
+      "before_seconds": 0.0,
+      "after_seconds": 0.0,
+      "delta_seconds": 0.0
+    },
+    {
+      "stage": "boot_script_begins",
+      "before_cck": null,
+      "after_cck": null,
+      "delta_cck": null,
+      "before_seconds": null,
+      "after_seconds": null,
+      "delta_seconds": null
+    },
+    {
+      "stage": "loadseg_begin",
+      "before_cck": null,
+      "after_cck": null,
+      "delta_cck": null,
+      "before_seconds": null,
+      "after_seconds": null,
+      "delta_seconds": null
+    },
+    {
+      "stage": "loadseg_complete",
+      "before_cck": 87914122,
+      "after_cck": 82970555,
+      "delta_cck": -4943567,
+      "before_seconds": 24.78622062395419,
+      "after_seconds": 23.392447478710253,
+      "delta_seconds": -1.3937731452439373
+    },
+    {
+      "stage": "executable_entry",
+      "before_cck": 87917692,
+      "after_cck": 82974112,
+      "delta_cck": -4943580,
+      "before_seconds": 24.78722713810248,
+      "after_seconds": 23.39345032768097,
+      "delta_seconds": -1.3937768104215102
+    },
+    {
+      "stage": "assets_ready",
+      "before_cck": 87960663,
+      "after_cck": 83092023,
+      "delta_cck": -4868640,
+      "before_seconds": 24.79934224159441,
+      "after_seconds": 23.426693770184908,
+      "delta_seconds": -1.3726484714095015
+    },
+    {
+      "stage": "first_complete_title_frame",
+      "before_cck": 88111067,
+      "after_cck": 83302398,
+      "delta_cck": -4808669,
+      "before_seconds": 24.841746654468203,
+      "after_seconds": 23.4860062110663,
+      "delta_seconds": -1.3557404434019027
+    },
+    {
+      "stage": "input_responsive",
+      "before_cck": 88210386,
+      "after_cck": 83400731,
+      "delta_cck": -4809655,
+      "before_seconds": 24.869748329172417,
+      "after_seconds": 23.513729896148604,
+      "delta_seconds": -1.356018433023813
+    }
+  ],
+  "cold_runtime_ram_delta": {
+    "chip_used_bytes": 152,
+    "chip_free_bytes": -152,
+    "largest_chip_free_block_bytes": -176
+  },
+  "cold_peak_comparison": "Both snapshots use the same complete-longword allocation observer; measured initialized-pool peaks are retained independently.",
+  "profile_comparison": "Same observer definitions; current.json carries compatible per-profile deltas and the actual measured extents.",
+  "scope": "Actual emulated time. Title design and startup-generated square-score banks change the product; these differences are not isolated symbol-stripping savings. OS boot/loader remain combined; read/relocation subphases, disk counters and host launch time remain unavailable."
+}

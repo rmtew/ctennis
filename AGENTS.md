@@ -32,3 +32,17 @@ failed/interrupted reruns. Verify actual completed bank/epoch, sprite-header
 publication timing and visible tally output; counters alone are insufficient.
 Report concrete outcome, exact commands/hashes and any failed/not-run checks.
 Do not mark a gate passed just because source inspection or host units passed.
+
+Resource changes: builds regenerate ignored static metrics. Existing cadence,
+setup and demo checks collect resource/loading metrics; the finite gate checks
+report completion. After affected validation, run
+`python scripts/native_metrics.py --require-runtime --record` and commit both
+`docs/metrics/current.json` and `.md` with reviewed changes. Follow
+`docs/metrics/README.md`; docs/report-only changes use `--check`, not an extra
+emulator campaign. Product version labels exclude docs/report commits. Later
+failed/interrupted runs supersede old passes. Remeasure new fonts/celebration
+only after their implementation lands; do not read other workers' branches.
+
+Release ADF packaging removes only HUNK_SYMBOL records. Keep the symbol-rich
+development executable/listing for debug observers, verify the exact stripped
+release bytes on cold boot, and report both product hashes separately.
