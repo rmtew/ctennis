@@ -18,7 +18,7 @@ title_pointer3: dc.w $00ec,0,$00ee,0
         dc.w $0194,$dc5
         dc.w $0196,$000
         dc.w $0198,$000
-        dc.w $019a,$c5b
+        dc.w $019a,$e33
         dc.w $019c,$ccc
         dc.w $019e,$fff
         dc.w $ffff,$fffe

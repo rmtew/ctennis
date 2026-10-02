@@ -9,7 +9,6 @@ from native_tools import ROOT,run
 from build_native_game import build
 from native_evidence import atomic_json,tracked_call
 
-OUT=ROOT/'build/amiga/ctennis-delivery'
 def _package(flavor):
     from importlib.metadata import distributions
     versions = [d.version for d in distributions(path=[str(ROOT/'.tools/python')]) if d.metadata['Name'].lower()=='amitools']
@@ -18,15 +17,15 @@ def _package(flavor):
     out=ROOT/"build/amiga/interfaces"/flavor/"delivery"
     _,executable=build(flavor=flavor)
     out.mkdir(parents=True,exist_ok=True)
-    startup=out/'startup-sequence';startup.write_bytes(b'ctennis\n')
-    adf=out/f'ctennis-{flavor}.adf'
+    startup=out/'startup-sequence';startup.write_bytes(b'baseline-rally\n')
+    adf=out/'baseline-rally.adf'
     adf.unlink(missing_ok=True) # format must start from a clean filesystem
     # Pinned local installation, no dependency on global PATH/site settings.
     env=dict(os.environ,PYTHONPATH=str(ROOT/'.tools/python'))
     command=[sys.executable,'-m','amitools.tools.xdftool','-f',str(adf),
-             'format','CTENNIS','+', 'makedir','S','+',
+             'format','baseline-rally','+', 'makedir','S','+',
              'write',str(startup),'S/startup-sequence','+',
-             'write',str(executable),'ctennis','+', 'boot','install','boot1x']
+             'write',str(executable),'baseline-rally','+', 'boot','install','boot1x']
     r=subprocess.run(command,cwd=ROOT,env=env,capture_output=True,text=True)
     if r.returncode:raise RuntimeError(f"xdftool exit{r.returncode}: {r.stdout} {r.stderr}")
     # Pinned0.8.1's `time` CLI treats its successful None return as failure.
@@ -39,9 +38,9 @@ def _package(flavor):
     stamp=TimeStamp();assert stamp.parse('01.01.2000 00:00:00')
     device=BlkDevFactory().open(str(adf),read_only=False)
     volume=ADFSVolume(device);volume.open()
-    for name in ('S','S/startup-sequence','ctennis'):
+    for name in ('S','S/startup-sequence','baseline-rally'):
         volume.get_path_name(FSString(name)).change_mod_ts(stamp)
-    embedded=volume.get_path_name(FSString('ctennis')).get_file_data()
+    embedded=volume.get_path_name(FSString('baseline-rally')).get_file_data()
     if embedded!=executable.read_bytes():raise ValueError('ADF executable differs from maintained build')
     volume.change_create_ts(stamp);volume.change_mod_ts(stamp);volume.change_disk_ts(stamp)
     volume.close();device.close()

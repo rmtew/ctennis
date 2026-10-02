@@ -14,6 +14,6 @@
   these exact bytes. Copperline did not reproduce the user's earlier WinUAE issue;
   user WinUAE6.0.2 confirmation included512KB slow RAM and is separate from the
   unexpanded target gate. No new WinUAE claim is made.
-- Branding/Sega-logo removal, Pink→Red palette/identity, new music/celebration and
-  recording/save/seek features are later scope. CT11 intentionally retains current
-  native artwork/audio/game behavior.
+- CT11 intentionally retained its native artwork/audio/game behavior. CT12 now
+  covers branding/logo removal, Red identity and readable native labels; see
+  ../ct12/README.md. New music/celebration and recording/save/seek remain later scope.

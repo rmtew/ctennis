@@ -15,7 +15,7 @@ SC_BALL equ 6*O_SIZE
 SC_SHADOW equ 7*O_SIZE
 COLOUR_WHITE equ 1
 COLOUR_BLUE equ 2
-COLOUR_PURPLE equ 3
+COLOUR_RED equ 3
 COLOUR_BLACK equ 4
 
 game_scene_reset:
@@ -187,7 +187,7 @@ game_scene_order:
         dc.b 0,1,2,6,3,4,5,7
         dc.b 0,1,2,3,4,5,6,7
         even
-game_scene_palette: dc.w 0,$fff,$55e,$c5b,$000
+game_scene_palette: dc.w 0,$fff,$55e,$e33,$000
 game_scene_poses: incbin "assets/native/scene/poses.bin"
 game_scene_animations: incbin "assets/native/scene/animations.bin"
         even

@@ -1,4 +1,4 @@
-; Read-only feedback observer. Logical score cells are fixed Blue/Pink identities.
+; Read-only feedback observer. Logical score cells are fixed Blue/Red identities.
 ui_feedback:
         tst.b   ui_paused
         bne     .done
@@ -11,10 +11,10 @@ ui_feedback:
         move.b  ui_last_games,d1
         move.b  d0,ui_last_games
         cmp.b   d1,d0
-        bls.s   .pink
+        bls.s   .red
         move.b  #2,ui_winner
         move.w  #120,ui_win_ticks
-.pink:  move.b  game_games_b,d0
+.red:  move.b  game_games_b,d0
         move.b  ui_last_games+1,d1
         move.b  d0,ui_last_games+1
         cmp.b   d1,d0

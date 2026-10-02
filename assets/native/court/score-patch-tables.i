@@ -1,5 +1,41 @@
-SCORE_PATCH_COUNT equ 224
+SCORE_PATCH_COUNT equ 242
 score_patch_descriptors:
+        dc.l score_cop_243_hi+2,score_cop_243_lo+2,score_pointer_table_243
+        dc.w $ffff
+        dc.l score_cop_242_hi+2,score_cop_242_lo+2,score_pointer_table_242
+        dc.w $ffff
+        dc.l score_cop_241_hi+2,score_cop_241_lo+2,score_pointer_table_241
+        dc.w $0001
+        dc.l score_cop_240_hi+2,score_cop_240_lo+2,score_pointer_table_240
+        dc.w $0001
+        dc.l score_cop_238_hi+2,score_cop_238_lo+2,score_pointer_table_238
+        dc.w $ffff
+        dc.l score_cop_237_hi+2,score_cop_237_lo+2,score_pointer_table_237
+        dc.w $ffff
+        dc.l score_cop_235_hi+2,score_cop_235_lo+2,score_pointer_table_235
+        dc.w $0005
+        dc.l score_cop_234_hi+2,score_cop_234_lo+2,score_pointer_table_234
+        dc.w $0005
+        dc.l score_cop_233_hi+2,score_cop_233_lo+2,score_pointer_table_233
+        dc.w $0005
+        dc.l score_cop_232_hi+2,score_cop_232_lo+2,score_pointer_table_232
+        dc.w $0005
+        dc.l score_cop_231_hi+2,score_cop_231_lo+2,score_pointer_table_231
+        dc.w $ffff
+        dc.l score_cop_230_hi+2,score_cop_230_lo+2,score_pointer_table_230
+        dc.w $ffff
+        dc.l score_cop_229_hi+2,score_cop_229_lo+2,score_pointer_table_229
+        dc.w $ffff
+        dc.l score_cop_228_hi+2,score_cop_228_lo+2,score_pointer_table_228
+        dc.w $ffff
+        dc.l score_cop_227_hi+2,score_cop_227_lo+2,score_pointer_table_227
+        dc.w $0004
+        dc.l score_cop_226_hi+2,score_cop_226_lo+2,score_pointer_table_226
+        dc.w $0004
+        dc.l score_cop_225_hi+2,score_cop_225_lo+2,score_pointer_table_225
+        dc.w $0004
+        dc.l score_cop_224_hi+2,score_cop_224_lo+2,score_pointer_table_224
+        dc.w $0004
         dc.l score_cop_0_hi+2,score_cop_0_lo+2,score_pointer_table_0
         dc.w $0000
         dc.l score_cop_1_hi+2,score_cop_1_lo+2,score_pointer_table_1
@@ -241,73 +277,73 @@ score_patch_descriptors:
         dc.l score_cop_119_hi+2,score_cop_119_lo+2,score_pointer_table_119
         dc.w $ffff
         dc.l score_cop_120_hi+2,score_cop_120_lo+2,score_pointer_table_120
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_121_hi+2,score_cop_121_lo+2,score_pointer_table_121
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_122_hi+2,score_cop_122_lo+2,score_pointer_table_122
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_123_hi+2,score_cop_123_lo+2,score_pointer_table_123
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_124_hi+2,score_cop_124_lo+2,score_pointer_table_124
         dc.w $0002
         dc.l score_cop_125_hi+2,score_cop_125_lo+2,score_pointer_table_125
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_126_hi+2,score_cop_126_lo+2,score_pointer_table_126
         dc.w $0003
         dc.l score_cop_127_hi+2,score_cop_127_lo+2,score_pointer_table_127
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_128_hi+2,score_cop_128_lo+2,score_pointer_table_128
         dc.w $0002
         dc.l score_cop_129_hi+2,score_cop_129_lo+2,score_pointer_table_129
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_130_hi+2,score_cop_130_lo+2,score_pointer_table_130
         dc.w $0003
         dc.l score_cop_131_hi+2,score_cop_131_lo+2,score_pointer_table_131
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_132_hi+2,score_cop_132_lo+2,score_pointer_table_132
         dc.w $0002
         dc.l score_cop_133_hi+2,score_cop_133_lo+2,score_pointer_table_133
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_134_hi+2,score_cop_134_lo+2,score_pointer_table_134
         dc.w $0003
         dc.l score_cop_135_hi+2,score_cop_135_lo+2,score_pointer_table_135
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_136_hi+2,score_cop_136_lo+2,score_pointer_table_136
         dc.w $0002
         dc.l score_cop_137_hi+2,score_cop_137_lo+2,score_pointer_table_137
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_138_hi+2,score_cop_138_lo+2,score_pointer_table_138
         dc.w $0003
         dc.l score_cop_139_hi+2,score_cop_139_lo+2,score_pointer_table_139
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_140_hi+2,score_cop_140_lo+2,score_pointer_table_140
         dc.w $0002
         dc.l score_cop_141_hi+2,score_cop_141_lo+2,score_pointer_table_141
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_142_hi+2,score_cop_142_lo+2,score_pointer_table_142
         dc.w $0003
         dc.l score_cop_143_hi+2,score_cop_143_lo+2,score_pointer_table_143
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_144_hi+2,score_cop_144_lo+2,score_pointer_table_144
         dc.w $0002
         dc.l score_cop_145_hi+2,score_cop_145_lo+2,score_pointer_table_145
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_146_hi+2,score_cop_146_lo+2,score_pointer_table_146
         dc.w $0003
         dc.l score_cop_147_hi+2,score_cop_147_lo+2,score_pointer_table_147
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_148_hi+2,score_cop_148_lo+2,score_pointer_table_148
         dc.w $0002
         dc.l score_cop_149_hi+2,score_cop_149_lo+2,score_pointer_table_149
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_150_hi+2,score_cop_150_lo+2,score_pointer_table_150
         dc.w $0003
         dc.l score_cop_151_hi+2,score_cop_151_lo+2,score_pointer_table_151
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_152_hi+2,score_cop_152_lo+2,score_pointer_table_152
         dc.w $0002
         dc.l score_cop_153_hi+2,score_cop_153_lo+2,score_pointer_table_153
-        dc.w $0004
+        dc.w $ffff
         dc.l score_cop_154_hi+2,score_cop_154_lo+2,score_pointer_table_154
         dc.w $0003
         dc.l score_cop_155_hi+2,score_cop_155_lo+2,score_pointer_table_155
@@ -417,35 +453,35 @@ score_patch_descriptors:
         dc.l score_cop_207_hi+2,score_cop_207_lo+2,score_pointer_table_207
         dc.w $ffff
         dc.l score_cop_208_hi+2,score_cop_208_lo+2,score_pointer_table_208
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_209_hi+2,score_cop_209_lo+2,score_pointer_table_209
         dc.w $ffff
         dc.l score_cop_210_hi+2,score_cop_210_lo+2,score_pointer_table_210
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_211_hi+2,score_cop_211_lo+2,score_pointer_table_211
         dc.w $ffff
         dc.l score_cop_212_hi+2,score_cop_212_lo+2,score_pointer_table_212
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_213_hi+2,score_cop_213_lo+2,score_pointer_table_213
         dc.w $ffff
         dc.l score_cop_214_hi+2,score_cop_214_lo+2,score_pointer_table_214
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_215_hi+2,score_cop_215_lo+2,score_pointer_table_215
         dc.w $ffff
         dc.l score_cop_216_hi+2,score_cop_216_lo+2,score_pointer_table_216
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_217_hi+2,score_cop_217_lo+2,score_pointer_table_217
         dc.w $ffff
         dc.l score_cop_218_hi+2,score_cop_218_lo+2,score_pointer_table_218
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_219_hi+2,score_cop_219_lo+2,score_pointer_table_219
         dc.w $ffff
         dc.l score_cop_220_hi+2,score_cop_220_lo+2,score_pointer_table_220
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_221_hi+2,score_cop_221_lo+2,score_pointer_table_221
         dc.w $ffff
         dc.l score_cop_222_hi+2,score_cop_222_lo+2,score_pointer_table_222
-        dc.w $0005
+        dc.w $ffff
         dc.l score_cop_223_hi+2,score_cop_223_lo+2,score_pointer_table_223
         dc.w $ffff
 score_pointer_table_0: dc.l score_bank_point_a_0_p2+2,score_bank_point_a_1_p2+2,score_bank_point_a_2_p2+2,score_bank_point_a_3_p2+2,score_bank_point_a_4_p2+2,score_bank_point_a_5_p2+2,score_bank_point_a_6_p2+2
@@ -568,40 +604,40 @@ score_pointer_table_116: dc.l plane1+3040
 score_pointer_table_117: dc.l score_bank_games_a_0_p1+738,score_bank_games_a_1_p1+738,score_bank_games_a_2_p1+738,score_bank_games_a_3_p1+738,score_bank_games_a_4_p1+738,score_bank_games_a_5_p1+738,score_bank_games_a_6_p1+738
 score_pointer_table_118: dc.l score_bank_games_b_0_p1+762,score_bank_games_b_1_p1+762,score_bank_games_b_2_p1+762,score_bank_games_b_3_p1+762,score_bank_games_b_4_p1+762,score_bank_games_b_5_p1+762,score_bank_games_b_6_p1+762
 score_pointer_table_119: dc.l plane1+3072
-score_pointer_table_120: dc.l score_bank_status_0_p0+0,score_bank_status_1_p0+0,score_bank_status_2_p0+0,score_bank_status_3_p0+0,score_bank_status_4_p0+0,score_bank_status_5_p0+0,score_bank_status_6_p0+0
-score_pointer_table_121: dc.l score_bank_status_0_p1+0,score_bank_status_1_p1+0,score_bank_status_2_p1+0,score_bank_status_3_p1+0,score_bank_status_4_p1+0,score_bank_status_5_p1+0,score_bank_status_6_p1+0
-score_pointer_table_122: dc.l score_bank_status_0_p2+0,score_bank_status_1_p2+0,score_bank_status_2_p2+0,score_bank_status_3_p2+0,score_bank_status_4_p2+0,score_bank_status_5_p2+0,score_bank_status_6_p2+0
-score_pointer_table_123: dc.l score_bank_status_0_p3+0,score_bank_status_1_p3+0,score_bank_status_2_p3+0,score_bank_status_3_p3+0,score_bank_status_4_p3+0,score_bank_status_5_p3+0,score_bank_status_6_p3+0
+score_pointer_table_120: dc.l plane0+3072
+score_pointer_table_121: dc.l plane1+3072
+score_pointer_table_122: dc.l plane2+3072
+score_pointer_table_123: dc.l plane3+3072
 score_pointer_table_124: dc.l score_bank_games_a_0_p1+770,score_bank_games_a_1_p1+770,score_bank_games_a_2_p1+770,score_bank_games_a_3_p1+770,score_bank_games_a_4_p1+770,score_bank_games_a_5_p1+770,score_bank_games_a_6_p1+770
-score_pointer_table_125: dc.l score_bank_status_0_p1+8,score_bank_status_1_p1+8,score_bank_status_2_p1+8,score_bank_status_3_p1+8,score_bank_status_4_p1+8,score_bank_status_5_p1+8,score_bank_status_6_p1+8
+score_pointer_table_125: dc.l plane1+3080
 score_pointer_table_126: dc.l score_bank_games_b_0_p1+794,score_bank_games_b_1_p1+794,score_bank_games_b_2_p1+794,score_bank_games_b_3_p1+794,score_bank_games_b_4_p1+794,score_bank_games_b_5_p1+794,score_bank_games_b_6_p1+794
-score_pointer_table_127: dc.l score_bank_status_0_p1+32,score_bank_status_1_p1+32,score_bank_status_2_p1+32,score_bank_status_3_p1+32,score_bank_status_4_p1+32,score_bank_status_5_p1+32,score_bank_status_6_p1+32
+score_pointer_table_127: dc.l plane1+3104
 score_pointer_table_128: dc.l score_bank_games_a_0_p1+802,score_bank_games_a_1_p1+802,score_bank_games_a_2_p1+802,score_bank_games_a_3_p1+802,score_bank_games_a_4_p1+802,score_bank_games_a_5_p1+802,score_bank_games_a_6_p1+802
-score_pointer_table_129: dc.l score_bank_status_0_p1+40,score_bank_status_1_p1+40,score_bank_status_2_p1+40,score_bank_status_3_p1+40,score_bank_status_4_p1+40,score_bank_status_5_p1+40,score_bank_status_6_p1+40
+score_pointer_table_129: dc.l plane1+3112
 score_pointer_table_130: dc.l score_bank_games_b_0_p1+826,score_bank_games_b_1_p1+826,score_bank_games_b_2_p1+826,score_bank_games_b_3_p1+826,score_bank_games_b_4_p1+826,score_bank_games_b_5_p1+826,score_bank_games_b_6_p1+826
-score_pointer_table_131: dc.l score_bank_status_0_p1+64,score_bank_status_1_p1+64,score_bank_status_2_p1+64,score_bank_status_3_p1+64,score_bank_status_4_p1+64,score_bank_status_5_p1+64,score_bank_status_6_p1+64
+score_pointer_table_131: dc.l plane1+3136
 score_pointer_table_132: dc.l score_bank_games_a_0_p1+834,score_bank_games_a_1_p1+834,score_bank_games_a_2_p1+834,score_bank_games_a_3_p1+834,score_bank_games_a_4_p1+834,score_bank_games_a_5_p1+834,score_bank_games_a_6_p1+834
-score_pointer_table_133: dc.l score_bank_status_0_p1+72,score_bank_status_1_p1+72,score_bank_status_2_p1+72,score_bank_status_3_p1+72,score_bank_status_4_p1+72,score_bank_status_5_p1+72,score_bank_status_6_p1+72
+score_pointer_table_133: dc.l plane1+3144
 score_pointer_table_134: dc.l score_bank_games_b_0_p1+858,score_bank_games_b_1_p1+858,score_bank_games_b_2_p1+858,score_bank_games_b_3_p1+858,score_bank_games_b_4_p1+858,score_bank_games_b_5_p1+858,score_bank_games_b_6_p1+858
-score_pointer_table_135: dc.l score_bank_status_0_p1+96,score_bank_status_1_p1+96,score_bank_status_2_p1+96,score_bank_status_3_p1+96,score_bank_status_4_p1+96,score_bank_status_5_p1+96,score_bank_status_6_p1+96
+score_pointer_table_135: dc.l plane1+3168
 score_pointer_table_136: dc.l score_bank_games_a_0_p1+866,score_bank_games_a_1_p1+866,score_bank_games_a_2_p1+866,score_bank_games_a_3_p1+866,score_bank_games_a_4_p1+866,score_bank_games_a_5_p1+866,score_bank_games_a_6_p1+866
-score_pointer_table_137: dc.l score_bank_status_0_p1+104,score_bank_status_1_p1+104,score_bank_status_2_p1+104,score_bank_status_3_p1+104,score_bank_status_4_p1+104,score_bank_status_5_p1+104,score_bank_status_6_p1+104
+score_pointer_table_137: dc.l plane1+3176
 score_pointer_table_138: dc.l score_bank_games_b_0_p1+890,score_bank_games_b_1_p1+890,score_bank_games_b_2_p1+890,score_bank_games_b_3_p1+890,score_bank_games_b_4_p1+890,score_bank_games_b_5_p1+890,score_bank_games_b_6_p1+890
-score_pointer_table_139: dc.l score_bank_status_0_p1+128,score_bank_status_1_p1+128,score_bank_status_2_p1+128,score_bank_status_3_p1+128,score_bank_status_4_p1+128,score_bank_status_5_p1+128,score_bank_status_6_p1+128
+score_pointer_table_139: dc.l plane1+3200
 score_pointer_table_140: dc.l score_bank_games_a_0_p1+898,score_bank_games_a_1_p1+898,score_bank_games_a_2_p1+898,score_bank_games_a_3_p1+898,score_bank_games_a_4_p1+898,score_bank_games_a_5_p1+898,score_bank_games_a_6_p1+898
-score_pointer_table_141: dc.l score_bank_status_0_p1+136,score_bank_status_1_p1+136,score_bank_status_2_p1+136,score_bank_status_3_p1+136,score_bank_status_4_p1+136,score_bank_status_5_p1+136,score_bank_status_6_p1+136
+score_pointer_table_141: dc.l plane1+3208
 score_pointer_table_142: dc.l score_bank_games_b_0_p1+922,score_bank_games_b_1_p1+922,score_bank_games_b_2_p1+922,score_bank_games_b_3_p1+922,score_bank_games_b_4_p1+922,score_bank_games_b_5_p1+922,score_bank_games_b_6_p1+922
-score_pointer_table_143: dc.l score_bank_status_0_p1+160,score_bank_status_1_p1+160,score_bank_status_2_p1+160,score_bank_status_3_p1+160,score_bank_status_4_p1+160,score_bank_status_5_p1+160,score_bank_status_6_p1+160
+score_pointer_table_143: dc.l plane1+3232
 score_pointer_table_144: dc.l score_bank_games_a_0_p1+930,score_bank_games_a_1_p1+930,score_bank_games_a_2_p1+930,score_bank_games_a_3_p1+930,score_bank_games_a_4_p1+930,score_bank_games_a_5_p1+930,score_bank_games_a_6_p1+930
-score_pointer_table_145: dc.l score_bank_status_0_p1+168,score_bank_status_1_p1+168,score_bank_status_2_p1+168,score_bank_status_3_p1+168,score_bank_status_4_p1+168,score_bank_status_5_p1+168,score_bank_status_6_p1+168
+score_pointer_table_145: dc.l plane1+3240
 score_pointer_table_146: dc.l score_bank_games_b_0_p1+954,score_bank_games_b_1_p1+954,score_bank_games_b_2_p1+954,score_bank_games_b_3_p1+954,score_bank_games_b_4_p1+954,score_bank_games_b_5_p1+954,score_bank_games_b_6_p1+954
-score_pointer_table_147: dc.l score_bank_status_0_p1+192,score_bank_status_1_p1+192,score_bank_status_2_p1+192,score_bank_status_3_p1+192,score_bank_status_4_p1+192,score_bank_status_5_p1+192,score_bank_status_6_p1+192
+score_pointer_table_147: dc.l plane1+3264
 score_pointer_table_148: dc.l score_bank_games_a_0_p1+962,score_bank_games_a_1_p1+962,score_bank_games_a_2_p1+962,score_bank_games_a_3_p1+962,score_bank_games_a_4_p1+962,score_bank_games_a_5_p1+962,score_bank_games_a_6_p1+962
-score_pointer_table_149: dc.l score_bank_status_0_p1+200,score_bank_status_1_p1+200,score_bank_status_2_p1+200,score_bank_status_3_p1+200,score_bank_status_4_p1+200,score_bank_status_5_p1+200,score_bank_status_6_p1+200
+score_pointer_table_149: dc.l plane1+3272
 score_pointer_table_150: dc.l score_bank_games_b_0_p1+986,score_bank_games_b_1_p1+986,score_bank_games_b_2_p1+986,score_bank_games_b_3_p1+986,score_bank_games_b_4_p1+986,score_bank_games_b_5_p1+986,score_bank_games_b_6_p1+986
-score_pointer_table_151: dc.l score_bank_status_0_p1+224,score_bank_status_1_p1+224,score_bank_status_2_p1+224,score_bank_status_3_p1+224,score_bank_status_4_p1+224,score_bank_status_5_p1+224,score_bank_status_6_p1+224
+score_pointer_table_151: dc.l plane1+3296
 score_pointer_table_152: dc.l score_bank_games_a_0_p1+994,score_bank_games_a_1_p1+994,score_bank_games_a_2_p1+994,score_bank_games_a_3_p1+994,score_bank_games_a_4_p1+994,score_bank_games_a_5_p1+994,score_bank_games_a_6_p1+994
-score_pointer_table_153: dc.l score_bank_status_0_p1+232,score_bank_status_1_p1+232,score_bank_status_2_p1+232,score_bank_status_3_p1+232,score_bank_status_4_p1+232,score_bank_status_5_p1+232,score_bank_status_6_p1+232
+score_pointer_table_153: dc.l plane1+3304
 score_pointer_table_154: dc.l score_bank_games_b_0_p1+1018,score_bank_games_b_1_p1+1018,score_bank_games_b_2_p1+1018,score_bank_games_b_3_p1+1018,score_bank_games_b_4_p1+1018,score_bank_games_b_5_p1+1018,score_bank_games_b_6_p1+1018
 score_pointer_table_155: dc.l plane1+3328
 score_pointer_table_156: dc.l plane0+3328
@@ -656,19 +692,37 @@ score_pointer_table_204: dc.l plane1+3808
 score_pointer_table_205: dc.l score_bank_games_a_0_p1+1506,score_bank_games_a_1_p1+1506,score_bank_games_a_2_p1+1506,score_bank_games_a_3_p1+1506,score_bank_games_a_4_p1+1506,score_bank_games_a_5_p1+1506,score_bank_games_a_6_p1+1506
 score_pointer_table_206: dc.l score_bank_games_b_0_p1+1530,score_bank_games_b_1_p1+1530,score_bank_games_b_2_p1+1530,score_bank_games_b_3_p1+1530,score_bank_games_b_4_p1+1530,score_bank_games_b_5_p1+1530,score_bank_games_b_6_p1+1530
 score_pointer_table_207: dc.l plane1+3840
-score_pointer_table_208: dc.l score_bank_mode_0_p3+26,score_bank_mode_1_p3+26,score_bank_mode_2_p3+26
+score_pointer_table_208: dc.l plane3+4634
 score_pointer_table_209: dc.l plane3+4640
-score_pointer_table_210: dc.l score_bank_mode_0_p3+58,score_bank_mode_1_p3+58,score_bank_mode_2_p3+58
+score_pointer_table_210: dc.l plane3+4666
 score_pointer_table_211: dc.l plane3+4672
-score_pointer_table_212: dc.l score_bank_mode_0_p3+90,score_bank_mode_1_p3+90,score_bank_mode_2_p3+90
+score_pointer_table_212: dc.l plane3+4698
 score_pointer_table_213: dc.l plane3+4704
-score_pointer_table_214: dc.l score_bank_mode_0_p3+122,score_bank_mode_1_p3+122,score_bank_mode_2_p3+122
+score_pointer_table_214: dc.l plane3+4730
 score_pointer_table_215: dc.l plane3+4736
-score_pointer_table_216: dc.l score_bank_mode_0_p3+154,score_bank_mode_1_p3+154,score_bank_mode_2_p3+154
+score_pointer_table_216: dc.l plane3+4762
 score_pointer_table_217: dc.l plane3+4768
-score_pointer_table_218: dc.l score_bank_mode_0_p3+186,score_bank_mode_1_p3+186,score_bank_mode_2_p3+186
+score_pointer_table_218: dc.l plane3+4794
 score_pointer_table_219: dc.l plane3+4800
-score_pointer_table_220: dc.l score_bank_mode_0_p3+218,score_bank_mode_1_p3+218,score_bank_mode_2_p3+218
+score_pointer_table_220: dc.l plane3+4826
 score_pointer_table_221: dc.l plane3+4832
-score_pointer_table_222: dc.l score_bank_mode_0_p3+250,score_bank_mode_1_p3+250,score_bank_mode_2_p3+250
+score_pointer_table_222: dc.l plane3+4858
 score_pointer_table_223: dc.l plane3+4864
+score_pointer_table_224: dc.l score_bank_status_0_p0,score_bank_status_1_p0,score_bank_status_2_p0,score_bank_status_3_p0,score_bank_status_4_p0,score_bank_status_5_p0,score_bank_status_6_p0
+score_pointer_table_225: dc.l score_bank_status_0_p1,score_bank_status_1_p1,score_bank_status_2_p1,score_bank_status_3_p1,score_bank_status_4_p1,score_bank_status_5_p1,score_bank_status_6_p1
+score_pointer_table_226: dc.l score_bank_status_0_p2,score_bank_status_1_p2,score_bank_status_2_p2,score_bank_status_3_p2,score_bank_status_4_p2,score_bank_status_5_p2,score_bank_status_6_p2
+score_pointer_table_227: dc.l score_bank_status_0_p3,score_bank_status_1_p3,score_bank_status_2_p3,score_bank_status_3_p3,score_bank_status_4_p3,score_bank_status_5_p3,score_bank_status_6_p3
+score_pointer_table_228: dc.l plane0+256
+score_pointer_table_229: dc.l plane1+256
+score_pointer_table_230: dc.l plane2+256
+score_pointer_table_231: dc.l plane3+256
+score_pointer_table_232: dc.l score_bank_mode_0_p0,score_bank_mode_1_p0,score_bank_mode_2_p0
+score_pointer_table_233: dc.l score_bank_mode_0_p1,score_bank_mode_1_p1,score_bank_mode_2_p1
+score_pointer_table_234: dc.l score_bank_mode_0_p2,score_bank_mode_1_p2,score_bank_mode_2_p2
+score_pointer_table_235: dc.l score_bank_mode_0_p3,score_bank_mode_1_p3,score_bank_mode_2_p3
+score_pointer_table_237: dc.l plane1+1280
+score_pointer_table_238: dc.l plane2+1280
+score_pointer_table_240: dc.l score_bank_point_b_0_p0,score_bank_point_b_1_p0,score_bank_point_b_2_p0,score_bank_point_b_3_p0,score_bank_point_b_4_p0,score_bank_point_b_5_p0,score_bank_point_b_6_p0
+score_pointer_table_241: dc.l score_bank_point_b_0_p3,score_bank_point_b_1_p3,score_bank_point_b_2_p3,score_bank_point_b_3_p3,score_bank_point_b_4_p3,score_bank_point_b_5_p3,score_bank_point_b_6_p3
+score_pointer_table_242: dc.l plane0+1792
+score_pointer_table_243: dc.l plane3+1792

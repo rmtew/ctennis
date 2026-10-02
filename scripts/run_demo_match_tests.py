@@ -94,4 +94,4 @@ if __name__ == '__main__':
     path = ROOT / 'build/tests' / ('demo-mid-takeover' if args.takeover else 'demo-full-repeat') / 'report.json'
     tracked_call([path], 'native-demo', 'maintained-native', 'ordinary title',
                  'scripts/run_demo_match_tests.py', None, lambda: run(args.takeover),
-                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/ctennis-enhanced'])
+                 lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])

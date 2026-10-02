@@ -34,7 +34,7 @@ cop_spr7h: dc.w $013c,0
         dc.w $0180,$000,$0182,$000,$0184,$2c4,$0186,$6d7
         dc.w $0188,$55e,$018a,$77f,$018c,$000,$018e,$000
         dc.w $0190,$000,$0192,$f77,$0194,$dc5,$0196,$000
-        dc.w $0198,$000,$019a,$c5b,$019c,$ccc,$019e,$fff
+        dc.w $0198,$000,$019a,$e33,$019c,$ccc,$019e,$fff
         ; Sprite pairs 0/1, 2/3, 4/5, 6/7. Colour zero is transparent.
 cop_spr_pair0_c1: dc.w $01a2,$fff
 cop_spr_pair0_c2: dc.w $01a4,$55e
@@ -43,14 +43,14 @@ cop_spr_pair1_c1: dc.w $01aa,$55e
 cop_spr_pair1_c2: dc.w $01ac,$fff
         dc.w $01ae,$000
 cop_spr_pair2_c1: dc.w $01b2,$fff
-cop_spr_pair2_c2: dc.w $01b4,$c5b
+cop_spr_pair2_c2: dc.w $01b4,$e33
         dc.w $01b6,$000
-cop_spr_pair3_c1: dc.w $01ba,$c5b
+cop_spr_pair3_c1: dc.w $01ba,$e33
 cop_spr_pair3_c2: dc.w $01bc,$000
         dc.w $01be,$000
 score_cop_commands:
         include "assets/native/court/score-cop-commands.i"
-        ; Separate footer after the court: no score-bank offsets or waits change.
+        ; Separate footer after the court: retained publication/DMA window ends at251.
         dc.w $ec01,$fffe
 ui_overlay_pointer0: dc.w $00e0,0,$00e2,0
 ui_overlay_pointer1: dc.w $00e4,0,$00e6,0

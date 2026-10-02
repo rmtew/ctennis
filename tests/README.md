@@ -28,7 +28,7 @@ They are labeled local fixtures, never ordinary complete-play evidence.
 
 Scoring contract: deuce5/5, advantage4/6 and return-deuce5/5 preserve the independently
 accepted tuples. Winning advantage awards the correct logical player; sixth game
-sets match completion. Status2–5 remain visible31ticks from appearance to expiry
+sets match completion. Status2–6 remain visible31ticks from appearance to expiry
 with the saturating224→255 clock. These facts transfer retained protection without
 source memory or snapshots. Native hit pitch1688 comes from the approved octave2,
 transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels.
@@ -55,10 +55,10 @@ reset, enhanced restart cleanup and the actual fresh serve (no legacy intro).
 `--self-test` compiles an actual skipped latch-retirement instruction and requires
 the retained release assertion to catch it.
 
-Status2–5 fixtures verify loaded hunks, scalar duration, actual completed
-publication/bank association, and full384-pixel visible/expired glyph crops.
-The 24x8 region at native112,96 is decoded independently from the four committed
-256-byte status planes and frozen merged OCS palette. A wrong native status-bank
+Status2–6 fixtures verify loaded hunks, scalar duration, actual completed
+publication/bank association, and full1536-pixel visible/expired glyph crops, including DOUBLE FAULT.
+The 96x8 region at native80,0 is decoded independently from the four committed
+256-byte status planes and reviewed CT12 OCS palette. A wrong native status-bank
 pointer control leaves scalars intact but must fail pixels. Fixtures explicitly
 select the enhanced Copper layout, matching the maintained application.
 
