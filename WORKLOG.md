@@ -1,3 +1,9 @@
+### 2026-10-02 17:55 NZDT — Diagnostic enhanced artifact identified; user confirms target tally
+- Status: target visible tally validated by user report on confirmed WinUAE6.0.2; not a local WinUAE run. Documentation only; no new tests, product changes or merge.
+- Evidence: user explicitly says "I was testing diagnostic enhanced. saw win text in column, with6wins toai resulting in game music iirc". Earlier artifact ambiguity is resolved. Six AI wins/music is remembered with uncertainty, not promoted to a captured six-win trace; earlier report also describes return to menu.
+- Artifact: read-only validation confirms diagnostic ADF500eb5c732c0d837f6a8cd9a718c372eb3a1acc99000c7a6078f10311345711f embeds executable80969eb5e05666e6eb3b7256c17b89985e2928ade69ebfd1f6249cbb32411e45; exactly96 WAIT-byte changes and no menu/demo code. Source reviewer cleared product49e018a; later commits document follow-ups only. Runtime source mechanism remains source-derived, not user-measured DMA timing.
+- Scope/next action: feature worker is authorized to integrate this isolated tally fix for combined review. Demo behavior remains that worker's scope. No additional tally code, tests or merge. Historical entries retain their original evidence boundaries.
+
 ### 2026-10-02 17:51 NZDT — User reports visible win tally and match return to menu
 - Status: user-reported runtime follow-up recorded on tally-copper-diagnostic; no product change and no merge.
 - Evidence: user says "I see win added to column. at end of match I get music then return to menu." This confirms the reported visible behavior; no fresh artifact hash accompanies the follow-up, so exact executable identity and both-side extent are not independently verified here.

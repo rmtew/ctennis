@@ -1,21 +1,33 @@
 # Tally Copper timing diagnostic
 
 Diagnostic candidate based on master `233727868b152b8a9c8add3d4dfd289e3d5ef027`.
-This is not verified as a WinUAE repair. The user reproduced blank enhanced
+The user subsequently validated visible tally behavior in WinUAE; this was
+a user-run test, not local WinUAE execution. The original failure was blank enhanced
 tallies on WinUAE 6.0.2 (2025.12.21), including a fresh cycle-exact Full run,
 with PAL OCS 68000, 512 KB chip and 512 KB slow RAM. Configuration is not an
 established cause. The absent GAME marker is also not independently explained.
 
 ## User follow-up
 
-The user subsequently reports that a win is added to the tally column and
-that the end of the match plays music, then returns to the menu. The user
-also observes early, buggy demo behavior and explicitly assigns that to the
-other worker, outside this tally repair's scope. This is user-reported runtime
-validation of the visible behavior. No fresh artifact hash was supplied with
-that follow-up, so it does not independently establish which exact executable
-was running, both tally sides, or the DMA collision mechanism. No menu/demo
-code is added or changed here; this branch remains unmerged.
+The user initially reported a win added to the tally column and match-end
+music followed by return to the menu. They then explicitly identified the
+artifact and clarified: "I was testing diagnostic enhanced. saw win text in
+column, with6wins toai resulting in game music iirc". This resolves the earlier
+artifact ambiguity and validates the reported visible tally behavior on the
+user's confirmed WinUAE6.0.2 setup. The six AI wins/music detail is recalled
+with uncertainty; it is not a captured six-win trace or a locally executed
+WinUAE receipt. The runtime result does not measure the DMA collision itself
+or independently establish all original-layout/both-side target behavior.
+
+Read-only artifact verification confirms the diagnostic enhanced ADF remains
+`500eb5c732c0d837f6a8cd9a718c372eb3a1acc99000c7a6078f10311345711f`, embedding
+executable `80969eb5e05666e6eb3b7256c17b89985e2928ade69ebfd1f6249cbb32411e45`.
+It contains exactly the96 WAIT-byte changes against the reviewed baseline and
+no menu/demo code. The parent's independent source reviewer cleared product
+head49e018a; subsequent commits only document user follow-ups. Feature worker
+integration is authorized for combined review; this branch remains unmerged.
+The user's earlier demo observation stays with that worker and does not expand
+this tally repair's scope.
 
 ## Minimal candidate
 
@@ -117,7 +129,7 @@ upload preparation through the current Library helper failed with a network
 error. No upload or attachment success is claimed. Private media, ROMs,
 generated banks, executables, ADFs and captures stay out of Git.
 
-Next: test this exact candidate in the user's confirmed WinUAE6.0.2 setup,
-through first and successive wins, and verify both tally sides plus GAME marker.
-Keep the candidate separate from menu/help/attract work and do not merge until
-the target result is understood.
+Next: the authorized feature worker integrates the independently reviewed
+tally change for combined review. Preserve user-run target validation separately
+from local Copperline measurements. No additional tally tests or merge are
+performed by this worker.
