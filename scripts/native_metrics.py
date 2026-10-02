@@ -71,6 +71,8 @@ def memory_summary(memory):
     return {'chip_used_bytes':memory['used_chip_bytes'],'chip_free_bytes':free,
             'largest_chip_free_block_bytes':max((c['bytes'] for r in regions for c in r['chunks']),default=0),
             'other_pool_bytes':sum(r['upper']-r['lower'] for r in regions if not r['attributes']&2),
+            'other_used_bytes':sum(r['upper']-r['lower']-r['free'] for r in regions if not r['attributes']&2),
+            'other_free_bytes':sum(r['free'] for r in regions if not r['attributes']&2),
             'scope':'Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership.'}
 
 
@@ -134,7 +136,7 @@ def read_case(name,relative,sha):
     metrics=report.get('resource_metrics')
     if not metrics or metrics['extent']['dropped_events'] or not metrics['extent']['completed_callbacks']:
         result['classification']={'status':'incomplete','reason':'Resource phase extent absent/dropped'};return result
-    result.update(metrics=metrics, provenance={'command':meta['command'],'commit':meta.get('commit'),
+    result.update(metrics=metrics, provenance={'startup':meta['startup'],'command':meta['command'],'commit':meta.get('commit'),
                   'target':meta['target'],'tools':meta['tools'], 'dependencies':{p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/')) and p!='scripts/native_metrics.py'},
                   'external_inputs_sha256':identity({p:sha for p,sha in meta['files'].items() if p.startswith('/') or p.startswith('.tools/')}),
                   'tool_sha256':{tool:digest(ROOT/info['path']) for tool,info in meta['tools'].items() if info.get('path') and (ROOT/info['path']).is_file()},
@@ -148,13 +150,16 @@ def read_case(name,relative,sha):
                           **report['memory'],
                           'pre_exec_bootstrap':'unmeasured','allocation_failures':None,
                           'allocation_failure_scope':'No allocator-result observer; product performs no runtime AllocMem calls.'}
+        result['overall_cadence']={k:v for k,v in report['cadence'].items() if k!='clock_contract'}
         result['deadlines']={'missed_native_callbacks':report.get('resource_missed_deadlines'),
                              'missed_publications_counter':report.get('missed_publications'),
                              'publication_failures':sum('publication' in d['field'] or 'presentation' in d['field'] or 'Copper' in d['field'] for d in report.get('differences',[]))}
         if name=='cold-one':result['cold_loading']=cold_timing(capture,report)
     if name in ('setup','demo'):
         result['deadlines']={'missed_publications_counter':report.get('missed_publications'),
-                             'missed_native_callbacks':sum(p['missed_deadlines'] or 0 for p in metrics['profiles'].values())}
+                             'missed_named_profile_deadlines':sum(p['missed_deadlines'] or 0 for p in metrics['profiles'].values()),
+                             'missed_native_callbacks':len(report['phase_contract_proposal']['raw_deadline_failures']) if name=='setup' else None,
+                             'scope':'Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured.'}
     return result
 
 
@@ -170,14 +175,15 @@ def summarize(report):
            'Timing uses elapsed emulated colour clocks, including chip-bus waits; host time is unavailable.',
            'PAL display budget: 70,824 CCK (~19.97 ms). Simulation budget: ~59,191.14 CCK (~16.69 ms).',
            'Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasured.','',
-           '| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |',
-           '|---|---:|---:|---:|---:|---:|']
+           'RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.']
     def ms(cck):return f'{cck*1000/3546895:.3f}' if cck is not None else 'unmeasured'
     for name,case in report.get('runtime',{}).items():
         metrics=case.get('metrics')
         if not metrics:
             lines.append(f"| {name}: {case['classification']['status']} | | | | | |")
             continue
+        lines.extend(['','| Case / profile | Samples | Update median / p95 / max ms | Sprite / UI render max ms | Dispatcher max ms | Work / deadline headroom ms |',
+                      '|---|---:|---:|---:|---:|---:|'])
         for profile,data in metrics['profiles'].items():
             update=data['update_including_render']
             if not update:continue
@@ -185,8 +191,10 @@ def summarize(report):
                          f" | {ms((data['render'] or {}).get('max_cck'))} / {ms((data['ui_construction_render'] or {}).get('max_cck'))} | {ms((data['dispatcher'] or {}).get('max_cck'))} | {ms(update['minimum_headroom_cck'])} / {ms(data['minimum_deadline_headroom_cck'])} |")
         if 'memory' in case:
             memory=case['memory'];final=memory['runtime_final']
-            lines.extend(['',f"{name}: chip used {final['chip_used_bytes']:,} B; free {final['chip_free_bytes']:,} B; largest block {final['largest_chip_free_block_bytes']:,} B; runtime peak {memory['peak_chip_bytes']} B; cold initialized-pool peak {memory['cold_boot_peak']} B.",
+            lines.extend(['',f"{name}: chip used {final['chip_used_bytes']:,} B; free {final['chip_free_bytes']:,} B; largest block {final['largest_chip_free_block_bytes']:,} B; runtime peak {memory['peak_chip_bytes']} B; cold initialized-pool peak {str(memory['cold_boot_peak'])+' B' if memory['cold_boot_peak'] is not None else 'unmeasured'}.",
                           f"Deadlines/publications: `{case['deadlines']}`. Allocation failures: unmeasured; pre-Exec bootstrap: unmeasured.",''])
+        if 'memory' not in case and 'deadlines' in case:
+            lines.extend(['',f"{name} deadlines/publications: `{case['deadlines']}`.",''])
         if 'cold_loading' in case:
             cold=case['cold_loading'];lines+=['| Cold loading stage | Emulated seconds | Signed offset from previous listed milestone (ms) |','|---|---:|---:|']
             for stage in cold['stages']:
@@ -207,6 +215,7 @@ def metric_deltas(previous, report):
         compatible=('metrics' in old and 'metrics' in current and old['metrics']['clock']==current['metrics']['clock']
             and old['metrics']['boundaries']==current['metrics']['boundaries']
             and old['provenance']['target']==current['provenance']['target']
+            and old['provenance'].get('startup')==current['provenance'].get('startup')
             and old['provenance'].get('tool_sha256')==current['provenance'].get('tool_sha256')
             and old['provenance'].get('kickstart_sha256')==current['provenance'].get('kickstart_sha256')
             and {k:v['version'] for k,v in old['provenance']['tools'].items()}=={k:v['version'] for k,v in current['provenance']['tools'].items()})
@@ -234,8 +243,8 @@ def report_identity(report):
         'measurement_inputs':report['measurement_inputs'],
         'writer_sha256':report['report_generator_sha256'],
         'cases':{name:{'metrics':case.get('metrics'),'memory':case.get('memory'),
-                       'deadlines':case.get('deadlines'),'cold_loading':case.get('cold_loading'),
-                       'target':case.get('provenance',{}).get('target'),
+                       'deadlines':case.get('deadlines'),'overall_cadence':case.get('overall_cadence'),'cold_loading':case.get('cold_loading'),
+                       'target':case.get('provenance',{}).get('target'),'startup':case.get('provenance',{}).get('startup'),
                        'tools':case.get('provenance',{}).get('tools'),
                        'tool_sha256':case.get('provenance',{}).get('tool_sha256'),
                        'command':case.get('provenance',{}).get('command'),
