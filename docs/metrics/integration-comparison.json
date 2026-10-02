@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "state": "historical pre-PR19 release versus newly measured merged product; both use stripping",
+  "state": "historical pre-title/score release versus newly measured frozen product; both use stripping",
   "before_report": "docs/metrics/baselines/pre-title-score-current.json",
   "before_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede",
   "after_report": "docs/metrics/current.json",
