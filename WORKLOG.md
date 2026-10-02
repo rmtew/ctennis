@@ -1,3 +1,9 @@
+### 2026-10-02 17:51 NZDT — User reports visible win tally and match return to menu
+- Status: user-reported runtime follow-up recorded on tally-copper-diagnostic; no product change and no merge.
+- Evidence: user says "I see win added to column. at end of match I get music then return to menu." This confirms the reported visible behavior; no fresh artifact hash accompanies the follow-up, so exact executable identity and both-side extent are not independently verified here.
+- Scope: user explicitly leaves early buggy demo behavior to the other worker. Menu/help/attract modules remain untouched. Prior Copperline receipts and package hashes retain their original provenance; no new build or runtime claim.
+- Next action: reconcile this reported target result with the tested artifact during independent review and the separately authorized combined integration.
+
 ### 2026-10-02 04:41 UTC — Enhanced tally diagnostic awaits WinUAE validation
 - Status: diagnostic candidate on tally-copper-diagnostic, isolated from menu/help/attract work, based on master233727868b152b8a9c8add3d4dfd289e3d5ef027. No merge.
 - Product change: only games_a/games_b Copper WAITs move two clocks earlier (original3b/9b; enhanced4b/ab); offsets2/26 and restore d1 preserved. Each executable differs in exactly96 WAIT bytes, all reduced by2. See analysis/tally-copper-diagnostic.md for source pins, exact-version distinctions and evidence limits.
