@@ -5,10 +5,11 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from native_hunk import hunk_layout
 from native_metrics_observation import distribution, MetricsObserver
-from native_metrics import identity, metric_deltas, cold_timing
+from native_metrics import identity, metric_deltas, cold_timing, measurement_status
 
 
 class MetricsTests(unittest.TestCase):
@@ -68,3 +69,18 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(result['measured_intervals_cck']['entry_to_assets_controls_ready'],20)
         self.assertIsNone(result['stages'][1]['cck'])
         self.assertIsNone(result['disk_reads'])
+
+    def test_only_reporter_change_can_reuse_and_later_failures_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'receipt.json'
+            report={'passed':True,'first_difference':None,'subject':'maintained-native','interface_flavor':'enhanced',
+                    'evidence':{'state':'complete','subject':'maintained-native','interface_flavor':'enhanced'}}
+            path.write_text(json.dumps(report))
+            with patch('native_metrics.status',return_value={'status':'stale','changed_dependencies':['scripts/native_metrics.py']}):
+                self.assertEqual(measurement_status(path)['freshness'],'reused')
+                report['passed']=False;path.write_text(json.dumps(report))
+                self.assertEqual(measurement_status(path)['status'],'stale')
+            with patch('native_metrics.status',return_value={'status':'failed','reason':'latest failed'}):
+                self.assertEqual(measurement_status(path)['status'],'failed')
+            with patch('native_metrics.status',return_value={'status':'stale','changed_dependencies':['scripts/native_metrics_observation.py']}):
+                self.assertEqual(measurement_status(path)['status'],'stale')

@@ -105,8 +105,23 @@ def cold_timing(capture, report):
             'scope':'Emulated CCK only. LoadSeg catch is completion/entry, not start; file reads/relocation not independently separated. First complete title frame is a frame boundary after a full title-selected frame. Input-responsive point is successful normal selection after the existing first-callback input request; includes that workflow wait. Milestones may overlap: input can respond before a complete title frame. Listed-milestone differences are signed offsets, not invented sequential phase durations; boot complete requires both displayed title and successful input.'}
 
 
+def measurement_status(path):
+    classification=status(path,subject='maintained-native',interface_flavor='enhanced')
+    # Build's static-report hook broadens the Python closure into this reporter.
+    # Reporter-only edits do not change the measured executable/observer. Keep
+    # every actual observer, product, tool, config and raw-artifact hash strict.
+    if classification.get('changed_dependencies')==['scripts/native_metrics.py']:
+        report=json.loads(path.read_text());meta=report.get('evidence',{})
+        if (report.get('passed') is True and report.get('first_difference') is None
+                and meta.get('state')=='complete' and meta.get('subject')=='maintained-native'
+                and report.get('subject')=='maintained-native'
+                and meta.get('interface_flavor')==report.get('interface_flavor')=='enhanced'):
+            return {'status':'passed','freshness':'reused','reason':'Reporter-only change; exact executable and all observation/config/tool/raw-artifact inputs unchanged'}
+    return classification
+
+
 def read_case(name,relative,sha):
-    path=ROOT/relative;classification=status(path,subject='maintained-native',interface_flavor='enhanced')
+    path=ROOT/relative;classification=measurement_status(path)
     result={'receipt':relative,'classification':classification}
     if not path.is_file():return result
     report=json.loads(path.read_text());meta=report.get('evidence',{})
@@ -118,7 +133,7 @@ def read_case(name,relative,sha):
     if not metrics or metrics['extent']['dropped_events'] or not metrics['extent']['completed_callbacks']:
         result['classification']={'status':'incomplete','reason':'Resource phase extent absent/dropped'};return result
     result.update(metrics=metrics, provenance={'command':meta['command'],'commit':meta.get('commit'),
-                  'target':meta['target'],'tools':meta['tools'], 'dependencies':{p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/'))},
+                  'target':meta['target'],'tools':meta['tools'], 'dependencies':{p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/')) and p!='scripts/native_metrics.py'},
                   'external_inputs_sha256':identity({p:sha for p,sha in meta['files'].items() if p.startswith('/') or p.startswith('.tools/')}),
                   'tool_sha256':{tool:digest(ROOT/info['path']) for tool,info in meta['tools'].items() if info.get('path') and (ROOT/info['path']).is_file()},
                   'kickstart_sha256':next((sha for p,sha in meta['files'].items() if p.endswith('.rom')),None),
@@ -224,6 +239,7 @@ def generate():
     complete=all(c['classification']['status']=='passed' and 'metrics' in c for c in runtime.values()) and all(coverage[p]=='measured' for p in PROFILES if p!='celebration')
     report={'schema':1,'state':'complete' if complete else 'incomplete','static':static,'runtime':runtime,'coverage':coverage,'measurement_inputs':measurement_inputs,
             'identity':identity({'executable':static['executable_sha256'],'inputs':static['product_inputs']}),
+            'report_generator_sha256':digest(ROOT/'scripts/native_metrics.py'),
             'deltas':{'state':'no previous accepted compatible report'}}
     accepted=subprocess.run(['git','show','master:docs/metrics/current.json'],cwd=ROOT,capture_output=True,text=True)
     if accepted.returncode==0:

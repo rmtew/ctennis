@@ -96,3 +96,11 @@ Input responsiveness may precede full scanout. Milestone differences are signed
 offsets; explicit loader/init/display intervals and the total until both input
 and a complete title are ready preserve that overlap. Initialized-pool boot RAM
 samples are recorded at their actual positions, without extrapolating peaks.
+
+The build's Python import closure also reaches the report writer. A change only
+to `scripts/native_metrics.py` may reuse completed native observations if the
+exact executable and every observer, product, tool, config and raw artifact
+remain hash-identical. The report marks that reuse and binds its current writer
+hash separately. An observer edit, missing artifact or later failed receipt
+never receives this exception. This prevents report-format fixes from creating
+a duplicate emulator campaign.
