@@ -40,7 +40,7 @@ Fresh unchanged-baseline checks:
   `.tools/vasm/vasmm68k_mot.exe` is absent.
 
 Python is the locked 3.12.14. No `.tools` directory or `config.local.ini` is
-present; neither vasm nor Copperline is on PATH. Required vasm1.9d SHA256 is
+present; neither vasm nor Copperline is on PATH. Required vasm 1.9d SHA256 is
 `0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39`;
 Copperline is locked to 1.0.0-rc.1, source commit e65a958. A separately supplied
 Kickstart file exists externally but has not been configured or validated here.
@@ -62,11 +62,11 @@ ROM transfer was used; external supplied Kickstart already existed.
 Recovered vasm from https://github.com/Leffmann/vasm at parent-supplied commit
 685a87e5ed14285350ccdb6581c9771bc8df6c7d. `make CPU=m68k SYNTAX=mot` reproduced
 the exact locked SHA256, then copied it to the locked native assembler path.
-Downloaded the official Copperline1.0.0-rc.1 Linux x86_64 AppImage (SHA256
+Downloaded the official Copperline 1.0.0-rc.1 Linux x86_64 AppImage (SHA256
 e69e732fc027d35f74874ea6720cc39f2f194006997d7000dc94b870ae989ce5), extracted it
 under ignored .tools and used its documented portable.txt mode to put --run
 staging in writable .tools rather than read-only home/Documents. No emulator
-code or machine settings were modified. Its --version reports1.0.0-rc.1;
+code or machine settings were modified. Its --version reports 1.0.0-rc.1;
 official source checked out at e65a958. Pinned Pillow was already installed;
 `python -m pip install --target .tools/python amitools==0.8.1` succeeded.
 

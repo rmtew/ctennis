@@ -1,9 +1,10 @@
 # CT12: Baseline Rally identity and readable native labels
 
-Implementation base is merged master43e1118d878453809a68c257deef20a937697e15.
+Implementation base is merged master 43e1118d878453809a68c257deef20a937697e15.
 CT11 cleanup and focused UI timing retain their product logic. Repository name
 remains rmtew/ctennis. This is a private native milestone, not a public release;
-retained Sega-derived assets confer no new ownership or redistribution rights.
+retained graphics/audio derive from Sega's Champion Tennis (1983) and confer no
+new ownership or redistribution rights.
 See [initial finite plan/checkpoint](checkpoint.md).
 
 ## Intentional visual changes
@@ -32,14 +33,14 @@ See [initial finite plan/checkpoint](checkpoint.md).
   x200/y32 between the B header and point field. Its row is clear of court, B header and point score. Full-row pointers switch at Copper76 and restore at84, with
   B point high-plane banks supplying planes0/3 at that boundary. Original point
   and tally WAIT/fetch positions remain intact, including tally slots4b/ab and
-  offsets2/26. Field descriptors increase224→242; footer still ends at251 and
+  offsets2/26. Field descriptors increase224 → 242; footer still ends at251 and
   court publication keeps the before25 or blank>=252 window.
 - Native executable, disk label, startup command and ADF are baseline-rally.
-  Attract/takeover input recording and canonical10958-tick trajectory are unchanged.
+  Attract/takeover input recording and canonical 10958-tick trajectory are unchanged.
 
 Before images are actual unchanged-baseline Copperline scanout, not cartridge
-captures. After images are actual native scanout and are added after focused
-verification. No expected images are regenerated from runtime rendering.
+captures. After images are actual native scanout from the accepted implementation commit
+ccaffc7. No expected images are regenerated from runtime rendering.
 The independently authored field tests spell each label from committed font
 bits and check full-row clearing; native raster observers check completed bank
 association and actual scanout. Intentional asset hashes retain imported hashes.
@@ -51,7 +52,23 @@ association and actual scanout. Intentional asset hashes retain imported hashes.
 | Controls | [before](screenshots/before-controls.png) | [after](screenshots/after-controls.png) |
 | Credits | [before](screenshots/before-credits.png) | [after](screenshots/after-credits.png) |
 | FAULT | [before](screenshots/before-fault.png) | [after](screenshots/after-fault.png) |
-| DOUBLE FAULT | previously abbreviated DBF | [after](screenshots/after-double-fault.png) |
+| DOUBLE FAULT | [actual DBF](screenshots/before-double-fault.png) | [after](screenshots/after-double-fault.png) |
 
 Final commands, exact hashes, verification extent and remaining limits are
 recorded in verification.md after the finite gate. No master merge is performed.
+
+[End exchange](screenshots/after-exchange.png) shows Red below and Blue above.
+[Canonical attract play](screenshots/after-demo.png) shows Red point 40 and the
+retained DEMO footer. Its header remains1 PLAYER, following unchanged mode flags;
+[bank 0 DEMO](screenshots/after-mode-demo-fixture.png) is separately verified in a
+one-time native fixture, not represented as ordinary attract evidence.
+
+The court-plane pixel audit found exactly 186 coral→Blue indicator pixels and 186
+coral→Red indicator pixels, 123 logo pixels cleared,258 index7 and 62 index15 retired
+mode pixels cleared. No other base indices changed. With the palette change,
+all 82 former Pink index13 pixels were in B's header. An actual native central
+court/net crop (screen286,57 to478,176) matched 22,848 pixels with zero differences
+between baseline and CT12; the first excluded row contains the intended player
+colour change. Reviewed Red point 0 scanout contains 88 Red doubled pixels and 424
+black pixels in its32x16 crop, with no remaining Blue pixels. The full Red point
+banks retain all original digit/graphical-advantage shapes.
