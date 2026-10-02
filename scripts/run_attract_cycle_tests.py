@@ -41,7 +41,7 @@ def run():
                         s.send_async('capture.screenshot',{'path':str(path)})
             elif n=='ui_dirty':state['dirty']=v
             elif n=='ui_idle':state['idle']=v
-            elif n=='game_celebration_loops':state['loops']=v
+            elif n=='game_celebration_loops':state['loops']=max(state['loops'],v) # Return clears the live counter before lifecycle2.
             elif n=='game_celebration_first_play' and v:state['first']=dict(callback=state['started'],position=p)
             elif n=='ui_demo':
                 state['demo']=v
