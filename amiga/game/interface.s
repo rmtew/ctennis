@@ -24,5 +24,6 @@ ui_cached_pages: incbin "build/native/ui-pages.bin"
 ui_font: incbin "assets/native/title/font.bin"
 ui_overlay_plane: dcb.b 512,0
 ui_match_banner: dcb.b 256,0
+ui_menu_options: incbin "build/native/ui-menu-options.bin"
 ui_demo_options: incbin "build/native/ui-demo-options.bin"
         section code,code

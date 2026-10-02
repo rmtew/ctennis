@@ -36,6 +36,13 @@ game_result_poll:
         bsr     game_celebration_present
         tst.b   game_celebration_first_play
         beq     game_round_done
+        tst.b   ui_demo
+        beq.s   .human_continue
+        ; Unattended attract playback returns only after the complete phrase.
+        ; A taken-over demo already cleared ui_demo and uses the human gate.
+        bsr     ui_return_title
+        bra     game_round_done
+.human_continue:
         move.b  game_input_bits,d0
         or.b    game_input_bits+1,d0
         or.b    ui_joystick_bits,d0

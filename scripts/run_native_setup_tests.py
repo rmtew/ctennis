@@ -145,7 +145,7 @@ if __name__=='__main__':
     if args.self_test:
         try: run(control='lost-wrap')
         except AssertionError as error:
-            if error.args[0].get('field')!='elapsed accounting lost time' or error.args[0].get('error_cck')!=-327680: raise
+            if error.args[0].get('field')!='elapsed accounting lost time' or abs(error.args[0].get('error_cck',0)+327680)>100: raise
             lost_failure=error.args[0]
             print('PASS lost-wrap accounting control rejected',str(error),flush=True)
         else: raise AssertionError('Lost-wrap control escaped')

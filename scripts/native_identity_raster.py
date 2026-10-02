@@ -75,18 +75,21 @@ def assert_footer_raster(path, first, second, selected=None):
 
 def assert_menu_selection_raster(path, selection, players):
     """Authored normal instructions and exactly one inverted title-menu row."""
-    font=(ROOT/'assets/native/title/font.bin').read_bytes();plane=bytearray(80*32)
-    entries=[(32,'START GAME'),(40,'PLAYERS: '+str(players)),(48,'HOW TO PLAY'),(56,'CONTROLS'),(72,'UP/DOWN CHOOSE  ACTION OPEN')]
+    font=(ROOT/'assets/native/title/font.bin').read_bytes()
+    canvas=[[False]*256 for _ in range(80)]
+    # HOW TO PLAY is the widest authored11-cell row:88 pixels, x84..171.
+    # All four entries share x84, including their inverted selection bar.
+    entries=[(32,'START GAME'),(40,'PLAYERS: '+str(players)),(48,'HOW TO PLAY'),(56,'CONTROLS')]
     for index,(y,text) in enumerate(entries):
         for column,char in enumerate(text):
             for row in range(8):
                 byte=font[ord(char)*8+row]
-                if index==selection:byte^=255
-                plane[(y+row)*32+4+column]=byte
+                for bit in range(8):
+                    canvas[y+row][84+column*8+bit]=bool(byte&(128>>bit)) ^ (index==selection)
     expected=[]
-    for byte in plane:
-        for bit in range(8):
-            rgb=(255,255,255) if byte&(128>>bit) else (0,0,0)
+    for row in canvas:
+        for ink in row:
+            rgb=(255,255,255) if ink else (0,0,0)
             expected.extend((rgb,rgb))
     with Image.open(path) as picture:
         actual=list(picture.convert('RGB').crop((126,128,638,208)).get_flattened_data())

@@ -12,7 +12,6 @@ ui_players_two: dc.b 'PLAYERS: 2',0
 ui_how: dc.b 'HOW TO PLAY',0
 ui_controls: dc.b 'CONTROLS',0
 ui_marker: dc.b '*',0
-ui_menu_hint: dc.b 'UP/DOWN CHOOSE  ACTION OPEN',0
 ui_empty: dc.b 0
 ui_help1: dc.b 'MOVE TO BALL: AUTO RETURNS.',0
 ui_help2: dc.b 'EITHER ACTION: SERVE / SHOT.',0

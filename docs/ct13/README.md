@@ -32,7 +32,10 @@ game_audio_phrase_complete requires all three actual final durations to expire
 and emitted levels to reach zero. The audio tick then notifies first-play,
 counts the completed cycle and reloads the next downbeat in that SAME step.
 There is no extra empty requeue interval after terminal rest. Only then does
-PRESS FIRE TO CONTINUE appear. Early presses are discarded, inherited holds
+PRESS FIRE TO CONTINUE appear for human play. Unattended demo play automatically
+returns to title after that same first complete phrase, then the unchanged
+30-second idle starts the next attract cycle. Takeover clears demo ownership and
+therefore retains the human gate. Early presses are discarded, inherited holds
 blocked, and all action sources must release before fresh fire/action returns
 once to title, clearing match/audio/presentation/phase. Pause freezes fractional
 clock and notes, mutes Paula and resumes previous levels. A256-byte static chip
@@ -110,6 +113,11 @@ player-count choice), pause option, return-confirmation option and demo option.
 Static instructions and game-state messages remain normal. Cached normal pages
 and cleared footer rows remove the previous inversion before each redraw.
 Navigation remains edge-driven: holding a direction never repeats the selection.
+The title has no star or control-hint row. Its four entries share one left edge,
+with the maximum88-pixel text/highlight width centered at native x84..171;
+1,536 bytes of authored normal/inverted row caches support exact half-byte
+alignment without repeated font drawing. Both player-count variants enter the
+width calculation. The title/court positions are unchanged.
 Pause/confirmation and match celebration own both rows. Ordinary demo game-state
 feedback owns row1; row2 always shows `DEMO - TAKE OVER / EXIT`, with only the
 chosen option inverted and EXIT selected by default. Left chooses TAKE OVER,
@@ -125,6 +133,18 @@ replay additionally carries live left/right/up/down input across50 callbacks
 apiece while still requiring the independently frozen10958-tick trajectory.
 Mid-match takeover checks exact native state at the confirmation sample and
 consumption of the held selector direction as well as the confirming action.
+Full demo replay then observes actual COP1LC/COPJMP publications through the
+complete tune, automatic return, full idle and next demo; four title scanouts
+and the next demo raster check pixels as well as lifecycle counters.
+
+The later approved native-size A/B human/robot+racket title preview and HUMAN VS
+AI/HUMAN VS HUMAN captions depend on the separate sprite branch and belong to
+parent combined integration. Hooks are ui_menu_lines/ui_players_one/two in
+interface_text.s, ui_player_count and remembered selection in interface_menu.s,
+the derived width/row caches in native_ui_pages.py, title rows144/152/160/168
+in interface_render.s, and native sprite/palette publication in main.s.
+Use actual gameplay poses/masks; no custom title art is introduced here. Update
+the independent menu raster contract when those captions/preview are integrated.
 
 No master merge, public release, new sprite design, music-alternative selection
 or unrelated sound-effect redesign is part of this draft.

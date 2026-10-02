@@ -176,34 +176,49 @@ ui_render:
         dbra    d6,.copy_plane
         tst.b   ui_page
         bne.s   .publish
-        move.w  #6144,d4
         tst.b   ui_player_count
-        beq.s   .marker
+        beq.s   .selection
+        lea     ui_menu_options+5*256,a0
         lea     title_plane0+152*32,a2
-        lea     ui_players_two,a0
-        bsr     ui_text
-.marker:
-        ; The selected existing menu row owns inversion. The cached normal
-        ; page restores every previous highlight before this bounded redraw.
+        bsr     ui_menu_row_copy
+.selection:
         moveq   #0,d0
         move.b  ui_selection,d0
         move.w  d0,d1
-        lsl.w   #2,d1
-        lea     ui_menu_lines,a0
-        move.l  (a0,d1.w),a0
+        lsl.w   #8,d1
+        lea     title_plane0+144*32,a2
+        adda.w  d1,a2
         cmpi.b  #1,d0
         bne.s   .selected_row
         tst.b   ui_player_count
         beq.s   .selected_row
-        lea     ui_players_two,a0
+        moveq   #4,d0
 .selected_row:
         lsl.w   #8,d0
-        lea     title_plane0+144*32,a2
-        adda.w  d0,a2
-        bsr     ui_selected_text
+        lea     ui_menu_options,a0
+        adda.w  d0,a0
+        bsr     ui_menu_row_copy
 .publish:
         move.b  #1,display_ready
 .done:  rts
+
+; A0 cached256-byte menu row, A2 matching first title-plane row. Copy the
+; same independently authored normal/inverted pixels to all four planes.
+ui_menu_row_copy:
+        movem.l d1/d7/a0-a3,-(sp)
+        move.l  a0,a3
+        moveq   #3,d1
+.plane:
+        move.l  a3,a0
+        move.l  a2,a1
+        moveq   #63,d7
+.row:
+        move.l  (a0)+,(a1)+
+        dbra    d7,.row
+        adda.w  #6144,a2
+        dbra    d1,.plane
+        movem.l (sp)+,d1/d7/a0-a3
+        rts
 
 ; A0 zero-terminated ASCII (<=28 columns); A2 line origin; D4 plane stride/0.
 ui_selected_text:
