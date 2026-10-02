@@ -8,13 +8,19 @@ import json
 from native_tools import ROOT
 
 CONTRACT = json.loads((ROOT/'docs/sprites/square-led-contract.json').read_text())
-MASKS = tuple(bytes.fromhex(value) for value in CONTRACT['masks_hex'])
+ORIGINAL_MASKS = tuple(bytes.fromhex(value) for value in CONTRACT['masks_hex'])
+LAYOUT = json.loads((ROOT/'docs/sprites/score-layout-contract.json').read_text())
+# The follow-up layout centres the unchanged selected segment shapes. These
+# authored translations are independent of the assembly's alignment table.
+MASKS = tuple(b''.join((int.from_bytes(mask[y*2:y*2+2], 'big') << -shift).to_bytes(2, 'big')
+                      for y in range(16))
+              for mask,shift in zip(ORIGINAL_MASKS, LAYOUT['point_mask_x_shifts']))
 
 
 def expected_point_bank(side, variant, plane):
     if (side, plane) not in (('a', 2), ('b', 2), ('b', 0), ('b', 3)) or not 0 <= variant < 7:
         raise ValueError('Unsupported native point stream')
-    data = bytearray((ROOT/f'assets/native/court/plane{plane}.bin').read_bytes()[40*32:56*32])
+    data = bytearray((ROOT/f'assets/native/court/plane{plane}.bin').read_bytes()[48*32:64*32])
     left = 2 if side == 'a' else 28
     for row in range(16):
         data[row*32+left:row*32+left+2] = MASKS[variant][row*2:row*2+2]

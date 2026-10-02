@@ -1,5 +1,9 @@
 # Selected square LED scores
 
+The later [framed layout](score-layout.md) supersedes the positions and alignment
+below. The selected segment shapes and startup-bank design remain in use.
+
+
 The user selected “lock in square” from Library preview
 `libfile_154a4a5e61f48191b284c13acd5b18aa`, version0. The implementation preserves
 those exact pixels, including the right-aligned zero, centred single A and blank

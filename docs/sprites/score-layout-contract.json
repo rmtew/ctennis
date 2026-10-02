@@ -1,0 +1,37 @@
+{
+  "native_size": [
+    256,
+    192
+  ],
+  "role_y": 34,
+  "point_y": 48,
+  "point_size": [
+    16,
+    16
+  ],
+  "frame_left": 11,
+  "frame_right": 36,
+  "frame_top": 43,
+  "shared_divider_y": 68,
+  "frame_bottom": 123,
+  "point_cell_padding": 4,
+  "side_offset": 208,
+  "source_reference_library_file_id": "libfile_24aa2b5c5a188191b3d6220223b9a180",
+  "reference_access": "Local materialization failed; parent worker visually inspected actual screenshot. Native geometry derives from current assets.",
+  "court_outside_layout_sha256": {
+    "0": "5de26298a4e58be3908772c9fcdf95c653f6a9ca89405e2502e45f5aa61d99a7",
+    "1": "4a68a00f1e3de55602f9991299860065e091821a1aa94611ddfae0dd13af0e3c",
+    "2": "c5745c2117a704b42b3a07279f756ac75b39d8d0b7c6bcad3b03769fb2aab37e",
+    "3": "6f17e33547182ad71ca93ef16f9c7ad2b1be1e88788ac646cbe1688f7d3c26fb"
+  },
+  "point_mask_x_shifts": [
+    -5,
+    -2,
+    -1,
+    0,
+    0,
+    0,
+    0
+  ],
+  "point_alignment": "Centre each visible score mask within the fixed16x16 cell, preserving every selected segment pixel. Odd-width glyphs have a one-pixel left/right remainder."
+}

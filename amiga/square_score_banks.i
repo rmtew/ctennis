@@ -25,6 +25,11 @@ square_score_digit:
         move.b  0(a0,d1.w),d3
         move.w  d5,d4
         mulu    #9,d4
+        lea     square_score_alignment(pc),a1
+        moveq   #0,d0
+        move.b  0(a1,d6.w),d0
+        ext.w   d0
+        add.w   d0,d4
         cmpi.w  #4,d6
         bne.s   square_score_positioned
         moveq   #4,d4 ; one centred A, not Ad
@@ -95,13 +100,13 @@ square_score_stamp:
 init_square_score_banks_end:
         rts
 square_score_streams:
-        dc.l plane2+40*32,score_bank_point_a_0_p2
+        dc.l plane2+48*32,score_bank_point_a_0_p2
         dc.w 2
-        dc.l plane2+40*32,score_bank_point_b_0_p2
+        dc.l plane2+48*32,score_bank_point_b_0_p2
         dc.w 28
-        dc.l plane0+40*32,score_bank_point_b_0_p0
+        dc.l plane0+48*32,score_bank_point_b_0_p0
         dc.w 28
-        dc.l plane3+40*32,score_bank_point_b_0_p3
+        dc.l plane3+48*32,score_bank_point_b_0_p3
         dc.w 28
 square_score_definitions:
 square_score_rectangles:
@@ -109,3 +114,7 @@ square_score_rectangles:
 square_score_glyphs equ square_score_definitions+28
 square_score_states equ square_score_definitions+34
 square_score_definitions_end:
+; Layout-only centring; original square segment definitions stay byte-identical.
+square_score_alignment:
+        dc.b -5,-2,-1,0,0,0,0
+        even

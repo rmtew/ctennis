@@ -16,6 +16,7 @@ from native_observation import code_symbols, target_log
 from native_tools import ROOT, ASSEMBLER, emulator_config, run as assemble
 from native_scoreboard_raster import assert_scoreboard_raster
 from native_square_scores import assert_generated_point_banks
+from native_identity_raster import assert_mode_raster
 
 
 def run_case(variant, two, exchanged, mutant=False):
@@ -138,6 +139,7 @@ def run_case(variant, two, exchanged, mutant=False):
             session.inspect('capture_screenshot', {'path': str(photo)})
             try:
                 result = assert_scoreboard_raster(photo, points, games)
+                assert_mode_raster(photo, 2 if two else 1)
             except AssertionError as error:
                 # Normalize only a raster rejection, allowing the self-test to
                 # distinguish it from scalar, pointer or telemetry failures.

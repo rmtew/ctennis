@@ -27,7 +27,10 @@ class IdentityAssets(unittest.TestCase):
             self.assertEqual(actual,expected,('status',label))
         for variant in range(3):
             actual=indices([ROOT/f'assets/native/court/score_bank_mode_{variant}_p{p}.bin' for p in range(4)],8)
-            expected=[[0]*256 for _ in range(8)]
+            expected=indices([ROOT/f'assets/native/court/plane{p}.bin' for p in range(4)],192)[34:42]
+            for row in expected:
+                row[:48]=[0]*48
+                row[208:]=[0]*48
             for label,left in (('HUMAN',6),('HUMAN',214) if variant==2 else ('AI',226)):
                 for column,char in enumerate(label):
                     for row in range(8):
@@ -41,7 +44,7 @@ class IdentityAssets(unittest.TestCase):
         from native_square_scores import MASKS, expected_point_bank
         for v in range(7):
             planes = [expected_point_bank('b', v, p) if p in (0, 2, 3)
-                      else (ROOT/'assets/native/court/plane1.bin').read_bytes()[40*32:56*32]
+                      else (ROOT/'assets/native/court/plane1.bin').read_bytes()[48*32:64*32]
                       for p in range(4)]
             for y in range(16):
                 for x in range(224, 240):

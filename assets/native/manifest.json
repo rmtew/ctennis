@@ -5,7 +5,7 @@
   "validated_transfer_sha256": "389445af6b85a39a6f6fb7f938a0e6277f6681d9187f39f56823bc3bc2867f63",
   "destination": "PRIVATE rmtew/ctennis repository; user-approved retained native graphics/audio",
   "approval_reference": "User y,2026-10-02 07:02:50UTC, Sentinel_933773b0be50819191f1c322462f8a96",
-  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs. CT13 removes superseded Sega-derived victory score-2/3 from active inputs and supplies the user-selected independently arranged historical Battle Hymn chorus, with independent waveform, accompaniment and period table. Other retained assets keep their stated provenance. Classic human/robot body masks are ImageGen-authored and fitted to retained pose bounds/seams; white rackets, poses, ball/shadow retain Sega-derived provenance. A/B headings retain their native lettering; centred HUMAN/AI role labels use the retained font. Residual court/unused-atlas Sega logo pixels are removed without changing provenance. Plain retained point/advantage glyphs and six compact WIN rows with an open white frame are authored native UI edits; font columns are packed without resampling. No conceptual ImageGen pixels are imported into the scoreboard. User-selected square LED point digits and single-A advantage replace retained point glyphs; 48 authored segment/selector bytes generate the same 28 native point strips once at startup. A/B labels, WIN lettering, palette and score semantics remain retained.",
+  "provenance": "Retained Sega-derived graphics/font/poses/music/effects converted to native Amiga formats. Private repository retention explicitly approved. No ownership, public redistribution or clean-room claim. CT12 intentionally edits title/logo and status/mode labels using the retained native font. Original imported hashes remain recorded; player-linked palette becomes Red without changing poses or unrelated court colours. Conversion generators/source media live only in Git history/external private inputs. CT13 removes superseded Sega-derived victory score-2/3 from active inputs and supplies the user-selected independently arranged historical Battle Hymn chorus, with independent waveform, accompaniment and period table. Other retained assets keep their stated provenance. Classic human/robot body masks are ImageGen-authored and fitted to retained pose bounds/seams; white rackets, poses, ball/shadow retain Sega-derived provenance. A/B headings retain their native lettering; centred HUMAN/AI role labels use the retained font. Residual court/unused-atlas Sega logo pixels are removed without changing provenance. Plain retained point/advantage glyphs and six compact WIN rows with an open white frame are authored native UI edits; font columns are packed without resampling. No conceptual ImageGen pixels are imported into the scoreboard. User-selected square LED point digits and single-A advantage replace retained point glyphs; 48 authored segment/selector bytes generate the same 28 native point strips once at startup. A/B labels, WIN lettering, palette and score semantics remain retained. Requested stacked white score/WIN frames share the y68 divider and close at y123. Labels move to y34 and square point cells to y48, with four native pixels of cell padding. Only these side-panel pixels and required vertical Copper selections/restores change.",
   "files": [
     {
       "path": "assets/native/audio/data.i",
@@ -70,25 +70,25 @@
     {
       "path": "assets/native/court/plane0.bin",
       "size_bytes": 6144,
-      "sha256": "c5e9c263901e0ce0a59ce4b72005fbd9545949539188da8bcc6c90ac3da101c7",
+      "sha256": "00e887d47959637eef4d1bdaeacb2aea91f92c0cc52a95e79b4905af4d9bdcb4",
       "imported_sha256": "f24d9e1105f7c30aa6f2422646e67d6ce56548220ed14269631cbcd82fb3b853"
     },
     {
       "path": "assets/native/court/plane1.bin",
       "size_bytes": 6144,
-      "sha256": "21e11d3511eb930ae72c8012c3b408f5d3a19e1f7ae57e6de6a78499f9541210",
+      "sha256": "727ed653e2cb6591d98389732ab19d232cd2ae4fa5ddc827898c7bcc9e0a7cbc",
       "imported_sha256": "d0632d68bd8602c060387b3bd67ff894c8d26bbb983e1ef790cf8b96a1ba7b44"
     },
     {
       "path": "assets/native/court/plane2.bin",
       "size_bytes": 6144,
-      "sha256": "d7e7b05d13e4093c7e2a217c1fddccf436d097d502942dc6c7b025149f5eea47",
+      "sha256": "aaaa231ffa3753d80a07d066d57987541ed9c3aa77ea14097e83ba236ef64c54",
       "imported_sha256": "0789bdff7d5f5eff57a0684b6f8b8c5959e06419c3627051325c89d266b9e0db"
     },
     {
       "path": "assets/native/court/plane3.bin",
       "size_bytes": 6144,
-      "sha256": "fefea5552689a53a3724243bafa1ce343addd38e2053b69c977bca301959777d",
+      "sha256": "9ab64f946e150b5856fd38fdb2295e5a0c2176f28a54f7fe1b07e316cb8b557b",
       "imported_sha256": "65473a3502a7539261aafded728d071cf9d682f33d11adbc5f9b17ea3b399569"
     },
     {
@@ -99,98 +99,98 @@
     },
     {
       "path": "assets/native/court/score-cop-commands.i",
-      "size_bytes": 31928,
-      "sha256": "fd238b246d94120985cd9d67a56b112a8bfbba39a4fb4ba513716d21c2651dc9",
+      "size_bytes": 32052,
+      "sha256": "03d0590cc88d8146a5407260e0a1b1dd54f9e899d8bcd9ba9d08af611b72830f",
       "imported_sha256": "d3380f3a54660fce243862b1fec2952b7a7b299daa198389df3215da6b9a6b68"
     },
     {
       "path": "assets/native/court/score-patch-tables.i",
-      "size_bytes": 59929,
-      "sha256": "e0acc8b7fe8c505e4b93c6f0b01bd94818f4c233f165c4787a8a107516c158bd",
+      "size_bytes": 60201,
+      "sha256": "7fda9ca84f00b12623dc27630da1c05a4bf7a2278f6f6648191e5ed51ff2586a",
       "imported_sha256": "e808dce811efc4ed93748b0510233d26e7b29fdc06a30231abbf67a16a870562"
     },
     {
       "path": "assets/native/court/score_bank_games_a_0_p1.bin",
       "size_bytes": 1536,
-      "sha256": "62724359d7634a6486a89aa972aa7a87ff139dce646aae948bc2fdd12798b971",
+      "sha256": "1c482971d73fbc718410fcfe0cf51008413a7f81078a24129b1b7edd1ec93dcb",
       "imported_sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
     },
     {
       "path": "assets/native/court/score_bank_games_a_1_p1.bin",
       "size_bytes": 1536,
-      "sha256": "720beff59dc48a84faedee411d8009beaf109606b151c1f65e9ebb88d5d07e37",
+      "sha256": "ac04942b5eabfe2a49a0c8010d994ef4379e81f1a06cbf4d44f0c20a324735e3",
       "imported_sha256": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13"
     },
     {
       "path": "assets/native/court/score_bank_games_a_2_p1.bin",
       "size_bytes": 1536,
-      "sha256": "341dac65209e8eaf6b3622e8f935ee8c8efd26574dd8f33f5f64212032454d41",
+      "sha256": "5ddb9b2f58a6bbe30039ccc5c486b0ecb8a054962ab940497e1983ee5f2bd962",
       "imported_sha256": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625"
     },
     {
       "path": "assets/native/court/score_bank_games_a_3_p1.bin",
       "size_bytes": 1536,
-      "sha256": "b12d94b9faefd52919da28bc80b46f7da4200a9418c1071d8348c2805d468a90",
+      "sha256": "299c228e5ee4430fe2ba27416c871b7191d6135421c8bf4b06b5ef0cfb8bc235",
       "imported_sha256": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9"
     },
     {
       "path": "assets/native/court/score_bank_games_a_4_p1.bin",
       "size_bytes": 1536,
-      "sha256": "e5d46759ff85f0eb4836b04bd368c97447719d99b9d482f840a29151e3d5a63c",
+      "sha256": "129b31bee3427147be2517dec7e76af5c77df17cd048389e1d28860bcac470e9",
       "imported_sha256": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c"
     },
     {
       "path": "assets/native/court/score_bank_games_a_5_p1.bin",
       "size_bytes": 1536,
-      "sha256": "c6b867c3360173e5e7291999cfa4a4192cc07917a4355d41baf523e416d08f93",
+      "sha256": "32f38dd44e66da641ce9bf325b2d7dc1836bbb42697477a990a3ddca4187e929",
       "imported_sha256": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6"
     },
     {
       "path": "assets/native/court/score_bank_games_a_6_p1.bin",
       "size_bytes": 1536,
-      "sha256": "48a9aa5d0d86fb2701efc7c810b62790fa2ab2443e69271268556163694e2336",
+      "sha256": "3c1cbbb49206a01af654c10c19979f94cedfe223966a9c5aede5fe197799cf2c",
       "imported_sha256": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4"
     },
     {
       "path": "assets/native/court/score_bank_games_b_0_p1.bin",
       "size_bytes": 1536,
-      "sha256": "62724359d7634a6486a89aa972aa7a87ff139dce646aae948bc2fdd12798b971",
+      "sha256": "f87f02ae00d6c299164ce2248645632a515d69d4d8664fc39364a9a17605161d",
       "imported_sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
     },
     {
       "path": "assets/native/court/score_bank_games_b_1_p1.bin",
       "size_bytes": 1536,
-      "sha256": "a3cad2c9262cdabbb2253c6524d996a0fe814b0be374ebe157fd40d7549b2e59",
+      "sha256": "9d160e0377e771425f0f705168f6ba1dae51a7ed2558bd61e65abd3148a6591c",
       "imported_sha256": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3"
     },
     {
       "path": "assets/native/court/score_bank_games_b_2_p1.bin",
       "size_bytes": 1536,
-      "sha256": "47efd53d3319888a4d6f59f35ef7fc2f1fd6f51b3ebb9d4aa17ee2ba3d3200ea",
+      "sha256": "0ce0ceaf01300dc794de7bd0396f5687957247bba03eee9cdace224fa46c6cd6",
       "imported_sha256": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c"
     },
     {
       "path": "assets/native/court/score_bank_games_b_3_p1.bin",
       "size_bytes": 1536,
-      "sha256": "78b985a2852d0ac3f431d7e60039371b04183e92ed044bcab1a352355c70154a",
+      "sha256": "32e9c180b6d7559d8976513bcfc6b6a8fbac1528f185c6b7087d2a57052da977",
       "imported_sha256": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2"
     },
     {
       "path": "assets/native/court/score_bank_games_b_4_p1.bin",
       "size_bytes": 1536,
-      "sha256": "79a7e095420982118822000172f406836874d78632b8a75233cab2d7c3799d4e",
+      "sha256": "46d901f24303c304dd0d342553bb4019caec5e3b908d111820374811f6c33907",
       "imported_sha256": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a"
     },
     {
       "path": "assets/native/court/score_bank_games_b_5_p1.bin",
       "size_bytes": 1536,
-      "sha256": "f74fa9b81ba6c51d23208a04164ce4bd6c8d9e87df144a4ff860316f1274a58c",
+      "sha256": "be8448c4ea7e9e014d4aa65986061319c31030e5ee145cd0164eaa1ae252ef89",
       "imported_sha256": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b"
     },
     {
       "path": "assets/native/court/score_bank_games_b_6_p1.bin",
       "size_bytes": 1536,
-      "sha256": "2c8306bde68c375aa4b3e30582b9bf918af31bf60b67963188dfb99a40b9926d",
+      "sha256": "d1ce444f02b42789b64f8ad3e00ff8df3546a2520593a1e0dbcfc5c61dc0ad7b",
       "imported_sha256": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9"
     },
     {
@@ -214,169 +214,169 @@
     {
       "path": "assets/native/court/score_bank_status_0_p0.bin",
       "size_bytes": 256,
-      "sha256": "b45e5a0455d6d0202ff52fb07bc992f7778ef177f79e0675983cdb9ba0c7f7dc",
+      "sha256": "7db17aace85b1d04153843aa08906cbbc9e535b094391e631443d3ef03b1e18f",
       "imported_sha256": "84513f16085dbcb01f213677f82500df67f5cf73e826349d51247a0520a2f7c4"
     },
     {
       "path": "assets/native/court/score_bank_status_0_p1.bin",
       "size_bytes": 256,
-      "sha256": "6e309e622ea031f23f871eb101f304899c2868e6c29860cb63a60c3a2b60aaf4",
+      "sha256": "45e750afbdd63acec73e414bd4b51d695c41fc2df9c4149ff3ccb02a76d73e81",
       "imported_sha256": "43bfad336d54edd464ad3fc763e1271b6c68b5500c989b7a2b472bd69e44d207"
     },
     {
       "path": "assets/native/court/score_bank_status_0_p2.bin",
       "size_bytes": 256,
-      "sha256": "a3f5787afba4be144c174efe35778ab3985c1043c78272e218394b22dac2bd66",
+      "sha256": "0d4f7bbbee827600bd46ca6815ae049b34dc9273059ac11a8655aa9be3fec010",
       "imported_sha256": "313b5026e6437ae9d4a7e203ba76b47920a1b44a6dcfd3590d65fa4c30affc64"
     },
     {
       "path": "assets/native/court/score_bank_status_0_p3.bin",
       "size_bytes": 256,
-      "sha256": "5a68a93be8ed9ec8aae6202826919d2c404ab5199bb2136238edf98c397a5f28",
+      "sha256": "8740b719a3c9039facb43eb2d30bc516ff0fb37f40d8d10ae8468b59f79d97b7",
       "imported_sha256": "62f2cc344252714b69ba6d91311e2b324286b02b0445310d86866715feafb710"
     },
     {
       "path": "assets/native/court/score_bank_status_1_p0.bin",
       "size_bytes": 256,
-      "sha256": "f94669abe6d4941b5a94f0040706d7c1ed65a7c717200d0991b369db64e33060",
+      "sha256": "fd44d005f7b5869161cb799f859e40b3bda53e442aeaa7c6fa52629ee68bb82a",
       "imported_sha256": "2b49e9f014cdf64f6f994345fc7cf5ff9305c788418673a8322826255eda60c2"
     },
     {
       "path": "assets/native/court/score_bank_status_1_p1.bin",
       "size_bytes": 256,
-      "sha256": "9344654de7ab2574ca4adff5cc8b1a2d4e97abb8cb5bd632faec881fd88074fd",
+      "sha256": "6cf6abf557ff63f81a2b8386d772492c044aa37016209c06fa5acd1123bef895",
       "imported_sha256": "93f353b820af6eb0c8c787a4bd98d6a8afae9f40af8cd2d8d4f6b8909d9b20d3"
     },
     {
       "path": "assets/native/court/score_bank_status_1_p2.bin",
       "size_bytes": 256,
-      "sha256": "c5b9103734bac7e3c229fc57e88c165b89374fd61f66b34a621e6cffe43c054d",
+      "sha256": "ad3bed790be779c8cd3dbfc16b6d33b1144d6ccc212b6ca2cb76402be32a7c76",
       "imported_sha256": "5a9f46a27f3c2c267d01b241ffa97ca995293e0d7b1120b687beaa0342932f89"
     },
     {
       "path": "assets/native/court/score_bank_status_1_p3.bin",
       "size_bytes": 256,
-      "sha256": "db0ffdab7edbe1837e3d3ea1c592f79f6f66becdc400735854df3e64dd17fd51",
+      "sha256": "baff1acbba8144a848c8347df026625b721935641cbffefef304b6431c1f8271",
       "imported_sha256": "462ddc8f84a1d657001d6775ef0d28a9c2f99ced3f31b81ba7dd83bf9a328799"
     },
     {
       "path": "assets/native/court/score_bank_status_2_p0.bin",
       "size_bytes": 256,
-      "sha256": "e797a842bb33c8f4ebb6ca0d98c30ab2d2bbb96b8e21dc0327c37c8abe6de80b",
+      "sha256": "8acf71de004c00edafb070d6811c8208ec42f166ef20e646ceedb4f4628e52b5",
       "imported_sha256": "46a3d4faa478e114c3125ba6e43f091eca6ea18b40aea578e7169d36dc74accb"
     },
     {
       "path": "assets/native/court/score_bank_status_2_p1.bin",
       "size_bytes": 256,
-      "sha256": "19eea555b71a27a8cf26009933bbd0f631796920e62d8eb1fdd937eb30d6d3bc",
+      "sha256": "ead88c9f9ac6af98192e4f11c282da4adff9a48c0ba5e72c8a8e35b773123f75",
       "imported_sha256": "80e1d43b0b3d1a6fe2aedf9cd8f4fc5578eb4d81597d0581cc9ef5298c92e8c4"
     },
     {
       "path": "assets/native/court/score_bank_status_2_p2.bin",
       "size_bytes": 256,
-      "sha256": "8d6609531a44e844ad7ab444789a4912a0a43bc750b6612f5c98480c8ce2c843",
+      "sha256": "e668a54b95174124eb85fa3a8553982b1b48c6449587a7d7ce9ebaf9685facc5",
       "imported_sha256": "8378d58eded31b8f94e4980010249cdc0695a21920d5781d945d268d9ad43f5a"
     },
     {
       "path": "assets/native/court/score_bank_status_2_p3.bin",
       "size_bytes": 256,
-      "sha256": "9f9268071a5a6477587eda5a996d55d2c75d32ae6d39d4aa841fab02184a2661",
+      "sha256": "897b33e9d36293426f06372f82448bda0bc884b4afa49778a255bd541d98e602",
       "imported_sha256": "807327f1bafc5650cdbf814b1d3c2672aff045d6966ea2119924a808a7293f78"
     },
     {
       "path": "assets/native/court/score_bank_status_3_p0.bin",
       "size_bytes": 256,
-      "sha256": "0ea4e78a3a9fb03bce31cee742651f5fa919ba6f38beaaa384932032a46c74f2",
+      "sha256": "04866104b75b3262945759328576889c75d3c40aa543c0e6d0e8d1a7cdae7297",
       "imported_sha256": "e159b47be08afe1043a04304b143c4b67543641df6bdf0668f295b7371a30034"
     },
     {
       "path": "assets/native/court/score_bank_status_3_p1.bin",
       "size_bytes": 256,
-      "sha256": "b28bde8c8310f1a643301468a81417265f5d4f82b922d9a548893e646812ec21",
+      "sha256": "58424bfca8775929240ae37936045f33c237eb4199b932438f1cdc8eb05f5929",
       "imported_sha256": "edfb62650058c0d0a90d6316c8cd9bf19851493128b82420673edfa6a70afc5f"
     },
     {
       "path": "assets/native/court/score_bank_status_3_p2.bin",
       "size_bytes": 256,
-      "sha256": "e3b05169decbf36ae68bfe69b7c1598e241e647c005a10996f2d39c8d7e529e6",
+      "sha256": "9fd34256eda79778e3e25a66150aafc85fbc5d97299d7ca16bb1a1b51540399f",
       "imported_sha256": "1348fcffb96aca512155e026bf867ef914ca5ce19e5376c4ca952ac9d2a70546"
     },
     {
       "path": "assets/native/court/score_bank_status_3_p3.bin",
       "size_bytes": 256,
-      "sha256": "49738071a0484981556ebf9ef739e039eab2f504656e88eb5dc6cffa110dcaf1",
+      "sha256": "2f0b7c720c30d55a924a94779dacfa0ba02f6b7ab154fca3fb03abc8614530a0",
       "imported_sha256": "26bbb80beb7fa060822b735d2458d2d17b400086a17b601016522c1f7ac33bac"
     },
     {
       "path": "assets/native/court/score_bank_status_4_p0.bin",
       "size_bytes": 256,
-      "sha256": "92ced675ec73970b3079cdb3e028e39156a4f5c68180d89ade8bdead5bbea65f",
+      "sha256": "3bc403ea25717d0c10032b7bf2149f299ddc7da3bf81c53c1d9a3ce498276115",
       "imported_sha256": "81b3bcd95c4af30d8cb355861aa25842bbed92d3449c1aff4768fd29711bbc32"
     },
     {
       "path": "assets/native/court/score_bank_status_4_p1.bin",
       "size_bytes": 256,
-      "sha256": "e0d9649ecaa7637c231fef9eb5e516148a915b69062008bbe698ed409c0f7ecf",
+      "sha256": "4881dade1314e37ae30354640ab33a9df878ecd9c3c7c4d9c8c0af64b683cc4b",
       "imported_sha256": "a0bdbef40ae9baf100685677b0703b9f09bed611cdda3a303f80cc168951d941"
     },
     {
       "path": "assets/native/court/score_bank_status_4_p2.bin",
       "size_bytes": 256,
-      "sha256": "650ff7dcfba4209e6ce08398675a3b2b7014da835257d6d4453777bc3909c65f",
+      "sha256": "0bc8640f1fce1498b5098bdbdfaf5d5365685a2aa0e3e86796de550d8ca4ce5f",
       "imported_sha256": "51cdfae616c1cc3f2d1a8bc625e2d7a8b30f792c7b944c146f005c9e7de3cbd0"
     },
     {
       "path": "assets/native/court/score_bank_status_4_p3.bin",
       "size_bytes": 256,
-      "sha256": "118dfecbe7490c33b588389ca08324192abd16223771c7d1f3fdbf49ba72c836",
+      "sha256": "b9ba6c3ded4bbc62160296f7d7dac13b50e21ec29416e5461eb6f76800de3496",
       "imported_sha256": "f4876fee40525c5ff25abac86abe05b4ac547bfac1fe2568ca08347dd47b830c"
     },
     {
       "path": "assets/native/court/score_bank_status_5_p0.bin",
       "size_bytes": 256,
-      "sha256": "ad3b90c11d047eea92c8616b55dd917a462b6280e152ff671d8cd26e111110cf",
+      "sha256": "dfe4fd73a25768667a8e5aca55569efb811b176d50a26c38dc4b28208ae949d8",
       "imported_sha256": "60aad4b49fee7ede5d0668eabad5224780b3bb760c0fd3d32df437889e5ea307"
     },
     {
       "path": "assets/native/court/score_bank_status_5_p1.bin",
       "size_bytes": 256,
-      "sha256": "aee00e61724c253bd0b14e91292c0609eace29ce66063e2778ae24abf094a114",
+      "sha256": "6254e61d39ca0e714ec540d4d24db273f03c8e253fe3b0997ca420570e1915a9",
       "imported_sha256": "20cebb0278dd6424f5e728c101076f2989e927655fee5bf942f116cd9b179834"
     },
     {
       "path": "assets/native/court/score_bank_status_5_p2.bin",
       "size_bytes": 256,
-      "sha256": "ab91fe748c0bdfe66e5fffb31af1347a0348aef017c55d0fbea76a10b99a001b",
+      "sha256": "a4f1a8a4bc791795af9de7a94058edba0b5cb365f3b89ed0a07d178bc3921167",
       "imported_sha256": "f2112d07b5e26916ad15c520cd186d540c125c8036b66f64466a825bf0d7ce4a"
     },
     {
       "path": "assets/native/court/score_bank_status_5_p3.bin",
       "size_bytes": 256,
-      "sha256": "de7079446b7ca3c0640cdda3f3713763ae1cbed3f966272b1f7defa09f3f3fc1",
+      "sha256": "3319811f5abd7a36c10e91f7d3f020114350323e39ebbf2e3cfa14cd3180ae8e",
       "imported_sha256": "3a2107d471058c3bc57f7899eb63883cf46c9ecf6fab7f24dfa45e00f259b195"
     },
     {
       "path": "assets/native/court/score_bank_status_6_p0.bin",
       "size_bytes": 256,
-      "sha256": "2249e6ae878ebc59f0b5c586211817b864b72e67bb0c16aeaf44c5a9107f5228",
+      "sha256": "fc677d7b2974901f3ca64718fc37382f550314b693d88c58f12c8f424d8f92dd",
       "imported_sha256": "b46694bfc12edcdb0af60b170f93144ee091dd23861c9bd2c103206bff0db21d"
     },
     {
       "path": "assets/native/court/score_bank_status_6_p1.bin",
       "size_bytes": 256,
-      "sha256": "495e5e1fc05a584af24abe0abf6e269b0e5e564e5eb8a4e8869d41d6ee5c7284",
+      "sha256": "82d7d5ad1cc5bd7b38815163a2b6139318dea4743f1024f185d122725966e54f",
       "imported_sha256": "74ae351c3bbbd2a9bfc8d5e0a8abea9ad2d361dadb7cc7282acdeeabe835e711"
     },
     {
       "path": "assets/native/court/score_bank_status_6_p2.bin",
       "size_bytes": 256,
-      "sha256": "84deacc80620c12e464594e67144d6928300de5bdb5352d0d18d5f5428041220",
+      "sha256": "842976347fcffee1294de6b8c11876e892dc490308304e0f76d5efde0ff460b4",
       "imported_sha256": "9ae8e0f56f4f152d91468c93e5a9b94b1816167acc499a8d9c12bfceccc5fac5"
     },
     {
       "path": "assets/native/court/score_bank_status_6_p3.bin",
       "size_bytes": 256,
-      "sha256": "ddeb5087756be5945888e122c23bfccb191fc34b38dd510ad1dd0a53964f89c6",
+      "sha256": "bcfa9e7f381d6a20f9a4982362ea93b77293fd909b9e0379078509a386889912",
       "imported_sha256": "0751260c8ff26ae86f9959b7fac3637f1737da29d058932e8f45c32ae5815ed3"
     },
     {
@@ -473,7 +473,7 @@
       "path": "assets/native/court/score_bank_mode_0_p1.bin",
       "authored_revision": "CT12 mode field uses retained native font",
       "size_bytes": 256,
-      "sha256": "92d4ba793f356d4430212ebd37c95d8af733aabefd3caa6cde5cf7e7ce01bc30"
+      "sha256": "0e1e53b3c201780311c9aaf1d35afef03bd92397cef1ede50bd3c3ea9cf6df6e"
     },
     {
       "path": "assets/native/court/score_bank_mode_0_p2.bin",
@@ -491,7 +491,7 @@
       "path": "assets/native/court/score_bank_mode_1_p1.bin",
       "authored_revision": "CT12 mode field uses retained native font",
       "size_bytes": 256,
-      "sha256": "92d4ba793f356d4430212ebd37c95d8af733aabefd3caa6cde5cf7e7ce01bc30"
+      "sha256": "0e1e53b3c201780311c9aaf1d35afef03bd92397cef1ede50bd3c3ea9cf6df6e"
     },
     {
       "path": "assets/native/court/score_bank_mode_1_p2.bin",
@@ -509,7 +509,7 @@
       "path": "assets/native/court/score_bank_mode_2_p1.bin",
       "authored_revision": "CT12 mode field uses retained native font",
       "size_bytes": 256,
-      "sha256": "5d57747f74c7da8ba97f5021659a8af25f0917689590769b29c3cab3f984cff7"
+      "sha256": "3b8fe1f2c4e201fef515b99cc0955b9f18f01875328251a300d9cf6800362b20"
     },
     {
       "path": "assets/native/court/score_bank_mode_2_p2.bin",

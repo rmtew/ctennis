@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = json.loads((ROOT/'docs/sprites/native-contract.json').read_text())
+LAYOUT = json.loads((ROOT/'docs/sprites/score-layout-contract.json').read_text())
 
 
 def poses(name):
@@ -95,10 +96,10 @@ class ClassicPlayers(unittest.TestCase):
             # Mask the exact authorized logo/scoreboard regions when verifying
             # unrelated court pixels against the independently frozen base.
             masked=bytearray(plane)
-            for left,top,right,bottom in CONTRACT['scoreboard_rectangles']+[[8,139,39,144]]:
+            for left,top,right,bottom in [[0,32,48,124],[208,32,256,124],[8,139,39,144]]:
                 for y in range(top,bottom):
                     for x in range(left,right):masked[y*32+x//8]&=~(128>>(x%8))
-            self.assertEqual(hashlib.sha256(masked).hexdigest(), CONTRACT['court_outside_sprite_ui'][str(n)])
+            self.assertEqual(hashlib.sha256(masked).hexdigest(), LAYOUT['court_outside_layout_sha256'][str(n)])
 
 
 if __name__ == '__main__':

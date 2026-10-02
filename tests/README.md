@@ -35,7 +35,7 @@ transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels
 
 Render expectations use immutable native assets and named fields, not expected
 images made by the runtime renderer. Complete side-panel crops verify six compact
-WIN words, solid grey remaining rows, Blue/Red earned rows, the white open frame
+WIN words, solid grey remaining rows, Blue/Red earned rows, the stacked closed white frames
 and the selected square LED points/advantage. All0–6 variants, both modes/ends and both
 physical Copper banks are checked by one-time native fixtures, with a compiled
 wrong tally-pointer control. Ordinary awards also verify actual full-panel pixels. Cadence
@@ -86,3 +86,10 @@ clock starts, and reject a compiled wrong advantage position. The masks in
 preview before native implementation; tests/build must never regenerate them.
 `run_native_scoreboard_tests.py --self-test` additionally verifies these banks
 and actual complete panel scanout in all28 mode/end/variant fixtures.
+
+The requested stacked-frame layout uses role labels at native y34, score cells at
+y48, and borders at y43/68/123. The point cells have four native blank pixels to
+every border. Score glyphs retain their selected shapes and are centred within
+the cells. The scoreboard fixtures also check the two-row gap below A/B and both
+HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
+white frame pixel while the full-width status strips are active.
