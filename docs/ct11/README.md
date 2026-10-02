@@ -13,3 +13,11 @@ Useful protection transferred to native controls, actual dispatcher scoring/stat
 Before removing the unreachable comparison keyboard block, stable version text plus inverse symbol renaming produced complete merged-baseline executable equality and equality of 1259 symbols. That comparison is limited to the behavior-neutral phase; it is not final executable identity. Final acceptance requires the finite fresh-checkout gate.
 
 Run `RUST_LOG=info python scripts/native_acceptance.py` at a clean committed head with empty outputs, versioned native assets, pinned tools and separately configured legitimate Kickstart. It records exact commands, head, artifact hashes, checked extents and fresh receipt status in ignored `build/acceptance/report.json`. `python scripts/progress.py` only reads receipts; missing, failed or stale evidence cannot certify completion. The draft PR reports the observed final result. Generated binaries and ADFs are never committed.
+
+## Final cleanup disposition
+
+Independent review cleared the behavior-neutral CT11 cleanup at `7a9f5f2ac4e87f55cba796f34ac74512f85a30ff`, and the parent accepted that scoped disposition. This clears cleanup review with an explicit inherited timing limitation; it does not certify cadence acceptance. Final focused verification completed 17 commands, with 16 passing. The failed raw cadence receipts remain failed. No setup contract, setup exemption or observer-origin switch is adopted.
+
+The reviewer independently verified 20 host tests, status-2 visible/expired rasters (384 pixels), the wrong-pointer fault (266 differing pixels), and the restart observer source. The bounded Help sequence retains timer-wrap debt despite subsequent normal-rate gameplay. See [verification issues and follow-on scope](verification-issues.md#final-independent-review-and-follow-on-timing-repair). Earlier canonical trajectory and other unchanged-product regressions are explicitly compatible reuse, not new final-head runs. PR16 records exact commands and hashes.
+
+The parent will manage a finite timing repair before cosmetic polish: wrap-safe elapsed accounting and bounded UI work between timer/input samples, first menus/help and then gameplay cadence. No timing fix is implemented in CT11. Independent cleanup clearance does not authorize a master merge by this executor.

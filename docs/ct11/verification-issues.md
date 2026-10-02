@@ -40,3 +40,17 @@ which resets voices and does not queue the legacy startup pair. Returned-title
 and restart-cleanup windows remain strictly silent; the fresh-serve window must
 emit native sound. All intervening update counters remain consecutive, including
 six post-serve capture updates. No product audio change is made.
+
+## Final independent review and follow-on timing repair
+
+Independent final review cleared the behavior-neutral CT11 cleanup at `7a9f5f2ac4e87f55cba796f34ac74512f85a30ff`; the parent accepted cleanup with the inherited timing limitation retained. Cadence acceptance remains failed. Raw failed receipts are preserved, and no proposed setup contract, setup exemption or observer-origin switch is adopted. Final focused verification completed 17 commands (16 passed); the setup measurement command passed collection, while its recovery proposal failed.
+
+The reviewer independently confirmed status-2 visible and expired rasters against 384 native asset pixels, the wrong-pointer fault with 266 differing pixels, 20 host tests, and the corrected restart observer source. The Help sequence measured 564 callbacks and ten construction regions: 354 raw timing errors, 280 outside setup and six recovery failures. Help construction took 359305 CCK, about 0.1 seconds, crossing the 327680 CCK modulo timer range and losing elapsed time. Later gameplay resumes normal tick spacing: 67 later active callbacks were observed, with the last 50 gaps spanning 58733–59697 CCK and maximum work 24355 CCK. Approximately one million CCK of absolute epoch debt remains. Normal-rate recovery does not erase that debt or turn the strict cadence receipt into a pass. Unchanged product timing/source, the merged-baseline reproduction and these recovery observations support the scoped cleanup disposition only.
+
+The parent will manage a finite follow-on timing repair before cosmetic polish:
+
+1. Make elapsed accounting wrap-safe so long UI updates cannot discard whole timer wraps. Preserve the continuous observation epoch and raw callback accounting.
+2. Bound UI construction work between timer and input samples, starting with menu/Help/Controls/Credits transitions. Preserve exact completed scene/bank association, publication windows, input packets and audio cleanup.
+3. Repeat the bounded menu/help sequence and then the relevant gameplay cadence checks, demonstrating accounted elapsed time and bounded recovery without changing observer origins or hiding failures. Reuse existing fixtures and observers rather than introducing a large framework.
+
+This is follow-on scope, not an implemented CT11 fix or an adopted timing budget. The documentation-only disposition commit does not rerun runtime tests or promote earlier evidence to a new-head runtime pass.
