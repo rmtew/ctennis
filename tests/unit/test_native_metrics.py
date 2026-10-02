@@ -208,6 +208,11 @@ class MetricsTests(unittest.TestCase):
                 'title_frame_evidence':{'cck':180,'frame':3,'title_copper':0x4000,
                                         'title_selected_since':{'cck':115,'frame':1}}}
 
+    def test_returned_title_cannot_certify_initial_boot(self):
+        loading=self.complete_loading()
+        loading['title_frame_evidence']['title_selected_since']['cck']=170
+        self.assertTrue(any('returned title' in issue for issue in cold_loading_issues(loading)))
+
     def test_generate_rejects_missing_loading_milestones_despite_passing_profiles(self):
         from native_metrics_observation import PROFILES
         template={'classification':{'status':'passed'},'metrics':{'profiles':{p:{'callbacks':1} for p in PROFILES}},

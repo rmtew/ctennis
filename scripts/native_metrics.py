@@ -299,6 +299,8 @@ def cold_loading_issues(cold):
             or proof['frame']<since['frame']+2 or type(proof.get('cck')) is not int
             or proof['cck']<=since['cck'] or proof.get('cck')!=points.get('first_complete_title_frame')):
         issues.append('Continuous loaded-title selection evidence missing/invalid')
+    elif ('input_responsive' in points and since['cck']>points['input_responsive']):
+        issues.append('Title scanout window began after initial input; returned title is not cold loading')
     return issues
 
 

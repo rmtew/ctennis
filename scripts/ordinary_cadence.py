@@ -234,8 +234,11 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                                  flight=native_state['game_flight'], controls=controls.hex())
             if lifecycle == 2 and state['initial_selected'] is None:
                 milestone('initial_title', position)
-                send('input.key', {'rawkey': selection_key(mode), 'action': 'press'})
-                state['initial_selected'] = n
+                # The cold loading milestone must prove initial title scanout
+                # before this harness switches away through physical input.
+                if not boot_adf or metrics_observer.first_complete_title_frame is not None:
+                    send('input.key', {'rawkey': selection_key(mode), 'action': 'press'})
+                    state['initial_selected'] = n
             if lifecycle == 3 and 'first_selection' not in checkpoints:
                 milestone('first_selection', position)
             if 'first_selection' in checkpoints and 'first_release' not in checkpoints and n-checkpoints['first_selection']['callback'] >= 80:

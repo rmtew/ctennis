@@ -147,3 +147,9 @@ development listing. Other native checks keep the development executable.
 The report binds both products separately. The earlier symbol-rich baseline is
 retained in `baselines/development-symbols.json` with its original historical
 identity; it does not certify current observer changes.
+
+For cold boot measurement the input harness waits for the continuously selected
+initial title scanout proof before pressing its physical mode key. This adds
+only an observation wait, not a product change. A scanout window beginning
+after initial successful selection is rejected as a returned title, so later
+match/title transitions cannot masquerade as the boot milestone.
