@@ -19,14 +19,16 @@ There are two blank native rows between the A/B header cells and the role row.
 Every score cell has four blank native pixels between its edges and its frame.
 The old left border moves one pixel outward because a16-pixel cell cannot have
 equal integer padding inside the previous23-pixel interior. WIN glyph pixels and
-row pitch stay unchanged. The zero and other narrower numbers are centred inside
-the cell using horizontal translations only; odd-width ink necessarily leaves a
-one-pixel remainder. No selected segment pixel is redrawn, scaled or clipped.
+row pitch stay unchanged. Following the user's correction, tens and units have
+fixed positions: single0 uses the same units pixels as0 in30/40, leaving the tens
+cell blank. There is no per-value ink centring. The single-A advantage keeps its
+original selected position. No selected segment pixel is moved, redrawn, scaled
+or clipped within the fixed16x16 cell.
 
-`score-layout-contract.json` specifies the new geometry and translations; the
+`score-layout-contract.json` specifies the new geometry and fixed placement; the
 original selected masks in `square-led-contract.json` remain frozen. All seven
 states still mean0,15,30,40,A,40,blank. The original48-byte segment definition is
-unchanged; a seven-byte signed alignment table plus alignment padding is added.
+unchanged. The per-value alignment table and its startup instructions are removed.
 
 The existing16-row point banks move down eight rows. Role banks move down two
 rows, retaining court pixels in their full-width strips. Two fixed plane0/3
@@ -52,7 +54,7 @@ active. The scoreboard comparisons include both published physical Copper banks,
 all selected/restore pointers, all score/tally variants, both role-label variants
 and the A/B-to-role blank gap. No broad full native campaign is claimed.
 
-## Focused result
+## Previous centred-layout receipt (superseded by fixed digit positions)
 
 All listed checks passed on product `0ce30f56f15f0f7fd39ad57d2a003f795e03ce9d`:
 37 host tests,94 input checks,28 generated banks,28 native scoreboard fixtures

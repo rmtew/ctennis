@@ -9,12 +9,10 @@ from native_tools import ROOT
 
 CONTRACT = json.loads((ROOT/'docs/sprites/square-led-contract.json').read_text())
 ORIGINAL_MASKS = tuple(bytes.fromhex(value) for value in CONTRACT['masks_hex'])
-LAYOUT = json.loads((ROOT/'docs/sprites/score-layout-contract.json').read_text())
-# The follow-up layout centres the unchanged selected segment shapes. These
-# authored translations are independent of the assembly's alignment table.
-MASKS = tuple(b''.join((int.from_bytes(mask[y*2:y*2+2], 'big') << -shift).to_bytes(2, 'big')
-                      for y in range(16))
-              for mask,shift in zip(ORIGINAL_MASKS, LAYOUT['point_mask_x_shifts']))
+# Fixed tens/units positions, exactly as selected in the original LED preview.
+# In particular, the single zero has a blank tens cell and the same units pixels
+# as the zero in 30/40. The single-A advantage placement also stays unchanged.
+MASKS = ORIGINAL_MASKS
 
 
 def expected_point_bank(side, variant, plane):

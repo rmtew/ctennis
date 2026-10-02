@@ -92,16 +92,12 @@ class ScoreboardAssets(unittest.TestCase):
                           layout['point_y']-layout['frame_top']-1,
                           layout['shared_divider_y']-(layout['point_y']+16)], [4]*4)
         self.assertEqual(layout['role_y'],34)
-        for before,after in zip(ORIGINAL_MASKS,MASKS):
-            def pixels(mask):
-                return {(x,y) for y in range(16) for x in range(16)
-                        if mask[y*2+x//8] & (128 >> (x%8))}
-            a,b=pixels(before),pixels(after)
-            self.assertEqual(len(a),len(b))
-            if a:
-                amin,bmin=min(x for x,y in a),min(x for x,y in b)
-                self.assertEqual({(x-amin,y) for x,y in a},{(x-bmin,y) for x,y in b})
-                self.assertLessEqual(abs(min(x for x,y in b)+max(x for x,y in b)-15),1)
+        self.assertEqual(MASKS,ORIGINAL_MASKS)
+        for y in range(16):
+            zero=int.from_bytes(MASKS[0][y*2:y*2+2],'big')
+            self.assertEqual(zero & ~0x7f,0)  # blank tens, units at x9..15
+            for variant in (2,3,5):  # 30,40,deuce40
+                self.assertEqual(int.from_bytes(MASKS[variant][y*2:y*2+2],'big') & 0x7f,zero)
         for side in ('a','b'):
             for point in range(7):
                 pixels=scoreboard_pixels(side,point,0)

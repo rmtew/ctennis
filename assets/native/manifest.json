@@ -70,7 +70,7 @@
     {
       "path": "assets/native/court/plane0.bin",
       "size_bytes": 6144,
-      "sha256": "00e887d47959637eef4d1bdaeacb2aea91f92c0cc52a95e79b4905af4d9bdcb4",
+      "sha256": "dd4809cb5b577476fda5f440c6eaffd055b6c0bdb8296a8759cb2e3fb78c26f2",
       "imported_sha256": "f24d9e1105f7c30aa6f2422646e67d6ce56548220ed14269631cbcd82fb3b853"
     },
     {
@@ -82,13 +82,13 @@
     {
       "path": "assets/native/court/plane2.bin",
       "size_bytes": 6144,
-      "sha256": "aaaa231ffa3753d80a07d066d57987541ed9c3aa77ea14097e83ba236ef64c54",
+      "sha256": "3754050afb5a84f89a2c6301b0555361031cde72ab6dc746d5e8094ead732071",
       "imported_sha256": "0789bdff7d5f5eff57a0684b6f8b8c5959e06419c3627051325c89d266b9e0db"
     },
     {
       "path": "assets/native/court/plane3.bin",
       "size_bytes": 6144,
-      "sha256": "9ab64f946e150b5856fd38fdb2295e5a0c2176f28a54f7fe1b07e316cb8b557b",
+      "sha256": "30e74247269f3e4621d92cd7f734e6df94caf2843a051d2bccc4572aea5134b6",
       "imported_sha256": "65473a3502a7539261aafded728d071cf9d682f33d11adbc5f9b17ea3b399569"
     },
     {

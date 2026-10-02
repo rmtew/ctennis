@@ -25,11 +25,6 @@ square_score_digit:
         move.b  0(a0,d1.w),d3
         move.w  d5,d4
         mulu    #9,d4
-        lea     square_score_alignment(pc),a1
-        moveq   #0,d0
-        move.b  0(a1,d6.w),d0
-        ext.w   d0
-        add.w   d0,d4
         cmpi.w  #4,d6
         bne.s   square_score_positioned
         moveq   #4,d4 ; one centred A, not Ad
@@ -114,7 +109,3 @@ square_score_rectangles:
 square_score_glyphs equ square_score_definitions+28
 square_score_states equ square_score_definitions+34
 square_score_definitions_end:
-; Layout-only centring; original square segment definitions stay byte-identical.
-square_score_alignment:
-        dc.b -5,-2,-1,0,0,0,0
-        even

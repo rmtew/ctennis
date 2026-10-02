@@ -89,7 +89,7 @@ and actual complete panel scanout in all28 mode/end/variant fixtures.
 
 The requested stacked-frame layout uses role labels at native y34, score cells at
 y48, and borders at y43/68/123. The point cells have four native blank pixels to
-every border. Score glyphs retain their selected shapes and are centred within
-the cells. The scoreboard fixtures also check the two-row gap below A/B and both
+every border. Score glyphs retain their selected shapes and fixed tens/units positions within
+the cells; a single0 has a blank tens cell. The scoreboard fixtures also check the two-row gap below A/B and both
 HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
 white frame pixel while the full-width status strips are active.

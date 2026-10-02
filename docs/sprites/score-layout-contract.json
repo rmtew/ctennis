@@ -24,14 +24,5 @@
     "2": "c5745c2117a704b42b3a07279f756ac75b39d8d0b7c6bcad3b03769fb2aab37e",
     "3": "6f17e33547182ad71ca93ef16f9c7ad2b1be1e88788ac646cbe1688f7d3c26fb"
   },
-  "point_mask_x_shifts": [
-    -5,
-    -2,
-    -1,
-    0,
-    0,
-    0,
-    0
-  ],
-  "point_alignment": "Centre each visible score mask within the fixed16x16 cell, preserving every selected segment pixel. Odd-width glyphs have a one-pixel left/right remainder."
+  "point_alignment": "Fixed tens/units positions from the selected original16x16 masks. Single0 shares the units pixels of30/40, with blank tens. No per-value ink centring. Single-A advantage retains its original placement."
 }
