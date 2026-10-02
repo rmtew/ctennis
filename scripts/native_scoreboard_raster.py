@@ -1,10 +1,11 @@
 """Independent authored WIN/point UI expectations for actual PAL scanout.
 
-No runtime-rendered golden: points use versioned retained masks, WIN uses the
+No runtime-rendered golden: points use versioned selected-preview masks, WIN uses the
 retained font and explicit authored placement; all remaining panel pixels black.
 """
 from PIL import Image
 from native_tools import ROOT
+from native_square_scores import MASKS
 
 RECTANGLES = ((0, 40, 48, 124), (208, 40, 256, 124))
 BLUE, RED, GREY, WHITE = (85, 85, 238), (238, 51, 51), (51, 51, 51), (255, 255, 255)
@@ -13,15 +14,14 @@ BLUE, RED, GREY, WHITE = (85, 85, 238), (238, 51, 51), (51, 51, 51), (255, 255, 
 def scoreboard_pixels(side, point, games):
     if side not in ('a', 'b') or not 0 <= point <= 6 or not 0 <= games <= 6:
         raise ValueError('Native scoreboard requires side a/b and variants0..6')
-    offset = 0 if side == 'a' else 208
     colour = BLUE if side == 'a' else RED
     expected = [[(0, 0, 0)] * 48 for _ in range(84)]
-    # Retained native glyph geometry; host contract checks against base93bb640.
-    mask = (ROOT / f'assets/native/court/score_bank_point_{side}_{point}_p2.bin').read_bytes()
+    # Frozen square-option pixels, extracted before the renderer was written.
+    mask = MASKS[point]
     for y in range(16):
-        for x in range(16, 32):
-            if mask[y*32+(x+offset)//8] & (128 >> ((x+offset)%8)):
-                expected[y][x] = colour
+        for x in range(16):
+            if mask[y*2+x//8] & (128 >> (x%8)):
+                expected[y][16+x] = colour
     # Exact native font columns with a single empty column between letters.
     font = (ROOT / 'assets/native/title/font.bin').read_bytes()
     for row in range(6):

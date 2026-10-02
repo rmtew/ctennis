@@ -12,6 +12,7 @@ start:
         jsr     -132(a6) ; Exec Forbid
         jsr     -120(a6) ; Exec Disable
         lea     game_stack_top,sp
+        bsr     init_square_score_banks
         bsr     game_begin_title
         lea     pointer_sources(pc),a0
         lea     pointer_targets(pc),a1
@@ -313,6 +314,7 @@ paula_events_done:
 
 
         include "amiga/score_copper_patch.i"
+        include "amiga/square_score_banks.i"
 
 ; Native AI target-sign entropy: timer bit mixed with the game PRNG.
 ; Attract playback uses the independently recorded native seeded stream.
@@ -585,3 +587,5 @@ sprite_back: dcb.b 8*72,0
 
         even
         include "assets/native/title/display.i"
+
+        include "amiga/square_score_storage.i"
