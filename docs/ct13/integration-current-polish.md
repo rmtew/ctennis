@@ -148,3 +148,18 @@ Help/navigation clean-head checks at5a4c0fd passed43 physical assertions and
 Library image now has version2, showing page1/4 with NEXT selected at716x537TV
 aspect. This evidence predates the neutral legacy-path cleanup; final combined
 acceptance runs once at the published frozen candidate, with no master merge.
+
+## Finite gate observer correction
+
+The first combined run at a14e01fb passed commands0–23, including all10958
+canonical input ticks and5480 takeover ticks, then stopped at the unattended
+observer: Copperline's bounded per-field MMIO queue dropped3847 events during
+legitimate bulk returned-title construction. This is a harness failure, not a
+product pass. The correction activates the full bitmap write watch after the
+first actual title-bank publication and removes it at the next automatic demo
+entry; lifecycle, control-block and physical publication watches remain active
+through construction. Every PAL title-field digest and all eight pixel captures
+remain required, with no dropped events permitted. Product sources and assets
+are identical to a14e01fb. Continue only the failed observer and commands25–32;
+reuse earlier unchanged-dependency receipts transparently, without a new full
+campaign or a claim that the initial aggregate passed.

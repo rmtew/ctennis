@@ -78,7 +78,7 @@ def run():
                     check('automatic attract enters after full title idle',state['idle'],1800)
                     if windows:
                         windows[-1]['next_entry']=entry
-                        s.send_async('events.subscribe',{'events':['frame'],'frame_interval':50,'frame_digest':False})
+                        s.send_async('events.subscribe',{'events':['frame','mmio'],'frame_interval':50,'frame_digest':False,'mmio':watches})
             elif n=='game_lifecycle':
                 state['life']=v
                 assert v not in (7,8),'Attract reached superseded intermediate title/court lifecycle'
@@ -105,15 +105,21 @@ def run():
                 if windows and windows[-1]['next_entry'] is None:
                     check('every returned-title publication selects actual title bank',pointer,title)
                     windows[-1]['publications']+=1
-                    if windows[-1]['first_title_publication_frame'] is None:windows[-1]['first_title_publication_frame']=p['frame']
+                    if windows[-1]['first_title_publication_frame'] is None:
+                        windows[-1]['first_title_publication_frame']=p['frame']
+                        # Observe quiet bitmap writes after construction, which
+                        # exceeds Copperline's bounded per-field event queue.
+                        # Continuous field digests start at the same publication.
+                        s.send_async('events.subscribe',{'events':['mmio'],'mmio':quiet_watches})
                 publications.append(dict(pointer=pointer,position=p,lifecycle=state['life'],demo=state['demo']))
         def read(n,length=1):return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':length})['data']),'big')
         state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2))
         regs=s.inspect('custom_dump')['regs'];state['pointer']=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big'))
         s.notification_handler=event
         watches=[{'addr':a,'len':1 if n in ('ui_demo','ui_dirty','game_celebration_first_play','display_ready') else 2,'access':'write'} for a,n in fields.items()]
-        watches += [{'addr':a,'len':length,'access':'write'} for a,length in planes+controls]
+        watches += [{'addr':a,'len':length,'access':'write'} for a,length in controls]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
+        quiet_watches=watches+[{'addr':a,'len':length,'access':'write'} for a,length in planes]
         s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
         # No injected state, keyboard/pad actions, seeded fixture or callback stops.
         s.inspect('run_until',{'seconds':stop['seconds']+570});s.inspect('events.unsubscribe');s.notification_handler=None
