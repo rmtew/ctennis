@@ -27,6 +27,7 @@ U_JOYSTICK_BITS rs.b 2
 U_JOYSTICK_PREVIOUS rs.b 2
 U_JOYSTICK_PRESSED rs.b 2
 U_JOYSTICK_ENTRY rs.b 2
+U_ENTROPY rs.w 1
 U_SIZE rs.b 0
 ui_previous_keys equ ui_state+U_PREVIOUS_KEYS
 ui_saved_volumes equ ui_state+U_SAVED_VOLUMES
@@ -54,3 +55,4 @@ ui_joystick_bits equ ui_state+U_JOYSTICK_BITS
 ui_joystick_previous equ ui_state+U_JOYSTICK_PREVIOUS
 ui_joystick_pressed equ ui_state+U_JOYSTICK_PRESSED
 ui_joystick_entry equ ui_state+U_JOYSTICK_ENTRY
+ui_entropy_state equ ui_state+U_ENTROPY

@@ -32,6 +32,9 @@ game_new_match:
 .clear_score:
         clr.b   (a0)+
         dbra    d7,.clear_score
+        ifd ENHANCED_INTERFACE
+        bsr     ui_seed_entropy
+        endif
         clr.b   game_directions
         clr.b   game_actions
         clr.b   game_status_clock

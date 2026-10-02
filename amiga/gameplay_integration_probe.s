@@ -416,6 +416,22 @@ replay_no_log:
 ; port samples a changing native timer bit, mixed with the existing game PRNG.
 ; A replay build can instead supply the source's recorded sign at each update.
 read_refresh_adapter:
+        ifd ENHANCED_INTERFACE
+        ifd DEMO_RECORDING
+        move.l  d1,-(sp)
+        bsr     ui_demo_entropy
+        move.l  (sp)+,d1
+        rts
+        else
+        tst.b   ui_demo
+        beq.s   refresh_live_entropy
+        move.l  d1,-(sp)
+        bsr     ui_demo_entropy
+        move.l  (sp)+,d1
+        rts
+refresh_live_entropy:
+        endif
+        endif
         ifd LONG_GAME_REPLAY
         movem.l d1/a0,-(sp)
         moveq   #0,d1
