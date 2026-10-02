@@ -1,13 +1,15 @@
 ; Native display events. A typed scalar packet enters at the temporary game
 ; ABI; this code selects six native field banks, never tiles/VRAM/VDP registers.
-D_FLAGS equ 0
-D_TIMER equ 1
-D_MODE equ 2
-D_POINT_A equ 3
-D_POINT_B equ 4
-D_GAME_A equ 5
-D_GAME_B equ 6
-D_SIZE equ 8
+        rsset 0
+D_FLAGS rs.b 1
+D_TIMER rs.b 1
+D_MODE rs.b 1
+D_POINT_A rs.b 1
+D_POINT_B rs.b 1
+D_GAME_A rs.b 1
+D_GAME_B rs.b 1
+        rs.b 1 ; reserved byte7
+D_SIZE rs.b 0
 
 game_scene_update_fields:
         movem.l d0-d7/a0-a4,-(sp)

@@ -1,29 +1,33 @@
 ; Native scoring owns the point/game cells, service mode and scoring stage.
 ; Presentation, gameplay and audio observations enter through the temporary ABI.
-S_STAGE equ 0
-S_AI equ 1
-S_OUTCOME equ 2
-S_MODE equ 3
-S_DISPLAY equ 4
-S_POINTS equ 6
-S_GAMES equ 8
-S_TIMER equ 10
-S_AUDIO_COMPLETE equ 11
-S_LOWER_ANIMATION equ 13
-S_UPPER_ANIMATION equ 14
-S_FLIGHT equ 15
-S_LOWER_PHASE equ 16
-S_UPPER_PHASE equ 17
-S_LOWER_Y equ 18
-S_LOWER_X equ 19
-S_UPPER_Y equ 20
-S_UPPER_X equ 21
-S_LOWER_IMAGE equ 22
-S_UPPER_IMAGE equ 23
-S_ROUND_GAME_A equ 24
-S_ROUND_GAME_B equ 25
-S_EVENT equ 26
-S_SIZE equ 28
+        rsset 0
+S_STAGE rs.b 1
+S_AI rs.b 1
+S_OUTCOME rs.b 1
+S_MODE rs.b 1
+S_DISPLAY rs.b 1
+        rs.b 1 ; reserved byte5
+S_POINTS rs.b 2 ; one byte per player; even for CLR.W
+S_GAMES rs.b 2 ; one byte per player
+S_TIMER rs.b 1
+S_AUDIO_COMPLETE rs.b 1
+        rs.b 1 ; reserved byte12
+S_LOWER_ANIMATION rs.b 1
+S_UPPER_ANIMATION rs.b 1
+S_FLIGHT rs.b 1
+S_LOWER_PHASE rs.b 1
+S_UPPER_PHASE rs.b 1
+S_LOWER_Y rs.b 1
+S_LOWER_X rs.b 1
+S_UPPER_Y rs.b 1
+S_UPPER_X rs.b 1
+S_LOWER_IMAGE rs.b 1
+S_UPPER_IMAGE rs.b 1
+S_ROUND_GAME_A rs.b 1
+S_ROUND_GAME_B rs.b 1
+S_EVENT rs.b 1
+        rs.b 1 ; reserved byte27
+S_SIZE rs.b 0
 S_IDLE equ 0
 S_ACTIVE equ 1
 S_POINT_PAUSE equ 2
