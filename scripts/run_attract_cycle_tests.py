@@ -11,7 +11,7 @@ from native_identity_raster import assert_title_raster,assert_menu_selection_ras
 
 def run():
     _,exe=build();config=emulator_config();listing=(exe.parent/'native.lst').read_text();symbols=code_symbols(listing)
-    directory=ROOT/'build/tests/attract-two-cycles';checks=[];windows=[];entries=[];publications=[];captures=[]
+    directory=ROOT/'build/tests/attract-two-cycles';checks=[];windows=[];entries=[];publications=[];captures=[];quiet_requests={}
     def check(label,actual,expected):
         checks.append(dict(label=label,actual=actual,expected=expected));assert actual==expected,checks[-1]
     with NativeControlSession(directory) as s:
@@ -40,12 +40,23 @@ def run():
         state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,pointer=bytearray(4))
         fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','display_ready')}
         def event(message):
+            if message.get('id') in quiet_requests:
+                window=quiet_requests.pop(message['id'])
+                assert 'error' not in message,{'label':'quiet bitmap subscription rejected','reply':message}
+                result=message['result']
+                check('quiet bitmap subscription includes all requested watches',result['mmio'],quiet_watches)
+                check('quiet bitmap subscription active', 'mmio' in result['active'],True)
+                check('quiet bitmap subscription has zero dropped notifications',result['dropped_notifications'],0)
+                window['quiet_subscription_ack']=dict(request_id=message['id'],result=result)
+                return
             if message.get('method')=='event.frame':
                 r=message['params']
                 assert not r.get('dropped_notifications',0),'Title frame telemetry dropped'
                 if windows and windows[-1]['next_entry'] is None:
                     window=windows[-1];first=window.get('first_title_publication_frame')
                     frame=r['position']['frame']
+                    if first is not None and first<=frame<=first+4:
+                        s.send_async('capture.screenshot',{'path':str(directory/f'cycle-{len(windows)}-transition-request-{frame}.png')})
                     # A capture describes the preceding completed scan. Begin
                     # after the first wholly title-owned visible field.
                     if first is not None and frame>=first+2:
@@ -54,7 +65,7 @@ def run():
                         if digest.get('digest')!=expected_digest:
                             failure=directory/f'cycle-{len(windows)}-changed-field-{frame}.png'
                             s.inspect('capture.screenshot',{'path':str(failure)})
-                            atomic_json(directory/'changed-field.json',dict(frame=frame,digest=digest,expected=expected_digest,window=window,state=state,capture=str(failure),custom=s.inspect('custom_dump')))
+                            atomic_json(directory/'changed-field.json',dict(frame=frame,digest=digest,expected=expected_digest,window=window,state={**state,'pointer':state['pointer'].hex()},capture=str(failure),custom=s.inspect('custom_dump')))
                             raise AssertionError({'label':'continuous actual title field changed','frame':frame,'actual':digest,'expected':expected_digest,'capture':str(failure)})
                         samples=window['title_frame_digests']
                         if samples:assert frame==samples[-1]['frame']+1,'Title frame observation gap'
@@ -114,7 +125,8 @@ def run():
                         # Observe quiet bitmap writes after construction, which
                         # exceeds Copperline's bounded per-field event queue.
                         # Continuous field digests start at the same publication.
-                        s.send_async('events.subscribe',{'events':['mmio'],'mmio':quiet_watches})
+                        request=s.send_async('events.subscribe',{'events':['mmio'],'mmio':quiet_watches})
+                        quiet_requests[request]=windows[-1]
                 publications.append(dict(pointer=pointer,position=p,lifecycle=state['life'],demo=state['demo']))
         def read(n,length=1):return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':length})['data']),'big')
         state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2))
@@ -129,9 +141,11 @@ def run():
         s.inspect('run_until',{'seconds':stop['seconds']+570});s.inspect('events.unsubscribe');s.notification_handler=None
         check('two unattended result-to-title cycles',len(windows),2)
         check('third attract starts after second idle',len(entries),3)
+        check('all quiet subscriptions acknowledged',len(quiet_requests),0)
         for cycle,window in enumerate(windows,1):
             check('every PAL title field checked continuously',len(window['title_frame_digests'])>=1400,True)
             check('title construction completed',window['stable'],True)
+            check('quiet bitmap subscription acknowledged',bool(window.get('quiet_subscription_ack')),True)
             check('title actual bank publications observed',window['publications']>0,True)
             check('no hidden quiet menu bitmap mutation',window['unexpected_title_writes'],0)
             elapsed=window['next_entry']['position']['seconds']-window['returned']['position']['seconds']
