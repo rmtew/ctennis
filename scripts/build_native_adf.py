@@ -7,7 +7,7 @@ import os,sys,json,hashlib,subprocess
 from pathlib import Path
 from native_tools import ROOT,run
 from build_native_game import build
-from evidence import atomic_json,tracked_call
+from native_evidence import atomic_json,tracked_call
 
 OUT=ROOT/'build/amiga/ctennis-delivery'
 def _package(flavor):
@@ -69,6 +69,6 @@ def package(self_test=False, flavor="enhanced"):
 if __name__=='__main__':
     import argparse
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--self-test',action='store_true')
-    parser.add_argument('--interface', choices=('original','enhanced'), default='enhanced')
+    parser.add_argument('--interface', choices=('enhanced',), default='enhanced')
     args=parser.parse_args()
     print(json.dumps(package(args.self_test,args.interface),indent=2))

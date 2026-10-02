@@ -8,7 +8,7 @@ from pathlib import Path
 from build_native_game import build
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT, atomic_json, compile_manifest, tracked_call
+from native_evidence import ROOT, atomic_json, compile_manifest, tracked_call
 
 
 def run(mode, flavor="enhanced"):
@@ -291,7 +291,7 @@ def main():
     parser.add_argument('--cadence',action='store_true',help='CT09 non-stopping ordinary match, clock and chip-memory measurement')
     parser.add_argument('--adf',action='store_true',help='CT10 cold boot packaged ADF, then existing uninterrupted cadence/lifecycle acceptance')
     parser.add_argument('--bank-control',action='store_true',help='CT09 delayed compiled stale Copper bank control')
-    parser.add_argument("--interface",choices=("original","enhanced"),default="enhanced")
+    parser.add_argument("--interface",choices=("enhanced",),default="enhanced")
     parser.add_argument("--keyboard",action="store_true",help="Use actual raw keyboard mode/fire events for the existing cadence lifecycle")
     args=parser.parse_args()
     if args.keyboard and (not args.cadence or args.interface!="enhanced"):

@@ -11,7 +11,7 @@ from native_hunk import loaded_hunks
 from build_native_game import build
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT, atomic_json, compile_manifest
+from native_evidence import ROOT, atomic_json, compile_manifest
 
 CCK_HZ = 3546895
 ECLK_HZ = 709379

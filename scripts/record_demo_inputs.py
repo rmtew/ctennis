@@ -6,7 +6,7 @@ from build_native_game import build
 from native_tools import ASSEMBLER,run
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT,atomic_json
+from native_evidence import ROOT,atomic_json
 
 def record():
  config,ordinary=build(flavor='enhanced');directory=ROOT/'build/tests/demo-full-recording';directory.mkdir(parents=True,exist_ok=True)

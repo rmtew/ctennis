@@ -3,7 +3,7 @@ import argparse,hashlib,json,re
 from build_native_game import build
 from native_observation import code_symbols
 from copperline_test_session import NativeControlSession
-from evidence import ROOT,atomic_json
+from native_evidence import ROOT,atomic_json
 from native_observation import target_log
 
 def load_trajectory(recording_path):
