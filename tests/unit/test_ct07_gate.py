@@ -36,3 +36,19 @@ class PresentationProof(unittest.TestCase):
             self.assertFalse(progress.presentation_proof(changed,self.recipe))
         changed=copy.deepcopy(self.report);changed['raw_state_differences'][-1]['differences'][0]['offset']=107
         self.assertFalse(progress.presentation_proof(changed,self.recipe))
+
+    def test_enhanced_upper_requires_exact_requested_generation(self):
+        recipe={'name':'p1-upper-serve','completed_callbacks':[4131],'fields':['upper_serve_scene']}
+        report=copy.deepcopy(self.report);report['interface_flavor']='enhanced'
+        row={'requested_callback':4131,'field':'upper_serve_scene','first_difference':None,
+             'raster':{'generation':{'prepared_after_callback':4131},'requested_generation':4131,'wait_horizon_callback':4132},
+             'source':{'generation':4131,'hardware_frames':[5430],'pixel_frames':[5432]}}
+        report['checks']=[row];report['raw_state_differences']=[{'update':4131,'differences':[]}]
+        self.assertTrue(progress.presentation_proof(report,recipe))
+        for field in ('raster','source'):
+            changed=copy.deepcopy(report)
+            if field=='raster':changed['checks'][0]['raster']['generation']['prepared_after_callback']=4130
+            else:changed['checks'][0]['source']['generation']=4130
+            self.assertFalse(progress.presentation_proof(changed,recipe))
+        changed=copy.deepcopy(report);changed['checks'][0]['source']['pixel_frames']=[5431]
+        self.assertFalse(progress.presentation_proof(changed,recipe))

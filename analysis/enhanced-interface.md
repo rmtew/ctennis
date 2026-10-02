@@ -101,9 +101,11 @@ Independent review and merge authorization remain separate from local passes.
 
 ## Current local review checkpoint (2026-10-02 UTC)
 
-Both flavor views report `evidenced within stated scope`; the26 current receipts
-in the ignored `build/interface-checkpoint/interface-evidence-index.json` are
-fresh and passed. This is local acceptance, pending exact-head independent review.
+At the independently reviewed9155b60 checkpoint both flavor views reported
+`evidenced within stated scope`; the26 then-current receipts
+in the ignored `build/interface-checkpoint/interface-evidence-index.json` were
+fresh and passed. That exact head was independently source/runtime cleared;
+subsequent receipt-only changes require their own delta review.
 The original executable SHA256 is
 `b3ac773721e62f2cabe7806523f5650192386e4bc99e2e4a30aa880260d1d492`;
 original ADF SHA256 is
@@ -131,3 +133,16 @@ and8 completed commands. Current provenance, rather than those counts, governs
 acceptance. Final42 unit tests pass; original title/mode fault guards and the
 maintained200-update serve mutation/restoration checks remain green. No aggregate
 suite was repeated for this interface follow-on.
+
+### Exact enhanced upper checkpoint correction
+
+The earlier requested4131 row captured completed scene4130. The corrected
+observer explicitly waits for the requested completed scene, with a three-frame
+bound and rejection if the scene has been skipped. Callback/state checkpoint
+4131 stays unchanged. The receipt separately records the actual callback reached
+at scanout (4133 in this run), completed scene4131, and the immutable original
+supplement hardware5430/pixel5432. All three normal crops match; the actual
+sprite fault is detected at each exact requested scene. The progress proof
+rejects the preceding-generation receipt. Other reports are retained evidence
+at the reviewed head; conservative helper fingerprints may mark them stale
+after this diagnostic change. They were not rewritten or broadly rerun.

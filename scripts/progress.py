@@ -73,6 +73,17 @@ def presentation_proof(report, recipe):
                 and bool(raster.get('generation'))
                 and all(r.get('offset') in MAINTAINED_SCRATCH_OFFSETS for r in raw))
     checks = report.get('checks', [])
+    if recipe['name']=='p1-upper-serve' and report.get('interface_flavor')=='enhanced':
+        rows=checks + report.get('hardware_mutation',{}).get('checks',[])
+        if any(r.get('raster',{}).get('requested_generation')!=r.get('requested_callback')
+               or type(r.get('raster',{}).get('wait_horizon_callback')) is not int
+               or r['raster']['wait_horizon_callback'] < r.get('requested_callback',0)
+               or r.get('raster',{}).get('generation',{}).get('prepared_after_callback')!=r.get('requested_callback')
+               or r.get('source',{}).get('generation')!=r.get('requested_callback')
+               or r.get('requested_callback')==4131 and (r.get('source',{}).get('hardware_frames')!=[5430]
+                                                         or r.get('source',{}).get('pixel_frames')!=[5432])
+               for r in rows):
+            return False
     expected = [(c,f) for c in recipe['completed_callbacks'] for f in recipe['fields']]
     return ([(r.get('requested_callback'), r.get('field')) for r in checks] == expected
             and all(r.get('first_difference') is None and r.get('raster', {}).get('generation') for r in checks)

@@ -241,10 +241,11 @@ def generation_sequence(case, contract, self_test):
         return source_generation(generation)
     if case['source_case'] != 'one-player-match' or case['inputs'] != [{'port': 2, 'red': True}]:
         raise ValueError('Generation adapter supports the frozen R1 held-fire prefix')
+    exact_generations = tuple(case['completed_callbacks']) if case['name']=='p1-upper-serve' and case.get('interface_flavor')=='enhanced' else ()
     captured = capture(tuple(case['completed_callbacks']), recorded_entropy=True,
                        track_commits=True, completed_rasters=True, initial_source_update=case.get('initial_source_update', 0),
                        initial_phase_reference=case.get('initial_phase_reference'), capture_label=case['name']+'-'+case.get('interface_flavor','original'),
-                       interface_flavor=case.get('interface_flavor','original'))
+                       interface_flavor=case.get('interface_flavor','original'), required_raster_generations=exact_generations)
     checks, first = [], None
     for observed in captured['observations']:
         if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
@@ -253,6 +254,8 @@ def generation_sequence(case, contract, self_test):
         if not raster['generation']:
             raise ValueError('No simulated presentation generation for requested checkpoint')
         generation = raster['generation']['prepared_after_callback']
+        if exact_generations and generation != observed['completed_callbacks']:
+            raise ValueError('Upper-serve raster does not prove the requested generation')
         source, association = original_generation(generation)
         expected = map_source_palette(source, contract)
         with Image.open(raster['capture']['path']) as picture:
@@ -295,7 +298,7 @@ def generation_sequence(case, contract, self_test):
             initial_source_update=case['initial_source_update'],
             initial_phase_reference=case['initial_phase_reference'],
             executable_mutator=move_sprite_one_pixel, capture_label=case['name']+'-'+case.get('interface_flavor','original') + '-mutation',
-            interface_flavor=case.get('interface_flavor','original'))
+            interface_flavor=case.get('interface_flavor','original'), required_raster_generations=exact_generations)
         changed_checks = []
         for observed in changed_capture['observations']:
             if any(row['offset'] not in MAINTAINED_SCRATCH_OFFSETS for row in observed['state_differences']):
