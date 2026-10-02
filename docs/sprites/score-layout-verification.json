@@ -1,11 +1,11 @@
 {
-  "tested_product_commit": "0ce30f56f15f0f7fd39ad57d2a003f795e03ce9d",
+  "tested_product_commit": "552458aedca9803fb94ccfa8b9c6b5fbf3d523d9",
   "base_master_commit": "21c370f0a614a4ea58f3efdb5c9fea41a5959b0e",
   "target": "PAL A500 68000 OCS 512KB chip zero slow/fast Kickstart1.3",
   "host_tests_passed": 37,
   "validated_inputs": 94,
   "startup_generated_banks": 28,
-  "startup_seconds": 0.02123152785746374,
+  "startup_seconds": 0.021160197863201446,
   "startup_wrong_advantage_control": {
     "detected": true,
     "failure": {
@@ -13,7 +13,7 @@
       "bank": "score_bank_point_a_4_p2",
       "different_bytes": 24
     },
-    "executable_sha256": "cd06146efd771c1025aeb700990558cc9f8cc1f5bc2fb7c3b3e9763ce554f457"
+    "executable_sha256": "3262fbed62975117b828563b8da9142a9a0be51a36aac5dd8602df7fb1d3960e"
   },
   "scoreboard_cases": 28,
   "scoreboard_native_captures": 56,
@@ -30,68 +30,74 @@
       0
     ],
     "artifact_directory": "build/tests/native-scoreboard/6-0-0/wrong-tally-pointer",
-    "executable_sha256": "411be02f020856a0b8fb0db3aab0643f2aabacd74f1d297024a2fbe22c47151f"
+    "executable_sha256": "2d7ba7c9ce2cb0c04fcae68c9dc08ba422e9f931c5d2744521a1186e6d45a6ad"
   },
-  "status6_checks": 112,
-  "status6_native_raster_checks": 2,
-  "status6_controls": [
-    {
-      "detected": true,
-      "failure": {
-        "label": "status visible until native saturation expiry",
-        "actual": 2,
-        "expected": 0
-      },
-      "artifact_directory": "build/tests/native-contracts/status-6/mutant-True",
-      "executable_sha256": "73e86b3b2b198a75f55e6b71dc8e647ecb7e23136abf22595d03f473b5a42852"
-    },
-    {
-      "detected": true,
-      "failure": {
-        "label": "visible native status raster matches committed bank",
-        "variant": 6,
-        "different_pixels": 1082
-      },
-      "artifact_directory": "build/tests/native-contracts/status-6/mutant-pointer",
-      "executable_sha256": "58ca452648e6207fded83e545c851f4eb5137e3d0c0f1a26553feaef5e02b466"
-    }
-  ],
   "ordinary_physical_input_starts": [
     {
       "two_players": false,
-      "screenshot_sha256": "a81f9d8ba635b7d1fa2121328f1b8efd1548495b1845fc6331523b0577480116",
+      "screenshot_sha256": "ffcc0c5d1c81096bca4d794409a2f2ee5ee019f2a4eb3c1e0b664dd5a1d63880",
       "input": "ordinary title; Enter"
     },
     {
       "two_players": true,
-      "screenshot_sha256": "6e68aec27f719d1d77b0ab856f7baa4252e63a26b44886c86f2d9a6682ffd347",
+      "screenshot_sha256": "cb4f807b83528be5dbfc388e657e847745aa628e6d5d41ac11de5cafe951f6c0",
       "input": "ordinary title; Down, Right, Up, Enter"
     }
   ],
   "preview": {
     "library_file_id": "libfile_7a650b8165548191bd91c5bb5a03dcef",
-    "version": 0,
+    "version": 1,
     "filename": "baseline-rally-framed-square-scores.png",
     "dimensions": [
       1500,
       1030
     ],
-    "sha256": "07b11fb3fce1fdfed79c98c0c54d3768bfdec1733466bf5412355076114ee038",
-    "content": "Actual native captures; ordinary one-player court at716x537 from716x285, native-pixel closeups, all seven states in both colours, two-player label"
+    "sha256": "85dda4d426dd3df9d11cc55a55c4123f54fb5aed9b450573ec184e4c4939b039",
+    "content": "Actual native fixed-column captures; ordinary one-player court at716x537 from716x285, native-pixel closeups, all seven original masks in both colours, two-player label"
   },
   "cost": {
     "base_executable_bytes": 248480,
-    "selected_executable_bytes": 235412,
-    "saved_executable_bytes": 13068,
+    "selected_executable_bytes": 235356,
+    "saved_executable_bytes": 13124,
     "base_hunk_payload_bytes": 202104,
-    "selected_hunk_payload_bytes": 202504,
+    "selected_hunk_payload_bytes": 202480,
     "point_bank_bytes_unchanged": 14336,
     "palette_entries_added": 0
   },
-  "selected_executable_sha256": "83e222cd71b09ad7266bfbf5405c66a6457e80a85ba539df60eb3956c18f20f8",
+  "selected_executable_sha256": "031c5cde44970e9feee22451a96aedcc91c327ba49af897a0f05fd4f6eb3f01e",
   "reference_access": "Local Library screenshot materialization failed; parent actual screenshot inspection supplied. Fresh local native captures inspected.",
   "not_run": [
     "unrelated full native acceptance",
     "WinUAE campaign"
-  ]
+  ],
+  "reused_status6_evidence": {
+    "tested_product_commit": "0ce30f56f15f0f7fd39ad57d2a003f795e03ce9d",
+    "reason": "Fixed-column correction leaves every status bank, frame/Copper command and role/WIN pixel unchanged.",
+    "status6_checks": 112,
+    "status6_native_raster_checks": 2,
+    "status6_controls": [
+      {
+        "detected": true,
+        "failure": {
+          "label": "status visible until native saturation expiry",
+          "actual": 2,
+          "expected": 0
+        },
+        "artifact_directory": "build/tests/native-contracts/status-6/mutant-True",
+        "executable_sha256": "73e86b3b2b198a75f55e6b71dc8e647ecb7e23136abf22595d03f473b5a42852"
+      },
+      {
+        "detected": true,
+        "failure": {
+          "label": "visible native status raster matches committed bank",
+          "variant": 6,
+          "different_pixels": 1082
+        },
+        "artifact_directory": "build/tests/native-contracts/status-6/mutant-pointer",
+        "executable_sha256": "58ca452648e6207fded83e545c851f4eb5137e3d0c0f1a26553feaef5e02b466"
+      }
+    ]
+  },
+  "point_placement": "All seven original selected masks restored exactly; fixed tens/units; no per-value ink centring; original single-A placement.",
+  "single_zero_units_equal_30_40": true
 }

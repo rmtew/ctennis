@@ -83,3 +83,32 @@ native capture displayed at716x537 from the716x285 field; the labelled state
 samples are native fixtures. [The compact receipt](score-layout-verification.json)
 records hashes and controls. Raw captures, reports and executables remain ignored.
 A subsequent documentation-only commit adds this receipt without product changes.
+
+## Current fixed-column correction
+
+The user clarified that this is an LED display with fixed tens/units positions:
+a single0 occupies exactly the units pixels used by0 in30 and40. Product
+`552458aedca9803fb94ccfa8b9c6b5fbf3d523d9` removes per-value translation and restores all seven
+original selected16x16 masks byte-for-byte, including the original single-A
+advantage placement. The stacked borders, four-pixel cell padding, role labels,
+WIN glyphs, palette, Copper scheduling and score semantics are unchanged.
+
+Fresh checks passed:37 host tests (including row-by-row zero/30/40 units equality
+and blank tens),94 asset checks, all28 generated native banks, all28 scoreboard
+mode/end/state fixtures with56 captures and both physical Copper banks, the
+wrong-advantage and wrong-WIN controls, and ordinary physical-input one/two-player
+starts. Static plane changes are confined to the two point cells. The prior
+DOUBLE FAULT receipt is explicitly reused for unchanged status/frame assets;
+no new status or unrelated full native campaign is claimed.
+
+Construction measured21.160ms. Against master21c370f, executable size is
+248480 ->235356 bytes (-13124), and loaded hunk payload is202104 ->202480 bytes
+(+376, excluding loader bookkeeping). Removing the centring table and its code
+reduces resident payload by24 bytes from the preceding framed version. The
+point-bank allocation remains14336 bytes, with no per-frame drawing.
+
+The same Library preview identity `libfile_7a650b8165548191bd91c5bb5a03dcef` is now
+version1,1500x1030, filename `baseline-rally-framed-square-scores.png`. It was
+rebuilt from fresh native captures and visually inspected. The standalone zero
+is visibly in the right-hand units position. The latest compact receipt above
+names this product and marks reused evidence explicitly.
