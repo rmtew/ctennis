@@ -580,7 +580,8 @@ game_scene_images: incbin "assets/native/scene/sprite-images.bin"
         even
         include "assets/native/court/score-bank-data.i"
         even
-paula_square: dc.b $7f,$7f,$81,$81
+; Authored mathematical four-byte square; identical bytes preserve effect timbre.
+paula_square: incbin "assets/native/audio/battle-hymn/square.s8"
         even
 copperlist_back: dcb.b copperlist_end-copperlist,0
 sprite_back: dcb.b 8*72,0

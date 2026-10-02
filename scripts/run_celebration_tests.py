@@ -35,6 +35,8 @@ def run(winner, exchanged, mutant=False):
     exe=directory/'native-fixture';listing=directory/'native.lst'
     assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(fixture)])
     compile_manifest(exe,listing);sym=code_symbols(listing.read_text());checks=[];rows=[];photos=[]
+    notes=json.loads((ROOT/'assets/native/audio/battle-hymn/notes.json').read_text())['voices']
+    previous_cursors=[0,0,0]
     def check(label,actual,expected):
         checks.append(dict(label=label,actual=actual,expected=expected))
         if actual!=expected:raise AssertionError(checks[-1])
@@ -52,8 +54,8 @@ def run(winner, exchanged, mutant=False):
             s.inspect('input_joy',dict(port=port,red=True))
         pc=base+sym['simulation_update'];s.inspect('break_add',dict(kind='pc',addr=pc))
         award=None;first=None;last_loaded=False;frozen=None;pose_seen=set();loops=[];returned=None;paused=False
-        previous_loop=0;initial_memory=None;early=False;early_release=False
-        for index in range(3000):
+        previous_loop=0;initial_memory=None;early=False;early_release=False;pause_ticks=0
+        for index in range(3500):
             stop=s.inspect('run_until',{'seconds':90});assert stop['pc']==pc,stop
             life=num('game_lifecycle',2);callback=num('simulation_updates',2)
             if life==6:
@@ -67,6 +69,19 @@ def run(winner, exchanged, mutant=False):
                 row=dict(callback=callback,elapsed=elapsed,seconds=stop['seconds'],gate=gate,loop=loop,
                          voices=voice.hex(),armed=num('game_celebration_armed'))
                 rows.append(row)
+                cursors=[voice[v*32+5] for v in range(3)]
+                if cursors!=previous_cursors:
+                    regs=s.inspect('custom_dump')['regs']
+                    for v,channel in enumerate((0,1,3)):
+                        if not cursors[v] or cursors[v]==previous_cursors[v]:continue
+                        event_index=cursors[v]-1
+                        if event_index>=len(notes[v]) or notes[v][event_index]['midi'] is None:continue
+                        expected=notes[v][event_index]['paula_period_4byte_wave']
+                        actual=int.from_bytes(voice[v*32+18:v*32+20],'big')
+                        check('native score pitch matches independently authored note',actual,expected)
+                        check('actual Paula period output matches note',regs[f'AUD{channel}PER'],expected)
+                        check('actual Paula volume stays bounded',0<=regs[f'AUD{channel}VOL']<=64,True)
+                    previous_cursors=cursors
                 check('score frozen', (mem('game_point_a',2)+mem('game_games_a',2)).hex(),frozen.hex())
                 if all(voice[v*32+6] for v in range(3)) and any(voice[v*32+12] for v in range(3)):
                     last_loaded=True
@@ -95,7 +110,7 @@ def run(winner, exchanged, mutant=False):
                         photo=directory/f'bounce-{elapsed}.png';s.inspect('capture_screenshot',{'path':str(photo)})
                 if gate and first is None:
                     first=callback;check('early input discarded and winning hold blocked',num('game_celebration_armed'),0)
-                    check('gate waits full first duration',elapsed>=768,True)
+                    check('gate waits full first duration',elapsed>=926,True)
                     check('last-loaded state observed before real completion',last_loaded,True)
                 if loop!=previous_loop:
                     loops.append(row);previous_loop=loop
@@ -107,16 +122,19 @@ def run(winner, exchanged, mutant=False):
                         if num('ui_paused'):break
                     check('pause entered',num('ui_paused'),255)
                     pause_voice=mem('game_audio_voices',96);pause_loops=num('game_celebration_loops',2)
+                    pause_callback=num('simulation_updates',2)
+                    pause_clock=mem('game_audio_wait')+mem('game_celebration_audio_fraction')
                     s.inspect('input_key',dict(rawkey=0x19,action='release'))
                     for _ in range(8):s.inspect('step',{'count':1});s.inspect('run_until',{'pc':pc})
                     check('paused audio duration/envelope frozen',mem('game_audio_voices',96).hex(),pause_voice.hex())
+                    check('paused fractional audio clock frozen',(mem('game_audio_wait')+mem('game_celebration_audio_fraction')).hex(),pause_clock.hex())
                     check('paused loop count frozen',num('game_celebration_loops',2),pause_loops)
                     regs=s.inspect('custom_dump')['regs'];check('pause mutes Paula',[regs[f'AUD{x}VOL'] for x in (0,1,3)],[0,0,0])
                     s.inspect('input_key',dict(rawkey=0x19,action='press'))
                     for _ in range(12):
                         s.inspect('step',{'count':1});s.inspect('run_until',{'pc':pc})
                         if not num('ui_paused'):break
-                    check('pause resumed',num('ui_paused'),0);s.inspect('input_key',dict(rawkey=0x19,action='release'));paused=True
+                    check('pause resumed',num('ui_paused'),0);pause_ticks=num('simulation_updates',2)-pause_callback;s.inspect('input_key',dict(rawkey=0x19,action='release'));paused=True
                 if loop>=2 and not early_release:
                     photo=directory/'ready-second-loop.png';s.inspect('capture_screenshot',{'path':str(photo)});photos.append(str(photo))
                     for port in (1,2):s.inspect('input_joy',dict(port=port,red=False))
@@ -136,23 +154,26 @@ def run(winner, exchanged, mutant=False):
             s.inspect('step',{'count':1})
         else:raise AssertionError('Finite celebration completion not reached')
         check('two full cycles observed',len(loops)>=2,True)
+        check('loop reload has no extra sequencer interval',loops[1]['callback']-loops[0]['callback']-pause_ticks,924)
         check('bounce visits at least three heights',len(pose_seen)>=3,True)
         check('early press and pause exercised',early and paused,True)
-        check('first cycle includes complete score and queue startup',first-award,770)
+        check('first cycle includes complete score and queue startup',first-award,926)
         check('bounded chip RAM',initial_memory['used_chip_bytes']<524288 and final_memory['used_chip_bytes']<524288,True)
         check('no runtime allocation',final_memory['used_chip_bytes'],initial_memory['used_chip_bytes'])
         deadlines=num('missed_presentation_deadlines',2)
     # Inspect actual emitted audio, not host synthesis.
     from native_audio_checks import pcm16_window
     sound=pcm16_window(directory/'native.wav',rows[40]['seconds'],.2)
-    check('native emitted fanfare signal',any(x['nonzero_pcm16_samples'] for x in sound['channels']),True)
+    check('native emitted Battle Hymn signal',any(x['nonzero_pcm16_samples'] for x in sound['channels']),True)
     # Exact footer pixels from the retained font, plus visible winner/absent loser.
     font=(ROOT/'assets/native/title/font.bin').read_bytes()
-    text=('BLUE WINS  ' if blue else 'RED WINS   ')+('BLUE 6 RED 2' if blue else 'BLUE 2 RED 6')
+    text=('A WINS  ' if blue else 'B WINS  ')+('A 6 B 2' if blue else 'A 2 B 6')
     for ready,name in [(False,'before-gate.png'),(True,'ready-second-loop.png')]:
         with Image.open(directory/name) as picture:
             raster=picture.convert('RGB');check('PAL viewport',list(picture.size),[716,285])
-            for y,line in [(208,text),(216,'PRESS FIRE TO CONTINUE' if ready else ' '*21)]:
+            for y,line in [(208,text),(216,'PRESS FIRE TO CONTINUE' if ready else '')]:
+                left=(32-len(line))//2
+                line=' '*left+line+' '*(32-left-len(line))
                 expected=[]
                 for row in range(8):
                     for char in line:
@@ -160,7 +181,7 @@ def run(winner, exchanged, mutant=False):
                         for bit in range(7,-1,-1):
                             rgb=(255,255,255) if byte&(1<<bit) else (0,0,0)
                             expected.extend((rgb,rgb))
-                actual=list(raster.crop((190,y,190+len(line)*16,y+8)).get_flattened_data())
+                actual=list(raster.crop((126,y,638,y+8)).get_flattened_data())
                 check('exact native '+('continue' if y==216 else 'winner/totals')+' pixels',actual==expected,True)
             colours=raster.crop((300,40,470,208)).getcolors(40000)
             own=(85,85,238) if blue else (238,51,51);other=(238,51,51) if blue else (85,85,238)

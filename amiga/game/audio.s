@@ -72,6 +72,7 @@ game_audio_tick:
         subq.b  #1,game_audio_wait
         bne     .done
         st      game_audio_due
+.voices:
         moveq   #2,d7
         lea     game_audio_voices+2*AV_SIZE,a0
 .voice:
@@ -132,11 +133,6 @@ game_audio_tick:
         beq.s   .pitch
         move.b  3(a1),AV_NOTE_OCTAVE(a0)
 .pitch:
-        btst    #5,d6
-        beq.s   .indexed_pitch
-        move.w  12(a1),d0
-        bra.s   .write_pitch
-.indexed_pitch:
         moveq   #0,d2
         move.b  AV_NOTE_OCTAVE(a0),d2
         andi.w  #7,d2
@@ -150,8 +146,11 @@ game_audio_tick:
         add.w   d0,d0
         add.w   d0,d2
         lea     native_audio_periods,a2
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .period_table
+        lea     native_victory_periods,a2
+.period_table:
         move.w  (a2,d2.w),d0
-.write_pitch:
         move.w  d0,AV_PERIOD(a0)
         bsr     game_audio_write_period
 .initial_level:
@@ -214,6 +213,33 @@ game_audio_tick:
 .next:
         suba.w  #AV_SIZE,a0
         dbra    d7,.voice
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .rearm
+        bsr     game_audio_phrase_complete
+        tst.b   d0
+        beq.s   .rearm
+        ; Notify only after every final duration actually expires. Reload the
+        ; next downbeat in THIS sequencer step, avoiding an extra empty step.
+        st      game_celebration_first_play
+        addq.w  #1,game_celebration_loops
+        bsr     game_result_sound
+        bra     .voices
+.rearm:
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        bne.s   .ordinary_rate
+        ; Game updates are ~59.923Hz, NOT the PAL50 video rate assumed by
+        ; authored .04s score units. A bounded2/3-tick cadence averages2.4
+        ; native ticks/unit (~40.052ms), retaining the intended125BPM pacing.
+        moveq   #2,d0
+        addq.b  #2,game_celebration_audio_fraction
+        cmpi.b  #5,game_celebration_audio_fraction
+        bcs.s   .victory_rate
+        subq.b  #5,game_celebration_audio_fraction
+        moveq   #3,d0
+.victory_rate:
+        move.b  d0,game_audio_wait
+        bra.s   .done
+.ordinary_rate:
         move.b  game_audio_rate,game_audio_wait
 .done:
         movem.l (sp)+,d0-d7/a0-a3

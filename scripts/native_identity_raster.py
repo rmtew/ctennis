@@ -50,3 +50,24 @@ def assert_title_raster(path):
             actual=list(raster.crop((left,16+y,left+len(text)*32,32+y)).get_flattened_data())
             assert actual==expected,{'label':'actual native Baseline Rally title','text':text}
     return {'title':'Baseline Rally','matched':True}
+
+
+def assert_footer_raster(path, first, second, selected=None):
+    """Compare the entire court footer against authored font cells, including blanks."""
+    font=(ROOT/'assets/native/title/font.bin').read_bytes()
+    expected=[]
+    for text in (first,second):
+        assert len(text)<=32
+        left=(32-len(text))//2
+        for row in range(8):
+            for cell in range(32):
+                column=cell-left
+                byte=font[ord(text[column])*8+row] if 0<=column<len(text) else 0
+                if text==second and selected is not None and left+text.index(selected)<=cell<left+text.index(selected)+len(selected):byte^=255
+                for bit in range(8):
+                    rgb=(255,255,255) if byte&(128>>bit) else (0,0,0)
+                    expected.extend((rgb,rgb))
+    with Image.open(path) as picture:
+        actual=list(picture.convert('RGB').crop((126,208,638,224)).get_flattened_data())
+    assert actual==expected,{'label':'centered complete two-row footer raster','first':first,'second':second,'selected':selected,'different_pixels':sum(a!=b for a,b in zip(actual,expected))}
+    return {'first':first,'second':second,'selected':selected,'matched':True,'pixels':len(actual)}

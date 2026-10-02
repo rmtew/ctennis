@@ -82,3 +82,17 @@ Primary image inspection is attributed to that reviewer, not the local
 asset worker. Bass/arpeggio, waveform and period table are newly authored.
 No Sega melody, modern arrangement audio, recording, or lyrics were copied.
 This private integration does not make a blanket public-release rights claim.
+
+## Integrated native timing (CT13)
+
+The package's40ms/.04s timing above is the authored nominal50Hz contract,
+not a measurement of this game's simulation timer. The accepted game updates
+at ~59.923Hz despite PAL50Hz video. CT13 therefore schedules celebration audio
+on a2/3-simulation-tick pattern averaging2.4 ticks/unit (~40.052ms), without
+changing the game timer or ordinary effect cadence. It includes the one-unit
+terminal rest:385 units/924 simulation ticks (~15.4205s) per loop, plus2 startup
+ticks for the first queued play. Reload occurs in the same audio step after
+actual duration/level completion; there is no additional empty requeue step.
+The prompt notification is produced by that real completion, not a timer guess.
+The independent period table is selected only for celebration; the retained
+effect lookup remains byte-identical.

@@ -1,58 +1,66 @@
-# CT13: provisional Warm Fanfare and match celebration
+# CT13: sequenced Battle Hymn and match celebration
 
-Six games now retain the final court and logical winner/totals instead of
-automatically returning to title. After a bounded 48-tick celebration pause,
-the loser/ball/shadow disappear and the winner moves to their own half's visual
-centre, raises the racket and bounces upward by zero, one or two pixels.
-Celebration reuses native pose4 for the lower actor and pose11 for the upper
-actor; no pose/sprite asset is added. Anchors are X120/Y125 (lower) and X120/Y52
-(upper), with the existing pose offsets and three-part16x32 actor geometry.
-Future replacement sprites must preserve those anchors and cover these two
-explicit raised-racket pose indices. Blue/Red
-identity follows logical score ownership through exchanged ends. The text is
-ordinary native label data; future P1/P2 naming or sprites are separate scope.
-Individual game-win feedback remains the existing short feedback.
+Six games retain the final court, logical winner/totals and celebration rather
+than automatically returning to title. After48 celebration ticks the loser,
+ball and shadow disappear; the winner centres on their own half with raised
+racket and0–2 pixel bounce. Logical Blue/Red ownership stays correct through end
+exchanges. Individual game feedback remains short.
 
-The independent Warm Fanfare is provisional, selected by the user to proceed
-with CT13 while traditional tune alternatives are prepared separately. It is
-the existing audition's melody, bass and harmony, represented by authored
-16-byte records in `assets/native/audio/fanfare.i`. No audition WAV/ZIP is a game
-input or committed delivery workaround. The source uses direct independently
-calculated Paula periods, native volume indices32/20/13 and a 7/8 release scale;
-it does not use the retained melody, period index or envelope rows for this cue.
-The analytic four-byte square DMA waveform remains shared with other sounds.
-Superseded Sega-derived victory score-2/3 are removed from the active manifest,
-includes and files; Git history preserves their provenance. Other retained
-assets keep their honest Sega-derived/private-only provenance. No unsupported
-rights-clearance, original parity or real-hardware quality claim is made.
+The user selected the corrected Battle Hymn chorus, replacing provisional Warm
+Fanfare. Asset-only source commit:9c7ede993525fdea8eee139a66ee72327fdb54db. See
+[authored format/provenance](../../assets/native/audio/battle-hymn/README.md).
+Melody/bass/arpeggio have34/33/65 native16-byte records:2,112 score bytes,4-byte
+square waveform and independent3,072-byte period bank,5,188 runtime asset bytes.
+This is three-voice sequenced chiptune, not embedded WAV music. No Hail alternative
+or tune selector is included. Old Sega victory score-2/3 and placeholder fanfare
+are removed from active inputs. Other retained provenance remains honest/private.
+The selected square is byte-identical to the previous mathematical waveform;
+the new period bank is used only during celebration. Ordinary effect pitches,
+levels and envelopes remain unchanged. No new channel/runtime allocation or
+unsupported public-release rights/original/hardware parity claim.
 
-Eight 4/4 bars take384 rate2 sequencer steps (768 simulation ticks), approximately
-12.8165 seconds per subsequent loop. Initial queuing adds2 simulation ticks.
-Final one-beat rests align all voices and create an intentional loop breath.
-`AV_DONE` retains its legacy last-loaded meaning for unaffected cue waits;
-`game_audio_phrase_complete` is the explicit full-duration/zero-emitted-level
-contract for all three voices. Completion, not an assumed elapsed delay, sets
-the first-play latch and restarts the next loop. The prompt appears only then.
-Early presses are discarded, inherited holds remain blocked and all action
-sources must release before fresh fire/action can return once to title.
-Title return mutes/resets voices and celebration state and clears the match.
-Normal pause freezes the sequencer, mutes Paula and resumes its prior levels.
-The frozen winner/totals line is cached after first drawing; prompt appearance
-and pause/resume copy it and draw only the prompt to stay within the unchanged
-callback deadline. The initial uncached two-line redraw failed cold-ADF cadence
-and was replaced; that failed receipt is not an acceptance pass.
+Composer timing assumes50Hz updates; the accepted game updates at~59.923Hz,
+despite PAL50Hz video. Celebration alone uses a bounded2/3-tick pattern averaging
+2.4 ticks/unit (~40.052ms), keeping approximately125BPM without changing gameplay
+or effects. The384-unit phrase plus1-unit terminal rest takes924 simulation ticks
+(~15.4205s) per subsequent loop; initial queuing adds2 ticks to the first play.
+This is distinct from the software audition's nominal15.36s phrase/15.40s end.
+Native timing is checked against actual emitted events.
 
-The tune boundary is three fixed native pointers (melody/bass/harmony), not a
-skin/music framework. To replace the provisional tune after selection, edit
-the three authored scores, align their terminal rests and update manifest
-hashes. Direct-period flag bit5 is documented in the score and is unused by the
-retained records. No new channels, PCM streaming or runtime allocation are
-introduced. There are59 records/944 score bytes,8 bytes of celebration state and a256-byte
-static chip cache for the frozen banner;
-additional code/labels must be measured with the normal post-link chip telemetry.
-Target remains PAL A500/68000/OCS/512KiB chip, zero expansion, legitimate
-Kickstart1.3 and pinned Copperline. Pre-Exec-pool bootstrap memory remains outside
-the established telemetry scope.
+AV_DONE retains its legacy last-loaded meaning for unaffected cue waits.
+game_audio_phrase_complete requires all three actual final durations to expire
+and emitted levels to reach zero. The audio tick then notifies first-play,
+counts the completed cycle and reloads the next downbeat in that SAME step.
+There is no extra empty requeue interval after terminal rest. Only then does
+PRESS FIRE TO CONTINUE appear. Early presses are discarded, inherited holds
+blocked, and all action sources must release before fresh fire/action returns
+once to title, clearing match/audio/presentation/phase. Pause freezes fractional
+clock and notes, mutes Paula and resumes previous levels. A256-byte static chip
+banner cache bounds prompt/resume drawing to one font line. The earlier two-line
+redraw failed cold-ADF cadence and was replaced; that failure is not a pass.
+Celebration state occupies8 bytes. Pre-Exec-pool bootstrap RAM remains unmeasured.
+
+The tune boundary is three fixed pointers, not a music/skin framework. Future
+replacement needs explicit selection, positive aligned terminal records, an
+independently checked compatible pitch bank and updated manifest hashes.
+Historical correction/provenance are attributed to the primary-source reviewer
+in the asset README, not claimed as this integrator's independent inspection.
+
+## Sprite/label integration contract
+
+No pose/sprite mask is added. Lower pose4 frame offsets:$0180/$0880/$0900,
+racket DY=-2/DX=+16. Upper pose11:$1180/$1880/$1900, DY=-2/DX=-16. Origins are
+X120/Y125 lower and X120/Y52 upper, with0–2 pixels upward bounce; legs retain
+Y+16 and existing native masks/offsets. Replacement sprites must cover these
+explicit raised-racket indices with unchanged anchors. Winner is logical0/1;
+interface_text.s holds ordinary label strings. Global A/B naming and Classic
+human/robot art belong to the separate sprite branch.
+
+Lifecycle/audio touchpoints:result.s/result_audio.s/audio.s and square declaration
+in main.s. Shared UI:interface.s/interface_feedback.s/interface_input.s/
+interface_pause.s/interface_render.s/interface_text.s. Manifest/data includes are
+explicitly updated. Parent combines these files and independently reviews/tests
+before any merge. No master merge or public release here.
 
 ## Affected finite verification
 
@@ -70,6 +78,7 @@ RUST_LOG=info python scripts/run_celebration_tests.py --winner=red
 RUST_LOG=info python scripts/run_celebration_tests.py --winner=blue --exchanged
 RUST_LOG=info python scripts/run_celebration_tests.py --winner=red --exchanged
 RUST_LOG=info python scripts/run_native_contracts.py --case=audio-hit --self-test
+RUST_LOG=info python scripts/run_native_contracts.py --case=match-award
 RUST_LOG=info python scripts/run_enhanced_menu_tests.py --adf
 RUST_LOG=info python scripts/run_demo_match_tests.py
 RUST_LOG=info python scripts/run_demo_match_tests.py --takeover
@@ -84,7 +93,8 @@ RUST_LOG=info python scripts/run_native_setup_tests.py --self-test
 The four new fixtures initialise near-match state once, then use actual native
 scoring, dispatcher, physical input, audio and scanout. They check both winners
 and end orientations, frozen score, exact footer font pixels, winner colour /
-absent loser pixels, raised pose, three bounce heights, two full plays and quiet
+absent loser pixels, raised pose, three bounce heights, independent authored pitch versus actual Paula registers, complete first play,
+exact subsequent-cycle interval and quiet
 real-emulator loop breath, held/early input, full-play gate, pause/mute/resume,
 fresh continuation, single title return and stable bounded chip allocation.
 A compiled premature-completion mutant removes the duration check and must be
@@ -94,11 +104,22 @@ milestones instead of the superseded automatic result-to-title epoch; existing
 restart/input/publication guards remain. Attract replay still compares the
 frozen10958-tick trajectory without regenerating it.
 
-The cold menu joystick takeover check now observes up to12 actual native input
-samples, matching its existing keyboard takeover check. The old single-sample
-assumption could run before the physical event was sampled. The check still
-requires actual takeover, byte-preserved world/score/audio/clocks at that sample,
-and consumed input; no takeover state is injected or assertion removed.
+All bottom messages use the256-pixel court viewport and centered32-cell rows.
+Pause/confirmation and match celebration own both rows. Ordinary demo game-state
+feedback owns row1; row2 always shows `DEMO - TAKE OVER / EXIT`, with only the
+chosen option inverted and EXIT selected by default. Left chooses TAKE OVER,
+right chooses EXIT, either player's action button or Enter confirms, and Escape
+exits. The selected action preserves world/score/audio/AI state on takeover and
+consumes the confirming event. Every carried keyboard/joystick control is masked
+until its own release. Live controls never drive recorded demo gameplay.
+
+The cold menu check compares the entire two-row scanout for pause, confirmation,
+default EXIT and selected TAKE OVER, including blank background pixels. Keyboard
+and joystick confirmation observe up to12 actual input samples. Frozen full-demo
+replay additionally carries live left/right/up/down input across50 callbacks
+apiece while still requiring the independently frozen10958-tick trajectory.
+Mid-match takeover checks exact native state at the confirmation sample and
+consumption of the held selector direction as well as the confirming action.
 
 No master merge, public release, new sprite design, music-alternative selection
 or unrelated sound-effect redesign is part of this draft.

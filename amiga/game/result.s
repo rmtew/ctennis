@@ -7,6 +7,7 @@ game_result_begin:
         clr.b   game_celebration_armed
         clr.b   game_celebration_pose
         clr.w   game_celebration_loops
+        clr.b   game_celebration_audio_fraction
         clr.b   game_serve_clock
         clr.b   game_celebration_winner
         cmpi.b  #6,game_games_a
@@ -33,13 +34,6 @@ game_result_poll:
         tst.b   ui_paused
         bne     game_round_done
         bsr     game_celebration_present
-        bsr     game_audio_phrase_complete
-        tst.b   d0
-        beq.s   .wait_input
-        st      game_celebration_first_play
-        addq.w  #1,game_celebration_loops
-        bsr     game_result_sound
-.wait_input:
         tst.b   game_celebration_first_play
         beq     game_round_done
         move.b  game_input_bits,d0
@@ -169,6 +163,7 @@ game_celebration_reset:
         clr.b   game_celebration_winner
         clr.b   game_celebration_upper
         clr.w   game_celebration_loops
+        clr.b   game_celebration_audio_fraction
         rts
         even
 game_celebration_loops: dc.w 0
@@ -177,4 +172,5 @@ game_celebration_armed: dc.b 0
 game_celebration_pose: dc.b 0
 game_celebration_winner: dc.b 0
 game_celebration_upper: dc.b 0
+game_celebration_audio_fraction: dc.b 0
         even

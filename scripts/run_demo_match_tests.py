@@ -62,20 +62,30 @@ def run(takeover=False):
    if index in (len(expected)//4,len(expected)//2,3*len(expected)//4):
     s.inspect('capture_screenshot',{'path':str(directory/f'rally-{index}.png')})
    if takeover and index==len(expected)//2:
-    s.inspect('input_key',{'rawkey':0x24,'action':'press'})
+    s.inspect('input_key',{'rawkey':0x4f,'action':'press'})
+    for attempt in range(12):
+     until({'pc':base+symbols['ui_sample']});until({'pc':base+symbols['ui_input_draw']})
+     if num('ui_demo_choice')==1:break
+    check('left selects takeover',num('ui_demo_choice'),1)
+    s.inspect('input_key',{'rawkey':0x44,'action':'press'})
     for attempt in range(12):
      until({'pc':base+symbols['ui_sample']});before=frozen()
      until({'pc':base+symbols['ui_input_draw']})
      if not num('ui_demo'):
       check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
-    else:raise AssertionError('Mid-match G never took over')
-    until({'pc':base+symbols['native_input_done']});check('takeover action consumed',num('game_player_controls')&32,0)
+    else:raise AssertionError('Mid-match selected Enter never took over')
+    until({'pc':base+symbols['native_input_done']});check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
     state=mem('ui_entropy_state',2);before=mem('game_play_state',60)
     until({'seconds':time+1});check('live entropy stops advancing demo generator',mem('ui_entropy_state',2).hex(),state.hex())
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
     check('ordinary world continues after takeover',mem('game_play_state',60)!=before,True)
-    s.inspect('input_key',{'rawkey':0x24,'action':'release'})
+    s.inspect('input_key',{'rawkey':0x44,'action':'release'})
+    s.inspect('input_key',{'rawkey':0x4f,'action':'release'})
     s.inspect('capture_screenshot',{'path':str(directory/'taken-over.png')});index+=1;break
+   if not takeover and index in (100,200,300,400):
+    s.inspect('input_key',{'rawkey':(0x4f,0x4e,0x4c,0x4d)[index//100-1],'action':'press'})
+   if not takeover and index in (150,250,350,450):
+    s.inspect('input_key',{'rawkey':(0x4f,0x4e,0x4c,0x4d)[(index-50)//100-1],'action':'release'})
    index+=1;s.inspect('step',{'count':1})
   else:raise AssertionError('Full playback did not end within finite bound')
   if not takeover:

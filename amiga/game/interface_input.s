@@ -40,10 +40,6 @@ ui_input_keys:
         tst.b   d0
         beq     ui_input_next
         ; Only supported gameplay/menu positions count as fresh demo input.
-        cmpi.w  #$24,d1
-        bne.s   ui_not_g
-        st      ui_takeover_edge
-ui_not_g:
         lea     game_keyboard_mapping,a2
 ui_find_key:
         move.b  (a2)+,d3
@@ -137,24 +133,31 @@ ui_input_dispatch:
         beq     ui_demo_input_done
         tst.b   ui_demo
         beq.s   ui_demo_input_done
-        btst    #5,ui_joystick_pressed
-        beq.s   ui_demo_g
-        st      ui_takeover_edge
-ui_demo_g:
-        tst.b   ui_takeover_edge
-        beq.s   ui_demo_other
-        ; P1 only: G / connector2 button2. Consume until physical release.
+        tst.b   ui_paused
+        bne     ui_demo_input_done
+        btst    #5,ui_edges
+        bne.s   ui_demo_exit
+        ; Live navigation belongs only to the demo's second footer row.
+        btst    #2,ui_edges
+        beq.s   ui_demo_right
+        move.b  #1,ui_demo_choice
+ui_demo_right:
+        btst    #3,ui_edges
+        beq.s   ui_demo_confirm
+        clr.b   ui_demo_choice
+ui_demo_confirm:
+        btst    #4,ui_edges
+        beq     ui_demo_input_done
+        tst.b   ui_demo_choice
+        beq.s   ui_demo_exit
+        ; Preserve the actual game/score/audio/AI state. Only source-owned UI
+        ; latches and physical packets change; all carried controls retire on
+        ; their own release, with confirmation consumed in this same update.
         clr.b   ui_demo
-        bsr     game_latch_old_actions
+        bsr     ui_latch_live_controls
         clr.b   ui_edges
         bra     ui_input_draw
-ui_demo_other:
-        move.b  game_input_pressed,d0
-        or.b    game_input_pressed+1,d0
-        or.b    ui_joystick_pressed,d0
-        or.b    ui_joystick_pressed+1,d0
-        or.b    ui_fresh_input,d0
-        beq.s   ui_demo_input_done
+ui_demo_exit:
         bsr     ui_return_title
         bra     ui_input_draw
 ui_demo_input_done:
@@ -214,4 +217,19 @@ ui_input_pause_accept:
 ui_input_draw:  bsr     ui_feedback
         bsr     ui_render
         movem.l (sp)+,d0-d7/a0-a4
+        rts
+
+ui_latch_live_controls:
+        lea     game_keyboard_matrix,a0
+        lea     ui_keyboard_entry_keys,a1
+        moveq   #127,d7
+.keys:
+        move.b  (a0)+,(a1)+
+        dbra    d7,.keys
+        move.b  ui_joystick_bits,ui_joystick_entry
+        move.b  ui_joystick_bits+1,ui_joystick_entry+1
+        bsr     game_latch_old_actions
+        clr.w   game_input_bits
+        clr.w   game_input_pressed
+        clr.w   game_input_released
         rts

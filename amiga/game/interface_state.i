@@ -13,7 +13,7 @@ U_SELECTION rs.b 1
 U_PLAYER_COUNT rs.b 1
 U_EDGES rs.b 1
 U_DIRTY rs.b 1
-U__PADDING rs.b 1
+U_DEMO_CHOICE rs.b 1 ;0 EXIT (default),1 TAKE OVER
 U_DEMO_CURSOR rs.l 1
 U_DEMO_REMAINING rs.w 1
 U_DEMO_MASK rs.b 1
@@ -42,6 +42,7 @@ ui_selection equ ui_state+U_SELECTION
 ui_player_count equ ui_state+U_PLAYER_COUNT
 ui_edges equ ui_state+U_EDGES
 ui_dirty equ ui_state+U_DIRTY
+ui_demo_choice equ ui_state+U_DEMO_CHOICE
 ui_demo_cursor equ ui_state+U_DEMO_CURSOR
 ui_demo_remaining equ ui_state+U_DEMO_REMAINING
 ui_demo_mask equ ui_state+U_DEMO_MASK

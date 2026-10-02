@@ -25,3 +25,19 @@ def prepare(version):
     path=ROOT/'build/native/ui-pages.bin'
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_bytes(output)
+
+    # Second-row demo ownership: authored centered text with exactly one option
+    # inverted. These two small caches avoid a two-line font redraw at awards.
+    value=text['ui_demo_selector']
+    if len(value)>32:raise ValueError('Demo selector exceeds court viewport')
+    left=(32-len(value))//2
+    output=bytearray()
+    for choice,option in [(0,'EXIT'),(1,'TAKE OVER')]:
+        plane=bytearray(256);begin=left+value.index(option);end=begin+len(option)
+        for row in range(8):
+            for column,char in enumerate(value):
+                byte=font[ord(char)*8+row]
+                if begin<=left+column<end:byte^=255
+                plane[row*32+left+column]=byte
+        output.extend(plane)
+    (ROOT/'build/native/ui-demo-options.bin').write_bytes(output)

@@ -14,6 +14,15 @@ ui_render:
         move.b  ui_selection,d1
         lsl.w   #8,d1
         move.b  d0,d1
+        tst.b   ui_paused
+        bne.s   .compare_signature
+        tst.b   ui_demo
+        beq.s   .compare_signature
+        ori.w   #$4000,d1
+        tst.b   ui_demo_choice
+        beq.s   .compare_signature
+        ori.w   #$8000,d1
+.compare_signature:
         cmp.w   ui_overlay_signature,d1
         beq     .title_menu
         move.w  d1,ui_overlay_signature
@@ -31,7 +40,7 @@ ui_render:
         lea     ui_confirm_text,a0
 .pause_text:
         lea     ui_overlay_plane,a2
-        bsr     ui_text
+        bsr     ui_footer_text
         lea     ui_resume_text,a0
         tst.b   ui_confirmation
         beq.s   .pause_selection
@@ -45,24 +54,16 @@ ui_render:
         lea     ui_yes_text,a0
 .pause_line:
         lea     ui_overlay_plane+256,a2
-        bsr     ui_text
+        bsr     ui_footer_text
         rts
 .title:
         tst.b   ui_paused
         bne     .done
         moveq   #0,d0
         move.b  ui_overlay_kind,d0
-        beq     .title_menu
+        beq     .footer_finish
         lea     ui_overlay_plane,a2
         moveq   #0,d4
-        cmpi.b  #1,d0
-        bne.s   .win_overlay
-        lea     ui_demo_text,a0
-        bsr     ui_text
-        lea     ui_overlay_plane+256,a2
-        lea     ui_demo_hint,a0
-        bsr     ui_text
-        bra     .done
 .win_overlay:
         cmpi.b  #10,d0
         bcs.s   .old_win_overlay
@@ -81,7 +82,7 @@ ui_render:
         addi.b  #'0',d1
         move.b  d1,ui_match_blue_b
         move.b  d1,ui_match_red_b
-        bsr     ui_text
+        bsr     ui_footer_text
         ; Scores freeze for the celebration. Preserve the first line so prompt
         ; appearance and pause/resume need only one font line per callback.
         lea     ui_overlay_plane,a1
@@ -100,17 +101,9 @@ ui_render:
         dbra    d7,.match_copy
         lea     ui_overlay_plane+256,a2
         lea     ui_match_continue,a0
-        bsr     ui_text
+        bsr     ui_footer_text
         bra     .done
 .old_win_overlay:
-        cmpi.b  #8,d0
-        bcs.s   .human_win
-        lea     ui_demo_blue_win,a0
-        cmpi.b  #8,d0
-        beq.s   .win_text
-        lea     ui_demo_red_win,a0
-        bra.s   .win_text
-.human_win:
         cmpi.b  #4,d0
         beq.s   .serve_overlay
         lea     ui_blue_win,a0
@@ -118,26 +111,35 @@ ui_render:
         beq.s   .win_text
         lea     ui_red_win,a0
 .win_text:
-        bsr     ui_text
+        bsr     ui_footer_text
         move.b  game_games_a,d0
         addi.b  #'0',d0
         move.b  d0,ui_tally_blue_digit
-        move.b  d0,ui_demo_tally_blue_digit
         move.b  game_games_b,d0
         addi.b  #'0',d0
         move.b  d0,ui_tally_red_digit
-        move.b  d0,ui_demo_tally_red_digit
+        tst.b   ui_demo
+        bne.s   .footer_finish
         lea     ui_overlay_plane+256,a2
         lea     ui_tally_text,a0
-        tst.b   ui_demo
-        beq.s   .tally_text
-        lea     ui_demo_tally_text,a0
-.tally_text:
-        bsr     ui_text
+        bsr     ui_footer_text
         bra     .done
 .serve_overlay:
         lea     ui_serve_text,a0
-        bsr     ui_text
+        bsr     ui_footer_text
+.footer_finish:
+        tst.b   ui_demo
+        beq     .title_menu
+        moveq   #0,d0
+        move.b  ui_demo_choice,d0
+        lsl.w   #8,d0
+        lea     ui_demo_options,a1
+        adda.w  d0,a1
+        lea     ui_overlay_plane+256,a2
+        moveq   #63,d7
+.demo_controls_copy:
+        move.l  (a1)+,(a2)+
+        dbra    d7,.demo_controls_copy
         bra     .done
 .title_menu:
         cmpi.w  #GAME_TITLE,game_lifecycle
@@ -219,4 +221,29 @@ ui_text:
         addq.l  #1,a2
         bra.s   .char
 .done:  movem.l (sp)+,d0-d3/d5/d7/a0-a2/a4
+        rts
+
+; A0 ASCII, A2 footer-line origin. Court viewport is32 bytes/256 pixels;
+; ui_text's four-byte title indent is compensated here, not globally changed.
+; Constant footer strings must fit32 columns; overlong text is never drawn.
+ui_footer_text:
+        movem.l d0-d2/a1-a2,-(sp)
+        move.l  a0,a1
+        moveq   #0,d0
+.length:
+        tst.b   (a1)+
+        beq.s   .centre
+        addq.w  #1,d0
+        cmpi.w  #32,d0
+        bhi.s   .done
+        bra.s   .length
+.centre:
+        moveq   #32,d1
+        sub.w   d0,d1
+        lsr.w   #1,d1
+        subq.w  #4,d1
+        adda.w  d1,a2
+        bsr     ui_text
+.done:
+        movem.l (sp)+,d0-d2/a1-a2
         rts

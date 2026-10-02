@@ -13,9 +13,9 @@ labels with the existing native font, and adds Red point glyph high planes while
 preserving original digit/advantage shapes. The logical player palette and score
 indicators change; court fills, player poses, animation masks and other audio remain
 retained. CT13 removes the old victory score-2/3 inputs and adds the independently
-composed provisional Warm Fanfare in audio/fanfare.i; it uses direct analytically
-calculated periods and the mathematical four-byte square, with no retained
-melody or envelope. No rights-clearance or public-redistribution claim is made. See [CT12 visual review](../../docs/ct12/README.md). Stale conversion reports and diagnostic maps are retired in
+arranged historical Battle Hymn chorus in audio/battle-hymn/; its isolated
+period bank, accompaniment and mathematical four-byte square are independently
+authored. Retained effect pitch/envelope data remain unchanged. No rights-clearance or public-redistribution claim is made. See [CT12 visual review](../../docs/ct12/README.md). Stale conversion reports and diagnostic maps are retired in
 Git history. Builders reject missing/incompatible/undeclared files; they never
 extract or recover from original sources. Version text and demo assembly table
 are generated in ignored build/native from the Git revision and committed native
