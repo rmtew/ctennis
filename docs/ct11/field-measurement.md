@@ -45,3 +45,34 @@ Focused protection:
 Both new checks are included in the finite acceptance command. Their synthetic
 beam cases are fixture evidence, not hardware measurement. Fresh Copperline
 results do not claim a WinUAE or real-hardware pass.
+
+## Focused validation receipt
+
+Product commit `4f82fec8c919ac079945f5c64284c64a616ce213`, pinned vasm1.9d and
+Copperline1.0.0-rc.1, verified external Kickstart1.3; completed2026-10-03:
+
+- Actual measurement/cadence assembly:9/9 finite streams passed; frozen pre-fix
+  routine rejected by the backwards-step assertion. Receipt SHA256
+  `4c2487baaaf2b2b13a3a4807d435a1f492a9f3c54880a7b8616545fee9aa6ac8`;
+  negative control `3f46cfb736e58e5474c4d34ee9e5df8ad9aff0399bc4ce83b2b79d7ea01f687f`.
+- Exact-release cold ADF physical Start:4/4 passed (PAL/NTSC × zero/512KB slow).
+  Initial title and court raster assertions, field/cadence values, loaded hunk
+  equality, and hardware/software Copper pointers passed. Receipt SHA256
+  `324241fb9417ffb0207eb3ba81d92591d3ea589e64dd4a8ab5a533d14ebe357a`.
+- Native video clock:PAL236 and NTSC237 strictly completed callbacks passed.
+  Receipt SHA256 `cab6a20482f6af4e2d25d7ac346c472b708752ca82f225b0f68cfe6dc6001064`.
+- Host unit suite:66 passed. `git diff --check` passed.
+
+Development SHA256 `20357f0cac9b8186f19bbb63542695e83eb6c49fdfae43212c2aafa9ccef9a4d`;
+release `293789313e83b112e9d99e4c1dee0fea376ca50f2eba8c38bd3871ad71956815`;
+ADF `ae12d6ca1fcefe5a1b9caf19aef00128615445d646bb18a9eb1791739b6527e8`.
+Loaded code grows40bytes to43,816; data112,188 and BSS9,424 are unchanged.
+Loaded payload165,428 and release158,956bytes. No new writable state.
+
+`python scripts/native_metrics.py --require-runtime --record` exited1 with an
+explicit incomplete resource report: the changed executable has not received
+new full-game loading/stack/resource measurements. These are not asserted as
+reused or fresh. PR27's earlier measurements remain historical at16679feb in Git.
+Only the focused validation above is claimed; the full gate and fresh WinUAE or
+physical-hardware execution were not run. The new exact-release ADF remains a
+private candidate pending independent review and merge, not a Library replacement.
