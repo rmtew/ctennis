@@ -9,6 +9,9 @@ RECEIPTS = {
     'package': 'amiga/interfaces/enhanced/delivery/package-report.json',
     'menu-cold': 'tests/enhanced-menu-cold/report.json',
     'inputs': 'tests/native-inputs/report.json',
+    'video-clock': 'tests/native-video-clock/report.json',
+    'sprite-dma-pal': 'tests/native-sprite-dma-pal-report.json',
+    'sprite-dma-ntsc': 'tests/native-sprite-dma-ntsc-report.json',
     'scoreboard': 'tests/native-scoreboard/report.json',
     'setup-proposal': 'tests/native-setup/report.json',
     'demo': 'tests/demo-full-repeat/report.json',
@@ -27,6 +30,14 @@ RECEIPTS = {
 
 
 def acceptance(name, report):
+    if name == 'video-clock':
+        return ([c.get('standard') for c in report.get('cases',[])]==['PAL','NTSC']
+                and all(c.get('completed_updates',0)>=150 for c in report['cases']))
+    if name.startswith('sprite-dma-'):
+        cases=report.get('cases',[])
+        return (len(cases)==(12 if name.endswith('pal') else 6)
+                and all(c.get('passed') and c.get('full_fields',0)>=23 for c in cases)
+                and (not name.endswith('pal') or len(report.get('compiled_controls',[]))==3))
     if name == 'scoreboard':
         return (len(report.get('cases', [])) == 28
                 and bool(report.get('compiled_fault_controls'))

@@ -78,7 +78,7 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
         watches=[{'addr':address(n),'len':z,'access':'write'} for n,z in [('front_copper',4),('back_copper',4),('ready_copper',4),('spare_copper',4),('display_ready',1),('ready_generation',2),('ready_title_display',1),('simulation_updates',2),('simulation_started_updates',2),('presentation_copper',4)]]
         watches += [{'addr':address(n),'len':address('copperlist_end')-address('copperlist'),'access':'write'} for n in ('copperlist','copperlist_back','copperlist_third')]
         watches += [{'addr':address(n),'len':576,'access':'write'} for n in ('sprite0','sprite_back','sprite_third')]
-        watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
+        watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'},{'addr':0xdff004,'len':4,'access':'read'}]
         def observe(message):
             if message.get('method')=='event.mmio':cpu_events.append(message['params'])
         s.notification_handler=observe
@@ -151,8 +151,8 @@ def run(self_test=False, ntsc=False):
         for control,reason in wanted.items():
             r=execute_case('control-'+control,22,control=control,frames=24)
             assert not r['passed'] and any(f['reason']==reason for f in r['failures']),r['failures']
-            controls.append(dict(control=control,detected=True,first_failure=r['failures'][0]))
-    report=dict(passed=True,target=f'A500/68000/OCS/{standard}/512KB chip/zero slow and fast/external Kick1.3',
+            controls.append(dict(control=control,detected=True,first_failure=r['failures'][0],binding=r['binding']))
+    report=dict(passed=True,interface_flavor='enhanced',executable_sha256=cases[0]['binding']['executable_sha256'],target=f'A500/68000/OCS/{standard}/512KB chip/zero slow and fast/external Kick1.3',
                 cases=cases,compiled_controls=controls,
                 scope='One-time startup phase fixtures, actual native dispatcher and physical input. Address/generation/ownership coverage; raw sidecar data values explicitly uncertified.')
     atomic_json(ROOT/f'build/tests/native-sprite-dma-{standard.lower()}-report.json',report)

@@ -25,6 +25,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     failures = []
     reported_word_disagreements = []
     live = {s['position']['frame']+1:s for s in (live_samples or [])}
+    if len(live)!=len(live_samples or []):
+        raise ValueError('Duplicate live sample field')
     checked_live_samples = 0
     encountered_live = set()
     def fail(reason, **details):
@@ -62,6 +64,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     last_pair = [None]*8
     pending = None
     last_sample = None
+    beam_high = None
+    beam_low = None
     cpu_pair = []
     full_frames = headers = pixels = terminators = 0
     publications = []
@@ -118,6 +122,16 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 e=field_events[event_cursor]; ep=e['position']
                 if ep['vpos']*stride+ep['hpos']>offset:break
                 event_cursor+=1
+                if e['access']=='read' and e['addr'] in (0xdff004,0xdff006):
+                    if e['addr']==0xdff006:
+                        beam_low=(number,ep['vpos']*stride+ep['hpos'],e['value'],beam_high)
+                    else:
+                        high=e['value']&1
+                        if beam_low and beam_low[3]==high:
+                            measured=(high<<8)|(beam_low[2]>>8)
+                            last_sample=(beam_low[0],beam_low[1],measured,beam_low[2]&255)
+                        beam_high=high
+                        beam_low=None
                 if e['access']!='write':continue
                 ea,es,ev=e['addr'],e['size'],e['value']
                 if ea+es<=len(memory):
@@ -177,7 +191,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                             maximum_cpu_handover = max(maximum_cpu_handover, latency)
                             if 'presentation_last_safe_line' in addresses:
                                 bound = scalar('presentation_last_safe_line', 2)
-                                if last_sample[2] > bound:
+                                if not 253<=last_sample[2]<=bound:
                                     fail('publication sampled after field-end guard', sample=last_sample, bound=bound)
                         if len(cpu_pair) != 2 or any(p[0] != number for p in cpu_pair):
                             fail('COP1LC pair straddled field restart', pair=cpu_pair, position=position)
@@ -203,8 +217,6 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                         publications.append(dict(position=position, bank=court,
                                                  generation=current['generation'] if current else 'title'))
                     cpu_pair = []
-            if kind == 2 and size and not flags & 1 and reg == 0x1006:
-                last_sample = (number, offset, vpos, hpos)
             if kind == 3 and size and 0x120 <= reg <= 0x13e:
                 slot = (reg-0x120)//2
                 if not 0<=address<=len(memory)-2:

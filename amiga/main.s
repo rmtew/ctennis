@@ -57,6 +57,13 @@ copy_third_copper:
         move.l  #copperlist_back,back_copper
         move.l  #copperlist_third,spare_copper
         bsr     select_build_bank
+        ; Initialize the spare's pointer/cache descriptors during startup too.
+        ; First completed update must not pay a236-descriptor bank setup.
+        move.l  back_copper,-(sp)
+        move.l  spare_copper,back_copper
+        bsr     select_build_bank
+        move.l  (sp)+,back_copper
+        bsr     select_build_bank
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
         move.w  #$7fff,$096(a0)
