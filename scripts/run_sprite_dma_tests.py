@@ -125,14 +125,14 @@ fixture_delay_done:
                         {'addr':address('score_pointer_cache'),'len':18,'access':'write'}]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'},{'addr':0xdff004,'len':4,'access':'read'}]
         if measure_isr:
-            watches += [{'addr':address('game_stack'),'len':address('game_stack_top')-address('game_stack'),'access':'access'}]
+            watches += [{'addr':address('game_stack_bottom'),'len':address('game_stack_top')-address('game_stack_bottom'),'access':'access'}]
         def observe(message):
             nonlocal isr_begin,isr_end
             if message.get('method')!='event.mmio':return
             row=message['params']
             if row.get('dropped_events',0) or row.get('dropped_notifications',0):
                 raise AssertionError('Native timing telemetry lost')
-            if address('game_stack')<=row['addr']<address('game_stack_top'):
+            if measure_isr and address('game_stack_bottom')<=row['addr']<address('game_stack_top'):
                 pc=row['pc'];when=row['position']['cck']
                 if pc==address('presentation_interrupt') and row['access']=='write':
                     if isr_end is not None:
