@@ -113,7 +113,7 @@ def run(takeover=False):
    located={n:(int(h),int(o,16)) for n,h,o in re.findall(r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',(exe.parent/'native.lst').read_text(),re.M)}
    h,offset=located['title_copper'];title_pointer=segments[h]['start']+offset
    regs=s.inspect('custom_dump')['regs']
-   end_state=dict(life=6,demo=255,idle=0,started=num('simulation_started_updates',2),completed=num('simulation_updates',2),('ready_generation',2),('display_ready',1),ready_generation=num('ready_generation',2),ready=num('ready_generation',2) if num('display_ready') else None,
+   end_state=dict(life=6,demo=255,idle=0,started=num('simulation_started_updates',2),completed=num('simulation_updates',2),ready_generation=num('ready_generation',2),ready=num('ready_generation',2) if num('display_ready') else None,
                   first_play=None,returned=None,title_published=False,next_demo=None,next_seed=False,maximum_loops=0,
                   pointer=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big')))
    publications=[];tail_events=[];tail_checks=[]
