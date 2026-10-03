@@ -61,9 +61,43 @@ These checks are in the finite acceptance command. Fresh Copperline results do
 not claim WinUAE or physical-hardware validation. No unrelated full campaign is
 required for this focused change; outstanding resource coverage remains explicit.
 
-## Validation status
+## Focused validation receipt
 
-Pending fresh candidate validation after replacing startup measurement. Earlier
-measurement-candidate receipts and hashes are superseded; see Git history for
-those results. The private candidate must pass independent review before merge
-or any Library replacement.
+Product commit `076c5796f70288e00c3a5f57fec9ca6453ae880e`, BUILD076c579; pinned vasm1.9d,
+Copperline1.0.0-rc.1 and external Kickstart1.3, completed2026-10-03:
+
+- Actual selector:256/256 byte values passed; the verified USS byte50 selects
+  last/safe lines311/307 and the PAL interval. Invalid values preserve all18
+  bytes of poisoned timing state and return20.
+- Exact-release ADF cold Start:4/4 passed (PAL/NTSC × zero/512KB slow).
+  Loaded hunks, bounds, cadence, title, hardware/software Copper pointers and
+  positive controller-label raster checks (1,920pixels each) passed.
+- `RUST_LOG=info python scripts/run_native_video_clock_tests.py`:PAL239 and
+  NTSC239 completed callbacks, each within its strict deadline. The first
+  invocation failed because inherited logging suppressed the required target
+  marker; its failed receipt is retained outside Git. This successful rerun
+  supersedes it, without weakening target or timing assertions.
+- `python -m unittest discover -s tests/unit -q`:67 tests passed, including
+  failed/interrupted startup receipt replacement. `git diff --check` passed.
+
+Receipt SHA256s (raw reports retained outside Git):
+
+- selector: `2b2110c4d9d04f44b23b425285826ef840a04b4542e1f0c403b60e11086d1ea8`.
+- cold-start: `ea24aea8c747ce268f1c32e0a76a7ff9d9a6ad51185c7d76caf88e95748215b3`.
+- cadence: `e41c03498f427e4bea61d43e37ee7dd37ff46bf3dac5b4f7738555a335ab5fa8`.
+- saved-state: `c63e423b3e5a3e0e2eec2390f8a364fb3a1ca36cc8e6d51c12c64248a3d41589`.
+
+Development SHA256 `6a15f93a4fc45539cc008dc1ac8848d596684b7c4844dfc7d888043f4a763a4c`;
+release `e7c777de556980d8e1c1aa7bcd9a2fd3dcfd8d3086b6c9d8e4422986c31c42fc`;
+ADF `59d3fc5dbb0621997cf38ff713346543137863ad8b1cef5bba4d09bc5e2f69e8`.
+Release158,928bytes; loaded code43,792 (+16 versus PR27), data112,188 and
+BSS9,424 unchanged; total loaded165,404. No new writable state. Compared with
+the abandoned hardened-measurement candidate, loaded code shrinks24bytes.
+
+`python scripts/native_metrics.py --require-runtime --record` exited1 and
+records explicit incomplete resource coverage for the changed executable.
+Fresh full-game loading/stack/resource measurements and the full gate were not
+run; earlier PR27 results remain historical at16679feb and are not claimed as
+reused. No fresh WinUAE or physical-hardware execution is claimed. Independent
+review remains required before merge. The ADF is a private candidate, not a
+Library replacement.

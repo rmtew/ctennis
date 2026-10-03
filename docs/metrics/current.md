@@ -1,12 +1,12 @@
 # Native resource and loading metrics
 
 Completion: **incomplete**. Acceptance is separate from metric coverage.
-Product SHA256: `20357f0cac9b8186f19bbb63542695e83eb6c49fdfae43212c2aafa9ccef9a4d`.
+Product SHA256: `6a15f93a4fc45539cc008dc1ac8848d596684b7c4844dfc7d888043f4a763a4c`.
 Identity excludes generated report files and Git report commits; timestamps are not freshness evidence.
 
 | Executable | Code | Data | BSS | Loaded payload |
 |---:|---:|---:|---:|---:|
-| 179308 | 43816 | 112188 | 9424 | 165428 |
+| 179240 | 43792 | 112188 | 9424 | 165404 |
 
 Asset bytes: {'graphics': 73588, 'audio': 9892, 'replay_loaded_bytes': 1110}. These overlap loaded hunks.
 
@@ -18,7 +18,7 @@ Typical = median; p95 = nearest rank. Frozen/absent phase values remain unmeasur
 
 UI construction is grouped by page (title = menu; help includes controls/credits), independently of callback-entry profiles; menu-page redraws can occur during pause/input transitions. Pause-only UI construction remains unmeasured.
 
-Release ADF executable: 158956 bytes; symbol bytes removed: 20352. Development retains symbols.
+Release ADF executable: 158928 bytes; symbol bytes removed: 20312. Development retains symbols.
 RAM measures whole initialized machine pools including OS/stack. Direct-executable and cold ADF startup differ; compare RAM within the same startup case.
 
 | Mutually exclusive executable category | Bytes |
@@ -31,10 +31,11 @@ RAM measures whole initialized machine pools including OS/stack. Direct-executab
 | celebration_scores | 2,112 |
 | celebration_square_wave | 4 |
 | court_bitplanes | 24,576 |
-| cpu_instructions | 13,348 |
+| cpu_instructions | 13,322 |
 | font | 1,024 |
 | front_court_and_title_copper_lists | 648 |
 | hunk_header_table | 32 |
+| hunk_payload_alignment_padding | 2 |
 | hunk_record_headers_and_ends | 36 |
 | initial_hardware_sprites | 576 |
 | menu_font_mac | 1,024 |
@@ -45,7 +46,7 @@ RAM measures whole initialized machine pools including OS/stack. Direct-executab
 | pre_rendered_menu_options | 768 |
 | pre_rendered_title_ui_pages | 29,696 |
 | pre_rendered_ui_pages | 14,848 |
-| relocation_offsets | 2,852 |
+| relocation_offsets | 2,848 |
 | relocation_record_framing | 32 |
 | replay_packets | 1,110 |
 | reserved_back_copper | 504 |
@@ -64,12 +65,12 @@ RAM measures whole initialized machine pools including OS/stack. Direct-executab
 | source_alignment_padding | 15 |
 | square_led_construction_definitions | 48 |
 | status_banks | 7,168 |
-| symbol_name_padding | 1,058 |
-| symbol_names | 12,974 |
-| symbol_record_framing | 6,320 |
+| symbol_name_padding | 1,056 |
+| symbol_names | 12,944 |
+| symbol_record_framing | 6,312 |
 | title_bitplanes | 24,576 |
 | ui_text_and_line_pointer_tables | 1,756 |
-| **Exact file total** | **179,308** |
+| **Exact file total** | **179,240** |
 
 Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately.
 Byte-identical incbin payload bytes beyond first copies: 8,192 B. These remain included in the categories; aliasing safety is unproven.
@@ -83,6 +84,6 @@ Cold loading completion issues: Missing/invalid cold milestone: reset; Missing/i
 
 Coverage: title: unmeasured, help: unmeasured, one-player-rally: unmeasured, two-player-rally: unmeasured, demo: unmeasured, pause: unmeasured, match-end: unmeasured, celebration: unmeasured
 
-Deltas: {"previous_identity": "ea32fefef08509b2817ddc05827848878c2fcfe606d30284cb811fac71096884", "previous_report": "docs/metrics/baselines/pre-title-score-current.json", "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede", "runtime": {"cold-one": {"state": "incompatible or unmeasured"}, "demo": {"state": "incompatible or unmeasured"}, "setup": {"state": "incompatible or unmeasured"}, "two": {"state": "incompatible or unmeasured"}}, "state": "historical reviewed baseline; master has no accepted metrics report", "static_bytes": {"bss_bytes": 9424, "code_bytes": -5748, "data_bytes": -40352, "executable_bytes": -69172, "loaded_payload_bytes": -36676}}
+Deltas: {"previous_identity": "ea32fefef08509b2817ddc05827848878c2fcfe606d30284cb811fac71096884", "previous_report": "docs/metrics/baselines/pre-title-score-current.json", "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede", "runtime": {"cold-one": {"state": "incompatible or unmeasured"}, "demo": {"state": "incompatible or unmeasured"}, "setup": {"state": "incompatible or unmeasured"}, "two": {"state": "incompatible or unmeasured"}}, "state": "historical reviewed baseline; master has no accepted metrics report", "static_bytes": {"bss_bytes": 9424, "code_bytes": -5772, "data_bytes": -40352, "executable_bytes": -69240, "loaded_payload_bytes": -36700}}
 
 Refresh hook: after merging new fonts/celebration, run the affected native checks or `RUST_LOG=info python scripts/native_metrics.py --refresh --record`; never copy results from an unfinished branch.
