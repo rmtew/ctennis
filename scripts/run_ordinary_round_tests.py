@@ -156,14 +156,23 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
             session.inspect('input_joy',{'port':port,'red':True})
         # Uniform boundary follows every completed native update, including menus.
         pc = base+symbols['simulation_update']
-        session.inspect('break_add',{'kind':'pc','addr':pc})
+        boundary_break=session.inspect('break_add',{'kind':'pc','addr':pc})
         deadline = stop['seconds']+1000
         for index in range(40000):
             stop = session.inspect('run_until',{'seconds':deadline})
             if stop['pc'] != pc or stop['reason'] not in ('target','breakpoint'): raise RuntimeError(stop)
+            # COPER may return to this entry PC before its counter instruction.
+            # Cross that instruction with the entry breakpoint removed, so an
+            # IRQ return cannot masquerade as another native callback.
+            session.inspect('break.remove',{'id':boundary_break['id']})
+            stop=session.inspect('run_until',{'pc':pc+6})
+            if stop['pc']!=pc+6:raise RuntimeError(stop)
+            boundary_break=session.inspect('break_add',{'kind':'pc','addr':pc})
             native_state = read_native_state(session,base,symbols)
             lifecycle = int.from_bytes(mem('game_lifecycle',2),'big')
             callback = int.from_bytes(mem('simulation_updates',2),'big')+1
+            if int.from_bytes(mem('simulation_started_updates',2),'big')!=callback:
+                raise AssertionError('Native callback counter increment differs from completed+1')
             if previous_callback is not None and callback != previous_callback+1:
                 raise AssertionError('Ordinary callback continuity lost')
             previous_callback=callback;observations+=1
