@@ -86,7 +86,7 @@ def assert_footer_raster(path, first, second, selected=None):
     return {'first':first,'second':second,'selected':selected,'matched':True,'pixels':len(actual)}
 
 
-def assert_menu_selection_raster(path, selection, players, build_hash=None):
+def assert_menu_selection_raster(path, selection, players, build_hash=None, standard="PAL", release_version=None):
     """Independent title specification: ASCII, native ready masks and colours."""
     font=(ROOT/'assets/native/title/font-mac.bin').read_bytes()
     canvas=[[0]*256 for _ in range(116)]
@@ -102,7 +102,9 @@ def assert_menu_selection_raster(path, selection, players, build_hash=None):
     text(26,188 if players==2 else 200,'Human' if players==2 else 'AI')
     if build_hash is None:
         build_hash=(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii').split()[1]
-    text(104,248-len(build_hash)*8,build_hash,ink=6)
+    if release_version is None:release_version=(ROOT/'amiga/VERSION').read_text().strip()
+    label=f'{standard} {build_hash} {release_version}'
+    text(104,248-len(label)*8,label,ink=6)
     atlas=(ROOT/'assets/native/scene/sprite-images.bin').read_bytes()
     for x,colour,parts in [(40,4,[(5376,0,0),(5504,0,16),(2432,0,0)]),(200,13,[(1280 if players==2 else 8192,0,0),(1408 if players==2 else 8320,0,16),(1536,0,8)])]:
         for index,(offset,dx,dy) in enumerate(parts):

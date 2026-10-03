@@ -3,7 +3,11 @@ import re
 from native_tools import ROOT
 
 
-def prepare(version):
+def prepare(version, release_version=None):
+    if release_version is None:
+        release_version=(ROOT/'amiga/VERSION').read_text().strip()
+    if re.fullmatch(r'[0-9]+\.[0-9]+',release_version) is None:
+        raise ValueError('Release version must be major.minor')
     source = (ROOT/'amiga/game/interface_text.s').read_text()
     text = dict(re.findall(r"^(ui_\w+): dc.b '([^']*)',0$", source, re.M))
     text.update(ui_empty='', ui_version=version.rstrip(b'\0').decode('ascii'))
@@ -154,8 +158,15 @@ def prepare(version):
             for offset,value in enumerate(planes[n]):combined[38*32+offset]|=value
             for centre,role in [(48,'ui_role_human'),(208,'ui_role_human' if both_human else 'ui_role_ai')]:
                 draw(combined,26,centre-len(text[role])*4,text[role])
-            # Index6 is subdued grey. Reuse the same build identity as Credits;
-            # the corner shows only its short hash, with no prefix/local suffix.
-            if n in (1,2):draw(combined,104,248-len(title_hash)*8,title_hash)
             figures.extend(combined)
     (ROOT/'build/native/ui-title-pages.bin').write_bytes(figures)
+
+    # One monochrome row per standard; runtime copies it into grey planes1/2.
+    identities=bytearray()
+    for standard in ('PAL','NTSC'):
+        label=f'{standard} {title_hash} {release_version}'
+        if len(label)*8>240:raise ValueError('Title identity exceeds corner width')
+        plane=bytearray(8*32)
+        draw(plane,0,248-len(label)*8,label)
+        identities.extend(plane)
+    (ROOT/'build/native/ui-title-identities.bin').write_bytes(identities)

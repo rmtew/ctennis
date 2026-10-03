@@ -56,6 +56,7 @@ def _units(listing):
 def _asset_group(path):
     if path=='build/native/ui-pages.bin':return 'pre_rendered_ui_pages'
     if path=='build/native/ui-title-pages.bin':return 'pre_rendered_title_ui_pages'
+    if path=='build/native/ui-title-identities.bin':return 'pre_rendered_title_identities'
     if path in ('build/native/ui-help-options.bin','build/native/ui-menu-options.bin','build/native/ui-demo-options.bin'):
         return 'pre_rendered_'+path.rsplit('/',1)[1][3:-4].replace('-','_')
     if path=='build/native/version.bin':return 'build_version_text'

@@ -232,6 +232,7 @@ def status(path, subject=None, full=False, fresh_since=None, interface_flavor=No
 def inputs_for(kind, runner, case=None):
     paths = python_inputs(ROOT / runner) | assembly_inputs(ROOT / 'amiga/main.s')
     paths |= {ROOT / 'scripts/native_evidence.py', ROOT / 'tools.lock.json', Path(sys.executable), ASSEMBLER}
+    paths.add(ROOT / 'amiga/VERSION')
     paths.update((ROOT / 'assets').rglob('*'))
     paths.update((ROOT / 'tests/fixtures/native-demo').rglob('*'))
     tools = {}

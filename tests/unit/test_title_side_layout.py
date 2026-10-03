@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from itertools import product
 from unittest.mock import patch
 
 from PIL import Image
@@ -20,32 +21,34 @@ class SideTitleLayout(unittest.TestCase):
             (root/'assets').symlink_to(ROOT/'assets',target_is_directory=True)
             (root/'amiga').symlink_to(ROOT/'amiga',target_is_directory=True)
             with patch.object(native_ui_pages,'ROOT',root):
-                native_ui_pages.prepare(b'BUILD 123abcd + LOCAL\0')
+                native_ui_pages.prepare(b'BUILD 123abcd + LOCAL\0',release_version='12.34')
             pages=(root/'build/native/ui-title-pages.bin').read_bytes()
+            identities=(root/'build/native/ui-title-identities.bin').read_bytes()
             options=(root/'build/native/ui-menu-options.bin').read_bytes()
             self.assertEqual(len(pages),2*4*116*32)
             self.assertEqual(len(options),3*8*32)
             palette=[tuple(((v>>s)&15)*17 for s in (8,4,0)) for v in
                      (0,0,0x2c4,0x6d7,0x55e,0x77f,0x555,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)]
-            for players in (1,2):
-                for selection in range(3):
-                    with self.subTest(players=players,selection=selection):
-                        planes=[bytearray(pages[((players-1)*4+n)*3712:((players-1)*4+n+1)*3712]) for n in range(4)]
-                        selected=options[selection*256:(selection+1)*256]
-                        # Cache only: impose the authored ownership rectangle.
-                        # Execution of the native copy loop is covered by the
-                        # physical-input target suite, not this host test.
-                        for plane in planes:
-                            for y in range(8):
-                                start=(38+selection*11+y)*32+11
-                                plane[start:start+10]=selected[y*32+11:y*32+21]
-                        raw=Image.new('RGB',(716,285),'black')
-                        for y in range(116):
-                            for x in range(256):
-                                colour=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
-                                for dx in range(2):raw.putpixel((126+2*x+dx,92+y),palette[colour])
-                        path=root/'cache.png';raw.save(path)
-                        self.assertTrue(assert_menu_selection_raster(path,selection,players,build_hash='123abcd')['inverted_menu_matched'])
+            for standard,players,selection in product(("PAL","NTSC"),(1,2),range(3)):
+                with self.subTest(standard=standard,players=players,selection=selection):
+                    planes=[bytearray(pages[((players-1)*4+n)*3712:((players-1)*4+n+1)*3712]) for n in range(4)]
+                    identity=identities[(0 if standard=='PAL' else 256):(256 if standard=='PAL' else 512)]
+                    for n in (1,2):planes[n][104*32:112*32]=identity
+                    selected=options[selection*256:(selection+1)*256]
+                    # Cache only: impose the authored ownership rectangle.
+                    # Execution of the native copy loop is covered by the
+                    # physical-input target suite, not this host test.
+                    for plane in planes:
+                        for y in range(8):
+                            start=(38+selection*11+y)*32+11
+                            plane[start:start+10]=selected[y*32+11:y*32+21]
+                    raw=Image.new('RGB',(716,285),'black')
+                    for y in range(116):
+                        for x in range(256):
+                            colour=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
+                            for dx in range(2):raw.putpixel((126+2*x+dx,92+y),palette[colour])
+                    path=root/'cache.png';raw.save(path)
+                    self.assertTrue(assert_menu_selection_raster(path,selection,players,build_hash='123abcd',standard=standard,release_version='12.34')['inverted_menu_matched'])
 
 
 if __name__=='__main__':unittest.main()
