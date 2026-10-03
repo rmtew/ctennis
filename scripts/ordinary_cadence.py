@@ -95,7 +95,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
              'released': False, 'initial_selected': None, 'restart_selected': None,
              'last_commit': 0, 'start': None, 'origin': None, 'pause_pose': None}
     pointer_bytes = {n: bytearray(4) for n in ('front_copper','back_copper','copper_write_delta','sprite_write_delta','cop1lc')}
-    state.update(title=0, prepared=None, bank_fault_pause=False)
+    state.update(title=0, ready_title=0, prepared=None, bank_fault_pause=False)
     restarted = 'two' if mode == 'one' else 'one'
     with NativeControlSession(directory) as s, (directory/'events.jsonl').open('w') as raw:
         args=['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K',
@@ -172,7 +172,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         base = int(re.search(r'first hunk \$([0-9A-Fa-f]+)', stop['detail'])[1], 16)
         address = {n: base+symbols[n] for n in ('simulation_updates', 'simulation_started_updates',
             'simulation_timer_origin', 'game_lifecycle', 'game_celebration_first_play', 'game_input_bits', 'display_ready',
-            'front_copper','back_copper','copper_write_delta','sprite_write_delta','game_title_display')}
+            'front_copper','back_copper','copper_write_delta','sprite_write_delta','game_title_display','ready_title_display')}
         # These buffers are in the chip-data hunk, not hunk0. Resolve the
         # compiled section offsets against the actual LoadSeg hunk addresses.
         segments = s.inspect('segments.list')['current']
@@ -339,6 +339,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 state['completed'] = value
                 callbacks[-1]['completion'] = position
                 on_callback(position)
+            elif a == address['ready_title_display']:
+                state['ready_title'] = value
             elif a == address['display_ready']:
                 state['ready'] = state['started'] if value else None
                 if value:
@@ -349,7 +351,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     if pointer not in (banks['copperlist'],banks['copperlist_back'],banks['copperlist_third']) or delta!=pointer-banks['copperlist'] or sprite_delta!=expected_sprite_delta:
                         fault('prepared bank/delta mismatch',pointer=pointer,delta=delta,sprite_delta=sprite_delta)
                     state['prepared']={'generation':state['started'],'bank':pointer,
-                        'title_at_prepare':bool(state['title']),'position':position}
+                        'title_at_prepare':bool(state['ready_title']),'position':position}
                     preparations.append(dict(state['prepared']))
             elif a == 0xdff088 and state['start'] is not None:
                 generation = state['ready']
@@ -363,7 +365,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 # The main lifecycle can explicitly select the permanently
                 # prepared title or the completed court between callbacks.
                 # Observe that page selection independently of scene readiness.
-                expected = banks['title_copper'] if state['title'] else prepared['bank'] if prepared else None
+                expected = banks['title_copper'] if prepared and prepared['title_at_prepare'] else prepared['bank'] if prepared else None
                 if pointer != expected:
                     fault('published Copper bank',generation=generation,expected_pointer=expected,actual_pointer=pointer)
                     if bank_control and not state['bank_fault_pause']:
@@ -371,7 +373,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                         send('pause',{})
                 commits.append({'generation': generation, 'position': position,'pointer':pointer,
                                 'prepared':dict(prepared) if prepared else None,
-                                'title_selected':bool(state['title']),'expected_pointer':expected})
+                                'title_selected':bool(prepared and prepared['title_at_prepare']),'expected_pointer':expected})
             if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and position['vpos'] < 253:
                 fault('visible-line Copper commit', position=position)
             if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
@@ -381,7 +383,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 memory_writes.append(r)
         if boot_adf:s.inspect('events.unsubscribe')
         s.notification_handler = event
-        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display','game_celebration_first_play') else 2, 'access': 'write'} for n, a in address.items()]
+        watches = [{'addr': a, 'len': 4 if n in pointer_bytes else 1 if n in ('display_ready','game_title_display','ready_title_display','game_celebration_first_play') else 2, 'access': 'write'} for n, a in address.items()]
         watches += [{'addr': address['game_input_bits'], 'len': 8, 'access': 'write'},
                     *[{'addr':a,'len':1,'access':'write'} for name,a in native_fields.items() if name in ('game_flight','game_contact','game_lower_phase','game_upper_phase','game_score_flags','game_mode','game_point_a','game_point_b','game_games_a','game_games_b','game_display','game_lower_animation','game_upper_animation','game_upper_y','game_upper_x','game_upper_image','game_upper_colour','game_lower_y','game_lower_x','game_lower_image','game_lower_colour','game_step')],
                     {'addr': 0xdff080, 'len': 4, 'access': 'write'},
