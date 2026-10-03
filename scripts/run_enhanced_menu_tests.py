@@ -123,14 +123,14 @@ def run(adf=False,boot_only=False,help_only=False):
         if boot_only:
             write_report(development,exe,debug_source,package_report,directory,checks,loaded,adf,boot_only)
             return
-        # Exercise the side-figure rows with actual physical input in all eight
+        # Exercise the side-figure rows with actual physical input in all six
         # mode/selection states. Full scanout guards catch full-row highlight
         # copies that would erase or turn the blue/red figures white.
         for players in (1,2):
             if players==2:
                 key(0x4d);key(0x4e);key(0x4c)
             check('title role toggle '+str(players),number('ui_player_count'),players-1)
-            for selection in range(4):
+            for selection in range(3):
                 check('title selection '+str((players,selection)),number('ui_selection'),selection)
                 help_photo('side-menu-'+str(players)+'p-selection-'+str(selection))
                 key(0x4d)
@@ -166,13 +166,10 @@ def run(adf=False,boot_only=False,help_only=False):
         key(0x23);check('BACK action returns controls',number('ui_page'),3);help_photo('controls-back')
         key(0x4e);check('right selects EXIT',number('ui_help_choice'),1)
         key(0x44);check('Enter activates EXIT',number('ui_page'),0);photo('help-returned')
-        key(0x4d);photo('controls-selected');key(0x44)
-        # Local screenshot preview only: no safe quit path exists in this base.
-        check('Exit preview does not misroute to Controls',number('ui_page'),0)
-        check('Exit remains blocked pending OS restoration',number('game_lifecycle',2),2)
-        key(0x45)
-        check('existing title Escape does not quit',number('game_lifecycle',2),2)
-        key(0x4c);key(0x44);key(0x44);key(0x44)
+        key(0x4d);check('three-item menu wraps to Start',number('ui_selection'),0)
+        key(0x4c);check('up wraps to Help',number('ui_selection'),2)
+        key(0x45);check('title Escape remains in title',number('game_lifecycle',2),2)
+        key(0x44);key(0x44);key(0x44)
         check('Controls remains reachable inside Help',number('ui_page'),3)
         check('Help entry resets NEXT',number('ui_help_choice'),2)
         key(0x45);check('Escape exits regardless of NEXT',number('ui_page'),0)

@@ -26,8 +26,8 @@ def prepare(version):
     menu_width=max(len(text[name]) for name in menu_names)*8
     menu_left=(256-menu_width)//2
     # Runtime selection owns bytes11..20 (x88..167), enclosing the centred
-    # nine-cell menu without touching the figures. Edge bytes use byte copies.
-    if (menu_left,menu_width)!=(92,72):raise ValueError('Title menu must fit native x92..163')
+    # five-cell menu without touching the figures. Edge bytes use byte copies.
+    if (menu_left,menu_width)!=(108,40):raise ValueError('Title menu must fit native x108..147')
     output = bytearray()
     title_menu=None
     layouts={

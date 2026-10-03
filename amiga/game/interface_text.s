@@ -1,4 +1,4 @@
-ui_menu_lines: dc.l ui_start,ui_mode,ui_help_menu,ui_exit_game
+ui_menu_lines: dc.l ui_start,ui_mode,ui_help_menu
 ui_pages: dc.l ui_help_lines,ui_control_lines,ui_credit_lines
 ui_help_lines:
         dc.l ui_how,ui_help1,ui_help2,ui_help3,ui_help4,ui_help5,ui_help6,ui_help7
@@ -11,7 +11,6 @@ ui_font_archive: dc.b 'Archive: ianhan/BitmapFonts',0
 ui_start: dc.b 'Start',0
 ui_mode: dc.b 'Mode',0
 ui_help_menu: dc.b 'Help',0
-ui_exit_game: dc.b 'Exit game',0
 ui_role_human: dc.b 'Human',0
 ui_role_ai: dc.b 'AI',0
 ui_how: dc.b 'How to play',0

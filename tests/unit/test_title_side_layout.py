@@ -24,11 +24,11 @@ class SideTitleLayout(unittest.TestCase):
             pages=(root/'build/native/ui-title-pages.bin').read_bytes()
             options=(root/'build/native/ui-menu-options.bin').read_bytes()
             self.assertEqual(len(pages),2*4*116*32)
-            self.assertEqual(len(options),4*8*32)
+            self.assertEqual(len(options),3*8*32)
             palette=[tuple(((v>>s)&15)*17 for s in (8,4,0)) for v in
                      (0,0,0x2c4,0x6d7,0x55e,0x77f,0x555,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)]
             for players in (1,2):
-                for selection in range(4):
+                for selection in range(3):
                     with self.subTest(players=players,selection=selection):
                         planes=[bytearray(pages[((players-1)*4+n)*3712:((players-1)*4+n+1)*3712]) for n in range(4)]
                         selected=options[selection*256:(selection+1)*256]

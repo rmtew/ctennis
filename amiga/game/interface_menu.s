@@ -28,11 +28,15 @@ ui_menu_tick:
         btst    #0,ui_edges
         beq.s   .down
         subq.b  #1,ui_selection
-        andi.b  #3,ui_selection
+        cmpi.b  #$ff,ui_selection
+        bne.s   .down
+        move.b  #2,ui_selection
 .down:  btst    #1,ui_edges
         beq.s   .toggle
         addq.b  #1,ui_selection
-        andi.b  #3,ui_selection
+        cmpi.b  #3,ui_selection
+        bcs.s   .toggle
+        clr.b   ui_selection
 .toggle:
         cmpi.b  #1,ui_selection
         bne.s   .action
@@ -50,12 +54,7 @@ ui_menu_tick:
         bne.s   .open
         eori.b  #1,ui_player_count
         bra     .done
-.open:  cmpi.b  #3,d0
-        ; Preview-only Exit game: this base has no OS-restoration routine.
-        ; Do not open Controls under an Exit label or return unsafely to DOS.
-        ; Parent must resolve the quit-path prerequisite before publication.
-        beq     .done
-        subq.b  #1,d0
+.open:  subq.b  #1,d0
         move.b  d0,ui_page
         move.b  #2,ui_help_choice
         bra     .done

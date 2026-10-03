@@ -246,8 +246,8 @@ ui_render:
 
 ; A0 cached256-byte title row, A2 first title-plane row. Only x88..167
 ; belongs to the central menu; copying a full row would erase/recolour the
-; flanking Classic figures. Both modes share the same four selected captions.
-; Text is centred at x92 and spans72 pixels. Byte edges surround the two
+; flanking Classic figures. Both modes share the same three selected captions.
+; Text is centred at x108 and spans40 pixels. Byte edges surround the two
 ; even-address longwords: never use a68000 word/longword at offset11.
 ui_title_row_copy:
         movem.l d1/d7/a0-a3,-(sp)

@@ -90,13 +90,13 @@ def assert_menu_selection_raster(path, selection, players, build_hash=None):
     """Independent title specification: ASCII, native ready masks and colours."""
     font=(ROOT/'assets/native/title/font-mac.bin').read_bytes()
     canvas=[[0]*256 for _ in range(116)]
-    entries=[(38,'Start'),(49,'Mode'),(60,'Help'),(71,'Exit game')]
+    entries=[(38,'Start'),(49,'Mode'),(60,'Help')]
     def text(y,x,value,inverted=False,ink=15):
         for column,char in enumerate(value):
             for row in range(8):
                 byte=font[ord(char)*8+row]
                 for bit in range(8):canvas[y+row][x+column*8+bit]=ink if bool(byte&(128>>bit)) ^ inverted else 0
-    for index,(y,value) in enumerate(entries):text(y,92,value,index==selection)
+    for index,(y,value) in enumerate(entries):text(y,108,value,index==selection)
     for x,value in [(44,'A'),(204,'B'),(120,'VS')]:text(16,x,value)
     text(26,28,'Human')
     text(26,188 if players==2 else 200,'Human' if players==2 else 'AI')
