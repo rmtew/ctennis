@@ -3,6 +3,9 @@
 ; Retain fractional phase instead of rounding every update down.
 SIM_INTERVAL_WHOLE equ 11838
 SIM_INTERVAL_FRACTION equ 14906
+; NTSC interval rounded to16 fractional bits:PAL interval*715909/709379.
+NTSC_INTERVAL_WHOLE equ 11947
+NTSC_INTERVAL_FRACTION equ 13180
 
 start:
         ; DOS enters on its task stack. Finish all OS scheduling calls there,
@@ -13,6 +16,7 @@ start:
         jsr     -120(a6) ; Exec Disable
         lea     game_stack_top,sp
         bsr     measure_presentation_field
+        bsr     select_simulation_cadence
         bsr     init_square_score_banks
         bsr     game_begin_title
         lea     pointer_sources(pc),a0
@@ -94,8 +98,9 @@ ui_skip_round_poll:
         bcs.s   main_loop
         sub.l   simulation_interval,d0
         move.l  d0,simulation_phase
-        move.l  #SIM_INTERVAL_WHOLE,simulation_interval
-        addi.w  #SIM_INTERVAL_FRACTION,simulation_fraction
+        move.l  simulation_interval_whole,simulation_interval
+        move.w  simulation_interval_fraction,d1
+        add.w   d1,simulation_fraction
         bcc.s   simulation_interval_ready
         addq.l  #1,simulation_interval
 simulation_interval_ready:
@@ -187,6 +192,17 @@ measure_presentation_field:
         move.w  d3,presentation_last_line
         subq.w  #4,d3
         move.w  d3,presentation_last_safe_line
+        rts
+
+ ; Select once from the measured physical field; Kick1.3 has no EClockFrequency.
+select_simulation_cadence:
+        cmpi.w  #300,presentation_last_line
+        bcc.s   .selected
+        move.l  #NTSC_INTERVAL_WHOLE,simulation_interval_whole
+        move.w  #NTSC_INTERVAL_FRACTION,simulation_interval_fraction
+.selected:
+        move.l  simulation_interval_whole,simulation_interval
+        move.l  simulation_interval_whole,simulation_phase
         rts
 
 ; Install at most one latest completed scene per guarded bottom interval.
@@ -571,6 +587,9 @@ hex_byte:
 dos_entry_sp: dc.l 0
 game_stack_bottom: dcb.b 4096,0
 game_stack_top:
+simulation_interval_whole: dc.l SIM_INTERVAL_WHOLE
+simulation_interval_fraction: dc.w SIM_INTERVAL_FRACTION
+        even
 simulation_phase:   dc.l SIM_INTERVAL_WHOLE
 simulation_interval: dc.l SIM_INTERVAL_WHOLE
 simulation_fraction: dc.w 0

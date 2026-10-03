@@ -60,3 +60,11 @@ targets separately; the pinned model begins NTSC sprite header DMA at20 rather
 than PAL25. NTSC E-clock frequency differs, so the current PAL interval is not
 proof of equivalent simulation timing. Do not claim NTSC acceptance or change
 its cadence without reporting the required scope.
+
+## Startup PAL/NTSC cadence
+
+The measured full field also selects the simulation cadence once (last line below300 means NTSC). PAL retains11838+14906/65536 E-clock ticks. NTSC uses11947+13180/65536, the nearest16-bit fractional interval to the PAL interval multiplied by715909/709379. Shared dispatcher code reads selected whole/fraction words; there is no per-update standard branch.
+
+Source: Amiga Inc. Exec include, https://d0.se/include/exec/execbase.i lines189–199: E-clock frequencies709379 PAL and715909 NTSC, and ex_EClockFrequency only added inV36 (unavailable onKick1.3). Exact scaled fraction277711866223633/23244931072 is11947.201106487884; selected interval11947.201110839844. Rates are59.922737854578195 PAL and59.92273783275037 NTSC updates/second. Existing PAL interval on real NTSC would run0.9205234437444582% faster.
+
+Copperline's current hardcoded PAL timebase means NTSC geometry/DMA checks alone do not validate real NTSC simulation timing. A separately pinned and reviewed clock correction or a legitimate emulator with correct NTSC clocks is required for that claim.
