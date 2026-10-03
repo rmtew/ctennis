@@ -43,3 +43,6 @@ configure legitimate Kickstart1.3 and the pinned Copperline executable for tests
 See [native acceptance](tests/README.md), [current risks](docs/ct11/risks.md) and
 [CT11 cutover evidence](docs/ct11/README.md). The canonical native fixture remains
 independent of replay; do not regenerate its expected hashes to fix a failure.
+
+Proposed next architecture: [deterministic match core and Shot Doctor](docs/ct14/README.md)
+(design review only; [milestone checklist](docs/ct14/work-plan.md)).
