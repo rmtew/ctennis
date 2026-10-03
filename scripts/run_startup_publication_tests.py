@@ -5,7 +5,7 @@ from native_evidence import atomic_json
 from native_hunk import loaded_hunks
 from build_native_adf import package
 from copperline_test_session import NativeControlSession
-from native_identity_raster import assert_title_raster,assert_logo_absent_initial_raster,assert_mode_raster
+from native_identity_raster import assert_title_raster,assert_logo_absent_initial_raster,assert_mode_raster,assert_menu_selection_raster
 
 def _run():
  report=package(self_test=True);cfg=emulator_config();exe=ROOT/report['executable'];adf=ROOT/report['adf']
@@ -35,6 +35,7 @@ def _run():
    assert (whole,fraction)==((11838,14906) if standard=='PAL' else (11947,13180))
    assert number('game_lifecycle',2)==2 and number('game_title_display')==255
    title=directory/'title.png';s.inspect('capture_screenshot',{'path':str(title)});assert_title_raster(title)
+   title_identity=assert_menu_selection_raster(title,0,1,standard=standard)
    s.inspect('input_key',{'rawkey':0x44,'action':'press'});advance(.11)
    s.inspect('input_key',{'rawkey':0x44,'action':'release'});advance(2)
    copper=number('presentation_copper',4)
@@ -44,7 +45,7 @@ def _run():
    assert hardware==copper,(hardware,copper)
    court=directory/'court.png';s.inspect('capture_screenshot',{'path':str(court)});assert_logo_absent_initial_raster(court)
    mode_raster=assert_mode_raster(court,1)
-   cases.append({'standard':standard,'slow_ram':slow,'loaded_hunks':binding,'last_line':last,'last_safe_line':safe,'cadence':[whole,fraction],'presentation_copper':copper,'hardware_cop1lc':hardware,'presentation_frames':number('presentation_frames',2),'court_sha256':hashlib.sha256(court.read_bytes()).hexdigest(),'mode_raster':mode_raster,'passed':True})
+   cases.append({'standard':standard,'slow_ram':slow,'loaded_hunks':binding,'last_line':last,'last_safe_line':safe,'cadence':[whole,fraction],'presentation_copper':copper,'hardware_cop1lc':hardware,'presentation_frames':number('presentation_frames',2),'court_sha256':hashlib.sha256(court.read_bytes()).hexdigest(),'mode_raster':mode_raster,'title_identity':title_identity,'passed':True})
    print(standard,slow,'cold Start passed',flush=True)
  result={'passed':True,'state':'complete','adf_sha256':hashlib.sha256(adf.read_bytes()).hexdigest(),'release_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'listing_sha256':hashlib.sha256(listing.encode()).hexdigest(),'cases':cases,'scope':'Copperline exact release cold boots; no WinUAE execution claim'}
  atomic_json(ROOT/'build/tests/startup-publication/report.json',result)

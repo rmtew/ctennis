@@ -219,6 +219,21 @@ ui_render:
         dbra    d6,.copy_plane
         tst.b   ui_page
         bne.s   .page_selection
+        ; The selected startup standard determines the title corner identity.
+        ; Both grey planes share one row; other planes retain blank cache bytes.
+        lea     ui_title_identities,a0
+        cmpi.w  #NTSC_LAST_LINE,presentation_last_line
+        bne.s   .identity_ready
+        adda.w  #256,a0
+.identity_ready:
+        lea     title_plane1+180*32,a1
+        lea     title_plane2+180*32,a2
+        moveq   #63,d7
+.identity_copy:
+        move.l  (a0)+,d0
+        move.l  d0,(a1)+
+        move.l  d0,(a2)+
+        dbra    d7,.identity_copy
 .selection:
         moveq   #0,d0
         move.b  ui_selection,d0

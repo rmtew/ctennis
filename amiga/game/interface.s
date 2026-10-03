@@ -22,6 +22,7 @@ ui_state: dcb.b U_SIZE,0
         section display_data,data,chip
 ui_cached_pages: incbin "build/native/ui-pages.bin"
 ui_title_pages: incbin "build/native/ui-title-pages.bin"
+ui_title_identities: incbin "build/native/ui-title-identities.bin"
 ui_menu_font: incbin "assets/native/title/font-mac.bin"
 ui_font: incbin "assets/native/title/font.bin"
 ui_overlay_plane: dcb.b 512,0

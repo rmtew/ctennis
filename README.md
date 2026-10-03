@@ -43,3 +43,9 @@ configure legitimate Kickstart1.3 and the pinned Copperline executable for tests
 See [native acceptance](tests/README.md), [current risks](docs/ct11/risks.md) and
 [CT11 cutover evidence](docs/ct11/README.md). The canonical native fixture remains
 independent of replay; do not regenerate its expected hashes to fix a failure.
+
+The title corner shows the detected PAL/NTSC standard, product Git hash, and
+release version. `amiga/VERSION` is the single `major.minor` release number,
+starting at `1.0`; increment it deliberately for releases, never for rebuilds.
+The label keeps its existing grey and eight-pixel right inset, aligning from its
+full text width. Overlong labels fail the build instead of clipping.
