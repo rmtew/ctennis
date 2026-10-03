@@ -26,6 +26,19 @@
   score/WIN, Copper/DMA and negative-control regressions, plus unchanged/changed
   field timing checks. Do not assume a speedup.
 
+- [ ] Acceptance criterion for direct HUD cleanup: compare worst observed spare
+  time against the accepted PR #25 baseline using identical workloads, tools,
+  measurement boundaries and PAL/NTSC target configurations. Bind each result to
+  its exact build. Report minimum simulation-deadline headroom and minimum display
+  handover margin separately, in CCK and target-correct milliseconds; do not
+  conflate 50/60 Hz display frames with the approximately 59.923 Hz simulation
+  cadence. Include maximum callback work, entry lateness and ISR cost alongside
+  code/data/BSS and chip RAM bytes. Exercise simultaneous score/WIN/status changes,
+  reset, end exchange and all banks dirty, as well as ordinary unchanged/changed
+  fields. Label finite-run maxima/minima and their coverage as observed, not proven
+  worst-case bounds. Preserve existing deadlines, publication/DMA checks and
+  negative controls; no weakened gates to obtain a better comparison.
+
 - [ ] If destination descriptors remain useful after that redesign, investigate
   16-bit Copper-list-relative offsets with base-indexed addressing (for example
   `0(a0,d0.w)`) instead of 32-bit destination addresses and relocations. Verify
