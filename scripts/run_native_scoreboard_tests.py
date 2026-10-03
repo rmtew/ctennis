@@ -15,7 +15,7 @@ from native_evidence import atomic_json, compile_manifest, tracked_call
 from native_observation import code_symbols, target_log
 from native_tools import ROOT, ASSEMBLER, emulator_config, run as assemble
 from native_scoreboard_raster import assert_scoreboard_raster
-from native_square_scores import assert_generated_point_banks
+from native_square_scores import assert_generated_point_banks, assert_hud_bank
 from native_identity_raster import assert_mode_raster
 
 
@@ -39,15 +39,13 @@ def run_case(variant, two, exchanged, mutant=False):
     init += '        bsr game_scene_build_players\n'
     source = source.replace(marker, init)
     if mutant:
-        tables = (ROOT/'assets/native/court/score-patch-tables.i').read_text()
-        for plane in range(4):
-            tables = tables.replace(f'score_bank_games_a_6_p{plane}', f'score_bank_games_a_0_p{plane}')
-        fault = directory/'wrong-tally-tables.i'
-        fault.write_text(tables)
-        marker = '        include "assets/native/court/score-patch-tables.i"'
-        if source.count(marker) != 1:
-            raise ValueError('Native scoreboard table marker changed')
-        source = source.replace(marker, f'        include "{fault}"')
+        patch = (ROOT/'amiga/score_copper_patch.i').read_text()
+        marker = '        move.b  0(a1,d5.w),d0'
+        if patch.count(marker) != 1:
+            raise ValueError('WIN selection fault marker changed')
+        fault = directory/'wrong-tally-stamp.i'
+        fault.write_text(patch.replace(marker, marker+'\n        clr.b d0 ; deliberately all unearned'))
+        source = source.replace('include "amiga/score_copper_patch.i"', f'include "{fault}"')
     fixture = directory/'fixture.s'
     fixture.write_text(source)
     executable, listing = directory/'native-fixture', directory/'native.lst'
@@ -100,6 +98,12 @@ def run_case(variant, two, exchanged, mutant=False):
                 begin = base+symbols[name]
                 if begin <= address and address+size <= begin+len(association[buffer]):
                     association[buffer][address-begin:address-begin+size] = value.to_bytes(size, 'big')
+            hud_start = located('hud_bank0')
+            if hud_start <= address < hud_start+3*3072:
+                bank_index = (address-hud_start)//3072
+                allowed = located(('copperlist','copperlist_back','copperlist_third')[bank_index])
+                check('HUD writes only current building bank',
+                      int.from_bytes(association['back'],'big'), allowed)
             if address == base+symbols['simulation_started_updates']:
                 association['started'] = value
             if address == base+symbols['display_ready'] and value:
@@ -121,6 +125,7 @@ def run_case(variant, two, exchanged, mutant=False):
             {'addr': base+symbols[name], 'len': length, 'access': 'write'} for name, length in
             [('prepared_field_values', 6), ('back_copper', 4), ('simulation_started_updates', 2),
              ('simulation_updates', 2), ('display_ready', 1)]] + [
+            {'addr': located('hud_bank0'), 'len': 3*3072, 'access': 'write'},
             {'addr': 0xdff080, 'len': 4, 'access': 'write'}, {'addr': 0xdff088, 'len': 2, 'access': 'write'}]})
         # Less than one second: normal gameplay ticks and bank preparation run,
         # while the initial serve has no physical action to award a point.
@@ -150,19 +155,23 @@ def run_case(variant, two, exchanged, mutant=False):
             descriptors = raw(located('score_patch_descriptors'), count*14)
             entries = [struct.unpack_from('>IIIH', descriptors, index*14) for index in range(count)]
             table_begin = min(table for hi, lo, table, field in entries)
-            table_end = max(table+4*(1 if field == 65535 else 7) for hi, lo, table, field in entries)
+            table_end = max(table+4*(1 if field >= 65534 else 3 if field == 5 else 7) for hi, lo, table, field in entries)
             tables = raw(table_begin, table_end-table_begin)
             copper_length = located('copperlist_end')-located('copperlist')
             for bank in banks:
                 delta = bank-located('copperlist')
                 copper = raw(bank, copper_length)
                 for hi, lo, table, field in entries:
-                    selection = 0 if field == 65535 else fields[field]
+                    selection = 0 if field >= 65534 else fields[field]
                     off = table-table_begin+4*selection
                     expected = int.from_bytes(tables[off:off+4], 'big')
+                    bank_index = [located(n) for n in ('copperlist','copperlist_back','copperlist_third')].index(bank)
+                    if field == 65534:
+                        expected += bank_index*3072
                     high, low = hi+delta-bank, lo+delta-bank
                     actual = int.from_bytes(copper[high:high+2]+copper[low:low+2], 'big')
                     check('bank selected/restore plane pointer', actual, expected)
+                assert_hud_bank(raw, located, bank_index, fields)
                 pointer_checks.append({'bank': bank, 'checkpoint': elapsed, 'descriptors_checked': count})
         check('subsequent native ticks completed', int.from_bytes(read('simulation_updates', 2), 'big') > 3, True)
         check('no missed scoreboard publications', int.from_bytes(read('missed_presentation_deadlines', 2), 'big'), 0)

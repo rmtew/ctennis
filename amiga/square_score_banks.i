@@ -1,5 +1,5 @@
-; User-selected square LED preview, authored 16x16 masks. Build all variants
-; once before title setup / timer start; live score changes still switch pointers.
+; Build six unique point masks, a WIN mask and three fixed HUD strips once.
+; Only the current building bank is stamped during play.
 init_square_score_banks:
         movem.l d0-d7/a0-a6,-(sp)
         lea     -32(sp),sp
@@ -64,45 +64,80 @@ square_score_next_digit:
         addq.w  #1,d5
         cmpi.w  #2,d5
         bne     square_score_digit
-        ; Keep the exact four streams/28 full-width banks expected by Copper.
-        ; Seed from the static court, replacing only this player's two bytes.
-        lea     square_score_streams(pc),a4
-        moveq   #3,d5
-square_score_stream:
-        move.l  (a4)+,a0
-        move.l  (a4)+,a1
+        ; Logical state5 duplicates40; slot5 contains logical state6 (blank).
         move.w  d6,d0
-        mulu    #512,d0
+        cmpi.w  #6,d0
+        bne.s   square_score_unique
+        moveq   #5,d0
+square_score_unique:
+        lsl.w   #5,d0
+        lea     hud_point_tiles,a1
         adda.w  d0,a1
-        move.l  a1,a2
-        moveq   #127,d7
-square_score_copy:
+        move.l  a5,a0
+        moveq   #7,d7
+square_score_store_tile:
         move.l  (a0)+,(a1)+
-        dbra    d7,square_score_copy
-        adda.w  (a4)+,a2
-        move.l  a5,a3
-        moveq   #15,d7
-square_score_stamp:
-        move.w  (a3)+,(a2)
-        adda.w  #32,a2
-        dbra    d7,square_score_stamp
-        dbra    d5,square_score_stream
+        dbra    d7,square_score_store_tile
         addq.w  #1,d6
+        cmpi.w  #5,d6
+        bne.s   square_score_next_variant
+        addq.w  #1,d6
+square_score_next_variant:
         cmpi.w  #7,d6
         bne     square_score_variant
         lea     32(sp),sp
+
+        ; Exact retained font columns: W at17, I at23, N at27 (word x16).
+        lea     ui_font+'W'*8,a0
+        lea     ui_font+'I'*8,a2
+        lea     ui_font+'N'*8,a3
+        lea     hud_win_tile,a1
+        moveq   #0,d6
+square_score_win_row:
+        moveq   #0,d0
+        move.b  0(a0,d6.w),d0
+        andi.w  #$f8,d0
+        lsl.w   #7,d0
+        moveq   #0,d1
+        move.b  0(a2,d6.w),d1
+        andi.w  #$70,d1
+        lsl.w   #2,d1
+        or.w    d1,d0
+        moveq   #0,d1
+        move.b  0(a3,d6.w),d1
+        andi.w  #$f8,d1
+        lsr.w   #3,d1
+        or.w    d1,d0
+        move.w  d0,(a1)+
+        addq.w  #1,d6
+        cmpi.w  #8,d6
+        bne.s   square_score_win_row
+
+        lea     hud_bank0,a1
+        moveq   #2,d6
+square_score_init_bank:
+        lea     plane0+48*32,a0
+        bsr.s   square_score_copy_point
+        lea     plane2+48*32,a0
+        bsr.s   square_score_copy_point
+        lea     plane3+48*32,a0
+        bsr.s   square_score_copy_point
+        lea     plane1+72*32,a0
+        move.w  #1536/4-1,d7
+square_score_copy_games:
+        move.l  (a0)+,(a1)+
+        dbra    d7,square_score_copy_games
+        dbra    d6,square_score_init_bank
         movem.l (sp)+,d0-d7/a0-a6
 init_square_score_banks_end:
         rts
-square_score_streams:
-        dc.l plane2+48*32,score_bank_point_a_0_p2
-        dc.w 2
-        dc.l plane2+48*32,score_bank_point_b_0_p2
-        dc.w 28
-        dc.l plane0+48*32,score_bank_point_b_0_p0
-        dc.w 28
-        dc.l plane3+48*32,score_bank_point_b_0_p3
-        dc.w 28
+square_score_copy_point:
+        move.w  #512/4-1,d7
+square_score_copy:
+        move.l  (a0)+,(a1)+
+        dbra    d7,square_score_copy
+        rts
+        even
 square_score_definitions:
 square_score_rectangles:
         incbin "assets/native/court/square-led-definitions.bin"

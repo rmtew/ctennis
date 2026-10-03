@@ -42,7 +42,7 @@ class MetricsTests(unittest.TestCase):
             result=executable_attribution(exe,listing,{'files':{}})
             self.assertEqual(result['bss_ram_bytes'],8)
             self.assertEqual(result['bss_instances'][0]['file_bytes'],0)
-            self.assertEqual(result['bss_instances'][0]['category'],'startup_generated_point_banks')
+            self.assertEqual(result['bss_instances'][0]['category'],'hud_strips_and_tiles')
             self.assertEqual(result['accounted_file_bytes'],len(exe.read_bytes()))
             listing.write_text(listing.read_text().replace('ds.b 8','ds.b 4'))
             with self.assertRaisesRegex(ValueError,'BSS declaration'):executable_attribution(exe,listing,{'files':{}})

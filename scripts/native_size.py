@@ -98,7 +98,7 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
                 if token not in ('ds.b','ds.w','ds.l'):raise ValueError('Unsupported BSS declaration')
                 size=_count(expression,symbols)*{'b':1,'w':2,'l':4}[token[-1]]
                 if size!=stop-unit['start']:raise ValueError('BSS declaration does not reconcile')
-                bss_instances.append({'category':'startup_generated_point_banks' if unit['source']=='amiga/square_score_storage.i' else 'reserved_bss',
+                bss_instances.append({'category':'hud_strips_and_tiles' if unit['source']=='amiga/square_score_storage.i' else 'reserved_bss',
                     'source':unit['source'],'hunk':hunk['index'],'offset':unit['start'],'bytes':size,'file_bytes':0})
             continue
         for index,unit in enumerate(rows):

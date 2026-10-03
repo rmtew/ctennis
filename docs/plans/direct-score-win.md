@@ -47,10 +47,11 @@ footer and COPER publication still need the existing ownership protocol.
 Counts below come from merged source declarations and actual retained file sizes,
 not a new executable build or emulated timing run. Court planes are256x192,
 32 bytes/row, four planes; the proposed destination sizes follow these dimensions.
+Copy counts exclude tile generation and initial field stamping.
 The earlier described2x40 strip geometry does not match this merged source:
 point masks are2x16 bytes and WIN has six8-row labels (48 rows).
 
-| Layout candidate | Three mutable copies | Startup bitmap word writes | Assessment |
+| Layout candidate | Three mutable copies | Initial destination-copy word writes | Assessment |
 | --- | ---: | ---: | --- |
 | Whole four-plane court | 73,728 B | 36,864 | Duplicates192 rows despite static court. |
 | Four-plane HUD band y48..119 | 27,648 B | 13,824 | Simple contiguous band, but copies unchanged planes/rows. |

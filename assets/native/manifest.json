@@ -93,105 +93,21 @@
     },
     {
       "path": "assets/native/court/score-bank-data.i",
-      "size_bytes": 4300,
-      "sha256": "aeebad602c1639b0fc6091e60898e04c04fcabfe41fce4ff8b148a1017bffe72",
+      "size_bytes": 3152,
+      "sha256": "424222896154662e61e42a0184d071315a5a89b944ca23f81c50c8d02e3f9206",
       "imported_sha256": "ce2190ab9cfbb66d661cc06e5a041c3586323c89fd17271208fd08fff35c7a81"
     },
     {
       "path": "assets/native/court/score-cop-commands.i",
-      "size_bytes": 32052,
-      "sha256": "03d0590cc88d8146a5407260e0a1b1dd54f9e899d8bcd9ba9d08af611b72830f",
+      "size_bytes": 2013,
+      "sha256": "073dec31fcfb5a73a3af210e454c2f43f431dc4f3d93dbaa919dfa5d210c43cb",
       "imported_sha256": "d3380f3a54660fce243862b1fec2952b7a7b299daa198389df3215da6b9a6b68"
     },
     {
       "path": "assets/native/court/score-patch-tables.i",
-      "size_bytes": 60201,
-      "sha256": "7fda9ca84f00b12623dc27630da1c05a4bf7a2278f6f6648191e5ed51ff2586a",
+      "size_bytes": 4144,
+      "sha256": "283a614177eee7c972d0f5a6a04b57a66671776870b07cb212d99c3446d00aca",
       "imported_sha256": "e808dce811efc4ed93748b0510233d26e7b29fdc06a30231abbf67a16a870562"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_0_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "1c482971d73fbc718410fcfe0cf51008413a7f81078a24129b1b7edd1ec93dcb",
-      "imported_sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_1_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "ac04942b5eabfe2a49a0c8010d994ef4379e81f1a06cbf4d44f0c20a324735e3",
-      "imported_sha256": "8c70178d17232e241827051189829197d107a8ca8cb8b44e55620a39785c0a13"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_2_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "5ddb9b2f58a6bbe30039ccc5c486b0ecb8a054962ab940497e1983ee5f2bd962",
-      "imported_sha256": "190d49d3a90595a472a06d5da1e6f7e27dbe4a8fcab50d45e686b0124cac1625"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_3_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "299c228e5ee4430fe2ba27416c871b7191d6135421c8bf4b06b5ef0cfb8bc235",
-      "imported_sha256": "8ad82f4d0067724c1f8e542ec9b5c85a9f5ef39b6939fa3f5cf65b68004b2ca9"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_4_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "129b31bee3427147be2517dec7e76af5c77df17cd048389e1d28860bcac470e9",
-      "imported_sha256": "87cc5af831075dc037178a6f5a0172e8a18f43f32b3b683a6e2c1912efb5505c"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_5_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "32f38dd44e66da641ce9bf325b2d7dc1836bbb42697477a990a3ddca4187e929",
-      "imported_sha256": "35090e66df7234b365b0cec54a60007861d1ea681ba47987a6c60deaa61874e6"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_a_6_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "3c1cbbb49206a01af654c10c19979f94cedfe223966a9c5aede5fe197799cf2c",
-      "imported_sha256": "193def94e5b72dc41d36e60ed93244a5f40027260c20c08668b1d4416498e0e4"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_0_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "f87f02ae00d6c299164ce2248645632a515d69d4d8664fc39364a9a17605161d",
-      "imported_sha256": "dfdbc79b6e24b0100d6acc57f2249647275d81ffba570e5ad62dd28a2c5f7d7d"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_1_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "9d160e0377e771425f0f705168f6ba1dae51a7ed2558bd61e65abd3148a6591c",
-      "imported_sha256": "78c8aef30d0ab29070afa2ec03474b4445dbc756e308cdeeed1811d1ba46d1f3"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_2_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "0ce0ceaf01300dc794de7bd0396f5687957247bba03eee9cdace224fa46c6cd6",
-      "imported_sha256": "8fabbce037e8d8422dc2c071b55c5dbff3fb3620eba373b2b5ae94eeefc01a3c"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_3_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "32e9c180b6d7559d8976513bcfc6b6a8fbac1528f185c6b7087d2a57052da977",
-      "imported_sha256": "c40c17859425e27a1814148d9346bc99f32f4f0549bdcf6551bb168a2610ddf2"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_4_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "46d901f24303c304dd0d342553bb4019caec5e3b908d111820374811f6c33907",
-      "imported_sha256": "94371c80b4b8d813dd065037ef8a1358ea3245ff5de696ffd848d4dce6acee2a"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_5_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "be8448c4ea7e9e014d4aa65986061319c31030e5ee145cd0164eaa1ae252ef89",
-      "imported_sha256": "38aebf11ce760f16c946fde4ef7df93983e97778d50ff4b5b4ee27891e70ee0b"
-    },
-    {
-      "path": "assets/native/court/score_bank_games_b_6_p1.bin",
-      "size_bytes": 1536,
-      "sha256": "d1ce444f02b42789b64f8ad3e00ff8df3546a2520593a1e0dbcfc5c61dc0ad7b",
-      "imported_sha256": "566c6ec4bb7cc7269cf31e62f7d9cca1473f7eaaaed3d9ee59ed168c2cc762f9"
     },
     {
       "path": "assets/native/court/score_bank_mode_0_p3.bin",
