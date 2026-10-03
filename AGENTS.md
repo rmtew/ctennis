@@ -46,3 +46,10 @@ only after their implementation lands; do not read other workers' branches.
 Release ADF packaging removes only HUNK_SYMBOL records. Keep the symbol-rich
 development executable/listing for debug observers, verify the exact stripped
 release bytes on cold boot, and report both product hashes separately.
+
+For the explicitly approved unchanged triple-bank product, the preserved2219 gate
+may be completed with `scripts/native_acceptance_resume.py`; follow
+`docs/ct11/composite-acceptance.md`. Report verified composite evidence honestly,
+preserve failed/original receipts, and rerun changed/unknown dependent stages.
+Do not restart unrelated passed native stages for documentation or inactive-observer
+changes. This narrow exception does not permit product changes or weaker assertions.

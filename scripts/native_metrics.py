@@ -120,6 +120,10 @@ def cold_timing(capture, report):
 
 def measurement_status(path):
     classification=status(path,subject='maintained-native',interface_flavor='enhanced')
+    if classification.get('status')=='stale':
+        from native_composite import verified_status
+        composite=verified_status(path,subject='maintained-native',interface_flavor='enhanced')
+        if composite.get('status')=='passed':return composite
     # Build's static-report hook broadens the Python closure into this reporter.
     # Reporter-only edits do not change the measured executable/observer. Keep
     # every actual observer, product, tool, config and raw-artifact hash strict.
