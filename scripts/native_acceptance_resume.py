@@ -40,11 +40,12 @@ def make_plan():
  if any(r['exit_code'] for r in source['commands'][:33]):raise ValueError('Preserved pass prefix is not successful')
  if any(digest(ROOT/p)!=sha for p,sha in PRODUCT.items()):raise ValueError('Product differs from approved unchanged bytes')
  receipts={}
- for i in range(4,34):
+ for i in range(4,35):
   path=receipt_for(i)
   if not path.exists():continue
   report=json.loads(path.read_text());meta=report.get('evidence',{})
   if report.get('passed') is not True or meta.get('state')!='complete':continue
+  if i>=33 and meta.get('started_utc','')<=source['commands'][-1]['completed_utc']:continue
   expected=command_for(i,source)
   actual=meta['command']
   if Path(actual[0]).name!=Path(expected[0]).name or actual[1:]!=expected[1:]:raise ValueError(f'Stage{i} command mismatch')
@@ -76,11 +77,13 @@ def main():
  if args.verify_only:return 0 if all(results[i]['status']=='passed' for i in range(4,34)) else 1
  head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
  if subprocess.run(['git','diff','--quiet','HEAD'],cwd=ROOT).returncode:raise ValueError('Commit the composite verifier/observer before execution')
- report={'commit':head,'base_commit':BASE,'mode':'composite_verified','passed':False,'state':'incomplete',
+ forbidden=('tests/reference','build/reference','build/translation','analysis','tooling','roms')
+ if any((ROOT/name).exists() for name in forbidden):raise ValueError('Original inputs/obsolete directories present')
+ report={'commit':head,'base_commit':BASE,'mode':'composite_verified','passed':False,'state':'incomplete','original_inputs_absent_in_checkout':True,
          'started_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'product':PRODUCT,'plan_sha256':digest(PLAN),'commands':[]}
  for i in range(37):
   args=command_for(i,source)
-  reuse=results.get(i) if i!=34 else None
+  reuse=results.get(i)
   if reuse and reuse['status']=='passed':
    row={'stage':i,'command':[sys.executable,*args],'exit_code':0,'evidence':reuse,
         'disposition':'preserved_pass' if i<33 else 'fresh_repair_pass'}
