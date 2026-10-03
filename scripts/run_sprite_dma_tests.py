@@ -16,10 +16,14 @@ NAMES=('front_copper','back_copper','ready_copper','spare_copper','display_ready
        'ready_generation','ready_title_display','simulation_updates','simulation_started_updates',
        'presentation_copper','presentation_last_line','presentation_last_safe_line',
        'copperlist','copperlist_back','copperlist_third','copperlist_end',
-       'sprite0','sprite_back','sprite_third','title_copper')
+       'sprite0','sprite_back','sprite_third','title_copper',
+       'hud_bank0','hud_bank1','hud_bank2','score_pointer_cache',
+       *('plane'+str(p) for p in range(4)),
+       *(f'score_bank_mode_{n}_p{p}' for n in range(3) for p in range(4)),
+       *(f'score_bank_status_{n}_p{p}' for n in range(7) for p in (0,2,3)))
 
 
-def execute_case(name, phase, scenario='play', standard='PAL', control=None, lace=False, frames=72):
+def execute_case(name, phase, scenario='play', standard='PAL', control=None, lace=False, frames=72, measure_isr=False):
     cfg=emulator_config();directory=ROOT/'build/tests/native-sprite-dma'/name
     directory.mkdir(parents=True,exist_ok=True)
     source=(ROOT/'amiga/main.s').read_text()
@@ -82,7 +86,11 @@ fixture_delay_done:
     compile_manifest(exe,listing)
     located={n:(int(h),int(o,16)) for n,h,o in re.findall(
         r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing.read_text(),re.M)}
-    samples=[];cpu_events=[]
+    samples=[];cpu_events=[];isr_begin=None;isr_end=None;isr_intervals=[]
+    irq_code=[(int(offset,16),statement.strip()) for offset,statement in re.findall(
+        r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*(.*)$',listing.read_text(),re.M)
+        if located['presentation_interrupt'][1]<=int(offset,16)<located['poll_presentation'][1]]
+    irq_return=next(offset for offset,statement in irq_code if statement=='rte')
     with NativeControlSession(directory) as s:
         s.inspect('session_launch',{'binary':cfg['tools']['copperline'],'run':str(exe),
             'args':['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K',
@@ -112,9 +120,28 @@ fixture_delay_done:
         watches=[{'addr':address(n),'len':z,'access':'write'} for n,z in [('front_copper',4),('back_copper',4),('ready_copper',4),('spare_copper',4),('display_ready',1),('ready_completed',1),('blank_seen',1),('ready_generation',2),('ready_title_display',1),('simulation_updates',2),('simulation_started_updates',2),('presentation_copper',4)]]
         watches += [{'addr':address(n),'len':address('copperlist_end')-address('copperlist'),'access':'write'} for n in ('copperlist','copperlist_back','copperlist_third')]
         watches += [{'addr':address(n),'len':576,'access':'write'} for n in ('sprite0','sprite_back','sprite_third')]
+        if 'hud_bank0' in located:
+            watches += [{'addr':address('hud_bank0'),'len':3*3072,'access':'write'},
+                        {'addr':address('score_pointer_cache'),'len':18,'access':'write'}]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'},{'addr':0xdff004,'len':4,'access':'read'}]
+        if measure_isr:
+            watches += [{'addr':address('game_stack_bottom'),'len':address('game_stack_top')-address('game_stack_bottom'),'access':'access'}]
         def observe(message):
-            if message.get('method')=='event.mmio':cpu_events.append(message['params'])
+            nonlocal isr_begin,isr_end
+            if message.get('method')!='event.mmio':return
+            row=message['params']
+            if row.get('dropped_events',0) or row.get('dropped_notifications',0):
+                raise AssertionError('Native timing telemetry lost')
+            if measure_isr and address('game_stack_bottom')<=row['addr']<address('game_stack_top'):
+                pc=row['pc'];when=row['position']['cck']
+                if pc==address('presentation_interrupt') and row['access']=='write':
+                    if isr_end is not None:
+                        isr_intervals.append(isr_end-isr_begin);isr_begin=isr_end=None
+                    if isr_begin is None:isr_begin=when
+                elif pc==segments[0]['start']+irq_return and row['access']=='read' and isr_begin is not None:
+                    isr_end=when
+                return
+            cpu_events.append(row)
         s.notification_handler=observe
         s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
         s.inspect('profile.start',{'path':str(profile),'frames':frames,'slots':True,'memory':True,
@@ -136,14 +163,15 @@ fixture_delay_done:
             bank=[address(n) for n in ('copperlist','copperlist_back','copperlist_third')].index(front)
             data=raw(address(('sprite0','sprite_back','sprite_third')[bank]),576)
             sample={'position':stop,'front':front,'installed':scalar('presentation_copper',4),
-                    'sprite_bytes':data.hex(),'paused':scalar('ui_paused',1),
+                    'sprite_bytes':data.hex(),'hud_bytes':raw(address(f'hud_bank{bank}'),3072).hex() if 'hud_bank0' in located else None,'paused':scalar('ui_paused',1),
                     'lifecycle':scalar('game_lifecycle'),'page':scalar('ui_page',1)}
             samples.append(sample)
         s.inspect('profile.stop')
+        if isr_end is not None:isr_intervals.append(isr_end-isr_begin)
         s.inspect('events.unsubscribe')
         s.notification_handler=None
         atomic_json(directory/'cpu-events.json',cpu_events)
-        binding={'addresses':{n:address(n) for n in NAMES},'loaded_hunks':loaded,
+        binding={'addresses':{n:address(n) for n in NAMES if n in located},'loaded_hunks':loaded,
                  'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'executable_path':str(exe.relative_to(ROOT)),
                  'profile':status,'phase':phase,'scenario':scenario,'standard':standard,'control':control,
                  'fixture':'one-time initial clock phase wait; then native main loop and physical input only',
@@ -166,7 +194,9 @@ fixture_delay_done:
             if e['addr']==address(n):counts[n]=e['value']
         if e['addr']==0xdff088 and counts['simulation_started_updates']!=counts['simulation_updates']:
             active.append(dict(position=e['position'],started=counts['simulation_started_updates'],completed=counts['simulation_updates']))
-    result.update(binding=binding,live_samples=used,excluded_samples=excluded,producer_active_publications=active)
+    result.update(binding=binding,live_samples=used,excluded_samples=excluded,producer_active_publications=active,
+                  isr_bus_timing={'samples':len(isr_intervals),'max_cck':max(isr_intervals) if isr_intervals else None,
+                                  'scope':'first register-save bus write through last RTE frame read; interrupt entry and post-read CPU tail excluded'})
     if not control:
         if scenario in ('play','two','serve') and result['sprite_header_words']!=16*result['full_fields']:
             raise AssertionError('Live gameplay did not scan all eight sprite headers in every complete field')

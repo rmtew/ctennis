@@ -192,3 +192,9 @@ deltas. `--check` verifies that baseline hash as well as current product inputs.
 The frozen PR21/PR22 integration preserves the selected LED masks and title geometry. Point banks occupy startup-generated chip BSS, not embedded file bytes; listing-backed BSS extents are reported separately and reconcile with HUNK_BSS. The previous measured product is preserved in baselines/pre-title-score-current.json/.md and its size snapshot. Refresh all four affected metric collectors plus the full cold menu after this product change.
 
 The focused native LED startup check supplies square-startup.json/.md, bound to its exact development executable and frozen-preview contract. Its emulated constructor interval is an ordinary-startup observation; it does not split the cold-ADF entry-to-ready interval. Current metrics cover frozen master f82780dcf9f4be154d912db0b306598a729afe24. Later help wording/title-ball changes require exact-product validation before reuse or remeasurement; these measurements do not certify those changes.
+
+Direct score/WIN strips replace full variant banks and horizontal per-row switches.
+The accepted pre-change report is retained in `baselines/pre-direct-hud-current.json`
+and `.md`. `direct-hud-comparison.json`/`.md` bind measured instruction, data/BSS,
+relocation and runtime changes; bounded baseline probes add previously unavailable
+ISR/handover/dirty-HUD metrics without rerunning the old acceptance campaign.

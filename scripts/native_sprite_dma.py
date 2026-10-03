@@ -20,6 +20,9 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     sprite_names = ['sprite0', 'sprite_back', 'sprite_third']
     copper = [addresses[n] for n in copper_names]
     sprites = [addresses[n] for n in sprite_names]
+    hud = [addresses.get(f'hud_bank{b}') for b in range(3)]
+    has_hud = all(a is not None for a in hud)
+    hud_fetches = hud_writes = 0
     copper_size = addresses['copperlist_end']-addresses['copperlist']
     header_line = 25 if standard == 'PAL' else 20
     failures = []
@@ -42,7 +45,9 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
         start = sprites[bank]
         return {'bank': bank, 'generation': generation,
                 'title':bool(scalar('ready_title_display',1)),
-                'data': bytes(memory[start:start+576])}
+                'data': bytes(memory[start:start+576]),
+                'hud':bytes(memory[hud[bank]:hud[bank]+3072]) if has_hud else None,
+                'fields':list(memory[addresses['score_pointer_cache']+bank*6:addresses['score_pointer_cache']+bank*6+6]) if has_hud else None}
     initial = index(scalar('front_copper'))
     hardware = scalar('presentation_copper')
     current = snapshot(initial, 'inherited') if initial is not None and hardware in copper else None
@@ -60,6 +65,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
         'display_ready':1,'ready_completed':1,'blank_seen':1,'ready_generation':2,'ready_title_display':1,'simulation_updates':2,
         'simulation_started_updates':2,'presentation_copper':4}
     watched=[(addresses[n],size) for n,size in metadata_sizes.items()] + [(a,copper_size) for a in copper] + [(a,576) for a in sprites]
+    if has_hud:watched += [(a,3072) for a in hud]+[(addresses['score_pointer_cache'],18)]
     last_cpu_cop=None
     pointer_words = [0]*16
     last_pair = [None]*8
@@ -75,6 +81,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     channels_seen = set()
     geometries = set()
     maximum_cpu_handover = 0
+    field_end_margins = []
     pointer_completion = []
     last_frame = None
     strobe_fields = set()
@@ -103,6 +110,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
         reads = [dict(header=[], data=[], terminator=[]) for _ in range(8)]
         expected_field = current
         field_hardware = hardware
+        bpl_rows = {}
         if not partial and number in live:
             encountered_live.add(number)
             sample=live[number]
@@ -111,6 +119,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                     fail('live frozen bank differs from bus-derived completed scene', frame=number)
                 else:
                     checked_live_samples += 1
+                if has_hud and bytes.fromhex(sample['hud_bytes']) != expected_field['hud']:
+                    fail('live HUD differs from frozen completed scene',frame=number)
             elif sample.get('installed')!=addresses['title_copper']:
                 fail('live title sample has another installed list', frame=number)
         for offset, record in enumerate(SLOT.iter_unpack(slot_bytes)):
@@ -136,6 +146,12 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                         beam_low=None
                 if e['access']!='write':continue
                 ea,es,ev=e['addr'],e['size'],e['value']
+                if has_hud and not partial:
+                    for b,h in enumerate(hud):
+                        if h <= ea < h+3072:
+                            hud_writes += 1
+                            if copper[b] != scalar('back_copper') or copper[b] in (scalar('front_copper'),scalar('ready_copper')):
+                                fail('CPU wrote displayed/completed HUD strip',bank=b,position=ep)
                 if ea+es<=len(memory):
                     memory[ea:ea+es]=ev.to_bytes(es,'big')
                     if ea==addresses['blank_seen'] and not ev and number in strobe_fields and ep['vpos']>=253:
@@ -221,6 +237,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                     else:
                         current = None
                     if not partial:
+                        field_end_margins.append(frame['rows']*stride-offset)
                         publications.append(dict(position=position, bank=court,
                                                  generation=ready_generation, completed_generation=scalar('simulation_updates',2), completed_latch=bool(scalar('ready_completed',1))))
                     cpu_pair = []
@@ -251,6 +268,29 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                                                            last_pair=position,
                                                            elapsed_cck=offset-pending['offset']))
                             pending = None
+            # Full-width fixed regions: verify every actual DMA source address,
+            # including the first fetch after each pointer change and court restore.
+            if has_hud and not partial and expected_field and kind==6 and size and 44<=vpos<236:
+                plane=(reg-0x110)//2
+                if plane not in range(4):
+                    fail('invalid HUD bitplane DMA register',reg=reg,position=position)
+                else:
+                    y=vpos-44;key=(y,plane);word=bpl_rows.get(key,0);bpl_rows[key]=word+1
+                    base=addresses[f'plane{plane}'];row=y
+                    fields=expected_field['fields'];bank=expected_field['bank']
+                    if 34<=y<42:
+                        base=addresses[f'score_bank_mode_{fields[5]}_p{plane}'];row=y-34
+                    elif 48<=y<64 and plane in (0,2,3):
+                        base=hud[bank]+{0:0,2:512,3:1024}[plane];row=y-48
+                    elif 72<=y<120 and plane==1:
+                        base=hud[bank]+1536;row=y-72
+                    elif 96<=y<104 and plane in (0,2,3):
+                        base=addresses[f'score_bank_status_{fields[4]}_p{plane}'];row=y-96
+                    expected=base+row*32+word*2
+                    if address!=expected:
+                        fail('bitplane DMA did not fetch completed HUD/court row',plane=plane,
+                             position=position,actual=address,expected=expected)
+                    hud_fetches+=1
             if partial or kind != 7 or not size:
                 continue
             if expected_field is None:
@@ -314,6 +354,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
             channels_seen.add(ch); banks_seen.add(expected_field['bank'])
             generations.add(str(expected_field['generation']))
         if not partial and expected_field:
+            if has_hud and (len(bpl_rows)!=192*4 or any(n!=16 for n in bpl_rows.values())):
+                fail('incomplete four-plane court DMA extent',frame=number,rows=len(bpl_rows))
             for ch, events in enumerate(reads):
                 if len(events['header']) != 2:
                     fail('field lacks both sprite header words', frame=number, channel=ch)
@@ -347,6 +389,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 independently_read_frozen_bank_samples=checked_live_samples,
                 raw_sidecar_word_disagreements=reported_word_disagreements,
                 data_value_limitation='Pinned Copperline update_last_cpu_trace_data can overwrite raw record data. RAM reconstruction uses authoritative CPU MMIO values; source addresses, frozen snapshots, destination/row timing and ownership remain strict. Raw sidecar data equality is diagnostic, not certified.',
+                hud_bitplane_words=hud_fetches,hud_cpu_writes=hud_writes,
+                minimum_strobe_to_field_end_cck=min(field_end_margins) if field_end_margins else None,
                 maximum_beam_sample_to_strobe_cck=maximum_cpu_handover,
                 field_geometries=[list(g) for g in sorted(geometries)],
                 standard=standard, header_line=header_line,

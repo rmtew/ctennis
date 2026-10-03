@@ -25,16 +25,56 @@ def expected_point_bank(side, variant, plane):
     return bytes(data)
 
 
+def win_mask():
+    # Independent authored placement used by native_scoreboard_raster.
+    font = (ROOT/'assets/native/title/font.bin').read_bytes()
+    rows = bytearray(16)
+    for char, first, last, left in (('W', 0, 4, 17), ('I', 1, 3, 23), ('N', 0, 4, 27)):
+        for y in range(8):
+            for x in range(first, last+1):
+                if font[ord(char)*8+y] & (128 >> x):
+                    bit = left+x-first-16
+                    rows[y*2+bit//8] |= 128 >> (bit%8)
+    return bytes(rows)
+
+
+def expected_hud_bank(fields):
+    """Independent retained assets/pixels, not product renderer output."""
+    planes = [(ROOT/f'assets/native/court/plane{p}.bin').read_bytes() for p in range(4)]
+    strips = bytearray(b''.join(planes[p][48*32:64*32] for p in (0,2,3)) + planes[1][72*32:120*32])
+    for field, streams, x in ((0,(512,),2), (1,(0,512,1024),28)):
+        for stream in streams:
+            for y in range(16):
+                strips[stream+y*32+x:stream+y*32+x+2] = MASKS[fields[field]][y*2:y*2+2]
+    strips[1536+24*32:1536+32*32] = (ROOT/f'assets/native/court/score_bank_status_{fields[4]}_p1.bin').read_bytes()
+    mask = win_mask()
+    for field,x in ((2,2),(3,28)):
+        for row in range(6):
+            for y in range(8):
+                off = 1536+(row*8+y)*32+x
+                strips[off:off+2] = bytes(2) if row < fields[field] else mask[y*2:y*2+2]
+    return bytes(strips)
+
+
+def assert_hud_bank(raw, located, bank, fields):
+    expected = expected_hud_bank(fields)
+    actual = raw(located(f'hud_bank{bank}'),len(expected))
+    if actual != expected:
+        raise AssertionError({'label':'native HUD strips match independent pixels', 'bank':bank,
+                              'fields':fields,'different_bytes':sum(a!=b for a,b in zip(actual,expected))})
+    return {'bank':bank,'fields':fields,'bytes':len(expected),'matched':True}
+
+
 def assert_generated_point_banks(raw, located):
+    # Retain entry name for startup receipts; representation is now six tiles.
     checks = []
-    for side, plane in (('a', 2), ('b', 2), ('b', 0), ('b', 3)):
-        for variant in range(7):
-            name = f'score_bank_point_{side}_{variant}_p{plane}'
-            actual = raw(located(name), 512)
-            expected = expected_point_bank(side, variant, plane)
-            if actual != expected:
-                raise AssertionError({'label': 'startup banks match selected square preview',
-                    'bank': name, 'different_bytes': sum(a != b for a, b in zip(actual, expected))})
-            checks.append({'bank': name, 'bytes': len(actual),
-                           'sha256': hashlib.sha256(actual).hexdigest(), 'matched': True})
+    for tile,variant in enumerate((0,1,2,3,4,6)):
+        actual = raw(located('hud_point_tiles')+tile*32,32)
+        expected = MASKS[variant]
+        if actual != expected:
+            raise AssertionError({'label':'startup banks match selected square preview',
+                'tile':tile,'different_bytes':sum(a!=b for a,b in zip(actual,expected))})
+        checks.append({'tile':tile,'logical_variant':variant,'bytes':32,'matched':True})
+    if raw(located('hud_win_tile'),16) != win_mask():
+        raise AssertionError('Native WIN mask differs from independently authored font placement')
     return checks

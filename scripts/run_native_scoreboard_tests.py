@@ -15,7 +15,7 @@ from native_evidence import atomic_json, compile_manifest, tracked_call
 from native_observation import code_symbols, target_log
 from native_tools import ROOT, ASSEMBLER, emulator_config, run as assemble
 from native_scoreboard_raster import assert_scoreboard_raster
-from native_square_scores import assert_generated_point_banks
+from native_square_scores import assert_generated_point_banks, assert_hud_bank
 from native_identity_raster import assert_mode_raster
 
 
@@ -24,7 +24,7 @@ def run_case(variant, two, exchanged, mutant=False):
     games = [variant, 6-variant]
     directory = ROOT / 'build/tests/native-scoreboard' / f'{variant}-{int(two)}-{int(exchanged)}'
     if mutant:
-        directory /= 'wrong-tally-pointer'
+        directory /= {True:'wrong-tally-pointer','ownership':'wrong-hud-bank','repair':'missing-win-repair'}[mutant]
     directory.mkdir(parents=True, exist_ok=True)
     source = (ROOT/'amiga/main.s').read_text()
     marker = '        bsr     game_begin_title'
@@ -36,18 +36,25 @@ def run_case(variant, two, exchanged, mutant=False):
     for name, value in zip(('game_mode', 'game_score_flags', 'game_point_a', 'game_point_b',
                             'game_games_a', 'game_games_b'), (mode, 64|ai, *points, *games)):
         init += f'        move.b #{value},{name}\n'
+    init += f'        move.b #{0xa0 | variant},game_display\n        move.b #224,game_status_clock\n'
     init += '        bsr game_scene_build_players\n'
     source = source.replace(marker, init)
     if mutant:
-        tables = (ROOT/'assets/native/court/score-patch-tables.i').read_text()
-        for plane in range(4):
-            tables = tables.replace(f'score_bank_games_a_6_p{plane}', f'score_bank_games_a_0_p{plane}')
-        fault = directory/'wrong-tally-tables.i'
-        fault.write_text(tables)
-        marker = '        include "assets/native/court/score-patch-tables.i"'
-        if source.count(marker) != 1:
-            raise ValueError('Native scoreboard table marker changed')
-        source = source.replace(marker, f'        include "{fault}"')
+        patch = (ROOT/'amiga/score_copper_patch.i').read_text()
+        if mutant == 'ownership':
+            marker = '        adda.l  d0,a4'
+            replacement = '        nop ; deliberately write bank0 instead'
+        elif mutant == 'repair':
+            marker = '        btst    #4,d3\n        beq.s   .done'
+            replacement = '        bra.s   .done ; deliberately omit unchanged-side repair'
+        else:
+            marker = '        move.b  0(a1,d5.w),d0'
+            replacement = marker+'\n        clr.b d0 ; deliberately all unearned'
+        if patch.count(marker) != 1:
+            raise ValueError('HUD fault marker changed')
+        fault = directory/'wrong-hud.i'
+        fault.write_text(patch.replace(marker, replacement))
+        source = source.replace('include "amiga/score_copper_patch.i"', f'include "{fault}"')
     fixture = directory/'fixture.s'
     fixture.write_text(source)
     executable, listing = directory/'native-fixture', directory/'native.lst'
@@ -100,6 +107,12 @@ def run_case(variant, two, exchanged, mutant=False):
                 begin = base+symbols[name]
                 if begin <= address and address+size <= begin+len(association[buffer]):
                     association[buffer][address-begin:address-begin+size] = value.to_bytes(size, 'big')
+            hud_start = located('hud_bank0')
+            if hud_start <= address < hud_start+3*3072:
+                bank_index = (address-hud_start)//3072
+                allowed = located(('copperlist','copperlist_back','copperlist_third')[bank_index])
+                check('HUD writes only current building bank',
+                      int.from_bytes(association['back'],'big'), allowed)
             if address == base+symbols['simulation_started_updates']:
                 association['started'] = value
             if address == base+symbols['display_ready'] and value:
@@ -121,6 +134,7 @@ def run_case(variant, two, exchanged, mutant=False):
             {'addr': base+symbols[name], 'len': length, 'access': 'write'} for name, length in
             [('prepared_field_values', 6), ('back_copper', 4), ('simulation_started_updates', 2),
              ('simulation_updates', 2), ('display_ready', 1)]] + [
+            {'addr': located('hud_bank0'), 'len': 3*3072, 'access': 'write'},
             {'addr': 0xdff080, 'len': 4, 'access': 'write'}, {'addr': 0xdff088, 'len': 2, 'access': 'write'}]})
         # Less than one second: normal gameplay ticks and bank preparation run,
         # while the initial serve has no physical action to award a point.
@@ -150,19 +164,23 @@ def run_case(variant, two, exchanged, mutant=False):
             descriptors = raw(located('score_patch_descriptors'), count*14)
             entries = [struct.unpack_from('>IIIH', descriptors, index*14) for index in range(count)]
             table_begin = min(table for hi, lo, table, field in entries)
-            table_end = max(table+4*(1 if field == 65535 else 7) for hi, lo, table, field in entries)
+            table_end = max(table+4*(1 if field >= 65534 else 3 if field == 5 else 7) for hi, lo, table, field in entries)
             tables = raw(table_begin, table_end-table_begin)
             copper_length = located('copperlist_end')-located('copperlist')
             for bank in banks:
                 delta = bank-located('copperlist')
                 copper = raw(bank, copper_length)
                 for hi, lo, table, field in entries:
-                    selection = 0 if field == 65535 else fields[field]
+                    selection = 0 if field >= 65534 else fields[field]
                     off = table-table_begin+4*selection
                     expected = int.from_bytes(tables[off:off+4], 'big')
+                    bank_index = [located(n) for n in ('copperlist','copperlist_back','copperlist_third')].index(bank)
+                    if field == 65534:
+                        expected += bank_index*3072
                     high, low = hi+delta-bank, lo+delta-bank
                     actual = int.from_bytes(copper[high:high+2]+copper[low:low+2], 'big')
                     check('bank selected/restore plane pointer', actual, expected)
+                assert_hud_bank(raw, located, bank_index, fields)
                 pointer_checks.append({'bank': bank, 'checkpoint': elapsed, 'descriptors_checked': count})
         check('subsequent native ticks completed', int.from_bytes(read('simulation_updates', 2), 'big') > 3, True)
         check('no missed scoreboard publications', int.from_bytes(read('missed_presentation_deadlines', 2), 'big'), 0)
@@ -182,18 +200,22 @@ def run(self_test):
                for two in (False, True) for exchanged in (False, True)]
     controls = []
     if self_test:
-        try:
-            run_case(6, False, False, mutant=True)
-        except AssertionError as error:
-            detail = error.args[0]
-            if not isinstance(detail, dict) or detail.get('label') != 'independent native scoreboard raster':
-                raise
-            control_directory = ROOT/'build/tests/native-scoreboard/6-0-0/wrong-tally-pointer'
-            controls.append({'detected': True, 'failure': detail, 'unchanged_tally': [6, 0],
-                             'artifact_directory': str(control_directory.relative_to(ROOT)),
-                             'executable_sha256': hashlib.sha256((control_directory/'native-fixture').read_bytes()).hexdigest()})
-        else:
-            raise AssertionError('Compiled wrong tally-pointer escaped independent raster assertion')
+        for mutation, label, folder in (
+                (True,'independent native scoreboard raster','wrong-tally-pointer'),
+                ('repair','independent native scoreboard raster','missing-win-repair'),
+                ('ownership','HUD writes only current building bank','wrong-hud-bank')):
+            try:
+                run_case(6, False, False, mutant=mutation)
+            except AssertionError as error:
+                detail = error.args[0]
+                if not isinstance(detail, dict) or detail.get('label') != label:
+                    raise
+                control_directory = ROOT/'build/tests/native-scoreboard/6-0-0'/folder
+                controls.append({'detected': True, 'failure': detail, 'unchanged_tally': [6, 0],
+                                 'artifact_directory': str(control_directory.relative_to(ROOT)),
+                                 'executable_sha256': hashlib.sha256((control_directory/'native-fixture').read_bytes()).hexdigest()})
+            else:
+                raise AssertionError('Compiled HUD fault escaped: '+str(mutation))
     report = {'passed': True, 'cases': reports, 'compiled_fault_controls': controls,
               'executable_sha256': reports[0]['executable_sha256'],
               'scope': 'All native point/tally variants, modes and ends; stable three-bank scanout; compiled fixture starts'}

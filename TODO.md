@@ -1,6 +1,6 @@
 # Deferred work
 
-- [ ] After PR #25 is accepted and merged, investigate direct score/WIN bitmap
+- [x] After PR #25 was accepted and merged, investigate direct score/WIN bitmap
   updates as the user-selected next direction: replace per-row score/WIN pointer
   switching and full variant strips with small LED tiles at fixed positions.
   Use the building buffer as the write target; displayed and ready buffers remain
@@ -48,8 +48,12 @@
   contended 68000 CCK while preserving fixed-pointer initialization, changed-field
   early rejection, independent per-bank caches and score/Copper/DMA regressions.
 
+The direct-HUD plan and implementation were subsequently authorized separately; see draft PR #27 and `docs/plans/direct-score-win.md`. The historical note below did not itself authorize runtime changes.
+
 Documentation only; no runtime implementation authorized by this note. Hold this
 TODO PR (#26) until PR #25 is accepted and merged to avoid release-gate base churn;
 the coordinator owns merge ordering. Leave PR #25's frozen head
 `1ec93d4d29e89f462efe9cdc2779b146e6346518` unchanged. This task is independent of
 PR #24 and does not approve Shot Doctor implementation.
+
+Measured implementation and validation: [direct HUD comparison](docs/metrics/direct-hud-comparison.md). Final result review/merge remains pending. Old all-callback baseline minima were not retained in the available summary; the report separates that gap from matching named-profile comparisons and new all-callback minima. The relative-offset investigation is still deferred.

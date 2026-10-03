@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from native_scoreboard_raster import scoreboard_pixels, WHITE
 from native_status_raster import PALETTE
-from native_square_scores import MASKS, ORIGINAL_MASKS, expected_point_bank, CONTRACT as LED_CONTRACT
+from native_square_scores import MASKS, ORIGINAL_MASKS, expected_point_bank, expected_hud_bank, CONTRACT as LED_CONTRACT
 
 CONTRACT = json.loads((ROOT / 'docs/sprites/native-contract.json').read_text())
 COURT = ROOT / 'assets/native/court'
@@ -25,7 +25,7 @@ class ScoreboardAssets(unittest.TestCase):
                 self.assertEqual(len(point), 512)
                 plain = b''.join(point[y*32+2+offset//8:y*32+4+offset//8] for y in range(16))
                 self.assertEqual(plain, MASKS[variant])
-                games = (COURT / f'score_bank_games_{side}_{variant}_p1.bin').read_bytes()
+                games = expected_hud_bank([variant,variant,variant,variant,0,1])[1536:]
                 self.assertEqual(len(games), 1536)
                 actual = []
                 for y in range(42, 124):
@@ -55,36 +55,16 @@ class ScoreboardAssets(unittest.TestCase):
         self.assertEqual((COURT/'square-led-definitions.bin').stat().st_size, 48)
         self.assertFalse(list(COURT.glob('score_bank_point_*.bin')))
 
-    def test_copper_fetch_slots_preserve_exact_vertical_relocation_contract(self):
-        for path, digest in CONTRACT['status_move_retained_copper'].items():
-            source=(ROOT/path).read_text()
-            if path.endswith('score-bank-data.i'):
-                digest = LED_CONTRACT['retained_nonpoint_bank_includes_sha256']
-            if path.endswith('score-cop-commands.i'):
-                # Reverse only the authored y32->34 label and y40->48 score moves.
-                # Horizontal fetch slots, all WIN/status commands and restore policy
-                # must still equal the independently frozen pre-layout contract.
-                source=source[source.index('        ; CT12 mode:'):]
-                for i in (244,245):
-                    source=re.sub(r'score_cop_'+str(i)+r'_hi:[^\n]+\nscore_cop_'+str(i)+r'_lo:[^\n]+\n','',source)
-                cut=source.index('        ; Red logical B point')
-                end=source.index('score_cop_243_lo: dc.w $00ee,0')+len('score_cop_243_lo: dc.w $00ee,0')
-                head=source[:cut].replace('native y34','native y32').replace('$4e01','$4c01').replace('$5601','$5401')
-                points=source[cut:end].replace('rows48..63','rows40..55')
-                points=re.sub(r'\$([0-9a-f]{2})([0-9a-f]{2}),\$fffe',lambda m:f'${int(m[1],16)-8:02x}{m[2]},$fffe',points)
-                source=head+points+source[end:]
-            elif path.endswith('score-patch-tables.i'):
-                for i in (244,245):
-                    source=re.sub(r'        dc.l score_cop_'+str(i)+r'_hi\+2[^\n]+\n        dc.w [^\n]+\n','',source)
-                    source=re.sub(r'score_pointer_table_'+str(i)+r':[^\n]+\n','',source)
-                for i in list(range(2,48,3))+[237,238,242,243]:
-                    delta=64 if i in (237,238) else 256
-                    source=re.sub(r'(score_pointer_table_'+str(i)+r': dc.l plane\d\+)(\d+)',lambda m:m[1]+str(int(m[2])-delta),source)
-                source=re.sub(r'SCORE_PATCH_COUNT equ \d+','SCORE_PATCH_COUNT equ STATUS_MOVED',source)
-                for i in list(range(224,232))+[120,121,122,123]+list(range(125,156,4))+list(range(127,156,4)):
-                    source=re.sub(r'        dc.l score_cop_'+str(i)+r'_hi\+2[^\n]+\n        dc.w [^\n]+\n','',source)
-                    source=re.sub(r'score_pointer_table_'+str(i)+r':[^\n]+\n','',source)
-            self.assertEqual(hashlib.sha256(source.encode()).hexdigest(),digest,path)
+    def test_fixed_region_transitions_replace_horizontal_pointer_switches(self):
+        source=(COURT/'score-cop-commands.i').read_text()
+        waits=re.findall(r'dc.w \$([0-9a-f]{4}),\$fffe',source)
+        self.assertEqual(waits,['4e01','5601','5c01','6c01','7401','8c01','9401','a401'])
+        # Each boundary completes all pointer writes before DDF start $48;
+        # the target DMA observer verifies actual contended fetch timing.
+        groups=re.split(r'dc.w \$[0-9a-f]{4},\$fffe[^\n]*',source)[1:]
+        self.assertEqual([len(re.findall(r'_hi:',g)) for g in groups],[4,4,3,3,1,3,3,1])
+        self.assertFalse(list(COURT.glob('score_bank_games_*.bin')))
+        self.assertEqual(len(re.findall(r'dc.w \$[0-9a-f]{4}',(COURT/'score-patch-tables.i').read_text())),22)
 
     def test_score_cell_has_equal_native_padding_and_closed_stacked_frames(self):
         layout=json.loads((ROOT/'docs/sprites/score-layout-contract.json').read_text())

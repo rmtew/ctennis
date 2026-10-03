@@ -38,6 +38,11 @@ def inspect_startup(executable, listing, directory):
         begin = session.inspect('run_until', {'pc': located('init_square_score_banks')})
         finish = session.inspect('run_until', {'pc': located('init_square_score_banks_end')})
         checks = assert_generated_point_banks(raw, located)
+        expected = b''.join((ROOT/f'assets/native/court/plane{p}.bin').read_bytes()[48*32:64*32]
+                            for p in (0,2,3)) + (ROOT/'assets/native/court/plane1.bin').read_bytes()[72*32:120*32]
+        for bank in range(3):
+            if raw(located(f'hud_bank{bank}'),len(expected)) != expected:
+                raise AssertionError('Initial HUD strip copy differs from unchanged court')
         if raw(located('simulation_timer_running'), 1) != b'\0':
             raise AssertionError('Score construction must precede the game timer')
         # The ordinary initialized title must still be reached after construction.
@@ -91,7 +96,7 @@ def run(self_test):
         else:
             raise AssertionError('Wrong advantage position escaped independent preview comparison')
     atomic_json(directory/'report.json', report)
-    print(f"All28 LED banks match selected preview; startup {report['constructor_seconds']*1000:.3f}ms", flush=True)
+    print(f"All6 LED tiles match selected preview; startup {report['constructor_seconds']*1000:.3f}ms", flush=True)
 
 
 if __name__ == '__main__':

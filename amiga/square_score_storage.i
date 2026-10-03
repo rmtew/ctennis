@@ -1,30 +1,12 @@
-; Generated at startup; four contiguous streams, seven 512-byte banks each.
+; Fixed scene-owned strips: point planes0/2/3 and WIN plane1.
+HUD_POINT0 equ 0
+HUD_POINT2 equ 512
+HUD_POINT3 equ 1024
+HUD_GAMES equ 1536
+HUD_BANK_SIZE equ 3072
         section square_score_data,bss,chip
-score_bank_point_a_0_p2: ds.b 512
-score_bank_point_a_1_p2: ds.b 512
-score_bank_point_a_2_p2: ds.b 512
-score_bank_point_a_3_p2: ds.b 512
-score_bank_point_a_4_p2: ds.b 512
-score_bank_point_a_5_p2: ds.b 512
-score_bank_point_a_6_p2: ds.b 512
-score_bank_point_b_0_p2: ds.b 512
-score_bank_point_b_1_p2: ds.b 512
-score_bank_point_b_2_p2: ds.b 512
-score_bank_point_b_3_p2: ds.b 512
-score_bank_point_b_4_p2: ds.b 512
-score_bank_point_b_5_p2: ds.b 512
-score_bank_point_b_6_p2: ds.b 512
-score_bank_point_b_0_p0: ds.b 512
-score_bank_point_b_1_p0: ds.b 512
-score_bank_point_b_2_p0: ds.b 512
-score_bank_point_b_3_p0: ds.b 512
-score_bank_point_b_4_p0: ds.b 512
-score_bank_point_b_5_p0: ds.b 512
-score_bank_point_b_6_p0: ds.b 512
-score_bank_point_b_0_p3: ds.b 512
-score_bank_point_b_1_p3: ds.b 512
-score_bank_point_b_2_p3: ds.b 512
-score_bank_point_b_3_p3: ds.b 512
-score_bank_point_b_4_p3: ds.b 512
-score_bank_point_b_5_p3: ds.b 512
-score_bank_point_b_6_p3: ds.b 512
+hud_bank0: ds.b HUD_BANK_SIZE
+hud_bank1: ds.b HUD_BANK_SIZE
+hud_bank2: ds.b HUD_BANK_SIZE
+hud_point_tiles: ds.b 6*32
+hud_win_tile: ds.b 16
