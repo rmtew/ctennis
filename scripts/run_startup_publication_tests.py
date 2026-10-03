@@ -30,7 +30,7 @@ def _run():
    advance(2)
    last=number('presentation_last_line',2);safe=number('presentation_last_safe_line',2)
    whole=number('simulation_interval_whole',4);fraction=number('simulation_interval_fraction',2)
-   assert last in (range(310,314) if standard=='PAL' else range(260,264)),last
+   assert last==(311 if standard=='PAL' else 261),last
    assert safe==last-4 and safe>=253
    assert (whole,fraction)==((11838,14906) if standard=='PAL' else (11947,13180))
    assert number('game_lifecycle',2)==2 and number('game_title_display')==255

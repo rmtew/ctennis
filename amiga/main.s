@@ -6,18 +6,30 @@ SIM_INTERVAL_FRACTION equ 14906
 ; NTSC interval rounded to16 fractional bits:PAL interval*715909/709379.
 NTSC_INTERVAL_WHOLE equ 11947
 NTSC_INTERVAL_FRACTION equ 13180
+; exec/execbase.i: readable UBYTE, available before the V36 additions.
+EXEC_VBLANK_FREQUENCY equ $212
+; Shortest supported OCS fields, zero-based last line.
+PAL_LAST_LINE equ 311
+NTSC_LAST_LINE equ 261
+PRESENTATION_GUARD_LINES equ 4
 
 start:
         ; DOS enters on its task stack. Finish all OS scheduling calls there,
         ; then own the machine and use a bounded application stack forever.
-        move.l  sp,dos_entry_sp
+        move.l  a6,-(sp)
         move.l  4.w,a6
+        bsr     select_video_standard
+        tst.l   d0
+        beq.s   .video_selected
+        move.l  (sp)+,a6
+        rts                     ; RETURN_FAIL, before any machine takeover
+.video_selected:
+        addq.l  #4,sp
+        move.l  sp,dos_entry_sp
         jsr     -132(a6) ; Exec Forbid
         jsr     -120(a6) ; Exec Disable
         jsr     -150(a6) ; Exec SuperState before owning the interrupt vector
         lea     game_stack_top,sp
-        bsr     measure_presentation_field
-        bsr     select_simulation_cadence
         bsr     init_square_score_banks
         bsr     game_begin_title
         lea     pointer_sources(pc),a0
@@ -181,60 +193,38 @@ read_presentation_line:
         or.w    d1,d0
         rts
 
-; Observe one physical field before the simulation clock starts. Reserve four
-; lines before its measured last line for shorter alternating fields and the
-; complete CPU pointer/strobe sequence. PAL and NTSC use the same safe layout.
-measure_presentation_field:
-        bsr     read_presentation_line
-        move.w  d0,d3
-.wait_wrap:
-        bsr     read_presentation_line
-        cmpi.w  #256,d3
-        bcs.s   .wait_line
-        cmpi.w  #128,d0
-        bcs.s   .start_field
-.wait_line:
-        move.w  d0,d3
-        bra.s   .wait_wrap
-.start_field:
-        move.w  d0,d3
-.next_line:
-        bsr     read_presentation_line
-        cmpi.w  #256,d3
-        bcs.s   .remember_line
-        cmpi.w  #128,d0
-        bcs.s   .validate
-.remember_line:
-        move.w  d0,d3
-        bra.s   .next_line
-.validate:
-        ; A one-line readback reversal is not a field wrap. Accept only
-        ; supported OCS PAL/NTSC lengths, allowing short/long fields and a
-        ; one-line sampling/readback edge. Invalid observations retry before
-        ; installing bounds or choosing the simulation cadence.
-        cmpi.w  #260,d3
-        bcs.s   measure_presentation_field
-        cmpi.w  #263,d3
-        bls.s   .measured
-        cmpi.w  #310,d3
-        bcs.s   measure_presentation_field
-        cmpi.w  #313,d3
-        bhi.s   measure_presentation_field
-.measured:
-        move.w  d3,presentation_last_line
-        subq.w  #4,d3
-        move.w  d3,presentation_last_safe_line
-        rts
-
- ; Select once from the measured physical field; Kick1.3 has no EClockFrequency.
-select_simulation_cadence:
-        cmpi.w  #300,presentation_last_line
-        bcc.s   .selected
-        move.l  #NTSC_INTERVAL_WHOLE,simulation_interval_whole
-        move.w  #NTSC_INTERVAL_FRACTION,simulation_interval_fraction
+; Read the OS standard once while Exec is available. Kickstart1.3 exposes
+; VBlankFrequency; EClockFrequency is a later addition. Fixed OCS PAL/NTSC
+; bounds avoid depending on transient beam readback during startup.
+; A6=ExecBase; D0=0 on success, DOS RETURN_FAIL (20) if unsupported.
+; Invalid values leave timing state untouched and return before takeover.
+select_video_standard:
+        moveq   #0,d0
+        move.b  EXEC_VBLANK_FREQUENCY(a6),d0
+        cmpi.b  #50,d0
+        beq.s   .pal
+        cmpi.b  #60,d0
+        bne.s   .unsupported
+        move.w  #NTSC_LAST_LINE,d1
+        move.l  #NTSC_INTERVAL_WHOLE,d2
+        move.w  #NTSC_INTERVAL_FRACTION,d3
+        bra.s   .selected
+.pal:
+        move.w  #PAL_LAST_LINE,d1
+        move.l  #SIM_INTERVAL_WHOLE,d2
+        move.w  #SIM_INTERVAL_FRACTION,d3
 .selected:
-        move.l  simulation_interval_whole,simulation_interval
-        move.l  simulation_interval_whole,simulation_phase
+        move.w  d1,presentation_last_line
+        subi.w  #PRESENTATION_GUARD_LINES,d1
+        move.w  d1,presentation_last_safe_line
+        move.l  d2,simulation_interval_whole
+        move.w  d3,simulation_interval_fraction
+        move.l  d2,simulation_interval
+        move.l  d2,simulation_phase
+        moveq   #0,d0
+        rts
+.unsupported:
+        moveq   #20,d0
         rts
 
 ; Copper-driven publication can interrupt a producer that spans blank.

@@ -28,7 +28,7 @@ def main():
         ['scripts/build_native_adf.py','--self-test'],
         ['scripts/run_enhanced_menu_tests.py','--adf'],
         ['scripts/run_native_inputs.py'],
-        ['scripts/run_field_measurement_tests.py'],
+        ['scripts/run_video_standard_tests.py'],
         ['scripts/run_startup_publication_tests.py'],
         ['scripts/run_native_video_clock_tests.py'],
         ['scripts/run_sprite_dma_tests.py','--self-test'],
