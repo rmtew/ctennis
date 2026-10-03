@@ -16,7 +16,11 @@ NAMES=('front_copper','back_copper','ready_copper','spare_copper','display_ready
        'ready_generation','ready_title_display','simulation_updates','simulation_started_updates',
        'presentation_copper','presentation_last_line','presentation_last_safe_line',
        'copperlist','copperlist_back','copperlist_third','copperlist_end',
-       'sprite0','sprite_back','sprite_third','title_copper')
+       'sprite0','sprite_back','sprite_third','title_copper',
+       'hud_bank0','hud_bank1','hud_bank2','score_pointer_cache',
+       *('plane'+str(p) for p in range(4)),
+       *(f'score_bank_mode_{n}_p{p}' for n in range(3) for p in range(4)),
+       *(f'score_bank_status_{n}_p{p}' for n in range(7) for p in (0,2,3)))
 
 
 def execute_case(name, phase, scenario='play', standard='PAL', control=None, lace=False, frames=72):
@@ -112,6 +116,8 @@ fixture_delay_done:
         watches=[{'addr':address(n),'len':z,'access':'write'} for n,z in [('front_copper',4),('back_copper',4),('ready_copper',4),('spare_copper',4),('display_ready',1),('ready_completed',1),('blank_seen',1),('ready_generation',2),('ready_title_display',1),('simulation_updates',2),('simulation_started_updates',2),('presentation_copper',4)]]
         watches += [{'addr':address(n),'len':address('copperlist_end')-address('copperlist'),'access':'write'} for n in ('copperlist','copperlist_back','copperlist_third')]
         watches += [{'addr':address(n),'len':576,'access':'write'} for n in ('sprite0','sprite_back','sprite_third')]
+        watches += [{'addr':address('hud_bank0'),'len':3*3072,'access':'write'},
+                    {'addr':address('score_pointer_cache'),'len':18,'access':'write'}]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'},{'addr':0xdff004,'len':4,'access':'read'}]
         def observe(message):
             if message.get('method')=='event.mmio':cpu_events.append(message['params'])
@@ -136,7 +142,7 @@ fixture_delay_done:
             bank=[address(n) for n in ('copperlist','copperlist_back','copperlist_third')].index(front)
             data=raw(address(('sprite0','sprite_back','sprite_third')[bank]),576)
             sample={'position':stop,'front':front,'installed':scalar('presentation_copper',4),
-                    'sprite_bytes':data.hex(),'paused':scalar('ui_paused',1),
+                    'sprite_bytes':data.hex(),'hud_bytes':raw(address(f'hud_bank{bank}'),3072).hex(),'paused':scalar('ui_paused',1),
                     'lifecycle':scalar('game_lifecycle'),'page':scalar('ui_page',1)}
             samples.append(sample)
         s.inspect('profile.stop')
