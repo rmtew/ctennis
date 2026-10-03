@@ -76,3 +76,16 @@ reused or fresh. PR27's earlier measurements remain historical at16679feb in Git
 Only the focused validation above is claimed; the full gate and fresh WinUAE or
 physical-hardware execution were not run. The new exact-release ADF remains a
 private candidate pending independent review and merge, not a Library replacement.
+
+Review follow-up (observer-only): the four retained court PNGs were verified
+against their original receipt hashes and each passed the existing positive
+`assert_mode_raster(...,1)` check for both controller-role labels (1,920pixels per
+capture). This closes the weakness of the original black logo-absence crop,
+which alone could accept a blank image. Supplemental receipt SHA256
+`19b6b88395d479001b50ba8a7b499ca66a93bbfd1b9613e12fcb6a92321f0bdd`.
+The startup checker now requires this positive assertion on future runs and
+writes incomplete/failed/interrupted status so a later unsuccessful invocation
+supersedes a previous pass. The focused host receipt test passed both failure
+and KeyboardInterrupt paths. No native rerun: these are new assertions on the
+unchanged retained captures and a host failure-path test; product bytes, prior
+native cadence/assembly results, and candidate hashes above remain unchanged.

@@ -5,9 +5,9 @@ from native_evidence import atomic_json
 from native_hunk import loaded_hunks
 from build_native_adf import package
 from copperline_test_session import NativeControlSession
-from native_identity_raster import assert_title_raster,assert_logo_absent_initial_raster
+from native_identity_raster import assert_title_raster,assert_logo_absent_initial_raster,assert_mode_raster
 
-def run():
+def _run():
  report=package(self_test=True);cfg=emulator_config();exe=ROOT/report['executable'];adf=ROOT/report['adf']
  listing=(ROOT/'build/amiga/interfaces/enhanced/native.lst').read_text()
  located={n:(int(h,16),int(o,16)) for n,h,o in re.findall(r'^([A-Za-z_]\w*)\s+([0-9A-Fa-f]{2}):([0-9A-Fa-f]{8})\s*$',listing,re.M)}
@@ -43,9 +43,19 @@ def run():
    hardware=(s.inspect('custom.read',{'reg':'COP1LCH'})['value']<<16)|s.inspect('custom.read',{'reg':'COP1LCL'})['value']
    assert hardware==copper,(hardware,copper)
    court=directory/'court.png';s.inspect('capture_screenshot',{'path':str(court)});assert_logo_absent_initial_raster(court)
-   cases.append({'standard':standard,'slow_ram':slow,'loaded_hunks':binding,'last_line':last,'last_safe_line':safe,'cadence':[whole,fraction],'presentation_copper':copper,'hardware_cop1lc':hardware,'presentation_frames':number('presentation_frames',2),'court_sha256':hashlib.sha256(court.read_bytes()).hexdigest(),'passed':True})
+   mode_raster=assert_mode_raster(court,1)
+   cases.append({'standard':standard,'slow_ram':slow,'loaded_hunks':binding,'last_line':last,'last_safe_line':safe,'cadence':[whole,fraction],'presentation_copper':copper,'hardware_cop1lc':hardware,'presentation_frames':number('presentation_frames',2),'court_sha256':hashlib.sha256(court.read_bytes()).hexdigest(),'mode_raster':mode_raster,'passed':True})
    print(standard,slow,'cold Start passed',flush=True)
- result={'adf_sha256':hashlib.sha256(adf.read_bytes()).hexdigest(),'release_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'listing_sha256':hashlib.sha256(listing.encode()).hexdigest(),'cases':cases,'scope':'Copperline exact release cold boots; no WinUAE execution claim'}
+ result={'passed':True,'state':'complete','adf_sha256':hashlib.sha256(adf.read_bytes()).hexdigest(),'release_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'listing_sha256':hashlib.sha256(listing.encode()).hexdigest(),'cases':cases,'scope':'Copperline exact release cold boots; no WinUAE execution claim'}
  atomic_json(ROOT/'build/tests/startup-publication/report.json',result)
  return result
+def run():
+ report=ROOT/'build/tests/startup-publication/report.json'
+ atomic_json(report,{'passed':False,'state':'incomplete'})
+ try:
+  return _run()
+ except BaseException as error:
+  atomic_json(report,{'passed':False,'state':'interrupted' if isinstance(error,KeyboardInterrupt) else 'failed','error':str(error)})
+  raise
+
 if __name__=='__main__':run()
