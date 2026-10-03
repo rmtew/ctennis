@@ -11,7 +11,7 @@ title_pointer3: dc.w $00ec,0,$00ee,0
         dc.w $0186,$6d7
         dc.w $0188,$55e
         dc.w $018a,$77f
-        dc.w $018c,$000
+        dc.w $018c,$555 ; subdued title build hash, previously unused slot6
         dc.w $018e,$000
         dc.w $0190,$000
         dc.w $0192,$f77

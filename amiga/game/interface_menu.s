@@ -50,11 +50,12 @@ ui_menu_tick:
         bne.s   .open
         eori.b  #1,ui_player_count
         bra     .done
-.open:  subq.b  #1,d0
-        cmpi.b  #2,d0
-        bne.s   .open_page
-        moveq   #3,d0
-.open_page:
+.open:  cmpi.b  #3,d0
+        ; Preview-only Exit game: this base has no OS-restoration routine.
+        ; Do not open Controls under an Exit label or return unsafely to DOS.
+        ; Parent must resolve the quit-path prerequisite before publication.
+        beq     .done
+        subq.b  #1,d0
         move.b  d0,ui_page
         move.b  #2,ui_help_choice
         bra     .done

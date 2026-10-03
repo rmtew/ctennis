@@ -244,9 +244,11 @@ ui_render:
         move.b  #1,display_ready
 .done:  rts
 
-; A0 cached256-byte title row, A2 first title-plane row. Only x96..159
+; A0 cached256-byte title row, A2 first title-plane row. Only x88..167
 ; belongs to the central menu; copying a full row would erase/recolour the
 ; flanking Classic figures. Both modes share the same four selected captions.
+; Text is centred at x92 and spans72 pixels. Byte edges surround the two
+; even-address longwords: never use a68000 word/longword at offset11.
 ui_title_row_copy:
         movem.l d1/d7/a0-a3,-(sp)
         move.l  a0,a3
@@ -256,8 +258,10 @@ ui_title_row_copy:
         move.l  a2,a1
         moveq   #7,d7
 .row:
+        move.b  11(a0),11(a1)
         move.l  12(a0),12(a1)
         move.l  16(a0),16(a1)
+        move.b  20(a0),20(a1)
         adda.w  #32,a0
         adda.w  #32,a1
         dbra    d7,.row

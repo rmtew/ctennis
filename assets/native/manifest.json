@@ -429,8 +429,8 @@
     },
     {
       "path": "assets/native/title/display.i",
-      "size_bytes": 905,
-      "sha256": "22f0644a72dc1a3645fb8fd047381499b322757337cd7179197cc4764d83dde8",
+      "size_bytes": 957,
+      "sha256": "90f5676746d6a1c52e10a6ca0314087bb626756ff4ac84389edfcd539b1b1231",
       "imported_sha256": "a8d65da898808f0e5da2eb2bcd1fac02ff9033fc4378201c4349bb0bd944fbf5"
     },
     {
@@ -442,25 +442,25 @@
     {
       "path": "assets/native/title/plane0.bin",
       "size_bytes": 6144,
-      "sha256": "891887be2d811c9731972f6a696d8960b10a44a8a94ea2c39a824e4dc081e0cd",
+      "sha256": "ae92fdec273f219ae049028e4f60b590ddf7eb64ade826adad521e6fab5689cd",
       "imported_sha256": "61c08a1469c26174c95c26f644fb508200e9774c41285f5ce5330abae80995c0"
     },
     {
       "path": "assets/native/title/plane1.bin",
       "size_bytes": 6144,
-      "sha256": "3bd6ff3ebd6931c2fff07aca0622415212d2190898320176b5eadc3a54718636",
+      "sha256": "61a9a5290d2fcbc872b70c16ff2c5464650675bdb2b56830925545bce256a101",
       "imported_sha256": "61c08a1469c26174c95c26f644fb508200e9774c41285f5ce5330abae80995c0"
     },
     {
       "path": "assets/native/title/plane2.bin",
       "size_bytes": 6144,
-      "sha256": "9c099eab169e72273cfabfff47d894b9de4777e22c8b6fccbd3af859a7463d28",
+      "sha256": "6418dce2700e38b5b8dc45e5aa7c6ef6e632eba6beaa0b00dfc890f5baf22199",
       "imported_sha256": "511f26ad2f389ae58de3f313cdbf421952aedcf4dc5c33f59f3fd2a7718d9c73"
     },
     {
       "path": "assets/native/title/plane3.bin",
       "size_bytes": 6144,
-      "sha256": "4459466a7193bb2a88b0cd49097189c70b6cb60ff6a2f2a746fbaca8dcda5ecf",
+      "sha256": "ae92fdec273f219ae049028e4f60b590ddf7eb64ade826adad521e6fab5689cd",
       "imported_sha256": "61c08a1469c26174c95c26f644fb508200e9774c41285f5ce5330abae80995c0"
     },
     {

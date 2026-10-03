@@ -7,6 +7,9 @@ def prepare(version):
     source = (ROOT/'amiga/game/interface_text.s').read_text()
     text = dict(re.findall(r"^(ui_\w+): dc.b '([^']*)',0$", source, re.M))
     text.update(ui_empty='', ui_version=version.rstrip(b'\0').decode('ascii'))
+    identity=re.fullmatch(r'BUILD ([0-9a-f]{7,12})(?: \+ LOCAL)?',text['ui_version'])
+    if identity is None:raise ValueError('Title requires the native build identity')
+    title_hash=identity[1]
     font = (ROOT/'assets/native/title/font-mac.bin').read_bytes()
     def lines(label):
         match = re.search(r'^'+label+r':(?: dc.l|\n\s+dc.l) ([^\n]+)', source, re.M)
@@ -22,37 +25,55 @@ def prepare(version):
     menu_names=lines('ui_menu_lines')
     menu_width=max(len(text[name]) for name in menu_names)*8
     menu_left=(256-menu_width)//2
-    # Runtime selection copies only these eight bytes, preserving side figures.
-    if (menu_left,menu_width)!=(96,64):raise ValueError('Title menu must fit native x96..159')
+    # Runtime selection owns bytes11..20 (x88..167), enclosing the centred
+    # nine-cell menu without touching the figures. Edge bytes use byte copies.
+    if (menu_left,menu_width)!=(92,72):raise ValueError('Title menu must fit native x92..163')
     output = bytearray()
     title_menu=None
     layouts={
-        1:[(12,'ui_move_label',False),(12,'ui_move_detail',True),(22,'ui_move_wrap',True),
-           (32,'ui_action_label',False),(32,'ui_action_detail',True),
-           (42,'ui_net_label',False),(42,'ui_net_detail',True),(52,'ui_contact_detail',True),
-           (62,'ui_rear_label',False),(62,'ui_rear_detail',True),(72,'ui_contact_detail',True)],
-        2:[(12,'ui_points_label',False),(12,'ui_points_detail',True),
-           (32,'ui_deuce_label',False),(32,'ui_deuce_detail',True),(42,'ui_deuce_wrap',True),
-           (52,'ui_match_label',False),(52,'ui_match_detail',True),
-           (62,'ui_demo_label',False),(62,'ui_demo_detail',True),(72,'ui_demo_wrap',True),(82,'ui_help_demo_exit',True)],
-        3:[(12,'ui_a_label',False),(12,'ui_a_move',True),(22,'ui_a_action',True),
-           (32,'ui_b_label',False),(32,'ui_b_move',True),(42,'ui_b_action',True),
-           (52,'ui_keypad_label',False),(52,'ui_keypad_move',True),(62,'ui_keypad_action',True),
-           (72,'ui_a_joy_label',False),(72,'ui_port2_detail',True),
-           (82,'ui_b_joy_label',False),(82,'ui_port1_detail',True)]}
+        1:[(24,'ui_move_label',['ui_move_detail']),
+           (34,'ui_serve_label',['ui_serve_detail']),
+           (44,'ui_shot_label',['ui_shot_detail']),
+           (54,'ui_changes_label',['ui_changes_detail'])],
+        2:[(24,'ui_points_label',['ui_points_detail']),
+           (34,'ui_deuce_label',['ui_deuce_detail']),
+           (44,'ui_match_label',['ui_match_detail']),
+           (54,'ui_demo_label',['ui_demo_detail']),
+           (64,'ui_confirm_label',['ui_confirm_detail']),
+           (74,'ui_exit_label',['ui_exit_detail'])],
+        3:[(24,'ui_a_label',['ui_a_compact']),
+           (34,'ui_empty',['ui_a_joy_compact']),
+           (44,'ui_b_label',['ui_b_compact']),
+           (54,'ui_empty',['ui_keypad_compact']),
+           (64,'ui_empty',['ui_b_joy_compact']),
+           (74,'ui_pause_label',['ui_pause_detail'])]}
     for page,label in enumerate(('ui_menu_lines','ui_help_lines','ui_help_lines','ui_control_lines','ui_credit_lines')):
         plane=bytearray(116*32)
         if page==0:
             entries=[(38+i*11,name,menu_left) for i,name in enumerate(menu_names)]
+        elif page==1:
+            entries=[(8,'ui_how',(256-len(text['ui_how'])*8)//2)]
+            entries.extend((24+i*10,'ui_play_prose'+str(i),24 if i>=5 else 16) for i in range(7))
+        elif page==2:
+            entries=[(8,'ui_scoring',(256-len(text['ui_scoring'])*8)//2)]
+            entries.extend((24+i*9,'ui_rule_prose'+str(i),16) for i in range(7))
         elif page in layouts:
             heading={1:'ui_how',2:'ui_scoring',3:'ui_controls'}[page]
-            entries=[(0,heading,16)]
-            for y,name,right in layouts[page]:
-                width=len(text[name])*8
-                if width>(112 if right else 80):raise ValueError('Help column width: '+name)
-                if y+8>90:raise ValueError('Help body overlaps page count: '+name)
-                entries.append((y,name,240-width if right else 16))
-        else:entries=[(i*10,name,16) for i,name in enumerate(lines(label))]
+            entries=[(8,heading,(256-len(text[heading])*8)//2)]
+            for y,name,details in layouts[page]:
+                label_width=len(text[name])*8
+                available=240-(16+label_width+32)
+                entries.append((y,name,16))
+                for index,detail in enumerate(details):
+                    width=len(text[detail])*8
+                    if width>available:raise ValueError('Help row gap/width: '+detail)
+                    row=y+index*10
+                    if row+8>92:raise ValueError('Help body overlaps page count: '+detail)
+                    entries.append((row,detail,240-width))
+        else:
+            names=lines(label)
+            entries=[(8,names[0],(256-len(text[names[0]])*8)//2)]
+            entries.extend((24+i*10,name,16) for i,name in enumerate(names[1:]))
         for y,name,x in entries:
             value=text[name]
             if any(ord(c)>=128 or (c!=' ' and not any(font[ord(c)*8:ord(c)*8+8])) for c in value):raise ValueError('Unavailable Font-Mac glyph: '+name)
@@ -64,7 +85,7 @@ def prepare(version):
             title_menu=bytes(plane)
         else:
             count=text['ui_page'+str(page)]
-            draw(plane,92,(256-len(count)*8)//2,count)
+            draw(plane,94,(256-len(count)*8)//2,count)
             draw(plane,106,48,text['ui_page_navigation'])
             output.extend(plane)
     path=ROOT/'build/native/ui-pages.bin'
@@ -133,5 +154,8 @@ def prepare(version):
             for offset,value in enumerate(planes[n]):combined[38*32+offset]|=value
             for centre,role in [(48,'ui_role_human'),(208,'ui_role_human' if both_human else 'ui_role_ai')]:
                 draw(combined,26,centre-len(text[role])*4,text[role])
+            # Index6 is subdued grey. Reuse the same build identity as Credits;
+            # the corner shows only its short hash, with no prefix/local suffix.
+            if n in (1,2):draw(combined,104,248-len(title_hash)*8,title_hash)
             figures.extend(combined)
     (ROOT/'build/native/ui-title-pages.bin').write_bytes(figures)

@@ -69,8 +69,8 @@ class ClassicPlayers(unittest.TestCase):
             for char in set(value)-{' '}:
                 self.assertTrue(any(font[ord(char)*8:ord(char)*8+8]), char)
         self.assertNotRegex(source, r"'(?:DEMO - )?(?:BLUE|RED) WINS")
-        self.assertIn("'A: WASD MOVE / F OR G ACT'", source)
-        self.assertIn("'B: ARROWS / . OR / ACT'", source)
+        self.assertIn("ui_a_compact: dc.b 'WASD / F',0", source)
+        self.assertIn("ui_b_compact: dc.b 'Cursor keys / .',0", source)
         self.assertNotRegex(source, r"'[^']*P[12][^']*'")
         for name in ('ui_demo_selector', 'ui_tally_text', 'ui_ai_tally_text'):
             block=source[source.index(name+':'):].splitlines()
