@@ -42,16 +42,14 @@ score_cache_copy:
         lea     prepared_field_values(pc),a4
         move.w  #SCORE_PATCH_COUNT-1,d7
 patch_next_score_pointer:
-        move.l  (a0)+,a1
-        move.l  (a0)+,a2
-        adda.l  copper_write_delta,a1
-        adda.l  copper_write_delta,a2
-        move.l  (a0)+,a3
-        move.w  (a0)+,d1
+        ; Most descriptors belong to unchanged fields. Inspect the mask before
+        ; fetching/relocating their pointers; each descriptor is fourteen bytes.
+        move.w  12(a0),d1
         cmpi.w  #$ffff,d1
         beq.s   use_fixed_pointer
         btst    d1,d3
         beq.s   skip_score_pointer
+        move.l  8(a0),a3
         moveq   #0,d2
         move.b  0(a4,d1.w),d2
         lsl.w   #2,d2
@@ -60,13 +58,19 @@ patch_next_score_pointer:
 use_fixed_pointer:
         tst.b   d4
         beq.s   skip_score_pointer
+        move.l  8(a0),a3
         move.l  (a3),d0
 write_score_pointer:
+        move.l  (a0),a1
+        move.l  4(a0),a2
+        adda.l  copper_write_delta,a1
+        adda.l  copper_write_delta,a2
         move.l  d0,d1
         swap    d1
         move.w  d1,(a1)
         move.w  d0,(a2)
 skip_score_pointer:
+        lea     14(a0),a0
         dbra    d7,patch_next_score_pointer
 score_patch_done:
         movem.l (sp)+,d0-d4/d7/a0-a4
