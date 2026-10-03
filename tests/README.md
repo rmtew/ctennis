@@ -40,7 +40,7 @@ and the selected square LED points/advantage. All0–6 variants, both modes/ends
 physical Copper banks are checked by one-time native fixtures, with compiled
 wrong WIN stamp, missing status/WIN repair and wrong-building-bank controls. Ordinary awards also verify actual full-panel pixels. Cadence
 observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
-Court publication uses the measured retired bottom interval starting at253; the
+Court publication uses the conservative retired bottom interval starting at253; the
 footer extends through251. Accepted clock is11838+14906/65536 PAL E-clock ticks,
 with retained origin, fractional quantization and deadline bounds.
 
@@ -117,3 +117,8 @@ native callbacks without state injection. It reads the initialized native cadenc
 reports dirty-field masks and deadline misses explicitly, and is a measurement,
 not a replacement acceptance gate. Before/after receipts and limits are summarized
 in [direct-hud-comparison.md](../docs/metrics/direct-hud-comparison.md).
+
+Startup reads Kickstart1.3 VBlankFrequency once and selects conservative OCS
+PAL/NTSC bounds. Actual-assembly tests cover all256 byte values; exact-release
+cold-start checks cover both standards and zero/512KB slow RAM. See
+[startup video standard selection](../docs/ct11/field-measurement.md).

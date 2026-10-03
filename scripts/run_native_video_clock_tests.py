@@ -34,7 +34,8 @@ def run():
             s.inspect('events.unsubscribe');s.notification_handler=None
             observed={'whole':scalar('simulation_interval_whole',4),'fraction':scalar('simulation_interval_fraction',2),'last_line':scalar('presentation_last_line',2),'last_safe_line':scalar('presentation_last_safe_line',2)}
             assert (observed['whole'],observed['fraction'])==(whole,fraction),observed
-            assert (observed['last_line']<300)==(standard=='NTSC'),observed
+            assert observed['last_line']==(311 if standard=='PAL' else 261),observed
+            assert observed['last_safe_line']==observed['last_line']-4,observed
         target_log(directory, standard=standard)
         atomic_json(directory/'cpu-events.json',events)
         start=next(e['position']['cck'] for e in events if e['addr']==0xbfde00 and e['value']&1)
