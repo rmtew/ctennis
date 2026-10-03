@@ -103,8 +103,10 @@ source of match progression.
 Define `S[n]` as the quiescent state immediately before canonical controls for
 tick n; `step(S[n], I[n]) -> S[n+1], E[n]`. Tick n covers service-only waits as
 well as active rally work. The modulo-256 gameplay clock remains unchanged;
-a proposed unsigned 64-bit history index is advanced once per step. Its
-exhaustion ends recording explicitly, never wraps into an old record.
+a separate unsigned history index advances once per step. Choose 32 versus 64
+bits at M1/M2 using supported recording duration, overflow handling, state/storage
+bytes and measured 68000 cost; encode the width in the schema. Exhaustion ends
+recording explicitly, never wraps into an old record.
 
 First instrument the existing call order: between-callback round/result polls,
 physical/logical samples and latch retirement, dispatch, scene semantic changes,
@@ -173,21 +175,65 @@ unseekable tail or overwrite live/doctor state. Pinning a browse range cannot
 make allocation unbounded. Disk export/full-match streaming is a separately
 approved extension, not an implicit requirement on the 512KB game.
 
+Each recorder append is transactional: reserve/stage the complete input/command,
+event and index batch, then publish its cursors and completeness watermark
+atomically. On event-buffer or storage overflow, discard the uncommitted batch,
+retain the last complete prefix and publish an out-of-band recording-stopped
+reason plus last complete tick. Never mark a partial tick complete or continue
+with an unmarked gap. Gameplay advances exactly once regardless of diagnostic
+storage failure; required sound/lifecycle effects use core state or a separately
+bounded required-output path, never depend on a lossy diagnostic queue. An event
+buffer overflow also fails validation of the claimed maximum burst. Reserve the
+small failure-status record independently of history capacity. Restarting capture
+requires a new complete checkpoint/segment with a declared gap, not cursor reuse.
+
 ## Pause, explanations and alternative branches
 
 Enter through a keyboard-to-session command at a completed tick; latch the live
 state, recorder cursors and pending adapter presentation/audio context. Live
 stepping, RNG, logical audio and recording stop. Doctor owns its own working
-state and bounded event/scratch area. Playback sound is muted initially. On exit,
-restore live adapter presentation, discard doctor inputs/branches and retire
-carried UI action buttons until release; do not synthesize a serve edge. Record
-the resulting canonical controls when simulation resumes. Seek/replay must not
-append to live history or alter its cursors. Pause before start, during sound
-waits, round exchange and match end all need explicit allowed/disabled behavior;
-proposal allows any active-match quiescent boundary, including those waits.
+state and bounded event/scratch area. Playback sound is muted initially. All live
+MatchState bytes and recorder cursors remain exactly invariant throughout browsing
+and immediately before resume, including suppression gates. Restore adapter
+presentation and discard doctor inputs/branches without changing that state.
 
-Instrument decisions where rules execute, not a second explanation model. A
-contact attempt event records actor/end, relevant phase/contact flags, input and
+Resume is an explicit recorded boundary command, ordered before the next tick's
+controls. Its payload contains logical A/B held samples and carried-action masks;
+it may change only the declared held/pressed/released baselines and suppression
+gates, retiring carried action buttons until release without a synthesized serve
+edge. The M1 state manifest names this exact allowlist. World, score, lifecycle,
+clocks, tick, logical audio and RNG state remain unchanged by the command itself.
+Commit the command/cursor transaction before subsequent recorded tick input;
+replay applies the same command exactly once. Multiple commands at one tick use
+an ordered boundary-command cursor, included in checkpoints. If recording cannot
+commit, apply the command for live play but stop capture at the prior complete
+boundary under the overflow contract; never imply that resume was recorded.
+
+M1 specifies this command and M2 proves pause isolation/resume headlessly; M3
+exposes the keyboard/browser flow. Seek/replay cannot append to live history.
+Proposal allows any active-match quiescent boundary, including sound waits,
+round exchange and match end; doctor entry before a match is disabled.
+
+Define the minimum diagnostic schema and emission sites in M1, and validate the
+encoded sizes, aggregation and maximum per-step burst in M2 **before freezing
+history capacity**. M3 consumes these records for wording/UI, not a new schema or
+late instrumentation. Minimum common fields are schema/kind, tick/phase/sequence,
+logical actor and court end, shot/opportunity ID and causal parent ID. Typed
+payloads must cover:
+
+- Contact decision: controls/suppression, evaluated predicate ID, operands and
+  threshold, accepted/rejected reason and relevant phase/contact flags.
+- Launch/AI decision: serve/return kind, timing, resolved direction/target/vector,
+  action choice and random perturbation/draw identity needed to explain it.
+- Opportunity summary: start/end tick, outcome, closest evaluated geometry with
+  its tick and predicate, and final failure reason; ongoing aggregation is owned
+  checkpoint state, not a hidden UI accumulator.
+- Fault/bounce/award/lifecycle: result kind, causal shot ID and outcome/transition;
+  sound requests retain deterministic cue identity/order.
+
+Packed widths, unavailable-field tags and maximum records/bytes per step require
+M1/M2 review. Instrument decisions where rules execute, not a second explanation
+model. A contact attempt event records actor/end, relevant phase/contact flags, input and
 suppression, geometry/height, threshold comparison and accepted/rejected reason.
 Existing contact checks include receiving side, flags, vertical distance <4,
 horizontal distance <17 and height in [0,29); these are audit examples, not new
@@ -199,9 +245,15 @@ net/out/bounce and point events link back to the causal shot.
 A missed opportunity is not limited to action-button edges: some native contacts
 are automatic. Define windows from the actual receive/contact eligibility
 checks; summarize their open/close, closest evaluated geometry and outcome.
-Rejected checks outside a relevant window must not flood the history each tick.
+Define eligibility, close conditions and deterministic closest-sample tie-breaking
+in M1. Maintain one bounded accumulator per actor/window; coalesce repeated
+rejections, emitting a summary at close and explicit accepted/attempt decisions
+as specified by the schema. Account for simultaneous close/open, contact, award,
+lifecycle and cue outputs in the M2 maximum-burst bound. Rejected checks outside
+a relevant window must not flood the history each tick.
 Suppressed/unavailable action is separately distinguishable from an evaluated
-geometric miss. Exact window definition and worst event burst require M3 review.
+geometric miss. Window aggregation and its state/size/burst contract must pass
+M1/M2 review before capacity is frozen.
 Human text translates recorded reasons: “outside contact width: …”, not “you
 should have pressed …” unless that counterfactual was actually simulated.
 
@@ -268,10 +320,13 @@ Programmatic completeness is a release gate, not confidence from one hash:
 2. Run identical inputs from initialization in native and standalone cores;
    compare every canonical state byte, ordered event payload and RNG/cursor at
    every boundary. Use native ordinary-flow observations in addition to fixtures.
-3. For each retained checkpoint, replay **every subsequent tick in its test
-   extent**, comparing full state, events, input/RLE and event/index cursors with
-   the uninterrupted run. Test every seek target, exact checkpoint boundaries,
-   wrap past gameplay tick 255, service waits and ring eviction boundaries.
+3. From every checkpoint, replay every tick through the next checkpoint (or
+   retained tail), comparing full state, events, input/RLE, boundary-command and
+   event/index cursors with the uninterrupted run. Test every seek target within
+   those intervals; cap K in the test plan so per-target seek tests cost O(N*K),
+   not a checkpoint-to-match-end quadratic campaign. Add selected long-span and
+   full-match replays with explicit finite extents. Cover exact boundaries,
+   gameplay tick 255 wrap, service waits and ring eviction.
 4. Decode each checkpoint into instances with different poisoned initial memory
    and relocated immutable tables/working addresses. Replay must agree. Poison
    scratch on entry; reserved serialization bytes are canonical. Repeat with
@@ -283,8 +338,12 @@ Programmatic completeness is a release gate, not confidence from one hash:
    add full-state differential evidence without claiming it is an independent
    rules oracle. Long deuce/rally, both modes/ends, restart and capacity tests
    use actual controls after one-time initialization, never intermediate state
-   injection. Branches and doctor cancel/resume must leave live bytes/cursors
-   invariant. The existing finite native gate remains the final native gate.
+   injection. Browsing/branches leave live bytes/cursors invariant through the
+   instant before resume. Separately verify the recorded resume command changes
+   only its declared control fields/cursors, preserves world/score/RNG, and replays
+   exactly. Inject event/storage overflow: play must match a sufficient-capacity
+   run while history ends at its last complete boundary with a failure status.
+   The existing finite native gate remains the final native gate.
 
 ## Decisions requiring user review
 
@@ -292,7 +351,8 @@ Approve the core/shared-runner boundary and lifecycle proof approach before any
 architecture code. Specifically approve: match-start-only entropy as an intended
 live behavior change; rolling history with visible loss of old shots versus a
 separate full-match storage requirement; silent doctor replay and action-release
-resume policy; reactive AI first and the explicit limits of paired randomness.
+resume policy with its recorded control-only boundary command; reactive AI first,
+fixed-opponent trace deferred, and the explicit limits of paired randomness.
 Review measured H/K, complete state layout and timing evidence at M1/M2 before
 freezing allocations. The fixed-opponent decision trace is an additional M4 gate,
 not a promised free consequence of recording inputs. Reject or revise these

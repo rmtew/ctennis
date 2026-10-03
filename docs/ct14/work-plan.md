@@ -31,6 +31,11 @@ Owner: implementation integrator. Review: core/determinism + native/resource.
   if the proposed boundary changes timing; do not start recorder/UI work first.
 - [ ] Produce machine-checkable writable-state inventory, relocation/pointer
   rules, bounded scratch/event contract and proposed canonical state layout.
+- [ ] Specify and emit the minimum diagnostic schema at actual decisions, define
+  missed-window eligibility/aggregation/tie-breaking and owned accumulator state;
+  cover human/AI, automatic contacts, suppression and absent-action cases.
+- [ ] Specify the recorded resume command, exact control-field allowlist and
+  command cursor; world/score/RNG and other non-control state cannot change.
 - [ ] Extract actual 68000 core shared by native and standalone; preserve widths,
   order, scoring and animation/status/cue semantics. Renderer and Paula are sinks.
 - [ ] Seed deterministic entropy once; version streams and initialization; keep
@@ -49,15 +54,27 @@ Owner: implementation integrator. Review: determinism + native/resource.
 
 - [ ] Version header/state/input/event formats and exact build/table compatibility;
   validate corrupt/unsupported input without partially restoring state.
-- [ ] Record logical controls/edges/phases and ordered events with monotonic ticks;
-  implement bounded storage and atomic checkpoint/cursor commit.
+- [ ] Record logical controls/edges/phases, boundary commands and ordered events;
+  choose 32/64-bit history index from duration/overflow and measured bytes/cycles.
+  Implement bounded storage and atomic checkpoint/cursor commit.
+- [ ] Freeze diagnostic payload widths, missed-window aggregation and maximum
+  per-step event/encoded-byte burst before capacity selection. Include simultaneous
+  contact/window/award/lifecycle/cue events and checkpoint all open accumulators.
+- [ ] Prove transactional overflow: publish no partial batch, retain last complete
+  boundary/status, stop capture explicitly, and preserve gameplay progression and
+  required outputs. Inject event-buffer and storage exhaustion independently.
+- [ ] Prove headless pause/live isolation through the instant before resume;
+  replay recorded resume commands and verify only declared control fields/cursors
+  change. Handle unrecordable resume through the explicit capture-stop contract.
 - [ ] Measure worst record bursts and noncompressible inputs. Select H/K, live and
   doctor instance costs, retention promise and bounded seek slice; user reviews
   measured allocation/retention tradeoff before capacity is frozen.
 - [ ] Add sparse complete checkpoints, nearest-checkpoint seek and atomic segment
   eviction with explicit unavailable/capacity status. No dangling index/cursor.
-- [ ] Replay every tick/seek target from each checkpoint across its test extent;
-  compare full state/events/cursors using different poisoned working states.
+- [ ] Replay every tick from each checkpoint through its next interval boundary;
+  test all seek targets within capped-K intervals plus selected finite long-span/
+  full-match runs. Avoid quadratic checkpoint-to-end campaigns. Compare full
+  state/events/command and recorder cursors from poisoned working states.
 - [ ] Exercise modulo-256 wrap, long rally/deuce, service waits, corrupt snapshots,
   capacity exhaustion, ring wrap/eviction and omitted-state negative controls.
 - [ ] Gate: exact seek equivalence; bounded RAM/time on target and no silent loss;
@@ -66,18 +83,18 @@ Owner: implementation integrator. Review: determinism + native/resource.
 ## M3 — Explanations and history UI
 
 Owner: implementation integrator. Review: core rules + native UI/resource;
-parent coordinates user review of diagnostic wording and opportunity definition.
+parent coordinates user review of diagnostic wording and browser behavior.
 
-- [ ] Emit reason events at actual serve/contact/return/fault decisions, with
-  operands, thresholds and causal shot IDs; cover human and AI actors.
-- [ ] Define missed-contact windows from existing rules, including automatic
-  contacts, ignored/suppressed controls and absent-action cases; bound event burst.
+- [ ] Translate the M1/M2 reason/window records into factual explanations for
+  human and AI shots, faults and missed opportunities. Schema/instrumentation and
+  capacity contracts are already gated; any new requirement returns to M1/M2 review.
 - [ ] Add keyboard-invoked paused history browser and state reconstruction with
   visible retention limit, actual shot/opportunity navigation and factual reasons.
-- [ ] Isolate live state/recorder/PRNG/audio logical state from doctor work; define
-  entry/exit during rally, sound wait, round exchange and result lifecycle.
-- [ ] Check cancel/resume and carried-input retirement byte-for-byte for live
-  state/cursors; measure UI construction and transition worst cases on target.
+- [ ] Connect the UI to the M2 isolation/resume contract during rally, sound wait,
+  round exchange and result lifecycle; disable pre-match entry.
+- [ ] Verify UI browsing/cancel preserves all live bytes/cursors until resume,
+  then invokes the recorded control-only command. Measure UI construction and
+  transition worst cases on target.
 - [ ] Gate: independently checked diagnostic examples for faults, direction and
   failed/unexpected returns; no unsupported causal advice; native input/render/
   deadline tests and reviewed resource report pass for exact implemented head.
