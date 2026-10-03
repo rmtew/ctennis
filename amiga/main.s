@@ -189,18 +189,37 @@ measure_presentation_field:
         move.w  d0,d3
 .wait_wrap:
         bsr     read_presentation_line
-        cmp.w   d3,d0
+        cmpi.w  #256,d3
+        bcs.s   .wait_line
+        cmpi.w  #128,d0
         bcs.s   .start_field
+.wait_line:
         move.w  d0,d3
         bra.s   .wait_wrap
 .start_field:
         move.w  d0,d3
 .next_line:
         bsr     read_presentation_line
-        cmp.w   d3,d0
-        bcs.s   .measured
+        cmpi.w  #256,d3
+        bcs.s   .remember_line
+        cmpi.w  #128,d0
+        bcs.s   .validate
+.remember_line:
         move.w  d0,d3
         bra.s   .next_line
+.validate:
+        ; A one-line readback reversal is not a field wrap. Accept only
+        ; supported OCS PAL/NTSC lengths, allowing short/long fields and a
+        ; one-line sampling/readback edge. Invalid observations retry before
+        ; installing bounds or choosing the simulation cadence.
+        cmpi.w  #260,d3
+        bcs.s   measure_presentation_field
+        cmpi.w  #263,d3
+        bls.s   .measured
+        cmpi.w  #310,d3
+        bcs.s   measure_presentation_field
+        cmpi.w  #313,d3
+        bhi.s   measure_presentation_field
 .measured:
         move.w  d3,presentation_last_line
         subq.w  #4,d3

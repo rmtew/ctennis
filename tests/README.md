@@ -117,3 +117,7 @@ native callbacks without state injection. It reads the initialized native cadenc
 reports dirty-field masks and deadline misses explicitly, and is a measurement,
 not a replacement acceptance gate. Before/after receipts and limits are summarized
 in [direct-hud-comparison.md](../docs/metrics/direct-hud-comparison.md).
+
+Startup field detection has focused actual-assembly backwards-read controls and
+exact-release PAL/NTSC cold-start checks; see
+[validated field measurement](../docs/ct11/field-measurement.md).
