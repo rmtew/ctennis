@@ -30,25 +30,25 @@ class SideTitleLayout(unittest.TestCase):
             palette=[tuple(((v>>s)&15)*17 for s in (8,4,0)) for v in
                      (0,0,0x2c4,0x6d7,0x55e,0x77f,0x555,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)]
             for standard,players,selection in product(("PAL","NTSC"),(1,2),range(3)):
-            with self.subTest(standard=standard,players=players,selection=selection):
-                planes=[bytearray(pages[((players-1)*4+n)*3712:((players-1)*4+n+1)*3712]) for n in range(4)]
-                identity=identities[(0 if standard=='PAL' else 256):(256 if standard=='PAL' else 512)]
-                for n in (1,2):planes[n][104*32:112*32]=identity
-                selected=options[selection*256:(selection+1)*256]
-                # Cache only: impose the authored ownership rectangle.
-                # Execution of the native copy loop is covered by the
-                # physical-input target suite, not this host test.
-                for plane in planes:
-                    for y in range(8):
-                        start=(38+selection*11+y)*32+11
-                        plane[start:start+10]=selected[y*32+11:y*32+21]
-                raw=Image.new('RGB',(716,285),'black')
-                for y in range(116):
-                    for x in range(256):
-                        colour=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
-                        for dx in range(2):raw.putpixel((126+2*x+dx,92+y),palette[colour])
-                path=root/'cache.png';raw.save(path)
-                self.assertTrue(assert_menu_selection_raster(path,selection,players,build_hash='123abcd',standard=standard,release_version='12.34')['inverted_menu_matched'])
+                with self.subTest(standard=standard,players=players,selection=selection):
+                    planes=[bytearray(pages[((players-1)*4+n)*3712:((players-1)*4+n+1)*3712]) for n in range(4)]
+                    identity=identities[(0 if standard=='PAL' else 256):(256 if standard=='PAL' else 512)]
+                    for n in (1,2):planes[n][104*32:112*32]=identity
+                    selected=options[selection*256:(selection+1)*256]
+                    # Cache only: impose the authored ownership rectangle.
+                    # Execution of the native copy loop is covered by the
+                    # physical-input target suite, not this host test.
+                    for plane in planes:
+                        for y in range(8):
+                            start=(38+selection*11+y)*32+11
+                            plane[start:start+10]=selected[y*32+11:y*32+21]
+                    raw=Image.new('RGB',(716,285),'black')
+                    for y in range(116):
+                        for x in range(256):
+                            colour=sum(((p[y*32+x//8]>>(7-x%8))&1)<<n for n,p in enumerate(planes))
+                            for dx in range(2):raw.putpixel((126+2*x+dx,92+y),palette[colour])
+                    path=root/'cache.png';raw.save(path)
+                    self.assertTrue(assert_menu_selection_raster(path,selection,players,build_hash='123abcd',standard=standard,release_version='12.34')['inverted_menu_matched'])
 
 
 if __name__=='__main__':unittest.main()
