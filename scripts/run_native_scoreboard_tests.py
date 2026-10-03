@@ -24,7 +24,7 @@ def run_case(variant, two, exchanged, mutant=False):
     games = [variant, 6-variant]
     directory = ROOT / 'build/tests/native-scoreboard' / f'{variant}-{int(two)}-{int(exchanged)}'
     if mutant:
-        directory /= 'wrong-tally-pointer'
+        directory /= {True:'wrong-tally-pointer','ownership':'wrong-hud-bank','repair':'missing-win-repair'}[mutant]
     directory.mkdir(parents=True, exist_ok=True)
     source = (ROOT/'amiga/main.s').read_text()
     marker = '        bsr     game_begin_title'
@@ -36,15 +36,24 @@ def run_case(variant, two, exchanged, mutant=False):
     for name, value in zip(('game_mode', 'game_score_flags', 'game_point_a', 'game_point_b',
                             'game_games_a', 'game_games_b'), (mode, 64|ai, *points, *games)):
         init += f'        move.b #{value},{name}\n'
+    init += f'        move.b #{0xa0 | variant},game_display\n        move.b #224,game_status_clock\n'
     init += '        bsr game_scene_build_players\n'
     source = source.replace(marker, init)
     if mutant:
         patch = (ROOT/'amiga/score_copper_patch.i').read_text()
-        marker = '        move.b  0(a1,d5.w),d0'
+        if mutant == 'ownership':
+            marker = '        adda.l  d0,a4'
+            replacement = '        nop ; deliberately write bank0 instead'
+        elif mutant == 'repair':
+            marker = '        btst    #4,d3\n        beq.s   .done'
+            replacement = '        bra.s   .done ; deliberately omit unchanged-side repair'
+        else:
+            marker = '        move.b  0(a1,d5.w),d0'
+            replacement = marker+'\n        clr.b d0 ; deliberately all unearned'
         if patch.count(marker) != 1:
-            raise ValueError('WIN selection fault marker changed')
-        fault = directory/'wrong-tally-stamp.i'
-        fault.write_text(patch.replace(marker, marker+'\n        clr.b d0 ; deliberately all unearned'))
+            raise ValueError('HUD fault marker changed')
+        fault = directory/'wrong-hud.i'
+        fault.write_text(patch.replace(marker, replacement))
         source = source.replace('include "amiga/score_copper_patch.i"', f'include "{fault}"')
     fixture = directory/'fixture.s'
     fixture.write_text(source)
@@ -191,18 +200,22 @@ def run(self_test):
                for two in (False, True) for exchanged in (False, True)]
     controls = []
     if self_test:
-        try:
-            run_case(6, False, False, mutant=True)
-        except AssertionError as error:
-            detail = error.args[0]
-            if not isinstance(detail, dict) or detail.get('label') != 'independent native scoreboard raster':
-                raise
-            control_directory = ROOT/'build/tests/native-scoreboard/6-0-0/wrong-tally-pointer'
-            controls.append({'detected': True, 'failure': detail, 'unchanged_tally': [6, 0],
-                             'artifact_directory': str(control_directory.relative_to(ROOT)),
-                             'executable_sha256': hashlib.sha256((control_directory/'native-fixture').read_bytes()).hexdigest()})
-        else:
-            raise AssertionError('Compiled wrong tally-pointer escaped independent raster assertion')
+        for mutation, label, folder in (
+                (True,'independent native scoreboard raster','wrong-tally-pointer'),
+                ('repair','independent native scoreboard raster','missing-win-repair'),
+                ('ownership','HUD writes only current building bank','wrong-hud-bank')):
+            try:
+                run_case(6, False, False, mutant=mutation)
+            except AssertionError as error:
+                detail = error.args[0]
+                if not isinstance(detail, dict) or detail.get('label') != label:
+                    raise
+                control_directory = ROOT/'build/tests/native-scoreboard/6-0-0'/folder
+                controls.append({'detected': True, 'failure': detail, 'unchanged_tally': [6, 0],
+                                 'artifact_directory': str(control_directory.relative_to(ROOT)),
+                                 'executable_sha256': hashlib.sha256((control_directory/'native-fixture').read_bytes()).hexdigest()})
+            else:
+                raise AssertionError('Compiled HUD fault escaped: '+str(mutation))
     report = {'passed': True, 'cases': reports, 'compiled_fault_controls': controls,
               'executable_sha256': reports[0]['executable_sha256'],
               'scope': 'All native point/tally variants, modes and ends; stable three-bank scanout; compiled fixture starts'}
