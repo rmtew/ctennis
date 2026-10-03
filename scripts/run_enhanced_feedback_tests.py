@@ -124,6 +124,7 @@ def run_checked(mode,self_test=False):
             assert isinstance(detail,dict) and detail.get('label')=='logical colour winning feedback',detail
             directory=ROOT/f'build/tests/enhanced-feedback-{mode}'/control
             evidence={'control':control,'detected':True,'failure':detail,
+                      'artifact_directory':str(directory.relative_to(ROOT)),
                       'executable_sha256':hashlib.sha256((directory/'native-fixture').read_bytes()).hexdigest()}
             atomic_json(directory/'report.json',dict(passed=False,expected_rejection=True,**evidence))
             controls.append(evidence)
