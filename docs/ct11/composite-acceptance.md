@@ -14,9 +14,11 @@ stage dependencies rerun only that stage. No complete single-head campaign is cl
 Reuse requires the pinned development/release/ADF hashes, exact commands, original
 receipt hashes/heads/timestamps, unchanged tools/config/fixtures/raw artifacts and
 all original extent assertions. Historical receipts are copied unchanged and never
-edited. Only two reviewed AST equivalences exist: changes confined to inactive
-`run_match` for non-restart stages, and metric classification changes confined to
-`measurement_status`. All other definitions must match the immutable recorded Git
+edited. Reviewed AST equivalences are confined to inactive `run_match` and setup `run`
+functions for other stages, and metric reporting functions `measurement_status`,
+`read_case` and `generate`. Actual observers must rerun when their function changes.
+Metric aggregation preserves recorded hashes and compares separate verified
+normalized identities; composite verification rejection never uses a fallback. All other definitions must match the immutable recorded Git
 blob. An active restart observer change cannot use the inactive-function exception.
 Failed, changed-during-run, superseded, unknown or unbound receipts cannot be reused.
 The original strict receipt validator runs on an ephemeral classification copy after
@@ -27,3 +29,7 @@ final verification. Packaging self-test35 also covers the identical early packag
 command03. Acceptance still requires every37 stage, both uninterrupted long cadence
 runs, actual publication/pixels, controls, setup and metrics. No deadline, assertion,
 input or runtime rule is relaxed. The policy/helper hashes are bound in its plan.
+
+Setup accounting uses the actual typed CIA low-byte read position, not a later
+phase-store position that IRQs may delay. The100/200CCK tolerances and intended
+whole-wrap/strict-overrun controls are unchanged.

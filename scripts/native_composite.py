@@ -26,24 +26,54 @@ def source_without_function(source,name):
     tree.body=[n for n in tree.body if n not in removed]
     return ast.dump(tree,include_attributes=False)
 
+def reporting_source_identity(source):
+    tree=ast.parse(source)
+    names={'measurement_status','read_case','generate'}
+    found={n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in names}
+    if found!=names:raise ValueError('Expected all three metric reporting functions')
+    tree.body=[n for n in tree.body if not isinstance(n,ast.FunctionDef) or n.name not in names]
+    return ast.dump(tree,include_attributes=False)
+
 
 def equivalence(path,expected,meta):
-    if path not in ('scripts/run_ordinary_round_tests.py','scripts/native_metrics.py'):
+    if path not in ('scripts/run_ordinary_round_tests.py','scripts/run_native_setup_tests.py','scripts/native_metrics.py'):
         raise ValueError(f'No reviewed equivalence for {path}')
     old=subprocess.check_output(['git','show',f"{meta['commit']}:{path}"],cwd=ROOT)
     if hashlib.sha256(old).hexdigest()!=expected:raise ValueError('Recorded source differs from its immutable Git blob')
     current=(ROOT/path).read_bytes()
-    name='run_match' if path.endswith('run_ordinary_round_tests.py') else 'measurement_status'
+    name='run_match' if path.endswith('run_ordinary_round_tests.py') else 'run' if path.endswith('run_native_setup_tests.py') else 'measurement_status'
+    if name=='run' and Path(meta['command'][0]).name=='run_native_setup_tests.py':
+        raise ValueError('Active setup observer changed: it must rerun')
     if path.endswith('run_ordinary_round_tests.py'):
         command=meta['command']
         if Path(command[0]).name=='run_ordinary_round_tests.py' and not any(a in command for a in ('--cadence','--bank-control')):
             raise ValueError('Active restart observer changed: it must rerun')
-    old_ast=source_without_function(old.decode(),name)
-    new_ast=source_without_function(current.decode(),name)
+    normalize=(lambda source:source_without_function(source,name)) if name in ('run_match','run') else reporting_source_identity
+    old_ast=normalize(old.decode())
+    new_ast=normalize(current.decode())
     if old_ast!=new_ast:raise ValueError(f'Changes outside the reviewed inactive/reporting function: {path}')
     return {'path':path,'recorded_sha256':expected,'current_sha256':hashlib.sha256(current).hexdigest(),
             'unchanged_ast_sha256':hashlib.sha256(old_ast.encode()).hexdigest(),'excluded_function':name,
-            'reason':'Restart-only function is inactive for this preserved stage' if name=='run_match' else 'Measurement classification only; product construction and observation unchanged'}
+            'excluded_functions':[name] if name in ('run_match','run') else ['measurement_status','read_case','generate'],
+            'reason':'Changed observer function is inactive for this preserved stage' if name in ('run_match','run') else 'Metric reporting only; product construction and observation unchanged'}
+
+def normalized_metric_dependencies(meta,case):
+    if case not in ('cold-one','two','setup','demo'):raise ValueError('Unknown metric observer coverage')
+    raw={p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/')) and p!='scripts/native_metrics.py'}
+    normalized=dict(raw);current={p:digest(ROOT/p) for p in raw};proofs=[]
+    for path,sha in raw.items():
+        if path in ('scripts/run_ordinary_round_tests.py','scripts/run_native_setup_tests.py'):
+            if current[path]!=sha:
+                proof=equivalence(path,sha,meta)
+            else:
+                function='run_match' if path.endswith('run_ordinary_round_tests.py') else 'run'
+                shared=source_without_function((ROOT/path).read_text(),function)
+                proof={'path':path,'recorded_sha256':sha,'current_sha256':sha,
+                       'unchanged_ast_sha256':hashlib.sha256(shared.encode()).hexdigest(),
+                       'reason':'Shared closure identity; active observer remains bound by its unchanged full source hash'}
+            proofs.append(proof);normalized[path]=proof['unchanged_ast_sha256']
+        elif current[path]!=sha:raise ValueError('Unverified metric dependency change: '+path)
+    return raw,normalized,current,proofs
 
 
 def verified_status(path,*,subject='maintained-native',interface_flavor='enhanced',plan=None):
