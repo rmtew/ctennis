@@ -35,9 +35,9 @@ def acceptance(name, report):
                 and all(c.get('completed_updates',0)>=150 for c in report['cases']))
     if name.startswith('sprite-dma-'):
         cases=report.get('cases',[])
-        return (len(cases)==(12 if name.endswith('pal') else 6)
+        return (len(cases)==(15 if name.endswith('pal') else 6)
                 and all(c.get('passed') and c.get('full_fields',0)>=23 for c in cases)
-                and len(report.get('compiled_controls',[]))==(3 if name.endswith('pal') else 1))
+                and len(report.get('compiled_controls',[]))==(4 if name.endswith('pal') else 1))
     if name == 'scoreboard':
         return (len(report.get('cases', [])) == 28
                 and bool(report.get('compiled_fault_controls'))

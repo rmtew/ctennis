@@ -57,7 +57,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
         for a in range(event['addr'],event['addr']+event['size']):
             events_by_byte.setdefault((f,a),[]).append(event)
     metadata_sizes={'front_copper':4,'back_copper':4,'ready_copper':4,'spare_copper':4,
-        'display_ready':1,'ready_generation':2,'ready_title_display':1,'simulation_updates':2,
+        'display_ready':1,'ready_completed':1,'blank_seen':1,'ready_generation':2,'ready_title_display':1,'simulation_updates':2,
         'simulation_started_updates':2,'presentation_copper':4}
     watched=[(addresses[n],size) for n,size in metadata_sizes.items()] + [(a,copper_size) for a in copper] + [(a,576) for a in sprites]
     last_cpu_cop=None
@@ -77,6 +77,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     maximum_cpu_handover = 0
     pointer_completion = []
     last_frame = None
+    strobe_fields = set()
     for line in (path/'profile.jsonl').read_text().splitlines():
         frame = json.loads(line)
         if 'slots_file' not in frame or not frame.get('traced'):
@@ -137,6 +138,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 ea,es,ev=e['addr'],e['size'],e['value']
                 if ea+es<=len(memory):
                     memory[ea:ea+es]=ev.to_bytes(es,'big')
+                    if ea==addresses['blank_seen'] and not ev and number in strobe_fields and ep['vpos']>=253:
+                        fail('blank latch reopened after publication in same bottom interval',position=ep)
                     if ea==addresses['display_ready'] and ev:
                         bank=index(scalar('ready_copper'))
                         if bank is None:fail('completed scene names unknown bank',position=ep)
@@ -169,6 +172,9 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                     else:
                         cpu_pair.append((number, offset, value))
                 if reg == 0x1088:
+                    if number in strobe_fields:fail('more than one presentation strobe in physical field',position=position)
+                    strobe_fields.add(number)
+                    if not scalar('ready_completed',1):fail('publication lacks completed scene latch',position=position)
                     selected = scalar('presentation_copper')
                     court = index(selected)
                     ready=scalar('ready_copper')
@@ -216,7 +222,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                         current = None
                     if not partial:
                         publications.append(dict(position=position, bank=court,
-                                                 generation=current['generation'] if current else 'title'))
+                                                 generation=ready_generation, completed_generation=scalar('simulation_updates',2), completed_latch=bool(scalar('ready_completed',1))))
                     cpu_pair = []
             if kind == 3 and size and 0x120 <= reg <= 0x13e:
                 slot = (reg-0x120)//2

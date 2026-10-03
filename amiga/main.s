@@ -231,6 +231,8 @@ presentation_interrupt:
 ; Install at most one latest completed scene per guarded bottom interval.
 ; The displayed bank remains owned until COPJMP, after all old consumers retire.
 poll_presentation:
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         bsr     read_presentation_line
         cmpi.w  #253,d0
         bcs     presentation_not_blank
@@ -243,9 +245,8 @@ presentation_blank:
         addq.w  #1,presentation_frames
         tst.b   display_ready
         beq     presentation_log
-        move.w  ready_generation,d1
-        cmp.w   simulation_updates,d1
-        bne     presentation_log
+        tst.b   ready_completed
+        beq     presentation_log
         move.l  ready_copper,d0
         tst.b   ready_title_display
         beq.s   presentation_court
@@ -264,6 +265,7 @@ presentation_selected:
         clr.l   ready_copper
         move.w  ready_game_generation,game_presented_generation
         clr.b   display_ready
+        clr.b   ready_completed
         bsr     read_presentation_line
         cmpi.w  #253,d0
         bcs.s   presentation_missed
@@ -276,12 +278,13 @@ presentation_log:
         bne.s   presentation_poll_done
         move.w  #50,log_timer
 presentation_poll_done:
+        move.w  (sp)+,sr
         rts
 presentation_not_blank:
         ; Any visible-line observation starts the next bottom interval; there
         ; is no requirement to poll exactly at field wrap or line0.
         clr.b   blank_seen
-        rts
+        bra     presentation_poll_done
 
 ; Freeze the building bank as latest complete. Its superseded ready bank (or
 ; the spare when no scene waits) becomes writable; the displayed bank is absent
@@ -290,6 +293,7 @@ complete_scene:
         movem.l d0-d2/a0,-(sp)
         move.w  sr,-(sp)
         ori.w   #$0700,sr
+        clr.b   ready_completed
         move.l  ready_copper,d0
         bne.s   .supersede
         move.l  spare_copper,d0
@@ -301,6 +305,11 @@ complete_scene:
         move.b  game_title_display,ready_title_display
         move.b  #1,display_ready
         move.l  d0,back_copper
+        move.w  simulation_started_updates,d1
+        cmp.w   simulation_updates,d1
+        bne.s   .producer_active
+        st      ready_completed
+.producer_active:
         move.w  (sp)+,sr
         bsr     select_build_bank
         movem.l (sp)+,d0-d2/a0
@@ -316,6 +325,7 @@ discard_ready_scene:
         move.l  ready_copper,spare_copper
         clr.l   ready_copper
 .none:  clr.b   display_ready
+        clr.b   ready_completed
         move.w  (sp)+,sr
         rts
 
@@ -370,11 +380,11 @@ simulation_update:
         bsr     game_render_sprites
         bsr     game_tick_dispatch
         bsr     complete_scene
-        addq.w  #1,simulation_updates
+        bsr     complete_update
         rts
 
 ui_frozen_update:
-        addq.w  #1,simulation_updates
+        bsr     complete_update
         rts
 simulation_menu:
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
@@ -386,7 +396,23 @@ simulation_service_tick:
         bcs.s   simulation_service_observed
         bsr     complete_scene
 simulation_service_observed:
+        bsr     complete_update
+        rts
+
+ ; Completion validity belongs to a scene, not the latest global tick.
+; Keep it valid across frozen ticks until consumption or supersession.
+complete_update:
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         addq.w  #1,simulation_updates
+        tst.b   display_ready
+        beq.s   .done
+        move.w  ready_generation,d0
+        cmp.w   simulation_updates,d0
+        bne.s   .done
+        st      ready_completed
+.done:
+        move.w  (sp)+,sr
         rts
 
 prepare_title_display:
@@ -631,6 +657,7 @@ simulation_timer_running: dc.b 0
         even
 blank_seen:        dc.b 0
 display_ready:     dc.b 0
+ready_completed:   dc.b 0
         even
 front_copper:      dc.l 0
 back_copper:       dc.l 0

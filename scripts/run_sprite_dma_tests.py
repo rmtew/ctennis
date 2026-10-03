@@ -12,7 +12,7 @@ from native_observation import target_log
 from native_sprite_dma import analyse, legacy_header_control
 from native_tools import ROOT, ASSEMBLER, emulator_config, run as assemble
 
-NAMES=('front_copper','back_copper','ready_copper','spare_copper','display_ready',
+NAMES=('front_copper','back_copper','ready_copper','spare_copper','display_ready','ready_completed','blank_seen',
        'ready_generation','ready_title_display','simulation_updates','simulation_started_updates',
        'presentation_copper','presentation_last_line','presentation_last_safe_line',
        'copperlist','copperlist_back','copperlist_third','copperlist_end',
@@ -43,6 +43,38 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
         source=source.replace('        move.w  #$c010,$dff09a','        move.w  #$0000,$dff09a')
     elif control=='height':
         source=source.replace('        addi.w  #16,d2','        addi.w  #15,d2')
+    if control in ('delay-title','delay-paused'):
+        condition='        tst.b   ready_title_display\n' if control=='delay-title' else '        tst.b   ui_paused\n'
+        hook=condition+'        beq.s   fixture_delay_done\n        cmpi.w  #10,simulation_started_updates\n        bls.s   fixture_delay_done\n        tst.b   fixture_delayed\n        bne.s   fixture_delay_done\n        st      fixture_delayed\n        bra     presentation_log\nfixture_delay_done:\n'
+        if control=='delay-paused':
+            hook='''        cmpi.w  #180,simulation_started_updates
+        bcs.s   fixture_delay_done
+        tst.b   ready_title_display
+        bne.s   fixture_delay_done
+        tst.b   fixture_delayed
+        bne.s   fixture_delay_done
+        tst.b   ui_paused
+        beq.s   fixture_pause_skip
+        tst.b   fixture_paused_seen
+        beq.s   fixture_pause_first
+        st      fixture_delayed
+        bra.s   fixture_delay_done
+fixture_pause_first:
+        st      fixture_paused_seen
+fixture_pause_skip:
+        bra     presentation_log
+fixture_delay_done:
+'''
+            source+='\n        even\nfixture_paused_seen: dc.b 0\n        even\n'
+        source=source.replace('        move.l  ready_copper,d0',hook+'        move.l  ready_copper,d0',1)
+        source+='\n        even\nfixture_delayed: dc.b 0\n        even\n'
+    if control in ('boundary-request','boundary-request-unmasked'):
+        hook='        cmpi.w  #252,d0\n        bne.s   fixture_boundary_done\n        move.w  $dff006,d1\n        andi.w  #$00ff,d1\n        cmpi.w  #180,d1\n        bcs.s   fixture_boundary_done\n        addq.w  #1,fixture_boundary_requests\n        move.w  #$8010,$dff09c\nfixture_boundary_done:\n'
+        source=source.replace('        cmpi.w  #253,d0',hook+'        cmpi.w  #253,d0',1)
+        source+='\n        even\nfixture_boundary_requests: dc.w 0\n'
+        if control=='boundary-request-unmasked':
+            source=source.replace('poll_presentation:\n        move.w  sr,-(sp)\n        ori.w   #$0700,sr\n','poll_presentation:\n')
+            source=source.replace('presentation_poll_done:\n        move.w  (sp)+,sr\n','presentation_poll_done:\n')
     fixture=directory/'fixture.s';fixture.write_text(source)
     exe,listing=directory/'native-fixture',directory/'native.lst'
     assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1',
@@ -77,7 +109,7 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
                 s.inspect('input_joy',{'port':2,'red':True});advance(.4)
                 s.inspect('input_joy',{'port':2,'red':False});advance(.1)
         profile=directory/'trace'
-        watches=[{'addr':address(n),'len':z,'access':'write'} for n,z in [('front_copper',4),('back_copper',4),('ready_copper',4),('spare_copper',4),('display_ready',1),('ready_generation',2),('ready_title_display',1),('simulation_updates',2),('simulation_started_updates',2),('presentation_copper',4)]]
+        watches=[{'addr':address(n),'len':z,'access':'write'} for n,z in [('front_copper',4),('back_copper',4),('ready_copper',4),('spare_copper',4),('display_ready',1),('ready_completed',1),('blank_seen',1),('ready_generation',2),('ready_title_display',1),('simulation_updates',2),('simulation_started_updates',2),('presentation_copper',4)]]
         watches += [{'addr':address(n),'len':address('copperlist_end')-address('copperlist'),'access':'write'} for n in ('copperlist','copperlist_back','copperlist_third')]
         watches += [{'addr':address(n),'len':576,'access':'write'} for n in ('sprite0','sprite_back','sprite_third')]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'},{'addr':0xdff004,'len':4,'access':'read'}]
@@ -116,7 +148,9 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
                  'profile':status,'phase':phase,'scenario':scenario,'standard':standard,'control':control,
                  'fixture':'one-time initial clock phase wait; then native main loop and physical input only',
                  'observed_last_line':scalar('presentation_last_line'),
-                 'observed_last_safe_line':scalar('presentation_last_safe_line')}
+                 'observed_last_safe_line':scalar('presentation_last_safe_line'),
+                 'fixture_delayed':scalar('fixture_delayed',1) if 'fixture_delayed' in located else None,
+                 'fixture_boundary_requests':scalar('fixture_boundary_requests') if 'fixture_boundary_requests' in located else None}
     target_log(directory, standard=standard)
     metadata=[json.loads(line) for line in (profile/'profile.jsonl').read_text().splitlines()]
     full={d['frame'] for d in metadata if not d['partial']}
@@ -141,7 +175,7 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
         if len(used)<6:raise AssertionError('Insufficient independent live samples')
         if scenario=='pause' and not any(s['paused'] for s in used):raise AssertionError('Physical pause not observed')
         if scenario=='title' and not any(s['page'] for s in used):raise AssertionError('Physical help page not observed')
-        if scenario=='return' and not any(s['lifecycle']==2 for s in used):raise AssertionError('Physical returned title not observed')
+        if scenario=='return' and not any(s['lifecycle']==2 and s['installed']==address('title_copper') for s in used):raise AssertionError('Physical returned title not observed')
     atomic_json(directory/'report.json',result)
     print(name,'PASS' if result['passed'] else 'REJECT',result['failures'][:1],flush=True)
     return result
@@ -171,6 +205,21 @@ def run(self_test=False, ntsc=False):
         r=execute_case('ntsc-interrupt-disabled',22,standard='NTSC',control='interrupt-disabled',frames=24)
         assert not r['passed'] and any(f['reason']=='DMA did not cover all three physical banks' for f in r['failures']),r['failures']
         controls.append(dict(control='interrupt-disabled',detected=True,first_failure=r['failures'][0],binding=r['binding']))
+    if self_test and not ntsc:
+        for name,phase,scenario,control,frames in [('delayed-title',22,'return','delay-title',120),('delayed-paused',22,'pause','delay-paused',96),('boundary-preemption',0,'play','boundary-request',120)]:
+            r=execute_case(name,phase,scenario,control=control,frames=frames)
+            assert r['passed'],r['failures']
+            if control.startswith('delay'):
+                assert r['binding']['fixture_delayed']==255
+                assert any(p['completed_generation']>p['generation'] and (control!='delay-title' or p['bank'] is None) for p in r['publications']),'Delayed completed scene was not consumed after later ticks'
+            else:
+                assert r['binding']['fixture_boundary_requests']>0
+                assert r['sprite_header_words']==16*r['full_fields']
+            cases.append(r)
+        r=execute_case('boundary-preemption-unmasked',0,'play',control='boundary-request-unmasked',frames=120)
+        assert r['binding']['fixture_boundary_requests']>0
+        assert not r['passed'] and any(f['reason'] in ('blank latch reopened after publication in same bottom interval','more than one presentation strobe in physical field') for f in r['failures']),r['failures']
+        controls.append(dict(control='boundary-request-unmasked',detected=True,first_failure=r['failures'][0],binding=r['binding']))
     report=dict(passed=True,interface_flavor='enhanced',executable_sha256=cases[0]['binding']['executable_sha256'],target=f'A500/68000/OCS/{standard}/512KB chip/zero slow and fast/external Kick1.3',
                 cases=cases,compiled_controls=controls,
                 scope='One-time startup phase fixtures, actual native dispatcher and physical input. Address/generation/ownership coverage; raw sidecar data values explicitly uncertified.')
