@@ -6,6 +6,7 @@ from copperline_test_session import NativeControlSession
 from native_evidence import atomic_json,tracked_call
 from native_hunk import loaded_hunks
 from native_tools import ROOT,emulator_config
+from native_observation import target_log
 
 
 def run():
@@ -34,6 +35,7 @@ def run():
             observed={'whole':scalar('simulation_interval_whole',4),'fraction':scalar('simulation_interval_fraction',2),'last_line':scalar('presentation_last_line',2),'last_safe_line':scalar('presentation_last_safe_line',2)}
             assert (observed['whole'],observed['fraction'])==(whole,fraction),observed
             assert (observed['last_line']<300)==(standard=='NTSC'),observed
+        target_log(directory, standard=standard)
         atomic_json(directory/'cpu-events.json',events)
         start=next(e['position']['cck'] for e in events if e['addr']==0xbfde00 and e['value']&1)
         origin_value=next(e['value'] for e in events if e['addr']==address('simulation_timer_origin'))

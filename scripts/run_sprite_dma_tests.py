@@ -115,7 +115,7 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
                  'fixture':'one-time initial clock phase wait; then native main loop and physical input only',
                  'observed_last_line':scalar('presentation_last_line'),
                  'observed_last_safe_line':scalar('presentation_last_safe_line')}
-    target_log(directory)
+    target_log(directory, standard=standard)
     metadata=[json.loads(line) for line in (profile/'profile.jsonl').read_text().splitlines()]
     full={d['frame'] for d in metadata if not d['partial']}
     used=[s for s in samples if s['position']['frame']+1 in full]
