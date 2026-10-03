@@ -68,9 +68,13 @@ Owner: implementation integrator. Review: determinism + native/resource.
 - [ ] Freeze diagnostic payload widths, missed-window aggregation and maximum
   per-step event/encoded-byte burst before capacity selection. Include simultaneous
   contact/window/award/lifecycle/cue events and checkpoint all open accumulators.
-- [ ] Prove transactional overflow: publish no partial batch, retain last complete
-  boundary/status, stop capture explicitly, and preserve gameplay progression and
-  required outputs. Inject event-buffer and storage exhaustion independently.
+- [ ] Prove normal full-ring/wrap handling evicts oldest complete checkpoint
+  segments and continues recording, preserving a seekable suffix and advancing
+  the oldest available tick. Commit eviction and append atomically.
+- [ ] Separately inject oversized atomic records/segments that cannot fit after
+  all safe evictions, invalid event bursts and numeric identifier exhaustion.
+  These exceptional failures stop capture explicitly at the last complete
+  boundary, publish no partial batch and preserve gameplay/required outputs.
 - [ ] Prove headless pause/live isolation through the instant before resume;
   replay recorded resume commands and verify only declared control fields/cursors
   change. Handle unrecordable resume through the explicit capture-stop contract.
@@ -78,6 +82,8 @@ Owner: implementation integrator. Review: determinism + native/resource.
   compression behavior, worst bursts/noncompressible inputs and seek latency.
   Select H/K, live/doctor instance costs and bounded seek slice from that evidence;
   review measured capacity/retained-duration tradeoffs before freezing allocation.
+  Ensure the maximum supported segment, next checkpoint and atomic workspace fit,
+  allowing routine eviction without stopping recording.
 - [ ] Preallocate the fixed rolling buffer and all required recording workspace
   before play; verify no allocations during play, including wrap and eviction.
 - [ ] Add sparse complete checkpoints, nearest-checkpoint seek and atomic
@@ -90,7 +96,8 @@ Owner: implementation integrator. Review: determinism + native/resource.
   full-match runs. Avoid quadratic checkpoint-to-end campaigns. Compare full
   state/events/command and recorder cursors from poisoned working states.
 - [ ] Exercise modulo-256 wrap, long rally/deuce, service waits, corrupt snapshots,
-  capacity exhaustion, ring wrap/eviction and omitted-state negative controls.
+  repeated full-ring wrap/eviction, exceptional oversized records/segments,
+  numeric ID exhaustion and omitted-state negative controls.
 - [ ] Gate: exact seek equivalence; bounded RAM/time on target and no silent loss;
   independent review and affected native metrics/contracts completed.
 

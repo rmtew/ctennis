@@ -108,8 +108,11 @@ tick n; `step(S[n], I[n]) -> S[n+1], E[n]`. Tick n covers service-only waits as
 well as active rally work. The modulo-256 gameplay clock remains unchanged;
 a separate unsigned history index advances once per step. Choose 32 versus 64
 bits at M1/M2 using supported recording duration, overflow handling, state/storage
-bytes and measured 68000 cost; encode the width in the schema. Exhaustion ends
-recording explicitly, never wraps into an old record.
+bytes and measured 68000 cost; encode the width in the schema. Only numeric
+exhaustion of a logical tick/sequence identifier ends recording explicitly, so a
+new event cannot alias an old ID. This is distinct from physical ring-buffer
+wrap: normal wrap/full-buffer eviction is expected and recording continues,
+dropping the oldest complete checkpoint segments while logical IDs advance.
 
 First instrument the existing call order: between-callback round/result polls,
 physical/logical samples and latch retirement, dispatch, scene semantic changes,
@@ -174,9 +177,16 @@ rolling buffer, with no allocations during play. Show the truthful oldest
 available tick and “earlier history unavailable” notice. Evict only complete
 checkpoint-led segments, atomically retaining a complete replayable suffix: a
 usable base checkpoint and all controls, commands and events from that base to
-the completeness watermark. If a segment cannot fit, stop recording with an
-explicit capacity status while play continues; never retain an unseekable tail
-or overwrite live/doctor state. Pinning a browse range cannot grow the buffer.
+the completeness watermark. When the ring fills or its write position wraps,
+evict the oldest complete segments as needed and continue recording; normal
+capacity pressure does not stop capture. Size the buffer/checkpoint cadence to
+hold the maximum supported segment, next checkpoint and atomic append workspace,
+so a new replayable base is available before the old base must be discarded.
+Only an exceptional atomic batch/segment that cannot fit even after all safe
+evictions, or an invalid event burst, invokes the failure contract below. Never
+retain an unseekable tail or overwrite live/doctor state. Browsing pauses live
+recording; release browse pins before resume so they cannot prevent normal
+eviction or grow the buffer.
 
 The numeric capacity is not yet chosen. Measure bytes per minute, point and
 match, compression behavior, worst bursts and seek latency before final capacity
@@ -185,12 +195,16 @@ are deferred, evidence-based future decisions, outside initial scope. Finite
 observed match sizes do not establish a bound for every possible match. Approval
 of this retention policy does not approve implementation of the overall design.
 
-Each recorder append is transactional: reserve/stage the complete input/command,
-event and index batch, then publish its cursors and completeness watermark
-atomically. On event-buffer or storage overflow, discard the uncommitted batch,
-retain the last complete prefix and publish an out-of-band recording-stopped
-reason plus last complete tick. Never mark a partial tick complete or continue
-with an unmarked gap. Gameplay advances exactly once regardless of diagnostic
+Each recorder append is transactional: plan any normal checkpoint-aware evictions,
+reserve/stage the complete input/command, event and index batch, then atomically
+publish eviction, cursors, oldest available boundary and completeness watermark.
+A full ring first evicts eligible old segments and continues; it is not an error.
+If an exceptional oversized atomic record/segment still cannot fit after all safe
+evictions, or the event buffer exceeds its validated maximum burst, discard the
+uncommitted batch/eviction plan. Retain the last complete replayable history and
+publish an out-of-band recording-stopped reason plus last complete tick. Numeric
+identifier exhaustion is another explicit stop condition. Never mark a partial
+tick complete or continue with an unmarked gap. Gameplay advances exactly once regardless of diagnostic
 storage failure; required sound/lifecycle effects use core state or a separately
 bounded required-output path, never depend on a lossy diagnostic queue. An event
 buffer overflow also fails validation of the claimed maximum burst. Reserve the
@@ -355,8 +369,11 @@ Programmatic completeness is a release gate, not confidence from one hash:
    injection. Browsing/branches leave live bytes/cursors invariant through the
    instant before resume. Separately verify the recorded resume command changes
    only its declared control fields/cursors, preserves world/score/RNG, and replays
-   exactly. Inject event/storage overflow: play must match a sufficient-capacity
-   run while history ends at its last complete boundary with a failure status.
+   exactly. Repeatedly fill/wrap the ring: recording must continue, oldest history
+   must advance by complete segments, and every retained tick must remain seekable.
+   Separately inject an oversized atomic record/segment, invalid event burst or
+   numeric identifier exhaustion: play must match the control run while history
+   ends at its last complete boundary with an explicit failure status.
    The existing finite native gate remains the final native gate.
 
 ## Decisions requiring user review
