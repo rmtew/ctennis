@@ -6,8 +6,9 @@ PR #23 has since landed on master at
 `70ed2e31b255f5161672944ef137af8b99bdd20d`. This docs-only proposal does not
 modify that release or supply its acceptance evidence. The source audit below
 remains at the stated older base; reconcile against the accepted release before
-implementation. Safe Exit remains
-separate unfinished work, not a prerequisite. Delivery tracking is in
+implementation. The user cancelled the Exit option and chose reboot to leave
+the game. Safe Exit work is stopped and out of scope, with no simulation
+dependency or future delivery commitment. Delivery tracking is in
 [the milestone checklist](work-plan.md).
 
 ## Intended experience and constraints

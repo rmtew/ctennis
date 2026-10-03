@@ -5,7 +5,9 @@ Status: proposal, **implementation blocked on user design review**. Checkboxes
 track evidence-backed completion; none authorize code now. One concrete item is
 active at a time. The user approved initial fixed preallocated rolling retention,
 not overall implementation. Full recordings/background disk flushing are deferred.
-Safe Exit is separate; PR #23 is now on master at
+The user cancelled the Exit option and chose reboot to leave the game. Safe Exit
+work is stopped and out of scope, neither a dependency nor a future commitment.
+PR #23 is now on master at
 `70ed2e31b255f5161672944ef137af8b99bdd20d` and is not modified here.
 
 Ownership: implementation integrator = this delegated implementation owner after
