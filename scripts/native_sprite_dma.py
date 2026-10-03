@@ -30,7 +30,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     checked_live_samples = 0
     encountered_live = set()
     def fail(reason, **details):
-        if len(failures) < 40:
+        # Preserve each distinct mechanism even when an early fault repeats.
+        if sum(f['reason']==reason for f in failures) < 3:
             failures.append(dict(reason=reason, **details))
     def scalar(name, size=4):
         start = addresses[name]
