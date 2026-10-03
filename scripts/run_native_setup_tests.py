@@ -36,7 +36,7 @@ def run(baseline=None, control=None, fault_controls=None):
     with NativeControlSession(directory) as s:
         s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
         stop=s.inspect('run_until',{'seconds':30});assert stop['reason']=='loadseg',stop
-        base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16); clock={'start':None,'origin':None,'started':0,'completed':0,'lifecycle':0,'cop':bytearray(4)}
+        base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16); clock={'start':None,'origin':None,'started':0,'completed':0,'lifecycle':0,'ready_generation':0,'ready':None,'cop':bytearray(4)}
         observer=SetupObserver(base,symbols,listing)
         metrics=MetricsObserver(base,symbols,listing)
         accounting_pc=None if baseline else base+int(re.search(r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*add.l\s+d1,simulation_phase',listing,re.M)[1],16)
@@ -72,16 +72,18 @@ def run(baseline=None, control=None, fault_controls=None):
             if a==base+symbols['simulation_started_updates']:
                 assert v==clock['started']+1 and clock['completed']==clock['started'],'Setup callback sequence'
                 clock['started']=v;callbacks.append({'callback':v,'entry':p})
+            if a==base+symbols['ready_generation']:clock['ready_generation']=v
+            if a==base+symbols['display_ready']:clock['ready']=clock['ready_generation'] if v else None
             if a==base+symbols['simulation_updates']:
                 assert v==clock['completed']+1 and v==clock['started'],'Setup completion sequence'
                 clock['completed']=v;callbacks[-1].update(completion=p,lifecycle=clock['lifecycle'])
             if 0xdff080<=a and a+size<=0xdff084:clock['cop'][a-0xdff080:a-0xdff080+size]=v.to_bytes(size,'big')
             if a==0xdff088 and clock['start'] is not None:
                 publications.append({'position':p,'callback':clock['completed'],'pointer':int.from_bytes(clock['cop'],'big')})
-                assert clock['completed']==clock['started'],'Title publication of unfinished update'
+                assert clock['ready'] is not None and clock['ready']<=clock['completed'],'Title publication of unfinished ready scene'
                 assert p['vpos']<25 or p['vpos']>=252,'Title publication outside retained blank window'
         s.notification_handler=event
-        watches=observer.watches()+[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in [('game_lifecycle',2),('simulation_timer_origin',2),('simulation_started_updates',2),('simulation_updates',2),('display_ready',1),('simulation_phase',4)]]+[{'addr':0xbfdf00 if baseline else 0xbfde00,'len':1,'access':'write'},{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
+        watches=observer.watches()+[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in [('game_lifecycle',2),('simulation_timer_origin',2),('simulation_started_updates',2),('simulation_updates',2),('ready_generation',2),('display_ready',1),('simulation_phase',4)]]+[{'addr':0xbfdf00 if baseline else 0xbfde00,'len':1,'access':'write'},{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
         watches+=metrics.watches()
         s.inspect('events.subscribe',{'events':['mmio','frame'],'mmio':watches})
         time=stop['seconds']

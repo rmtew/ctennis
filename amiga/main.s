@@ -14,6 +14,7 @@ start:
         move.l  4.w,a6
         jsr     -132(a6) ; Exec Forbid
         jsr     -120(a6) ; Exec Disable
+        jsr     -150(a6) ; Exec SuperState before owning the interrupt vector
         lea     game_stack_top,sp
         bsr     measure_presentation_field
         bsr     select_simulation_cadence
@@ -66,6 +67,8 @@ copy_third_copper:
         bsr     select_build_bank
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
+        move.w  #$7fff,$09c(a0)
+        move.l  #presentation_interrupt,$6c.w
         move.w  #$7fff,$096(a0)
         bsr     prepare_title_display
         move.l  #title_copper,presentation_copper
@@ -92,6 +95,9 @@ copy_third_copper:
         move.l  d0,last_timer_count
         move.w  d0,simulation_timer_origin
         st      simulation_timer_running
+        ; Copper requests level3 at253, after every outgoing consumer retires.
+        move.w  #$c010,$dff09a
+        andi.w  #$f8ff,sr
 main_loop:
         tst.b   ui_paused
         bne.s   ui_skip_round_poll
@@ -212,6 +218,16 @@ select_simulation_cadence:
         move.l  simulation_interval_whole,simulation_phase
         rts
 
+; Copper-driven publication can interrupt a producer that spans blank.
+; Registers and its building bank remain intact; only completed ready scenes commit.
+presentation_interrupt:
+        movem.l d0-d7/a0-a6,-(sp)
+        move.w  #$0010,$dff09c
+        bsr     poll_presentation
+        move.w  #$0010,$dff09c
+        movem.l (sp)+,d0-d7/a0-a6
+        rte
+
 ; Install at most one latest completed scene per guarded bottom interval.
 ; The displayed bank remains owned until COPJMP, after all old consumers retire.
 poll_presentation:
@@ -227,6 +243,9 @@ presentation_blank:
         addq.w  #1,presentation_frames
         tst.b   display_ready
         beq     presentation_log
+        move.w  ready_generation,d1
+        cmp.w   simulation_updates,d1
+        bne     presentation_log
         move.l  ready_copper,d0
         tst.b   ready_title_display
         beq.s   presentation_court
@@ -269,6 +288,8 @@ presentation_not_blank:
 ; from this rotation. This does not wait for the PAL display or alter game ticks.
 complete_scene:
         movem.l d0-d2/a0,-(sp)
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         move.l  ready_copper,d0
         bne.s   .supersede
         move.l  spare_copper,d0
@@ -280,6 +301,7 @@ complete_scene:
         move.b  game_title_display,ready_title_display
         move.b  #1,display_ready
         move.l  d0,back_copper
+        move.w  (sp)+,sr
         bsr     select_build_bank
         movem.l (sp)+,d0-d2/a0
         rts
@@ -287,11 +309,14 @@ complete_scene:
 ; Explicit title construction invalidates a waiting court scene, preserving
 ; ownership while the complete menu bitmap is built.
 discard_ready_scene:
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         tst.l   ready_copper
         beq.s   .none
         move.l  ready_copper,spare_copper
         clr.l   ready_copper
 .none:  clr.b   display_ready
+        move.w  (sp)+,sr
         rts
 
 select_build_bank:

@@ -37,7 +37,7 @@ def acceptance(name, report):
         cases=report.get('cases',[])
         return (len(cases)==(12 if name.endswith('pal') else 6)
                 and all(c.get('passed') and c.get('full_fields',0)>=23 for c in cases)
-                and (not name.endswith('pal') or len(report.get('compiled_controls',[]))==3))
+                and len(report.get('compiled_controls',[]))==(3 if name.endswith('pal') else 1))
     if name == 'scoreboard':
         return (len(report.get('cases', [])) == 28
                 and bool(report.get('compiled_fault_controls'))

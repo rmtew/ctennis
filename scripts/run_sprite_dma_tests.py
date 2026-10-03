@@ -39,6 +39,8 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
         source=source.replace('        move.l  ready_copper,d0','        move.l  front_copper,d0',1)
     elif control=='unknown':
         source=source.replace('presentation_selected:\n','presentation_selected:\n        addq.l  #4,d0\n')
+    elif control=='interrupt-disabled':
+        source=source.replace('        move.w  #$c010,$dff09a','        move.w  #$0000,$dff09a')
     elif control=='height':
         source=source.replace('        addi.w  #16,d2','        addi.w  #15,d2')
     fixture=directory/'fixture.s';fixture.write_text(source)
@@ -121,8 +123,21 @@ def execute_case(name, phase, scenario='play', standard='PAL', control=None, lac
     used=[s for s in samples if s['position']['frame']+1 in full]
     excluded=[dict(position=s['position'],reason='outside complete profile extent') for s in samples if s['position']['frame']+1 not in full]
     result=analyse(profile,binding['addresses'],standard,live_samples=used,cpu_events=cpu_events,require_three=scenario!='title')
-    result.update(binding=binding,live_samples=used,excluded_samples=excluded)
+    initial=(profile/'chip-ram.bin').read_bytes()
+    counts={n:int.from_bytes(initial[address(n):address(n)+2],'big') for n in ('simulation_started_updates','simulation_updates')}
+    active=[]
+    for e in cpu_events:
+        if e['access']!='write':continue
+        for n in counts:
+            if e['addr']==address(n):counts[n]=e['value']
+        if e['addr']==0xdff088 and counts['simulation_started_updates']!=counts['simulation_updates']:
+            active.append(dict(position=e['position'],started=counts['simulation_started_updates'],completed=counts['simulation_updates']))
+    result.update(binding=binding,live_samples=used,excluded_samples=excluded,producer_active_publications=active)
     if not control:
+        if scenario in ('play','two','serve') and result['sprite_header_words']!=16*result['full_fields']:
+            raise AssertionError('Live gameplay did not scan all eight sprite headers in every complete field')
+        if standard=='NTSC' and phase==22 and not active:
+            raise AssertionError('NTSC phase-lock case did not publish during producer work')
         if len(used)<6:raise AssertionError('Insufficient independent live samples')
         if scenario=='pause' and not any(s['paused'] for s in used):raise AssertionError('Physical pause not observed')
         if scenario=='title' and not any(s['page'] for s in used):raise AssertionError('Physical help page not observed')
@@ -145,13 +160,17 @@ def run(self_test=False, ntsc=False):
         r=execute_case('alternating-fields',253,lace=True)
         assert r['passed'],r['failures'];assert len(r['field_geometries'])==2,r['field_geometries'];cases.append(r)
     controls=[]
-    if self_test:
+    if self_test and not ntsc:
         wanted={'stale':'strobe does not install current latest completed scene',
                 'unknown':'unknown installed Copper list','height':'malformed visible sprite geometry'}
         for control,reason in wanted.items():
             r=execute_case('control-'+control,22,control=control,frames=24)
             assert not r['passed'] and any(f['reason']==reason for f in r['failures']),r['failures']
             controls.append(dict(control=control,detected=True,first_failure=r['failures'][0],binding=r['binding']))
+    if self_test and ntsc:
+        r=execute_case('ntsc-interrupt-disabled',22,standard='NTSC',control='interrupt-disabled',frames=24)
+        assert not r['passed'] and any(f['reason']=='DMA did not cover all three physical banks' for f in r['failures']),r['failures']
+        controls.append(dict(control='interrupt-disabled',detected=True,first_failure=r['failures'][0],binding=r['binding']))
     report=dict(passed=True,interface_flavor='enhanced',executable_sha256=cases[0]['binding']['executable_sha256'],target=f'A500/68000/OCS/{standard}/512KB chip/zero slow and fast/external Kick1.3',
                 cases=cases,compiled_controls=controls,
                 scope='One-time startup phase fixtures, actual native dispatcher and physical input. Address/generation/ownership coverage; raw sidecar data values explicitly uncertified.')

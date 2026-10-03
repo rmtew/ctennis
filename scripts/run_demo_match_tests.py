@@ -113,7 +113,7 @@ def run(takeover=False):
    located={n:(int(h),int(o,16)) for n,h,o in re.findall(r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',(exe.parent/'native.lst').read_text(),re.M)}
    h,offset=located['title_copper'];title_pointer=segments[h]['start']+offset
    regs=s.inspect('custom_dump')['regs']
-   end_state=dict(life=6,demo=255,idle=0,started=num('simulation_started_updates',2),completed=num('simulation_updates',2),
+   end_state=dict(life=6,demo=255,idle=0,started=num('simulation_started_updates',2),completed=num('simulation_updates',2),('ready_generation',2),('display_ready',1),ready_generation=num('ready_generation',2),ready=num('ready_generation',2) if num('display_ready') else None,
                   first_play=None,returned=None,title_published=False,next_demo=None,next_seed=False,maximum_loops=0,
                   pointer=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big')))
    publications=[];tail_events=[];tail_checks=[]
@@ -135,6 +135,8 @@ def run(takeover=False):
      if value==2 and end_state['returned'] is None:
       assert end_state['first_play'],'Unattended demo returned before actual full phrase completion'
       end_state['returned']=dict(callback=end_state['completed'],position=position)
+    if addr==base+symbols['ready_generation']:end_state['ready_generation']=value
+    if addr==base+symbols['display_ready']:end_state['ready']=end_state['ready_generation'] if value else None
     if addr==base+symbols['ui_demo']:
      end_state['demo']=value
      if value and end_state['returned']:
@@ -144,15 +146,15 @@ def run(takeover=False):
     if 0xdff080<=addr and addr+size<=0xdff084:end_state['pointer'][addr-0xdff080:addr-0xdff080+size]=value.to_bytes(size,'big')
     if addr==0xdff088:
      pointer=int.from_bytes(end_state['pointer'],'big')
-     assert end_state['started']==end_state['completed'],'Demo-end publication of incomplete callback'
-     assert position['vpos']<25 or position['vpos']>=252,'Demo-end publication outside retained blank window'
+     assert end_state['ready'] is not None and end_state['ready']<=end_state['completed'],'Demo-end publication of incomplete ready scene'
+     assert position['vpos']>=253,'Demo-end publication outside retained blank window'
      if end_state['returned'] and not end_state['next_demo']:
       assert pointer==title_pointer,{'label':'actual Copper returns to court during title idle','pointer':pointer,'title':title_pointer,'position':position}
       end_state['title_published']=True
      publications.append(dict(pointer=pointer,position=position,lifecycle=end_state['life'],demo=end_state['demo']))
     tail_events.append(row)
    watches=[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in
-            [('game_lifecycle',2),('ui_demo',1),('ui_idle',2),('ui_entropy_state',2),('simulation_started_updates',2),('simulation_updates',2),('game_celebration_first_play',1),('game_celebration_loops',2)]]
+            [('game_lifecycle',2),('ui_demo',1),('ui_idle',2),('ui_entropy_state',2),('simulation_started_updates',2),('simulation_updates',2),('ready_generation',2),('display_ready',1),('game_celebration_first_play',1),('game_celebration_loops',2)]]
    watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
    s.notification_handler=event;s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
    s.inspect('step',{'count':1});until({'seconds':time+54});s.inspect('events.unsubscribe');s.notification_handler=None
