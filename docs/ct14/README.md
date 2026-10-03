@@ -2,9 +2,11 @@
 
 Status: **design proposal; user review required before implementation**.
 Audit base: `5e3fa7434fc88f0688f8338bb30fb426b7559f14` (master).
-This docs-only proposal does not certify or modify release PR #23,
-`b45072a8c1ca2bd517e67b777871eb3214285c79`, whose acceptance is separate.
-Reconcile against the accepted release before implementation. Safe Exit remains
+PR #23 has since landed on master at
+`70ed2e31b255f5161672944ef137af8b99bdd20d`. This docs-only proposal does not
+modify that release or supply its acceptance evidence. The source audit below
+remains at the stated older base; reconcile against the accepted release before
+implementation. Safe Exit remains
 separate unfinished work, not a prerequisite. Delivery tracking is in
 [the milestone checklist](work-plan.md).
 
@@ -24,7 +26,7 @@ expected-state injection. Preserve integer widths, wrapping, comparison order,
 scoring, animation-dependent timing, sound-gated transitions and existing
 input suppression. PAL A500/OCS, 512KB chip, no slow/fast RAM remains the target.
 Optimal means measured simplicity: contiguous state, static immutable tables,
-bounded buffers and no per-tick allocation; do not claim optimality before
+preallocated bounded buffers and no allocations during play; do not claim optimality before
 measuring code size and worst-case cost.
 
 ## Findings rechecked in the repository
@@ -166,14 +168,21 @@ live points. Checkpoint exactly-at-target does no extra step. Browsing uses
 bounded work slices so the paused UI can cancel a long seek.
 
 A complete match cannot be guaranteed in finite RAM: deuce and rally length are
-unbounded. Proposed default is a bounded rolling history with a visible oldest
+unbounded. **User-approved initial retention policy:** a fixed-size, preallocated
+rolling buffer, with no allocations during play. Show the truthful oldest
 available tick and “earlier history unavailable” notice. Evict only complete
-checkpoint-led segments, atomically retaining a usable base checkpoint and all
-inputs needed from that base forward. If a segment cannot fit, stop recording
-with an explicit capacity status while play continues; never retain an
-unseekable tail or overwrite live/doctor state. Pinning a browse range cannot
-make allocation unbounded. Disk export/full-match streaming is a separately
-approved extension, not an implicit requirement on the 512KB game.
+checkpoint-led segments, atomically retaining a complete replayable suffix: a
+usable base checkpoint and all controls, commands and events from that base to
+the completeness watermark. If a segment cannot fit, stop recording with an
+explicit capacity status while play continues; never retain an unseekable tail
+or overwrite live/doctor state. Pinning a browse range cannot grow the buffer.
+
+The numeric capacity is not yet chosen. Measure bytes per minute, point and
+match, compression behavior, worst bursts and seek latency before final capacity
+selection. Full recordings, export/streaming and possible background disk flushing
+are deferred, evidence-based future decisions, outside initial scope. Finite
+observed match sizes do not establish a bound for every possible match. Approval
+of this retention policy does not approve implementation of the overall design.
 
 Each recorder append is transactional: reserve/stage the complete input/command,
 event and index batch, then publish its cursors and completeness watermark
@@ -296,9 +305,13 @@ instruction/table/data/BSS bytes, stack high water, live+doctor working copies,
 input/event/index costs, checkpoint scratch and largest contiguous chip demand.
 Use `H >= checkpoints*(C+metadata) + inputs + events + indexes` and include all
 non-history allocations separately in peak RAM. Stress noncompressible input and
-maximum event bursts, not just the 1,110-byte attract table. Establish maximum
-encoded record sizes and overflow behavior before allocation. Choose H/K and
-visible retention promise from measurements; if two instances do not fit, return
+maximum event bursts, not just the 1,110-byte attract table. Report uncompressed
+and encoded bytes per minute, point and completed observed match, compression
+ratios and worst bursts for named workloads; include long rallies/deuce and
+noncompressible input. Measure seek latency across checkpoint intervals and
+worst-case bounded slices. Establish maximum encoded record sizes and overflow
+behavior before choosing final capacity. Choose H/K and the visible retention
+promise from this evidence, then preallocate before play; if two instances do not fit, return
 to design review rather than silently raising the hardware target.
 
 Measure 68000 instruction cycles where available and elapsed native CCK including
@@ -347,10 +360,14 @@ Programmatic completeness is a release gate, not confidence from one hash:
 
 ## Decisions requiring user review
 
+The user has approved the initial fixed preallocated rolling-buffer policy.
+Full recordings and possible background disk flushing remain outside initial
+scope, to be reconsidered using measured recording costs. Numeric capacity and
+overall implementation approval remain pending.
+
 Approve the core/shared-runner boundary and lifecycle proof approach before any
 architecture code. Specifically approve: match-start-only entropy as an intended
-live behavior change; rolling history with visible loss of old shots versus a
-separate full-match storage requirement; silent doctor replay and action-release
+live behavior change; silent doctor replay and action-release
 resume policy with its recorded control-only boundary command; reactive AI first,
 fixed-opponent trace deferred, and the explicit limits of paired randomness.
 Review measured H/K, complete state layout and timing evidence at M1/M2 before

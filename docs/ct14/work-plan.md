@@ -3,7 +3,10 @@
 Design: [deterministic core and Shot Doctor](README.md).
 Status: proposal, **implementation blocked on user design review**. Checkboxes
 track evidence-backed completion; none authorize code now. One concrete item is
-active at a time. Safe Exit is separate; PR #23 acceptance is not changed here.
+active at a time. The user approved initial fixed preallocated rolling retention,
+not overall implementation. Full recordings/background disk flushing are deferred.
+Safe Exit is separate; PR #23 is now on master at
+`70ed2e31b255f5161672944ef137af8b99bdd20d` and is not modified here.
 
 Ownership: implementation integrator = this delegated implementation owner after
 approval; reviewer assignment = parent coordinator; product decisions = user.
@@ -15,7 +18,10 @@ Reconcile with the accepted release commit before M1 and name it in receipts.
 - [x] Audit existing packets, entropy, scene/audio/control/lifecycle dependencies.
 - [x] Propose state/input/events, history policy, branch semantics and gates.
 - [ ] Parent assigns core/determinism and native/resource reviewers.
-- [ ] User reviews live RNG change, retention, pause/resume and branch policies.
+- [x] User approves a fixed preallocated rolling buffer, no allocations during
+  play, with checkpoint-aware eviction and truthful oldest available history.
+- [ ] User reviews live RNG change, pause/resume and branch policies; overall
+  implementation approval remains pending.
 - [ ] Resolve findings; approve design before runtime architecture work or merge.
 
 ## M1 — Deterministic isolated core
@@ -66,11 +72,17 @@ Owner: implementation integrator. Review: determinism + native/resource.
 - [ ] Prove headless pause/live isolation through the instant before resume;
   replay recorded resume commands and verify only declared control fields/cursors
   change. Handle unrecordable resume through the explicit capture-stop contract.
-- [ ] Measure worst record bursts and noncompressible inputs. Select H/K, live and
-  doctor instance costs, retention promise and bounded seek slice; user reviews
-  measured allocation/retention tradeoff before capacity is frozen.
-- [ ] Add sparse complete checkpoints, nearest-checkpoint seek and atomic segment
-  eviction with explicit unavailable/capacity status. No dangling index/cursor.
+- [ ] Measure uncompressed/encoded bytes per minute, point and observed match,
+  compression behavior, worst bursts/noncompressible inputs and seek latency.
+  Select H/K, live/doctor instance costs and bounded seek slice from that evidence;
+  review measured capacity/retained-duration tradeoffs before freezing allocation.
+- [ ] Preallocate the fixed rolling buffer and all required recording workspace
+  before play; verify no allocations during play, including wrap and eviction.
+- [ ] Add sparse complete checkpoints, nearest-checkpoint seek and atomic
+  checkpoint-aware eviction retaining a complete replayable suffix. Expose the
+  truthful oldest available history and capacity status; no dangling index/cursor.
+- [ ] Retain recording-cost evidence for a later full-recording/background-disk-
+  flushing decision; neither capability is part of this initial implementation.
 - [ ] Replay every tick from each checkpoint through its next interval boundary;
   test all seek targets within capped-K intervals plus selected finite long-span/
   full-match runs. Avoid quadratic checkpoint-to-end campaigns. Compare full
@@ -129,6 +141,7 @@ recording, golden or metrics summary modified. PR #23 head was verified by
 reuse**: this checkout lacks
 `build/amiga/interfaces/enhanced/baseline-rally.compile.json`. No emulator campaign
 or native acceptance was run for these documents; this failure says nothing
-about the separately running release acceptance. Docs validation checks local
+about release acceptance. PR #23 subsequently landed at the release commit named
+above; this update does not rerun or alter its acceptance. Docs validation checks local
 Markdown links, whitespace and the docs-only diff. Publication receipt (commit,
 PR head and actual checks) belongs in the handoff, not a self-referential document.
