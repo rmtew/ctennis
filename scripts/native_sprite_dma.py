@@ -81,6 +81,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
     channels_seen = set()
     geometries = set()
     maximum_cpu_handover = 0
+    field_end_margins = []
     pointer_completion = []
     last_frame = None
     strobe_fields = set()
@@ -236,6 +237,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                     else:
                         current = None
                     if not partial:
+                        field_end_margins.append(frame['rows']*stride-offset)
                         publications.append(dict(position=position, bank=court,
                                                  generation=ready_generation, completed_generation=scalar('simulation_updates',2), completed_latch=bool(scalar('ready_completed',1))))
                     cpu_pair = []
@@ -388,6 +390,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 raw_sidecar_word_disagreements=reported_word_disagreements,
                 data_value_limitation='Pinned Copperline update_last_cpu_trace_data can overwrite raw record data. RAM reconstruction uses authoritative CPU MMIO values; source addresses, frozen snapshots, destination/row timing and ownership remain strict. Raw sidecar data equality is diagnostic, not certified.',
                 hud_bitplane_words=hud_fetches,hud_cpu_writes=hud_writes,
+                minimum_strobe_to_field_end_cck=min(field_end_margins) if field_end_margins else None,
                 maximum_beam_sample_to_strobe_cck=maximum_cpu_handover,
                 field_geometries=[list(g) for g in sorted(geometries)],
                 standard=standard, header_line=header_line,
