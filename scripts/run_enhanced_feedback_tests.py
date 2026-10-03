@@ -9,10 +9,37 @@ from native_evidence import ROOT,atomic_json,tracked_call
 from native_observation import target_log
 
 
-def run(mode):
+def run(mode, control=None):
     config,exe=build(flavor='enhanced'); config = emulator_config()
     symbols=code_symbols((exe.parent/'native.lst').read_text())
     directory=ROOT/f'build/tests/enhanced-feedback-{mode}'
+    if control:
+        from native_tools import ASSEMBLER,run as assemble
+        from native_evidence import compile_manifest
+        directory=directory/control
+        directory.mkdir(parents=True,exist_ok=True)
+        feedback=(ROOT/'amiga/game/interface_feedback.s').read_text()
+        instruction='        move.b  ui_winner,ui_overlay_kind'
+        assert feedback.count(instruction)==1
+        replacement='        clr.b   ui_overlay_kind' if control=='missing-overlay' else '        move.b  #2,ui_overlay_kind'
+        fault=directory/'interface-feedback.s'
+        fault.write_text(feedback.replace(instruction,replacement))
+        source=(ROOT/'amiga/main.s').read_text()
+        marker='        include "amiga/game/interface_feedback.s"'
+        # The include resides in interface.s, so preserve its other consumers.
+        interface=(ROOT/'amiga/game/interface.s').read_text()
+        assert interface.count(marker)==1
+        altered=directory/'interface.s'
+        altered.write_text(interface.replace(marker,f'        include "{fault}"'))
+        marker='        include "amiga/game/interface.s"'
+        assert source.count(marker)==1
+        fixture=directory/'fixture.s'
+        fixture.write_text(source.replace(marker,f'        include "{altered}"'))
+        exe=directory/'native-fixture'
+        listing=directory/'native.lst'
+        assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(fixture)])
+        compile_manifest(exe,listing)
+        symbols=code_symbols(listing.read_text())
     rows=[];checks=[]
     def check(label,actual,expected):
         checks.append({'label':label,'actual':actual,'expected':expected})
@@ -43,6 +70,12 @@ def run(mode):
             if current==games:continue
             winner=0 if current[0]>games[0] else 1
             advance(.1)
+            # Timed CPU stops may catch ui_feedback between its clear and winner
+            # restore. Observe the completed native callback, not that transient.
+            boundary=s.inspect('run_until',{'pc':base+symbols['main_loop']})
+            time=boundary['seconds']
+            check('feedback sampled after complete update',num('simulation_started_updates',2),num('simulation_updates',2))
+            check('award unchanged at completed boundary',list(mem('game_games_a',2)),current)
             check('logical colour winning feedback',num('ui_overlay_kind'),2+winner)
             check('Blue tally after award',num('ui_tally_blue_digit'),48+current[0])
             check('Red tally after award',num('ui_tally_red_digit'),48+current[1])
@@ -61,9 +94,12 @@ def run(mode):
             from native_scoreboard_raster import assert_scoreboard_raster
             scoreboard = assert_scoreboard_raster(photo, list(mem('game_point_a',2)), current)
             check('actual A/B tally raster matches authored WIN columns', all(row['matched'] for row in scoreboard), True)
+            from native_identity_raster import assert_footer_raster
+            banner='A WINS GAME' if winner==0 else 'B AI WINS GAME' if mode=='one' else 'B WINS GAME'
+            footer=assert_footer_raster(photo,banner,f'A {current[0]}  B {current[1]}')
             rows.append({'games':current,'winner':('Blue','Red')[winner],'exchanged':flipped,
                          'callback':num('simulation_updates',2),'screenshot':str(photo.relative_to(ROOT)),
-                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity,'roles':roles,'scoreboard':scoreboard})
+                         'overlay_kind':num('ui_overlay_kind'),'actual_player_colours':identity,'roles':roles,'scoreboard':scoreboard,'footer':footer,'completed_boundary':boundary})
             games=current
             if len(rows)==2:break
         check('two ordinary game awards observed',len(rows),2)
@@ -76,11 +112,33 @@ def run(mode):
     atomic_json(directory/'report.json',report)
     print(json.dumps({'passed':True,'awards':rows,'missed_publications':failures}))
 
+def run_checked(mode,self_test=False):
+    run(mode)
+    if not self_test:return
+    controls=[]
+    for control in ('wrong-winner','missing-overlay'):
+        try:
+            run(mode,control)
+        except AssertionError as error:
+            detail=error.args[0]
+            assert isinstance(detail,dict) and detail.get('label')=='logical colour winning feedback',detail
+            directory=ROOT/f'build/tests/enhanced-feedback-{mode}'/control
+            evidence={'control':control,'detected':True,'failure':detail,
+                      'executable_sha256':hashlib.sha256((directory/'native-fixture').read_bytes()).hexdigest()}
+            atomic_json(directory/'report.json',dict(passed=False,expected_rejection=True,**evidence))
+            controls.append(evidence)
+        else:raise AssertionError(f'Compiled {control} escaped winner feedback assertion')
+    path=ROOT/f'build/tests/enhanced-feedback-{mode}/report.json'
+    report=json.loads(path.read_text());report['compiled_fault_controls']=controls
+    atomic_json(path,report)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('one', 'two'), required=True)
+    parser.add_argument('--self-test',action='store_true')
     args = parser.parse_args()
     path = ROOT / f'build/tests/enhanced-feedback-{args.mode}/report.json'
     tracked_call([path], 'native-feedback', 'maintained-native', 'ordinary title',
-                 'scripts/run_enhanced_feedback_tests.py', None, lambda: run(args.mode),
+                 'scripts/run_enhanced_feedback_tests.py', None, lambda: run_checked(args.mode,args.self_test),
                  lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])

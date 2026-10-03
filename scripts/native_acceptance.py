@@ -41,7 +41,7 @@ def main():
         ['scripts/run_demo_match_tests.py'],
         ['scripts/run_demo_match_tests.py','--takeover'],
         ['scripts/run_attract_cycle_tests.py'],
-        ['scripts/run_enhanced_feedback_tests.py','--mode=one'],
+        ['scripts/run_enhanced_feedback_tests.py','--mode=one','--self-test'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=two'],
         ['scripts/run_ordinary_round_tests.py','--mode=one','--match','--cadence','--adf'],
         ['scripts/run_ordinary_round_tests.py','--mode=two','--match','--cadence'],
