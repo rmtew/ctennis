@@ -53,7 +53,7 @@ def assert_title_raster(path):
     # Compare actual scanout to the versioned, reviewed native logo planes;
     # these are authored assets, never goldens regenerated from the runtime.
     planes=[(ROOT/f'assets/native/title/plane{n}.bin').read_bytes() for n in range(4)]
-    colours={0:(0,0,0),4:(85,85,238),10:(221,204,85),13:(238,51,51),15:(255,255,255)}
+    colours={0:(0,0,0),2:(34,204,68),4:(85,85,238),10:(221,204,85),13:(238,51,51),15:(255,255,255)}
     expected=[]
     for y in range(76):
         for x in range(256):
@@ -86,20 +86,23 @@ def assert_footer_raster(path, first, second, selected=None):
     return {'first':first,'second':second,'selected':selected,'matched':True,'pixels':len(actual)}
 
 
-def assert_menu_selection_raster(path, selection, players):
+def assert_menu_selection_raster(path, selection, players, build_hash=None):
     """Independent title specification: ASCII, native ready masks and colours."""
     font=(ROOT/'assets/native/title/font-mac.bin').read_bytes()
     canvas=[[0]*256 for _ in range(116)]
-    entries=[(38,'Start'),(49,'Mode'),(60,'Help'),(71,'Controls')]
-    def text(y,x,value,inverted=False):
+    entries=[(38,'Start'),(49,'Mode'),(60,'Help')]
+    def text(y,x,value,inverted=False,ink=15):
         for column,char in enumerate(value):
             for row in range(8):
                 byte=font[ord(char)*8+row]
-                for bit in range(8):canvas[y+row][x+column*8+bit]=15 if bool(byte&(128>>bit)) ^ inverted else 0
-    for index,(y,value) in enumerate(entries):text(y,96,value,index==selection)
+                for bit in range(8):canvas[y+row][x+column*8+bit]=ink if bool(byte&(128>>bit)) ^ inverted else 0
+    for index,(y,value) in enumerate(entries):text(y,108,value,index==selection)
     for x,value in [(44,'A'),(204,'B'),(120,'VS')]:text(16,x,value)
     text(26,28,'Human')
     text(26,188 if players==2 else 200,'Human' if players==2 else 'AI')
+    if build_hash is None:
+        build_hash=(ROOT/'build/native/version.bin').read_bytes().rstrip(b'\0').decode('ascii').split()[1]
+    text(104,248-len(build_hash)*8,build_hash,ink=6)
     atlas=(ROOT/'assets/native/scene/sprite-images.bin').read_bytes()
     for x,colour,parts in [(40,4,[(5376,0,0),(5504,0,16),(2432,0,0)]),(200,13,[(1280 if players==2 else 8192,0,0),(1408 if players==2 else 8320,0,16),(1536,0,8)])]:
         for index,(offset,dx,dy) in enumerate(parts):
@@ -107,7 +110,7 @@ def assert_menu_selection_raster(path, selection, players):
                 mask=int.from_bytes(atlas[offset+row*4:offset+row*4+2],'big')
                 for bit in range(16):
                     if mask&(32768>>bit):canvas[38+dy+row][x+dx+bit]=15 if index==2 else colour
-    palette=(0x000,0x000,0x2c4,0x6d7,0x55e,0x77f,0,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)
+    palette=(0x000,0x000,0x2c4,0x6d7,0x55e,0x77f,0x555,0,0,0xf77,0xdc5,0,0,0xe33,0xccc,0xfff)
     expected=[]
     for row in canvas:
         for colour in row:

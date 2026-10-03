@@ -63,11 +63,22 @@ def logo():
             if c:
                 im.putpixel((x,y),c)
                 im.putpixel((255-x,y),13 if c==4 else c)
-    # Existing title palette's gold/yellow slot10; no palette expansion.
+    # Existing title palette's green slot2; no new ball colour.
     draw.line((82,69,112,69),fill=15,width=1)
     draw.line((143,69,173,69),fill=15,width=1)
-    draw.polygon([(124,63),(131,63),(135,67),(135,72),(131,75),(124,75),(120,71),(120,67)],fill=10)
-    draw.line((121,73,132,64),fill=0,width=2)
+    # A12x13 native ellipse is nearly circular in the established PAL display
+    # aspect. Two white inward-curving seams read as a tennis ball, rather than
+    # a dark diagonal slash. Clip seam endpoints to the green silhouette.
+    ball=Image.new('P',(12,13),0);bd=ImageDraw.Draw(ball)
+    bd.ellipse((0,0,11,12),fill=2)
+    seams=Image.new('1',ball.size);sd=ImageDraw.Draw(seams)
+    for curve in [[(2,1),(3,3),(4,5),(4,7),(3,9),(2,11)],
+                  [(9,1),(8,3),(7,5),(7,7),(8,9),(9,11)]]:
+        sd.line(curve,fill=1,width=1)
+    for y in range(13):
+        for x in range(12):
+            if ball.getpixel((x,y)):
+                im.putpixel((122+x,63+y),15 if seams.getpixel((x,y)) else 2)
     return im
 
 
