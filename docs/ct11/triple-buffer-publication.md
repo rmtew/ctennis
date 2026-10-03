@@ -67,7 +67,7 @@ The measured full field also selects the simulation cadence once (last line belo
 
 Source: Amiga Inc. Exec include, https://d0.se/include/exec/execbase.i lines189–199: E-clock frequencies709379 PAL and715909 NTSC, and ex_EClockFrequency only added inV36 (unavailable onKick1.3). Exact scaled fraction277711866223633/23244931072 is11947.201106487884; selected interval11947.201110839844. Rates are59.922737854578195 PAL and59.92273783275037 NTSC updates/second. Existing PAL interval on real NTSC would run0.9205234437444582% faster.
 
-Copperline's current hardcoded PAL timebase means NTSC geometry/DMA checks alone do not validate real NTSC simulation timing. A separately pinned and reviewed clock correction or a legitimate emulator with correct NTSC clocks is required for that claim.
+Copperline's current hardcoded PAL timebase means NTSC geometry/DMA checks alone do not validate simulation timing through its reported seconds. The native clock check instead validates CIA cadence in actual CCK and converts using the documented NTSC E-clock frequency, as described below. This avoids an emulator clock patch; audio pacing and real hardware behavior remain outside that claim.
 
 The third bank's236 score descriptors/cache are initialized before the CIA timer starts, alongside the existing banks. The first uninitialized third-bank selection failed a strict callback deadline (76335CCK versus59191CCK); initializing all banks removed that runtime setup cost. The focused unchanged-dispatcher clock check then passed235 PAL and236 NTSC callbacks, including the first update. No callback deadline was relaxed. The final finite gate checks every callback in its ordinary lifecycle/setup campaigns as well.
 
