@@ -73,12 +73,12 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         marker = '        move.l  d0,$dff080'
         if source.count(marker)!=1:
             raise ValueError('Ordinary Copper publication instruction changed')
-        # The previous front is now back_copper. Publish that stale physical
+        # Publish the still-displayed front instead of the latest completed
         # bank after update200, leaving readiness/counters/gameplay unchanged.
         wrapper = directory/'wrong-bank.s'
         wrapper.write_text(source.replace(marker,
             '        cmpi.w  #200,simulation_updates\n        bcs.s   bank_control_unchanged\n'
-            '        move.l  back_copper,d0\nbank_control_unchanged:\n'+marker))
+            '        move.l  front_copper,d0\nbank_control_unchanged:\n'+marker))
         assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000',*(['-DENHANCED_INTERFACE=1'] if flavor=='enhanced' else []),'-L',str(listing),'-o',str(exe),str(wrapper)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())
@@ -181,7 +181,7 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
         located = {n:(int(h),int(o,16)) for n,h,o in re.findall(
             r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing.read_text(),re.M)}
         banks = {}
-        for n in ('copperlist','copperlist_back','title_copper','sprite0','sprite_back'):
+        for n in ('copperlist','copperlist_back','copperlist_third','title_copper','sprite0','sprite_back','sprite_third'):
             h,offset=located[n]
             if offset>=segments[h]['size']: raise ValueError('Buffer symbol outside loaded hunk')
             banks[n]=segments[h]['start']+offset
@@ -345,8 +345,8 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                     pointer = int.from_bytes(pointer_bytes['back_copper'],'big')
                     delta = int.from_bytes(pointer_bytes['copper_write_delta'],'big')
                     sprite_delta = int.from_bytes(pointer_bytes['sprite_write_delta'],'big')
-                    expected_sprite_delta = banks['sprite_back']-banks['sprite0'] if pointer==banks['copperlist_back'] else 0
-                    if pointer not in (banks['copperlist'],banks['copperlist_back']) or delta!=pointer-banks['copperlist'] or sprite_delta!=expected_sprite_delta:
+                    expected_sprite_delta = {banks['copperlist']:0,banks['copperlist_back']:banks['sprite_back']-banks['sprite0'],banks['copperlist_third']:banks['sprite_third']-banks['sprite0']}.get(pointer)
+                    if pointer not in (banks['copperlist'],banks['copperlist_back'],banks['copperlist_third']) or delta!=pointer-banks['copperlist'] or sprite_delta!=expected_sprite_delta:
                         fault('prepared bank/delta mismatch',pointer=pointer,delta=delta,sprite_delta=sprite_delta)
                     state['prepared']={'generation':state['started'],'bank':pointer,
                         'title_at_prepare':bool(state['title']),'position':position}
@@ -372,10 +372,10 @@ def run(mode, bank_control=False, boot_adf=None, flavor="enhanced", keyboard=Fal
                 commits.append({'generation': generation, 'position': position,'pointer':pointer,
                                 'prepared':dict(prepared) if prepared else None,
                                 'title_selected':bool(state['title']),'expected_pointer':expected})
-            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and 44 <= position['vpos'] < 252:
+            if a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None and position['vpos'] < 253:
                 fault('visible-line Copper commit', position=position)
             if (a in (0xdff080, 0xdff082, 0xdff088) and state['start'] is not None
-                    and not state['title'] and 25 <= position['vpos'] < 252):
+                    and not state['title'] and position['vpos'] < 253):
                 fault('court bank publication after sprite header DMA starts', position=position)
             if any(h['header'] <= a < h['header']+32 for h in initial_memory['regions']) or initial_memory['execbase']+0x142 <= a < initial_memory['execbase']+0x14e:
                 memory_writes.append(r)

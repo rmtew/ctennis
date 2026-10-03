@@ -4,11 +4,11 @@ patch_score_pointers:
         movem.l d0-d4/d7/a0-a4,-(sp)
         ; Each inactive list retains its selected banks. Rewriting all SCORE_PATCH_COUNT
         ; descriptors on every PAL publication stalls a source update even
-        ; when no field changed. Cache values independently for the two lists.
+        ; when no field changed. Cache values independently for all three lists.
         lea     score_pointer_cache(pc),a3
-        tst.l   copper_write_delta
-        beq.s   score_cache_selected
-        addq.l  #6,a3
+        move.w  build_bank_index,d0
+        mulu.w  #6,d0
+        adda.w  d0,a3
 score_cache_selected:
         move.l  a3,a2
         lea     prepared_field_values(pc),a4
@@ -71,5 +71,5 @@ skip_score_pointer:
 score_patch_done:
         movem.l (sp)+,d0-d4/d7/a0-a4
         rts
-score_pointer_cache: dcb.b 12,$ff
+score_pointer_cache: dcb.b 18,$ff
         even

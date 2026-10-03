@@ -1,7 +1,7 @@
 ui_begin_title:
         move.w  #$ffff,ui_overlay_signature
         ; Keep the published scene until the complete menu bitmap is ready.
-        clr.b   display_ready
+        bsr     discard_ready_scene
         clr.b   ui_page
         clr.b   ui_selection
         clr.b   ui_paused

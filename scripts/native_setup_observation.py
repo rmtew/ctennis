@@ -10,13 +10,13 @@ class SetupObserver:
         instructions=[(int(address,16),text) for address,text in re.findall(r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*(.*)$',listing,re.M)]
         body=[(a,t) for a,t in instructions if symbols['ui_render']<=a<symbols['ui_text']]
         self.begin_pc=[a for a,t in body if t.strip()=='clr.b   ui_dirty']
-        self.end_pc=[a for a,t in body if t.strip()=='move.b  #1,display_ready']
+        self.end_pc=[a for a,t in body if t.strip()=='st      ui_construction_complete']
         if len(self.begin_pc)!=1 or len(self.end_pc)!=1: raise ValueError('Explicit UI construction markers changed')
         # MMIO records identify the writing instruction (not a broad title state).
         self.begin_pc=self.begin_pc[0]+base; self.end_pc=self.end_pc[0]+base
     def watches(self):
         return [{'addr':self.base+self.symbols[n],'len':length,'access':'write'} for n,length in
-            [('ui_dirty',1),('ui_page',1),('ui_selection',1),('game_play_state',60),('game_score_state',28)]]
+            [('ui_dirty',1),('ui_construction_complete',1),('ui_page',1),('ui_selection',1),('game_play_state',60),('game_score_state',28)]]
     def observe(self,row):
         a=row['addr']; v=row['value']; p=row['position']; pc=row['pc']
         if a==self.base+self.symbols['ui_page']: self.page=v
@@ -32,7 +32,7 @@ class SetupObserver:
             for n,length in [('game_play_state',60),('game_score_state',28)]:
                 start=self.base+self.symbols[n]
                 if start<=a<start+length: self.pending['gameplay_writes'].append(row)
-        if a==self.base+self.symbols['display_ready'] and v and pc==self.end_pc:
+        if a==self.base+self.symbols['ui_construction_complete'] and v and pc==self.end_pc:
             if self.pending is None: raise AssertionError('UI setup completion without entry')
             self.pending.update(end=p,end_pc=pc,work_cck=p['cck']-self.pending['begin']['cck'],kind=('menu','help','scoring','controls','credits')[self.pending['page']])
             self.regions.append(self.pending); self.pending=None

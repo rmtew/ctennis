@@ -129,7 +129,8 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
                 size=_count(expression,symbols)*width
                 label=statement.split(':',1)[0] if ':' in statement else ''
                 category={'game_stack_bottom':'reserved_native_stack','copperlist_back':'reserved_back_copper',
-                          'sprite_back':'reserved_back_sprites','ui_overlay_plane':'reserved_ui_overlay'}.get(label,'reserved_state_and_work_buffers')
+                          'sprite_back':'reserved_back_sprites','copperlist_third':'reserved_third_copper',
+                          'sprite_third':'reserved_third_sprites','ui_overlay_plane':'reserved_ui_overlay'}.get(label,'reserved_state_and_work_buffers')
             elif token=='even':category='source_alignment_padding'
             elif token.startswith('dc.'):
                 if unit['source']=='build/native/demo-inputs.i':category='replay_packets'

@@ -241,7 +241,8 @@ ui_render:
         bsr     ui_menu_row_copy
 .publish:
         st      game_title_display
-        move.b  #1,display_ready
+        st      ui_construction_complete
+        bsr     complete_scene
 .done:  rts
 
 ; A0 cached256-byte title row, A2 first title-plane row. Only x88..167

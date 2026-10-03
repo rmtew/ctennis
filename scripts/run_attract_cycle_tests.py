@@ -21,7 +21,7 @@ def run():
         segments=s.inspect('segments.list')['current'];located={n:(int(h),int(o,16)) for n,h,o in re.findall(r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing,re.M)}
         def address(n):
             h,offset=located[n];return segments[h]['start']+offset
-        title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back')}
+        title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back','copperlist_third')}
         # Let ordinary startup finish without a callback stop, then watch
         # every title bitmap/control byte through both result/idle windows.
         # This avoids startup's bulk branding writes filling the4096 queue.
