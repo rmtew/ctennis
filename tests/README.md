@@ -37,8 +37,8 @@ Render expectations use immutable native assets and named fields, not expected
 images made by the runtime renderer. Complete side-panel crops verify six compact
 WIN words, solid grey remaining rows, Blue/Red earned rows, the stacked closed white frames
 and the selected square LED points/advantage. All0–6 variants, both modes/ends and all three
-physical Copper banks are checked by one-time native fixtures, with a compiled
-wrong tally-pointer control. Ordinary awards also verify actual full-panel pixels. Cadence
+physical Copper banks are checked by one-time native fixtures, with compiled
+wrong WIN stamp, missing status/WIN repair and wrong-building-bank controls. Ordinary awards also verify actual full-panel pixels. Cadence
 observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
 Court publication uses the measured retired bottom interval starting at253; the
 footer extends through251. Accepted clock is11838+14906/65536 PAL E-clock ticks,
@@ -83,15 +83,16 @@ readable summary alongside reviewed changes. For docs-only identical-product
 reuse and the affected four-check refresh, see
 [resource report workflow](../docs/metrics/README.md). Missing/stale/incomplete
 metrics do not establish runtime coverage or a fresh green result.
-Square LED point banks are constructed once by the native startup entry. Run
+Six unique square LED tiles, the retained-font WIN mask and three fixed
+scene-owned HUD strips are constructed once by the native startup entry. Run
 `python scripts/run_native_square_startup.py --self-test` to compare every byte
-of all28 generated strips with the frozen selected-preview masks plus the
-unchanged court background, measure construction time before the simulation
+of all six generated point masks and the WIN mask with independent expectations,
+and all three initialized strips with the unchanged court background, measure
+construction time before the simulation
 clock starts, and reject a compiled wrong advantage position. The masks in
 `docs/sprites/square-led-contract.json` were sampled from the user-selected
 preview before native implementation; tests/build must never regenerate them.
-`run_native_scoreboard_tests.py --self-test` additionally verifies these banks
-and actual complete panel scanout in all28 mode/end/variant fixtures.
+`run_native_scoreboard_tests.py --self-test` additionally verifies all 3,072 bytes of each completed HUD bank, status overlap and actual complete panel scanout in all28 mode/end/variant fixtures.
 
 The requested stacked-frame layout uses role labels at native y34, score cells at
 y48, and borders at y43/68/123. The point cells have four native blank pixels to
@@ -101,3 +102,18 @@ HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
 white frame pixel while the full-width status strips are active.
 
 The finite gate also verifies three-bank sprite DMA in PAL and NTSC across six startup phases, both players/serve/pause/title transitions and alternating PAL field lengths, with native stale-bank/unknown-list/malformed-height controls. CPU MMIO reconstructs frozen banks independently of the pinned sidecar's unreliable data values; actual DMA addresses/registers/rows/header+4 progression and live whole-bank samples remain strict. Native startup selects the PAL or NTSC CIA interval once. Every observed clock-test callback is checked in CCK, applying the documented standard's E-clock frequency, independent of Copperline's PAL-derived host seconds.
+
+Direct HUD DMA validation checks every fetched word across all 192 court rows and
+four planes against the selected scene's fixed region pointers, including static
+row restoration. CPU writes must target only the building strip, never front or
+ready; independent live reads compare frozen strip bytes. Existing PAL/NTSC
+publication and negative-control assertions remain enabled.
+
+After the ordinary build has generated the matching native inputs, the bounded
+supplementary cost probe is
+`python scripts/measure_native_hud_cost.py /absolute/path/to/checkout`. It compiles
+one startup-only fixture for each PAL/NTSC/end orientation, then observes actual
+native callbacks without state injection. It reads the initialized native cadence,
+reports dirty-field masks and deadline misses explicitly, and is a measurement,
+not a replacement acceptance gate. Before/after receipts and limits are summarized
+in [direct-hud-comparison.md](../docs/metrics/direct-hud-comparison.md).

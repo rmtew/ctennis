@@ -1,197 +1,65 @@
 {
   "passed": true,
-  "executable_sha256": "045bf76b5553886b9463aa161346c11508ff6437b6b422fd88ffe27dbb6216a8",
-  "constructor_seconds": 0.021157942369311122,
+  "executable_sha256": "21578578dcce14bc38fb83db06ee242cd848f41f0b03f07a9217d11a87cfbc05",
+  "constructor_seconds": 0.013033371441782293,
   "timing_scope": "init_square_score_banks entry through end label before RTS; emulated elapsed time, including active OS display DMA",
   "constructor_entry": {
-    "cck": 22408933,
-    "detail": "pc $01FF3C",
-    "frame": 315,
-    "hpos": 174,
-    "pc": 130876,
+    "cck": 19468216,
+    "detail": "pc $02020E",
+    "frame": 274,
+    "hpos": 15,
+    "pc": 131598,
     "reason": "target",
-    "retired_instructions": 3336913,
-    "seconds": 6.317901432097652,
-    "vpos": 122
+    "retired_instructions": 2935662,
+    "seconds": 5.488805278983449,
+    "vpos": 1
   },
   "constructor_end": {
-    "cck": 22483978,
-    "detail": "pc $020012",
-    "frame": 316,
-    "hpos": 82,
-    "pc": 131090,
+    "cck": 19514444,
+    "detail": "pc $02035A",
+    "frame": 274,
+    "hpos": 162,
+    "pc": 131930,
     "reason": "target",
-    "retired_instructions": 3347736,
-    "seconds": 6.339059374466963,
-    "vpos": 140
+    "retired_instructions": 2942231,
+    "seconds": 5.501838650425231,
+    "vpos": 204
   },
   "generated_banks": [
     {
-      "bank": "score_bank_point_a_0_p2",
-      "bytes": 512,
-      "sha256": "2b3ba580d0bd1e37cd035dbb33bb73a4326f0dab7e8974a141180f4b3bf25e9d",
+      "tile": 0,
+      "logical_variant": 0,
+      "bytes": 32,
       "matched": true
     },
     {
-      "bank": "score_bank_point_a_1_p2",
-      "bytes": 512,
-      "sha256": "10e40a33f2ac99885a10c0b6942a86a410ebe5bd23d04a6d742260924589da02",
+      "tile": 1,
+      "logical_variant": 1,
+      "bytes": 32,
       "matched": true
     },
     {
-      "bank": "score_bank_point_a_2_p2",
-      "bytes": 512,
-      "sha256": "7984221bb11f6ea8eaf94e8ad917967408456000c7f63121efa0f748032de308",
+      "tile": 2,
+      "logical_variant": 2,
+      "bytes": 32,
       "matched": true
     },
     {
-      "bank": "score_bank_point_a_3_p2",
-      "bytes": 512,
-      "sha256": "fb12dd99bd390c21840f6bac1d2f502f45508b6cc982fc3697c5eb6ca231b4e7",
+      "tile": 3,
+      "logical_variant": 3,
+      "bytes": 32,
       "matched": true
     },
     {
-      "bank": "score_bank_point_a_4_p2",
-      "bytes": 512,
-      "sha256": "cd14eb894ec95fd711a67104fdab38896f74780c4c52d5ef1bbab41628ec3b47",
+      "tile": 4,
+      "logical_variant": 4,
+      "bytes": 32,
       "matched": true
     },
     {
-      "bank": "score_bank_point_a_5_p2",
-      "bytes": 512,
-      "sha256": "fb12dd99bd390c21840f6bac1d2f502f45508b6cc982fc3697c5eb6ca231b4e7",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_a_6_p2",
-      "bytes": 512,
-      "sha256": "db03b4968b0f3dde7020a9f289c575811c5b2797588491bac840778256609bee",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_0_p2",
-      "bytes": 512,
-      "sha256": "2b3ba580d0bd1e37cd035dbb33bb73a4326f0dab7e8974a141180f4b3bf25e9d",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_1_p2",
-      "bytes": 512,
-      "sha256": "7a21a92a244cc1cf92bcd39c380a6be409fbf6e057c0c3951752799d78a29573",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_2_p2",
-      "bytes": 512,
-      "sha256": "643d0fbef19790c9468020d6be60e7c236a4cf0f56410a74b8f2a58367dae554",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_3_p2",
-      "bytes": 512,
-      "sha256": "b2f400b69b5677e8d7b15c5ef26df62b415b368014288a6eb294697f82870d57",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_4_p2",
-      "bytes": 512,
-      "sha256": "3edeb7b9391e9fd5eeef762ee93ac6acd3b52b85d6f84c7b687de5bb6b8de59a",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_5_p2",
-      "bytes": 512,
-      "sha256": "b2f400b69b5677e8d7b15c5ef26df62b415b368014288a6eb294697f82870d57",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_6_p2",
-      "bytes": 512,
-      "sha256": "f328548f3958778b764f349621bcfc607a367d958197748548040b13dfbfc06f",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_0_p0",
-      "bytes": 512,
-      "sha256": "db03b4968b0f3dde7020a9f289c575811c5b2797588491bac840778256609bee",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_1_p0",
-      "bytes": 512,
-      "sha256": "85c6c36358784cff979cc8bcc3f8170cb798e4b50008dcb18bb5e043701b0a9d",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_2_p0",
-      "bytes": 512,
-      "sha256": "d63c7a2996f409012e26674682bdf9aa102630a51f81ef08b34a51ddcf4ba034",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_3_p0",
-      "bytes": 512,
-      "sha256": "f5912c43d3ce65b8c60fde8fc212acb0e16973d8a0ceaa10ac119d00daf03f74",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_4_p0",
-      "bytes": 512,
-      "sha256": "292e7b2aa611b50e9801c8a40b71c56eae91c7821b7280646c8b9b41a70fa2ea",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_5_p0",
-      "bytes": 512,
-      "sha256": "f5912c43d3ce65b8c60fde8fc212acb0e16973d8a0ceaa10ac119d00daf03f74",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_6_p0",
-      "bytes": 512,
-      "sha256": "3e1639649e9c4f785b8a1fc749a863bb475c04fe9cd3669179eb5a1e4e243fd1",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_0_p3",
-      "bytes": 512,
-      "sha256": "db03b4968b0f3dde7020a9f289c575811c5b2797588491bac840778256609bee",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_1_p3",
-      "bytes": 512,
-      "sha256": "85c6c36358784cff979cc8bcc3f8170cb798e4b50008dcb18bb5e043701b0a9d",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_2_p3",
-      "bytes": 512,
-      "sha256": "d63c7a2996f409012e26674682bdf9aa102630a51f81ef08b34a51ddcf4ba034",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_3_p3",
-      "bytes": 512,
-      "sha256": "f5912c43d3ce65b8c60fde8fc212acb0e16973d8a0ceaa10ac119d00daf03f74",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_4_p3",
-      "bytes": 512,
-      "sha256": "292e7b2aa611b50e9801c8a40b71c56eae91c7821b7280646c8b9b41a70fa2ea",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_5_p3",
-      "bytes": 512,
-      "sha256": "f5912c43d3ce65b8c60fde8fc212acb0e16973d8a0ceaa10ac119d00daf03f74",
-      "matched": true
-    },
-    {
-      "bank": "score_bank_point_b_6_p3",
-      "bytes": 512,
-      "sha256": "3e1639649e9c4f785b8a1fc749a863bb475c04fe9cd3669179eb5a1e4e243fd1",
+      "tile": 5,
+      "logical_variant": 6,
+      "bytes": 32,
       "matched": true
     }
   ],
@@ -199,25 +67,25 @@
     {
       "hunk": 0,
       "start": 129672,
-      "bytes": 49932,
-      "expected_sha256": "37f4cde73ec68001bf087eab48725a0f2bb69a62aaacbe926ff43dead19efc76",
-      "actual_sha256": "37f4cde73ec68001bf087eab48725a0f2bb69a62aaacbe926ff43dead19efc76",
+      "bytes": 43776,
+      "expected_sha256": "cd266037cb0e6f7cf64a2364dd3ed0fca9a55bf96c22f92221d7302bba8e7b3c",
+      "actual_sha256": "cd266037cb0e6f7cf64a2364dd3ed0fca9a55bf96c22f92221d7302bba8e7b3c",
       "matched": true
     },
     {
       "hunk": 1,
-      "start": 179616,
-      "bytes": 137980,
-      "expected_sha256": "b1f555925e549f825fffb5dfe83f233fcfc243e8fc6a553aad619e46b90bd7b2",
-      "actual_sha256": "b1f555925e549f825fffb5dfe83f233fcfc243e8fc6a553aad619e46b90bd7b2",
+      "start": 173456,
+      "bytes": 112188,
+      "expected_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
+      "actual_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
       "matched": true
     },
     {
       "hunk": 2,
-      "start": 317608,
-      "bytes": 14336,
-      "expected_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
-      "actual_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
+      "start": 285656,
+      "bytes": 9424,
+      "expected_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
+      "actual_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
       "matched": true
     }
   ],
@@ -225,16 +93,19 @@
     "detected": true,
     "failure": {
       "label": "startup banks match selected square preview",
-      "bank": "score_bank_point_a_4_p2",
+      "tile": 4,
       "different_bytes": 24
     },
-    "executable_sha256": "6555c93ad0b4ff13e96bf1191f6ea6ad17d52b93def12c2e2b099b63b79cb078"
+    "executable_sha256": "4f5c73136ffe7dc78fa439cac134ae67544784633f18c33f37afe488eeac40ec"
   },
   "schema": 1,
-  "state": "complete bounded ordinary-startup observation; not a separate cold-ADF subphase",
-  "receipt_sha256": "8af157a2825a7702f1a9ce8c9302acd2dde652565d012e1b20c387b241f5ad1c",
-  "command": "RUST_LOG=info python scripts/run_native_square_startup.py --self-test",
-  "measurement_commit": "19473281a454d86008d670d5b3c33146b50fae95",
+  "state": "complete bounded ordinary-startup observation",
+  "receipt_sha256": "2744f8edc19d62aeb22a74fbec062853b3786424f618b6403cf7bca60c1c4e7f",
+  "command": [
+    "scripts/run_native_square_startup.py",
+    "--self-test"
+  ],
+  "measurement_commit": "21b4be65a151258cbc43bdd30beec16e64fe8ebe",
   "target": {
     "model": "A500",
     "cpu": "68000",
@@ -255,7 +126,7 @@
       "version": "vasm 1.9d (c) in 2002-2023 Volker Barthelmann"
     },
     "copperline": {
-      "path": ".tools/copperline/squashfs-root/usr/bin/copperline",
+      "path": "/workspace/native-tools/squashfs-root/usr/bin/copperline",
       "version": "copperline 1.0.0-rc.1"
     }
   },
@@ -263,9 +134,8 @@
   "measurement_inputs": {
     "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
     "/workspace/attachments/30c1a24c-f353-4e4e-9dc0-36ce5cee8932/kick13.rom": "1d68ba18412501d2a4b307a0a632b94a50b839c2c7c5ff2df6de2c38b99a921f",
-    ".tools/copperline/squashfs-root/usr/bin/copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8",
     ".tools/vasm/vasmm68k_mot.exe": "0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39",
-    "amiga/display.i": "1d09f350a33f4cc0039c7f8ef33087c8f481ee915c30056a8886a8d8b9aa2673",
+    "amiga/display.i": "252a46ec28ed6157cb8f205ce2620aafd2b4fda89d389e2d86b999f6e6c83a32",
     "amiga/game/audio.s": "cd01d6dcf684299dd821e562b710424b9327a8e5eefd2dd7461cfc98d326426b",
     "amiga/game/audio_state.i": "5efb2f761d3eb883889a198f57dff5a710ef04f687cbae5b30c2f004206459e5",
     "amiga/game/controls.s": "9f283fd37305710d9890ff13ff5c9294e4c216580a80657ef6c34a34ef71c1cf",
@@ -282,11 +152,11 @@
     "amiga/game/interface_demo.s": "e8d66955680b63f30e48ae1a7288ed49dedd5ce8b5157cb3c418b38ca6236de5",
     "amiga/game/interface_feedback.s": "d8c7586588bc1281447020c46bfcdc72d52c27a9db694cab8e369be0f6dc2fc0",
     "amiga/game/interface_input.s": "4a0821828c25ceb2ce2fc75e42cdbb40c18bdd7a2366eea596636ef43d57dafe",
-    "amiga/game/interface_menu.s": "bb529241d14fa17657192314cf21e9aa9b95986bc09cad220b6b46a05de320cc",
+    "amiga/game/interface_menu.s": "b48aa55e94b8020902ec99314af67458cf98a00130a7a430320d527c96333573",
     "amiga/game/interface_pause.s": "76b2153d1bf1f2269b1d76da76ee3319173e25fa8bc7c21645958473411c5c4f",
-    "amiga/game/interface_render.s": "96e94ff6120728d03b41dd9dabab5aee2dcd04219ba339c60c40e699550fd25f",
+    "amiga/game/interface_render.s": "7590e05d62accd49c790373cb7104555723cb599b45617848a29bbf238639f8d",
     "amiga/game/interface_state.i": "89aa13779b65e5a9a3b16785c80a0cc223b13da78d5a85bbd5601633891fb584",
-    "amiga/game/interface_text.s": "30558a4128836542a9efa7aa5d2371780fe0510b44fa0244ff52d16829d9f536",
+    "amiga/game/interface_text.s": "814d8482f635371a72d60f96a1e86c65a9469d883531fc9b75a7842bc89d656c",
     "amiga/game/keyboard.s": "bf6f51ca899d194c4f1560239abc482fe48c760ec45ce178084a811d8e51281f",
     "amiga/game/menu.s": "28b1096f59c91a237326a64e9a675cce96c54d9c73205f8e58d18862786cab3a",
     "amiga/game/paula_output.s": "1d53bd2a4f64e8aca81a232691d0327ab95399f380956cb57f25e4e7820cd7e5",
@@ -301,10 +171,10 @@
     "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
     "amiga/game/state.i": "98258d5b3741d55af7afa1d5642140d91ee2be14309286592b6d342584fb7777",
     "amiga/game/tick.s": "2a370b076365a80808f53b17e978387dda0ceba88f35906101319667ec35e97a",
-    "amiga/main.s": "d482bd28ad0f2e62b02e2485007ed0275c7361907a76cb932f834ecf6cfe76a6",
-    "amiga/score_copper_patch.i": "ef709c254a19fe02cd446ea1578e8119f6d9a50492f0f6297a1ab591cd585645",
-    "amiga/square_score_banks.i": "e20817750890bd6959491341d14caf5878fb51c2b18a65d21c58afe4fe483229",
-    "amiga/square_score_storage.i": "b62d6c3728928f8687c8acc5c4dfe8352ce0c30a07a18ece6c560477f937d5ca",
+    "amiga/main.s": "03b12c1147f98d598d406edc430c7758f3f41019bedd7f9a88d5b5fea5461b5d",
+    "amiga/score_copper_patch.i": "ccca27793c7b832a2542cc18fa991c62824c300e671701fe387b7c30093c49ae",
+    "amiga/square_score_banks.i": "700bd4da2cb7ec9954c383c7d3a17439de62b6311b87f48ecdf49f1694f47589",
+    "amiga/square_score_storage.i": "c9cffada92c9c11fb72dec2b33449a97c53772ac52cd23e05295fa96a79b2926",
     "assets/interface/demo-inputs.json": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
     "assets/interface/font-mac/Font-Mac.png": "b21998e5bc6d8227486a121f5d1fb0b1f62b13a7b6e70ba3129c967fd5fb4616",
     "assets/interface/font-mac/README.md": "f682bc011157d4b63e9c4296605f474da45f6d3824ef4831e5fe6317986c4694",
@@ -332,23 +202,9 @@
     "assets/native/court/plane1.bin": "727ed653e2cb6591d98389732ab19d232cd2ae4fa5ddc827898c7bcc9e0a7cbc",
     "assets/native/court/plane2.bin": "3754050afb5a84f89a2c6301b0555361031cde72ab6dc746d5e8094ead732071",
     "assets/native/court/plane3.bin": "30e74247269f3e4621d92cd7f734e6df94caf2843a051d2bccc4572aea5134b6",
-    "assets/native/court/score-bank-data.i": "aeebad602c1639b0fc6091e60898e04c04fcabfe41fce4ff8b148a1017bffe72",
-    "assets/native/court/score-cop-commands.i": "03d0590cc88d8146a5407260e0a1b1dd54f9e899d8bcd9ba9d08af611b72830f",
-    "assets/native/court/score-patch-tables.i": "7fda9ca84f00b12623dc27630da1c05a4bf7a2278f6f6648191e5ed51ff2586a",
-    "assets/native/court/score_bank_games_a_0_p1.bin": "1c482971d73fbc718410fcfe0cf51008413a7f81078a24129b1b7edd1ec93dcb",
-    "assets/native/court/score_bank_games_a_1_p1.bin": "ac04942b5eabfe2a49a0c8010d994ef4379e81f1a06cbf4d44f0c20a324735e3",
-    "assets/native/court/score_bank_games_a_2_p1.bin": "5ddb9b2f58a6bbe30039ccc5c486b0ecb8a054962ab940497e1983ee5f2bd962",
-    "assets/native/court/score_bank_games_a_3_p1.bin": "299c228e5ee4430fe2ba27416c871b7191d6135421c8bf4b06b5ef0cfb8bc235",
-    "assets/native/court/score_bank_games_a_4_p1.bin": "129b31bee3427147be2517dec7e76af5c77df17cd048389e1d28860bcac470e9",
-    "assets/native/court/score_bank_games_a_5_p1.bin": "32f38dd44e66da641ce9bf325b2d7dc1836bbb42697477a990a3ddca4187e929",
-    "assets/native/court/score_bank_games_a_6_p1.bin": "3c1cbbb49206a01af654c10c19979f94cedfe223966a9c5aede5fe197799cf2c",
-    "assets/native/court/score_bank_games_b_0_p1.bin": "f87f02ae00d6c299164ce2248645632a515d69d4d8664fc39364a9a17605161d",
-    "assets/native/court/score_bank_games_b_1_p1.bin": "9d160e0377e771425f0f705168f6ba1dae51a7ed2558bd61e65abd3148a6591c",
-    "assets/native/court/score_bank_games_b_2_p1.bin": "0ce0ceaf01300dc794de7bd0396f5687957247bba03eee9cdace224fa46c6cd6",
-    "assets/native/court/score_bank_games_b_3_p1.bin": "32e9c180b6d7559d8976513bcfc6b6a8fbac1528f185c6b7087d2a57052da977",
-    "assets/native/court/score_bank_games_b_4_p1.bin": "46d901f24303c304dd0d342553bb4019caec5e3b908d111820374811f6c33907",
-    "assets/native/court/score_bank_games_b_5_p1.bin": "be8448c4ea7e9e014d4aa65986061319c31030e5ee145cd0164eaa1ae252ef89",
-    "assets/native/court/score_bank_games_b_6_p1.bin": "d1ce444f02b42789b64f8ad3e00ff8df3546a2520593a1e0dbcfc5c61dc0ad7b",
+    "assets/native/court/score-bank-data.i": "424222896154662e61e42a0184d071315a5a89b944ca23f81c50c8d02e3f9206",
+    "assets/native/court/score-cop-commands.i": "073dec31fcfb5a73a3af210e454c2f43f431dc4f3d93dbaa919dfa5d210c43cb",
+    "assets/native/court/score-patch-tables.i": "283a614177eee7c972d0f5a6a04b57a66671776870b07cb212d99c3446d00aca",
     "assets/native/court/score_bank_mode_0_p0.bin": "92d4ba793f356d4430212ebd37c95d8af733aabefd3caa6cde5cf7e7ce01bc30",
     "assets/native/court/score_bank_mode_0_p1.bin": "0e1e53b3c201780311c9aaf1d35afef03bd92397cef1ede50bd3c3ea9cf6df6e",
     "assets/native/court/score_bank_mode_0_p2.bin": "92d4ba793f356d4430212ebd37c95d8af733aabefd3caa6cde5cf7e7ce01bc30",
@@ -390,7 +246,7 @@
     "assets/native/court/score_bank_status_6_p2.bin": "842976347fcffee1294de6b8c11876e892dc490308304e0f76d5efde0ff460b4",
     "assets/native/court/score_bank_status_6_p3.bin": "bcfa9e7f381d6a20f9a4982362ea93b77293fd909b9e0379078509a386889912",
     "assets/native/court/square-led-definitions.bin": "722e33cce4eade3c2ad26b9c2386104ce5ebd3f1f02a1922aa5506a2482291f5",
-    "assets/native/manifest.json": "8f692dec6f45bb216b888a7ab17fe6ab3d63db1c39abdcb60e445ba19601c8c8",
+    "assets/native/manifest.json": "2961f326f00ac5a15685fea0bb516a196bed4ec75e08f3c36bf374896b85f763",
     "assets/native/scene/animations.bin": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad",
     "assets/native/scene/poses.bin": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376",
     "assets/native/scene/robot-poses.bin": "044bb1c5b8b96182a5844d09fc2e8537b896f747d097a71144ce7ef12cf62363",
@@ -403,14 +259,14 @@
     "assets/native/sprites/sprite5.bin": "c4eb1ecb9735bdc41f16d9117903d740a45ad1713e099f24aa53fc1c01bd73aa",
     "assets/native/sprites/sprite6.bin": "bcb5c9b664ec0e10fb8f20d131228f818ea519ab8391f5daa13b6c5d28a19ce9",
     "assets/native/sprites/sprite7.bin": "971905ba776eae8ba120c70bb729295061e62a6bc54ee5f0b342dee7ae3db939",
-    "assets/native/title/display.i": "22f0644a72dc1a3645fb8fd047381499b322757337cd7179197cc4764d83dde8",
+    "assets/native/title/display.i": "79349f7b06d44913a7c494f78a4a141dae3541ce9a71b766b3ed69d71a73c4e9",
     "assets/native/title/font-mac.bin": "0cac150a456a400258d9e065b947331bfea451bac4aa26547c5a4ddcfaebcac7",
     "assets/native/title/font.bin": "691d65151c72adfbd63155ec9cea8f8051d83cbac82e3c266c4c0a1731afcdfb",
-    "assets/native/title/plane0.bin": "891887be2d811c9731972f6a696d8960b10a44a8a94ea2c39a824e4dc081e0cd",
-    "assets/native/title/plane1.bin": "3bd6ff3ebd6931c2fff07aca0622415212d2190898320176b5eadc3a54718636",
-    "assets/native/title/plane2.bin": "9c099eab169e72273cfabfff47d894b9de4777e22c8b6fccbd3af859a7463d28",
-    "assets/native/title/plane3.bin": "4459466a7193bb2a88b0cd49097189c70b6cb60ff6a2f2a746fbaca8dcda5ecf",
-    "config.local.ini": "5ec477a699c5c7fffcad64a70b5ffdf40a1786a0b99ca4fa10eecad5ef6cec14",
+    "assets/native/title/plane0.bin": "ae92fdec273f219ae049028e4f60b590ddf7eb64ade826adad521e6fab5689cd",
+    "assets/native/title/plane1.bin": "61a9a5290d2fcbc872b70c16ff2c5464650675bdb2b56830925545bce256a101",
+    "assets/native/title/plane2.bin": "6418dce2700e38b5b8dc45e5aa7c6ef6e632eba6beaa0b00dfc890f5baf22199",
+    "assets/native/title/plane3.bin": "ae92fdec273f219ae049028e4f60b590ddf7eb64ade826adad521e6fab5689cd",
+    "config.local.ini": "11f2afde04fd4648ff697c4c7667dddbefd19e976310cc12b56eaa8fb3e5a5ac",
     "scripts/audio_wave.py": "d6f17c5827752a53c926f77d264c6eb477a95b6ae3f5a120d860812da581b78a",
     "scripts/build_native_adf.py": "618894fbb6f18a302b8bda0b7837aaff1d646ccfdb9cf65929bbc1a7ebf1e6c4",
     "scripts/build_native_game.py": "67cb908c41718cc19054638b62ecf55835bcf06b2da614979b3bd319533bd63c",
@@ -418,45 +274,47 @@
     "scripts/native_assets.py": "d52b11cf6d10429683f6c87ca3ff12ae1ce65c0f93bb30d0c4b18133072f0701",
     "scripts/native_audio_checks.py": "3d71b172363498203ad9c6822d63cddad6c8a0d85a298d051eb07f7387a4a97b",
     "scripts/native_clock.py": "ac0d83a921b27cd1c0d9f6e46901b8ab3cb7f11140c49043e072f1797da6d5df",
+    "scripts/native_composite.py": "a631df8320017898c499a7ee0fff5daf76c8d90af645630f5247a28b984dc00d",
     "scripts/native_evidence.py": "6e8e0ec2f4600b81c28428273e9a62e6bbfd856a4a5fac41fb84e4cfe99ad27b",
     "scripts/native_hunk.py": "7c5e7b31bca82af439fc46346da80478439adae2d2917306265bd6b55a93ec40",
-    "scripts/native_identity_raster.py": "f93d17b13f3d5c9154fc88822c26c8e652e507f8344604882979d1654b27829a",
+    "scripts/native_identity_raster.py": "d6d04bab65a065fcbe111c84707d861033a91aaba13c3ab566f42c0537740566",
     "scripts/native_longword_observer.py": "9aaf0cc3ec8dfbba2d2c17008f966932c2fc539331eef8fa2081768620c6fc1b",
-    "scripts/native_metrics.py": "9194fb4713eb410b2074f42f013e74ccede1c89dead78f01e230e3202b30a09d",
+    "scripts/native_metrics.py": "3b661fe59c95c4092bd14ce53507da9e4124f3ceb2733114c93fafeaf960fb0c",
     "scripts/native_metrics_observation.py": "3efe024e4d0833e0f03b194898767e37a6af4d8034fe8aa33cb4c046212cd34b",
-    "scripts/native_observation.py": "a6cee227f8bcbbc19dba0fad26d1c36ac54d09b739a1b31d7abe83a7596da4eb",
+    "scripts/native_observation.py": "069b72ba4498aaea46a2d51eb27495a346c7ea0a485c804a85449ff905f328bb",
     "scripts/native_player_roles.py": "7f0be1fed79a3ea266cc3c9486c5fda9091a106d6c658ba6f8ca4a7a44782e01",
     "scripts/native_release.py": "9fb46d492de649006058e339d88f1d80d44d1962bcf3f9c7de8a25456bea4568",
     "scripts/native_scoreboard_raster.py": "a7b1686376a47bf9c3d7529fcc85cc8a91b258c2e3b743d9db65abfba6458b3a",
-    "scripts/native_setup_observation.py": "a7d75689b395806e7f0c1af1347eae9ab36569b82813951a95e102b9fb0de18a",
-    "scripts/native_size.py": "73b188790e6066d79b9deb7dcf573e52b0e97326254b0806afbd19fd5c53e43a",
-    "scripts/native_square_scores.py": "a194f6e1adae0ef0a5a6b9649ca85d8f158be3b27abb9796ca713274c13b58fc",
+    "scripts/native_setup_observation.py": "244076554a8beb621aca29e9d10dde35068e0eb11524d8917898c254388b2718",
+    "scripts/native_size.py": "d42411e60190fef6d2965dcc3cab2cfa01b17c7a621f9839809a3da867f8e4a0",
+    "scripts/native_square_scores.py": "e727158841b00bfb3212c3f00be23020e80f3f9049f7bc02161a3d3f09b762c7",
     "scripts/native_state_observation.py": "879a3a13aa4334b2d481715d87146b038095c9ef2d07b45492f1d84c36ccd28e",
     "scripts/native_status_raster.py": "9a1da61c33735aa938ba9f3dca88e31f0b5fdc063ab511a426ede30fb381f45a",
     "scripts/native_tools.py": "336a943f578df80d61c122793ccbd54b6e6bf7131a3de72581ba96b834131100",
-    "scripts/native_ui_pages.py": "7949d90af2f5ca3dd639aaae631cf14f14ddb701f9ccf44a6dbc1f59066ff215",
-    "scripts/native_ui_raster.py": "87d3d4762b53bacdc67a41dd05187a6933998e5bce3e48ff2dd68406723eea81",
-    "scripts/ordinary_cadence.py": "0850346ac22e5d362b215e1a0c914bdf4780b525d0c6bf6afcb1fd54e51db8c7",
+    "scripts/native_ui_pages.py": "c886e5c180d8b5c1c20a2cb0ab0bd67fd5bb7595df643915947dc20a3986b644",
+    "scripts/native_ui_raster.py": "1e92b374c2c7e74782353c44f46ab31e400db4b55526b0cb6c1af198ca63fdb8",
+    "scripts/ordinary_cadence.py": "0354656d4e0ab247c35d1f81b2b044aa0a5dffe65898d3a408fc1fc6be68c289",
     "scripts/record_demo_inputs.py": "b184f60ce6b00a18119f1e5cdb39a6404459c84b52fe47cb64a55fa70f264f7e",
-    "scripts/run_demo_match_tests.py": "7d71521c047d3ce954a805fa3277e62e989f2c485b54a8620158c2a898799580",
-    "scripts/run_native_setup_tests.py": "350ee0a19e727887ae6a69ae061bc326f63706a5a272cee55e4aef771026bde3",
-    "scripts/run_native_square_startup.py": "cb94e6f7503760d8e7b435b1084ac93f097a4e1c897de8b200a55f2abd9574fd",
-    "scripts/run_ordinary_round_tests.py": "e4f883178fccca0528f90a3356fbecb4122dba125ee7051c550d95ac89eb2eca",
+    "scripts/run_demo_match_tests.py": "f403377be0a4738f24ee2f5ea0cce3efccacd47dfcff167fa6915292fa684b04",
+    "scripts/run_native_setup_tests.py": "428a25e987a776a4a56edd052af28bd47e6f0b2510e4562bd798a86cb2522f93",
+    "scripts/run_native_square_startup.py": "8bc5602b7b2ddd53f48b6d80cadcc6afdde0843de1675b897fc3a68b3d1dfa59",
+    "scripts/run_ordinary_round_tests.py": "c56a64895165f312c0873d16fd73670f13147dd92a403d16fe20fbf84982fcbd",
     "tests/fixtures/native-demo/README.md": "71d8aadc2cabe747baf835cda2affbbf676c224cd228893ad0813e627bd37f32",
     "tests/fixtures/native-demo/manifest.json": "3f9b5a458c2310a12cdda0faf2ae06fc9c58e23834d8bec547e21747ec78720c",
     "tests/fixtures/native-demo/trajectory.sha256": "17dd5ddba0499a70956b2d588f084786a00c294672510f69ef991858734d79e6",
     "tools.lock.json": "61b7c792b1e80fd62303dfbedbca1114b4beac9c6fbdccc8b7f855c27d87f93e",
-    "build/amiga/interfaces/enhanced/baseline-rally": "045bf76b5553886b9463aa161346c11508ff6437b6b422fd88ffe27dbb6216a8",
-    "build/amiga/interfaces/enhanced/native.lst": "20cbad03a090f93e3a7a9d8d679880b185f996401cb2a4fd526fca2b4e440d8d",
+    "/workspace/native-tools/squashfs-root/usr/bin/copperline": "26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8",
+    "build/amiga/interfaces/enhanced/baseline-rally": "21578578dcce14bc38fb83db06ee242cd848f41f0b03f07a9217d11a87cfbc05",
+    "build/amiga/interfaces/enhanced/native.lst": "ff9be05fbaa44ece82150beabea300be5bb60d0e58fc679bf7a1c85ed9916b44",
     "build/native/demo-inputs.i": "ac8711ffce813a318e61d33556b997572fbb8f649885ca06c8ae418bd5dc4d14",
     "build/native/ui-demo-options.bin": "c58e6952fc3bf557c2154d2007f9da681e8f30e7888d78d9a0cfc5d4e809e163",
     "build/native/ui-help-options.bin": "b7ee2276560910fcf5b496fe4ae8a598612f0ac6a9c82b93edc1c6009c094713",
-    "build/native/ui-menu-options.bin": "b43c3478aca0a8cc103f1f1626fe4434ef2bde3d1c925087a835e513c6fe3e4d",
-    "build/native/ui-pages.bin": "6dbfd75adab5a63c08e11c9e7936df09e25f2b1d85425e3ff0712c398f27b21f",
-    "build/native/ui-title-pages.bin": "6bb38a1de139726d94fb2e736667791630a64ac7d7811f4e6428028745c24f59",
-    "build/native/version.bin": "1854db21738c5845b4e1f85761cb9cc47ea901b1a1c1cc1f5a2339e4f5313cba",
-    "build/tests/native-square-startup/copperline.log": "369e18d49f5ca7762af1b87eadcce6830b0eb22ab24a691221b33e62cadb45c9",
-    "build/tests/native-square-startup/emulator.log": "369e18d49f5ca7762af1b87eadcce6830b0eb22ab24a691221b33e62cadb45c9",
-    "build/tests/native-square-startup/ordinary-title.png": "515395a30799f845adab946bcb342f3348469a81857795067a2c202fbebc6915"
+    "build/native/ui-menu-options.bin": "42a1aeb53991565d14f1d978b75d87c54ea27e94ba491d92c47d3f1f63073128",
+    "build/native/ui-pages.bin": "9758d3b32e421a85555868ec08fd2abf694cc228cf10f75274df1b5bb76ac948",
+    "build/native/ui-title-pages.bin": "0b4e83174ee5059dead5d34e61ee9d1b74df3d517daff82444b14c06576ba54f",
+    "build/native/version.bin": "49e284fa22d83ae05f8da390e5fadef786ad3268c936992c30bef3f14bae1d0e",
+    "build/tests/native-square-startup/copperline.log": "36a8e4a7a20dcb43d8a44319596f83fb8d35037f4c63a3ebf34a53fb36d3a974",
+    "build/tests/native-square-startup/emulator.log": "36a8e4a7a20dcb43d8a44319596f83fb8d35037f4c63a3ebf34a53fb36d3a974",
+    "build/tests/native-square-startup/ordinary-title.png": "c233be2389dd8405b3fef8ca9fb1eda205229611cc34deaef09996f71151dd1d"
   }
 }

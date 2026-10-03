@@ -1,7 +1,7 @@
 # Direct score/WIN bitmap update plan
 
-For review before runtime edits. Audit base: accepted PR #25 merge
-`d4c9be71364225a663897acf2664e14ca7e2865c`; no runtime changes in this plan.
+Reviewed plan implemented on draft PR #27. Audit base: accepted PR #25 merge
+`d4c9be71364225a663897acf2664e14ca7e2865c`. The original plan arithmetic below remains labeled as such; actual results are in [the measured comparison](../metrics/direct-hud-comparison.md).
 Keep appearance, simulation timing, PAL/NTSC selection, COPER ISR and the three
 front/ready/building roles unchanged. This does not authorize Shot Doctor work.
 
@@ -132,10 +132,10 @@ unchanged/changed fields on PAL/NTSC. Display50/60Hz and simulation~59.923Hz are
 separate budgets; do not weaken deadlines, DMA assertions or compiled controls.
 Report sample counts and observed extrema, not proven bounds or predicted gains.
 
-This executor is available, but its clean worktree has no private build/tool cache
-or raw accepted receipts. The committed metrics summary is available; raw receipt
-bindings, NTSC/handover/ISR detail and any newly requested stress-case coverage
-must come from the coordinator's accepted PR #25 artifacts. Obtain and verify
-those before runtime comparison; if a metric was not observed, mark it unavailable
-or add only a specifically justified bounded baseline observation. No emulator
-campaign was started for this plan.
+The initial plan checkout lacked tools and raw baseline receipts. Pinned tools
+were reproduced and the accepted baseline executable rebuilt byte-for-byte.
+Ordinary baseline metrics reuse their accepted summary; missing display/ISR and
+dirty-HUD detail was measured with bounded common observers on old/new products.
+See the measured comparison for exact bindings, baseline deadline misses in the
+new supplementary fixtures, sample counts and limits. Full runtime acceptance
+and independent review remain separate gates. No Shot Doctor work is authorized.

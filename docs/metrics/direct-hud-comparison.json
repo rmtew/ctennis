@@ -1,0 +1,2537 @@
+{
+  "schema": 1,
+  "scope": "Direct HUD comparison. Finite observed extrema, not worst-case bounds. Old ordinary workloads reuse accepted PR25 summaries; supplemental DMA/HUD fixtures are new bounded measurements of reproduced accepted product. No baseline campaign rerun.",
+  "before_report_identity": "e7b80a5ea695782e5a5375802d94a02ab596a0b69c33fddd09528be20d1f2b6d",
+  "after_report_identity": "bc4fffc94c55999e90488666f26938985b9fa764d5747f4bda04b7676f179286",
+  "before_executable_sha256": "1a5286650df54e65d4a3339557b1b54f5a0a7c398fcd552b3c7537e14d547e72",
+  "after_executable_sha256": "21578578dcce14bc38fb83db06ee242cd848f41f0b03f07a9217d11a87cfbc05",
+  "static": [
+    {
+      "metric": "executable_bytes",
+      "before": 240732,
+      "after": 179268,
+      "delta": -61464
+    },
+    {
+      "metric": "code_bytes",
+      "before": 50892,
+      "after": 43776,
+      "delta": -7116
+    },
+    {
+      "metric": "data_bytes",
+      "before": 141396,
+      "after": 112188,
+      "delta": -29208
+    },
+    {
+      "metric": "bss_bytes",
+      "before": 14336,
+      "after": 9424,
+      "delta": -4912
+    },
+    {
+      "metric": "loaded_payload_bytes",
+      "before": 206624,
+      "after": 165388,
+      "delta": -41236
+    },
+    {
+      "metric": "relocation_bytes",
+      "before": 9920,
+      "after": 2884,
+      "delta": -7036
+    },
+    {
+      "metric": "relocations",
+      "before": 2472,
+      "after": 713,
+      "delta": -1759
+    },
+    {
+      "metric": "symbol_bytes",
+      "before": 38456,
+      "after": 20352,
+      "delta": -18104
+    },
+    {
+      "metric": "cpu_instruction_bytes",
+      "before": 12904,
+      "after": 13308,
+      "delta": 404
+    }
+  ],
+  "ordinary_workloads": {
+    "cold-one": {
+      "before_receipt_sha256": "20d714fefedcabc1e4de2609205780f45005a4924a04c3a829ea39cd095abb60",
+      "after_receipt_sha256": "fbb0bb7154b598b39150b9af73d05f1a9b346a1d64fcddfdefca52b555422baf",
+      "profiles": {
+        "title": {
+          "before": {
+            "callbacks": 8,
+            "minimum_deadline_headroom_cck": 3683.720428466797,
+            "update_including_render": {
+              "samples": 8,
+              "typical_median_cck": 10087.0,
+              "p95_cck": 55192,
+              "max_cck": 55192,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 3999.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 9,
+            "minimum_deadline_headroom_cck": 4739.137237548828,
+            "update_including_render": {
+              "samples": 9,
+              "typical_median_cck": 8254.0,
+              "p95_cck": 53606,
+              "max_cck": 53606,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5585.137237548828
+            }
+          }
+        },
+        "one-player-rally": {
+          "before": {
+            "callbacks": 3507,
+            "minimum_deadline_headroom_cck": 30311.584014892578,
+            "update_including_render": {
+              "samples": 3507,
+              "typical_median_cck": 21739.0,
+              "p95_cck": 22994,
+              "max_cck": 28338,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 30853.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 3507,
+            "minimum_deadline_headroom_cck": 31467.0546875,
+            "update_including_render": {
+              "samples": 3507,
+              "typical_median_cck": 21310.0,
+              "p95_cck": 21953,
+              "max_cck": 27287,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 31904.137237548828
+            }
+          }
+        },
+        "two-player-rally": {
+          "before": {
+            "callbacks": 1,
+            "minimum_deadline_headroom_cck": 36083.53942871094,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 22638.0,
+              "p95_cck": 22638,
+              "max_cck": 22638,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 36553.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 1,
+            "minimum_deadline_headroom_cck": 37222.08837890625,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 21278.0,
+              "p95_cck": 21278,
+              "max_cck": 21278,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37913.13723754883
+            }
+          }
+        },
+        "match-end": {
+          "before": {
+            "callbacks": 48,
+            "minimum_deadline_headroom_cck": 35235.4033203125,
+            "update_including_render": {
+              "samples": 48,
+              "typical_median_cck": 14556.0,
+              "p95_cck": 16207,
+              "max_cck": 23448,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 35743.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 48,
+            "minimum_deadline_headroom_cck": 36495.54055786133,
+            "update_including_render": {
+              "samples": 48,
+              "typical_median_cck": 14180.0,
+              "p95_cck": 16472,
+              "max_cck": 22059,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37132.13723754883
+            }
+          }
+        },
+        "celebration": {
+          "before": {
+            "callbacks": 887,
+            "minimum_deadline_headroom_cck": 34977.485290527344,
+            "update_including_render": {
+              "samples": 887,
+              "typical_median_cck": 12386.0,
+              "p95_cck": 13857,
+              "max_cck": 22274,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 36917.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 888,
+            "minimum_deadline_headroom_cck": 37550.62252807617,
+            "update_including_render": {
+              "samples": 888,
+              "typical_median_cck": 12041.0,
+              "p95_cck": 13178,
+              "max_cck": 21290,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37901.13723754883
+            }
+          }
+        }
+      },
+      "before_overall_cadence": {
+        "minimum_phase_cck": 227.42257690429688,
+        "maximum_entry_late_cck": 2734.904541015625,
+        "maximum_update_work_cck": 55192
+      },
+      "after_overall_cadence": {
+        "minimum_phase_cck": 227.259765625,
+        "maximum_entry_late_cck": 2568.8406677246094,
+        "maximum_update_work_cck": 53606
+      },
+      "before_memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 308152,
+          "chip_free_bytes": 216136,
+          "largest_chip_free_block_bytes": 214944,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 312160,
+          "chip_free_bytes": 212128,
+          "largest_chip_free_block_bytes": 210936,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [
+          {
+            "position": {
+              "cck": 3594137,
+              "detail": "frame 50",
+              "frame": 50,
+              "hpos": 46,
+              "pc": 16517532,
+              "reason": "target",
+              "retired_instructions": 5854983,
+              "seconds": 1.013319255292305,
+              "vpos": 183
+            },
+            "memory": {
+              "chip_used_bytes": 13336,
+              "chip_free_bytes": 510952,
+              "largest_chip_free_block_bytes": 510952,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 7135844,
+              "detail": "frame 100",
+              "frame": 100,
+              "hpos": 99,
+              "pc": 16527664,
+              "reason": "target",
+              "retired_instructions": 6594097,
+              "seconds": 2.0118565675048177,
+              "vpos": 135
+            },
+            "memory": {
+              "chip_used_bytes": 29576,
+              "chip_free_bytes": 494712,
+              "largest_chip_free_block_bytes": 494688,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 10665036,
+              "detail": "frame 150",
+              "frame": 150,
+              "hpos": 122,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7228901,
+              "seconds": 3.00686544146359,
+              "vpos": 32
+            },
+            "memory": {
+              "chip_used_bytes": 48336,
+              "chip_free_bytes": 475952,
+              "largest_chip_free_block_bytes": 475928,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 14241783,
+              "detail": "frame 200",
+              "frame": 200,
+              "hpos": 30,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7324184,
+              "seconds": 4.015281816913103,
+              "vpos": 139
+            },
+            "memory": {
+              "chip_used_bytes": 52496,
+              "chip_free_bytes": 471792,
+              "largest_chip_free_block_bytes": 471648,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 17778580,
+              "detail": "frame 250",
+              "frame": 250,
+              "hpos": 167,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7356003,
+              "seconds": 5.012434819750796,
+              "vpos": 69
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 21368570,
+              "detail": "frame 300",
+              "frame": 300,
+              "hpos": 152,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7418791,
+              "seconds": 6.024584883398014,
+              "vpos": 234
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 24891274,
+              "detail": "frame 350",
+              "frame": 350,
+              "hpos": 43,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7505900,
+              "seconds": 7.017764551812219,
+              "vpos": 103
+            },
+            "memory": {
+              "chip_used_bytes": 53696,
+              "chip_free_bytes": 470592,
+              "largest_chip_free_block_bytes": 467784,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 28462662,
+              "detail": "frame 400",
+              "frame": 400,
+              "hpos": 40,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7811837,
+              "seconds": 8.024670028292352,
+              "vpos": 186
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 32012888,
+              "detail": "frame 450",
+              "frame": 450,
+              "hpos": 213,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7962227,
+              "seconds": 9.025609159560686,
+              "vpos": 175
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 35559590,
+              "detail": "frame 500",
+              "frame": 500,
+              "hpos": 40,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8122820,
+              "seconds": 10.025554745770597,
+              "vpos": 150
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 39120881,
+              "detail": "frame 550",
+              "frame": 550,
+              "hpos": 155,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8274469,
+              "seconds": 11.029613507025159,
+              "vpos": 188
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 42689346,
+              "detail": "frame 600",
+              "frame": 600,
+              "hpos": 180,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8579874,
+              "seconds": 12.035694882425332,
+              "vpos": 258
+            },
+            "memory": {
+              "chip_used_bytes": 310240,
+              "chip_free_bytes": 214048,
+              "largest_chip_free_block_bytes": 213968,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 46238891,
+              "detail": "frame 650",
+              "frame": 650,
+              "hpos": 126,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8737502,
+              "seconds": 13.036442014776304,
+              "vpos": 245
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 49793832,
+              "detail": "frame 700",
+              "frame": 700,
+              "hpos": 20,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8868722,
+              "seconds": 14.038710477755897,
+              "vpos": 256
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 53341526,
+              "detail": "frame 750",
+              "frame": 750,
+              "hpos": 158,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9024786,
+              "seconds": 15.038935745208132,
+              "vpos": 234
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 56897808,
+              "detail": "frame 800",
+              "frame": 800,
+              "hpos": 31,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9151096,
+              "seconds": 16.04158228535099,
+              "vpos": 251
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 60449522,
+              "detail": "frame 850",
+              "frame": 850,
+              "hpos": 103,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9296392,
+              "seconds": 17.042940938482815,
+              "vpos": 247
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 63995037,
+              "detail": "frame 900",
+              "frame": 900,
+              "hpos": 105,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9458248,
+              "seconds": 18.042551865786837,
+              "vpos": 216
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 67555438,
+              "detail": "frame 950",
+              "frame": 950,
+              "hpos": 11,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9572374,
+              "seconds": 19.046359703346166,
+              "vpos": 251
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 71104009,
+              "detail": "frame 1000",
+              "frame": 1000,
+              "hpos": 118,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9726745,
+              "seconds": 20.046832229316063,
+              "vpos": 233
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 74647736,
+              "detail": "frame 1050",
+              "frame": 1050,
+              "hpos": 148,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 9894381,
+              "seconds": 21.045939053735733,
+              "vpos": 194
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 78205704,
+              "detail": "frame 1100",
+              "frame": 1100,
+              "hpos": 118,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 10017292,
+              "seconds": 22.04906093921585,
+              "vpos": 218
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 81754484,
+              "detail": "frame 1150",
+              "frame": 1150,
+              "hpos": 207,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 10170153,
+              "seconds": 23.049592389963617,
+              "vpos": 201
+            },
+            "memory": {
+              "chip_used_bytes": 309264,
+              "chip_free_bytes": 215024,
+              "largest_chip_free_block_bytes": 214944,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          }
+        ],
+        "peak_chip_bytes": 312160,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "observed",
+        "cold_boot_peak": 315248,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      },
+      "after_memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 266912,
+          "chip_free_bytes": 257376,
+          "largest_chip_free_block_bytes": 256184,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 270920,
+          "chip_free_bytes": 253368,
+          "largest_chip_free_block_bytes": 252176,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [
+          {
+            "position": {
+              "cck": 3594137,
+              "detail": "frame 50",
+              "frame": 50,
+              "hpos": 46,
+              "pc": 16517532,
+              "reason": "target",
+              "retired_instructions": 5201573,
+              "seconds": 1.013319255292305,
+              "vpos": 183
+            },
+            "memory": {
+              "chip_used_bytes": 13336,
+              "chip_free_bytes": 510952,
+              "largest_chip_free_block_bytes": 510952,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 7135844,
+              "detail": "frame 100",
+              "frame": 100,
+              "hpos": 99,
+              "pc": 16527664,
+              "reason": "target",
+              "retired_instructions": 5940687,
+              "seconds": 2.0118565675048177,
+              "vpos": 135
+            },
+            "memory": {
+              "chip_used_bytes": 29576,
+              "chip_free_bytes": 494712,
+              "largest_chip_free_block_bytes": 494688,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 10665036,
+              "detail": "frame 150",
+              "frame": 150,
+              "hpos": 122,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6575491,
+              "seconds": 3.00686544146359,
+              "vpos": 32
+            },
+            "memory": {
+              "chip_used_bytes": 48336,
+              "chip_free_bytes": 475952,
+              "largest_chip_free_block_bytes": 475928,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 14241251,
+              "detail": "frame 200",
+              "frame": 200,
+              "hpos": 179,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6670690,
+              "seconds": 4.015131826569436,
+              "vpos": 136
+            },
+            "memory": {
+              "chip_used_bytes": 52496,
+              "chip_free_bytes": 471792,
+              "largest_chip_free_block_bytes": 471648,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 17778054,
+              "detail": "frame 250",
+              "frame": 250,
+              "hpos": 95,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6702509,
+              "seconds": 5.012286521027547,
+              "vpos": 67
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 21368295,
+              "detail": "frame 300",
+              "frame": 300,
+              "hpos": 104,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6764807,
+              "seconds": 6.024507350795555,
+              "vpos": 233
+            },
+            "memory": {
+              "chip_used_bytes": 57152,
+              "chip_free_bytes": 467136,
+              "largest_chip_free_block_bytes": 467040,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 24891194,
+              "detail": "frame 350",
+              "frame": 350,
+              "hpos": 190,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 6851130,
+              "seconds": 7.017741996873322,
+              "vpos": 102
+            },
+            "memory": {
+              "chip_used_bytes": 53696,
+              "chip_free_bytes": 470592,
+              "largest_chip_free_block_bytes": 467784,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 28462457,
+              "detail": "frame 400",
+              "frame": 400,
+              "hpos": 62,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7157247,
+              "seconds": 8.024612231261427,
+              "vpos": 185
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 32012124,
+              "detail": "frame 450",
+              "frame": 450,
+              "hpos": 130,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7307675,
+              "seconds": 9.025393759894218,
+              "vpos": 172
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 35562282,
+              "detail": "frame 500",
+              "frame": 500,
+              "hpos": 8,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7458339,
+              "seconds": 10.02631371946449,
+              "vpos": 162
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 39088030,
+              "detail": "frame 550",
+              "frame": 550,
+              "hpos": 219,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7693509,
+              "seconds": 11.020351603303734,
+              "vpos": 43
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 42635573,
+              "detail": "frame 600",
+              "frame": 600,
+              "hpos": 206,
+              "pc": 16517410,
+              "reason": "target",
+              "retired_instructions": 7849805,
+              "seconds": 12.020534298308803,
+              "vpos": 21
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 46196473,
+              "detail": "frame 650",
+              "frame": 650,
+              "hpos": 157,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 7959473,
+              "seconds": 13.024482822299504,
+              "vpos": 58
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 49745541,
+              "detail": "frame 700",
+              "frame": 700,
+              "hpos": 80,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8111631,
+              "seconds": 14.025095470827301,
+              "vpos": 43
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 53292053,
+              "detail": "frame 750",
+              "frame": 750,
+              "hpos": 171,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8270722,
+              "seconds": 15.024987489057331,
+              "vpos": 16
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 56854011,
+              "detail": "frame 800",
+              "frame": 800,
+              "hpos": 45,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8380336,
+              "seconds": 16.029234302114947,
+              "vpos": 58
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 60398955,
+              "detail": "frame 850",
+              "frame": 850,
+              "hpos": 157,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8546269,
+              "seconds": 17.028684243542592,
+              "vpos": 24
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 63948080,
+              "detail": "frame 900",
+              "frame": 900,
+              "hpos": 137,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8700575,
+              "seconds": 18.029312962464353,
+              "vpos": 9
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          },
+          {
+            "position": {
+              "cck": 67509535,
+              "detail": "frame 950",
+              "frame": 950,
+              "hpos": 189,
+              "pc": 16519060,
+              "reason": "target",
+              "retired_instructions": 8812294,
+              "seconds": 19.033417961343655,
+              "vpos": 48
+            },
+            "memory": {
+              "chip_used_bytes": 268024,
+              "chip_free_bytes": 256264,
+              "largest_chip_free_block_bytes": 256184,
+              "other_pool_bytes": 0,
+              "other_used_bytes": 0,
+              "other_free_bytes": 0,
+              "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+            }
+          }
+        ],
+        "peak_chip_bytes": 270920,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "observed",
+        "cold_boot_peak": 270920,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      }
+    },
+    "two": {
+      "before_receipt_sha256": "8943350a89caff08061eca54b879420b1a52f971f514399a1911c3235c22e4be",
+      "after_receipt_sha256": "ffdec59fb8e15ac4c4ca6da82432fbb9507c282be65e2feffaffcccc99942b10",
+      "profiles": {
+        "title": {
+          "before": {
+            "callbacks": 6,
+            "minimum_deadline_headroom_cck": 4774.748474121094,
+            "update_including_render": {
+              "samples": 6,
+              "typical_median_cck": 12569.5,
+              "p95_cck": 53850,
+              "max_cck": 53850,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5341.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 6,
+            "minimum_deadline_headroom_cck": 4757.137237548828,
+            "update_including_render": {
+              "samples": 6,
+              "typical_median_cck": 12838.0,
+              "p95_cck": 53570,
+              "max_cck": 53570,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5621.137237548828
+            }
+          }
+        },
+        "one-player-rally": {
+          "before": {
+            "callbacks": 1,
+            "minimum_deadline_headroom_cck": 37330.84194946289,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 21568.0,
+              "p95_cck": 21568,
+              "max_cck": 21568,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37623.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 1,
+            "minimum_deadline_headroom_cck": 37088.567474365234,
+            "update_including_render": {
+              "samples": 1,
+              "typical_median_cck": 21779.0,
+              "p95_cck": 21779,
+              "max_cck": 21779,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37412.13723754883
+            }
+          }
+        },
+        "two-player-rally": {
+          "before": {
+            "callbacks": 9262,
+            "minimum_deadline_headroom_cck": 30948.923461914062,
+            "update_including_render": {
+              "samples": 9262,
+              "typical_median_cck": 21550.5,
+              "p95_cck": 22847,
+              "max_cck": 27538,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 31653.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 9262,
+            "minimum_deadline_headroom_cck": 31936.665008544922,
+            "update_including_render": {
+              "samples": 9262,
+              "typical_median_cck": 21159.0,
+              "p95_cck": 21811,
+              "max_cck": 26498,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 32693.137237548828
+            }
+          }
+        },
+        "match-end": {
+          "before": {
+            "callbacks": 48,
+            "minimum_deadline_headroom_cck": 36523.4313659668,
+            "update_including_render": {
+              "samples": 48,
+              "typical_median_cck": 14234.5,
+              "p95_cck": 16464,
+              "max_cck": 21916,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37275.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 48,
+            "minimum_deadline_headroom_cck": 37269.4313659668,
+            "update_including_render": {
+              "samples": 48,
+              "typical_median_cck": 13804.0,
+              "p95_cck": 15631,
+              "max_cck": 21497,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 37694.13723754883
+            }
+          }
+        },
+        "celebration": {
+          "before": {
+            "callbacks": 887,
+            "minimum_deadline_headroom_cck": 34895.51333618164,
+            "update_including_render": {
+              "samples": 887,
+              "typical_median_cck": 12380.0,
+              "p95_cck": 13798,
+              "max_cck": 22360,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 36831.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 887,
+            "minimum_deadline_headroom_cck": 35765.51333618164,
+            "update_including_render": {
+              "samples": 887,
+              "typical_median_cck": 12037.0,
+              "p95_cck": 13203,
+              "max_cck": 22298,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 36893.13723754883
+            }
+          }
+        }
+      },
+      "before_overall_cadence": {
+        "minimum_phase_cck": 227.3153076171875,
+        "maximum_entry_late_cck": 2690.5801391601562,
+        "maximum_update_work_cck": 56673
+      },
+      "after_overall_cadence": {
+        "minimum_phase_cck": 227.25350952148438,
+        "maximum_entry_late_cck": 2435.0459899902344,
+        "maximum_update_work_cck": 53570
+      },
+      "before_memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 341888,
+          "chip_free_bytes": 182400,
+          "largest_chip_free_block_bytes": 181824,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 345896,
+          "chip_free_bytes": 178392,
+          "largest_chip_free_block_bytes": 177816,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [],
+        "peak_chip_bytes": 345896,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "unverified",
+        "cold_boot_peak": null,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      },
+      "after_memory": {
+        "at_loadseg": {
+          "chip_used_bytes": 300648,
+          "chip_free_bytes": 223640,
+          "largest_chip_free_block_bytes": 223064,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "runtime_final": {
+          "chip_used_bytes": 304656,
+          "chip_free_bytes": 219632,
+          "largest_chip_free_block_bytes": 219056,
+          "other_pool_bytes": 0,
+          "other_used_bytes": 0,
+          "other_free_bytes": 0,
+          "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+        },
+        "cold_boot_samples": [],
+        "peak_chip_bytes": 304656,
+        "scope": "CIA timer start through restarted flight, including resident OS/application/allocated stack; pre-timer peak not claimed",
+        "continuous_allocation_watch": true,
+        "cold_disk_boot": "unverified",
+        "cold_boot_peak": null,
+        "cold_boot_peak_scope": "first initialized Exec chip pool through restarted flight; pre-pool bootstrap transient usage unverified",
+        "pre_exec_bootstrap": "unmeasured",
+        "allocation_failures": null,
+        "allocation_failure_scope": "No allocator-result observer; product performs no runtime AllocMem calls."
+      }
+    },
+    "setup": {
+      "before_receipt_sha256": "e55023cd5d66d2b693ceb0fd08fffe1559240a7cde0e2ca9883e6aaf86104598",
+      "after_receipt_sha256": "c7ca7ac4d7a8cc8cec286e0829a97fb572530be032c1192e4137b6f8d5207e5d",
+      "profiles": {
+        "title": {
+          "before": {
+            "callbacks": 1233,
+            "minimum_deadline_headroom_cck": 4276.888824462891,
+            "update_including_render": {
+              "samples": 1233,
+              "typical_median_cck": 7804.0,
+              "p95_cck": 7988,
+              "max_cck": 54054,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5137.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 1235,
+            "minimum_deadline_headroom_cck": 4427.163299560547,
+            "update_including_render": {
+              "samples": 1235,
+              "typical_median_cck": 7806.0,
+              "p95_cck": 8014,
+              "max_cck": 54196,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 4995.137237548828
+            }
+          }
+        },
+        "help": {
+          "before": {
+            "callbacks": 575,
+            "minimum_deadline_headroom_cck": 4271.769927978516,
+            "update_including_render": {
+              "samples": 575,
+              "typical_median_cck": 7778.0,
+              "p95_cck": 8013,
+              "max_cck": 54178,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5013.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 575,
+            "minimum_deadline_headroom_cck": 4282.750701904297,
+            "update_including_render": {
+              "samples": 575,
+              "typical_median_cck": 7778.0,
+              "p95_cck": 8000,
+              "max_cck": 54255,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 4936.137237548828
+            }
+          }
+        },
+        "one-player-rally": {
+          "before": {
+            "callbacks": 31,
+            "minimum_deadline_headroom_cck": 35441.86935424805,
+            "update_including_render": {
+              "samples": 31,
+              "typical_median_cck": 21535.0,
+              "p95_cck": 22947,
+              "max_cck": 23425,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 35766.13723754883
+            }
+          },
+          "after": {
+            "callbacks": 31,
+            "minimum_deadline_headroom_cck": 36292.8063659668,
+            "update_including_render": {
+              "samples": 31,
+              "typical_median_cck": 21227.0,
+              "p95_cck": 21865,
+              "max_cck": 22302,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 36889.13723754883
+            }
+          }
+        },
+        "pause": {
+          "before": {
+            "callbacks": 88,
+            "minimum_deadline_headroom_cck": 791.0048217773438,
+            "update_including_render": {
+              "samples": 88,
+              "typical_median_cck": 7573.5,
+              "p95_cck": 8463,
+              "max_cck": 58122,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 1069.1372375488281
+            }
+          },
+          "after": {
+            "callbacks": 88,
+            "minimum_deadline_headroom_cck": 2106.279296875,
+            "update_including_render": {
+              "samples": 88,
+              "typical_median_cck": 7465.0,
+              "p95_cck": 7654,
+              "max_cck": 56608,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 2583.137237548828
+            }
+          }
+        }
+      },
+      "before_overall_cadence": null,
+      "after_overall_cadence": null,
+      "before_memory": null,
+      "after_memory": null
+    },
+    "demo": {
+      "before_receipt_sha256": "0adf71b61d39f01bbdf7743717d229a1be5dcebfe6dd9403193c0ae95ce7d75d",
+      "after_receipt_sha256": "e9e651c34ce8b03ccb6704b9f391fbaa15a5e314022c8cf9b9f0cd95fbf5a25c",
+      "profiles": {
+        "title": {
+          "before": {
+            "callbacks": 1800,
+            "minimum_deadline_headroom_cck": 4976.137237548828,
+            "update_including_render": {
+              "samples": 1800,
+              "typical_median_cck": 7804.0,
+              "p95_cck": 7990,
+              "max_cck": 53345,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5846.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 1800,
+            "minimum_deadline_headroom_cck": 4757.137237548828,
+            "update_including_render": {
+              "samples": 1800,
+              "typical_median_cck": 7804.5,
+              "p95_cck": 8004,
+              "max_cck": 53570,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 5621.137237548828
+            }
+          }
+        },
+        "demo": {
+          "before": {
+            "callbacks": 11703,
+            "minimum_deadline_headroom_cck": 5977.497039794922,
+            "update_including_render": {
+              "samples": 11703,
+              "typical_median_cck": 20552.0,
+              "p95_cck": 22935,
+              "max_cck": 52909,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 6282.137237548828
+            }
+          },
+          "after": {
+            "callbacks": 11703,
+            "minimum_deadline_headroom_cck": 29077.497039794922,
+            "update_including_render": {
+              "samples": 11703,
+              "typical_median_cck": 20313.0,
+              "p95_cck": 21941,
+              "max_cck": 29494,
+              "budget_cck": 59191.13723754883,
+              "minimum_headroom_cck": 29697.137237548828
+            }
+          }
+        }
+      },
+      "before_overall_cadence": null,
+      "after_overall_cadence": null,
+      "before_memory": null,
+      "after_memory": null
+    }
+  },
+  "bounded_dma": {
+    "pal": {
+      "cck_hz": 3546895,
+      "before": {
+        "full_fields": 23,
+        "minimum_strobe_to_field_end_cck": 13226,
+        "maximum_beam_sample_to_strobe_cck": 192,
+        "isr_bus_timing": {
+          "samples": 23,
+          "max_cck": 626,
+          "scope": "first register-save bus write through last RTE frame read; interrupt entry and post-read CPU tail excluded"
+        },
+        "receipt_sha256": "e9502c635027dd1b2416aeb40079b9d06e5783950ad70a469b7629dca8827f8a",
+        "binding": {
+          "addresses": {
+            "front_copper": 160922,
+            "back_copper": 160926,
+            "ready_copper": 160930,
+            "spare_copper": 160934,
+            "display_ready": 160919,
+            "ready_completed": 160920,
+            "blank_seen": 160918,
+            "ready_generation": 160938,
+            "ready_title_display": 160948,
+            "simulation_updates": 160958,
+            "simulation_started_updates": 160960,
+            "presentation_copper": 131146,
+            "presentation_last_line": 160944,
+            "presentation_last_safe_line": 160946,
+            "copperlist": 229992,
+            "copperlist_back": 289964,
+            "copperlist_third": 293612,
+            "copperlist_end": 233064,
+            "sprite0": 257640,
+            "sprite_back": 293036,
+            "sprite_third": 296684,
+            "title_copper": 297260,
+            "score_pointer_cache": 131314,
+            "plane0": 233064,
+            "plane1": 239208,
+            "plane2": 245352,
+            "plane3": 251496,
+            "score_bank_mode_0_p0": 287656,
+            "score_bank_mode_0_p1": 287912,
+            "score_bank_mode_0_p2": 288168,
+            "score_bank_mode_0_p3": 286888,
+            "score_bank_mode_1_p0": 288424,
+            "score_bank_mode_1_p1": 288680,
+            "score_bank_mode_1_p2": 288936,
+            "score_bank_mode_1_p3": 287144,
+            "score_bank_mode_2_p0": 289192,
+            "score_bank_mode_2_p1": 289448,
+            "score_bank_mode_2_p2": 289704,
+            "score_bank_mode_2_p3": 287400,
+            "score_bank_status_0_p0": 279720,
+            "score_bank_status_0_p2": 280232,
+            "score_bank_status_0_p3": 280488,
+            "score_bank_status_1_p0": 280744,
+            "score_bank_status_1_p2": 281256,
+            "score_bank_status_1_p3": 281512,
+            "score_bank_status_2_p0": 281768,
+            "score_bank_status_2_p2": 282280,
+            "score_bank_status_2_p3": 282536,
+            "score_bank_status_3_p0": 282792,
+            "score_bank_status_3_p2": 283304,
+            "score_bank_status_3_p3": 283560,
+            "score_bank_status_4_p0": 283816,
+            "score_bank_status_4_p2": 284328,
+            "score_bank_status_4_p3": 284584,
+            "score_bank_status_5_p0": 284840,
+            "score_bank_status_5_p2": 285352,
+            "score_bank_status_5_p3": 285608,
+            "score_bank_status_6_p0": 285864,
+            "score_bank_status_6_p2": 286376,
+            "score_bank_status_6_p3": 286632
+          },
+          "loaded_hunks": [
+            {
+              "hunk": 0,
+              "start": 129672,
+              "bytes": 50904,
+              "expected_sha256": "c366aeb5a64ad404143cda6124b7a0deeb2e51b7795a7687d269cd031dca5155",
+              "actual_sha256": "c366aeb5a64ad404143cda6124b7a0deeb2e51b7795a7687d269cd031dca5155",
+              "matched": true
+            },
+            {
+              "hunk": 1,
+              "start": 180584,
+              "bytes": 141396,
+              "expected_sha256": "e6b28c984e3d2ef8dc23a473d9761313d5cd81e935e720542ea38167598862cc",
+              "actual_sha256": "e6b28c984e3d2ef8dc23a473d9761313d5cd81e935e720542ea38167598862cc",
+              "matched": true
+            },
+            {
+              "hunk": 2,
+              "start": 321992,
+              "bytes": 14336,
+              "expected_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
+              "actual_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
+              "matched": true
+            }
+          ],
+          "executable_sha256": "9f113c1c8a3fc6de671c6a2613c85bc0dd52d2da3784eab156fa6d3de4d6850b",
+          "executable_path": "build/tests/native-sprite-dma/baseline-timing-pal/native-fixture",
+          "profile": {
+            "active": true,
+            "coverage": false,
+            "done": true,
+            "frames_limit": 24,
+            "frames_written": 24,
+            "irq_cck": 0,
+            "memory": true,
+            "path": "/workspace/ctennis-hud-baseline/build/tests/native-sprite-dma/baseline-timing-pal/trace",
+            "pc_samples": false,
+            "registers": false,
+            "samples": false,
+            "samples_total": 0,
+            "screenshots": "last",
+            "slots": true,
+            "trigger": null,
+            "triggered": true,
+            "triggered_at": 461
+          },
+          "phase": 22,
+          "scenario": "play",
+          "standard": "PAL",
+          "control": null,
+          "fixture": "one-time initial clock phase wait; then native main loop and physical input only",
+          "observed_last_line": 312,
+          "observed_last_safe_line": 308,
+          "fixture_delayed": null,
+          "fixture_boundary_requests": null
+        },
+        "minimum_strobe_to_field_end_ms": 3.728895273189649,
+        "maximum_isr_bus_interval_ms": 0.1764923968710661
+      },
+      "after": {
+        "full_fields": 23,
+        "minimum_strobe_to_field_end_cck": 13231,
+        "maximum_beam_sample_to_strobe_cck": 192,
+        "isr_bus_timing": {
+          "samples": 24,
+          "max_cck": 628,
+          "scope": "first register-save bus write through last RTE frame read; interrupt entry and post-read CPU tail excluded"
+        },
+        "receipt_sha256": "6c46ccfe42f26b8c8899c0b7d13dbb1f7f220485e8d034da382df2786586e4e7",
+        "binding": {
+          "addresses": {
+            "front_copper": 161286,
+            "back_copper": 161290,
+            "ready_copper": 161294,
+            "spare_copper": 161298,
+            "display_ready": 161283,
+            "ready_completed": 161284,
+            "blank_seen": 161282,
+            "ready_generation": 161302,
+            "ready_title_display": 161312,
+            "simulation_updates": 161322,
+            "simulation_started_updates": 161324,
+            "presentation_copper": 131146,
+            "presentation_last_line": 161308,
+            "presentation_last_safe_line": 161310,
+            "copperlist": 222880,
+            "copperlist_back": 258780,
+            "copperlist_third": 259860,
+            "copperlist_end": 223384,
+            "sprite0": 247960,
+            "sprite_back": 259284,
+            "sprite_third": 260364,
+            "title_copper": 260940,
+            "hud_bank0": 285672,
+            "hud_bank1": 288744,
+            "hud_bank2": 291816,
+            "score_pointer_cache": 131590,
+            "plane0": 223384,
+            "plane1": 229528,
+            "plane2": 235672,
+            "plane3": 241816,
+            "score_bank_mode_0_p0": 256472,
+            "score_bank_mode_0_p1": 256728,
+            "score_bank_mode_0_p2": 256984,
+            "score_bank_mode_0_p3": 255704,
+            "score_bank_mode_1_p0": 257240,
+            "score_bank_mode_1_p1": 257496,
+            "score_bank_mode_1_p2": 257752,
+            "score_bank_mode_1_p3": 255960,
+            "score_bank_mode_2_p0": 258008,
+            "score_bank_mode_2_p1": 258264,
+            "score_bank_mode_2_p2": 258520,
+            "score_bank_mode_2_p3": 256216,
+            "score_bank_status_0_p0": 248536,
+            "score_bank_status_0_p2": 249048,
+            "score_bank_status_0_p3": 249304,
+            "score_bank_status_1_p0": 249560,
+            "score_bank_status_1_p2": 250072,
+            "score_bank_status_1_p3": 250328,
+            "score_bank_status_2_p0": 250584,
+            "score_bank_status_2_p2": 251096,
+            "score_bank_status_2_p3": 251352,
+            "score_bank_status_3_p0": 251608,
+            "score_bank_status_3_p2": 252120,
+            "score_bank_status_3_p3": 252376,
+            "score_bank_status_4_p0": 252632,
+            "score_bank_status_4_p2": 253144,
+            "score_bank_status_4_p3": 253400,
+            "score_bank_status_5_p0": 253656,
+            "score_bank_status_5_p2": 254168,
+            "score_bank_status_5_p3": 254424,
+            "score_bank_status_6_p0": 254680,
+            "score_bank_status_6_p2": 255192,
+            "score_bank_status_6_p3": 255448
+          },
+          "loaded_hunks": [
+            {
+              "hunk": 0,
+              "start": 129672,
+              "bytes": 43788,
+              "expected_sha256": "c5a96e09617c82d3e63f3ea2aa613439ab332793c1e3dc1d492d34942f86e9e8",
+              "actual_sha256": "c5a96e09617c82d3e63f3ea2aa613439ab332793c1e3dc1d492d34942f86e9e8",
+              "matched": true
+            },
+            {
+              "hunk": 1,
+              "start": 173472,
+              "bytes": 112188,
+              "expected_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
+              "actual_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
+              "matched": true
+            },
+            {
+              "hunk": 2,
+              "start": 285672,
+              "bytes": 9424,
+              "expected_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
+              "actual_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
+              "matched": true
+            }
+          ],
+          "executable_sha256": "271d2bd085ef4e97d0a386be967fd4eaef57d513f37847c2670024a9f3f9b4d8",
+          "executable_path": "build/tests/native-sprite-dma/hud-timing-pal/native-fixture",
+          "profile": {
+            "active": true,
+            "coverage": false,
+            "done": true,
+            "frames_limit": 24,
+            "frames_written": 24,
+            "irq_cck": 0,
+            "memory": true,
+            "path": "/workspace/ctennis-direct-hud/build/tests/native-sprite-dma/hud-timing-pal/trace",
+            "pc_samples": false,
+            "registers": false,
+            "samples": false,
+            "samples_total": 0,
+            "screenshots": "last",
+            "slots": true,
+            "trigger": null,
+            "triggered": true,
+            "triggered_at": 416
+          },
+          "phase": 22,
+          "scenario": "play",
+          "standard": "PAL",
+          "control": null,
+          "fixture": "one-time initial clock phase wait; then native main loop and physical input only",
+          "observed_last_line": 312,
+          "observed_last_safe_line": 308,
+          "fixture_delayed": null,
+          "fixture_boundary_requests": null
+        },
+        "minimum_strobe_to_field_end_ms": 3.730304956870728,
+        "maximum_isr_bus_interval_ms": 0.17705627034349763
+      }
+    },
+    "ntsc": {
+      "cck_hz": 3579545,
+      "before": {
+        "full_fields": 23,
+        "minimum_strobe_to_field_end_cck": 1892,
+        "maximum_beam_sample_to_strobe_cck": 193,
+        "isr_bus_timing": {
+          "samples": 24,
+          "max_cck": 625,
+          "scope": "first register-save bus write through last RTE frame read; interrupt entry and post-read CPU tail excluded"
+        },
+        "receipt_sha256": "d98739f3742684da38d9bbccc17b7ce559ab0a005f74d4f1387a177adcd7f4d3",
+        "binding": {
+          "addresses": {
+            "front_copper": 151962,
+            "back_copper": 151966,
+            "ready_copper": 151970,
+            "spare_copper": 151974,
+            "display_ready": 151959,
+            "ready_completed": 151960,
+            "blank_seen": 151958,
+            "ready_generation": 151978,
+            "ready_title_display": 151988,
+            "simulation_updates": 151998,
+            "simulation_started_updates": 152000,
+            "presentation_copper": 122186,
+            "presentation_last_line": 151984,
+            "presentation_last_safe_line": 151986,
+            "copperlist": 221032,
+            "copperlist_back": 281004,
+            "copperlist_third": 284652,
+            "copperlist_end": 224104,
+            "sprite0": 248680,
+            "sprite_back": 284076,
+            "sprite_third": 287724,
+            "title_copper": 288300,
+            "score_pointer_cache": 122354,
+            "plane0": 224104,
+            "plane1": 230248,
+            "plane2": 236392,
+            "plane3": 242536,
+            "score_bank_mode_0_p0": 278696,
+            "score_bank_mode_0_p1": 278952,
+            "score_bank_mode_0_p2": 279208,
+            "score_bank_mode_0_p3": 277928,
+            "score_bank_mode_1_p0": 279464,
+            "score_bank_mode_1_p1": 279720,
+            "score_bank_mode_1_p2": 279976,
+            "score_bank_mode_1_p3": 278184,
+            "score_bank_mode_2_p0": 280232,
+            "score_bank_mode_2_p1": 280488,
+            "score_bank_mode_2_p2": 280744,
+            "score_bank_mode_2_p3": 278440,
+            "score_bank_status_0_p0": 270760,
+            "score_bank_status_0_p2": 271272,
+            "score_bank_status_0_p3": 271528,
+            "score_bank_status_1_p0": 271784,
+            "score_bank_status_1_p2": 272296,
+            "score_bank_status_1_p3": 272552,
+            "score_bank_status_2_p0": 272808,
+            "score_bank_status_2_p2": 273320,
+            "score_bank_status_2_p3": 273576,
+            "score_bank_status_3_p0": 273832,
+            "score_bank_status_3_p2": 274344,
+            "score_bank_status_3_p3": 274600,
+            "score_bank_status_4_p0": 274856,
+            "score_bank_status_4_p2": 275368,
+            "score_bank_status_4_p3": 275624,
+            "score_bank_status_5_p0": 275880,
+            "score_bank_status_5_p2": 276392,
+            "score_bank_status_5_p3": 276648,
+            "score_bank_status_6_p0": 276904,
+            "score_bank_status_6_p2": 277416,
+            "score_bank_status_6_p3": 277672
+          },
+          "loaded_hunks": [
+            {
+              "hunk": 0,
+              "start": 120712,
+              "bytes": 50904,
+              "expected_sha256": "ad2e489dd5d623f2fd3d007f52938f766c8587d0d9903ed07956968a8b51e13c",
+              "actual_sha256": "ad2e489dd5d623f2fd3d007f52938f766c8587d0d9903ed07956968a8b51e13c",
+              "matched": true
+            },
+            {
+              "hunk": 1,
+              "start": 171624,
+              "bytes": 141396,
+              "expected_sha256": "e6b28c984e3d2ef8dc23a473d9761313d5cd81e935e720542ea38167598862cc",
+              "actual_sha256": "e6b28c984e3d2ef8dc23a473d9761313d5cd81e935e720542ea38167598862cc",
+              "matched": true
+            },
+            {
+              "hunk": 2,
+              "start": 313032,
+              "bytes": 14336,
+              "expected_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
+              "actual_sha256": "90b446c6472fde83a94e15bcef5e4b2ea20522db2c242448f6a825bb2a3f42b1",
+              "matched": true
+            }
+          ],
+          "executable_sha256": "9f113c1c8a3fc6de671c6a2613c85bc0dd52d2da3784eab156fa6d3de4d6850b",
+          "executable_path": "build/tests/native-sprite-dma/baseline-timing-ntsc/native-fixture",
+          "profile": {
+            "active": true,
+            "coverage": false,
+            "done": true,
+            "frames_limit": 24,
+            "frames_written": 24,
+            "irq_cck": 0,
+            "memory": true,
+            "path": "/workspace/ctennis-hud-baseline/build/tests/native-sprite-dma/baseline-timing-ntsc/trace",
+            "pc_samples": false,
+            "registers": false,
+            "samples": false,
+            "samples_total": 0,
+            "screenshots": "last",
+            "slots": true,
+            "trigger": null,
+            "triggered": true,
+            "triggered_at": 549
+          },
+          "phase": 22,
+          "scenario": "play",
+          "standard": "NTSC",
+          "control": null,
+          "fixture": "one-time initial clock phase wait; then native main loop and physical input only",
+          "observed_last_line": 262,
+          "observed_last_safe_line": 258,
+          "fixture_delayed": null,
+          "fixture_boundary_requests": null
+        },
+        "minimum_strobe_to_field_end_ms": 0.5285587972773076,
+        "maximum_isr_bus_interval_ms": 0.1746031967750091
+      },
+      "after": {
+        "full_fields": 23,
+        "minimum_strobe_to_field_end_cck": 1912,
+        "maximum_beam_sample_to_strobe_cck": 193,
+        "isr_bus_timing": {
+          "samples": 25,
+          "max_cck": 625,
+          "scope": "first register-save bus write through last RTE frame read; interrupt entry and post-read CPU tail excluded"
+        },
+        "receipt_sha256": "1357a54932cff320a1f9224d8522e417ecd4a2e85120dabbf096f925e5cce05a",
+        "binding": {
+          "addresses": {
+            "front_copper": 152326,
+            "back_copper": 152330,
+            "ready_copper": 152334,
+            "spare_copper": 152338,
+            "display_ready": 152323,
+            "ready_completed": 152324,
+            "blank_seen": 152322,
+            "ready_generation": 152342,
+            "ready_title_display": 152352,
+            "simulation_updates": 152362,
+            "simulation_started_updates": 152364,
+            "presentation_copper": 122186,
+            "presentation_last_line": 152348,
+            "presentation_last_safe_line": 152350,
+            "copperlist": 213920,
+            "copperlist_back": 249820,
+            "copperlist_third": 250900,
+            "copperlist_end": 214424,
+            "sprite0": 239000,
+            "sprite_back": 250324,
+            "sprite_third": 251404,
+            "title_copper": 251980,
+            "hud_bank0": 276712,
+            "hud_bank1": 279784,
+            "hud_bank2": 282856,
+            "score_pointer_cache": 122630,
+            "plane0": 214424,
+            "plane1": 220568,
+            "plane2": 226712,
+            "plane3": 232856,
+            "score_bank_mode_0_p0": 247512,
+            "score_bank_mode_0_p1": 247768,
+            "score_bank_mode_0_p2": 248024,
+            "score_bank_mode_0_p3": 246744,
+            "score_bank_mode_1_p0": 248280,
+            "score_bank_mode_1_p1": 248536,
+            "score_bank_mode_1_p2": 248792,
+            "score_bank_mode_1_p3": 247000,
+            "score_bank_mode_2_p0": 249048,
+            "score_bank_mode_2_p1": 249304,
+            "score_bank_mode_2_p2": 249560,
+            "score_bank_mode_2_p3": 247256,
+            "score_bank_status_0_p0": 239576,
+            "score_bank_status_0_p2": 240088,
+            "score_bank_status_0_p3": 240344,
+            "score_bank_status_1_p0": 240600,
+            "score_bank_status_1_p2": 241112,
+            "score_bank_status_1_p3": 241368,
+            "score_bank_status_2_p0": 241624,
+            "score_bank_status_2_p2": 242136,
+            "score_bank_status_2_p3": 242392,
+            "score_bank_status_3_p0": 242648,
+            "score_bank_status_3_p2": 243160,
+            "score_bank_status_3_p3": 243416,
+            "score_bank_status_4_p0": 243672,
+            "score_bank_status_4_p2": 244184,
+            "score_bank_status_4_p3": 244440,
+            "score_bank_status_5_p0": 244696,
+            "score_bank_status_5_p2": 245208,
+            "score_bank_status_5_p3": 245464,
+            "score_bank_status_6_p0": 245720,
+            "score_bank_status_6_p2": 246232,
+            "score_bank_status_6_p3": 246488
+          },
+          "loaded_hunks": [
+            {
+              "hunk": 0,
+              "start": 120712,
+              "bytes": 43788,
+              "expected_sha256": "20c4235c2019fc19d47f7ebb75ba9c4c0e79216c394306486f7a54d1a9d18d8c",
+              "actual_sha256": "20c4235c2019fc19d47f7ebb75ba9c4c0e79216c394306486f7a54d1a9d18d8c",
+              "matched": true
+            },
+            {
+              "hunk": 1,
+              "start": 164512,
+              "bytes": 112188,
+              "expected_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
+              "actual_sha256": "8af08f855a6171f80046a54b076f603273e80a6beecfe8880ed22b4a2e930f09",
+              "matched": true
+            },
+            {
+              "hunk": 2,
+              "start": 276712,
+              "bytes": 9424,
+              "expected_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
+              "actual_sha256": "3b3318b249b3e5332342e2b4450dce32882fe9e9e31cf72d5db81feec2d0dd52",
+              "matched": true
+            }
+          ],
+          "executable_sha256": "271d2bd085ef4e97d0a386be967fd4eaef57d513f37847c2670024a9f3f9b4d8",
+          "executable_path": "build/tests/native-sprite-dma/hud-timing-ntsc/native-fixture",
+          "profile": {
+            "active": true,
+            "coverage": false,
+            "done": true,
+            "frames_limit": 24,
+            "frames_written": 24,
+            "irq_cck": 0,
+            "memory": true,
+            "path": "/workspace/ctennis-direct-hud/build/tests/native-sprite-dma/hud-timing-ntsc/trace",
+            "pc_samples": false,
+            "registers": false,
+            "samples": false,
+            "samples_total": 0,
+            "screenshots": "last",
+            "slots": true,
+            "trigger": null,
+            "triggered": true,
+            "triggered_at": 496
+          },
+          "phase": 22,
+          "scenario": "play",
+          "standard": "NTSC",
+          "control": null,
+          "fixture": "one-time initial clock phase wait; then native main loop and physical input only",
+          "observed_last_line": 262,
+          "observed_last_safe_line": 258,
+          "fixture_delayed": null,
+          "fixture_boundary_requests": null
+        },
+        "minimum_strobe_to_field_end_ms": 0.5341460995741079,
+        "maximum_isr_bus_interval_ms": 0.1746031967750091
+      }
+    }
+  },
+  "bounded_hud_cost": {
+    "pal-0": {
+      "cck_hz": 3546895,
+      "before": {
+        "groups": {
+          "0": {
+            "samples": 51,
+            "max_work_cck": 27232,
+            "max_entry_lateness_cck": 3522.7255249023438,
+            "minimum_deadline_headroom_cck": 31112.137237548828,
+            "max_work_ms": 7.677701200627591,
+            "max_entry_lateness_ms": 0.9931857370749188,
+            "minimum_deadline_headroom_ms": 8.771654429451345
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 40352,
+            "max_entry_lateness_cck": 658.6083984375,
+            "minimum_deadline_headroom_cck": 18180.528839111328,
+            "max_work_ms": 11.37671117977837,
+            "max_entry_lateness_ms": 0.18568590229975795,
+            "minimum_deadline_headroom_ms": 5.125758963575557
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 61378,
+            "max_entry_lateness_cck": 350.8627624511719,
+            "minimum_deadline_headroom_cck": -2537.7255249023438,
+            "max_work_ms": 17.304712995450952,
+            "max_entry_lateness_ms": 0.0989211021051291,
+            "minimum_deadline_headroom_ms": -0.7154780519023946
+          }
+        },
+        "deadline_passed": false,
+        "executable_sha256": "864b901f8e323f2fa97f7c3547bc7e461b89509ba61a95a5d32cb3fe48e5fdf2",
+        "fixture_sha256": "5f57f0a6c95963a8aefd136b45aac28f5e3ec1c418d4fd009e54d2b97e9a3099",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59191.13723754883,
+        "receipt_sha256": "de77e0ec2d1e16418b31c205ba40000953d1e550770e7b5c59878aa24f7ea9ce"
+      },
+      "after": {
+        "groups": {
+          "0": {
+            "samples": 52,
+            "max_work_cck": 27620,
+            "max_entry_lateness_cck": 912.1765747070312,
+            "minimum_deadline_headroom_cck": 30711.137237548828,
+            "max_work_ms": 7.787092654279307,
+            "max_entry_lateness_ms": 0.25717608632537226,
+            "minimum_deadline_headroom_ms": 8.658597798228826
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 25860,
+            "max_entry_lateness_cck": 640.6083984375,
+            "minimum_deadline_headroom_cck": 32690.528839111328,
+            "max_work_ms": 7.2908839985395675,
+            "max_entry_lateness_ms": 0.18061104104787426,
+            "minimum_deadline_headroom_ms": 9.216661006066243
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 32828,
+            "max_entry_lateness_cck": 694.7255249023438,
+            "minimum_deadline_headroom_cck": 25728.274475097656,
+            "max_work_ms": 9.255419176490987,
+            "max_entry_lateness_ms": 0.19586864705674786,
+            "minimum_deadline_headroom_ms": 7.253745733972293
+          }
+        },
+        "deadline_passed": true,
+        "executable_sha256": "4686f5c47e6edc75fc91f49e78b39de9ad097abb6ef2d4b5177bdce22949a69e",
+        "fixture_sha256": "5e366c29455f75b771f3df69b2ebb3f4fbb293634b94fdff5d65607c1138af70",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59191.13723754883,
+        "receipt_sha256": "6e18f30822a674cc7cd01e5a408ef033ab181c6dd92bd7e21a117bb7c45ddaaf"
+      }
+    },
+    "pal-1": {
+      "cck_hz": 3546895,
+      "before": {
+        "groups": {
+          "0": {
+            "samples": 51,
+            "max_work_cck": 27417,
+            "max_entry_lateness_cck": 4026.7255249023438,
+            "minimum_deadline_headroom_cck": 30927.137237548828,
+            "max_work_ms": 7.7298594968275065,
+            "max_entry_lateness_ms": 1.135281852127662,
+            "minimum_deadline_headroom_ms": 8.719496133251429
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 40542,
+            "max_entry_lateness_cck": 697.6083984375,
+            "minimum_deadline_headroom_cck": 17951.528839111328,
+            "max_work_ms": 11.430279159659364,
+            "max_entry_lateness_ms": 0.1966814350121726,
+            "minimum_deadline_headroom_ms": 5.061195450982149
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 61616,
+            "max_entry_lateness_cck": 860.5882873535156,
+            "minimum_deadline_headroom_cck": -3078.7255249023438,
+            "max_work_ms": 17.3718139386703,
+            "max_entry_lateness_ms": 0.24263145296196126,
+            "minimum_deadline_headroom_ms": -0.868005826195121
+          }
+        },
+        "deadline_passed": false,
+        "executable_sha256": "ef05544f1ca599f9e816a6969ca6844535ce5fa5e97852a4b9b135d2fe02fa98",
+        "fixture_sha256": "2a1e721a030a8c6bd37e3a9b12333536a471991a3e479a334d589d0a3d976714",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59191.13723754883,
+        "receipt_sha256": "58f175c7c7f041f43065822326a2a5eb9593a093f4b5c1bbaeaf2bb14f24f8f3"
+      },
+      "after": {
+        "groups": {
+          "0": {
+            "samples": 52,
+            "max_work_cck": 27811,
+            "max_entry_lateness_cck": 1017.0008850097656,
+            "minimum_deadline_headroom_cck": 30520.137237548828,
+            "max_work_ms": 7.840942570896517,
+            "max_entry_lateness_ms": 0.28672991024819333,
+            "minimum_deadline_headroom_ms": 8.604747881611615
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 26018,
+            "max_entry_lateness_cck": 517.4711608886719,
+            "minimum_deadline_headroom_cck": 32678.528839111328,
+            "max_work_ms": 7.335430002861658,
+            "max_entry_lateness_ms": 0.14589413018673286,
+            "minimum_deadline_headroom_ms": 9.213277765231654
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 33011,
+            "max_entry_lateness_cck": 809.8627624511719,
+            "minimum_deadline_headroom_cck": 25370.274475097656,
+            "max_work_ms": 9.307013599218472,
+            "max_entry_lateness_ms": 0.2283300640281632,
+            "minimum_deadline_headroom_ms": 7.152812382407051
+          }
+        },
+        "deadline_passed": true,
+        "executable_sha256": "aea137705deec698438eaf575a016748b3237c389e6437a1ece78df7a061a272",
+        "fixture_sha256": "38382f3151b7b1726dada5521e664efa6277de7aa5a91ba791b1cab4ccf85e67",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59191.13723754883,
+        "receipt_sha256": "cffd66c0fcf10f67ddd9a2cb13fc0a4dca20ab62bbfc2781f0707c275c428e21"
+      }
+    },
+    "ntsc-0": {
+      "cck_hz": 3579545,
+      "before": {
+        "groups": {
+          "0": {
+            "samples": 50,
+            "max_work_cck": 27629,
+            "max_entry_lateness_cck": 3638.9888916015625,
+            "minimum_deadline_headroom_cck": 31249.00555419922,
+            "max_work_ms": 7.718578757914763,
+            "max_entry_lateness_ms": 1.016606549603808,
+            "minimum_deadline_headroom_ms": 8.729882025285118
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 41049,
+            "max_entry_lateness_cck": 938.822265625,
+            "minimum_deadline_headroom_cck": 17748.18328857422,
+            "max_work_ms": 11.467658599067759,
+            "max_entry_lateness_ms": 0.2622741900506908,
+            "minimum_deadline_headroom_ms": 4.9582232626141645
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 62247,
+            "max_entry_lateness_cck": 504.98333740234375,
+            "minimum_deadline_headroom_cck": -2778.9888916015625,
+            "max_work_ms": 17.389640303446388,
+            "max_entry_lateness_ms": 0.1410747280456996,
+            "minimum_deadline_headroom_ms": -0.7763525508413953
+          }
+        },
+        "deadline_passed": false,
+        "executable_sha256": "864b901f8e323f2fa97f7c3547bc7e461b89509ba61a95a5d32cb3fe48e5fdf2",
+        "fixture_sha256": "5f57f0a6c95963a8aefd136b45aac28f5e3ec1c418d4fd009e54d2b97e9a3099",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59736.00555419922,
+        "receipt_sha256": "fc202359394a690a781d82674ea63dfb49ca08dec2bd2a81d3b62073b1efb017"
+      },
+      "after": {
+        "groups": {
+          "0": {
+            "samples": 52,
+            "max_work_cck": 27669,
+            "max_entry_lateness_cck": 933.86669921875,
+            "minimum_deadline_headroom_cck": 31197.00555419922,
+            "max_work_ms": 7.729753362508363,
+            "max_entry_lateness_ms": 0.2608897776725114,
+            "minimum_deadline_headroom_ms": 8.715355039313437
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 26490,
+            "max_entry_lateness_cck": 571.822265625,
+            "minimum_deadline_headroom_cck": 32674.18328857422,
+            "max_work_ms": 7.400381892111986,
+            "max_entry_lateness_ms": 0.15974719290440545,
+            "minimum_deadline_headroom_ms": 9.128026966716222
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 33403,
+            "max_entry_lateness_cck": 776.9944458007812,
+            "minimum_deadline_headroom_cck": 25556.011108398438,
+            "max_work_ms": 9.331632931001007,
+            "max_entry_lateness_ms": 0.21706514258118875,
+            "minimum_deadline_headroom_ms": 7.139457978150418
+          }
+        },
+        "deadline_passed": true,
+        "executable_sha256": "4686f5c47e6edc75fc91f49e78b39de9ad097abb6ef2d4b5177bdce22949a69e",
+        "fixture_sha256": "5e366c29455f75b771f3df69b2ebb3f4fbb293634b94fdff5d65607c1138af70",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59736.00555419922,
+        "receipt_sha256": "f1422480e4b6046873b835475bcc77e0ea3a1495c9b6d4d16e88a5361066981d"
+      }
+    },
+    "ntsc-1": {
+      "cck_hz": 3579545,
+      "before": {
+        "groups": {
+          "0": {
+            "samples": 50,
+            "max_work_cck": 27819,
+            "max_entry_lateness_cck": 3887.9888916015625,
+            "minimum_deadline_headroom_cck": 31053.00555419922,
+            "max_work_ms": 7.771658129734366,
+            "max_entry_lateness_ms": 1.0861684631989714,
+            "minimum_deadline_headroom_ms": 8.675126462776475
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 41219,
+            "max_entry_lateness_cck": 766.822265625,
+            "minimum_deadline_headroom_cck": 17750.18328857422,
+            "max_work_ms": 11.515150668590561,
+            "max_entry_lateness_ms": 0.2142233902982083,
+            "minimum_deadline_headroom_ms": 4.958781992843845
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 62406,
+            "max_entry_lateness_cck": 349.99444580078125,
+            "minimum_deadline_headroom_cck": -3019.9888916015625,
+            "max_work_ms": 17.43405935670595,
+            "max_entry_lateness_ms": 0.09777623854450251,
+            "minimum_deadline_headroom_ms": -0.8436795435178389
+          }
+        },
+        "deadline_passed": false,
+        "executable_sha256": "ef05544f1ca599f9e816a6969ca6844535ce5fa5e97852a4b9b135d2fe02fa98",
+        "fixture_sha256": "2a1e721a030a8c6bd37e3a9b12333536a471991a3e479a334d589d0a3d976714",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59736.00555419922,
+        "receipt_sha256": "2e43d54bc5764bd12624437a6d1b62304ce25207d815123733e7b330f79b7c7f"
+      },
+      "after": {
+        "groups": {
+          "0": {
+            "samples": 52,
+            "max_work_cck": 27868,
+            "max_entry_lateness_cck": 1058.8389282226562,
+            "minimum_deadline_headroom_cck": 31010.00555419922,
+            "max_work_ms": 7.7853470203615265,
+            "max_entry_lateness_ms": 0.29580265878000034,
+            "minimum_deadline_headroom_ms": 8.663113762838355
+          },
+          "16": {
+            "samples": 2,
+            "max_work_cck": 26646,
+            "max_entry_lateness_cck": 417.822265625,
+            "minimum_deadline_headroom_cck": 32672.18328857422,
+            "max_work_ms": 7.443962850027028,
+            "max_entry_lateness_ms": 0.1167249652190432,
+            "minimum_deadline_headroom_ms": 9.127468236486543
+          },
+          "31": {
+            "samples": 2,
+            "max_work_cck": 33592,
+            "max_entry_lateness_cck": 650.9833374023438,
+            "minimum_deadline_headroom_cck": 25710.011108398438,
+            "max_work_ms": 9.38443293770577,
+            "max_entry_lateness_ms": 0.18186203481234173,
+            "minimum_deadline_headroom_ms": 7.18248020583578
+          }
+        },
+        "deadline_passed": true,
+        "executable_sha256": "aea137705deec698438eaf575a016748b3237c389e6437a1ece78df7a061a272",
+        "fixture_sha256": "38382f3151b7b1726dada5521e664efa6277de7aa5a91ba791b1cab4ccf85e67",
+        "probe_sha256": "ad12d20535d40eead4ce4a6edbeabcdfa93853b4e6fd8bc8f1d773ac10dd99bc",
+        "scope": "one-time serve initialization with points4/3, games5/2, status6; no later state injection; callback entry/completion counter bus writes; changed masks derived from cache bytes, bits pointA/pointB/WINA/WINB/status/mode; observed extrema, not bounds",
+        "simulation_interval_cck": 59736.00555419922,
+        "receipt_sha256": "044f61e5e3318c6ad51c32557a23fabd0169cb0f48fd11fa583e1c3016cb695d"
+      }
+    }
+  },
+  "limitations": [
+    "ISR interval excludes interrupt-entry and post-RTE-read tail. Display margin is COPJMP strobe to physical field restart, not simulation deadline headroom.",
+    "HUD cost fixture initializes points4/3, games5/2 and status6 once, then native serve ticks and status expiry; it does not claim every possible gameplay transition.",
+    "Before HUD-cost deadline_passed is false in all four supplemental fixtures; retain misses, not a prior release-acceptance reclassification.",
+    "Initial draft probe wrongly used PAL cadence for NTSC and stopped at old baseline miss; corrected probe reads actual initialized native interval and reports misses. Original local attempts retained, excluded from comparison."
+  ],
+  "all_callback_deadlines": {
+    "cold-one": {
+      "before_minimum_deadline_headroom_cck": null,
+      "before_reason": "Accepted committed baseline summary lacks an all-callback minimum; raw baseline capture was not available. Named-profile minima remain separately comparable.",
+      "after_minimum_deadline_headroom_cck": 4739.137237548828,
+      "after_minimum_deadline_headroom_ms": 1.3361368852330922,
+      "after_callback_at_minimum": 1,
+      "after_samples": 11856,
+      "after_maximum_update_work_cck": 53606,
+      "after_maximum_entry_lateness_cck": 2568.8406677246094,
+      "measurement_sha256": "c4af6d5460132113b8944e216b74ce13813d56d99e1386a4aed28d8d91d72ae3",
+      "measurement_path": "build/tests/ct10-adf-one-cadence-enhanced/measurement.json",
+      "scope": "All completed PAL callbacks, including transition/serve/input callbacks. Pending final callback excluded by the existing raw observer; no exemption or unrelated-maxima subtraction.",
+      "minimum_boundary": {
+        "clock_origin_cck": 70989253,
+        "callback": 1,
+        "entry_cck": 70990123,
+        "completion_cck": 71043705,
+        "interval_numerator": 3879150370,
+        "interval_denominator": 65536,
+        "formula": "origin + callback * interval - completion_cck"
+      },
+      "after_maximum_update_work_ms": 15.11350068158206,
+      "after_maximum_entry_lateness_ms": 0.7242505537165914
+    },
+    "two": {
+      "before_minimum_deadline_headroom_cck": null,
+      "before_reason": "Accepted committed baseline summary lacks an all-callback minimum; raw baseline capture was not available. Named-profile minima remain separately comparable.",
+      "after_minimum_deadline_headroom_cck": 4757.137237548828,
+      "after_minimum_deadline_headroom_ms": 1.3412117464849758,
+      "after_callback_at_minimum": 1,
+      "after_samples": 23795,
+      "after_maximum_update_work_cck": 53570,
+      "after_maximum_entry_lateness_cck": 2435.0459899902344,
+      "measurement_sha256": "82237b5c50daf15420701845cfeb4a766a8ba3fad926937fb06c1a94cbf474be",
+      "measurement_path": "build/tests/ct09-ordinary-two-cadence-enhanced/measurement.json",
+      "scope": "All completed PAL callbacks, including transition/serve/input callbacks. Pending final callback excluded by the existing raw observer; no exemption or unrelated-maxima subtraction.",
+      "minimum_boundary": {
+        "clock_origin_cck": 19548388,
+        "callback": 1,
+        "entry_cck": 19549252,
+        "completion_cck": 19602822,
+        "interval_numerator": 3879150370,
+        "interval_denominator": 65536,
+        "formula": "origin + callback * interval - completion_cck"
+      },
+      "after_maximum_update_work_ms": 15.103350959078293,
+      "after_maximum_entry_lateness_ms": 0.6865289189531222
+    },
+    "setup": {
+      "before_minimum_deadline_headroom_cck": null,
+      "before_reason": "Accepted committed baseline summary lacks an all-callback minimum; raw baseline capture was not available. Named-profile minima remain separately comparable.",
+      "after_minimum_deadline_headroom_cck": 2106.279296875,
+      "after_minimum_deadline_headroom_ms": 0.5938375105197645,
+      "after_callback_at_minimum": 1984,
+      "after_samples": 2133,
+      "after_maximum_update_work_cck": 56608,
+      "after_maximum_entry_lateness_cck": 1242.14013671875,
+      "measurement_sha256": "49a9dde0e3462e8ac89b3097e17860f5a187760d05e9c17d087dd4a5fa1454ee",
+      "measurement_path": "build/tests/native-setup/measurement.json",
+      "scope": "All completed PAL callbacks, including transition/serve/input callbacks. Pending final callback excluded by the existing raw observer; no exemption or unrelated-maxima subtraction.",
+      "minimum_boundary": {
+        "clock_origin_cck": 19548388,
+        "callback": 1984,
+        "entry_cck": 136924890,
+        "completion_cck": 136981498,
+        "interval_numerator": 3879150370,
+        "interval_denominator": 65536,
+        "formula": "origin + callback * interval - completion_cck"
+      },
+      "after_maximum_update_work_ms": 15.959874763701773,
+      "after_maximum_entry_lateness_ms": 0.350204936069083
+    }
+  },
+  "acceptance": {
+    "gate_commit": "21b4be65a151258cbc43bdd30beec16e64fe8ebe",
+    "gate_receipt_sha256": "b317d442f234e4508955fe846e05d8cd3bcfc37f274f6d4b4a13c36bf317c811",
+    "gate_command": "RUST_LOG=info python scripts/native_acceptance.py",
+    "completed_utc": "2026-10-03T10:58:35.944509+00:00",
+    "command_count": 37,
+    "artifacts": {
+      "build/amiga/interfaces/enhanced/baseline-rally": "21578578dcce14bc38fb83db06ee242cd848f41f0b03f07a9217d11a87cfbc05",
+      "build/amiga/interfaces/enhanced/delivery/baseline-rally.adf": "32bae3ba6f975ddbea92f8d18d59d56d9ff1218b700fcc7393f960f393fd96ab"
+    },
+    "source_path": "build/acceptance/report.json",
+    "head_unchanged": true
+  }
+}
