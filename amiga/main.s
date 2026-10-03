@@ -3,6 +3,9 @@
 ; Retain fractional phase instead of rounding every update down.
 SIM_INTERVAL_WHOLE equ 11838
 SIM_INTERVAL_FRACTION equ 14906
+; NTSC interval rounded to16 fractional bits:PAL interval*715909/709379.
+NTSC_INTERVAL_WHOLE equ 11947
+NTSC_INTERVAL_FRACTION equ 13180
 
 start:
         ; DOS enters on its task stack. Finish all OS scheduling calls there,
@@ -11,7 +14,10 @@ start:
         move.l  4.w,a6
         jsr     -132(a6) ; Exec Forbid
         jsr     -120(a6) ; Exec Disable
+        jsr     -150(a6) ; Exec SuperState before owning the interrupt vector
         lea     game_stack_top,sp
+        bsr     measure_presentation_field
+        bsr     select_simulation_cadence
         bsr     init_square_score_banks
         bsr     game_begin_title
         lea     pointer_sources(pc),a0
@@ -42,17 +48,27 @@ ui_init_overlay:
 copy_back_copper:
         move.w  (a0)+,(a1)+
         dbra    d7,copy_back_copper
+        lea     copperlist,a0
+        lea     copperlist_third,a1
+        move.w  #(copperlist_end-copperlist)/2-1,d7
+copy_third_copper:
+        move.w  (a0)+,(a1)+
+        dbra    d7,copy_third_copper
         move.l  #copperlist,front_copper
         move.l  #copperlist_back,back_copper
-        move.l  #copperlist_back,d0
-        sub.l   #copperlist,d0
-        move.l  d0,copper_write_delta
-        move.l  #sprite_back,d0
-        sub.l   #sprite0,d0
-        move.l  d0,sprite_write_delta
-        bsr     patch_back_sprite_pointers
+        move.l  #copperlist_third,spare_copper
+        bsr     select_build_bank
+        ; Initialize the spare's pointer/cache descriptors during startup too.
+        ; First completed update must not pay a236-descriptor bank setup.
+        move.l  back_copper,-(sp)
+        move.l  spare_copper,back_copper
+        bsr     select_build_bank
+        move.l  (sp)+,back_copper
+        bsr     select_build_bank
         lea     $dff000,a0
         move.w  #$7fff,$09a(a0)
+        move.w  #$7fff,$09c(a0)
+        move.l  #presentation_interrupt,$6c.w
         move.w  #$7fff,$096(a0)
         bsr     prepare_title_display
         move.l  #title_copper,presentation_copper
@@ -79,6 +95,9 @@ copy_back_copper:
         move.l  d0,last_timer_count
         move.w  d0,simulation_timer_origin
         st      simulation_timer_running
+        ; Copper requests level3 at253, after every outgoing consumer retires.
+        move.w  #$c010,$dff09a
+        andi.w  #$f8ff,sr
 main_loop:
         tst.b   ui_paused
         bne.s   ui_skip_round_poll
@@ -92,8 +111,9 @@ ui_skip_round_poll:
         bcs.s   main_loop
         sub.l   simulation_interval,d0
         move.l  d0,simulation_phase
-        move.l  #SIM_INTERVAL_WHOLE,simulation_interval
-        addi.w  #SIM_INTERVAL_FRACTION,simulation_fraction
+        move.l  simulation_interval_whole,simulation_interval
+        move.w  simulation_interval_fraction,d1
+        add.w   d1,simulation_fraction
         bcc.s   simulation_interval_ready
         addq.l  #1,simulation_interval
 simulation_interval_ready:
@@ -146,20 +166,78 @@ ui_construction_sample:
         movem.l (sp)+,d0-d7/a0-a6
 .done:  rts
 
-; Simulation prepares an inactive Copper list and sprite bank. The display
-; commit changes only COP1LC; preparation of the next back list can run later.
+; Read a coherent nine-bit physical beam line. A68000 longword custom read
+; is two bus transfers, not an atomic beam snapshot. Retry a changed high bit.
+read_presentation_line:
+        move.w  $dff004,d0
+        andi.w  #1,d0
+        move.w  $dff006,d1
+        move.w  $dff004,d2
+        andi.w  #1,d2
+        cmp.w   d0,d2
+        bne.s   read_presentation_line
+        lsl.w   #8,d0
+        lsr.w   #8,d1
+        or.w    d1,d0
+        rts
+
+; Observe one physical field before the simulation clock starts. Reserve four
+; lines before its measured last line for shorter alternating fields and the
+; complete CPU pointer/strobe sequence. PAL and NTSC use the same safe layout.
+measure_presentation_field:
+        bsr     read_presentation_line
+        move.w  d0,d3
+.wait_wrap:
+        bsr     read_presentation_line
+        cmp.w   d3,d0
+        bcs.s   .start_field
+        move.w  d0,d3
+        bra.s   .wait_wrap
+.start_field:
+        move.w  d0,d3
+.next_line:
+        bsr     read_presentation_line
+        cmp.w   d3,d0
+        bcs.s   .measured
+        move.w  d0,d3
+        bra.s   .next_line
+.measured:
+        move.w  d3,presentation_last_line
+        subq.w  #4,d3
+        move.w  d3,presentation_last_safe_line
+        rts
+
+ ; Select once from the measured physical field; Kick1.3 has no EClockFrequency.
+select_simulation_cadence:
+        cmpi.w  #300,presentation_last_line
+        bcc.s   .selected
+        move.l  #NTSC_INTERVAL_WHOLE,simulation_interval_whole
+        move.w  #NTSC_INTERVAL_FRACTION,simulation_interval_fraction
+.selected:
+        move.l  simulation_interval_whole,simulation_interval
+        move.l  simulation_interval_whole,simulation_phase
+        rts
+
+; Copper-driven publication can interrupt a producer that spans blank.
+; Registers and its building bank remain intact; only completed ready scenes commit.
+presentation_interrupt:
+        movem.l d0-d7/a0-a6,-(sp)
+        move.w  #$0010,$dff09c
+        bsr     poll_presentation
+        move.w  #$0010,$dff09c
+        movem.l (sp)+,d0-d7/a0-a6
+        rte
+
+; Install at most one latest completed scene per guarded bottom interval.
+; The displayed bank remains owned until COPJMP, after all old consumers retire.
 poll_presentation:
-        move.w  $dff006,d0
-        andi.w  #$ff00,d0
-        ; The UI footer is visible through251; late blank starts at252.
-        cmpi.w  #$fc00,d0
-        bcc.s   presentation_blank
-        ; Sprite POS/CTL DMA starts before the visible bitplane window.
-        ; Publish with one line of margin before its line25 header fetch;
-        ; changing banks later can mix old controls with new sprite pixels.
-        cmpi.w  #$1800,d0
-        bcs.s   presentation_blank
-        bra     presentation_not_blank
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
+        bsr     read_presentation_line
+        cmpi.w  #253,d0
+        bcs     presentation_not_blank
+        cmp.w   presentation_last_safe_line,d0
+        bhi     presentation_poll_done
 presentation_blank:
         tst.b   blank_seen
         bne     presentation_poll_done
@@ -167,10 +245,10 @@ presentation_blank:
         addq.w  #1,presentation_frames
         tst.b   display_ready
         beq     presentation_log
-        move.l  back_copper,d0
-        move.l  front_copper,back_copper
-        move.l  d0,front_copper
-        tst.b   game_title_display
+        tst.b   ready_completed
+        beq     presentation_log
+        move.l  ready_copper,d0
+        tst.b   ready_title_display
         beq.s   presentation_court
         move.l  #title_copper,d0
         move.w  #$0020,$dff096
@@ -180,44 +258,94 @@ presentation_court:
 presentation_selected:
         move.l  d0,presentation_copper
         move.l  d0,$dff080
-        ; COP1LC alone takes effect at the next automatic Copper restart.
-        ; Reload in blank so an early-blank publication drives this frame too.
         move.w  #0,$dff088
-        move.w  game_accept_count,game_presented_generation
-        move.w  $dff006,d0
-        andi.w  #$ff00,d0
-        cmpi.w  #$2c00,d0
-        bcs.s   presentation_commit_in_blank
-        ; The UI footer is visible through251; late blank starts at252.
-        cmpi.w  #$fc00,d0
-        bcc.s   presentation_commit_in_blank
-        addq.w  #1,missed_presentation_deadlines
-presentation_commit_in_blank:
+        ; Retirement follows the strobe, never the future COP1LC write alone.
+        move.l  front_copper,spare_copper
+        move.l  ready_copper,front_copper
+        clr.l   ready_copper
+        move.w  ready_game_generation,game_presented_generation
         clr.b   display_ready
-        move.l  back_copper,d0
-        sub.l   #copperlist,d0
-        move.l  d0,copper_write_delta
-        tst.l   d0
-        beq.s   write_original_sprites
-        move.l  #sprite_back,d0
-        sub.l   #sprite0,d0
-        move.l  d0,sprite_write_delta
-        bra.s   back_list_prepared
-write_original_sprites:
-        clr.l   sprite_write_delta
-back_list_prepared:
-        bsr     patch_back_sprite_pointers
-        bsr     patch_score_pointers
+        clr.b   ready_completed
+        bsr     read_presentation_line
+        cmpi.w  #253,d0
+        bcs.s   presentation_missed
+        cmp.w   presentation_last_line,d0
+        bls.s   presentation_log
+presentation_missed:
+        addq.w  #1,missed_presentation_deadlines
 presentation_log:
         subq.w  #1,log_timer
         bne.s   presentation_poll_done
         move.w  #50,log_timer
 presentation_poll_done:
+        move.w  (sp)+,sr
         rts
 presentation_not_blank:
-        cmpi.w  #$6000,d0
-        bcs.s   presentation_poll_done
+        ; Any visible-line observation starts the next bottom interval; there
+        ; is no requirement to poll exactly at field wrap or line0.
         clr.b   blank_seen
+        bra     presentation_poll_done
+
+; Freeze the building bank as latest complete. Its superseded ready bank (or
+; the spare when no scene waits) becomes writable; the displayed bank is absent
+; from this rotation. This does not wait for the PAL display or alter game ticks.
+complete_scene:
+        movem.l d0-d2/a0,-(sp)
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
+        clr.b   ready_completed
+        move.l  ready_copper,d0
+        bne.s   .supersede
+        move.l  spare_copper,d0
+        clr.l   spare_copper
+.supersede:
+        move.l  back_copper,ready_copper
+        move.w  simulation_started_updates,ready_generation
+        move.w  game_accept_count,ready_game_generation
+        move.b  game_title_display,ready_title_display
+        move.b  #1,display_ready
+        move.l  d0,back_copper
+        move.w  simulation_started_updates,d1
+        cmp.w   simulation_updates,d1
+        bne.s   .producer_active
+        st      ready_completed
+.producer_active:
+        move.w  (sp)+,sr
+        bsr     select_build_bank
+        movem.l (sp)+,d0-d2/a0
+        rts
+
+; Explicit title construction invalidates a waiting court scene, preserving
+; ownership while the complete menu bitmap is built.
+discard_ready_scene:
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
+        tst.l   ready_copper
+        beq.s   .none
+        move.l  ready_copper,spare_copper
+        clr.l   ready_copper
+.none:  clr.b   display_ready
+        clr.b   ready_completed
+        move.w  (sp)+,sr
+        rts
+
+select_build_bank:
+        move.l  back_copper,d0
+        sub.l   #copperlist,d0
+        move.l  d0,copper_write_delta
+        clr.w   build_bank_index
+        clr.l   sprite_write_delta
+        tst.l   d0
+        beq.s   .patch
+        move.w  #1,build_bank_index
+        move.l  #sprite_back-sprite0,sprite_write_delta
+        cmpi.l  #copperlist_back-copperlist,d0
+        beq.s   .patch
+        move.w  #2,build_bank_index
+        move.l  #sprite_third-sprite0,sprite_write_delta
+.patch:
+        bsr     patch_back_sprite_pointers
+        bsr     patch_score_pointers
         rts
 
 patch_back_sprite_pointers:
@@ -251,12 +379,12 @@ simulation_update:
         bne.s   simulation_menu
         bsr     game_render_sprites
         bsr     game_tick_dispatch
-        move.b  #1,display_ready
-        addq.w  #1,simulation_updates
+        bsr     complete_scene
+        bsr     complete_update
         rts
 
 ui_frozen_update:
-        addq.w  #1,simulation_updates
+        bsr     complete_update
         rts
 simulation_menu:
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
@@ -266,9 +394,25 @@ simulation_service_tick:
         bsr     game_tick_dispatch
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
         bcs.s   simulation_service_observed
-        move.b  #1,display_ready
+        bsr     complete_scene
 simulation_service_observed:
+        bsr     complete_update
+        rts
+
+ ; Completion validity belongs to a scene, not the latest global tick.
+; Keep it valid across frozen ticks until consumption or supersession.
+complete_update:
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         addq.w  #1,simulation_updates
+        tst.b   display_ready
+        beq.s   .done
+        move.w  ready_generation,d0
+        cmp.w   simulation_updates,d0
+        bne.s   .done
+        st      ready_completed
+.done:
+        move.w  (sp)+,sr
         rts
 
 prepare_title_display:
@@ -501,6 +645,9 @@ hex_byte:
 dos_entry_sp: dc.l 0
 game_stack_bottom: dcb.b 4096,0
 game_stack_top:
+simulation_interval_whole: dc.l SIM_INTERVAL_WHOLE
+simulation_interval_fraction: dc.w SIM_INTERVAL_FRACTION
+        even
 simulation_phase:   dc.l SIM_INTERVAL_WHOLE
 simulation_interval: dc.l SIM_INTERVAL_WHOLE
 simulation_fraction: dc.w 0
@@ -510,9 +657,19 @@ simulation_timer_running: dc.b 0
         even
 blank_seen:        dc.b 0
 display_ready:     dc.b 0
+ready_completed:   dc.b 0
         even
 front_copper:      dc.l 0
 back_copper:       dc.l 0
+ready_copper:      dc.l 0
+spare_copper:      dc.l 0
+ready_generation: dc.w 0
+ready_game_generation: dc.w 0
+build_bank_index:  dc.w 0
+presentation_last_line: dc.w 0
+presentation_last_safe_line: dc.w 0
+ready_title_display: dc.b 0
+ui_construction_complete: dc.b 0
 copper_write_delta: dc.l 0
 sprite_write_delta: dc.l 0
 simulation_updates: dc.w 0
@@ -584,6 +741,8 @@ paula_square: incbin "assets/native/audio/battle-hymn/square.s8"
         even
 copperlist_back: dcb.b copperlist_end-copperlist,0
 sprite_back: dcb.b 8*72,0
+copperlist_third: dcb.b copperlist_end-copperlist,0
+sprite_third: dcb.b 8*72,0
 
         even
         include "assets/native/title/display.i"

@@ -120,6 +120,12 @@ def cold_timing(capture, report):
 
 def measurement_status(path):
     classification=status(path,subject='maintained-native',interface_flavor='enhanced')
+    if classification.get('status')=='stale':
+        import os
+        from native_composite import verified_status,PLAN_ENV
+        composite=verified_status(path,subject='maintained-native',interface_flavor='enhanced')
+        if os.environ.get(PLAN_ENV):return composite
+        if composite.get('status')=='passed':return composite
     # Build's static-report hook broadens the Python closure into this reporter.
     # Reporter-only edits do not change the measured executable/observer. Keep
     # every actual observer, product, tool, config and raw-artifact hash strict.
@@ -148,8 +154,11 @@ def read_case(name,relative,sha):
     for profile,data in metrics['profiles'].items():
         if data.get('ui_construction_render'):
             data['ui_construction_render']['scope']='Explicit redraws grouped by UI page: title means menu page; help includes help/controls/credits. Page redraws may occur during pause/input transitions; this is not an exclusive callback-profile render distribution.'
+    from native_composite import normalized_metric_dependencies
+    recorded,normalized,current,proofs=normalized_metric_dependencies(meta,name)
     result.update(metrics=metrics, provenance={'startup':meta['startup'],'command':meta['command'],'commit':meta.get('commit'),
-                  'target':meta['target'],'tools':meta['tools'], 'dependencies':{p:sha for p,sha in meta['files'].items() if not p.startswith(('build/','.tools/','/')) and p!='scripts/native_metrics.py'},
+                  'target':meta['target'],'tools':meta['tools'], 'dependencies':recorded,
+                  'verified_dependencies':normalized,'verified_input_fingerprints':current,'dependency_equivalences':proofs,
                   'external_inputs_sha256':identity({p:sha for p,sha in meta['files'].items() if p.startswith('/') or p.startswith('.tools/')}),
                   'tool_sha256':{tool:digest(ROOT/info['path']) for tool,info in meta['tools'].items() if info.get('path') and (ROOT/info['path']).is_file()},
                   'kickstart_sha256':next((sha for p,sha in meta['files'].items() if p.endswith('.rom')),None),
@@ -310,14 +319,20 @@ def cold_loading_issues(cold):
 
 def generate():
     static=static_metrics();runtime={name:read_case(name,path,static['release']['executable_sha256'] if name=='cold-one' else static['executable_sha256']) for name,path in CASES.items()}
-    measurement_inputs={}
+    measurement_inputs={};normalized_inputs={}
     for case in runtime.values():
         if 'provenance' in case:
             dependencies=case['provenance'].pop('dependencies')
+            case['provenance']['recorded_dependencies']=dependencies
             case['provenance']['source_dependency_identity']=identity(dependencies)
-            for path,sha in dependencies.items():
-                if path in measurement_inputs and measurement_inputs[path]!=sha:raise ValueError('Cases disagree on dependency '+path)
-                measurement_inputs[path]=sha
+            normalized=case['provenance'].pop('verified_dependencies')
+            current=case['provenance'].pop('verified_input_fingerprints')
+            case['provenance']['verified_dependency_identity']=identity(normalized)
+            for path,sha in normalized.items():
+                if path in normalized_inputs and normalized_inputs[path]!=sha:raise ValueError('Cases disagree on verified dependency '+path)
+                normalized_inputs[path]=sha
+                if path in measurement_inputs and measurement_inputs[path]!=current[path]:raise ValueError('Cases disagree on current dependency '+path)
+                measurement_inputs[path]=current[path]
     coverage={p:'measured' if any(c.get('metrics',{}).get('profiles',{}).get(p,{}).get('callbacks',0) for c in runtime.values()) else 'unmeasured' for p in PROFILES}
     if not static.get('features',{}).get('celebration'):
         coverage['celebration']='unavailable in this product; remeasure when implemented'

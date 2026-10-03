@@ -21,7 +21,7 @@ def run():
         segments=s.inspect('segments.list')['current'];located={n:(int(h),int(o,16)) for n,h,o in re.findall(r'^([A-Za-z_][\w]*)\s+(\d\d):([0-9A-Fa-f]{8})\s*$',listing,re.M)}
         def address(n):
             h,offset=located[n];return segments[h]['start']+offset
-        title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back')}
+        title=address('title_copper');courts={address(n) for n in ('copperlist','copperlist_back','copperlist_third')}
         # Let ordinary startup finish without a callback stop, then watch
         # every title bitmap/control byte through both result/idle windows.
         # This avoids startup's bulk branding writes filling the4096 queue.
@@ -37,8 +37,8 @@ def run():
         expected_digest=f'{expected_digest:016x}'
         planes=[(address(f'title_plane{i}'),192*32) for i in range(4)]
         controls=[(title,address('title_plane0')-title)]
-        state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,pointer=bytearray(4))
-        fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','display_ready')}
+        state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,ready_generation=0,ready=None,pointer=bytearray(4))
+        fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','ready_generation','display_ready')}
         def event(message):
             if message.get('id') in quiet_requests:
                 window=quiet_requests.pop(message['id'])
@@ -74,6 +74,8 @@ def run():
             if message.get('method')!='event.mmio':return
             r=message['params'];a=r['addr'];v=r['value'];size=r['size'];p=r['position'];n=fields.get(a)
             assert not r.get('dropped_events',0) and not r.get('dropped_notifications',0),{'label':'Attract telemetry dropped','position':p,'dropped_events':r.get('dropped_events',0),'dropped_notifications':r.get('dropped_notifications',0)}
+            if n=='ready_generation':state['ready_generation']=v
+            if n=='display_ready':state['ready']=state['ready_generation'] if v else None
             if n=='simulation_started_updates':state['started']=v
             elif n=='simulation_updates':
                 state['completed']=v
@@ -114,8 +116,8 @@ def run():
             if 0xdff080<=a and a+size<=0xdff084:state['pointer'][a-0xdff080:a-0xdff080+size]=v.to_bytes(size,'big')
             if a==0xdff088:
                 pointer=int.from_bytes(state['pointer'],'big')
-                check('publication has a complete native callback',state['started'],state['completed'])
-                if state['started']:assert p['vpos']<25 or p['vpos']>=252,{'label':'retained sprite/header blank window','position':p}
+                check('publication has a complete native ready scene',state['ready'] is not None and state['ready']<=state['completed'],True)
+                if state['started']:assert p['vpos']>=253,{'label':'retained sprite/header blank window','position':p}
                 assert pointer==title or pointer in courts,'Unknown published Copper bank'
                 if windows and windows[-1]['next_entry'] is None:
                     check('every returned-title publication selects actual title bank',pointer,title)
@@ -129,7 +131,7 @@ def run():
                         quiet_requests[request]=windows[-1]
                 publications.append(dict(pointer=pointer,position=p,lifecycle=state['life'],demo=state['demo']))
         def read(n,length=1):return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':length})['data']),'big')
-        state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2))
+        state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2),ready_generation=read('ready_generation',2),ready=read('ready_generation',2) if read('display_ready') else None)
         regs=s.inspect('custom_dump')['regs'];state['pointer']=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big'))
         s.notification_handler=event
         watches=[{'addr':a,'len':1 if n in ('ui_demo','ui_dirty','game_celebration_first_play','display_ready') else 2,'access':'write'} for a,n in fields.items()]

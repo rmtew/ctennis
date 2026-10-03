@@ -36,17 +36,22 @@ def run(baseline=None, control=None, fault_controls=None):
     with NativeControlSession(directory) as s:
         s.inspect('session_launch',{'binary':config['tools']['copperline'],'run':str(exe),'args':['--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]})
         stop=s.inspect('run_until',{'seconds':30});assert stop['reason']=='loadseg',stop
-        base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16); clock={'start':None,'origin':None,'started':0,'completed':0,'lifecycle':0,'cop':bytearray(4)}
+        base=int(re.search(r'first hunk \$([0-9a-fA-F]+)',stop['detail'])[1],16); clock={'start':None,'origin':None,'started':0,'completed':0,'lifecycle':0,'ready_generation':0,'ready':None,'cop':bytearray(4)}
         observer=SetupObserver(base,symbols,listing)
         metrics=MetricsObserver(base,symbols,listing)
         accounting_pc=None if baseline else base+int(re.search(r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*add.l\s+d1,simulation_phase',listing,re.M)[1],16)
+        sample_pc=None if baseline else base+int(re.search(r'^00:([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]+\s+\d+:\s*move.b\s+\$bfd400,d0',listing,re.M)[1],16)
+        sample_position=None
         accounting={'phase':11838,'position':None,'samples':[],'bytes':bytearray(4),'seen':set(),'count':0,'maximum_error_cck':0,'maximum_elapsed_cck':0}
         def event(message):
+            nonlocal sample_position
             metrics.observe(message)
             if message.get('method')!='event.mmio':return
             r=message['params'];a=r['addr'];v=r['value'];size=r['size'];p=r['position']
             if r.get('dropped_events',0) or r.get('dropped_notifications',0):raise AssertionError('Setup telemetry dropped')
             observer.observe(r)
+            if a==0xbfd400 and r.get('access')=='read' and r['pc']==sample_pc:
+                sample_position=p
             phase_address=base+symbols['simulation_phase']
             if phase_address<=a and a+size<=phase_address+4:
                 offset=a-phase_address
@@ -56,15 +61,18 @@ def run(baseline=None, control=None, fault_controls=None):
                 accounting['seen'].clear()
                 v=int.from_bytes(accounting['bytes'],'big')
                 if r['pc']==accounting_pc:
+                    assert sample_position is not None,'Elapsed accounting lacks actual CIA sample'
                     previous=accounting['position'] if accounting['position'] is not None else clock['start']+(65535-clock['origin'])*5
                     elapsed=((v-accounting['phase'])&0xffffffff)*5
-                    error=elapsed-(p['cck']-previous)
+                    # An IRQ may delay the phase store after the timer sample.
+                    # Compare the actual CIA read boundaries, keeping tolerance.
+                    error=elapsed-(sample_position['cck']-previous)
                     accounting['count']+=1
                     accounting['maximum_error_cck']=max(accounting['maximum_error_cck'],abs(error))
                     accounting['maximum_elapsed_cck']=max(accounting['maximum_elapsed_cck'],elapsed)
-                    if len(accounting['samples'])<8 or elapsed>327680: accounting['samples'].append({'cck':p['cck'],'elapsed_cck':elapsed,'error_cck':error})
+                    if len(accounting['samples'])<8 or elapsed>327680: accounting['samples'].append({'cck':sample_position['cck'],'phase_store_cck':p['cck'],'sample_pc':sample_pc,'elapsed_cck':elapsed,'error_cck':error})
                     assert abs(error)<=(200 if accounting['position'] is None else 100),{'field':'elapsed accounting lost time','error_cck':error}
-                    accounting['position']=p['cck']
+                    accounting['position']=sample_position['cck']
                 accounting['phase']=v
             if a==(0xbfdf00 if baseline else 0xbfde00) and v&1 and clock['start'] is None:clock['start']=p['cck']
             if a==base+symbols['simulation_timer_origin']:clock['origin']=v
@@ -72,17 +80,19 @@ def run(baseline=None, control=None, fault_controls=None):
             if a==base+symbols['simulation_started_updates']:
                 assert v==clock['started']+1 and clock['completed']==clock['started'],'Setup callback sequence'
                 clock['started']=v;callbacks.append({'callback':v,'entry':p})
+            if a==base+symbols['ready_generation']:clock['ready_generation']=v
+            if a==base+symbols['display_ready']:clock['ready']=clock['ready_generation'] if v else None
             if a==base+symbols['simulation_updates']:
                 assert v==clock['completed']+1 and v==clock['started'],'Setup completion sequence'
                 clock['completed']=v;callbacks[-1].update(completion=p,lifecycle=clock['lifecycle'])
             if 0xdff080<=a and a+size<=0xdff084:clock['cop'][a-0xdff080:a-0xdff080+size]=v.to_bytes(size,'big')
             if a==0xdff088 and clock['start'] is not None:
                 publications.append({'position':p,'callback':clock['completed'],'pointer':int.from_bytes(clock['cop'],'big')})
-                assert clock['completed']==clock['started'],'Title publication of unfinished update'
+                assert clock['ready'] is not None and clock['ready']<=clock['completed'],'Title publication of unfinished ready scene'
                 assert p['vpos']<25 or p['vpos']>=252,'Title publication outside retained blank window'
         s.notification_handler=event
-        watches=observer.watches()+[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in [('game_lifecycle',2),('simulation_timer_origin',2),('simulation_started_updates',2),('simulation_updates',2),('display_ready',1),('simulation_phase',4)]]+[{'addr':0xbfdf00 if baseline else 0xbfde00,'len':1,'access':'write'},{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
-        watches+=metrics.watches()
+        watches=observer.watches()+[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in [('game_lifecycle',2),('simulation_timer_origin',2),('simulation_started_updates',2),('simulation_updates',2),('ready_generation',2),('display_ready',1),('simulation_phase',4)]]+[{'addr':0xbfdf00 if baseline else 0xbfde00,'len':1,'access':'write'},{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
+        watches+=metrics.watches()+[{'addr':0xbfd400,'len':1,'access':'read'}]
         s.inspect('events.subscribe',{'events':['mmio','frame'],'mmio':watches})
         time=stop['seconds']
         def advance(t):

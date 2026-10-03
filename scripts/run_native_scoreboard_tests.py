@@ -131,7 +131,7 @@ def run_case(variant, two, exchanged, mutant=False):
             check('mode/end ownership remains initialized', read('game_mode')[0], mode)
             check('prepared scoreboard fields retain native selections', list(read('prepared_field_values', 4)), points+games)
             banks = sorted({row['actual_pointer'] for row in publications if row['fields'][:4] == points+games})
-            check('both physical Copper banks published requested scoreboard', len(banks), 2)
+            check('all three physical Copper banks published requested scoreboard', len(banks), 3)
             regs = session.inspect('custom_dump')['regs']
             actual_pointer = regs['COP1LCH']*65536+regs['COP1LCL']
             check('scanout pointer is a published selected bank', actual_pointer in banks, True)
@@ -196,7 +196,7 @@ def run(self_test):
             raise AssertionError('Compiled wrong tally-pointer escaped independent raster assertion')
     report = {'passed': True, 'cases': reports, 'compiled_fault_controls': controls,
               'executable_sha256': reports[0]['executable_sha256'],
-              'scope': 'All native point/tally variants, modes and ends; stable two-bank scanout; compiled fixture starts'}
+              'scope': 'All native point/tally variants, modes and ends; stable three-bank scanout; compiled fixture starts'}
     atomic_json(ROOT/'build/tests/native-scoreboard/report.json', report)
 
 

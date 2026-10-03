@@ -28,6 +28,9 @@ def main():
         ['scripts/build_native_adf.py','--self-test'],
         ['scripts/run_enhanced_menu_tests.py','--adf'],
         ['scripts/run_native_inputs.py'],
+        ['scripts/run_native_video_clock_tests.py'],
+        ['scripts/run_sprite_dma_tests.py','--self-test'],
+        ['scripts/run_sprite_dma_tests.py','--ntsc','--self-test'],
         ['scripts/run_native_scoreboard_tests.py','--self-test'],
         *[['scripts/run_native_contracts.py','--case='+case,*(['--self-test'] if case in ('deuce','status-2','status-6','audio-hit') else [])]
           for case in ('deuce','advantage','return-deuce','advantage-game','match-award','status-2','status-3','status-4','status-5','status-6','audio-hit')],
@@ -38,7 +41,7 @@ def main():
         ['scripts/run_demo_match_tests.py'],
         ['scripts/run_demo_match_tests.py','--takeover'],
         ['scripts/run_attract_cycle_tests.py'],
-        ['scripts/run_enhanced_feedback_tests.py','--mode=one'],
+        ['scripts/run_enhanced_feedback_tests.py','--mode=one','--self-test'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=two'],
         ['scripts/run_ordinary_round_tests.py','--mode=one','--match','--cadence','--adf'],
         ['scripts/run_ordinary_round_tests.py','--mode=two','--match','--cadence'],

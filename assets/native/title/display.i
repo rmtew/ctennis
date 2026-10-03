@@ -21,6 +21,8 @@ title_pointer3: dc.w $00ec,0,$00ee,0
         dc.w $019a,$e33
         dc.w $019c,$ccc
         dc.w $019e,$fff
+        dc.w $fd01,$fffe ; retired bottom interval
+        dc.w $009c,$8010 ; Copper interrupt for latest completed scene
         dc.w $ffff,$fffe
 title_plane0: incbin "assets/native/title/plane0.bin"
 title_plane1: incbin "assets/native/title/plane1.bin"

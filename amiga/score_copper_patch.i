@@ -4,11 +4,11 @@ patch_score_pointers:
         movem.l d0-d4/d7/a0-a4,-(sp)
         ; Each inactive list retains its selected banks. Rewriting all SCORE_PATCH_COUNT
         ; descriptors on every PAL publication stalls a source update even
-        ; when no field changed. Cache values independently for the two lists.
+        ; when no field changed. Cache values independently for all three lists.
         lea     score_pointer_cache(pc),a3
-        tst.l   copper_write_delta
-        beq.s   score_cache_selected
-        addq.l  #6,a3
+        move.w  build_bank_index,d0
+        mulu.w  #6,d0
+        adda.w  d0,a3
 score_cache_selected:
         move.l  a3,a2
         lea     prepared_field_values(pc),a4
@@ -42,16 +42,14 @@ score_cache_copy:
         lea     prepared_field_values(pc),a4
         move.w  #SCORE_PATCH_COUNT-1,d7
 patch_next_score_pointer:
-        move.l  (a0)+,a1
-        move.l  (a0)+,a2
-        adda.l  copper_write_delta,a1
-        adda.l  copper_write_delta,a2
-        move.l  (a0)+,a3
-        move.w  (a0)+,d1
+        ; Most descriptors belong to unchanged fields. Inspect the mask before
+        ; fetching/relocating their pointers; each descriptor is fourteen bytes.
+        move.w  12(a0),d1
         cmpi.w  #$ffff,d1
         beq.s   use_fixed_pointer
         btst    d1,d3
         beq.s   skip_score_pointer
+        move.l  8(a0),a3
         moveq   #0,d2
         move.b  0(a4,d1.w),d2
         lsl.w   #2,d2
@@ -60,16 +58,22 @@ patch_next_score_pointer:
 use_fixed_pointer:
         tst.b   d4
         beq.s   skip_score_pointer
+        move.l  8(a0),a3
         move.l  (a3),d0
 write_score_pointer:
+        move.l  (a0),a1
+        move.l  4(a0),a2
+        adda.l  copper_write_delta,a1
+        adda.l  copper_write_delta,a2
         move.l  d0,d1
         swap    d1
         move.w  d1,(a1)
         move.w  d0,(a2)
 skip_score_pointer:
+        lea     14(a0),a0
         dbra    d7,patch_next_score_pointer
 score_patch_done:
         movem.l (sp)+,d0-d4/d7/a0-a4
         rts
-score_pointer_cache: dcb.b 12,$ff
+score_pointer_cache: dcb.b 18,$ff
         even

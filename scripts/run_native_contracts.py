@@ -125,7 +125,7 @@ def run(case, mutant=False):
                 if address==0xdff088 and association['started']:
                     prepared=association['ready']; pointer=int.from_bytes(association['cop'],'big')
                     check('status published bank belongs to completed prepared scene',bool(prepared and prepared['completed'] and prepared['bank']==pointer),True)
-                    check('status publication stays before sprite DMA or late blank',row['position']['vpos']<25 or row['position']['vpos']>=252,True)
+                    check('status publication stays in retired bottom window',row['position']['vpos']>=253,True)
                     association['published']=dict(prepared,position=row['position'],actual_pointer=pointer,visible_frame=row['position']['frame']+(1 if row['position']['vpos']>=252 else 0))
                     association['publications'].append(association['published'])
             session.notification_handler=observe

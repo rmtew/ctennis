@@ -138,6 +138,7 @@ class MetricsTests(unittest.TestCase):
         self.assertIsNone(result['stages'][1]['cck'])
         self.assertIsNone(result['disk_reads'])
 
+    @patch.dict("os.environ", {}, clear=True)
     def test_only_reporter_change_can_reuse_and_later_failures_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'receipt.json'
@@ -230,7 +231,7 @@ class MetricsTests(unittest.TestCase):
     def test_generate_rejects_missing_loading_milestones_despite_passing_profiles(self):
         from native_metrics_observation import PROFILES
         template={'classification':{'status':'passed'},'metrics':{'profiles':{p:{'callbacks':1} for p in PROFILES}},
-                  'provenance':{'dependencies':{}}}
+                  'provenance':{'dependencies':{},'verified_dependencies':{},'verified_input_fingerprints':{}}}
         static={'executable_sha256':'exe','product_inputs':{},'release':{'executable_sha256':'release'}}
         for missing in (None,'reset','loadseg_complete','executable_entry','assets_ready',
                         'first_complete_title_frame','input_responsive','title-proof'):

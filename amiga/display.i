@@ -58,6 +58,8 @@ ui_overlay_pointer1: dc.w $00e4,0,$00e6,0
 ui_overlay_pointer2: dc.w $00e8,0,$00ea,0
 ui_overlay_pointer3: dc.w $00ec,0,$00ee,0
         dc.w $019e,$fff
+        dc.w $fd01,$fffe ; retired bottom interval
+        dc.w $009c,$8010 ; Copper interrupt for latest completed scene
         dc.w $ffff,$fffe
 copperlist_end:
 
