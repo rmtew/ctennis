@@ -36,11 +36,11 @@ transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels
 Render expectations use immutable native assets and named fields, not expected
 images made by the runtime renderer. Complete side-panel crops verify six compact
 WIN words, solid grey remaining rows, Blue/Red earned rows, the stacked closed white frames
-and the selected square LED points/advantage. All0–6 variants, both modes/ends and both
+and the selected square LED points/advantage. All0–6 variants, both modes/ends and all three
 physical Copper banks are checked by one-time native fixtures, with a compiled
 wrong tally-pointer control. Ordinary awards also verify actual full-panel pixels. Cadence
 observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
-Court publication precedes sprite header DMA at line25 or uses blank>=252; the
+Court publication uses the measured retired bottom interval starting at253; the
 footer extends through251. Accepted clock is11838+14906/65536 PAL E-clock ticks,
 with retained origin, fractional quantization and deadline bounds.
 
@@ -99,3 +99,5 @@ every border. Score glyphs retain their selected shapes and fixed tens/units pos
 the cells; a single0 has a blank tens cell. The scoreboard fixtures also check the two-row gap below A/B and both
 HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
 white frame pixel while the full-width status strips are active.
+
+The finite gate also verifies three-bank sprite DMA in PAL and NTSC across six startup phases, both players/serve/pause/title transitions and alternating PAL field lengths, with native stale-bank/unknown-list/malformed-height controls. CPU MMIO reconstructs frozen banks independently of the pinned sidecar's unreliable data values; actual DMA addresses/registers/rows/header+4 progression and live whole-bank samples remain strict. Native startup selects the PAL or NTSC CIA interval once. Every observed clock-test callback is checked in CCK, applying the documented standard's E-clock frequency, independent of Copperline's PAL-derived host seconds.

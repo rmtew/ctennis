@@ -41,7 +41,7 @@ def acceptance(name, report):
     if name == 'scoreboard':
         return (len(report.get('cases', [])) == 28
                 and bool(report.get('compiled_fault_controls'))
-                and all(len({p['bank'] for p in row.get('plane_pointers', [])}) == 2
+                and all(len({p['bank'] for p in row.get('plane_pointers', [])}) == 3
                         and len(row.get('raster', [])) == 2
                         for row in report.get('cases', [])))
     if name == 'package':

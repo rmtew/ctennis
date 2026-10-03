@@ -196,7 +196,7 @@ def run(self_test):
             raise AssertionError('Compiled wrong tally-pointer escaped independent raster assertion')
     report = {'passed': True, 'cases': reports, 'compiled_fault_controls': controls,
               'executable_sha256': reports[0]['executable_sha256'],
-              'scope': 'All native point/tally variants, modes and ends; stable two-bank scanout; compiled fixture starts'}
+              'scope': 'All native point/tally variants, modes and ends; stable three-bank scanout; compiled fixture starts'}
     atomic_json(ROOT/'build/tests/native-scoreboard/report.json', report)
 
 
