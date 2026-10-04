@@ -55,7 +55,31 @@ ADF packaging strips symbols from a copy and checks its embedded release bytes.
 The finite native gate adds emulator and physical-input checks. Host tests and
 offline authoring checks do not certify the native gate.
 
-Validation commands and outcomes are recorded below after the clean-checkout run.
+The following checks ran in a separate clean clone of cleanup commit `d237b02`.
+The later audit-receipt commit changes only this report.
+
+| Command or check | Result |
+| --- | --- |
+| `python scripts/check_repository_audit.py` | All 283 baseline and 233 current files covered |
+| `python -m unittest discover -s tests/unit -q` | 67 tests passed |
+| `python scripts/native_assets.py` | 80 declared inputs validated; demo table generated |
+| `python assets/interface/font-mac/extract.py --proof /tmp/ctennis-font-proof.png` | 5,504 source pixels checked; proof generated outside Git |
+| `python scripts/author_battle_hymn.py --output /tmp/ctennis-clean-music` | All six outputs equal the committed files |
+| `author_title_logo_b.logo()` against retained title planes | All four 256 x 76 header planes match |
+| `python -m compileall -q scripts tests assets/interface/font-mac docs/sprites` | Passed |
+| `python scripts/progress.py --help` | Documented read-only entrypoint works |
+| Retained support script AST comparison | All 14 edited modules have identical logic after removing module prose strings |
+| Local Markdown links and removed-path search | No broken links; only historical font-proof hashes remain |
+| Retained JSON previous-report chains | All three path/SHA256 links verified |
+| `git diff --check` | Passed |
+| `RUST_LOG=info python scripts/build_native_game.py` | Blocked: missing pinned vasm |
+| `RUST_LOG=info python scripts/build_native_adf.py --self-test` | Blocked: missing pinned vasm |
+| `python scripts/native_metrics.py --check` | Rejected inherited incomplete metrics |
+
+The clean clone has no tracked changes after validation. Native tests and the
+full acceptance gate were not run. Assembly/include reachability, exact source
+preservation and host checks support this cleanup; they do not replace a native
+build, exact-release cold boot or binary comparison.
 
 ## Product identity and limits
 
