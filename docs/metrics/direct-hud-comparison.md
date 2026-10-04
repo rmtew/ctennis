@@ -109,11 +109,11 @@ The initial probe stopped on the old miss and used a PAL-only interval for NTSC;
 ## Bindings
 
 - Full data and receipt hashes: [direct-hud-comparison.json](direct-hud-comparison.json).
-- New complete resource report: [current.md](current.md).
+- The comparison JSON binds the complete PR #27 report. [current.md](current.md) describes the later product and has separate coverage.
 - Preserved accepted baseline: [pre-direct-hud-current.json](baselines/pre-direct-hud-current.json).
 - Before development SHA256: `1a5286650df54e65d4a3339557b1b54f5a0a7c398fcd552b3c7537e14d547e72`.
 - After development SHA256: `21578578dcce14bc38fb83db06ee242cd848f41f0b03f07a9217d11a87cfbc05`.
 
-Raw emulator captures and executables remain private/ignored. Independent review is required before merge.
+Raw emulator captures and executables remain private and ignored. PR #27 is merged; these measurements describe that product.
 
 Full-gate and focused-check bindings: [direct-hud-validation.md](direct-hud-validation.md).

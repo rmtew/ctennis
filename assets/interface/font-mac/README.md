@@ -67,15 +67,13 @@ data). Character lookup costs zero extra runtime bytes: ASCII×8 is the lookup.
 JSON, source PNG, proof and extraction script are authoring inputs and need no
 runtime memory. No additional pointers, widths, font engine or decompression.
 
-The integration worker must choose this path for the runtime `incbin` and for
-offline UI page baking, then install/register the selected binary under `assets/native` in the native
-input manifest/validation contract. The staged authoring bundle lives under
-`assets/interface/font-mac` so it does not violate the current strict
-`assets/native` inventory while awaiting integration. This asset-only commit does not
-change those consumers, the old font, shared runtime files or build manifests.
-Current 28-character/224-pixel UI width remains valid; line origins/stride and
-native palette remain the renderer's responsibility. This file supplies glyph
-pixels, not evidence of completed native rendering/readability acceptance.
+The runtime font is installed at `assets/native/title/font-mac.bin` and registered
+in the native manifest. `amiga/game/interface.s` loads it. The offline UI page
+builder uses the same installed binary. This directory retains the source PNG,
+explicit character map, extraction script and verified authoring binary.
+
+The 28-character, 224-pixel UI width remains valid. The renderer controls line
+origins, stride and palette. Extraction checks do not certify native readability.
 
 Ready-to-use final help-page credit lines, 26 and 27 ASCII characters:
 

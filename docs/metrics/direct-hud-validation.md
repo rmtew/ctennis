@@ -16,4 +16,4 @@ Coverage includes host/assets/package, cold menu, physical input, PAL/NTSC clock
 
 The startup check was refreshed separately after the gate; it verifies generated tiles/strips and rejects the wrong-advantage-position control. Supplemental common old/new HUD-cost and ISR/handover probes are distinct from accepted baseline workloads and from full-gate acceptance; their exact scope, corrected initial observer attempts and baseline misses are documented in the comparison. Raw captures, ROMs and executables remain outside Git.
 
-Independent code review approved head `21b4be65a151258cbc43bdd30beec16e64fe8ebe`, as relayed by the coordinator. Later additions are measurement/documentation only; the development executable remains byte-identical. Final result review and merge approval are pending. No Shot Doctor implementation is included.
+Independent code review approved head `21b4be65a151258cbc43bdd30beec16e64fe8ebe`, as relayed by the coordinator. Later additions are measurement/documentation only; the development executable remains byte-identical. PR #27 is merged. These receipts do not certify later product changes. No Shot Doctor implementation is included.

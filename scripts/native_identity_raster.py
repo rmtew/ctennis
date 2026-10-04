@@ -1,4 +1,4 @@
-"""CT12 actual scanout guards: complete mode field and logical player colours."""
+"""Check visible mode labels, player colours and title identity."""
 from PIL import Image
 from native_tools import ROOT
 from native_status_raster import PALETTE

@@ -1,6 +1,6 @@
+"""Check physical input, match lifecycle, restart audio and native cadence."""
 from native_tools import emulator_config
 from native_state_observation import read_native_state
-"""Focused CT05 ordinary physical-input proof: first game, pause, next serve."""
 import argparse
 import json
 import re

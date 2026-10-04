@@ -1,18 +1,18 @@
 # Current limits
 
-- Retained converted graphics/font/poses/music/effects remain Sega-derived.
-  Private retention is approved; public redistribution rights are not asserted.
-- RAM telemetry begins with initialized Exec chip pools. Pre-pool bootstrap
-  transient use remains unmeasured; executable size is not a RAM measurement.
-- Whole-game source pixel/waveform/filter/phase/stereo parity is not claimed.
-  Missing historical original media are not reconstructed or replaced with goldens
-  from the code under test. Native asset/trajectory/contracts are the maintained
-  protection. The old failed99-case aggregate stays in Git history.
-- Direct HUD strips replace the historical per-row tally WAIT relationship.
-  Fixed vertical region switches, every fetched source word and static row
-  restoration are checked on pinned Copperline PAL/NTSC, with strict three-bank
-  ownership. This does not add a fresh WinUAE or physical-hardware claim. Earlier
-  WinUAE6.0.2 feedback used512KB slow RAM and is separate from the unexpanded gate.
-- CT11 intentionally retained its native artwork/audio/game behavior. CT12 now
-  covers branding/logo removal, Red identity and readable native labels; see
-  ../ct12/README.md. CT13 adds selected independently arranged historical victory music and celebration; recording/save/seek remains later scope.
+- Retained converted graphics, fonts, poses, music and effects remain Sega-derived.
+  Private retention is approved. Public redistribution rights are not asserted.
+- RAM telemetry starts with initialized Exec chip pools. Earlier bootstrap use
+  remains unmeasured. Executable size is not a whole-machine RAM measurement.
+- Tests do not establish whole-game original pixel, waveform, filter, phase or
+  stereo parity. Do not replace missing historical media with expected results
+  generated from the implementation. Native assets and independent contracts
+  provide the maintained protection.
+- Copperline checks cover fixed region pointers, fetched words, row restoration,
+  three-bank ownership and PAL/NTSC publication. They do not establish a fresh
+  WinUAE or physical-hardware pass. Earlier WinUAE feedback with 512 KB slow RAM
+  is separate from the unexpanded target.
+- The current resource report has incomplete runtime coverage. Older complete
+  reports are historical evidence. See [resource reporting](../metrics/README.md).
+- Recording, save and seek remain later scope. The active Shot Doctor draft does
+  not authorize implementation. Reboot remains intentional after play.

@@ -1,4 +1,4 @@
-"""Read-only finite native receipt view; missing/stale/partial evidence stays open."""
+"""Read native receipts. Keep missing, stale and incomplete results open."""
 import argparse
 import json
 from native_tools import ROOT

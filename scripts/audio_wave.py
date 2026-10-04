@@ -1,4 +1,4 @@
-"""Read the small PCM/IEEE-float RIFF formats emitted by our two emulators."""
+"""Read PCM and IEEE-float RIFF audio from native emulator tests."""
 import array
 import math
 import struct

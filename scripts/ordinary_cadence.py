@@ -1,5 +1,5 @@
+"""Measure uninterrupted native play, callback timing and bank publication."""
 from native_tools import emulator_config
-"""CT09's finite non-stopping ordinary play measurement, not a reference model."""
 from fractions import Fraction
 import json
 import re

@@ -1,4 +1,4 @@
-"""Finite CT11 native gate; sequential commands, exact-head receipt and no originals."""
+"""Run the finite native gate and bind its receipt to the current commit."""
 import datetime as dt
 import hashlib
 import json

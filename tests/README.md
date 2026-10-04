@@ -1,124 +1,136 @@
-# Finite native acceptance
+# Native checks
 
-Host checks need no ROM, source captures or emulator:
+Run the host checks without a ROM, source captures or emulator:
 
 ```sh
 python -m unittest discover -s tests/unit -q
 python scripts/native_assets.py
 ```
 
-Configure only the pinned Copperline and legitimate external Kickstart1.3 for the
-finite gate. Target: PAL A500/68000/OCS/512KB chip/zero slow/fast RAM. Copperline is
-accepted; no additional WinUAE gate. Run from a fresh checkout with empty outputs,
-versioned native inputs and pinned tools, and no original inputs in its active
-filesystem:
+For native checks, install the tools in `tools.lock.json`. Set the Copperline
+path and a legitimate external Kickstart 1.3 path in `config.local.ini`.
+The standard target is PAL A500, 68000, OCS, 512 KB chip RAM and no expansion.
+Some checks also cover NTSC or the stated slow-RAM configuration.
+
+Run the finite gate from a clean, committed checkout. Use empty output directories
+and the versioned native inputs. Keep original-platform inputs outside the checkout.
 
 ```sh
 RUST_LOG=info python scripts/native_acceptance.py
 ```
 
-The gate packages twice, checks embedded executable/hash equality, runs host
-contracts, ordinary menu/pause/cold-load and physical raw input checks, native
-scoring/status/audio fixtures, both-mode uninterrupted lifecycle/cadence,
-canonical10958-tick demo/takeover, visible tally progression, restart audio and
-early-release latch behavior. The delayed real stale-bank control and compiled
-field/pitch/envelope controls must be rejected. Native fixtures initialize once
-through product initialization and thereafter use the actual dispatcher.
-They are labeled local fixtures, never ordinary complete-play evidence.
+The gate runs the checks below in sequence. It also packages the game twice and
+checks the embedded executable and artifact hashes. A failure stops the gate.
+Copperline is the maintained emulator target. These results do not establish
+WinUAE or physical-hardware coverage.
 
-Scoring contract: deuce5/5, advantage4/6 and return-deuce5/5 preserve the independently
-accepted tuples. Winning advantage awards the correct logical player; sixth game
-sets match completion. Status2–6 remain visible31ticks from appearance to expiry
-with the saturating224→255 clock. These facts transfer retained protection without
-source memory or snapshots. Native hit pitch1688 comes from the approved octave2,
-transpose0,key0 period entry; envelope starts at calibrated64/51 hardware levels.
+| Entry point | Protection |
+|---|---|
+| `build_native_adf.py --self-test` | Repeatable packaging and release executable bytes. |
+| `run_enhanced_menu_tests.py --adf` | Cold load, menu, help, pause and lifecycle through physical input. |
+| `run_native_inputs.py` | Raw input packets and key aliases through the native sampler. |
+| `run_video_standard_tests.py` | Actual startup selector for all 256 OS frequency-byte values. |
+| `run_startup_publication_tests.py` | Exact release cold boot in PAL/NTSC with zero or 512 KB slow RAM. |
+| `run_native_video_clock_tests.py` | PAL/NTSC callback intervals measured in colour clocks. |
+| `run_sprite_dma_tests.py --self-test` | Three-bank sprite and HUD DMA, startup phases and negative controls. The gate also uses `--ntsc`. |
+| `run_native_scoreboard_tests.py --self-test` | Complete scoreboard pixels and HUD bank bytes. |
+| `run_native_contracts.py --case=...` | Scoring, status and audio fixtures. The gate lists all cases and required negative controls. |
+| `run_celebration_tests.py --winner=blue` | Winner celebration. The gate covers both winners, both ends and a negative control. |
+| `run_demo_match_tests.py` | The frozen 10,958-tick trajectory. The gate also uses `--takeover`. |
+| `run_attract_cycle_tests.py` | Two uninterrupted attract cycles and title return. |
+| `run_enhanced_feedback_tests.py --mode=one` | Visible game-win labels and tally progression. The gate covers both modes. |
+| `run_ordinary_round_tests.py --mode=one --match --cadence --adf` | Uninterrupted lifecycle, cadence and bank publication. The gate also covers two-player mode, stale-bank rejection and restart audio/input. |
+| `run_native_setup_tests.py --self-test` | UI construction, raw callback deadlines and complete elapsed-time accounting. |
+| `native_metrics.py --require-runtime` | Required resource-report coverage from existing receipts. |
 
-Render expectations use immutable native assets and named fields, not expected
-images made by the runtime renderer. Complete side-panel crops verify six compact
-WIN words, solid grey remaining rows, Blue/Red earned rows, the stacked closed white frames
-and the selected square LED points/advantage. All0–6 variants, both modes/ends and all three
-physical Copper banks are checked by one-time native fixtures, with compiled
-wrong WIN stamp, missing status/WIN repair and wrong-building-bank controls. Ordinary awards also verify actual full-panel pixels. Cadence
-observes actual COP1LC at COPJMP1 against the latest completed prepared bank/epoch.
-Court publication uses the conservative retired bottom interval starting at253; the
-footer extends through251. Accepted clock is11838+14906/65536 PAL E-clock ticks,
-with retained origin, fractional quantization and deadline bounds.
+Paths in this table are relative to `scripts/`. The command list in
+`native_acceptance.py` defines the complete gate. Use focused checks for a bounded
+change. Host checks alone do not establish native acceptance.
 
-Receipts under ignored build/tests record exact head/inputs/tools/target and
-extent. Failed/interrupted latest runs supersede older passes. `progress.py`
-reads these receipts without running tests; missing/stale/partial/wrong-subject
-results cannot certify acceptance. See risks for unmeasured claims. Historical
-aggregate failures are available in Git history, not an active gate or archive.
+Native fixtures initialize state once through product initialization. They then
+use the actual dispatcher and controls. Do not inject intermediate expected state
+or generate expected pixels from the renderer under test. A fixture result is
+not evidence of an ordinary complete match.
 
-The CT11 focused observer uses the native update entry to inspect the preceding
-completed update, including enhanced title/menu callbacks. It verifies old-score
-cleanup, opposite-mode reselection, exact early release/repress packets and
-independent held-player exclusion; emitted audio is checked at returned-title
-reset, enhanced restart cleanup and the actual fresh serve (no legacy intro).
-`--self-test` compiles an actual skipped latch-retirement instruction and requires
-the retained release assertion to catch it.
+Scoring fixtures preserve the accepted tuples: deuce 5/5, advantage 4/6 and return
+to deuce 5/5. Winning advantage awards the correct logical player. A player
+completes the match by winning their sixth game. Status values 2–6 remain visible for 31 ticks with the
+saturating 224–255 clock. The hit pitch is 1688 from octave 2, transpose 0, key 0.
+The envelope starts at the calibrated hardware levels 64/51.
 
-Status2–6 fixtures verify loaded hunks, scalar duration, actual completed
-publication/bank association, and full1536-pixel visible/expired glyph crops, including DOUBLE FAULT.
-The 96x8 region at native80,0 is decoded independently from the four committed
-256-byte status planes and reviewed CT12 OCS palette. A wrong native status-bank
-pointer control leaves scalars intact but must fail pixels. Fixtures explicitly
-select the enhanced Copper layout, matching the maintained application.
+Raster checks use immutable native assets and named fields. The scoreboard checks
+cover all 28 mode/end/variant fixtures, all three Copper banks and each complete
+3,072-byte HUD strip. They check six WIN words, remaining grey rows, earned
+Blue/Red rows, closed white frames and the selected point/advantage masks.
+Negative controls corrupt the WIN stamp, status repair or bank selection.
+Ordinary game awards also check the full visible panel.
 
-`run_native_setup_tests.py --self-test` retains the continuous timer origin and
-requires every raw callback to meet the existing deadline. It measures all
-menu/help/controls/credits construction, repeated navigation,15-second idle and start/pause/return/restart,
-checks representative actual scanout against the committed font and retained
-layout, and independently compares native elapsed additions to wall CCK.
-The diagnostic phase proposal is retained for historical comparison; it grants
-no exemption. A compiled lost-wrap mask must lose exactly327680CCK and fail
-accounting; a separate delayed construction must fail raw deadlines while the
-unmodified32-bit timer accounts for the complete wrap. Both restore the normal
-executable before final acceptance. See the follow-on report in
-[verification issues](../docs/ct11/verification-issues.md).
+Scoreboard role labels start at native y=34. Score cells start at y=48, with
+borders at y=43, 68 and 123. The point cells have four blank native pixels to
+each border. A single zero leaves the tens cell blank. Checks cover the two-row
+gap below A/B and both HUMAN/AI and HUMAN/HUMAN labels.
 
-Resource reporting is part of the existing checks and the finite gate. Builds
-regenerate static sizes without emulation; record the compact accepted JSON and
-readable summary alongside reviewed changes. For docs-only identical-product
-reuse and the affected four-check refresh, see
-[resource report workflow](../docs/metrics/README.md). Missing/stale/incomplete
-metrics do not establish runtime coverage or a fresh green result.
-Six unique square LED tiles, the retained-font WIN mask and three fixed
-scene-owned HUD strips are constructed once by the native startup entry. Run
-`python scripts/run_native_square_startup.py --self-test` to compare every byte
-of all six generated point masks and the WIN mask with independent expectations,
-and all three initialized strips with the unchanged court background, measure
-construction time before the simulation
-clock starts, and reject a compiled wrong advantage position. The masks in
-`docs/sprites/square-led-contract.json` were sampled from the user-selected
-preview before native implementation; tests/build must never regenerate them.
-`run_native_scoreboard_tests.py --self-test` additionally verifies all 3,072 bytes of each completed HUD bank, status overlap and actual complete panel scanout in all28 mode/end/variant fixtures.
+Status fixtures check loaded hunks, duration, completed bank publication and all
+1,536 pixels in each visible or expired glyph crop. The 96×8 native region at
+(80, 96) uses four committed 256-byte planes and the reviewed OCS palette.
+Checks include DOUBLE FAULT and every white frame pixel. A wrong-bank control
+must fail the pixel check even when scalar state is correct.
 
-The requested stacked-frame layout uses role labels at native y34, score cells at
-y48, and borders at y43/68/123. The point cells have four native blank pixels to
-every border. Score glyphs retain their selected shapes and fixed tens/units positions within
-the cells; a single0 has a blank tens cell. The scoreboard fixtures also check the two-row gap below A/B and both
-HUMAN/AI and HUMAN/HUMAN label selections. Status raster checks now verify every
-white frame pixel while the full-width status strips are active.
+Cadence checks compare COP1LC at COPJMP1 with the latest completed bank and epoch.
+The court publication interval starts at line 253; the footer ends at line 251.
+The accepted PAL interval is 11,838 + 14,906/65,536 E-clock ticks. Checks retain
+the timer origin, fractional quantization and deadline bounds. NTSC uses its
+specified E-clock frequency. Host seconds do not determine either result.
 
-The finite gate also verifies three-bank sprite DMA in PAL and NTSC across six startup phases, both players/serve/pause/title transitions and alternating PAL field lengths, with native stale-bank/unknown-list/malformed-height controls. CPU MMIO reconstructs frozen banks independently of the pinned sidecar's unreliable data values; actual DMA addresses/registers/rows/header+4 progression and live whole-bank samples remain strict. Native startup selects the PAL or NTSC CIA interval once. Every observed clock-test callback is checked in CCK, applying the documented standard's E-clock frequency, independent of Copperline's PAL-derived host seconds.
+DMA checks cover six startup phases, both players, serve/pause/title transitions
+and alternating PAL field lengths. CPU writes reconstruct frozen sprite banks
+because the pinned sidecar's data values are unreliable. Checks still require
+correct DMA addresses, registers, rows, header progression and live bank bytes.
+HUD checks compare every fetched word across 192 court rows and four planes,
+including static-row restoration. Writes must target only the building strip.
 
-Direct HUD DMA validation checks every fetched word across all 192 court rows and
-four planes against the selected scene's fixed region pointers, including static
-row restoration. CPU writes must target only the building strip, never front or
-ready; independent live reads compare frozen strip bytes. Existing PAL/NTSC
-publication and negative-control assertions remain enabled.
+Setup checks cover menu, help, controls, credits, repeated navigation, 15 seconds
+of idle, start, pause, title return and restart. They compare scanout with the
+committed font and layout. Every raw callback must meet its deadline. A compiled
+lost-wrap mask must lose exactly 327,680 colour clocks and fail accounting.
+Delayed construction must fail its deadline while the normal 32-bit timer still
+accounts for the full wrap. Neither control creates a setup exemption.
 
-After the ordinary build has generated the matching native inputs, the bounded
-supplementary cost probe is
-`python scripts/measure_native_hud_cost.py /absolute/path/to/checkout`. It compiles
-one startup-only fixture for each PAL/NTSC/end orientation, then observes actual
-native callbacks without state injection. It reads the initialized native cadence,
-reports dirty-field masks and deadline misses explicitly, and is a measurement,
-not a replacement acceptance gate. Before/after receipts and limits are summarized
-in [direct-hud-comparison.md](../docs/metrics/direct-hud-comparison.md).
+Restart checks inspect completed native updates. They check old-score cleanup,
+opposite-mode reselection, early release/repress packets and held-player exclusion.
+Audio checks cover title return, restart cleanup and the next serve. The latch
+negative control skips an actual retirement instruction and must fail.
 
-Startup reads Kickstart1.3 VBlankFrequency once and selects conservative OCS
-PAL/NTSC bounds. Actual-assembly tests cover all256 byte values; exact-release
-cold-start checks cover both standards and zero/512KB slow RAM. See
-[startup video standard selection](../docs/ct11/field-measurement.md).
+For a separate startup measurement, run:
+
+```sh
+python scripts/run_native_square_startup.py --self-test
+```
+
+This check compares all six generated point masks, the WIN mask and three initial
+HUD strips with independent expectations. It measures construction before the
+simulation clock starts. A wrong advantage position must fail. The masks in
+`docs/sprites/square-led-contract.json` came from the selected preview before
+implementation. Do not regenerate them from build or test output.
+
+After a normal build, the optional HUD cost probe is:
+
+```sh
+python scripts/measure_native_hud_cost.py /absolute/path/to/checkout
+```
+
+It compiles one startup fixture per PAL/NTSC and end orientation. It then observes
+native callbacks without more state injection. Results include dirty-field masks
+and deadline misses. This measurement does not replace the acceptance gate.
+See [the HUD comparison](../docs/metrics/direct-hud-comparison.md).
+
+Receipts under ignored `build/tests` bind the commit, inputs, tools, target and
+checked extent. A failed or interrupted rerun replaces an older pass.
+`python scripts/progress.py` reads these receipts without running native checks.
+Missing, stale, partial or wrong-subject results cannot establish acceptance.
+
+Builds regenerate static resource sizes without emulation. Existing native checks
+collect runtime metrics. Follow [the metric workflow](../docs/metrics/README.md)
+to review and record results. See [current limits](../docs/ct11/risks.md) for claims
+that remain unmeasured. Keep the [frozen trajectory](fixtures/native-demo/README.md)
+bound to its recording and seed.

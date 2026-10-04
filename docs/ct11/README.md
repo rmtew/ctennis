@@ -1,23 +1,15 @@
-# CT11 native independence
+# Native build independence
 
-The cutover starts from merged `50ef76227a72e137c37efe29502cf60b1d4590d4`. Library specification `libfile_4418e95b71388191ab3e9857bf2927b3`, version 1, was read in full. Execution, private native asset storage and retirement of the original comparison flavor are authorized. CT12–16 remain later scope; master and release packaging are untouched.
+The maintained game uses explicit versioned native inputs and pinned tools.
+Builds and packaging do not need a source cartridge, captured state or emulator.
+Tests use the actual native dispatcher, controls, rendering and audio.
+The independent 10,958-tick demo fixture remains a test input.
 
-[ledger.json](ledger.json) records all 422 baseline paths and their Git blobs, current paths and executed dispositions. [baseline.json](baseline.json) freezes baseline hashes and asset import verification. Git history is rollback for tracked removals. No active archive or original reconstruction machinery remains. Irreplaceable untracked inputs in the supplied checkout were left untouched.
+CT11 removed the original comparison build, extraction tools and translation
+adapters. Its file ledger and intermediate reports remain in Git history.
+Asset import hashes and Sega-derived provenance remain in
+[the native manifest and README](../../assets/native/README.md).
 
-The native pack was imported from approved private commit `26aa157de91c2bda23f84f632ad8e46194739b06` after the Library helper failed twice without installing bytes. All 96 imported hashes were verified. The supported durable runtime set now contains 92 explicit versioned native inputs; four obsolete conversion metadata files were removed. Binary graphics/audio bytes are retained. Include paths changed to native locations. See [asset provenance](../../assets/native/README.md): Sega-derived converted content remains private, with no ownership or redistribution claim. Cartridge, Kickstart, source captures, executable and ADF remain excluded.
-
-The enhanced native game is the maintained application. Native scalar integrations remain useful; obsolete translation adapters, captured-state initialization, original-format assets, extraction/conversion tools, source emulators, comparison flavor, stale recipes and superseded reports were removed. Build and packaging use explicit native inputs and pinned tools without test configuration or ROM. Copperline alone requires separately configured legitimate Kickstart.
-
-Useful protection transferred to native controls, actual dispatcher scoring/status/audio fixtures, physical input checks, tally raster checks and ordinary lifecycle/cadence observers. The independent PR15 canonical 10958 trajectory remains useful. Completed scene/bank association, exact publication timing and native clock rounding remain checked. Deliberately compiled scoring, status, pitch, envelope and stale-bank faults must fail the relevant guards. See [native test contracts](../../tests/README.md) and [current risks](risks.md).
-
-Before removing the unreachable comparison keyboard block, stable version text plus inverse symbol renaming produced complete merged-baseline executable equality and equality of 1259 symbols. That comparison is limited to the behavior-neutral phase; it is not final executable identity. Final acceptance requires the finite fresh-checkout gate.
-
-Run `RUST_LOG=info python scripts/native_acceptance.py` at a clean committed head with empty outputs, versioned native assets, pinned tools and separately configured legitimate Kickstart. It records exact commands, head, artifact hashes, checked extents and fresh receipt status in ignored `build/acceptance/report.json`. `python scripts/progress.py` only reads receipts; missing, failed or stale evidence cannot certify completion. The draft PR reports the observed final result. Generated binaries and ADFs are never committed.
-
-## Final cleanup disposition
-
-Independent review cleared the behavior-neutral CT11 cleanup at `7a9f5f2ac4e87f55cba796f34ac74512f85a30ff`, and the parent accepted that scoped disposition. This clears cleanup review with an explicit inherited timing limitation; it does not certify cadence acceptance. Final focused verification completed 17 commands, with 16 passing. The failed raw cadence receipts remain failed. No setup contract, setup exemption or observer-origin switch is adopted.
-
-The reviewer independently verified 20 host tests, status-2 visible/expired rasters (384 pixels), the wrong-pointer fault (266 differing pixels), and the restart observer source. The bounded Help sequence retains timer-wrap debt despite subsequent normal-rate gameplay. See [verification issues and follow-on scope](verification-issues.md#final-independent-review-and-follow-on-timing-repair). Earlier canonical trajectory and other unchanged-product regressions are explicitly compatible reuse, not new final-head runs. PR16 records exact commands and hashes.
-
-The parent will manage a finite timing repair before cosmetic polish: wrap-safe elapsed accounting and bounded UI work between timer/input samples, first menus/help and then gameplay cadence. No timing fix is implemented in CT11. Independent cleanup clearance does not authorize a master merge by this executor.
+Current guidance is in [tests](../../tests/README.md), [limits](risks.md),
+[timing](verification-issues.md), [publication](triple-buffer-publication.md),
+and [startup standard selection](field-measurement.md).

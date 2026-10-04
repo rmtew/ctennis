@@ -1,8 +1,7 @@
-"""Finite native scoreboard starts, actual scanout and both published Copper banks.
+"""Check native scoreboard fixtures, scanout and all three Copper banks.
 
-Fixture initialization is compiled once before the normal dispatcher. No
-intermediate RAM writes, injected outcomes or regenerated pixel expectations.
-"""
+Compile fixture initialization before the normal dispatcher. Keep expected
+pixels independent of the renderer. Do not write intermediate runtime state."""
 import argparse
 import hashlib
 import json

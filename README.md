@@ -1,51 +1,62 @@
 # Baseline Rally for Amiga
 
-The maintained enhanced game runs on PAL A500/68000/OCS with512KB chip RAM and
-no expansion. It includes native controls, gameplay/scoring, graphics/audio,
-menu/help/pause and a complete native attract recording with takeover. The old
-comparison build and original-platform tooling are retired; Git history retains
-tracked rollback. CT12 gives the native game its Baseline Rally title, Blue/Red player identity
-and expanded gameplay labels. CT13 adds selected Battle Hymn chiptune and a full-match winner celebration;
-Classic sprites preserve logical A/B ownership with human/robot roles. Recording extensions remain later scope. See [CT13](docs/ct13/README.md).
+Baseline Rally is a native tennis game for the Amiga A500, 68000 and OCS.
+It runs with 512 KB chip RAM and no expansion. Startup selects PAL or NTSC.
+The game includes menus, help, pause, scoring, sound, an attract demo with
+player takeover, and a match celebration. Reboot after play is intentional.
 
-This private repository includes the approved retained Amiga-native assets.
-They remain Sega-derived; retention/conversion grants no new ownership or public
-redistribution permission. See [asset provenance](assets/native/README.md).
-Cartridge/source captures are unnecessary for builds or tests. Kickstart is an
-external emulator-test input only and is never packaged.
+This private repository contains Sega-derived graphics and audio. Retention and
+conversion grant no new ownership or public redistribution rights. See
+[asset provenance](assets/native/README.md). Builds do not need a cartridge or
+source captures. Emulator tests need a legitimate external Kickstart 1.3 ROM.
+The ROM is never packaged.
 
-Install the exact tools declared in [tools.lock.json](tools.lock.json):
+## Tools
 
-- Python3.12.14.
-- Validated vasm1.9d executable at `.tools/vasm/vasmm68k_mot.exe`, with the locked
-  SHA256. Use the existing validated native tool cache or reproduce its build;
-  do not substitute an unpinned assembler.
-- `python -m pip install --target .tools/python amitools==0.8.1` for ADF packaging.
-- Copperline1.0.0-rc.1 for target tests, plus Pillow12.3.0 for raster checks.
-  `python -m pip install Pillow==12.3.0` installs the pinned image reader.
+Use the exact versions in [tools.lock.json](tools.lock.json):
 
-Build and package directly from a fresh checkout:
+- Python 3.12.14.
+- vasm 1.9d at `.tools/vasm/vasmm68k_mot.exe`, with the locked SHA256.
+  Restore the validated tool cache or follow the Linux recovery procedure in
+  [tool setup](docs/tool-setup.md). Verify the executable hash before use.
+- amitools 0.8.1 for ADF packaging:
+  `python -m pip install --target .tools/python amitools==0.8.1`.
+- Copperline 1.0.0-rc.1 and Pillow 12.3.0 for emulator and raster tests.
+  Install Pillow with `python -m pip install Pillow==12.3.0`.
+
+The repository does not supply vasm, Copperline or Kickstart. A fresh checkout
+needs these external tools before the corresponding commands can run. The setup
+guide gives the verified Debian vasm recipe, preserves emulator recovery facts
+and states the remaining platform limits.
+
+## Build and test
+
+Run from the repository root:
 
 ```sh
 RUST_LOG=info python scripts/build_native_game.py
 RUST_LOG=info python scripts/build_native_adf.py --self-test
+python -m unittest discover -s tests/unit -q
+python scripts/native_assets.py
 ```
 
-Outputs remain ignored/private under `build/amiga/interfaces/enhanced/`.
-The disk label, executable and startup command are `baseline-rally`; the package
-is `baseline-rally.adf`. The disk never contains Kickstart.
-Asset validation rejects missing/corrupt/undeclared inputs. Only version text and
-the committed native input recording's assembly table are generated at build time.
-No cartridge extraction, source emulation or translation fallback exists.
+Outputs stay under ignored `build/amiga/interfaces/enhanced/`. The executable,
+disk label and startup command are `baseline-rally`. The disk image is
+`baseline-rally.adf`. Missing, corrupt or undeclared native inputs fail the build.
+Builds generate version text, UI caches and the native input recording table.
+They do not extract cartridge assets or recover files from archives.
 
-Copy [config.example.ini](config.example.ini) to ignored `config.local.ini` and
-configure legitimate Kickstart1.3 and the pinned Copperline executable for tests.
-See [native acceptance](tests/README.md), [current risks](docs/ct11/risks.md) and
-[CT11 cutover evidence](docs/ct11/README.md). The canonical native fixture remains
-independent of replay; do not regenerate its expected hashes to fix a failure.
+Copy [config.example.ini](config.example.ini) to ignored `config.local.ini`.
+Set the paths to the pinned Copperline executable and legitimate Kickstart ROM.
+See [native tests](tests/README.md) for the finite acceptance command and focused
+checks. See [current limits](docs/ct11/risks.md) before interpreting test results.
+Do not regenerate the independent demo fixture to fix a test failure.
 
-The title corner shows the detected PAL/NTSC standard, product Git hash, and
-release version. `amiga/VERSION` is the single `major.minor` release number,
-starting at `1.0`; increment it deliberately for releases, never for rebuilds.
-The label keeps its existing grey and eight-pixel right inset, aligning from its
-full text width. Overlong labels fail the build instead of clipping.
+The title corner shows the selected video standard, product Git hash and release
+version. `amiga/VERSION` is the single `major.minor` release number. Change it
+only for a release. The label uses grey text and an eight-pixel right inset.
+The build rejects labels that do not fit. Documentation outside product-input paths does not change the label.
+Documentation inside `assets/` is a product input and can change it.
+
+See [game behavior](docs/ct13/README.md), [publication design](docs/ct11/triple-buffer-publication.md),
+[resource reporting](docs/metrics/README.md) and [deferred work](TODO.md).
