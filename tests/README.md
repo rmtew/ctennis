@@ -53,8 +53,8 @@ or generate expected pixels from the renderer under test. A fixture result is
 not evidence of an ordinary complete match.
 
 Scoring fixtures preserve the accepted tuples: deuce 5/5, advantage 4/6 and return
-to deuce 5/5. Winning advantage awards the correct logical player. The sixth game
-completes the match. Status values 2–6 remain visible for 31 ticks with the
+to deuce 5/5. Winning advantage awards the correct logical player. A player
+completes the match by winning their sixth game. Status values 2–6 remain visible for 31 ticks with the
 saturating 224–255 clock. The hit pitch is 1688 from octave 2, transpose 0, key 0.
 The envelope starts at the calibrated hardware levels 64/51.
 

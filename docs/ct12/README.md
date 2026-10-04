@@ -2,7 +2,8 @@
 
 The game uses the Baseline Rally title and logical Blue/Red player colors.
 Classic human/robot sprites preserve A/B ownership through end exchanges.
-The title menu uses HUMAN VS AI and HUMAN VS HUMAN. Status text includes
+The title menu has Start, Mode and Help entries. Separate Human/AI role labels
+identify the players beside the menu. Status text includes
 FAULT and DOUBLE FAULT. The retained court font supplies score and status text;
 Font-Mac supplies menu and help text.
 

@@ -17,15 +17,17 @@ Use the exact versions in [tools.lock.json](tools.lock.json):
 
 - Python 3.12.14.
 - vasm 1.9d at `.tools/vasm/vasmm68k_mot.exe`, with the locked SHA256.
-  Restore the validated tool cache. The repository has no reproducible recipe
-  for that exact executable.
+  Restore the validated tool cache or follow the Linux recovery procedure in
+  [tool setup](docs/tool-setup.md). Verify the executable hash before use.
 - amitools 0.8.1 for ADF packaging:
   `python -m pip install --target .tools/python amitools==0.8.1`.
 - Copperline 1.0.0-rc.1 and Pillow 12.3.0 for emulator and raster tests.
   Install Pillow with `python -m pip install Pillow==12.3.0`.
 
 The repository does not supply vasm, Copperline or Kickstart. A fresh checkout
-needs these external tools before the corresponding commands can run.
+needs these external tools before the corresponding commands can run. The setup
+guide gives the verified Debian vasm recipe, preserves emulator recovery facts
+and states the remaining platform limits.
 
 ## Build and test
 

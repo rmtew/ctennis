@@ -10,8 +10,9 @@ The corner renders `PAL <hash> 1.0` or `NTSC <hash> 1.0` using the standard alre
 selected at startup. The existing Font-Mac, palette index6 (`$555`), native y180
 and eight-pixel right inset remain. Its left edge is248 minus the complete text
 width, so NTSC and multi-digit release versions align to the same right edge.
-Builds reject malformed or overlong versions instead of clipping. Credits retain
-the existing full BUILD identity, including the local-change marker when needed.
+Builds reject malformed or overlong versions instead of clipping. The title
+label omits the LOCAL marker. The generated version input retains it for a
+modified product checkout. Credits show the game, font and AI acknowledgements.
 
 Two 256-byte monochrome rows are generated; title rendering copies the selected
 row into planes 1/2 after the existing menu/figure cache. Other planes remain

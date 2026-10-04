@@ -6,7 +6,7 @@ Git metadata and filesystem allocation are excluded.
 
 [The index](repository-audit.tsv) gives every file's baseline size, type,
 purpose, consumer, decision and evidence. It includes removed paths and the
-three new audit files. Stage file additions and removals, then run:
+four new support files. Stage file additions and removals, then run:
 
 ```sh
 python scripts/check_repository_audit.py
@@ -20,8 +20,8 @@ checkouts. Git history is the recovery source for tracked removals.
 
 ## Decisions
 
-The audit keeps 193 baseline files, updates 37 and removes 53. It adds this
-report, the index and the coverage check. The resulting tree has 233 files.
+The audit keeps 192 baseline files, updates 38 and removes 53. It adds this
+report, the index, the coverage check and current tool setup instructions. The resulting tree has 234 files.
 
 Remove completed branch handoffs, obsolete review images, redundant metric
 snapshots, the old WIN authoring script and the old acceptance-resume runner.
@@ -56,7 +56,8 @@ The finite native gate adds emulator and physical-input checks. Host tests and
 offline authoring checks do not certify the native gate.
 
 The following checks ran in a separate clean clone of cleanup commit `d237b02`.
-The later audit-receipt commit changes only this report.
+Commit `65c1422` then added only the audit receipt. Review corrections below
+were checked separately.
 
 | Command or check | Result |
 | --- | --- |
@@ -76,10 +77,42 @@ The later audit-receipt commit changes only this report.
 | `RUST_LOG=info python scripts/build_native_adf.py --self-test` | Blocked: missing pinned vasm |
 | `python scripts/native_metrics.py --check` | Rejected inherited incomplete metrics |
 
-The clean clone has no tracked changes after validation. Native tests and the
-full acceptance gate were not run. Assembly/include reachability, exact source
-preservation and host checks support this cleanup; they do not replace a native
-build, exact-release cold boot or binary comparison.
+The local clean clone had no tracked changes after validation. Its initial
+missing-tool results are superseded by the separate worker checks below.
+Neither worker ran the full acceptance gate for this cleanup.
+
+## Separate worker validation at `65c1422`
+
+The parent relayed clean-worktree results from the worker with the pinned tools:
+
+- `python scripts/build_native_adf.py --self-test` passed for baseline and candidate.
+- All 67 host tests passed.
+- Exact-release startup passed all four PAL/NTSC × zero/512 KB slow-RAM cases.
+- Normal candidate BUILD `d237b02`, version `1.0`, changed only generated
+  `version.bin` and `ui-title-identities.bin` compared with the baseline inputs.
+- Controlling only the build hash produced byte-identical development and release
+  executables and all 787 symbols. The normal build was restored for emulator tests.
+- The metrics check still rejected the inherited incomplete report.
+
+These results establish the checked extent at `65c1422`. Subsequent review fixes
+change prose and one generator comment. The comment leaves the generator AST
+unchanged but advances the normal displayed build hash under existing rules.
+Do not label the predecessor's native receipts as fresh for the later head.
+
+## Review corrections
+
+The current title has three menu entries at x108 and y114/125/136. Its selected
+row cache is 768 bytes. The native copy owns ten bytes per row, offsets 11–20.
+The host layout test covers both standards, both modes and all three selections.
+Corrected documentation now agrees with the generator, native copy loop and
+independent raster test. The generator's stale four-row comment was corrected;
+its logic is unchanged. The focused title-layout test passed after these edits.
+
+The same source review corrected role-label wording, the Credits identity claim,
+the generated-only LOCAL marker and the requirement for one player to win six
+games. It also checked scoreboard geometry, mask sizes, music cadence, startup
+bounds and fixture counts against current code. These checks do not add native
+execution evidence.
 
 ## Product identity and limits
 
@@ -92,14 +125,20 @@ The build selects its revision from all of `assets`, as well as assembly and
 selected build scripts. Asset README edits and removal of the optional font proof
 therefore advance the displayed BUILD revision. A normal new build is expected
 to differ in its title identity. The PAL/NTSC selection and PR #29 label layout
-remain unchanged. No binary-equivalence claim is made without the assembler.
+remain unchanged. The controlled-hash equality result above applies to `65c1422`; normal builds
+retain their own commit-derived identity.
 
 This environment has Python 3.12.14 and Pillow 12.3.0. It lacks the locked vasm
 executable (`.tools/vasm/vasmm68k_mot.exe`, SHA256
 `0332feebc562e06bf245c1d60bef3fd7598c464a4be8162429be5e3e3a061e39`),
-Copperline 1.0.0-rc.1 and amitools 0.8.1. The repository supplies no recipe that
-reproduces the locked vasm executable. Build/package and native execution need
-these external tools. No tool lock was weakened to bypass this requirement.
+Copperline 1.0.0-rc.1 and amitools 0.8.1. The first audit missed the Linux
+recovery recipe in the removed CT12 checkpoint. Independent review found it.
+[Tool setup](tool-setup.md) now preserves its source commit, build command,
+hashes and portable-mode workaround. A separate validation worker reproduced
+the exact locked vasm on Debian 13 x86_64 with GCC 14.2.0-19. It also confirmed
+the portable marker location beside the extracted Copperline ELF. The initial
+missing-tool failures above
+do not establish that provisioning is impossible. No tool lock was weakened.
 
 The supplied Kickstart and cartridge files are outside the checkout. They were
 not changed, copied into Git or packaged. Initially the checkout had no untracked

@@ -6,8 +6,9 @@ It does not start an emulator. File size includes symbols and relocations.
 Loaded code, data and BSS exclude that metadata. Asset totals overlap the hunks;
 they are not additional RAM allocations.
 
-The product label uses the latest commit that touches product inputs. The LOCAL
-suffix marks changes to those inputs. Exact executable and input SHA256 values
+The product label uses the latest commit that touches product inputs. The
+generated `build/native/version.bin` adds LOCAL for uncommitted changes to those
+inputs; the displayed title omits that marker. Exact executable and input SHA256 values
 establish identity; the displayed label alone does not establish freshness.
 Documentation under product-input directories can affect that label.
 

@@ -1,6 +1,6 @@
 # Match celebration and interface behavior
 
-A match ends after six games. The final court, logical winner and totals remain
+The first player to win six games wins the match. The final court, logical winner and totals remain
 visible. After 48 celebration ticks, the loser, ball and shadow disappear.
 The winner stands on their own half with a raised racket and a small bounce.
 Blue/Red ownership remains correct after an end exchange.
@@ -22,7 +22,8 @@ returns to title. Pause freezes the clock and notes, mutes Paula, and restores
 levels on resume. Demo play returns to title after the first phrase, then waits
 through the ordinary 30-second attract interval.
 
-The title has four aligned menu entries and native A/B figures. Menus and help
+The title has three aligned entries: Start, Mode and Help. Native A/B figures
+stand beside them. Menus and help
 use Font-Mac. The footer and game status use the retained court font. Selection
 is inverted; static instructions remain normal. Holding a direction does not
 repeat navigation. [Title identity](title-release-identity.md) defines the

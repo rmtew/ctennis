@@ -105,7 +105,7 @@ def prepare(version, release_version=None):
         navigation.extend(plane)
     (ROOT/'build/native/ui-help-options.bin').write_bytes(navigation)
 
-    # Four selected menu rows, shared by both modes; roles live under A/B.
+    # Three selected menu rows, shared by both modes; roles live under A/B.
     # All rows share the exact pixel edge of the widest menu/highlight block.
     menu=bytearray()
     for name,inverted in [(name,True) for name in menu_names]:

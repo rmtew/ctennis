@@ -11,8 +11,9 @@ planes. Run it from the checkout with the pinned Pillow version. It updates
 only the first 76 rows and the manifest hashes. Review its diff before use.
 Pixels below row 75, plane sizes and palette entries remain unchanged.
 
-The bitmap is 256×192. Font-Mac uses 8×8 cells. Menu rows start at x96 and
-y114, 125, 136 and 147. Their labels are Start, Mode, Help and Controls.
+The bitmap is 256×192. Font-Mac uses 8×8 cells. Menu rows start at x108 and
+y114, 125 and 136. Their labels are Start, Mode and Help. Controls is a
+page within Help.
 Only the selected word's cells are inverted.
 
 A/B labels are centred at x48/x208, y92. Human/AI labels are at y102.
@@ -20,10 +21,11 @@ A stays Blue and human. B stays Red and changes between human and robot with
 the remembered mode. The figures start at (40,114) and (200,114), with 16×32
 body bounds. The title renderer uses presentation state, not gameplay updates.
 
-`ui_title_row_copy` updates the eight central bytes of each row in all four
+`ui_title_row_copy` updates the ten central bytes (offsets 11–20) of each row in all four
 planes. This preserves the side figures. Help-page selection uses the
-full-row copy routine. Title caches occupy 29,696 bytes; selected menu caches
-occupy 1,024 bytes.
+full-row copy routine. Title caches occupy 29,696 bytes (two modes × four planes × 116 rows ×
+32 bytes). The PAL/NTSC identity rows occupy 512 bytes. Selected menu caches
+occupy 768 bytes: three 256-byte rows.
 
 Run the host layout test with:
 
@@ -31,9 +33,9 @@ Run the host layout test with:
 python -m unittest discover -s tests/unit -p test_title_side_layout.py -v
 ```
 
-It checks all eight mode/selection states against independent font, pose and
-palette rules. The physical-input suite visits these states and checks actual
-scanout. Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py --help-only`
+It checks 12 cases: both video standards, both player modes and all three
+selections. It compares the full title cache with independent font, pose and
+palette rules. The physical-input suite checks actual menu scanout separately. Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py --help-only`
 with the configured native tools and external Kickstart. See
 [native acceptance](../../tests/README.md) for setup and timing checks.
 
