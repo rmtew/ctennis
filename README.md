@@ -60,6 +60,3 @@ Documentation inside `assets/` is a product input and can change it.
 
 See [game behavior](docs/ct13/README.md), [publication design](docs/ct11/triple-buffer-publication.md),
 [resource reporting](docs/metrics/README.md) and [deferred work](TODO.md).
-
-See [the repository audit](docs/repository-audit.md) for all file decisions and
-the repeatable inventory coverage check.
