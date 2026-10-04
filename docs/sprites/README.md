@@ -1,6 +1,6 @@
 # Native artwork and contracts
 
-The current game uses Classic human and robot bodies. Logical player A is
+The game uses the Baseline Rally title and Classic human and robot bodies. Logical player A is
 human. Player B is a robot in one-player mode and human in two-player mode.
 Blue and Red follow logical ownership across court-end changes. Demo takeover
 keeps the same roles. Pose geometry, physics and the frozen recording remain
@@ -14,8 +14,13 @@ Sega-derived. The composite assets are not claimed to be clean-room work.
 
 The native atlas contains 24 human body masks and 24 robot body masks. Both
 pose tables cover all 14 poses with the same racket references and offsets.
-The robot masks add 3,072 bytes. The robot pose table adds 112 bytes.
+The robot masks occupy 3,072 bytes. The robot pose table occupies 112 bytes.
 Unused logo slots 28–30 are blank. The old court logo rectangle is also blank.
+
+Menus and help use Font-Mac. The footer, score and status text use the retained
+court font. Status labels include FAULT and DOUBLE FAULT. The native title and
+court do not display the Sega logo; asset provenance remains unchanged.
+See [retained inputs](../../assets/native/README.md) for attribution.
 
 The independent contracts remain test inputs. Do not regenerate them from the
 implementation to fix a test failure.
@@ -29,7 +34,5 @@ implementation to fix a test failure.
 See [score layout](score-layout.md), [square LED scores](square-led.md) and
 [title layout](title-side-layout.md) for the current artwork rules.
 
-Historical branch reports and static review PNGs are in Git history. They
-show earlier artwork and do not certify the current product. The retained
-ImageGen source preserves authoring provenance. Current native validation uses
-actual assets and emulator output. See [native acceptance](../../tests/README.md).
+Native validation uses the retained assets and actual emulator output.
+See [native tests](../../tests/README.md) for checks and their limits.

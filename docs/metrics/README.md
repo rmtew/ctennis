@@ -90,22 +90,40 @@ Both products have separate hashes. For a bounded boot check, run
 `RUST_LOG=info python scripts/run_enhanced_menu_tests.py --adf --boot-only`.
 That receipt does not replace full menu lifecycle validation.
 
+## Comparison measurements
+
+Compare equivalent targets, observer definitions and workload extents. Counts
+and missing measurements must remain explicit. A zero missed-deadline count is
+not a measured minimum margin. Do not subtract independent maxima to calculate
+headroom. Live CIA-entropy runs measure workload extrema, not paired per-tick
+costs. The canonical demo has fixed inputs and a fixed seed.
+
+Handover margin runs from the actual COPJMP strobe to the physical field restart.
+The ISR bus interval runs from the first register-save write to the last RTE
+frame read. It excludes interrupt entry and the final CPU tail. Convert CCK to
+seconds using 3,546,895 Hz for PAL or 3,579,545 Hz for NTSC. Display frequency and
+simulation frequency are separate.
+
+The optional `measure_native_hud_cost.py` probe initializes points 4/3, WIN 5/2
+and status 6 once. It then observes native callbacks without further state
+injection, for PAL/NTSC and both end orientations. Dirty-field bits identify
+point A, point B, WIN A, WIN B, status and mode. Mask 31 means both points and
+WIN fields plus status; 16 means status only; 0 means no field changed. The probe
+uses the initialized native interval and reports deadline misses explicitly.
+See [the test guide](../../tests/README.md) for the command. These measurements
+do not replace normal lifecycle, pixel, DMA or acceptance checks.
+
 ## Retained evidence
 
 `current.json` and `current.md` describe the recorded product and its limits.
-At this cleanup baseline, runtime resource coverage is incomplete. Historical
-measurements do not certify the PR #28 startup or PR #29 title changes.
+The committed runtime resource coverage is incomplete. Historical measurements
+do not certify the current executable.
 
 The current delta chain uses `baselines/pre-title-score-current.json`, which in
 turn binds `baselines/pre-pr19-release.json`. Keep these exact JSON bytes.
 `native_metrics.py` also uses the first file as its historical fallback.
 
-[The direct HUD comparison](direct-hud-comparison.md) and its JSON retain the
-measured PR #25 to PR #27 result. Its source baseline is
-`baselines/pre-direct-hud-current.json`. [Validation](direct-hud-validation.md)
-records that older product's finite gate. Later failed or unmeasured products
-must not inherit those passes.
-
-Older integration, symbol-removal and startup summaries remain in Git history.
-Their former filenames did not guarantee that they described the current build.
-Use regenerated ignored static metrics for current size attribution.
+Historical comparisons and execution receipts remain in Git and their pull
+requests. Use regenerated ignored static metrics for current size attribution.
+The retained baseline JSON files support the active report chain; they do not
+certify the current executable.

@@ -49,7 +49,7 @@ They do not extract cartridge assets or recover files from archives.
 Copy [config.example.ini](config.example.ini) to ignored `config.local.ini`.
 Set the paths to the pinned Copperline executable and legitimate Kickstart ROM.
 See [native tests](tests/README.md) for the finite acceptance command and focused
-checks. See [current limits](docs/ct11/risks.md) before interpreting test results.
+checks. See [current limits](docs/limits.md) before interpreting test results.
 Do not regenerate the independent demo fixture to fix a test failure.
 
 The title corner shows the selected video standard, product Git hash and release
@@ -58,5 +58,5 @@ only for a release. The label uses grey text and an eight-pixel right inset.
 The build rejects labels that do not fit. Documentation outside product-input paths does not change the label.
 Documentation inside `assets/` is a product input and can change it.
 
-See [game behavior](docs/ct13/README.md), [publication design](docs/ct11/triple-buffer-publication.md),
+See [game behavior](docs/game-behavior.md), [publication design](docs/display-timing.md),
 [resource reporting](docs/metrics/README.md) and [deferred work](TODO.md).

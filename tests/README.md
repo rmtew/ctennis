@@ -122,7 +122,7 @@ python scripts/measure_native_hud_cost.py /absolute/path/to/checkout
 It compiles one startup fixture per PAL/NTSC and end orientation. It then observes
 native callbacks without more state injection. Results include dirty-field masks
 and deadline misses. This measurement does not replace the acceptance gate.
-See [the HUD comparison](../docs/metrics/direct-hud-comparison.md).
+See [measurement definitions](../docs/metrics/README.md#comparison-measurements).
 
 Receipts under ignored `build/tests` bind the commit, inputs, tools, target and
 checked extent. A failed or interrupted rerun replaces an older pass.
@@ -131,6 +131,6 @@ Missing, stale, partial or wrong-subject results cannot establish acceptance.
 
 Builds regenerate static resource sizes without emulation. Existing native checks
 collect runtime metrics. Follow [the metric workflow](../docs/metrics/README.md)
-to review and record results. See [current limits](../docs/ct11/risks.md) for claims
+to review and record results. See [current limits](../docs/limits.md) for claims
 that remain unmeasured. Keep the [frozen trajectory](fixtures/native-demo/README.md)
 bound to its recording and seed.

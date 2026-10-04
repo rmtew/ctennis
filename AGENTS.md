@@ -2,7 +2,7 @@
 
 Maintain Baseline Rally for A500, 68000, OCS and 512 KB chip RAM with no expansion.
 Use legitimate external Kickstart 1.3 for emulator tests. Read README.md,
-tests/README.md and docs/ct11/risks.md before changing the project.
+tests/README.md and docs/limits.md before changing the project.
 Keep one concrete work item active. Independent review must precede merge.
 Do not change master directly or rewrite history.
 
