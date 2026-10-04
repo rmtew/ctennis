@@ -1,55 +1,52 @@
 # Native Amiga development
 
-Maintain Baseline Rally, the enhanced native game for PAL A500,68000,OCS,512KB chip,zero slow/fast
-RAM and legitimate separately configured Kickstart1.3 testing. Read README.md,
-tests/README.md and docs/ct11/risks.md before choosing a change. Keep one concrete
-item active. CT12 branding/palette/readability is implemented on its draft branch, preserving
-CT11 independence and focused native UI timing. CT13 uses the user-selected Battle Hymn chiptune and full-match celebration;
-replacement music still requires user selection; CT14+ recording/save/seek remains later scope. Independent review
-precedes merge. Do not change master or rewrite history.
+Maintain Baseline Rally for A500, 68000, OCS and 512 KB chip RAM with no expansion.
+Use legitimate external Kickstart 1.3 for emulator tests. Read README.md,
+tests/README.md and docs/ct11/risks.md before changing the project.
+Keep one concrete work item active. Independent review must precede merge.
+Do not change master directly or rewrite history.
 
-Runtime lives in amiga/main.s and amiga/game/. Tests exercise the actual native
-dispatcher, input, rendering and audio. A fixture may initialize native state once;
-afterward use controls/entropy and read actual outputs. Never inject intermediate
-expected state, select a callback's regime, duplicate the game as an oracle or
-regenerate a golden from the implementation under test. Keep the independently
-frozen10958-tick trajectory bound to its recording and seed.
+Branding, Classic human/robot sprites, Font-Mac, Battle Hymn and match celebration
+are integrated. Replacement music needs user selection. PR #24 is an active
+Shot Doctor draft design; implementation is not approved. Recording, save and
+seek remain later scope. Exit-game work was cancelled; reboot is intentional.
 
-Build/package consume explicit versioned native inputs and tools.lock.json only.
-Missing/corrupt inputs fail rather than triggering extraction or archive recovery.
-Assets/native is approved private storage for retained native graphics/audio;
-keep honest Sega-derived provenance. Cartridge/Kickstart, original captures,
-executables, ADFs and raw runtime reports stay outside Git. Do not destroy
-irreplaceable untracked files. Tracked rollback uses Git history, not active
-archive directories. Public publication requires separate authorization.
+Runtime code is in amiga/main.s and amiga/game/. Preserve the assembly style.
+Tests must exercise the actual native dispatcher, controls, rendering and audio.
+A fixture can initialize native state once. After that, use controls and entropy,
+and read actual outputs. Do not inject intermediate expected state, select a
+callback regime, duplicate the game as an oracle or regenerate expected results
+from the implementation. Keep the independent 10,958-tick trajectory bound to
+its recording and seed.
+
+Builds use explicit versioned native inputs and tools.lock.json. Missing or
+corrupt inputs must fail. Do not recover them through extraction or archives.
+assets/native is approved private storage; retain Sega-derived provenance.
+Keep cartridges, Kickstart, original captures, executables, ADFs and raw runtime
+reports outside Git. Do not destroy irreplaceable untracked inputs. Recover
+tracked removals through Git history, not archive directories. Public publication
+needs separate authorization.
 
 Run focused checks after a change. The finite full native gate is
-`RUST_LOG=info python scripts/native_acceptance.py`; do not recreate the retired
-historical aggregate or repeat manual playthroughs. For neutral refactors prefer
-byte/symbol equality and relevant checks. Receipts distinguish fresh/reused/stale,
-name exact commit/inputs/tools/target/checked extent and replace older passes on
-failed/interrupted reruns. Verify actual completed bank/epoch, sprite-header
-publication timing and visible tally output; counters alone are insufficient.
-Report concrete outcome, exact commands/hashes and any failed/not-run checks.
-Do not mark a gate passed just because source inspection or host units passed.
+`RUST_LOG=info python scripts/native_acceptance.py`. Do not recreate the retired
+aggregate or repeat manual playthroughs without need. For neutral changes, prefer
+byte/symbol equality and relevant checks. Receipts must name the exact commit,
+inputs, tools, target and checked extent. Distinguish fresh, reused and stale
+results. A failed or interrupted rerun supersedes earlier passes.
 
-Resource changes: builds regenerate ignored static metrics. Existing cadence,
-setup and demo checks collect resource/loading metrics; the finite gate checks
-report completion. After affected validation, run
-`python scripts/native_metrics.py --require-runtime --record` and commit both
-`docs/metrics/current.json` and `.md` with reviewed changes. Follow
-`docs/metrics/README.md`; docs/report-only changes use `--check`, not an extra
-emulator campaign. Product version labels exclude docs/report commits. Later
-failed/interrupted runs supersede old passes. Remeasure new fonts/celebration
-only after their implementation lands; do not read other workers' branches.
+Check actual completed banks and epochs, sprite-header publication timing and
+visible tally output. Counters alone do not prove correct output. Report exact
+commands, hashes, failed checks and checks not run. Source inspection or host
+unit tests do not establish a native gate pass.
 
-Release ADF packaging removes only HUNK_SYMBOL records. Keep the symbol-rich
-development executable/listing for debug observers, verify the exact stripped
-release bytes on cold boot, and report both product hashes separately.
+Builds regenerate ignored static metrics. Existing cadence, setup and demo checks
+collect runtime and loading metrics. After affected resource validation, run
+`python scripts/native_metrics.py --require-runtime --record`. Review and commit
+both docs/metrics/current.json and .md. For documentation-only work, use
+`--check`; do not start another emulator campaign. Follow docs/metrics/README.md.
+Product labels exclude report and documentation commits outside product inputs.
+Do not inspect another worker's unfinished branches.
 
-For the explicitly approved unchanged triple-bank product, the preserved2219 gate
-may be completed with `scripts/native_acceptance_resume.py`; follow
-`docs/ct11/composite-acceptance.md`. Report verified composite evidence honestly,
-preserve failed/original receipts, and rerun changed/unknown dependent stages.
-Do not restart unrelated passed native stages for documentation or inactive-observer
-changes. This narrow exception does not permit product changes or weaker assertions.
+Release packaging removes only HUNK_SYMBOL records. Keep the development
+executable and listing for debug observers. Check the exact stripped release
+bytes on cold boot. Report development and release hashes separately.

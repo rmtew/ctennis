@@ -3,7 +3,7 @@
 The game reads Kickstart's `ExecBase.VBlankFrequency` once before Forbid,
 Disable, SuperState or custom-chip takeover. The named offset `$212` is the
 readable byte in [exec/execbase.i](https://d0.se/include/exec/execbase.i), before
-its V36 additions; unlike EClockFrequency, it is available on Kickstart1.3.
+its V36 additions; unlike EClockFrequency, it is available on Kickstart 1.3.
 For the supported fixed OCS A500 display,50 selects PAL and60 selects NTSC.
 
 PAL installs the existing CIA interval11838+14906/65536 and zero-based last
@@ -20,7 +20,7 @@ superseded by this simpler selection; its commits remain historical evidence.
 
 ## Historical failure evidence
 
-WinUAE6.0.3 user capture `baseline-rally2.uss` (SHA256
+WinUAE 6.0.3 user capture `baseline-rally2.uss` (SHA256
 `1c510e769970523e59d2090d57efc838721feb2eaaf198cf3e4aa3513d680028`)
 contains a completed court scene waiting behind the title. Its measured last line
 is158 and safe line154; publication requires253 or later, so that interval is
@@ -28,7 +28,7 @@ empty. Relocated startup/publication instructions match release PR27. The captur
 uses PAL/OCS/68000,512KB chip plus512KB slow, compatible CPU, both CPU cycle-exact
 modes disabled. It does not establish interrupt liveness from one instant.
 
-The previous routine treated any decrease as a wrap. WinUAE6.0.3's beam readback
+The previous routine treated any decrease as a wrap. WinUAE 6.0.3's beam readback
 can transiently advance one line at horizontal position1 in its non-cycle-exact
 path. A return to the current line can therefore look like158→157.
 [Upstream fix5b2b253](https://github.com/tonioni/WinUAE/commit/5b2b253dcf27d24e6b183a06d2c4625d5fae0181)
@@ -44,8 +44,8 @@ is claimed by its read-only inspection.
 ## Focused protection
 
 - `python scripts/run_video_standard_tests.py` assembles the actual selector and
-  constants. All256 possible OS byte values execute against poisoned timing
-  state:50/60 must replace every bound/interval/phase correctly; all254 other
+  constants. All 256 possible OS byte values execute against poisoned timing
+  state:50/60 must replace every bound/interval/phase correctly; all 254 other
   values must return20 and preserve the state exactly. This includes the50 read
   from the actual failed USS.
 - `python scripts/run_startup_publication_tests.py` cold-boots the exact packaged
@@ -63,15 +63,15 @@ required for this focused change; outstanding resource coverage remains explicit
 
 ## Focused validation receipt
 
-Product commit `076c5796f70288e00c3a5f57fec9ca6453ae880e`, BUILD076c579; pinned vasm1.9d,
-Copperline1.0.0-rc.1 and external Kickstart1.3, completed2026-10-03:
+Product commit `076c5796f70288e00c3a5f57fec9ca6453ae880e`, BUILD076c579; pinned vasm 1.9d,
+Copperline 1.0.0-rc.1 and external Kickstart 1.3, completed 2026-10-03:
 
 - Actual selector:256/256 byte values passed; the verified USS byte50 selects
-  last/safe lines311/307 and the PAL interval. Invalid values preserve all18
+  last/safe lines311/307 and the PAL interval. Invalid values preserve all 18
   bytes of poisoned timing state and return20.
 - Exact-release ADF cold Start:4/4 passed (PAL/NTSC × zero/512KB slow).
   Loaded hunks, bounds, cadence, title, hardware/software Copper pointers and
-  positive controller-label raster checks (1,920pixels each) passed.
+  positive controller-label raster checks (1,920 pixels each) passed.
 - `RUST_LOG=info python scripts/run_native_video_clock_tests.py`:PAL239 and
   NTSC239 completed callbacks, each within its strict deadline. The first
   invocation failed because inherited logging suppressed the required target
@@ -90,14 +90,12 @@ Receipt SHA256s (raw reports retained outside Git):
 Development SHA256 `6a15f93a4fc45539cc008dc1ac8848d596684b7c4844dfc7d888043f4a763a4c`;
 release `e7c777de556980d8e1c1aa7bcd9a2fd3dcfd8d3086b6c9d8e4422986c31c42fc`;
 ADF `59d3fc5dbb0621997cf38ff713346543137863ad8b1cef5bba4d09bc5e2f69e8`.
-Release158,928bytes; loaded code43,792 (+16 versus PR27), data112,188 and
+Release 158,928 bytes; loaded code43,792 (+16 versus PR27), data112,188 and
 BSS9,424 unchanged; total loaded165,404. No new writable state. Compared with
-the abandoned hardened-measurement candidate, loaded code shrinks24bytes.
+the abandoned hardened-measurement candidate, loaded code shrinks 24 bytes.
 
 `python scripts/native_metrics.py --require-runtime --record` exited1 and
 records explicit incomplete resource coverage for the changed executable.
 Fresh full-game loading/stack/resource measurements and the full gate were not
 run; earlier PR27 results remain historical at16679feb and are not claimed as
-reused. No fresh WinUAE or physical-hardware execution is claimed. Independent
-review remains required before merge. The ADF is a private candidate, not a
-Library replacement.
+reused. No fresh WinUAE or physical-hardware execution is claimed. PR #28 is merged. This evidence does not authorize a Library replacement.

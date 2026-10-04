@@ -1,9 +1,8 @@
-"""Verify this native gate's preserved receipts; never edit the originals.
+"""Verify retained metric receipts and reviewed source equivalences.
 
-Two narrowly reviewed observer/reporting equivalences are supported. All other
-file/tool/config/fixture/raw-artifact changes retain native_evidence's strict
-invalidation. This is a composite evidence verifier, not a general cache.
-"""
+Keep all other product, tool, fixture and raw-artifact checks strict.
+Historical composite plans remain bound to their original product hashes.
+The general metrics reporter also uses the dependency normalization here."""
 import ast
 import copy
 import hashlib

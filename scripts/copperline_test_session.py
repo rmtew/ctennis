@@ -1,4 +1,4 @@
-"""Small stdlib client for the pinned native Copperline control protocol."""
+"""Control the pinned Copperline test session with the Python standard library."""
 import json
 import subprocess
 

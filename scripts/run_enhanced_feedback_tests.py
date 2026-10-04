@@ -1,5 +1,5 @@
+"""Check game-win labels and tally pixels during physical play at both ends."""
 from native_tools import emulator_config
-"""Bounded ordinary physical play: game-win identity and tally feedback across ends."""
 import argparse,hashlib,json,re
 from PIL import Image
 from build_native_game import build,module_hashes

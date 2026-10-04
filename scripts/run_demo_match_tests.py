@@ -1,5 +1,5 @@
+"""Check the frozen native match recording and physical-input takeover."""
 from native_tools import emulator_config
-"""Finite seeded full-native-match replay and live takeover; no RAM writes."""
 import argparse,hashlib,json,re
 from build_native_game import build
 from native_observation import code_symbols

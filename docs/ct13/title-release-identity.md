@@ -1,7 +1,7 @@
 # Title release identity
 
 No existing human release numbering was found; the old corner contained only the
-product Git hash. `amiga/VERSION` now starts at1.0 and is deliberately incremented
+product Git hash. `amiga/VERSION` now starts at 1.0 and is deliberately incremented
 for releases, not automatically on builds. The README documents this single source.
 The existing product-hash rules already include all of `amiga`, so a version
 change changes product identity. Evidence tracking also includes the version file.
@@ -13,16 +13,16 @@ width, so NTSC and multi-digit release versions align to the same right edge.
 Builds reject malformed or overlong versions instead of clipping. Credits retain
 the existing full BUILD identity, including the local-change marker when needed.
 
-Two256-byte monochrome rows are generated; title rendering copies the selected
-row into planes1/2 after the existing menu/figure cache. Other planes remain
+Two 256-byte monochrome rows are generated; title rendering copies the selected
+row into planes 1/2 after the existing menu/figure cache. Other planes remain
 blank in this row. There is no new mutable state or versioning framework.
 
 ## Focused validation
 
-Product7379b1a, pinned vasm1.9d/Copperline1.0.0-rc.1 and external Kickstart1.3:
+Product 7379b1a, pinned vasm 1.9d/Copperline 1.0.0-rc.1 and external Kickstart 1.3:
 
 - 67 host tests passed. The title-cache test covers both standards, both player
-  roles and all three selections using multi-digit version12.34, comparing the
+  roles and all three selections using multi-digit version 12.34, comparing the
   complete raster with the independent text/colour specification. An interim
   indentation error in this test was corrected before the passing run.
 - Exact-release ADF cold boots:4/4 PAL/NTSC × zero/512KB slow RAM passed. Full title
@@ -34,7 +34,7 @@ Product7379b1a, pinned vasm1.9d/Copperline1.0.0-rc.1 and external Kickstart1.3:
 - Strict native cadence:239 completed callbacks on each standard passed.
 - `git diff --check` passed. No WinUAE/hardware execution or full-game gate claim.
 
-Loaded code43,836 (+44), chip data112,700 (+512), BSS9,424 (unchanged), total165,960.
+Loaded code 43,836 (+44), chip data 112,700 (+512), BSS 9,424 (unchanged), total 165,960.
 `native_metrics.py --require-runtime --record` exits1 and honestly records
 incomplete full-game runtime resource coverage; old runtime measurements are not
 claimed as fresh or reused. Only the focused results above are claimed.
@@ -48,4 +48,4 @@ Private artifact SHA256s:
 - cold-start receipt: `3549dcb9f4363f0946a342f2dbcdd54d177e0dbdc0bab28238830b5a0674be38`.
 - cadence receipt: `6b4af48d35192fc6ad0c6e82525f287746ff450a19660858574a1999c79239b3`.
 
-Independent review precedes merge. No Library replacement is included.
+PR #29 is merged. No Library replacement is included.

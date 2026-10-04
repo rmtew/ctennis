@@ -1,4 +1,4 @@
-"""Read-only explicit title-UI construction boundaries; raw deadlines remain raw."""
+"""Observe UI construction boundaries and retain every callback deadline."""
 import re
 from fractions import Fraction
 from native_clock import INTERVAL_CCK

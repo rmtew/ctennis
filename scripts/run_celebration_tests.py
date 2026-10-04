@@ -1,4 +1,4 @@
-"""Finite CT13 native fixtures: initialise once, then actual dispatcher/input/scanout."""
+"""Check native winner fixtures through the dispatcher, input and scanout."""
 import argparse, hashlib, json, re
 from pathlib import Path
 from build_native_game import build

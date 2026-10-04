@@ -1,4 +1,4 @@
-"""Strict ordinary UI cadence and independent elapsed accounting; no setup waiver."""
+"""Check UI callback deadlines and elapsed time without a setup exemption."""
 import json,re,hashlib
 from pathlib import Path
 from native_tools import ROOT,emulator_config

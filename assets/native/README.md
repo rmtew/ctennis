@@ -1,28 +1,29 @@
 # Retained native inputs
 
-This is the approved durable native graphics/audio set in private rmtew/ctennis.
-These converted Sega-derived court/player/ball/shadow/font/music/effect inputs
-retain their original provenance. Conversion does not establish ownership,
-public redistribution permission or clean-room status. Native small-font additions
-and input recording metadata are authored components. No source media, cartridge,
-Kickstart, executable, ADF or captured diagnostic stream is included.
+This directory contains the approved native assets for private rmtew/ctennis.
+Converted court, racket, ball, shadow, pose, font and effect inputs remain
+Sega-derived. Conversion grants no ownership or public redistribution rights.
+The repository contains no cartridge, Kickstart, executable, ADF or raw capture.
 
-The manifest declares every file's format, size and hash. Original imported hashes remain recorded from approved asset-only commit26aa157.
-CT12 intentionally replaces title lettering, removes the logo, expands status/mode
-labels with the existing native font, and adds Red point glyph high planes while
-preserving original digit/advantage shapes. The logical player palette and score
-indicators change; court fills, player poses, animation masks and other audio remain
-retained. CT13 removes the old victory score-2/3 inputs and adds the independently
-arranged historical Battle Hymn chorus in audio/battle-hymn/; its isolated
-period bank, accompaniment and mathematical four-byte square are independently
-authored. Retained effect pitch/envelope data remain unchanged. No rights-clearance or public-redistribution claim is made. See [CT12 visual review](../../docs/ct12/README.md). Stale conversion reports and diagnostic maps are retired in
-Git history. Builders reject missing/incompatible/undeclared files; they never
-extract or recover from original sources. Version text and demo assembly table
-are generated in ignored build/native from the Git revision and committed native
-input recording. Keep this repository and its assets private.
+`manifest.json` records each input's size and SHA256. It also retains imported
+hashes and provenance. Builders reject missing, corrupt or undeclared inputs.
+They do not extract or recover assets from original media. Preserve these
+versioned bytes when the original authoring inputs are unavailable.
 
-Classic player replacement: human/robot body masks are newly drawn with built-in
-ImageGen and fitted to retained native pose envelopes, seams and attachment edges.
-White rackets, pose geometry, animation, ball, shadow and court retain their
-Sega-derived provenance. Neither the whole game nor the composite assets are
-claimed clean-room. See ../../docs/sprites/README.md for the fitting/evidence limits.
+The title, labels, palette and score panels include approved native edits.
+Classic human and robot bodies use the retained ImageGen source, fitted to
+original pose bounds and seams. Rackets and geometry keep their Sega-derived
+provenance. See [artwork contracts](../../docs/sprites/README.md).
+
+The independently arranged [Battle Hymn chorus](audio/battle-hymn/README.md)
+uses authored accompaniment, a separate period table and a four-byte square
+wave. Other effect data are retained. Font-Mac has separate
+[provenance and extraction rules](../interface/font-mac/README.md).
+
+`assets/interface/small-font-additions.json` preserves all 47 authored additions
+to the retained small font. Its rows match `title/font.bin`. The independent
+native input recording is in `assets/interface/demo-inputs.json`.
+
+Builds generate version text and the recording's assembly table under ignored
+`build/native`. Generated outputs do not replace the versioned source assets.
+Keep the repository and its retained assets private.
