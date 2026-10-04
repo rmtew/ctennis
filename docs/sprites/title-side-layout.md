@@ -21,11 +21,30 @@ A stays Blue and human. B stays Red and changes between human and robot with
 the remembered mode. The figures start at (40,114) and (200,114), with 16×32
 body bounds. The title renderer uses presentation state, not gameplay updates.
 
-`ui_title_row_copy` updates the ten central bytes (offsets 11–20) of each row in all four
-planes. This preserves the side figures. Help-page selection uses the
-full-row copy routine. Title caches occupy 29,696 bytes (two modes × four planes × 116 rows ×
-32 bytes). The PAL/NTSC identity rows occupy 512 bytes. Selected menu caches
+`ui_title_row_copy` updates ten central bytes (offsets 11–20) per row in all
+four planes. This preserves the side figures. Help-page selection uses the
+full-row copy routine. Title caches occupy 29,696 bytes:
+two modes × four planes × 116 rows × 32 bytes. The PAL/NTSC identity rows occupy 512 bytes. Selected menu caches
 occupy 768 bytes: three 256-byte rows.
+
+## Release label
+
+The title corner shows `PAL <hash> <version>` or `NTSC <hash> <version>`.
+Startup selects the standard. `amiga/VERSION` supplies the `major.minor` release
+number; change it deliberately for releases. The build rejects malformed
+versions and labels that do not fit.
+
+The label uses Font-Mac at native y180, palette index 6 (`$555`). Its left edge
+is 248 minus the full text width, leaving an eight-pixel right inset. It omits
+the LOCAL marker from the generated version input. Credits show the game, font
+and AI acknowledgements.
+
+The generator emits one 256-byte monochrome identity row per standard. The title
+renderer copies the selected row into planes 1 and 2 after the menu and figures.
+Other planes stay blank in that row. See [build identity](../../README.md) for
+which changes advance the hash.
+
+## Validation and previews
 
 Run the host layout test with:
 
@@ -35,7 +54,8 @@ python -m unittest discover -s tests/unit -p test_title_side_layout.py -v
 
 It checks 12 cases: both video standards, both player modes and all three
 selections. It compares the full title cache with independent font, pose and
-palette rules. The physical-input suite checks actual menu scanout separately. Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py --help-only`
+palette rules. The physical-input suite checks actual menu scanout separately.
+Run `RUST_LOG=info python scripts/run_enhanced_menu_tests.py --help-only`
 with the configured native tools and external Kickstart. See
 [native acceptance](../../tests/README.md) for setup and timing checks.
 

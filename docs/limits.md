@@ -13,6 +13,6 @@
   WinUAE or physical-hardware pass. Earlier WinUAE feedback with 512 KB slow RAM
   is separate from the unexpanded target.
 - The current resource report has incomplete runtime coverage. Older complete
-  reports are historical evidence. See [resource reporting](../metrics/README.md).
+  reports are historical evidence. See [resource reporting](metrics/README.md).
 - Recording, save and seek remain later scope. The active Shot Doctor draft does
   not authorize implementation. Reboot remains intentional after play.

@@ -6,11 +6,10 @@ ignored. A fresh clone does not contain the tool cache or a Kickstart ROM.
 
 ## Linux x86_64 recovery
 
-The vasm procedure was rechecked for PR #30 on Debian 13 x86_64 with
-`gcc (Debian 14.2.0-19) 14.2.0`. A fresh checkout of the source commit below
-produced the exact executable SHA256 in `tools.lock.json`. This confirms the
-earlier CT12 recovery report on this platform. It does not establish identical
-output on other compilers or operating systems. Keep the hash check.
+This vasm procedure was verified on Debian 13 x86_64 with
+`gcc (Debian 14.2.0-19) 14.2.0`. A fresh source checkout produced the exact
+executable SHA256 in `tools.lock.json`. Other compilers and operating systems
+may produce different bytes. Keep the hash check.
 The unmodified Makefile uses `-std=c90 -O2 -pedantic -Wno-long-long -DUNIX`,
 generated output-format defines and `-lm`. Do not add stripping or custom flags.
 
@@ -46,29 +45,23 @@ not satisfy the packaging check. Host raster tests import Pillow normally.
 
 ## Copperline and test configuration
 
-The historical Linux setup used the official Copperline 1.0.0-rc.1 x86_64
-[AppImage](https://github.com/CopperlineHQ/Copperline/releases/download/v1.0.0-rc.1/Copperline-1.0.0-rc.1-x86_64.AppImage). Its archive SHA256 was:
+Use the official Copperline 1.0.0-rc.1 x86_64
+[AppImage](https://github.com/CopperlineHQ/Copperline/releases/download/v1.0.0-rc.1/Copperline-1.0.0-rc.1-x86_64.AppImage). Its archive SHA256 is:
 
 `e69e732fc027d35f74874ea6720cc39f2f194006997d7000dc94b870ae989ce5`
 
-The extracted Copperline ELF SHA256 was:
+The extracted Copperline ELF SHA256 is:
 
 `26d655f07484412d00ad20eb5f0b363498eccb83d2261526c0cbb21ad8c723e8`
 
-The official source tag resolved to
-`e65a9584ccd0c86e678661ed5d2c18622da63fd4`. These identities were preserved from the former
-CT12 checkpoint, verification report and CT13 integration report at baseline
-`dd97c573df8044ba090facaedf31d549b83e12cf`. The PR #30 worker verified the
-published AppImage through fresh extraction, the ELF hash and `--version`.
-This verifies the published package, not a reproducible Copperline source build.
+The source tag `v1.0.0-rc.1` resolves to
+`e65a9584ccd0c86e678661ed5d2c18622da63fd4`. Fresh extraction, ELF hash and
+`--version` checks verified the published package. This does not establish
+reproducible compilation of Copperline from source.
 
-That setup extracted the AppImage under `.tools` and enabled its `portable.txt`
-mode. This placed `--run` staging in writable tool storage instead of a read-only
-home/Documents directory. The initial input check had failed at that staging
-step; portable mode fixed it. Preserve this setting when restoring the cache.
-The PR #30 validation worker confirmed that the empty marker belongs beside
-the extracted ELF, at `squashfs-root/usr/bin/portable.txt`. For an extraction
-under `.tools/copperline`, create it with:
+Enable portable mode to keep `--run` staging in writable tool storage. Otherwise
+it can fail when home/Documents is read-only. Put an empty `portable.txt` beside
+the extracted ELF. For an extraction under `.tools/copperline`, run:
 
 ```sh
 touch .tools/copperline/squashfs-root/usr/bin/portable.txt

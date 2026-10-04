@@ -8,8 +8,4 @@
   Preserve fixed initialization, per-bank caches and DMA tests.
 - Recording, save and seek extensions remain later work.
 
-PR #27 implemented direct score/WIN strips and is merged. The
-[measured comparison](docs/metrics/direct-hud-comparison.md) records its scope,
-observed results and missing old all-callback minima. Those historical results
-do not certify a later executable. Exit-game work was cancelled; reboot remains
-the intended behavior.
+Exit-game work was cancelled; reboot remains the intended behavior.
