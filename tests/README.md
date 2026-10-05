@@ -134,3 +134,7 @@ collect runtime metrics. Follow [the metric workflow](../docs/metrics/README.md)
 to review and record results. See [current limits](../docs/limits.md) for claims
 that remain unmeasured. Keep the [frozen trajectory](fixtures/native-demo/README.md)
 bound to its recording and seed.
+
+The optional [bounded match-core proof](../docs/match-core-proof.md) compares the
+same 68000 routines in native and isolated execution. It is separate from the
+acceptance gate and does not certify a complete deterministic match core.
