@@ -69,8 +69,8 @@ not alter match state. Standalone uses these explicit phases:
 
 Red fire is held on both controller ports and carried from selection; this does
 not exercise the separate blue action buttons. Ten live updates must suppress
-the held red actions; release clears both latches, and repress permits service. A later release
-in point pause and repress in sound wait exercise transition sampling. The proof
+the held red actions; release clears both latches, and repress permits service.
+A later release in point pause and repress in sound wait exercise transition sampling. The proof
 requires a successful `game_return_vector` visit, actual entropy use, point pause,
 sound wait and an advancing next serve. Inputs are recorded independently from
 full-state assertions and reused for standalone replay.
@@ -100,7 +100,9 @@ bounded core; state comparisons check that the ordinary integration preserves
 the proposed separation over the observed path.
 
 Every standalone write must target owned state, bounded stack, or an allowed
-Paula output. Every read must target the loaded image or stack; a final audit
+Paula output. The return trap permits only its 16-bit read/fetch; CPU writes
+to it are rejected. Other reads must target the loaded image or stack; a final
+audit
 further restricts observed reads to owned state, executed instruction bytes and
 an explicit immutable table inventory (`READONLY`). This captures scoring field
 maps, pose/animation tables and audio score/period/envelope tables. No blanket
@@ -110,8 +112,9 @@ observed-path completeness checks, not proof of all unreachable branches.
 Ordered scene-object, ball-layer, display-field and Paula writes are compared,
 including repeated writes. Registers and unused working RAM receive different
 fills on replay. Negative controls omit initial audio state, remove the tick
-clock from writable ownership, and force the actual CIA-read instruction into
-the entropy path. Each must fail for its stated reason.
+clock from writable ownership, force the actual CIA-read instruction into
+the entropy path, and execute a forbidden word write to the return trap. Each
+must fail for its stated reason.
 
 Audio pointers remain native relocated addresses in this experiment. A future
 canonical snapshot must replace them with validated table IDs/offsets and define
@@ -124,7 +127,7 @@ a same-seed experiment is not a paired-randomness guarantee.
 
 The bounded PAL, A500, 68000, OCS, 512 KB chip, no-expansion run compares 362
 updates, including one successful AI return. All 307 owned bytes and output
-sequences agree at every boundary. Poisoned replay and all three negative
+sequences agree at every boundary. Poisoned replay and all four negative
 controls pass. The separately invoked standalone replay also agrees.
 
 The ordinary development executable remains byte-identical to the base product:

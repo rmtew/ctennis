@@ -56,6 +56,9 @@ class Core:
         self.cpu.w_sr(0x2700)
         for register in range(15):self.cpu.w_reg(register,poison*0x01010101)
         if fault=='out-of-state':self.owned.remove(symbols['game_tick'])
+        if fault=='write-trap':
+            # MOVE.W #0,$00100000: execute the forbidden write on the CPU.
+            self.mem.w_block(symbols['game_round_poll'],bytes.fromhex('33fc000000100000'))
         if fault=='hardware':
             start=symbols['native_entropy_bit']
             code=bytes(self.mem.r_block(start,80))
@@ -82,7 +85,9 @@ class Core:
         if 0x1f0000<=address and address+size<=0x200000:
             self.stack_low=min(self.stack_low,address)
             return
-        if address==0x100000:return
+        if address==0x100000:
+            if mode=='R' and width==1:return  # 16-bit return-trap instruction fetch
+            raise AssertionError(f'Forbidden return-trap access {mode}{size} at {address:#x}')
         if address in PAULA:
             if mode!='W':raise AssertionError('Hardware read')
             return
@@ -126,6 +131,25 @@ class Core:
 
     def close(self):
         self.machine.traps.free(self.trap);self.machine.cleanup()
+
+
+def negative_controls(image,symbols,initial,rows):
+    negatives={}
+    for fault in ('omit-audio','out-of-state','hardware','write-trap'):
+        core=Core(image,symbols,initial,0x5a,fault)
+        try:
+            for row in rows:
+                core.tick(row['pads'])
+                if {n:v.hex() for n,v in core.state().items()}!=row['state']:
+                    raise AssertionError('Full-state mismatch')
+            raise RuntimeError('Negative control escaped: '+fault)
+        except AssertionError as error:
+            message=str(error)
+            expected={'omit-audio':'Full-state mismatch','out-of-state':'Out-of-state write','hardware':'0xbfe401','write-trap':'Forbidden return-trap access W2 at 0x100000'}[fault]
+            assert expected in message,(fault,message)
+            negatives[fault]=message
+        finally:core.close()
+    return negatives
 
 
 def main():
@@ -237,21 +261,7 @@ def main():
         assert {n:v.hex() for n,v in replay.state().items()}==row['state'],('poisoned replay',row['tick'])
         assert replay.events==row['events'],('poisoned events',row['tick'])
     replay.audit_reads();replay.close()
-    negatives={}
-    for fault in ('omit-audio','out-of-state','hardware'):
-        core=Core(image,symbols,initial,0x5a,fault)
-        try:
-            for row in rows:
-                core.tick(row['pads'])
-                if {n:v.hex() for n,v in core.state().items()}!=row['state']:
-                    raise AssertionError('Full-state mismatch')
-            raise RuntimeError('Negative control escaped: '+fault)
-        except AssertionError as error:
-            message=str(error)
-            expected={'omit-audio':'Full-state mismatch','out-of-state':'Out-of-state write','hardware':'0xbfe401'}[fault]
-            assert expected in message,(fault,message)
-            negatives[fault]=message
-        finally:core.close()
+    negatives=negative_controls(image,symbols,initial,rows)
     import platform
     report={'schema':1, 'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             'cpu_harness':'machine68k 0.4.1 / Musashi', 'python':platform.python_version(),
@@ -286,6 +296,8 @@ def replay_capture(directory):
             assert core.events==row['events'],row['tick']
         core.audit_reads()
     finally:core.close()
+    negatives=negative_controls(image,capture['symbols'],initial,report['rows'])
+    print('Negative controls:',json.dumps(negatives))
     print('Standalone replay matched',len(report['rows']),'boundaries; no emulator or ROM opened')
 
 if __name__=='__main__':
