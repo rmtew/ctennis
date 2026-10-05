@@ -1,0 +1,3 @@
+# Optional isolated 68000 proof only; not a product/build dependency.
+# Install from source with --require-hashes --no-binary=machine68k.
+machine68k==0.4.1 --hash=sha256:a58ae3f0f5f32639296e7eaf564f2aa96852462078e35b0c6d8e714d2510a9cb
