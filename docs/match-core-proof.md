@@ -31,7 +31,7 @@ fixtures. A new native run invalidates the earlier proof receipt before building
 
 ## Boundary and identity
 
-The native side uses the ordinary title, physical F1 selection, physical held
+The native side uses the ordinary title, physical Delete selection, physical held
 fire and live gameplay dispatcher. Its existing `DEMO_RECORDING` build option
 selects seeded entropy while retaining live controls and reactive AI. This is an
 explicit deterministic fixture variant, not a claim that today's ordinary live
@@ -67,8 +67,9 @@ not alter match state. Standalone uses these explicit phases:
 4. Compare every owned byte and ordered output writes at `complete_update`,
    before its completion counter increment. Require consecutive native counters.
 
-Both fire buttons are carried from selection. Ten live updates must suppress
-them; release clears both latches, and repress permits service. A later release
+Red fire is held on both controller ports and carried from selection; this does
+not exercise the separate blue action buttons. Ten live updates must suppress
+the held red actions; release clears both latches, and repress permits service. A later release
 in point pause and repress in sound wait exercise transition sampling. The proof
 requires a successful `game_return_vector` visit, actual entropy use, point pause,
 sound wait and an advancing next serve. Inputs are recorded independently from
