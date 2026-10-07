@@ -85,8 +85,18 @@ def run(takeover=False):
     until({'pc':base+symbols['native_input_done']});check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
     roles=assert_player_roles(mem,num)
     check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
-    state=mem('ui_entropy_state',2);before=mem('game_play_state',60)
-    until({'seconds':time+1});check('live entropy stops advancing demo generator',mem('ui_entropy_state',2).hex(),state.hex())
+    before=mem('game_play_state',60)
+    # Takeover keeps the canonical current LFSR, then live play consumes the
+    # same generator. Observe an actual call rather than assuming one per tick.
+    entropy_pc=base+symbols['native_entropy_bit']
+    entropy_break=s.inspect('break_add',{'kind':'pc','addr':entropy_pc})
+    stop=until({'seconds':time+10})
+    s.inspect('break_remove',{'id':entropy_break['id']})
+    check('live takeover reaches shared entropy routine within bound',stop['pc'],entropy_pc)
+    state=mem('ui_entropy_state',2)
+    s.inspect('step',{'count':1})
+    until({'pc':base+symbols['native_input_done']})
+    check('live takeover consumes preserved shared entropy state',mem('ui_entropy_state',2)!=state,True)
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
     check('ordinary world continues after takeover',mem('game_play_state',60)!=before,True)
     s.inspect('input_key',{'rawkey':0x44,'action':'release'})

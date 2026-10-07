@@ -73,4 +73,13 @@ game_core_title_requested:
         clr.b   ui_edges
         clr.b   ui_demo
         bsr     ui_begin_title
+        ; Core cleanup and the four-plane menu copy must not share a callback.
+        ; UI state changes now; retain the complete old presentation until the
+        ; next callback can construct and publish the complete title bitmap.
+        move.w  simulation_started_updates,ui_title_request_epoch
+        st      ui_title_deferred
         bra     game_show_returned_title
+
+ui_title_request_epoch: dc.w 0
+ui_title_deferred: dc.b 0
+        even

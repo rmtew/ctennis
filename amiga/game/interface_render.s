@@ -1,6 +1,13 @@
 ; One authored/private offline font; text rendered into UI-owned chip memory.
 ; Title uses four existing planes. Overlay uses one white bit pattern in all four.
 ui_render:
+        tst.b   ui_title_deferred
+        beq.s   .render
+        move.w  simulation_started_updates,d0
+        cmp.w   ui_title_request_epoch,d0
+        beq     .done
+        clr.b   ui_title_deferred
+.render:
         moveq   #0,d0
         move.b  ui_overlay_kind,d0
         tst.b   ui_paused

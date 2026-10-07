@@ -173,3 +173,40 @@ reinstalled with the existing hash-pinned requirements. Receipts and raw private
 runtime state stay outside Git. Ordinary cadence, sprite publication, resource
 coverage, the finite native gate and independent review remain outstanding at
 this document boundary. No history buffers have been allocated.
+
+The first ordinary one-player cadence rerun then failed on returned-title
+callback 11,787: 63,480 CCK work plus 586.518 CCK entry lateness exceeded the
+59,191.137 CCK callback interval. The completed ordinary match/restart had
+12,049 callbacks, zero missed publications and a measured initialized-chip peak
+of 305,496 bytes, but the missed deadline invalidates that native case. The
+pre-fix two-player diagnostic was intentionally interrupted at observed guest
+time 333.838 seconds to apply this known deadline fix; its interrupted receipt
+establishes no pass.
+
+The native presentation adapter now resets title UI state immediately and marks
+the requesting callback's epoch. `ui_render` retains the previous complete
+presentation throughout that callback; the next callback builds and publishes
+the complete title bitmap. This spreads match cleanup and the four-plane menu
+copy across separate unchanged-deadline callbacks. Physical keyboard polling and
+elapsed accounting between construction planes remain in place. Fresh deliberate
+menu shortcuts retain their existing acceptance, including a selection before a
+deferred title bitmap is visible; held continuation controls do not become fresh
+menu edges. Core state and semantic title requests remain at their original
+fixed boundary. This is a presentation timing fix, not a timing exemption.
+
+Before that fix, the full native menu passed 132 checks and PAL sprite DMA passed
+all startup phases, two-player, serve, pause, return, title, alternating fields,
+delayed construction and boundary-preemption cases. Stale-bank, unknown-bank,
+malformed-height and unmasked-preemption controls were rejected. Native setup
+passed raw deadlines and elapsed accounting; lost-wrap and delayed UI controls
+were rejected. These bind the pre-fix executable and must not be presented as
+fresh passes for the modified presentation adapter.
+
+The updated demo takeover check passed 5,480 trajectory ticks, 18 flight-side
+changes and zero missed publications. It retained complete game/score/audio/
+clock/entropy state at takeover, then observed an actual shared-entropy call
+during ordinary live execution within a finite horizon and checked consumption
+at the next native input boundary. It never invokes entropy manually or injects
+state. The old assertion that the demo LFSR stops in live play was deliberately
+replaced because live play now consumes that same seeded generator. The frozen
+10,958 expected digests remain unchanged.
