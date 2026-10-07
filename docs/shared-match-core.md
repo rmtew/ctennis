@@ -227,3 +227,69 @@ that the deferred flag skips only the requesting callback, then retires even
 if a fresh shortcut already entered play. This bounded CPU regression does not
 establish Amiga deadlines or DMA correctness; fresh integration reruns remain
 required for the modified copy.
+
+### Returned-title validation boundary
+
+At committed head `0e994e9`, the ordinary executable was
+`48f2ca13a10fc4432b1e9871aa1c9dd49a8ca3837b4e028db7ee4215dd940ae8`.
+One-player match/restart completed 12,047 observed callbacks and two-player
+match/restart completed 23,795. Both completed receipts have zero raw deadline
+misses, zero missed publications, verified loaded executable identity and no
+changed inputs. Their tightest observed title headrooms were 1,272.756 and
+1,022.886 CCK respectively; these are finite observations, not worst-case
+bounds. Both measured initialized-chip peaks were 305,568 bytes, not a claim
+about pre-pool cold boot. The setup self-test passed all raw deadlines and
+rejected lost-wrap accounting and UI-overwork controls. The menu passed all
+132 checks. PAL DMA passed 15 cases and rejected four compiled controls; NTSC
+passed its six startup phases. Those fixture binaries are distinct from the
+ordinary executable and cover the explicitly recorded physical-bank cases.
+Takeover passed 5,480 frozen ticks, 18 side changes and zero missed publications.
+
+The fresh full frozen run reproduced all 10,958 expected trajectory ticks but
+failed its earliest returned-title pixel check: the old four-callback screenshot
+still showed the previous complete court. It is a failed receipt, not a full
+demo acceptance pass. A bounded initial-once retained match-award fixture then
+measured actual semantic TITLE, complete bitmap/ready epoch, Copper publication
+and captured scanout without inserting state or selecting a callback regime
+after initialization. Startup phases 0, 253 and 308 completed title construction
+in exactly the following callback; ready-to-publication times were 23,338,
+36,811 and 24,392 CCK, each below one physical PAL field (71,051 CCK). Phase 253
+reproduced the old four-callback pixel failure, while the other phases did not.
+All captured fields from the first title publication's frame plus two had the
+full independently checked title pixels. This is the existing completed-scan
+convention used by the continuous attract digest observer, not a software frame
+model or an increased callback budget.
+
+The frozen and attract harnesses now require that exact first completed physical
+scan, construction in the next callback and publication within one PAL field
+of completed ready. The old four-callback capture remains a diagnostic. Later
+600/1,200/1,790-callback pixels, continuous attract digests, bank/blank/ready
+guards and all trajectory digests remain strict. An actual compiled extra-
+deferred-callback control is rejected by the next-callback construction bound.
+These test changes require fresh full acceptance; they do not retroactively
+turn the failed frozen receipt green. Current tail timelines are persisted even
+when an assertion fails, and a new run replaces stale tail metadata immediately.
+
+`check_shared_core_bytes.py` compares 17,936 actual uninstrumented native and
+standalone code/table/alignment bytes. Only 250 actual HUNK_RELOC32 references
+and 11 verified named synchronous-sink branch destinations per image are
+normalized; all remaining bytes must match. At this boundary the normalized
+SHA256 is `83679f6d9b538584f387f144f143231293753348a83092aead1ed7dcb6330601`.
+Canonical mutable state is excluded from that byte comparison and validated by
+the separate complete-state replay guards. The current PAL eight-second smoke
+passed 1,914 operations/478 callbacks, poisoned and relocated replays and all
+four forbidden-access/omitted-init controls. The current NTSC two-human pause/
+return/opposite-mode smoke passed 2,850 operations/771 callbacks with the same
+guards, including 119 paused logical samples and the actual title request.
+Short smoke is not full-lifecycle
+coverage; the earlier full core replay remains explicitly tied to its unchanged
+standalone byte identity.
+
+The honest `native_metrics.py --require-runtime --record` refresh exited 1 and
+recorded incomplete current coverage: cold-one ADF was not run, two/setup
+receipts were conservatively stale after harness changes, and full demo failed.
+The current ordinary file is 181,192 bytes; release-symbol stripping yields
+159,952 bytes and loaded code/data/BSS total 166,300 bytes. Those static sizes
+do not establish whole-machine RAM headroom. The clean-head finite native gate,
+fresh resource coverage and independent review are still required. No merge,
+readiness or history/tutorial UI claim is implied by this boundary.

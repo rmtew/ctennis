@@ -28,6 +28,9 @@ def run(takeover=False):
  assert recording['schema']==2 and len(expected)==recording['frames']
  assert recording['entropy_version']=='galois16-b400-v1' and 0<recording['seed']<65536 and recording['initial_game_random']==0
  directory=ROOT/('build/tests/demo-mid-takeover' if takeover else 'build/tests/demo-full-repeat');checks=[];awards=[];seen_games=[0,0];index=0;contacts=0;previous_side=None
+ if not takeover:
+  atomic_json(directory/'demo-end-state.json',{'state':'incomplete','passed':False})
+  atomic_json(directory/'demo-end-events.json',[]);atomic_json(directory/'demo-end-publications.json',[])
  def check(label,actual,expected_value):
   checks.append({'label':label,'actual':actual,'expected':expected_value})
   if actual!=expected_value:raise AssertionError(checks[-1])
@@ -124,10 +127,24 @@ def run(takeover=False):
    h,offset=located['title_copper'];title_pointer=segments[h]['start']+offset
    regs=s.inspect('custom_dump')['regs']
    end_state=dict(life=6,demo=255,idle=0,started=num('simulation_started_updates',2),completed=num('simulation_updates',2),ready_generation=num('ready_generation',2),ready=num('ready_generation',2) if num('display_ready') else None,
-                  first_play=None,returned=None,title_published=False,next_demo=None,next_seed=False,maximum_loops=0,
+                  first_play=None,returned=None,title_published=False,title_ready=None,title_display=False,
+                  first_title_publication=None,first_complete_title_capture=None,next_demo=None,next_seed=False,maximum_loops=0,
                   pointer=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big')))
    publications=[];tail_events=[];tail_checks=[]
    def event(message):
+    capture=end_state['first_complete_title_capture']
+    if capture and message.get('id')==capture['request_id']:
+     assert 'error' not in message,message
+     capture['reply']=message
+     return
+    if message.get('method')=='event.frame':
+     row=message['params'];assert not row.get('dropped_notifications',0)
+     publication=end_state['first_title_publication']
+     if publication and not capture and row['position']['frame']>=publication['position']['frame']+2:
+      assert row['position']['frame']==publication['position']['frame']+2,'First complete title frame telemetry missing'
+      identifier=s.send_async('capture.screenshot',{'path':str(directory/'title-first-complete.png')})
+      end_state['first_complete_title_capture']=dict(request_id=identifier,request_position=row['position'],publication=publication)
+     return
     if message.get('method')!='event.mmio':return
     row=message['params'];addr=row['addr'];value=row['value'];size=row['size'];position=row['position']
     assert not row.get('dropped_events',0) and not row.get('dropped_notifications',0),'Demo-end telemetry dropped'
@@ -144,7 +161,10 @@ def run(takeover=False):
      end_state['life']=value
      if value==2 and end_state['returned'] is None:
       assert end_state['first_play'],'Unattended demo returned before actual full phrase completion'
-      end_state['returned']=dict(callback=end_state['completed'],position=position)
+      end_state['returned']=dict(callback=end_state['completed'],started=end_state['started'],position=position)
+    if addr==base+symbols['game_title_display']:end_state['title_display']=bool(value)
+    if addr==base+symbols['ready_completed'] and value and end_state['returned'] and end_state['title_display'] and end_state['title_ready'] is None:
+     end_state['title_ready']=dict(started=end_state['started'],position=position)
     if addr==base+symbols['ready_generation']:end_state['ready_generation']=value
     if addr==base+symbols['display_ready']:end_state['ready']=end_state['ready_generation'] if value else None
     if addr==base+symbols['ui_demo']:
@@ -160,14 +180,23 @@ def run(takeover=False):
      assert position['vpos']>=253,'Demo-end publication outside retained blank window'
      if end_state['returned'] and not end_state['next_demo']:
       assert pointer==title_pointer,{'label':'actual Copper returns to court during title idle','pointer':pointer,'title':title_pointer,'position':position}
+      if end_state['first_title_publication'] is None:
+       ready=end_state['title_ready'];assert ready,'Title published before complete construction'
+       assert ready['started']==(end_state['returned']['started']+1)&65535,'Title construction did not finish next callback'
+       assert 0<=position['cck']-ready['position']['cck']<=313*227,'Title publication exceeded one physical PAL field'
+       end_state['first_title_publication']=dict(position=position,started=end_state['started'])
       end_state['title_published']=True
      publications.append(dict(pointer=pointer,position=position,lifecycle=end_state['life'],demo=end_state['demo']))
     tail_events.append(row)
    watches=[{'addr':base+symbols[n],'len':length,'access':'write'} for n,length in
-            [('game_lifecycle',2),('ui_demo',1),('ui_idle',2),('ui_entropy_state',2),('simulation_started_updates',2),('simulation_updates',2),('ready_generation',2),('display_ready',1),('game_celebration_first_play',1),('game_celebration_loops',2)]]
+            [('game_lifecycle',2),('ui_demo',1),('ui_idle',2),('ui_entropy_state',2),('simulation_started_updates',2),('simulation_updates',2),('ready_generation',2),('ready_completed',1),('game_title_display',1),('display_ready',1),('game_celebration_first_play',1),('game_celebration_loops',2)]]
    watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
-   s.notification_handler=event;s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
-   s.inspect('step',{'count':1});until({'seconds':time+54});s.inspect('events.unsubscribe');s.notification_handler=None
+   s.notification_handler=event;s.inspect('events.subscribe',{'events':['mmio','frame'],'frame_interval':1,'mmio':watches})
+   try:
+    s.inspect('step',{'count':1});until({'seconds':time+54});s.inspect('events.unsubscribe');s.inspect('status');s.notification_handler=None
+   finally:
+    atomic_json(directory/'demo-end-publications.json',publications);atomic_json(directory/'demo-end-events.json',tail_events)
+    atomic_json(directory/'demo-end-state.json',dict(end_state,pointer=end_state['pointer'].hex()))
    check('demo automatically returned after actual first complete tune',bool(end_state['returned'] and end_state['first_play']),True)
    check('only one completed tune before automatic demo return',end_state['maximum_loops'],1)
    check('actual title bank published throughout bounded idle',end_state['title_published'],True)
@@ -175,14 +204,23 @@ def run(takeover=False):
    check('next demo is ordinary active attract',num('ui_demo'),255)
    check('next demo resets game totals',list(mem('game_games_a',2)),[0,0])
    check('next demo resets default selector EXIT',num('ui_demo_choice'),0)
+   # Preserve the actual publication timeline even if a subsequent pixel
+   # assertion fails. Failed evidence must remain diagnostically useful.
+   atomic_json(directory/'demo-end-publications.json',publications);atomic_json(directory/'demo-end-events.json',tail_events)
+   end_state['pointer']=end_state['pointer'].hex();atomic_json(directory/'demo-end-state.json',end_state)
    from native_identity_raster import assert_menu_selection_raster
-   for offset in (4,600,1200,1790):assert_menu_selection_raster(directory/f'title-idle-{offset}.png',0,1)
+   assert end_state['first_complete_title_capture'] and 'reply' in end_state['first_complete_title_capture']
+   assert_menu_selection_raster(directory/'title-first-complete.png',0,1)
+   # Four logical callbacks can precede the first complete physical title scan.
+   # Retain that screenshot diagnostically; publication+2 owns acceptance.
+   try:assert_menu_selection_raster(directory/'title-idle-4.png',0,1);end_state['callback4_title_pixels']=True
+   except AssertionError:end_state['callback4_title_pixels']=False
+   for offset in (600,1200,1790):assert_menu_selection_raster(directory/f'title-idle-{offset}.png',0,1)
+   atomic_json(directory/'demo-end-state.json',end_state)
    s.inspect('capture_screenshot',{'path':str(directory/'next-attract.png')})
    from native_identity_raster import assert_mode_raster,assert_footer_raster
    assert_mode_raster(directory/'next-attract.png',1)
    assert_footer_raster(directory/'next-attract.png',{0:'',2:'A WINS GAME',3:'B WINS GAME',4:'YOUR SERVE'}[num('ui_overlay_kind')],'DEMO - TAKE OVER / EXIT','EXIT')
-   atomic_json(directory/'demo-end-publications.json',publications);atomic_json(directory/'demo-end-events.json',tail_events)
-   end_state['pointer']=end_state['pointer'].hex();atomic_json(directory/'demo-end-state.json',end_state)
   deadlines=num('missed_presentation_deadlines',2)
  target_log(directory)
  report={'resource_metrics':metrics.result(),'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}

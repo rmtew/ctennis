@@ -11,7 +11,7 @@ from native_identity_raster import assert_title_raster,assert_menu_selection_ras
 
 def run():
     _,exe=build();config=emulator_config();listing=(exe.parent/'native.lst').read_text();symbols=code_symbols(listing)
-    directory=ROOT/'build/tests/attract-two-cycles';checks=[];windows=[];entries=[];publications=[];captures=[];quiet_requests={}
+    directory=ROOT/'build/tests/attract-two-cycles';checks=[];windows=[];entries=[];publications=[];captures=[];quiet_requests={};capture_requests={}
     def check(label,actual,expected):
         checks.append(dict(label=label,actual=actual,expected=expected));assert actual==expected,checks[-1]
     with NativeControlSession(directory) as s:
@@ -37,9 +37,13 @@ def run():
         expected_digest=f'{expected_digest:016x}'
         planes=[(address(f'title_plane{i}'),192*32) for i in range(4)]
         controls=[(title,address('title_plane0')-title)]
-        state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,ready_generation=0,ready=None,pointer=bytearray(4))
-        fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','ready_generation','display_ready')}
+        state=dict(life=0,demo=0,dirty=0,idle=0,started=0,completed=0,award=None,first=None,loops=0,ready_generation=0,ready=None,title=False,pointer=bytearray(4))
+        fields={base+symbols[n]:n for n in ('game_lifecycle','ui_demo','ui_dirty','ui_idle','simulation_started_updates','simulation_updates','game_celebration_first_play','game_celebration_loops','ready_generation','ready_completed','game_title_display','display_ready')}
         def event(message):
+            if message.get('id') in capture_requests:
+                capture=capture_requests.pop(message['id']);assert 'error' not in message,message
+                capture['reply']=message
+                return
             if message.get('id') in quiet_requests:
                 window=quiet_requests.pop(message['id'])
                 assert 'error' not in message,{'label':'quiet bitmap subscription rejected','reply':message}
@@ -60,6 +64,12 @@ def run():
                     # A capture describes the preceding completed scan. Begin
                     # after the first wholly title-owned visible field.
                     if first is not None and frame>=first+2:
+                        if window.get('first_complete_title_capture') is None:
+                            assert frame==first+2,'First complete title frame telemetry missing'
+                            path=directory/f'cycle-{len(windows)}-title-first-complete.png';captures.append(path)
+                            identifier=s.send_async('capture.screenshot',{'path':str(path)})
+                            capture=dict(request_id=identifier,request_position=r['position'])
+                            window['first_complete_title_capture']=capture;capture_requests[identifier]=capture
                         digest=r.get('digest',{})
                         assert digest.get('width')==716 and digest.get('height')==285
                         if digest.get('digest')!=expected_digest:
@@ -85,6 +95,9 @@ def run():
                         path=directory/f'cycle-{len(windows)}-title-{offset}.png';captures.append(path)
                         s.send_async('capture.screenshot',{'path':str(path)})
             elif n=='ui_dirty':state['dirty']=v
+            elif n=='game_title_display':state['title']=bool(v)
+            elif n=='ready_completed' and v and state['title'] and windows and windows[-1]['next_entry'] is None and windows[-1].get('title_ready') is None:
+                windows[-1]['title_ready']=dict(started=state['started'],position=p)
             elif n=='ui_idle':state['idle']=v
             elif n=='game_celebration_loops':state['loops']=max(state['loops'],v) # Return clears the live counter before lifecycle2.
             elif n=='game_celebration_first_play' and v:state['first']=dict(callback=state['started'],position=p)
@@ -104,7 +117,7 @@ def run():
                     check('automatic return follows actual first-play completion',state['first'] is not None,True)
                     check('exact full native phrase before unattended return',state['first']['callback']-state['award']['callback'],926)
                     check('one completed phrase before unattended return',state['loops'],1)
-                    windows.append(dict(award=state['award'],first_play=state['first'],returned=dict(callback=state['completed'],position=p),next_entry=None,publications=0,stable=False,unexpected_title_writes=0,title_frame_digests=[],first_title_publication_frame=None))
+                    windows.append(dict(award=state['award'],first_play=state['first'],returned=dict(callback=state['completed'],started=state['started'],position=p),next_entry=None,publications=0,stable=False,unexpected_title_writes=0,title_frame_digests=[],first_title_publication_frame=None,title_ready=None,first_complete_title_capture=None))
                     s.send_async('events.subscribe',{'events':['frame'],'frame_interval':1,'frame_digest':True})
                     state['award']=None
             elif n=='display_ready' and v and windows and windows[-1]['next_entry'] is None and state['life']==2 and not state['dirty']:
@@ -123,6 +136,9 @@ def run():
                     check('every returned-title publication selects actual title bank',pointer,title)
                     windows[-1]['publications']+=1
                     if windows[-1]['first_title_publication_frame'] is None:
+                        ready=windows[-1]['title_ready'];assert ready,'Title published before complete construction'
+                        assert ready['started']==(windows[-1]['returned']['started']+1)&65535,'Title construction did not finish next callback'
+                        assert 0<=p['cck']-ready['position']['cck']<=313*227,'Title publication exceeded one physical PAL field'
                         windows[-1]['first_title_publication_frame']=p['frame']
                         # Observe quiet bitmap writes after construction, which
                         # exceeds Copperline's bounded per-field event queue.
@@ -134,13 +150,16 @@ def run():
         state.update(life=read('game_lifecycle',2),demo=read('ui_demo'),dirty=read('ui_dirty'),idle=read('ui_idle',2),started=read('simulation_started_updates',2),completed=read('simulation_updates',2),ready_generation=read('ready_generation',2),ready=read('ready_generation',2) if read('display_ready') else None)
         regs=s.inspect('custom_dump')['regs'];state['pointer']=bytearray(((regs['COP1LCH']<<16)|regs['COP1LCL']).to_bytes(4,'big'))
         s.notification_handler=event
-        watches=[{'addr':a,'len':1 if n in ('ui_demo','ui_dirty','game_celebration_first_play','display_ready') else 2,'access':'write'} for a,n in fields.items()]
+        watches=[{'addr':a,'len':1 if n in ('ui_demo','ui_dirty','game_celebration_first_play','display_ready','ready_completed','game_title_display') else 2,'access':'write'} for a,n in fields.items()]
         watches += [{'addr':a,'len':length,'access':'write'} for a,length in controls]
         watches += [{'addr':0xdff080,'len':4,'access':'write'},{'addr':0xdff088,'len':2,'access':'write'}]
         quiet_watches=watches+[{'addr':a,'len':length,'access':'write'} for a,length in planes]
         s.inspect('events.subscribe',{'events':['mmio'],'mmio':watches})
         # No injected state, keyboard/pad actions, seeded fixture or callback stops.
-        s.inspect('run_until',{'seconds':stop['seconds']+570});s.inspect('events.unsubscribe');s.notification_handler=None
+        try:
+            s.inspect('run_until',{'seconds':stop['seconds']+570});s.inspect('events.unsubscribe');s.inspect('status');s.notification_handler=None
+        finally:
+            atomic_json(directory/'tail-diagnostic.json',dict(windows=windows,entries=entries,publications=publications,state=dict(state,pointer=state['pointer'].hex()),scope='Current run timeline retained even if acceptance assertions fail'))
         check('two unattended result-to-title cycles',len(windows),2)
         check('third attract starts after second idle',len(entries),3)
         check('all quiet subscriptions acknowledged',len(quiet_requests),0)
@@ -152,7 +171,12 @@ def run():
             check('no hidden quiet menu bitmap mutation',window['unexpected_title_writes'],0)
             elapsed=window['next_entry']['position']['seconds']-window['returned']['position']['seconds']
             check('retained bounded 30-second title idle',29.9<elapsed<30.2,True)
-            for offset in (4,600,1200,1790):
+            check('complete title scan capture replied',bool(window['first_complete_title_capture'].get('reply')),True)
+            path=directory/f'cycle-{cycle}-title-first-complete.png'
+            assert_title_raster(path);assert_menu_selection_raster(path,0,1)
+            try:assert_menu_selection_raster(directory/f'cycle-{cycle}-title-4.png',0,1);window['callback4_title_pixels']=True
+            except AssertionError:window['callback4_title_pixels']=False
+            for offset in (600,1200,1790):
                 path=directory/f'cycle-{cycle}-title-{offset}.png'
                 assert_title_raster(path);assert_menu_selection_raster(path,0,1)
     target_log(directory)
