@@ -71,7 +71,10 @@ CC=gcc CXX=g++ python -m pip install --require-hashes --no-binary=machine68k \
 RUST_LOG=info python scripts/run_shared_match_core.py --seconds 8
 RUST_LOG=info python scripts/run_shared_match_core.py --ntsc --seconds 8
 RUST_LOG=info python scripts/run_shared_match_core.py --two --seconds 8
+RUST_LOG=info python scripts/run_shared_match_core.py --two --restart --seconds 8
 RUST_LOG=info python scripts/run_shared_match_core.py --demo --seconds 300
+RUST_LOG=info python scripts/run_shared_match_core_fixtures.py --case all
+python scripts/check_shared_core_poll.py build/tests/shared-match-core-pal-demo/report.json
 RUST_LOG=info python scripts/run_demo_match_tests.py
 ```
 
@@ -97,3 +100,76 @@ invalidates that case's prior pass before building. CPU cycles exclude Amiga
 contention and physical presentation work. They do not prove native deadlines
 or a worst-case budget. Native acceptance, resource reports and independent
 review remain required before calling the increment complete.
+
+## Focused evidence at the reviewed boundaries
+
+Production assembly boundary: `228c31ecbdc27c32a34c08d5da7588dfa48ad4ad`.
+Validation/schema boundary: `3ba1babc0396421ca36743a502cfc5f7340b91ee`.
+The development executable remained byte-identical across those boundaries:
+`e9420c22893b0c6e1abf5ad1fac2437ef2e8018ff78211f95bf9503c294752cc`.
+The isolated executable is
+`462becbdabc101841ba880dec980a2250a77a467289cbe3744a44a3c148ea482`.
+These identities describe local focused evidence, not a completed native gate.
+
+The 300-second PAL native/standalone comparison at `3ba1bab` passed 71,907
+operations and 17,976 completed callbacks. It covered title, selection, play,
+round pause, round sound, result sound, one completed title request and a second
+demo selection. All 314 state bytes were written and compared; ordered semantic
+outputs, both complete poison replays, the relocated 2,000-operation replay and
+all four forbidden-access/initialization controls passed. The 240-second earlier
+extent ended in result sound and is superseded by this longer case.
+
+The PAL two-human physical selection, pause, confirmed title return and opposite
+one-human selection passed 2,876 operations across 778 callbacks, including 120
+paused sampling callbacks without dispatch. Both selections and final play were
+asserted. The early two-human harness attempt pressed its key before native
+startup sampling was installed and selected one-player mode through joystick
+fire; it did not establish two-human coverage. The corrected harness waits for
+the initialized native menu and asserts the actual mode commands.
+
+Each of the five retained scoring starts passed 1,920 operation comparisons over
+480 callbacks, with one native initial fixture state and no later state writes.
+They retained deuce 5/5, advantage 4/6, return to deuce 5/5, advantage game award
+0/0 with games 2/2, and match award 0/0 with games 6/2. Whole-fixture poisoned and
+relocated replays passed. These fixtures are separate from ordinary match play.
+
+The frozen independent trajectory passed all 10,958 ticks, with 31 flight-side
+changes and zero missed publications, at production boundary `228c31e`.
+Its executable hash is the same `e9420c...` product checked above; this is explicit
+byte-identity reuse, not a fresh full-trajectory rerun at `3ba1bab`. Native input
+sampling passed 11 checks. The host suite passed 70 tests. The early NTSC
+eight-second differential passed 1,894 operations/473 callbacks, both complete
+poison replays and four negative controls; its receipt binds the then-current
+validation source hashes and is a bounded smoke extent, not full NTSC lifecycle
+coverage. Final current-head NTSC validation remains required.
+
+The existing emitted-byte classifier verified the standalone file against its
+listing and assets. Loaded bytes reconcile as follows:
+
+| Component | Bytes |
+| --- | ---: |
+| Actual shared CPU instructions | 7,538 |
+| Immutable simulation tables | 10,396 |
+| Shared source alignment | 2 |
+| Complete canonical state | 314 |
+| Eight standalone RTS sinks | 16 |
+| Hunk alignment | 2 |
+| Total standalone loaded bytes | 18,268 |
+
+The native development file is 181,016 bytes; the stripped release file is
+159,864 bytes with SHA256
+`d70d1a0b1b5208b3798a054a64fea28d6ad775528bc3508a147b8ca9b97ab1f4`.
+Native loaded code/data/BSS totals 166,228 bytes. Release stripping removes only
+symbols. These sizes are not a whole-machine RAM measurement or a release cold
+boot pass. The maximum observed isolated stack extent is 128 bytes; the PAL
+300-second core execution accumulated 170,572,718 CPU cycles. This accumulated
+total is not worst-frame cost, native contention timing or a hardware budget.
+
+The first smoke attempt failed because its final observer call supplied both a
+PC and seconds target to `run_until`; the corrected bounded breakpoint call
+passed. The initial CPU dependency build failed because the environment's
+default compiler was missing `clang`; the successful recovery used GCC and then
+reinstalled with the existing hash-pinned requirements. Receipts and raw private
+runtime state stay outside Git. Ordinary cadence, sprite publication, resource
+coverage, the finite native gate and independent review remain outstanding at
+this document boundary. No history buffers have been allocated.
