@@ -228,8 +228,5 @@ ui_latch_live_controls:
         dbra    d7,.keys
         move.b  ui_joystick_bits,ui_joystick_entry
         move.b  ui_joystick_bits+1,ui_joystick_entry+1
-        bsr     game_latch_old_actions
-        clr.w   game_input_bits
-        clr.w   game_input_pressed
-        clr.w   game_input_released
+        bsr     game_core_clear_inputs
         rts

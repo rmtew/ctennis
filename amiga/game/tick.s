@@ -17,6 +17,14 @@ game_begin_active:
         rts
 
 game_tick_dispatch:
+        tst.b   game_core_command
+        beq.s   .dispatch
+        moveq   #0,d0
+        move.b  game_core_command,d0
+        clr.b   game_core_command
+        subq.b  #1,d0
+        bra     game_core_start_choice
+.dispatch:
         cmpi.w  #GAME_TITLE,game_lifecycle
         beq     game_returned_title_tick
         cmpi.w  #GAME_SELECTION_HELD,game_lifecycle
@@ -29,7 +37,6 @@ game_service_tick:
         bra     game_service_tail
 
         even
-game_lifecycle: dc.w GAME_SERVICE
 
         include "amiga/game/menu.s"
 

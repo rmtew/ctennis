@@ -56,7 +56,6 @@ native_mode_ready:
         bsr     game_scene_reset
         bsr     game_scene_build_players
         rts
-game_new_mode: dc.b 0
         even
 
 ; Logical-player input packet. The maintained controls module owns physical state
@@ -68,7 +67,10 @@ input_update:
         lsr.b   #7,d0
         lsr.b   #4,d1
         bsr     game_assign_players
-        bsr     ui_playback
+        tst.b   game_playback_active
+        beq.s   .live_controls
+        move.b  game_playback_mask,game_player_controls
+.live_controls:
         clr.b   game_directions
         clr.b   game_actions
         btst    #2,game_mode

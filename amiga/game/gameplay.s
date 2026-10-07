@@ -25,4 +25,3 @@ game_play_tick:
         include "amiga/game/gameplay_contact.s"
         include "amiga/game/gameplay_ai.s"
         even
-game_play_state: dcb.b G_SIZE,0

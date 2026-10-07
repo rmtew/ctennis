@@ -31,6 +31,7 @@ start:
         jsr     -150(a6) ; Exec SuperState before owning the interrupt vector
         lea     game_stack_top,sp
         bsr     init_square_score_banks
+        bsr     game_core_init
         bsr     game_begin_title
         lea     pointer_sources(pc),a0
         lea     pointer_targets(pc),a1
@@ -111,10 +112,6 @@ copy_third_copper:
         move.w  #$c010,$dff09a
         andi.w  #$f8ff,sr
 main_loop:
-        tst.b   ui_paused
-        bne.s   ui_skip_round_poll
-        bsr     game_round_poll
-ui_skip_round_poll:
         bsr     game_poll_keyboard
         bsr     poll_presentation
         bsr     account_sim_timer
@@ -380,8 +377,14 @@ simulation_update:
         ; Compact observational counter: external bus timestamps distinguish
         ; update entry/completion without stopping or tracing each instruction.
         addq.w  #1,simulation_started_updates
+        tst.b   ui_paused
+        bne.s   simulation_poll_done
+        bsr     game_round_poll
+simulation_poll_done:
         bsr     sample_amiga_joystick
+        move.b  game_native_selection_keys,game_selection_keys
         bsr     ui_sample
+        bsr     game_native_commands
         tst.b   ui_paused
         bne     ui_frozen_update
         cmpi.w  #GAME_PLAYING,game_lifecycle
@@ -400,6 +403,7 @@ simulation_menu:
         bcs.s   simulation_service_tick
         bsr     game_render_sprites
 simulation_service_tick:
+        bsr     game_native_menu_tick
         bsr     game_tick_dispatch
         cmpi.w  #GAME_ROUND_PAUSE,game_lifecycle
         bcs.s   simulation_service_observed
@@ -453,8 +457,7 @@ game_show_returned_title:
         bsr     prepare_title_display
         ; ui_render selects title only after the complete menu copy.
         rts
-game_clear_returned_status:
-        clr.b   field_values+4
+game_core_status_present:
         bra     patch_score_pointers
 game_title_display: dc.b 0
         even
@@ -468,32 +471,6 @@ paula_events_done:
 
         include "amiga/score_copper_patch.i"
         include "amiga/square_score_banks.i"
-
-; Native AI target-sign entropy: timer bit mixed with the game PRNG.
-; Attract playback uses the independently recorded native seeded stream.
-native_entropy_bit:
-        ifd DEMO_RECORDING
-        move.l  d1,-(sp)
-        bsr     ui_demo_entropy
-        move.l  (sp)+,d1
-        rts
-        else
-        tst.b   ui_demo
-        beq.s   refresh_live_entropy
-        move.l  d1,-(sp)
-        bsr     ui_demo_entropy
-        move.l  (sp)+,d1
-        rts
-refresh_live_entropy:
-        endif
-        move.l  d1,-(sp)
-        moveq   #0,d0
-        move.b  $bfe401,d0
-        move.b  game_random_seed,d1
-        eor.b   d1,d0
-        andi.b  #1,d0
-        move.l  (sp)+,d1
-        rts
 
         include "amiga/game/controls.s"
 
@@ -646,8 +623,8 @@ hex_byte:
 
         include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
-        include "amiga/game/tick.s"
-        include "amiga/game/integration.s"
+        include "amiga/game/core.s"
+        include "amiga/game/native_core_adapter.s"
         include "amiga/game/interface.s"
 
         even
@@ -686,8 +663,6 @@ simulation_started_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
-score_dirty: dc.b 0
-field_values: dc.b 0,0,0,0,0,1
 prepared_field_values: dc.b 0,0,0,0,0,1
         even
 pair_colours:      dcb.b 8,0

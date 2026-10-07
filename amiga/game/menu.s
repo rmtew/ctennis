@@ -1,33 +1,22 @@
 ; Maintained title/selection lifecycle. No source callback PC or RAM snapshot.
 ; Selection is latched once, then waits for physical release before live play.
-game_begin_title:
+game_core_begin_title:
         move.w  #GAME_TITLE,game_lifecycle
         clr.b   game_selection_keys
         clr.b   game_restart_context
-        bsr     ui_begin_title
         clr.w   game_accept_count
         rts
 
 game_menu_tick:
         cmpi.w  #GAME_TITLE,game_lifecycle
-        beq     ui_menu_tick
-        cmpi.w  #GAME_TITLE,game_lifecycle
-        bne     game_wait_release
-        tst.b   game_selection_keys
         beq     game_menu_return
-        moveq   #0,d0
-        btst    #1,game_selection_keys
-        beq.s   game_latch_choice
-        moveq   #1,d0
-game_latch_choice:
-        tst.b   ui_demo
-        bne.s   ui_keep_player_count
-        move.b  d0,ui_player_count
-ui_keep_player_count:
+        bra     game_wait_release
+
+; D0=mode, game_match_seed supplied by the caller. No UI or hardware reads.
+game_core_start_choice:
         move.w  d0,-(sp)
         bsr     game_latch_old_actions
         move.w  (sp)+,d0
-        clr.b   game_title_display
         move.b  d0,game_selected_mode
         bsr     game_new_match
         tst.b   game_restart_context
@@ -73,10 +62,5 @@ game_first_play:
 game_menu_return:
         rts
         even
-game_selection_delay: dc.w 0
-game_accept_count: dc.w 0
-game_selection_keys: dc.b 0
-game_selected_mode: dc.b 0
 
-game_restart_context: dc.b 0
         even

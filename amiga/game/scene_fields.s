@@ -78,4 +78,3 @@ game_scene_draw_scores:
 game_scene_service:
         rts
         even
-game_display_state: dcb.b D_SIZE,0
