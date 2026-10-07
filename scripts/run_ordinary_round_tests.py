@@ -111,7 +111,7 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
     shutil.copy2(ordinary.parent / 'native.lst', listing)
     if held_fault:
         from native_tools import ASSEMBLER, run as assemble
-        controls = (ROOT/'amiga/game/controls.s').read_text()
+        controls = (ROOT/'amiga/game/core_controls.s').read_text()
         marker = '        and.b   d0,game_old_action_latches-game_input_bits(a0)'
         if controls.count(marker) != 1: raise ValueError('Native action retirement instruction changed')
         fault = directory/'held-controls.s'
@@ -119,8 +119,11 @@ def run_match(mode, early_release=False, audio=False, flavor="enhanced", held_fa
             '        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle\n'
             '        beq.s   held_fault_no_retirement\n'+marker+'\nheld_fault_no_retirement:'))
         source = directory/'held-main.s'
-        source.write_text((ROOT/'amiga/main.s').read_text().replace('include "amiga/game/controls.s"',
-            'include "'+str(fault)+'"'))
+        fault_core = directory/'held-core.s'
+        fault_core.write_text((ROOT/'amiga/game/core.s').read_text().replace(
+            'include "amiga/game/core_controls.s"', 'include "'+str(fault)+'"'))
+        source.write_text((ROOT/'amiga/main.s').read_text().replace('include "amiga/game/core.s"',
+            'include "'+str(fault_core)+'"'))
         assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(source)])
     compile_manifest(exe, listing)
     symbols = code_symbols(listing.read_text())

@@ -11,7 +11,6 @@ ui_playback:
         bne.s   .load
         ; End of a complete match recording: neutral input, never loop it.
         clr.b   ui_demo_mask
-        clr.b   game_playback_mask
         rts
 .load:  move.w  d0,ui_demo_remaining
         move.w  (a0)+,d0
@@ -19,7 +18,6 @@ ui_playback:
         move.l  a0,ui_demo_cursor
 .packet:
         subq.w  #1,ui_demo_remaining
-        move.b  ui_demo_mask,game_playback_mask
         ; B exclusion and native AI continue through the existing one-player path.
 .done:  rts
         include "build/native/demo-inputs.i"

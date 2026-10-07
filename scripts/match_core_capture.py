@@ -15,6 +15,7 @@ OPERATIONS = {
     6: ('game_core_return_title', 0),
     7: ('game_round_poll', 0),
     8: ('game_tick_dispatch', 0),
+    9: ('game_core_latch_actions', 0),
 }
 SINKS = {0x101: 'render', 0x102: 'fields', 0x103: 'status',
          0x104: 'title', 0x105: 'period', 0x106: 'level'}

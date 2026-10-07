@@ -27,6 +27,7 @@ paula_tone_init:
         rts
 ; D7=voice, D0=period/level. Preserve sequencer scratch registers.
 game_audio_write_period:
+        core_trace_sink $105
         movem.l d0/d1/a2-a3,-(sp)
         move.w  d7,d1
         add.w   d1,d1
@@ -37,6 +38,7 @@ game_audio_write_period:
         movem.l (sp)+,d0/d1/a2-a3
         rts
 game_audio_write_level:
+        core_trace_sink $106
         movem.l d1/a2-a3,-(sp)
         move.w  d7,d1
         add.w   d1,d1

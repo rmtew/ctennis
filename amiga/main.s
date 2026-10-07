@@ -1,4 +1,5 @@
         section code,code
+        include "amiga/game/core_trace_macros.i"
 ; Accepted PAL E-clock cadence:11838+14906/65536 ticks at709379Hz.
 ; Retain fractional phase instead of rounding every update down.
 SIM_INTERVAL_WHOLE equ 11838
@@ -33,8 +34,13 @@ start:
         bsr     init_square_score_banks
         bsr     game_core_init
         bsr     game_begin_title
+        ifd CORE_TRACE
+        lea     pointer_sources,a0
+        lea     pointer_targets,a1
+        else
         lea     pointer_sources(pc),a0
         lea     pointer_targets(pc),a1
+        endif
         moveq   #11,d7
 patch_pointers:
         move.l  (a0)+,d0
@@ -382,7 +388,6 @@ simulation_update:
         bsr     game_round_poll
 simulation_poll_done:
         bsr     sample_amiga_joystick
-        move.b  game_native_selection_keys,game_selection_keys
         bsr     ui_sample
         bsr     game_native_commands
         tst.b   ui_paused
@@ -448,6 +453,7 @@ game_presented_generation: dc.w 0
 
 ; Hardware integration hooks: gameplay and service order live in game/.
 game_scene_present_fields:
+        core_trace_sink $102
         tst.b   score_dirty
         beq.s   scoreboard_selection_done
         bsr     patch_score_pointers
@@ -458,6 +464,7 @@ game_show_returned_title:
         ; ui_render selects title only after the complete menu copy.
         rts
 game_core_status_present:
+        core_trace_sink $103
         bra     patch_score_pointers
 game_title_display: dc.b 0
         even
@@ -477,6 +484,7 @@ paula_events_done:
 ; Eight native primitives drive hardware channels directly. Images are already
 ; Native two-plane sprite data.
 game_render_sprites:
+        core_trace_sink $101
         movem.l d0-d7/a0-a4,-(sp)
         ; Score/status selection belongs to this prepared scene, just like
         ; its sprites. The subsequent native tick may select fields for the
@@ -624,6 +632,7 @@ hex_byte:
         include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
         include "amiga/game/core.s"
+        include "amiga/game/core_trace.s"
         include "amiga/game/native_core_adapter.s"
         include "amiga/game/interface.s"
 

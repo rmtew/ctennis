@@ -2,12 +2,19 @@
 ; Public phases: init; poll previous logical input; sample pads/commands; tick.
 ; Sink calls are synchronous and preserve registers; they never advance state.
 game_core_code_begin:
+GAME_CORE_SCHEMA_VERSION equ 1
+GAME_CORE_SIMULATION_VERSION equ 2
+        include "amiga/game/core_input.s"
         include "amiga/game/core_controls.s"
         include "amiga/game/tick.s"
         include "amiga/game/integration.s"
 
 ; Complete initialization, including reserved bytes. D0/D7/A0 are scratch.
+        ifd CORE_TRACE
+game_core_init_body:
+        else
 game_core_init:
+        endif
         lea     game_core_state,a0
         move.w  #GAME_CORE_STATE_SIZE-1,d7
 .clear: clr.b   (a0)+
@@ -18,6 +25,7 @@ game_core_init:
         move.b  #2,game_scene_ball_layer
         move.b  #1,field_values+5
         move.w  #$ace1,game_match_seed
+        move.w  #GAME_TITLE,game_lifecycle
         rts
 
 ; Compatibility observer label; each new match restores the caller's seed.
@@ -40,7 +48,13 @@ ui_demo_entropy:
         rts
 
 ; A title request is a simulation command. UI publication is a separate sink.
+        ifd CORE_TRACE
+game_core_return_title_body:
+game_core_return_title_internal equ game_core_return_title_body
+        else
 game_core_return_title:
+game_core_return_title_internal equ game_core_return_title
+        endif
         clr.b   game_auto_continue
         clr.b   game_playback_active
         clr.b   game_core_command

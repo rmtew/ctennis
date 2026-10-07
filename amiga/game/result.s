@@ -38,7 +38,7 @@ game_result_poll:
         beq.s   .human_continue
         ; Unattended attract playback returns only after the complete phrase.
         ; A taken-over demo clears automatic continuation and uses the human gate.
-        bsr     game_core_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .human_continue:
         tst.b   game_continue_held
@@ -50,20 +50,20 @@ game_result_poll:
         beq     game_round_done
         tst.b   game_continue_pressed
         beq     game_round_done
-        bsr     game_core_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .title_wait:
         cmpi.b  #$ff,game_serve_clock
         bne     game_round_done
         ; Legacy transition also returns directly to the title. It must
         ; never publish a court or trigger another intro after title return.
-        bsr     game_core_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .title_sound:
         bsr     game_audio_cue_complete
         tst.b   d0
         beq     game_round_done
-        bsr     game_core_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .restart_sound:
         bsr     game_pair_sound_complete

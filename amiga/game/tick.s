@@ -16,7 +16,11 @@ game_begin_active:
         move.w  #GAME_PLAYING,game_lifecycle
         rts
 
+        ifd CORE_TRACE
+game_tick_dispatch_body:
+        else
 game_tick_dispatch:
+        endif
         tst.b   game_core_command
         beq.s   .dispatch
         moveq   #0,d0
