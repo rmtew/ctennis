@@ -210,3 +210,20 @@ at the next native input boundary. It never invokes entropy manually or injects
 state. The old assertion that the demo LFSR stops in live play was deliberately
 replaced because live play now consumes that same seeded generator. The frozen
 10,958 expected digests remain unchanged.
+
+The first deferred-construction cadence rerun still failed: callback11,788
+spent60,327 CCK and completed60,690.381 CCK after its deadline origin, exceeding
+the59,191.137 CCK interval by1,499.244 CCK. Its diagnostic setup proposal passed,
+but that is not a product deadline pass. The cached-plane copy now uses register
+bursts to reduce instruction overhead while copying the same3,712 bytes per
+plane and retaining between-plane keyboard/timer sampling. A first dirty-source
+attempt placed the helper inside a footer fallthrough and failed the menu test;
+that placement was corrected before acceptance or any deadline pass claim.
+
+`check_native_title_copy.py` executes the assembled68000 plane helper and checks
+all bytes, surrounding sentinels, pointer advances and preserved registers. It
+also executes the native callback counter increment across65,535->0 and checks
+that the deferred flag skips only the requesting callback, then retires even
+if a fresh shortcut already entered play. This bounded CPU regression does not
+establish Amiga deadlines or DMA correctness; fresh integration reruns remain
+required for the modified copy.
