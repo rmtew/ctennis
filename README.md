@@ -60,3 +60,6 @@ Documentation inside `assets/` is a product input and can change it.
 
 See [game behavior](docs/game-behavior.md), [publication design](docs/display-timing.md),
 [resource reporting](docs/metrics/README.md) and [deferred work](TODO.md).
+
+See the [tutorial design and roadmap](docs/tutorial-mode-design.md) for the
+authorized next work. The design is not an implemented feature or release claim.

@@ -7,9 +7,10 @@ Keep one concrete work item active. Independent review must precede merge.
 Do not change master directly or rewrite history.
 
 Branding, Classic human/robot sprites, Font-Mac, Battle Hymn and match celebration
-are integrated. Replacement music needs user selection. PR #24 is an active
-Shot Doctor draft design; implementation is not approved. Recording, save and
-seek remain later scope. Exit-game work was cancelled; reboot is intentional.
+are integrated. Replacement music needs user selection. The authorized tutorial scope and implementation
+roadmap are in docs/tutorial-mode-design.md. That document replaces conflicting
+proposals in draft PR #24; it does not approve the old draft wholesale.
+Bounded recording and seek are in scope; persistent saves remain later work. Exit-game work was cancelled; reboot is intentional.
 
 Runtime code is in amiga/main.s and amiga/game/. Preserve the assembly style.
 Tests must exercise the actual native dispatcher, controls, rendering and audio.
