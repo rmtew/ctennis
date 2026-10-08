@@ -43,7 +43,7 @@ cannot establish the endpoint sooner: that still needs sequential simulation.
 
 ## Delivery and validation
 
-- [ ] Batch path segments under one aggregate pixel quota and one bounded header
+- [x] Batch path segments under one aggregate pixel quota and one bounded header
   quota, including invisible and stationary samples.
 - [ ] Measure each work class including callback tail, presentation IRQ and timer
   margin before changing its admission reserve. Keep original deadlines.
@@ -64,3 +64,28 @@ reporting. The presentation author supplies isolated source changes; an
 independent reviewer clears exact source before execution and checks original
 completed evidence afterward. Existing screenshots and PR38's earlier selective
 PAL pass describe the starting prototype, not this unfinished repair.
+
+## First repair
+
+Product `44d9c86` batches at most eight segment/header attempts under one shared
+32-pixel quota. Its fresh selective PAL campaign
+`6982ce508ce741afab62e651d81df269` passed: 2,507 complete callbacks, zero drops,
+minimum absolute headroom 3,594.137 CCK. Cold complete-view latency fell to
+13.400 seconds; warm variant changes took 2.200–3.000 seconds. These remain
+complete-view measurements, not separate placement readiness or full acceptance.
+Independent evidence review is pending.
+
+A read-only reconstruction of the original `21542bc7` literal RPC matched each
+worker JSR stack write to the caller's progress write. Across 640 calls, observed
+cost was at most 20,834 CCK, median 15,981, total 10,225,192. This includes return
+and caller bookkeeping but excludes admission and subsequent footer/publication.
+It covers two current-serve previews, not arbitrary retained-shot resolution.
+
+The next reviewed source increment rechecks remaining time after every public
+worker return, with at most four calls per callback. It retains the original
+10,000 E-clock reserve for budget four and proposes budget two at 7,000 E-clock
+ticks. The prior actual-CPU budget-two proof's finite peak is 54,884 CPU cycles;
+the added native IRQ/tail margin is an estimate pending fresh native validation.
+READY result/footer processing has its own original-reserve admission on the
+following callback. The public core budget and canonical restore contract do
+not change. This does not yet certify lower-reserve retained-return execution.
