@@ -100,6 +100,11 @@ class ObservedSession(NativeControlSession):
         finally:self.rpc.close()
 
 
+def verify_preview_retirement(before,after):
+    assert after['generation']!=before['generation']
+    assert after['status']==7 and after['cache_valid']==0, 'Preview retirement must be PREVIEW_CANCELED with invalid cache'
+
+
 def verify_admission(admission):
     """Check captured guest downcounter arithmetic, including unsigned wrap."""
     assert set(admission)=={'current','last','phase','interval','remaining','reserve','admitted','requested_work'}
@@ -230,8 +235,7 @@ class Native:
         initial_begin,generation=begin()
         checkpoint=self.number('game_history_seek_cursor',8)
         preview_pending=preview()
-        assert preview_pending['generation']!=preview_before['generation']
-        assert preview_pending['status']==0 and preview_pending['cache_valid']==0
+        verify_preview_retirement(preview_before,preview_pending)
         decline_before=self.block('game_history_seek_storage','game_history_seek_storage_end')
         self.call('game_history_seek_step',[generation,0])
         decline_index=len(self.observer.api_rows)-1

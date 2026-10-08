@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement
 from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
@@ -186,6 +186,14 @@ class NativePreviewTiming(unittest.TestCase):
                 current.write_text(json.dumps({'passed':True,'run':'unreviewed-newer'}))
                 with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
                     inherited_endpoints()
+
+    def test_preview_retirement_requires_actual_canceled_status(self):
+        before=dict(generation=5,status=4,cache_valid=1)
+        retired=dict(generation=6,status=7,cache_valid=0)
+        verify_preview_retirement(before,retired)
+        self.assertRegex((ROOT/'amiga/game/preview.s').read_text(),r'PREVIEW_CANCELED equ 7')
+        for change in ({'status':0},{'status':4},{'cache_valid':1},{'generation':5}):
+            with self.assertRaises(AssertionError):verify_preview_retirement(before,dict(retired,**change))
 
     def test_guest_admission_threshold_underflow_and_wrap_are_checked(self):
         def row(last,current,phase,interval):
