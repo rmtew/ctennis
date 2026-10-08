@@ -657,6 +657,7 @@ hex_byte:
         include "amiga/game/keyboard.s"
         include "amiga/game/core.s"
         include "amiga/game/history.s"
+        include "amiga/game/preview.s"
         include "amiga/game/core_trace.s"
         include "amiga/game/native_core_adapter.s"
         include "amiga/game/interface.s"
@@ -771,3 +772,4 @@ sprite_third: dcb.b 8*72,0
         include "amiga/game/history_storage.i"
 ; HUNK longword padding, outside the attach buffer
         ds.b 2
+        include "amiga/game/preview_storage.i"

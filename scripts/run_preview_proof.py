@@ -1,0 +1,35 @@
+"""Execute the focused actual CPU preview proof through native_acceptance.py."""
+import json
+import os
+from build_match_core import build
+from match_core_cpu import cpu_tool_inputs
+from native_evidence import ReportRun,atomic_json,compile_manifest,digest,inputs_for,snapshot,status
+from native_tools import ROOT
+from preview_proof import small
+
+
+def run():
+    path=ROOT/'build/tests/preview-cpu/report.json'
+    transaction=ReportRun([path],'preview-cpu','maintained-native','actual CPU, no emulator')
+    try:
+        paths,tools=inputs_for('build','scripts/run_preview_proof.py')
+        cpu_paths,tools['machine68k']=cpu_tool_inputs()
+        transaction.meta.update(files=snapshot(paths|cpu_paths),tools=tools,
+            target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only',
+            target_scope='evidence.target is a legacy validation reference, not an actual display target.')
+        transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
+        executable,listing=build()
+        validation=small(executable)
+        report=dict(passed=True,execution='actual-68000-cpu-only',executable_sha256=digest(executable),
+            preview_validation=validation,scope=validation['scope'])
+        atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
+            receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+        transaction.finalize(path,report,compiled=[compile_manifest(executable,listing)])
+        assert status(path)['status']=='passed',status(path)
+        print(json.dumps(report),flush=True)
+    except BaseException as error:
+        transaction.abort(error)
+        raise
+
+
+if __name__=='__main__':run()

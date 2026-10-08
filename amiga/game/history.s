@@ -443,7 +443,7 @@ game_history_contact_begin:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         cmpi.w  #8,game_history_operation
         bne.s   .done
         btst    #7,game_contact
@@ -461,12 +461,17 @@ game_history_contact_begin:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        bsr     game_preview_contact_begin
+        bra.s   .done
 
 game_history_contact:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         tst.b   game_history_probe_active
@@ -480,13 +485,19 @@ game_history_contact:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        moveq   #1,d6
+        bsr     game_preview_launch
+        bra.s   .done
 
 ; Actual completed human serve launch, kind3. Preserve the rules' registers.
 game_history_serve:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         move.w  d7,d5
@@ -496,6 +507,12 @@ game_history_serve:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        moveq   #3,d6
+        bsr     game_preview_launch
+        bra.s   .done
 
 game_history_add_index:
         moveq   #0,d0
