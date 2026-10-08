@@ -29,7 +29,12 @@ tracked removals through Git history, not archive directories. Public publicatio
 needs separate authorization.
 
 Run focused checks after a change. The finite full native gate is
-`RUST_LOG=info python scripts/native_acceptance.py`. Do not recreate the retired
+`RUST_LOG=info python scripts/native_acceptance.py`. First use `--plan`; select
+stable IDs with `--case`, retain the printed campaign ID, and reconnect with
+`--campaign ID` or `--resume --campaign ID`. Follow docs/acceptance-campaigns.md.
+Do not hand-start a duplicate builder/observer while its shared workspace is
+owned. Resume is between tests; incomplete evidence never counts as a pass.
+Do not recreate the retired
 aggregate or repeat manual playthroughs without need. For neutral changes, prefer
 byte/symbol equality and relevant checks. Receipts must name the exact commit,
 inputs, tools, target and checked extent. Distinguish fresh, reused and stale
