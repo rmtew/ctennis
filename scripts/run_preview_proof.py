@@ -25,6 +25,8 @@ def run():
         atomic_json(path.parent/('small-results-'+transaction.meta['run_id']+'-unvalidated.json'),
             dict(preview_validation=validation,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
         validation['cache_validation']=cache_proof(executable)
+        atomic_json(path.parent/('cache-results-'+transaction.meta['run_id']+'-unvalidated.json'),
+            dict(preview_validation=validation,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
         stage_a1_rows=[]
         def progress(row):
             stage_a1_rows.append(row)

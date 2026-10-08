@@ -458,7 +458,9 @@ def stage_a1(executable,progress):
     def saved(name,report):
         cases[name]=report;progress(dict(stage='stage-a1',case=name,result=report))
     fallback=current_fallback(executable)
+    progress(dict(stage='stage-a1',case='human-serve-fallback-core',result=fallback))
     fallback['postlaunch_rejection']=postlaunch_rejection(executable)
+    progress(dict(stage='stage-a1',case='postlaunch-rejection',result=fallback['postlaunch_rejection']))
     fallback['timed_prelaunch']=timed_prelaunch(executable)
     saved('human-serve-fallback',fallback)
     saved('limit-256',dict(passed=True,case='human-serve-fallback',variant=1,
