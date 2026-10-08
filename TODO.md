@@ -13,5 +13,9 @@
   baseline; see the [separate opt-in milestone](docs/tutorial-mode-design.md#optional-ball-sprite-echoes).
   Defining the milestone does not authorize implementation. Richard's future
   explicit go-ahead is required; primary objects win and clashes are skipped.
+- Optional [static sprite trail fragments](docs/tutorial-mode-design.md#optional-static-sprite-trail-fragments)
+  are a separate prototype requiring Richard's separate opt-in. Build over
+  unchanged frames, invalidate on movement/action/context changes, preserve
+  primary objects and allow gaps. Neither optional milestone gates the roadmap.
 
 Exit-game work was cancelled; reboot remains the intended behavior.

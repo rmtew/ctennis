@@ -164,6 +164,39 @@ every complete callback, including input, IRQ/DMA and publication tails, must
 retain its deadline. Record added code/RAM/stack and worst observed contended
 work. Richard reviews native screenshots/animation before appearance is accepted.
 
+### Optional static sprite trail fragments
+
+This independent opt-in prototype follows the basic placement/ball-animation
+baseline. It uses spare sprite bitmap area to show fragments of a static predicted
+path, rather than extra moving ball samples. Richard must separately opt in before
+implementation, even if moving echoes have been approved; neither optional
+milestone depends on the other or gates the main tutorial roadmap.
+
+Build a bounded number of fragments incrementally over consecutive frames while
+the selected moment, player position and action remain unchanged. Consume actual
+completed path samples and keep all work subordinate to fresh input, latest
+placement and primary ball animation. Invalidate and clear fragments on movement,
+action, selected moment/shot or preview-generation changes; an old path must never
+describe the new request. Missing fragments and gaps are acceptable.
+
+First assess how much useful local path fits within a sprite's 16-pixel width and
+chosen height, including horizontal range, court/height projection and clipping.
+Evaluate ball-channel space first, then other channels only in safe vertical gaps.
+Preserve player, AI, ball and shadow intervals, palette and priority. Audit sprite
+DMA and chip RAM, compact bitmap/record construction cost, and immutable queued
+and displayed publication ownership. Reuse bounded prepared storage; avoid a
+general allocator or a complete filled trail requirement.
+
+Feasibility and exit evidence must show native-resolution static fragments,
+incremental construction over unchanged frames, immediate stale-fragment removal,
+clipped/gapped paths and primary-object preservation. Use focused PAL/NTSC timing
+and actual native sprite/DMA/publication checks against the simple no-fragment
+baseline; record code/RAM/stack, construction work and every complete callback's
+headroom. Richard reviews screenshots/animation for usefulness. Stop or narrow the
+prototype if local width, clipping, conflicts or gaps make the path misleading,
+if measured latency/deadlines or memory regress, or if a general allocator or
+display redesign becomes necessary. Further scope needs discussion and approval.
+
 ## Resume rules
 
 There are two outcomes, with no extra resume interpretation:
@@ -261,7 +294,12 @@ committed foundation. Do not build the UI on an unproved state boundary.
    existing-sample presentation described above. Preserve primary-object priority,
    skip clashes and prove focused PAL/NTSC timing and actual native visual output.
    This opt-in milestone may be skipped without blocking the main roadmap.
-6. **Prove the target build and release.** Run the applicable existing tests and
+6. **Optional: prototype static sprite trail fragments.** Only after Richard's
+   separate future opt-in, evaluate the independent bounded prototype above.
+   Build fragments over unchanged frames, invalidate on relevant changes, preserve
+   primary objects and accept gaps. Stop if usefulness or measured budgets fail.
+   Moving-echo approval does not authorize this milestone, and it may be skipped.
+7. **Prove the target build and release.** Run the applicable existing tests and
    new tutorial checks, then the finite native acceptance gate. Exercise PAL and
    NTSC on A500, 68000, OCS, 512 KB chip RAM, no expansion. Check actual scanout,
    sprite/HUD publication and cold-loaded release bytes. Exit: reviewed evidence
