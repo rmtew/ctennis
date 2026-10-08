@@ -115,7 +115,7 @@ class TutorialCaptureTests(unittest.TestCase):
             observer.result(11838*65536+14906)
 
     def test_capture_gate_rejects_missing_or_lossy_evidence(self):
-        names = ['title','released-serve','edited-serve','held-serve',
+        names = ['title','released-serve','edited-serve','held-serve','held-edited-serve',
                  'released-edited-serve','options','options-resume','resumed','resumed-1','resumed-2']
         names += [f'animation-{i:02d}' for i in range(24)]
         report = dict(complete_state_bytes=318, public_history_bytes=72,
@@ -146,12 +146,16 @@ class TutorialCaptureTests(unittest.TestCase):
         tick_seconds = (11838*65536+14906)*5/(65536*3546895)
         maximum_drift = 312.5*227/3546895+tick_seconds
         report['responsiveness'] = dict(latest_pose_matches=True, trails_enabled=False,
+            physical_movement_to_player_seconds=.03,physical_held_choice_to_endpoint_seconds=.02,
+            fresh_held_endpoint_seconds=[1.],
+            fresh_held_edit=dict(start_seconds=11.,end_seconds=13.,generations=[1]),
             moving_publications=2, native_sprite_checks=2, animation_dense_samples=True,
             animation_normal_speed=True, animation_cadence=[dict(ticks=20,producer_ticks=20,
                 nominal_seconds=20*tick_seconds,elapsed_seconds=20*tick_seconds+.01,
                 drift_seconds=.01,maximum_drift_seconds=maximum_drift)],
             animation_steps=[dict(previous_index=n,index=n+2,interval_seconds=.04) for n in (2,4)],
-            requests=[dict(player_publication_seconds=.02, endpoint_publication_seconds=1.,
+            requests=[dict(variant=0,generation=1,position=dict(seconds=12.),
+                           player_publication_seconds=.02, endpoint_publication_seconds=1.,
                            waiting_publication_seconds=None),
                       dict(player_publication_seconds=.02, waiting_publication_seconds=.2)])
         report['visual_checks'] = dict(
@@ -227,6 +231,13 @@ class TutorialCaptureTests(unittest.TestCase):
             self.assertFalse(required_capture_extent(broken),key)
         broken = copy.deepcopy(report)
         broken['responsiveness']['requests'][0]['endpoint_publication_seconds'] = float('nan')
+        self.assertFalse(required_capture_extent(broken))
+        for key,value in [('start_seconds',12.5),('generations',[2])]:
+            broken = copy.deepcopy(report)
+            broken['responsiveness']['fresh_held_edit'][key] = value
+            self.assertFalse(required_capture_extent(broken),key)
+        broken = copy.deepcopy(report)
+        broken['responsiveness']['requests'][0]['variant'] = 1
         self.assertFalse(required_capture_extent(broken))
         broken = copy.deepcopy(report)
         broken['responsiveness']['animation_cadence'][0]['drift_seconds'] = .2

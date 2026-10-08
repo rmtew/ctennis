@@ -223,6 +223,7 @@ class CallbackObserver:
                 if name == 'tutorial_generation' and right == address+width:
                     self.presentation_requests.append(dict(generation=self.state[name],
                         x=self.state.get('tutorial_x'),y=self.state.get('tutorial_y'),
+                        variant=self.state.get('tutorial_active_variant'),
                         callback=self.started,position=dict(position)))
         if 'missed_presentation_deadlines' in self.state:
             assert self.state['missed_presentation_deadlines'] == 0, 'Native presentation missed its deadline'
@@ -549,6 +550,19 @@ def required_capture_extent(report):
     animation_cadence = responsiveness.get('animation_cadence') or []
     def latency(value):
         return type(value) in (int,float) and math.isfinite(value) and value >= 0
+    def fresh_held():
+        edit = responsiveness.get('fresh_held_edit') or {}
+        start,end = edit.get('start_seconds'),edit.get('end_seconds')
+        if not (latency(start) and latency(end) and start < end):
+            return False
+        selected = [r for r in responses if r.get('variant') == 0
+                    and latency((r.get('position') or {}).get('seconds'))
+                    and start <= r['position']['seconds'] < end]
+        samples = [r['endpoint_publication_seconds'] for r in selected
+                   if latency(r.get('endpoint_publication_seconds'))]
+        return (selected and samples
+                and edit.get('generations') == [r.get('generation') for r in selected]
+                and responsiveness.get('fresh_held_endpoint_seconds') == samples)
     def cadence(row):
         ticks = row.get('ticks')
         producer_ticks = row.get('producer_ticks')
@@ -581,7 +595,7 @@ def required_capture_extent(report):
             and type(headroom) in (int, float) and math.isfinite(headroom) and headroom > 0
             and type(raw.get('uncompressed_bytes')) is int
             and 0 < raw['uncompressed_bytes'] <= CaptureSession.MAX_RAW_BYTES
-            and {'title','released-serve','edited-serve','held-serve',
+            and {'title','released-serve','edited-serve','held-serve','held-edited-serve',
                  'released-edited-serve','options','options-resume',
                  'resumed','resumed-1','resumed-2'} <= names
             and len([n for n in names if isinstance(n,str) and n.startswith('animation-')]) == 24
@@ -634,6 +648,11 @@ def required_capture_extent(report):
             and surfaces.get('resumed_native_banks') == 3
             and responsiveness.get('latest_pose_matches') is True
             and responsiveness.get('trails_enabled') is False
+            and latency(responsiveness.get('physical_movement_to_player_seconds'))
+            and latency(responsiveness.get('physical_held_choice_to_endpoint_seconds'))
+            and responsiveness.get('fresh_held_endpoint_seconds')
+            and all(latency(r) for r in responsiveness['fresh_held_endpoint_seconds'])
+            and fresh_held()
             and type(responsiveness.get('moving_publications')) is int
             and responsiveness['moving_publications'] >= 2
             and type(responsiveness.get('native_sprite_checks')) is int
@@ -648,6 +667,7 @@ def required_capture_extent(report):
                     and type(r.get('index')) is int
                     and 0 < r['index']-r['previous_index'] <= 2 for r in animation_steps)
             and any(latency(r.get('endpoint_publication_seconds')) for r in responses)
+            and any(r.get('variant') == 0 and latency(r.get('endpoint_publication_seconds')) for r in responses)
             and any(latency(r.get('waiting_publication_seconds')) for r in responses)
             and all(r.get('superseded_without_publication') is True
                     or latency(r.get('player_publication_seconds')) for r in responses)

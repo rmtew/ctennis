@@ -323,6 +323,9 @@ tutorial_draw_ghost:
         move.w  d0,tutorial_render_path
         clr.w   tutorial_render_point
         move.w  #3,tutorial_render_phase
+        tst.b   tutorial_trails_enabled
+        bne     .done
+        move.w  #4,tutorial_render_phase
 .done:  rts
 
 ; One aggregate32-pixel slice, at most8 segment headers, including invisible

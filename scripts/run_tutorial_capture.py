@@ -264,7 +264,14 @@ def run(standard='PAL'):
             movement_end = actions[-1]['at_seconds']
             assert (number('tutorial_x'), number('tutorial_y')) != old_xy
             ready(); photo('edited-serve')
+            held_action_start = time
             key(0x23, True); ready(); photo('held-serve')
+            # Recompute after an actual position edit with F still held, so
+            # endpoint latency excludes a later alternative-selection action.
+            held_edit_start = time
+            key(0x22, True, .035); key(0x22, False)
+            held_edit_end = time
+            ready(); photo('held-edited-serve')
             frames = []
             for index in range(24):
                 advance(1/12)
@@ -322,6 +329,8 @@ def run(standard='PAL'):
                     expected[obj+1] = (expected[obj+1]+dx)&255
                 assert bytes.fromhex(publication['objects'])[:48] == bytes(expected), 'Published player is not latest edited native pose'
                 assert not fields['tutorial_trails_enabled'], 'Trails unexpectedly gate the static proof'
+            assert not any(r['entry']['state'].get('tutorial_render_phase') == 3
+                           for r in timing['callbacks']), 'Disabled trails still consume menu callbacks'
             moving = [p for p in active_publications
                       if movement_start <= p['position']['seconds'] < movement_end]
             assert len({(p['tutorial_fields']['tutorial_x'],p['tutorial_fields']['tutorial_y'])
@@ -329,7 +338,8 @@ def run(standard='PAL'):
             responses = []
             for request in observer.presentation_requests:
                 pubs = [p for p in active_publications if
-                        p['tutorial_fields']['tutorial_presentation_generation'] == request['generation']]
+                        p['tutorial_fields']['tutorial_presentation_generation'] == request['generation']
+                        and p['tutorial_fields']['tutorial_active_variant'] == request['variant']]
                 if not pubs:
                     responses.append(dict(request, superseded_without_publication=True))
                     continue
@@ -344,6 +354,17 @@ def run(standard='PAL'):
                     animation_publication_seconds=animation_pub['position']['seconds']-origin if animation_pub else None))
             assert any(r.get('endpoint_publication_seconds') is not None for r in responses)
             assert any(r.get('waiting_publication_seconds') is not None for r in responses)
+            held_requests = [r for r in responses if r['variant'] == 0
+                             and held_edit_start <= r['position']['seconds'] < held_edit_end]
+            held_latencies = [r['endpoint_publication_seconds'] for r in held_requests
+                              if r.get('endpoint_publication_seconds') is not None]
+            assert held_latencies, 'No fresh held-position to actual endpoint measurement'
+            changed = next(p for p in moving if
+                           (p['tutorial_fields']['tutorial_x'],p['tutorial_fields']['tutorial_y']) != old_xy)
+            held_choice = next(p for p in active_publications if
+                               p['position']['seconds'] >= held_action_start
+                               and p['tutorial_fields']['tutorial_active_variant'] == 0
+                               and p['tutorial_fields']['tutorial_marker_ready'])
             animation_steps = []
             previous = {}
             animation_epochs = {}
@@ -392,6 +413,11 @@ def run(standard='PAL'):
                 native_sprite_checks=len(surfaces['native_sprite_checks']),
                 animation_steps=animation_steps, animation_dense_samples=True,
                 animation_cadence=animation_cadence, animation_normal_speed=True,
+                physical_movement_to_player_seconds=changed['position']['seconds']-movement_start,
+                physical_held_choice_to_endpoint_seconds=held_choice['position']['seconds']-held_action_start,
+                fresh_held_endpoint_seconds=held_latencies,
+                fresh_held_edit=dict(start_seconds=held_edit_start,end_seconds=held_edit_end,
+                                    generations=[r['generation'] for r in held_requests]),
                 latest_pose_matches=True, trails_enabled=False,
                 scope='Accepted request stores to specific actual native player/endpoint/waiting/animation publications; superseded requests need no prediction result.')
         target_log(directory, standard)
@@ -425,7 +451,7 @@ def run(standard='PAL'):
             complete_state_bytes=318, public_history_bytes=72,
             native_memory=memory_summary(memory), timing=timing,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
-            scope=f'Finite {standard} current-human-serve court prototype; physical double-tap/edit/hold/release/modifier/menu/resume. No retained-shot navigation, live branching, full native gate or release claim.')
+            scope=f'Finite {standard} current-human-serve court prototype; physical double-tap/released-edit/held-edit/hold/release/modifier/menu/resume. No retained-shot navigation, live branching, full native gate or release claim.')
         manifest = json.loads((executable.parent/'baseline-rally.compile.json').read_text())
         artifacts = [p for p in directory.iterdir() if p.is_file() and p != output]
         transaction.finalize(output, report, [manifest], artifacts)
