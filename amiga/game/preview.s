@@ -27,6 +27,8 @@ game_preview_request:
         bcc     .invalid
         cmpi.b  #2,game_history_mode
         bne     .invalid
+        cmpi.w  #GAME_PLAYING,game_lifecycle
+        bne     .invalid
         tst.b   game_preview_active
         bne     .invalid
         cmpi.w  #255,d2
