@@ -35,15 +35,41 @@ class TutorialCaptureTests(unittest.TestCase):
                       timing=dict(completed_callbacks=101, pending_callback=None,
                                   dropped_notifications=0, minimum_absolute_headroom_cck=100),
                       literal_rpc=dict(uncompressed_bytes=123))
+        from native_evidence import TARGET
+        report.update(target=TARGET, native_video=dict(presentation_last_line=311,
+            simulation_interval_whole=11838, simulation_interval_fraction=14906),
+            capture='build/tests/tutorial-court-pal/capture.json',
+            literal_rpc_path='build/tests/tutorial-court-pal/literal-rpc.jsonl.gz',
+            animation='build/tests/tutorial-court-pal/movie.gif', animation_frames=24,
+            animation_source_frames=24, animation_geometry=[256,208],
+            loaded_hunks=[dict(matched=True, expected_sha256='a'*64, actual_sha256='a'*64)],
+            shared_core=dict(bytes=18020, relocations=257, sink_branches=14,
+                normalized_sha256='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'),
+            resume_readback=dict(state='00'*318, expected_state='00'*318, backup='00'*318,
+                history='00'*72, expected_history='00'*72),
+            first_resumed_boundary_matches=True, held_resume_no_pressed_edge=True)
+        files = {report[n]:'a'*64 for n in ('capture','literal_rpc_path','animation')}
+        for row in report['screenshots']:
+            row.update(source='build/tests/tutorial-court-pal/'+row['name']+'-viewport.png',
+                       native='build/tests/tutorial-court-pal/'+row['name']+'.png',
+                       source_geometry=[716,285], native_geometry=[256,208])
+            files[row['source']] = files[row['native']] = 'a'*64
+        report['evidence'] = dict(files=files, actual_target=TARGET)
         self.assertTrue(required_capture_extent(report))
         for key, value in [('screenshots',[]), ('frozen_boundaries',0),
                            ('complete_state_bytes',88), ('animation',None)]:
             broken = copy.deepcopy(report); broken[key] = value
             self.assertFalse(required_capture_extent(broken), key)
         for key, value in [('dropped_notifications',1), ('pending_callback',{}),
-                           ('minimum_absolute_headroom_cck',-1), ('completed_callbacks',1)]:
+                           ('minimum_absolute_headroom_cck',-1),
+                           ('minimum_absolute_headroom_cck',float('inf')), ('completed_callbacks',1)]:
             broken = copy.deepcopy(report); broken['timing'][key] = value
             self.assertFalse(required_capture_extent(broken), key)
+        broken = copy.deepcopy(report)
+        broken['evidence']['files'].pop(broken['screenshots'][0]['source'])
+        self.assertFalse(required_capture_extent(broken))
+        broken = copy.deepcopy(report); broken['resume_readback']['state'] = 'ff'*318
+        self.assertFalse(required_capture_extent(broken))
 
     def test_partial_longword_metadata_reconstructs_literal_bytes(self):
         symbols = dict(game_stack_top=1024, game_stack_bottom=512,
@@ -53,10 +79,12 @@ class TutorialCaptureTests(unittest.TestCase):
         observer.watches(dict(generation=4), lambda a,n:bytes(n))
         for address, value in [(20, 0x1234),(22, 0xabcd)]:
             observer.observe(dict(method='event.mmio', params=dict(addr=address,
-                value=value, size=2, position=dict(cck=1))))
+                value=value, size=2, position=dict(cck=1), dropped_notifications=0)))
         self.assertEqual(observer.state['generation'], 0x1234abcd)
         with self.assertRaises(AssertionError):
             observer.observe(dict(method='event.frame', params=dict(dropped_notifications=1)))
+        with self.assertRaises(AssertionError):
+            observer.observe(dict(method='event.frame', params={}))
 
 
 if __name__ == '__main__':

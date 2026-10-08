@@ -10,7 +10,7 @@ import re
 
 from build_native_game import build
 from check_shared_core_bytes import normalized
-from native_evidence import ReportRun, atomic_json, inputs_for, snapshot
+from native_evidence import ReportRun, TARGET, atomic_json, inputs_for, snapshot
 from native_hunk import loaded_hunks
 from native_metrics import memory_summary
 from native_observation import target_log
@@ -35,7 +35,7 @@ def run():
     try:
         paths, tools = inputs_for('native-feedback', 'scripts/run_tutorial_capture.py')
         transaction.meta.update(files=snapshot(paths), tools=tools,
-                                runner='scripts/run_tutorial_capture.py')
+                                runner='scripts/run_tutorial_capture.py', actual_target=TARGET)
         import subprocess
         transaction.meta['commit'] = subprocess.check_output(
             ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -49,6 +49,10 @@ def run():
         config = emulator_config()
         screenshots, boundaries, actions = [], [], []
         selected = metadata = live_backup = None
+        resume_readback = None
+        awaiting_resumed_boundary = False
+        first_resumed_boundary_matches = False
+        held_resume_samples = 0
         with CaptureSession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video','PAL',
@@ -73,15 +77,37 @@ def run():
                 dict(events=['mmio','frame'], mmio=observer.watches(FIELDS, read)))
             assert not subscription.get('dropped_notifications', 0)
             session.inspect('break_add', dict(kind='pc', addr=symbols['simulation_update']))
+            session.inspect('break_add', dict(kind='pc', addr=symbols['tutorial_resume_restored']))
             start_seconds = stop['seconds']
             time = start_seconds
             def advance(seconds):
                 nonlocal stop, time, selected, metadata, live_backup
+                nonlocal resume_readback, awaiting_resumed_boundary
+                nonlocal first_resumed_boundary_matches, held_resume_samples
                 target = time+seconds
                 assert target-start_seconds <= 120, 'Finite native tutorial seconds cap'
                 for _ in range(8192):
                     stop = session.inspect('run_until', dict(seconds=target))
                     time = stop['seconds']
+                    if stop.get('pc') == symbols['tutorial_resume_restored']:
+                        assert resume_readback is None and live_backup is not None
+                        restored = block('game_core_state', 318)
+                        history = block('game_history_state', 72)
+                        backup = block('tutorial_interrupted_state', 318)
+                        expected_history = bytearray(metadata)
+                        origin = symbols['game_history_state']
+                        mode_offset = symbols['game_history_mode']-origin
+                        position_offset = symbols['game_history_position']-origin
+                        cursor_offset = symbols['game_history_cursor']-origin
+                        assert 0 <= mode_offset < 72 and 0 <= position_offset <= 64 and 0 <= cursor_offset <= 64
+                        expected_history[mode_offset] = 1
+                        expected_history[position_offset:position_offset+8] = metadata[cursor_offset:cursor_offset+8]
+                        assert restored == backup == live_backup, 'Resume did not publish exact interrupted state'
+                        assert history == expected_history, 'Resume changed unrelated history metadata'
+                        resume_readback = dict(state=restored.hex(), expected_state=live_backup.hex(),
+                            backup=backup.hex(), history=history.hex(), expected_history=expected_history.hex(),
+                            position={k:stop[k] for k in ('pc','cck','frame','seconds')})
+                        awaiting_resumed_boundary = True
                     if stop.get('pc') == symbols['simulation_update']:
                         assert observer.pending is None
                         current = block('game_core_state', 318)
@@ -98,6 +124,13 @@ def run():
                             assert current == selected, 'Tutorial changes selected complete state'
                             assert history == metadata, 'Tutorial changes public history metadata'
                             assert backup == live_backup, 'Tutorial changes interrupted live backup'
+                        elif awaiting_resumed_boundary:
+                            assert current == live_backup, 'Resume callback dispatched before restored boundary'
+                            first_resumed_boundary_matches = True
+                            awaiting_resumed_boundary = False
+                        elif first_resumed_boundary_matches:
+                            assert not (block('game_input_pressed', 2)[0] & 0x10), 'Held menu action creates an invented shot edge'
+                            held_resume_samples += 1
                     if time >= target:
                         break
                 else:
@@ -121,6 +154,7 @@ def run():
                 native_view(source, native)
                 screenshots.append(dict(name=name, source=str(source.relative_to(ROOT)),
                                         native=str(native.relative_to(ROOT)),
+                                        source_geometry=[716,285], native_geometry=[256,208],
                                         stop=dict(stop), fields={n:number(n) for n in FIELDS}))
                 return native
             advance(.7)
@@ -140,8 +174,10 @@ def run():
                 advance(1/12)
                 frames.append(photo(f'animation-{index:02d}'))
             movie = directory/'held-serve-animation.gif'
-            animation(frames, movie, 83)
+            movie_info = animation(frames, movie, 83)
             key(0x23, False); ready(); photo('released-edited-serve')
+            # Restore while physical F is held but interrupted logical F was not.
+            key(0x23, True); ready()
             # Modifier use must consume its release instead of opening a menu.
             key(0x24, True); key(0x22, True); key(0x22, False); key(0x24, False)
             assert not number('tutorial_menu')
@@ -152,6 +188,7 @@ def run():
             key(0x44, True); key(0x44, False)
             advance(.2)
             assert not number('tutorial_active') and number('tutorial_resume_count') == 1
+            assert first_resumed_boundary_matches and held_resume_samples >= 2
             photo('resumed')
             # Finish at a real outer-callback boundary, retaining no partial one.
             stop = session.inspect('run_until', dict(seconds=time+.1))
@@ -159,6 +196,11 @@ def run():
             memory = chip_memory(read)
             interval = (number('simulation_interval_whole', 4)*65536+
                         number('simulation_interval_fraction', 2))
+            video = dict(presentation_last_line=number('presentation_last_line', 2),
+                         simulation_interval_whole=number('simulation_interval_whole', 4),
+                         simulation_interval_fraction=number('simulation_interval_fraction', 2))
+            assert video == dict(presentation_last_line=311, simulation_interval_whole=11838,
+                                 simulation_interval_fraction=14906), 'Actual PAL selector/deadline contract differs'
             timing = observer.result(interval)
             raw = dict(records=session.records, uncompressed_bytes=session.raw_bytes,
                        cap_uncompressed_bytes=session.MAX_RAW_BYTES)
@@ -167,9 +209,17 @@ def run():
         atomic_json(capture, dict(boundaries=boundaries, actions=actions, timing=timing,
                                  memory=memory, loaded_hunks=loaded))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
+            target=TARGET, native_video=video,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             capture=str(capture.relative_to(ROOT)), screenshots=screenshots,
             animation=str(movie.relative_to(ROOT)), literal_rpc=raw,
+            literal_rpc_path=str((directory/'literal-rpc.jsonl.gz').relative_to(ROOT)),
+            animation_frames=movie_info['frames'], animation_geometry=movie_info['geometry'],
+            animation_source_frames=movie_info['source_frames'],
+            shared_core=dict(bytes=len(shared), relocations=relocations, sink_branches=sinks,
+                             normalized_sha256=hashlib.sha256(shared).hexdigest()), loaded_hunks=loaded,
+            resume_readback=resume_readback, first_resumed_boundary_matches=first_resumed_boundary_matches,
+            held_resume_no_pressed_edge=held_resume_samples >= 2,
             complete_state_bytes=318, public_history_bytes=72,
             native_memory=memory_summary(memory), timing=timing,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),

@@ -6,6 +6,8 @@ This observer neither changes guest state nor supplies expected trajectories.
 """
 import gzip
 import json
+import math
+import re
 from fractions import Fraction
 
 from copperline_test_session import NativeControlSession
@@ -84,6 +86,14 @@ class CallbackObserver:
 
     def observe(self, message):
         row = message.get('params', {})
+        if message.get('method', '').startswith('event.'):
+            assert type(row.get('dropped_notifications')) is int, 'Missing explicit notification loss telemetry'
+            assert row['dropped_notifications'] >= 0
+            if 'dropped_events' in row:
+                assert type(row['dropped_events']) is int and row['dropped_events'] >= 0
+            for name in ('queue_overflow','access_overflow','notification_overflow','overflow','dropped_accesses'):
+                if name in row:
+                    assert type(row[name]) in (bool, int) and row[name] == 0, ('Overflow telemetry', name)
         self.dropped += row.get('dropped_events', 0)+row.get('dropped_notifications', 0)
         if self.dropped:
             raise AssertionError('Tutorial capture dropped literal notifications')
@@ -164,6 +174,9 @@ def animation(paths, output, duration_ms):
     assert len(images) >= 2
     images[0].save(output, save_all=True, append_images=images[1:],
                    duration=duration_ms, loop=0, optimize=False)
+    with Image.open(output) as result:
+        return dict(frames=result.n_frames, geometry=list(result.size),
+                    source_frames=len(paths))
 
 
 def required_capture_extent(report):
@@ -172,19 +185,53 @@ def required_capture_extent(report):
     rows = report.get('screenshots') or []
     names = {r.get('name') for r in rows}
     count = report.get('frozen_boundaries')
+    files = (report.get('evidence') or {}).get('files') or {}
+    def bound(path):
+        return (isinstance(path, str)
+                and re.fullmatch(r'build/tests/tutorial-court-pal/[\w.-]+', path)
+                and isinstance(files.get(path), str)
+                and re.fullmatch(r'[0-9a-f]{64}', files[path]))
+    target = dict(model='A500', cpu='68000', chipset='OCS', video='PAL',
+                  chip_bytes=524288, slow_bytes=0, fast_bytes=0, kickstart='1.3')
+    restored = report.get('resume_readback') or {}
+    core = report.get('shared_core') or {}
+    hunks = report.get('loaded_hunks') or []
+    headroom = timing.get('minimum_absolute_headroom_cck')
     return (report.get('complete_state_bytes') == 318
             and report.get('public_history_bytes') == 72
+            and report.get('target') == target
+            and (report.get('evidence') or {}).get('actual_target') == target
+            and report.get('native_video') == dict(presentation_last_line=311,
+                simulation_interval_whole=11838, simulation_interval_fraction=14906)
+            and bound(report.get('capture')) and bound(report.get('literal_rpc_path'))
             and type(count) is int and count >= 2
             and type(timing.get('completed_callbacks')) is int
             and timing['completed_callbacks'] >= count
             and timing.get('pending_callback') is None
             and timing.get('dropped_notifications') == 0
-            and type(timing.get('minimum_absolute_headroom_cck')) in (int, float)
-            and timing['minimum_absolute_headroom_cck'] > 0
+            and type(headroom) in (int, float) and math.isfinite(headroom) and headroom > 0
             and type(raw.get('uncompressed_bytes')) is int
             and 0 < raw['uncompressed_bytes'] <= CaptureSession.MAX_RAW_BYTES
             and {'title','released-serve','edited-serve','held-serve',
                  'released-edited-serve','options','resumed'} <= names
             and len([n for n in names if isinstance(n,str) and n.startswith('animation-')]) == 24
-            and isinstance(report.get('animation'), str)
-            and bool(report.get('native_memory')))
+            and all(bound(r.get('source')) and bound(r.get('native'))
+                    and r.get('source_geometry') == [716,285]
+                    and r.get('native_geometry') == [256,208] for r in rows)
+            and bound(report.get('animation'))
+            and report.get('animation_geometry') == [256,208]
+            and type(report.get('animation_frames')) is int
+            and 2 <= report['animation_frames'] <= 24
+            and report.get('animation_source_frames') == 24
+            and core == dict(bytes=18020, relocations=257, sink_branches=14,
+                normalized_sha256='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d')
+            and hunks and all(r.get('matched') is True
+                and r.get('expected_sha256') == r.get('actual_sha256') for r in hunks)
+            and isinstance(restored.get('state'), str) and len(restored['state']) == 636
+            and restored.get('state') == restored.get('expected_state') == restored.get('backup')
+            and isinstance(restored.get('history'), str) and len(restored['history']) == 144
+            and restored.get('history') == restored.get('expected_history')
+            and report.get('first_resumed_boundary_matches') is True
+            and report.get('held_resume_no_pressed_edge') is True
+            and type((report.get('native_memory') or {}).get('chip_free_bytes')) is int
+            and report['native_memory']['chip_free_bytes'] > 0)
