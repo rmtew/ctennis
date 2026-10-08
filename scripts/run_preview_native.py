@@ -1,5 +1,7 @@
 """Finite actual PAL/NTSC paused preview observation (campaign-owned only)."""
 import argparse
+from copy import deepcopy
+from types import SimpleNamespace
 import gzip
 import hashlib
 import json
@@ -31,8 +33,17 @@ CAPS=dict(accepted_request_generations=7,playing_dispatches=512,ordinary_operati
 CPU9_RECEIPT=ROOT/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json'
 CPU9_CURRENT=ROOT/'build/tests/preview-cpu/report.json'
 CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
-COMMANDS=('game_history_freeze','game_history_seek','game_preview_request',
-    'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest')
+SEEK_RECEIPT=ROOT/'build/acceptance/campaigns/69cd1780198c4e55a7f8d6c25484c239/attempts/seek-sliced-cpu/000004/receipt.json'
+SEEK_CURRENT=ROOT/'build/tests/seek-sliced-cpu/report.json'
+SEEK_SHA='1a0a8cc933c5c9f42507ca8b2f1cc7c260db769fffbd0a50570b35beb712995c'
+CPU9_START=CPU9_RECEIPT.with_name('started.json')
+SEEK_START=SEEK_RECEIPT.with_name('started.json')
+CPU9_KEY='2fe61ee7c2ed6320263f1de1f580aa7449f23243d6cce325d3a8eb8507ae3adf'
+SEEK_GUARD=('        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status\n'
+    '        beq     .invalid\n        cmpi.w  #SEEK_JOB_READY,game_history_seek_status\n        beq     .invalid\n')
+COMMANDS=('game_history_freeze','game_history_seek_begin','game_preview_request',
+    'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest',
+    'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel')
 
 
 def overlay(directory):
@@ -89,6 +100,18 @@ class ObservedSession(NativeControlSession):
         finally:self.rpc.close()
 
 
+def verify_admission(admission):
+    """Check captured guest downcounter arithmetic, including unsigned wrap."""
+    assert set(admission)=={'current','last','phase','interval','remaining','reserve','admitted','requested_work'}
+    assert all(type(v) is int and 0<=v<=0xffffffff for v in admission.values())
+    elapsed=(admission['last']-admission['current'])&0xffffffff
+    remaining=admission['interval']-admission['phase']-elapsed
+    assert admission['remaining']==max(0,remaining) and admission['reserve']==10000
+    assert admission['requested_work'] in (0,1)
+    assert admission['admitted']==int(admission['requested_work']==1 and remaining>=admission['reserve'])
+    return admission['admitted']
+
+
 class Native:
     """Guest mailbox calls; host writes only command arguments, never core state."""
     def __init__(self,session,executable,listing,standard,cpu):
@@ -96,7 +119,7 @@ class Native:
         self.session=session;self.cpu=cpu;self.normal=[];self.states={};self.launches=[]
         self.selected_seconds=None;self.selected_frame=None;self.requests=0;self.paused_callbacks=0
         self.public_checks=0;self.callback_stops=[];self.input_actions=[];self.frozen_intervals=[];self.pause_volume_writes=[]
-        self.internal_body_stops=0
+        self.internal_body_stops=0;self.seek_rows=[];self.seek_jobs=[]
         config=emulator_config()
         session.inspect('session_launch',dict(binary=config['tools']['copperline'],run=str(executable),
             args=['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K',
@@ -185,6 +208,74 @@ class Native:
         self.observer.finish();self.check_caps()
         if self.observer.frozen:assert self.number('ui_paused',1),'Frozen owner lost actual UI pause' 
 
+    def seek(self,target):
+        selected=self.block('game_core_state','game_core_state_end').hex()
+        metadata=self.block('game_history_state','game_history_state_end').hex()
+        def preview():
+            return dict(generation=self.number('game_preview_generation',4),
+                status=self.number('game_preview_status'),cache_valid=self.number('game_preview_cache_valid'))
+        def begin():
+            index=len(self.observer.api_rows)
+            self.call('game_history_seek_begin',[self.number('game_history_seek_generation',4),target>>32,target&0xffffffff])
+            return index,self.number('game_history_seek_generation',4)
+        def finish(generation):
+            indices=[]
+            for _ in range(CAPS['paused_callbacks']):
+                if self.number('game_history_seek_status')==2:return indices
+                assert self.number('game_history_seek_status')==1
+                self.call('game_history_seek_step',[generation,1])
+                indices.append(len(self.observer.api_rows)-1)
+            raise AssertionError('Native admitted seek did not finish within unchanged callback cap')
+        preview_before=preview()
+        initial_begin,generation=begin()
+        checkpoint=self.number('game_history_seek_cursor',8)
+        preview_pending=preview()
+        assert preview_pending['generation']!=preview_before['generation']
+        assert preview_pending['status']==0 and preview_pending['cache_valid']==0
+        decline_before=self.block('game_history_seek_storage','game_history_seek_storage_end')
+        self.call('game_history_seek_step',[generation,0])
+        decline_index=len(self.observer.api_rows)-1
+        assert self.block('game_history_seek_storage','game_history_seek_storage_end')==decline_before
+        assert self.observer.api_rows[decline_index]['bodies']==0
+        self.call('game_preview_result',[preview_pending['generation']],accepted=False)
+        result_rejection=len(self.observer.api_rows)-1
+        self.call('game_preview_request',[preview_pending['generation'],0xffff,0,0],accepted=False)
+        request_rejection=len(self.observer.api_rows)-1
+        assert self.block('game_history_seek_storage','game_history_seek_storage_end')==decline_before
+        canceled_steps=finish(generation)
+        assert self.number('game_history_seek_status')==2
+        self.call('game_history_seek_cancel',[generation]);cancel_index=len(self.observer.api_rows)-1
+        canceled=self.block('game_history_seek_storage','game_history_seek_storage_end')
+        self.call('game_history_seek_commit',[generation],accepted=False)
+        canceled_commit_index=len(self.observer.api_rows)-1
+        assert self.block('game_history_seek_storage','game_history_seek_storage_end')==canceled
+        superseded_begin,superseded_generation=begin()
+        superseded_steps=finish(superseded_generation)
+        assert self.number('game_history_seek_status')==2
+        begin_index,generation=begin()
+        superseding=self.block('game_history_seek_storage','game_history_seek_storage_end')
+        self.call('game_history_seek_commit',[superseded_generation],accepted=False)
+        stale_commit_index=len(self.observer.api_rows)-1
+        assert self.block('game_history_seek_storage','game_history_seek_storage_end')==superseding
+        step_indices=finish(generation)
+        self.call('game_history_seek_commit',[generation])
+        self.seek_jobs.append(dict(target=target,checkpoint=checkpoint,generation=generation,
+            selected_position=int.from_bytes(bytes.fromhex(metadata)[34:42],'big'),
+            selected_state=selected,selected_metadata=metadata,
+            initial_begin_api_row_index=initial_begin,admission_zero_api_row_index=decline_index,
+            admission_zero_identity_preserved=True,canceled_commit_preserved=True,superseded_commit_preserved=True,
+            canceled_job=dict(generation=int.from_bytes(decline_before[:4],'big'),
+                begin_api_row_index=initial_begin,step_api_row_indices=canceled_steps,
+                cancel_api_row_index=cancel_index,canceled_commit_api_row_index=canceled_commit_index,ready_before_cancel=True),
+            superseded_job=dict(generation=superseded_generation,begin_api_row_index=superseded_begin,
+                step_api_row_indices=superseded_steps,superseding_begin_api_row_index=begin_index,
+                stale_commit_api_row_index=stale_commit_index,ready_before_supersession=True),
+            preview_transition=dict(before=preview_before,after=preview_pending,retired=True,
+                result_rejection_api_row_index=result_rejection,request_rejection_api_row_index=request_rejection),
+            begin_api_row_index=begin_index,step_api_row_indices=step_indices,commit_api_row_index=len(self.observer.api_rows)-1,
+            final_state=self.block('game_core_state','game_core_state_end').hex(),final_metadata=self.block('game_history_state','game_history_state_end').hex(),
+            final_position=self.number('game_history_position',8)))
+
     def idle(self):
         assert self.at_before
         self.session.inspect('break_remove',{'id':self.breakpoint})
@@ -199,7 +290,7 @@ class Native:
         assert not frames.stack and observer.active is None,'Unfinished trace at owned API entry'
         entry_ids=[self.session.inspect('break_add',{'kind':'pc','addr':pc})['id']
             for pc in frames.body_map]
-        return_ids={};deadline=self.stop['seconds']+1;previous=None;entry_count=0
+        return_ids={};deadline=self.stop['seconds']+1;previous=None;entry_count=0;outer_count=0
         try:
             for _ in range(16385): # <=8192 actual entries, paired exits, one public return.
                 stop=self.session.inspect('run_until',{'seconds':deadline})
@@ -233,8 +324,14 @@ class Native:
                 if name=='game_preview_step':assert entry_count<=budget,'Actual preview body entries exceed requested operation budget'
                 return_pc=int.from_bytes(self.read(sp,4),'big')
                 owner=dict(active=observer.number('game_preview_active',1),
-                    status=observer.number('game_preview_status'),variant=observer.number('game_preview_variant',1))
+                    status=observer.number('game_preview_status'),variant=observer.number('game_preview_variant',1),
+                    seek_active=observer.number('game_history_seek_active',1),seek_status=observer.number('game_history_seek_status'),
+                    seek_generation=observer.number('game_history_seek_generation',4),
+                    seek_cursor=observer.number('game_history_seek_cursor',8))
                 row=frames.entry(pc,registers,return_pc,state,position,owner,len(observer.api_rows))
+                if row['depth']==1:
+                    outer_count+=1
+                    if name=='game_history_seek_step':assert outer_count<=1,'Actual seek logical bodies exceed one-body admission'
                 observer.pending['bodies']+=1
                 return_ids[row['entry_index']]=self.session.inspect('break_add',{'kind':'pc','addr':return_pc,
                     'cond':{'lhs':'sp','op':'eq','rhs':sp+4}})['id']
@@ -252,6 +349,8 @@ class Native:
         before=self.block('game_core_state','game_core_state_end')
         metadata=self.block('game_history_state','game_history_state_end')
         store=self.block('game_history_buffer','game_history_buffer_end')
+        private_before=self.block('game_history_seek_storage','game_history_seek_storage_end')
+        intents_before=deepcopy(self.cpu.seek_events)
         inputs={n:self.read(self.symbols[n],size) for n,size in INPUTS}
         frame=self.read(self.symbols['game_stack_top']-70,62)
         arguments=list(args)+[0]*(6-len(args))
@@ -263,7 +362,7 @@ class Native:
         self.observer.begin(name);self.subscribe(True)
         self.session.inspect('break_remove',{'id':self.breakpoint})
         self.breakpoint=self.arm('preview_native_return')
-        self.stop=self.run_owned_api(name,arguments[1] if name=='game_preview_step' else 4)
+        self.stop=self.run_owned_api(name,arguments[1] if name=='game_preview_step' else 1 if name=='game_history_seek_step' else 4)
         assert self.stop['pc']==self.symbols['preview_native_return'],self.stop
         self.at_before=False;cost=self.observer.finish();self.public_checks+=1
         assert self.read(self.symbols['game_stack_top']-70,62)==frame,'Caller register/SR frame overwritten'
@@ -280,10 +379,46 @@ class Native:
             self.cpu.call(name);self.observer.frozen=True
             assert self.block('game_core_state','game_core_state_end')==before
             self.frozen_intervals.append(dict(begin=cost['end'],end=None))
-        elif name=='game_history_seek':
+        elif name.startswith('game_history_seek_'):
             assert after_store==store
-            self.cpu.call(name,{0:arguments[0],1:arguments[1]})
-            assert self.cpu.cpu.r_reg(0)==1 and self.cpu.state()==self.block('game_core_state','game_core_state_end')
+            admission=None
+            if name=='game_history_seek_step':
+                admission={key:self.number('preview_native_timer_'+key,4) for key in
+                    ('current','last','phase','interval','remaining','reserve','admitted','requested_work')}
+                verify_admission(admission)
+                arguments[1]=admission['admitted']
+                logical=sum(frame['depth']==1 for frame in self.observer.body_frames.records
+                    if frame['api_row_index']==len(self.observer.api_rows)-1)
+                assert logical==admission['admitted'],'Admission/logical body count disagreement'
+            intent_start=len(self.cpu.seek_events)
+            self.cpu.call(name,{i:v for i,v in enumerate(arguments[:3])})
+            actual_intents=[event for frame in self.observer.body_frames.records
+                if frame['api_row_index']==len(self.observer.api_rows)-1 and frame['depth']==1 for event in frame['events']]
+            expected_intents=deepcopy(self.cpu.seek_events[intent_start:])
+            assert actual_intents==expected_intents,'Native seek intents differ from uninterrupted actual core'
+            assert self.cpu.cpu.r_reg(0)==int(accepted)
+            assert self.cpu.state()==self.block('game_core_state','game_core_state_end')
+            private=self.block('game_history_seek_storage','game_history_seek_storage_end')
+            reference=bytes(self.cpu.mem.r_block(self.cpu.symbols['game_history_seek_storage'],734))
+            assert private[:26]==reference[:26] and private[98:]==reference[98:],'Native seek semantic context differs'
+            # Saved public metadata contains image-specific recorder pointers.
+            # Preserve all actual72 bytes; compare semantic private header/images.
+            assert private[26:98]==metadata,'Seek saved metadata differs from actual selected context'
+            if not accepted or name!='game_history_seek_commit':
+                assert self.block('game_core_state','game_core_state_end')==before
+                assert self.block('game_history_state','game_history_state_end')==metadata
+            if not accepted or (admission is not None and admission['admitted']==0):
+                assert private==private_before and self.cpu.seek_events==intents_before,'Declined/rejected seek changes private context/intents'
+            self.seek_rows.append(dict(api_row_index=len(self.observer.api_rows)-1,name=name,generation=arguments[0],
+                admission=admission,body_operations=cost['bodies'],
+                logical_body_operations=sum(frame['depth']==1 for frame in self.observer.body_frames.records
+                    if frame['api_row_index']==len(self.observer.api_rows)-1),working_cursor=self.number('game_history_seek_cursor',8),
+                working_state=self.block('game_history_seek_working','game_history_seek_storage_end').hex(),
+                reference_working_state=bytes(self.cpu.mem.r_block(self.cpu.symbols['game_history_seek_working'],318)).hex(),
+                public_state=self.block('game_core_state','game_core_state_end').hex(),
+                public_metadata=self.block('game_history_state','game_history_state_end').hex(),
+                selected_state=before.hex(),selected_metadata=metadata.hex(),events=actual_intents,reference_events=expected_intents,
+                actual_core_equal=True,frozen_store_preserved=True))
         elif name=='game_history_resume_latest':
             assert after_store==store
             self.cpu.call(name);self.observer.frozen=False
@@ -536,7 +671,7 @@ def schedule(native,directory):
         native.idle()
     else:raise AssertionError('Actual retained completed human return/miss with incoming context absent within acquisition cap')
     native.fire(False);native.freeze()
-    native.call('game_history_seek',[candidate['probe']>>32,candidate['probe']&0xffffffff])
+    native.seek(candidate['probe'])
     end=candidate['end'];x,y=native.position(end);selection=candidate['probe']
     observations.append(native.completed('cold-incoming',candidate['ordinal'],selection,end,x,y))
     bounds=table(native.cpu,end);edited_x=x+1 if x<bounds['right']-1 else x-1
@@ -580,13 +715,36 @@ def total_bytes(paths):
     return sum(path.stat().st_size for path in set(paths) if path.is_file())
 
 
+def reviewed_execution(saved,current,sha,start,expected_key=None):
+    """Bind the reviewed pass and reject any later failed/interrupted actual run."""
+    from acceptance_campaign import canonical,execution_blocker
+    assert digest(saved)==sha,'Reviewed CPU receipt is unavailable or changed'
+    assert digest(current)==sha,'Latest CPU proof is not the reviewed passing receipt'
+    receipt=json.loads(current.read_text())
+    assert receipt.get('passed') is True,'Latest CPU proof did not pass'
+    started=json.loads(start.read_text())
+    key=canonical(started['dependencies'])
+    assert key==started['dependency_key'] and (expected_key is None or key==expected_key)
+    blocker=execution_blocker(SimpleNamespace(id=started['id']),started['dependencies'])
+    assert blocker is None,blocker
+    return receipt
+
+
 def inherited_endpoints():
-    """An immutable older pass cannot bypass the canonical latest invocation."""
-    assert digest(CPU9_RECEIPT)==CPU9_SHA,'Reviewed CPU endpoint receipt is unavailable or changed'
-    assert digest(CPU9_CURRENT)==CPU9_SHA,'Latest CPU proof is not the reviewed passing receipt'
-    inherited=json.loads(CPU9_CURRENT.read_text())
-    assert inherited.get('passed') is True,'Latest CPU proof did not pass'
-    return inherited
+    return reviewed_execution(CPU9_RECEIPT,CPU9_CURRENT,CPU9_SHA,CPU9_START,CPU9_KEY)
+
+
+def worker_guard_closure(inherited):
+    """Only three entry guards changed; their removal reproduces reviewed bytes."""
+    source=(ROOT/'amiga/game/preview.s').read_bytes()
+    guard=SEEK_GUARD.encode()
+    assert source.count(guard)==3,'Unexpected preview ownership changes'
+    original=source.replace(guard,b'')
+    expected=inherited['evidence']['files']['amiga/game/preview.s']
+    assert hashlib.sha256(original).hexdigest()==expected,'Preview changed beyond scoped seek guards'
+    return dict(passed=True,removed_entry_guards=3,current_source_sha256=hashlib.sha256(source).hexdigest(),
+        guard_removed_source_sha256=expected,
+        scope='Exact source equality after removal of three seek-owner guards; physics/endpoints inherited, current ownership freshly proven.')
 
 
 def run(standard):
@@ -600,14 +758,15 @@ def run(standard):
     try:
         paths,tools=inputs_for('preview-native','scripts/run_preview_native.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
-        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT,CPU9_CURRENT}
+        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT,CPU9_CURRENT,CPU9_START,SEEK_RECEIPT,SEEK_CURRENT,SEEK_START}
         inherited=inherited_endpoints()
-        assert inherited['evidence']['files']['amiga/game/preview.s']==digest(ROOT/'amiga/game/preview.s')
+        guard_closure=worker_guard_closure(inherited)
+        seek_receipt=reviewed_execution(SEEK_RECEIPT,SEEK_CURRENT,SEEK_SHA,SEEK_START)
         transaction.meta.update(files=snapshot(paths),tools=tools)
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         print('Preparing bounded native preview',standard,flush=True)
         _,product=build_native();standalone,_=build_core()
-        assert {digest(product),digest(standalone)}==set(inherited['evidence']['compiled_executables'].values()),'Reviewed CPU9 products no longer match'
+        assert {digest(product),digest(standalone)}==set(seek_receipt['evidence']['compiled_executables'].values()),'Fresh sliced CPU products no longer match'
         product_listing=product.parent/'native.lst';core_listing=standalone.parent/'match-core.lst'
         executable,listing,manifest,overlay_identity=overlay(directory)
         product_manifest=compile_manifest(product,product_listing)
@@ -630,6 +789,9 @@ def run(standard):
                     loaded_sha256=hashlib.sha256(native.worker).hexdigest(),bytes=len(native.worker),
                     loaded_start=worker_start,loaded_end=worker_start+len(native.worker),
                     fixture_executable_sha256=digest(executable))
+                seek_storage_identity=dict(loaded_start=native.symbols['game_history_seek_storage'],
+                    loaded_end=native.symbols['game_history_seek_storage_end'],bytes=734,
+                    fixture_executable_sha256=digest(executable))
                 observer=native.observer
                 physical=dict(joystick_press_edges=sum(e['pressed_bits'].bit_count() for e in observer.physical_edges if e['name']=='ui_joystick_bits'),
                     joystick_release_edges=sum(e['released_bits'].bit_count() for e in observer.physical_edges if e['name']=='ui_joystick_bits'),
@@ -651,7 +813,10 @@ def run(standard):
                     worker_calls_per_job=native.maximum_job_calls,
                     samples_per_path=max(len(p)//8 for o in observations for p in o['result']['paths']),raw_bytes=0)
                 validation=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
-                    preview_storage_bytes=5550,preview_metadata_bytes=110,acquisition=acquisition,
+                    preview_storage_bytes=5550,preview_metadata_bytes=110,seek_storage_bytes=734,acquisition=acquisition,
+                    seek_validation=dict(passed=True,cpu_receipt_sha256=SEEK_SHA,rows=native.seek_rows,jobs=native.seek_jobs,
+                        one_body_per_slice=True,selected_pending_preserved=True,actual_guest_timer_admission=True,
+                        reserve_eclock_ticks=10000,reserve_scope='Initial CPU-derived estimate; all actual callbacks and deadlines remain acceptance evidence.'),
                     replacement_cancel_cases=replacements,preservation={k:True for k in
                     ('selected_canonical','history_metadata','frozen_store','live_backup','caller_frame',
                      'input_globals','publication_irq_only','audio_cpu_configuration')},
@@ -664,11 +829,12 @@ def run(standard):
                     byte_cap_scope='stored-artifact-bytes; rpc-and-event-transcripts-gzip; uncompressed-transcripts-measured-separately',
                     endpoint_classification_scope='inherited-reviewed-cpu9; no-fresh-native-launch-hook-qualification',
                     inherited_endpoint_validation=dict(cpu_receipt_sha256=CPU9_SHA,
-                        scope='CPU9-independent-endpoints; native-labels-only'),
+                        scope='CPU9-independent-endpoints; native-labels-only',worker_guard_closure=guard_closure,
+                        current_ownership_cpu_receipt_sha256=SEEK_SHA),
                     resources=dict(fixture_chip_free_bytes=memory['chip_free_bytes'],
                         fixture_loaded_bytes=sum(h['bytes'] for h in native.hunks),
                         product_static_loaded_bytes=hunk_layout(product)['loaded_payload_bytes']),
-                    compiled_identity=dict(loaded_hunks=native.hunks,worker_bytes=worker_identity,overlay=overlay_identity,
+                    compiled_identity=dict(loaded_hunks=native.hunks,worker_bytes=worker_identity,seek_storage=seek_storage_identity,overlay=overlay_identity,
                         normalized_shared_core=dict(matched=True,bytes=len(expected[0]),relocations=expected[1],
                             sink_branches=expected[2],sha256=hashlib.sha256(expected[0]).hexdigest()),
                         fixture_manifest_sha256=digest(Path(str(executable)+'.compile.json')),

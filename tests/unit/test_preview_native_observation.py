@@ -16,7 +16,7 @@ class NativePreviewGuards(unittest.TestCase):
         observer=object.__new__(Observer)
         observer.symbols={n:a for n,a in [('game_core_state',0x1000),
             ('game_history_state',0x2000),('game_history_buffer',0x3000),
-            ('game_preview_storage',0x20000),('preview_native_mailbox',0x22000),
+            ('game_preview_storage',0x20000),('game_history_seek_storage',0x27000),('preview_native_mailbox',0x22000),
             ('core_trace_arguments',0x23000),('core_trace_marker',0x23010),
             ('game_stack_bottom',0x24000),('game_stack_top',0x25000)]}
         observer.frozen=True;observer.pending=None;observer.problems=[]
@@ -27,6 +27,19 @@ class NativePreviewGuards(unittest.TestCase):
 
     def event(self,address,size=2,pc=0x400,value=0):
         return dict(addr=address,size=size,pc=pc,value=value,position={'cck':1})
+
+    def test_seek_private_writes_require_owned_seek_api_and_complete_extent(self):
+        observer=self.observer()
+        observer._guard(self.event(0x27000))
+        self.assertIn('External caller writes frozen seek',observer.problems[-1])
+        observer.pending={'name':'game_preview_step','begin':{'cck':0},'end':None}
+        observer._guard(self.event(0x27000))
+        self.assertIn('Non-seek API',observer.problems[-1])
+        observer.pending['name']='game_history_seek_step';observer.problems.clear()
+        observer._guard(self.event(0x27000))
+        self.assertEqual(observer.problems,[])
+        observer._guard(self.event(0x27000+732,4))
+        self.assertIn('Forbidden native API',observer.problems[-1])
 
     def test_frozen_cross_boundary_and_external_call_writes(self):
         observer=self.observer()

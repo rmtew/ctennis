@@ -196,7 +196,7 @@ class Observer(TraceCollector):
     def watches(self,inside=False):
         ranges=super().watches()+[{'addr':self.symbols[n],'len':length,'access':'write'}
             for n,length in [('game_preview_storage',5550),('game_history_state',72),
-                             ('game_history_buffer',80318),*INPUTS]]
+                             ('game_history_buffer',80318),('game_history_seek_storage',734),*INPUTS]]
         ranges += [{'addr':self.symbols['simulation_started_updates'],'len':2,'access':'write'},
             {'addr':self.symbols['simulation_timer_origin'],'len':2,'access':'write'},
             {'addr':0xbfde00,'len':1,'access':'write'}]
@@ -278,6 +278,7 @@ class Observer(TraceCollector):
             rule=self.rules.get(pc)
             if not publication_write and rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']:
                 self.irq_write(r,rule)
+            if self.frozen and overlap('game_history_seek_storage',734):self.problems.append('External caller writes frozen seek context')
             if self.frozen and overlap('game_preview_storage',5550):self.problems.append('External caller writes frozen preview context')
             if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
             if self.frozen and a<0xdff098 and a+size>0xdff096:
@@ -291,7 +292,11 @@ class Observer(TraceCollector):
         if s['game_stack_bottom']<=a<a+size<=s['game_stack_top']:
             self.stack_min=min(self.stack_min,a);return
         if contained('game_preview_storage',5550):return
-        if contained('preview_native_mailbox',50):return
+        if contained('preview_native_mailbox',82):return
+        if contained('game_history_seek_storage',734):
+            if self.pending['name'] in ('game_history_freeze','game_history_resume_latest','game_history_seek_begin',
+                    'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel'):return
+            self.problems.append('Non-seek API writes private seek context');return
         if contained('core_trace_arguments',12) or contained('core_trace_marker',2):return
         if contained('game_core_state',318) or contained('game_history_state',72):return
         if self.pending['name']=='game_history_freeze' and overlap('game_history_buffer',80318):return

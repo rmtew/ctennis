@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure
 from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
@@ -67,6 +67,31 @@ class NativePreviewTiming(unittest.TestCase):
             added=[a for m,a in native.session.calls if m=='break_add']
             removed=[a for m,a in native.session.calls if m=='break_remove']
             self.assertEqual(len(added),len(removed),'Failed observation leaks debugger traps')
+
+    def test_seek_counts_one_outer_call_and_retains_nested_body_frames(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x420,0x1700,2,0),
+            (0x520,0x1704,3,1),(0x500,0x1804,4,2),(0x900,0x1900,5,2)])
+        frames=native.observer.body_frames
+        frames.body_map[0x420]=dict(operation='game_round_poll',arity=0)
+        frames.return_pcs.add(0x520)
+        native.read=lambda a,b:(0x520 if a==0x1700 else 0x500).to_bytes(4,'big')
+        native.run_owned_api('game_history_seek_step',1)
+        self.assertEqual(native.observer.pending['bodies'],2)
+        self.assertEqual([r['depth'] for r in frames.records],[2,1])
+        self.assertEqual(len(native.observer.rows),1)
+
+    def test_guard_removed_source_must_equal_reviewed_preview_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'amiga/game';path.mkdir(parents=True)
+            from run_preview_native import SEEK_GUARD
+            original=b'first\nsecond\nthird\n'
+            source=SEEK_GUARD.encode()+b'first\n'+SEEK_GUARD.encode()+b'second\n'+SEEK_GUARD.encode()+b'third\n'
+            (path/'preview.s').write_bytes(source)
+            inherited={'evidence':{'files':{'amiga/game/preview.s':hashlib.sha256(original).hexdigest()}}}
+            with patch('run_preview_native.ROOT',Path(directory)):
+                self.assertTrue(worker_guard_closure(inherited)['passed'])
+                (path/'preview.s').write_bytes(source+b'extra operation\n')
+                with self.assertRaisesRegex(AssertionError,'beyond scoped seek guards'):worker_guard_closure(inherited)
 
     def test_overlay_dispatches_to_tool_helper_without_campaign_recursion(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as directory:
@@ -146,9 +171,14 @@ class NativePreviewTiming(unittest.TestCase):
             saved=Path(directory)/'saved.json';current=Path(directory)/'current.json'
             data=json.dumps({'passed':True,'run':'reviewed'}).encode()
             saved.write_bytes(data);current.write_bytes(data)
+            from acceptance_campaign import canonical
+            (Path(directory)/'started.json').write_text(json.dumps(dict(id='preview-cpu',dependencies={},dependency_key=canonical({}))))
             with patch('run_preview_native.CPU9_RECEIPT',saved), \
                     patch('run_preview_native.CPU9_CURRENT',current), \
-                    patch('run_preview_native.CPU9_SHA',hashlib.sha256(data).hexdigest()):
+                    patch('run_preview_native.CPU9_SHA',hashlib.sha256(data).hexdigest()), \
+                    patch('run_preview_native.CPU9_START',Path(directory)/'started.json'), \
+                    patch('acceptance_campaign.execution_blocker',return_value=None), \
+                    patch('run_preview_native.CPU9_KEY',None):
                 self.assertTrue(inherited_endpoints()['passed'])
                 current.write_text(json.dumps({'passed':False,'run':'newer-failed'}))
                 with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
@@ -156,6 +186,32 @@ class NativePreviewTiming(unittest.TestCase):
                 current.write_text(json.dumps({'passed':True,'run':'unreviewed-newer'}))
                 with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
                     inherited_endpoints()
+
+    def test_guest_admission_threshold_underflow_and_wrap_are_checked(self):
+        def row(last,current,phase,interval):
+            remaining=interval-phase-((last-current)&0xffffffff)
+            return dict(last=last,current=current,phase=phase,interval=interval,
+                remaining=max(0,remaining),reserve=10000,admitted=int(remaining>=10000),requested_work=1)
+        for args,admitted in (((100,90,0,10010),1),((100,90,0,10009),0),
+                ((100,90,12000,11838),0),((5,0xfffffff5,0,10016),1)):
+            value=row(*args);self.assertEqual(verify_admission(value),admitted)
+            value['admitted']=1-admitted
+            with self.assertRaises(AssertionError):verify_admission(value)
+        declined=row(100,90,0,10010);declined.update(requested_work=0,admitted=0)
+        self.assertEqual(verify_admission(declined),0)
+        declined['admitted']=1
+        with self.assertRaises(AssertionError):verify_admission(declined)
+        bad=row(100,90,0,10010);bad['remaining']+=1
+        with self.assertRaises(AssertionError):verify_admission(bad)
+
+    def test_endpoint_inheritance_rejects_later_interrupted_execution(self):
+        with patch('run_preview_native.digest',return_value='x'), \
+                patch('run_preview_native.CPU9_SHA','x'), \
+                patch('pathlib.Path.read_text',side_effect=[json.dumps({'passed':True}),
+                    json.dumps(dict(id='preview-cpu',dependencies={},dependency_key=hashlib.sha256(b'{}').hexdigest()))]), \
+                patch('run_preview_native.CPU9_KEY',None), \
+                patch('acceptance_campaign.execution_blocker',return_value='Latest execution interrupted'):
+            with self.assertRaisesRegex(AssertionError,'interrupted'):inherited_endpoints()
 
     def test_private_readback_serialization_does_not_mutate_observation(self):
         source={'selected':bytes([1,2]),'rows':[(3,bytes([4]))]}
