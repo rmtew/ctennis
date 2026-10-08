@@ -2,7 +2,7 @@
 import hashlib
 import json
 from build_match_core import load_image
-from history_proof import attempts, cursor, seek
+from history_proof import attempts, cursor, field, seek
 from match_core_cpu import Core
 from preview_extended_proof import candidates, continuous, execute, table, value
 from preview_proof import fixture, geometry
@@ -29,12 +29,30 @@ def qualification(observation,symbols):
     result=observation['result'];end=observation['end'];rows=[];coverage=set()
     for variant in (0,1):
         accepted=observation['launches'][variant]
-        human=next((i for i,event in enumerate(accepted) if event['end']==end),None)
+        human=next((i for i,event in enumerate(accepted) if event['end']==end and event['kind']==1),None)
         opponent=next((i for i,event in enumerate(accepted)
             if human is not None and i>human and event['end']!=end and event['kind']==1),None)
         state=result['contexts'][variant]
         contact=value(state,symbols,'game_contact');flight=value(state,symbols,'game_flight')
         lifecycle=value(state,symbols,'game_lifecycle',2)
+        first_terminal=None
+        first_classification=None
+        for dispatch,boundary in enumerate(observation['boundaries'][variant]):
+            launched=human is not None and accepted[human]['dispatch']<=dispatch
+            intercepted=(opponent is not None and accepted[opponent]['dispatch']<=dispatch)
+            flags=boundary['contact'];terminal=None
+            if launched:
+                if intercepted:terminal='interception'
+                elif flags&1:terminal='net'
+                elif flags&0x88:terminal='out'
+                elif flags&2:terminal='landing'
+            elif flags&0x8d:terminal='no-contact'
+            if terminal is not None:
+                first_terminal=dispatch;first_classification=terminal;break
+        last_dispatch=len(observation['boundaries'][variant])-1
+        assert last_dispatch>=0, 'Discovery lacks a full actual dispatch boundary'
+        if first_terminal is not None:
+            assert first_terminal==last_dispatch, 'Preview continues after its first actual terminal boundary'
         classification='unqualified'
         if human is not None:
             if opponent is not None:classification='interception'
@@ -42,6 +60,9 @@ def qualification(observation,symbols):
             elif contact&0x88:classification='out'
             elif contact&2:classification='landing'
         elif contact&0x8d:classification='no-contact'
+        assert (first_classification or 'unqualified')==classification, 'Final endpoint is not the first actual terminal'
+        if classification!='unqualified':
+            assert result['outcomes'][variant]=={'landing':1,'net':2,'out':3,'interception':4,'no-contact':5}[classification]
         if classification in REQUIRED:coverage.add(classification)
         count=len(result['paths'][variant])//8
         # Require a complete sample strictly later than the launch boundary.
@@ -52,12 +73,14 @@ def qualification(observation,symbols):
             contact=contact,flight=flight,lifecycle=lifecycle,classification=classification,
             preview_outcome=result['outcomes'][variant],samples=count,outgoing_samples_present=outgoing,
             final_state_sha256=hashlib.sha256(state).hexdigest(),
-            last_sampled_boundary=observation['boundaries'][variant][-1]))
+            last_sampled_boundary=observation['boundaries'][variant][-1],
+            first_terminal_boundary_checked=True,first_terminal_dispatch=first_terminal,
+            last_sampled_dispatch=last_dispatch))
     paths=[[path[n:n+8] for n in range(0,len(path),8)] for path in result['paths']]
     coincident=bool(paths[0] and paths[1] and geometry(paths[0])==geometry(paths[1]))
     launched_coincidence=coincident and all(row['outgoing_samples_present'] for row in rows)
     if launched_coincidence:coverage.add('coincidence')
-    return dict(variants=rows,geometry_coincident=coincident,
+    return dict(variants=rows,prefix_samples=result['prefix'],geometry_coincident=coincident,
         launched_outgoing_coincidence=launched_coincidence,coverage=sorted(coverage),
         classifier_priority=['interception','net','out','landing'],
         source='actual-full-canonical-and-accepted-hooks',geometry_source='actual-sampled-drawn-geometry-visibility-ticks')
@@ -94,6 +117,14 @@ def discovery(executable,progress):
                 recorded_completed_returns=len(completed_returns),
                 unavailable=None if len(eligible)==2 else f'Only {len(eligible)} completed returns with retained incoming context within512dispatches; no later search'))
             progress(dict(stage='stage-a2-recorded-seed',seed=seeds[-1]))
+            original_trace=cpu.trace
+            def guard(mode,width,address,value):
+                if (mode=='W' and address<symbols['game_history_buffer_end']
+                        and address+(1<<width)>symbols['game_history_buffer']
+                        and field(cpu,'game_history_mode',1)==2):
+                    raise AssertionError('Frozen discovery writes history/live backup, including crossing writes')
+                original_trace(mode,width,address,value)
+            cpu.mem.set_trace_func(guard)
             cpu.call('game_history_freeze')
             for candidate,identity in zip(eligible,identities):
                 selection=candidate['origin'];seek(cpu,selection);bounds=table(cpu,candidate['end'])
@@ -108,7 +139,9 @@ def discovery(executable,progress):
                         assert bounds['left']<=x<bounds['right'] and bounds['top']<=y<bounds['bottom']
                         row=dict(name=observation['name'],seed=seed,ordinal=candidate['ordinal'],
                             candidate=identity,x=x,y=y,bounds=bounds,selection=selection,
-                            qualification=facts,costs=observation['costs'])
+                            qualification=facts,costs=observation['costs'],
+                            worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
+                            frozen_history_write_guard=True)
                         jobs.append(row)
                         new=set(facts['coverage'])-qualified
                         if new:
@@ -129,6 +162,8 @@ def discovery(executable,progress):
     report=dict(passed=set(REQUIRED)<=qualified,planned_seeds=list(SEEDS),input_policy=INPUT_POLICY,
         dispatch_cap=512,ordinary_operation_cap=2049,returns_per_seed_cap=2,positions_per_return_cap=9,
         position_policy='recorded-contact-plus-minus8-clamped-to-actual-phase-limits',job_cap=72,
+        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
+        frozen_history_write_guard=True,
         jobs=len(jobs),seeds=seeds,job_results=jobs,required_coverage=list(REQUIRED),
         actual_coverage=sorted(qualified),absent_classes=sorted(set(REQUIRED)-qualified),chosen_cases=chosen,
         scope='A2 bounded actual CPU discovery and chosen uninterrupted continuations; A3/native/resources/UI pending.')
