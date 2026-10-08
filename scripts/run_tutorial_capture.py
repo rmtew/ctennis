@@ -7,6 +7,7 @@ and the exact same pixels in a native-resolution review view and animation.
 import hashlib
 import json
 import re
+import shutil
 
 from build_native_game import build
 from check_shared_core_bytes import normalized
@@ -52,7 +53,10 @@ def run():
         transaction.meta['commit'] = subprocess.check_output(
             ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
         _, executable = build()
-        listing = (executable.parent/'native.lst').read_text()
+        # Keep original debug/product identity even when runtime validation fails.
+        for name in ('baseline-rally','native.lst','baseline-rally.compile.json'):
+            shutil.copy2(executable.parent/name, directory/name)
+        listing = (directory/'native.lst').read_text()
         shared, relocations, sinks = normalized(executable, executable.parent/'native.lst')
         assert (len(shared), relocations, sinks,
                 hashlib.sha256(shared).hexdigest()) == (

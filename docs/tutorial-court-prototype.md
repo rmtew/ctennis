@@ -143,3 +143,11 @@ animation samples are actual emulator output, but the run is timing FAILED.
 Independent inspection also found that the options view lacks its three central
 menu captions/highlight; that appearance is defective and remains pending.
 Do not describe this visual checkpoint as accepted native gameplay or a release.
+
+The released-shot image also reports “CALCULATION LIMIT — INCOMPLETE”; its
+preview is not complete. Independent literal readbacks verify all 318 bytes
+restored at resume, prescribed history changes and no invented F edge across
+17 subsequent held-input boundaries. The original executable/listing for that
+historical run were overwritten; this limits product identity verification.
+Future capture cases retain the just-built executable, listing and compile
+manifest before launching the emulator, including on failure.
