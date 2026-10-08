@@ -2,60 +2,60 @@
   "schema": 1,
   "state": "incomplete",
   "static": {
-    "executable_sha256": "bd6d33fcf1524fc481074f17bb067a04a97744307c4aeb74a84421581f08e4de",
+    "executable_sha256": "fd737e529671d005041b9252338788a52a0b9905031dbad1dacdfc0c88b3c56d",
     "layout": {
-      "executable_bytes": 192788,
+      "executable_bytes": 194600,
       "hunks": [
         {
           "file_offset": 44,
           "index": 0,
           "kind": "code",
-          "bytes": 49832,
+          "bytes": 50728,
           "memory": "any"
         },
         {
-          "file_offset": 74740,
+          "file_offset": 76168,
           "index": 1,
           "kind": "data",
           "bytes": 112700,
           "memory": "chip"
         },
         {
-          "file_offset": 191220,
+          "file_offset": 192648,
           "index": 2,
           "kind": "bss",
           "bytes": 9424,
           "memory": "chip"
         },
         {
-          "file_offset": 191344,
+          "file_offset": 192772,
           "index": 3,
           "kind": "bss",
-          "bytes": 85872,
+          "bytes": 86604,
           "memory": "any"
         }
       ],
       "file_format": {
         "header_table_bytes": 36,
         "hunk_headers_and_end_bytes": 48,
-        "relocation_bytes": 4572,
-        "relocations": 1133,
-        "symbol_bytes": 25600,
-        "symbols": 951,
-        "symbol_name_bytes": 16664,
-        "symbol_name_padding_bytes": 1296,
-        "symbol_framing_bytes": 7640,
+        "relocation_bytes": 4824,
+        "relocations": 1196,
+        "symbol_bytes": 26264,
+        "symbols": 970,
+        "symbol_name_bytes": 17152,
+        "symbol_name_padding_bytes": 1320,
+        "symbol_framing_bytes": 7792,
         "debug_bytes": 0
       },
-      "code_bytes": 49832,
+      "code_bytes": 50728,
       "data_bytes": 112700,
-      "bss_bytes": 95296,
-      "loaded_payload_bytes": 257828
+      "bss_bytes": 96028,
+      "loaded_payload_bytes": 259456
     },
     "attribution": {
       "schema": 1,
-      "executable_sha256": "bd6d33fcf1524fc481074f17bb067a04a97744307c4aeb74a84421581f08e4de",
-      "accounted_file_bytes": 192788,
+      "executable_sha256": "fd737e529671d005041b9252338788a52a0b9905031dbad1dacdfc0c88b3c56d",
+      "accounted_file_bytes": 194600,
       "reconciled": true,
       "categories": [
         {
@@ -148,9 +148,9 @@
         },
         {
           "category": "cpu_instructions",
-          "bytes": 19174,
+          "bytes": 20072,
           "by_hunk": {
-            "0": 19174
+            "0": 20072
           },
           "by_source": {
             "amiga/main.s": 2000,
@@ -181,8 +181,9 @@
             "amiga/game/result_audio.s": 86,
             "amiga/game/audio.s": 826,
             "amiga/game/core.s": 196,
-            "amiga/game/history.s": 1554,
-            "amiga/game/preview.s": 3046,
+            "amiga/game/history.s": 1584,
+            "amiga/game/history_seek_job.s": 800,
+            "amiga/game/preview.s": 3114,
             "amiga/game/core_trace.s": 558,
             "amiga/game/native_core_adapter.s": 244,
             "amiga/game/interface_input.s": 782,
@@ -192,7 +193,7 @@
             "amiga/game/interface_demo.s": 60,
             "amiga/game/interface_feedback.s": 266
           },
-          "instances": 5091
+          "instances": 5313
         },
         {
           "category": "font",
@@ -222,15 +223,6 @@
           "category": "hunk_header_table",
           "bytes": 36,
           "by_hunk": {},
-          "by_source": {},
-          "instances": 1
-        },
-        {
-          "category": "hunk_payload_alignment_padding",
-          "bytes": 2,
-          "by_hunk": {
-            "0": 2
-          },
           "by_source": {},
           "instances": 1
         },
@@ -364,7 +356,7 @@
         },
         {
           "category": "relocation_offsets",
-          "bytes": 4532,
+          "bytes": 4784,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -564,21 +556,21 @@
         },
         {
           "category": "symbol_name_padding",
-          "bytes": 1296,
+          "bytes": 1320,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_names",
-          "bytes": 16664,
+          "bytes": 17152,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_record_framing",
-          "bytes": 7640,
+          "bytes": 7792,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -708,14 +700,14 @@
         {
           "path": "build/native/version.bin",
           "hunk": 0,
-          "offset": 32162,
+          "offset": 33060,
           "bytes": 14,
-          "sha256": "d9e7d099c324d3d0221c320d750e4b6e68a937f8ba9ce8a97d8c7fef1c08b406"
+          "sha256": "310544f5b2e0c6faa2a5d9e967716086789f40e8407ba0be841235f444b2d288"
         },
         {
           "path": "assets/native/scene/sprite-images.bin",
           "hunk": 0,
-          "offset": 38566,
+          "offset": 39464,
           "bytes": 11264,
           "sha256": "cf1b94f8a8f804df28cc928472e600cfe5d57579967e36344a58fd104a4606ef"
         },
@@ -738,7 +730,7 @@
           "hunk": 1,
           "offset": 44544,
           "bytes": 512,
-          "sha256": "1d8323a22fc2cc54e9e4132785593dc5be26a325058380afc7627b3bf40d8257"
+          "sha256": "4e9e4d210dcd7e7e49863e5cf38b25d61dd933b222527ad07b3d9954dacecc93"
         },
         {
           "path": "assets/native/title/font-mac.bin",
@@ -1220,51 +1212,45 @@
         },
         {
           "hunk": 0,
-          "offset": 22285,
+          "offset": 22293,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 23745,
+          "offset": 23775,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 27663,
+          "offset": 28561,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 33199,
+          "offset": 34097,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 33291,
+          "offset": 34189,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 37715,
+          "offset": 38613,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 37719,
+          "offset": 38617,
           "bytes": 1,
           "hex": "00"
-        },
-        {
-          "hunk": 0,
-          "offset": 49830,
-          "bytes": 2,
-          "hex": "4e71"
         }
       ],
       "identical_incbin_payload_groups": [
@@ -1693,27 +1679,99 @@
           "file_bytes": 0
         },
         {
-          "category": "hunk_bss_alignment_padding",
-          "source": null,
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
           "offset": 85870,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85874,
           "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85876,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85878,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85879,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85880,
+          "bytes": 8,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85888,
+          "bytes": 8,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85896,
+          "bytes": 72,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 85968,
+          "bytes": 318,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 86286,
+          "bytes": 318,
           "file_bytes": 0
         }
       ],
-      "bss_ram_bytes": 95296,
-      "bss_declared_ram_bytes": 95294,
-      "bss_alignment_ram_bytes": 2,
+      "bss_ram_bytes": 96028,
+      "bss_declared_ram_bytes": 96028,
+      "bss_alignment_ram_bytes": 0,
       "scope": "Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately."
     },
     "features": {
       "celebration": true
     },
     "release": {
-      "executable_sha256": "359b00a3fe2e3045be5a25cbc5bffdbd26c66fed61bc871d8ca86510097e5274",
-      "executable_bytes": 167188,
-      "removed_symbol_bytes": 25600,
-      "loaded_payload_bytes": 257828,
+      "executable_sha256": "24288fa1a76d4918b6d91069358cf87aace001d05a4188c9373a92f2341beec5",
+      "executable_bytes": 168336,
+      "removed_symbol_bytes": 26264,
+      "loaded_payload_bytes": 259456,
       "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols."
     },
     "executable_budget_bytes": null,
@@ -2202,7 +2260,9 @@
       "amiga/game/gameplay_math.s": "e3de01e5ad2d033910bef8a10a8d5230284f897373e16a54faf59cd3fa766cba",
       "amiga/game/gameplay_players.s": "8b076a2e2c18ea5dd7e8b3c6c472c6de9046032df371f7a56c3a66e284743409",
       "amiga/game/gameplay_state.i": "b689400b724cd1d39c024d82d5ea4ccd7d31448b7180a86cafafbfb140ba1d07",
-      "amiga/game/history.s": "e241e212186a8c1881b2ce4bd4cf55a9d1bb065a16306d68418a92bff3c03bd9",
+      "amiga/game/history.s": "bd59e747905cc501e750194cb5ccef23ab13e758f53298e0b0cddc76de2a3c38",
+      "amiga/game/history_seek_job.s": "bc0e6a04e5b325cc1cdb5af4ab2d80417e0c295fe5d63ff40cf902b52598e985",
+      "amiga/game/history_seek_storage.i": "b89406203b8144594f864074a6e697e849e0da10c1c8cc63da36c2e5274298e9",
       "amiga/game/history_storage.i": "56e05a76e796116719bde5f6cf71ea306cd9cb888fc286bc7b262267432f93ec",
       "amiga/game/integration.s": "fd9e24d23faf79833128d115f8180e19fa353371435808a8c930f8df98fb4a1e",
       "amiga/game/interface.s": "683c694fce2918dc73310115f683f5785c2f8b47ba1f80279159ef24f1f2a9b2",
@@ -2218,7 +2278,7 @@
       "amiga/game/menu.s": "e8e9c499443e9c3ea654f21c513f982d08be53a4dbe697eb64b69c739de56bd9",
       "amiga/game/native_core_adapter.s": "844d1e6413cf7ba7a6b96b3ff703ecaf0c07e7cbb6dd498a9c4395d8a3c0593a",
       "amiga/game/paula_output.s": "15f7439f2350384395b221b11df27ad797f2c530776e0eeab476d4cd587449d0",
-      "amiga/game/preview.s": "40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d",
+      "amiga/game/preview.s": "239ca7e7dc141f42ebf130b176518da0bec213a964eb9088fb32c01975075461",
       "amiga/game/preview_storage.i": "df81b8ff996e17452180117d6b9565e37f4b711ae1dfc587ba76a76af41ec33f",
       "amiga/game/result.s": "3afb626e3c872f224b3d2486719e59aca670885bf0e9a9bfeee359fe1f13746e",
       "amiga/game/result_audio.s": "f6071174cc9aeb933afcadb2351eb3220ab29faa40b04c6d00b80bb872ad99eb",
@@ -2231,7 +2291,7 @@
       "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
       "amiga/game/state.i": "b9eef0b6290a1a61548ce74ffaa0d555a6ddaad6a923d40f62c97c1ce26498ab",
       "amiga/game/tick.s": "df335398348996c54f7dda8f1c01b367ad9834c4fe52231d005b60782e094016",
-      "amiga/main.s": "f66e0f349ab16ef10a85f1e92b6059bd47a5af6bdd77a6aa613aedf0b30115d3",
+      "amiga/main.s": "a5953034ff7626a37693ee78443092a1b9dacba15382515b2bb0cbdbada6a010",
       "amiga/score_copper_patch.i": "d31a223b068268bcd68c34613090c096fcc764e0e866bc095c25162e24d65fec",
       "amiga/square_score_banks.i": "700bd4da2cb7ec9954c383c7d3a17439de62b6311b87f48ecdf49f1694f47589",
       "amiga/square_score_storage.i": "c9cffada92c9c11fb72dec2b33449a97c53772ac52cd23e05295fa96a79b2926",
@@ -2321,11 +2381,11 @@
       "build/native/ui-help-options.bin": "b7ee2276560910fcf5b496fe4ae8a598612f0ac6a9c82b93edc1c6009c094713",
       "build/native/ui-menu-options.bin": "42a1aeb53991565d14f1d978b75d87c54ea27e94ba491d92c47d3f1f63073128",
       "build/native/ui-pages.bin": "9758d3b32e421a85555868ec08fd2abf694cc228cf10f75274df1b5bb76ac948",
-      "build/native/ui-title-identities.bin": "1d8323a22fc2cc54e9e4132785593dc5be26a325058380afc7627b3bf40d8257",
+      "build/native/ui-title-identities.bin": "4e9e4d210dcd7e7e49863e5cf38b25d61dd933b222527ad07b3d9954dacecc93",
       "build/native/ui-title-pages.bin": "7b12a2e86d63431cc569623628290cb6f38527a0be3fca19ba6385973572478f",
-      "build/native/version.bin": "d9e7d099c324d3d0221c320d750e4b6e68a937f8ba9ce8a97d8c7fef1c08b406"
+      "build/native/version.bin": "310544f5b2e0c6faa2a5d9e967716086789f40e8407ba0be841235f444b2d288"
     },
-    "build_receipt_sha256": "0b7feb0cb16802b2948d35709043a91d95b6489af04a7ed692e0d7e741ba503a"
+    "build_receipt_sha256": "5c908384f10c075b281703c5c8ad0b3a653c7a7b2676debc09e093259fbb549f"
   },
   "runtime": {
     "cold-one": {
@@ -2377,17 +2437,17 @@
     "Missing/invalid cold milestone: input_responsive",
     "Continuous loaded-title selection evidence missing/invalid"
   ],
-  "identity": "d41e16f73827fa73e700f70566cb4533bc8f358a745f577db5af936143c3ad4b",
+  "identity": "41b7679e332dc5130fcf1bb45547b84ecb62eea1cb6a7f52062b7837a26955a2",
   "report_generator_sha256": "3b661fe59c95c4092bd14ce53507da9e4124f3ceb2733114c93fafeaf960fb0c",
   "deltas": {
     "state": "historical reviewed baseline; master has no accepted metrics report",
     "previous_identity": "ea32fefef08509b2817ddc05827848878c2fcfe606d30284cb811fac71096884",
     "static_bytes": {
-      "executable_bytes": -55692,
-      "code_bytes": 268,
+      "executable_bytes": -53880,
+      "code_bytes": 1164,
       "data_bytes": -39840,
-      "bss_bytes": 95296,
-      "loaded_payload_bytes": 55724
+      "bss_bytes": 96028,
+      "loaded_payload_bytes": 57352
     },
     "runtime": {
       "cold-one": {
@@ -2406,5 +2466,5 @@
     "previous_report": "docs/metrics/baselines/pre-title-score-current.json",
     "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede"
   },
-  "product_identity": "e10c2a3b445c5195f0f3664a19887a0988d8078c3911a101f004198e6b109367"
+  "product_identity": "4ae0742df21a82fd4c0ca1f38fea0404a9c9247fd444284b43c2a6d3724ae011"
 }

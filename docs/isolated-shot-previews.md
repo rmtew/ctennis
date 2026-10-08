@@ -1,10 +1,13 @@
 # Isolated shot preview foundation
 
-The isolated-preview implementation has passed independently reviewed actual
-68000 CPU proofs through relocation, emitted native sink suppression and focused
-history regressions and bounded same-owner batching at `9648bfc` (selective
-attempt 000009). Real native interrupt
-isolation, paused execution latency and runtime resources remain pending. This
+The isolated-preview implementation has independently reviewed actual 68000 CPU
+evidence at `9648bfc` (selective attempt 000009). The seek scheduling repair has
+fresh independently reviewed CPU evidence at `363fad8` (sliced-seek attempt
+000004), including emitted native instructions and relocation. The earlier
+preview proof remains historical evidence for its exact worker/product; unchanged
+simulation endpoint qualification is the only proposed inheritance for the new
+native cases. Real native interrupt isolation, paused execution latency and
+runtime resources remain pending. This
 increment has no tutorial UI or live branch commit and is not a complete native
 acceptance gate.
 
@@ -77,7 +80,8 @@ the old generation, saturating at `ffffffff`. Internal request-owned oldest-seek
 restoration has an explicit active-3 bypass. Editing before READY or changing
 selection/attempt can require cold resolution.
 
-History seek backs up 72 metadata bytes on the stack after pure range guards.
+Synchronous history seek backs up 72 metadata bytes on the stack before shared
+bounded validation.
 Rejected checkpoint envelopes or operations restore them; canonical restoration
 starts only after complete upfront validation. Failed seeks preserve READY,
 cache and the selected moment. Rollback storage is stack memory, not another
@@ -145,20 +149,24 @@ native latency or frame deadlines. Budget-1/2/3/4 proofs independently compare
 actual body counts, all five owner transitions, restoration before each next
 owner/READY, and full uninterrupted state/path/outcome/output equality.
 
-The standalone image has 109,560 loaded bytes. Fresh native static attribution
-reconciles 49,832 code, 112,700 data and 95,296 BSS bytes (257,828 loaded bytes),
-adding 96 code bytes with no storage growth. BSS remains 95,294 declared bytes
-plus two final HUNK alignment bytes. The native file is 192,788 bytes. These
-compile measurements do not establish actual initialized chip-RAM free space,
-stack safety or native deadlines. Current runtime metrics remain incomplete;
-older PR36 runtime observations are historical.
+The repaired native static attribution reconciles 50,728 code, 112,700 data and
+96,028 BSS bytes (259,456 loaded bytes), adding 896 code and 732 loaded BSS
+bytes. The private seek job declares 734 bytes; it consumes the preceding two
+final alignment bytes. The development file is 194,600 bytes. Symbol removal
+produces a 168,336-byte release file with identical loaded bytes; that release
+has no fresh cold-boot proof. These compile measurements do not establish actual
+initialized chip-RAM free space or native deadlines. Current runtime metrics
+remain incomplete; older PR36 runtime observations are historical.
 
-The bounded native observer cases inherit endpoint qualification from the private,
-independently reviewed CPU9 receipt. Both its immutable saved receipt and the
-canonical latest CPU report must be the same pinned passing bytes; a newer failed
-or changed report blocks inheritance. These cases currently continue that private
-selective campaign. A fresh checkout without both receipts fails closed, and a new
-CPU receipt needs a reviewed pin before these observer cases can use it.
+The bounded native observer cases may inherit unchanged simulation endpoint
+qualification from the independently reviewed CPU9 receipt only after checking
+its immutable and canonical passing bytes and latest execution ledger. Exact
+removal of the three added seek-ownership guards must reproduce the older preview
+source hash, with unchanged normalized simulation bytes and sinks. This does not
+reuse old worker scheduling, current product or ownership acceptance. The fresh
+sliced-seek receipt must independently bind current products, inputs, tools and
+latest execution, and new native cases must compare actual complete states,
+paths and ordered events. Missing or failed evidence blocks inheritance.
 
 Native observer attempts remain failed and preserved. Direct prime/synthetic
 body calls require read-only emitted-entry and stack-matched return observations;
@@ -174,33 +182,58 @@ blocker: callback 536 takes 167,076 CCK, including a 159,175-CCK synchronous see
 with observed deadline headroom of -108,565.44 CCK. That failed callback is not
 exempted from timing acceptance. Practical paused latency remains unresolved.
 
-### Seek scheduling decision for review
+### Implemented seek repair and remaining native gate
 
-The next small proof should use this retained failing selection: seek from the
-checkpoint at operation 512 to the selected completed probe at 569. Keep the
-same native callback deadline and independently observed complete states,
-ordered outputs, cursors and interrupted-live isolation. The existing CPU proof
-of at most 63 replay operations does not establish a native timing budget.
+The approved repair uses the retained failing selection: checkpoint operation
+512 through completed probe 569. `game_history_seek_begin` accepts the expected
+generation and 64-bit target, validates the complete bounded replay plan and
+captures the selected 318 canonical bytes plus all 72 public metadata bytes.
+`game_history_seek_step` accepts the generation and an external admission bit;
+it advances at most one actual core operation. Between calls its 734-byte job
+holds a private cursor, selected state/metadata and working state. Every pending
+return restores the full selected public state and metadata and clears replaying.
+Seek bodies use their own active flag, with preview ownership zero.
 
-A proposed follow-up is a bounded seek job advanced across paused callbacks,
-with its working state private between calls and publication only at a complete
-selected boundary. Review must settle its cancellation/replacement semantics,
-scratch ownership relative to preview resolution, and whether the existing
-synchronous API remains available for standalone callers. Each public return
-must restore the interrupted state and preserve the frozen recording; pending
-navigation must never expose a partial selected moment. No implementation of
-this scheduling proposal is included here. Architecture/scope approval remains
-with the user through the coordinating parent before new runtime changes.
+`game_history_seek_commit` publishes the complete target state/cursor only when
+the generation and selected identity still agree. Cancellation retires the job;
+a stale call cannot restore an older selection. Begin, commit and cancellation
+retire preview publication/cache as appropriate. Pending or ready seek jobs reject
+preview request/step/result, serializing the two owners. External synchronous
+seek remains available for offline callers and retires pending jobs; its shared
+validator retains complete rollback. No partial target is published.
 
-The existing history/preview author owns the proposed implementation. The root
-integrator owns controller execution and delivery; the coordinating parent
-assigns independent source and completed-evidence reviewers. Acceptance requires
-fresh PAL and NTSC input-transition and seek worst cases, full state/event/cursor
-comparisons, complete body accounting, initialized RAM/stack measurements and
-positive callback headroom. Measure typical rallies as well. Track added state
-and emitted code bytes and observed worst cycles; choose a work budget from those
-measurements rather than inventing one. Until then PR #37 stays draft/unmerged
-and the tutorial UI increment remains deferred.
+Fresh selective CPU campaign `69cd1780198c4e55a7f8d6c25484c239`, attempt 000004,
+passed independent source and completed-evidence review at `363fad8`. Receipt
+SHA256 is `1a0a8cc933c5c9f42507ca8b2f1cc7c260db769fffbd0a50570b35beb712995c`.
+It binds 216 files and the standalone/native products. All 57 working boundaries
+match separate uninterrupted actual-core references in standalone, relocated
+standalone and emitted-native roles: complete states, ordered events and cursors
+agree while selection 835 remains public until commit to 569. Different initial
+working memory, full bus guards, 16 negative controls per role, six synchronous
+rollback controls, cursor rollover and a fresh post-commit preview/cancel are
+included. No separate simulation model supplies expected state.
+
+Observed CPU costs are begin 24,730 cycles, maximum step 37,604 standalone and
+37,884 emitted-native, commit 8,156, cancel 296, and stack 204 bytes. These finite
+CPU observations establish neither contention/IRQ costs nor native deadlines.
+The first three failed attempts remain preserved: two static declaration/parser
+failures before execution and one completed computation with a missing receipt
+identity field. Only attempt 000004 is an acceptance pass for this selective case.
+
+The native-only fixture is being adapted to admit work using actual remaining
+CIA callback time; any reserve is an estimate until measured. Begin validation,
+state swaps, admission-zero returns, interrupts, commit/cancel and callback tails
+remain inside unchanged timing acceptance. Required fresh PAL and NTSC evidence
+includes the actual retained seek, cancellation/supersession, owner transitions,
+physical input edges, full state/event/cursor equality, audio/publication isolation,
+initialized RAM/stack and positive complete callback headroom. Older failed PAL
+callback 536 remains a blocker until the affected fresh native gate passes.
+
+The history/preview author owns the repair; the root integrator owns the single
+controller and delivery. The coordinating parent assigns independent source and
+completed-evidence reviewers. PR #37 stays draft/unmerged until those native
+checks and reviews clear. The approved on-court tutorial prototype then requires
+user visual review; live branch commit remains later work.
 
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
