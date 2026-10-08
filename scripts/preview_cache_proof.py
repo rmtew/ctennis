@@ -20,6 +20,10 @@ def result(cpu):
 
 def job(cpu,ordinal,x,y,expected_status=5):
     saved=protected(cpu)
+    expected=bytearray(cpu.state())
+    end=attempts(cpu)[ordinal][2]
+    player=cpu.symbols['game_play_state']-cpu.symbols['game_core_state']+end*10
+    expected[player+3]=x;expected[player+2]=y
     bodies={cpu.symbols[n+'_body'] for n in OPERATIONS}
     resolver=0
     def observe(pc):
@@ -43,8 +47,10 @@ def job(cpu,ordinal,x,y,expected_status=5):
         assert operations[-1]<=4
     else:raise AssertionError('Cache proof worker did not terminate')
     assert field(cpu,'game_preview_status')==expected_status
+    if expected_status==5:
+        assert block(cpu,'game_preview_edited_state','game_preview_held_state')==bytes(expected), 'Preview changes bytes beyond requested human X/Y (including RNG)'
     cpu.cpu.set_instr_hook_callback(cpu.instruction)
-    return dict(generation=generation,cache_hit=cache_hit,resolver_operations=resolver,
+    return dict(generation=generation,edited_only_position_changed=expected_status==5,cache_hit=cache_hit,resolver_operations=resolver,
         request_cpu_cycles=request_cycles,total_worker_cpu_cycles=sum(cycles),
         maximum_worker_cpu_cycles=max(cycles),maximum_worker_operations=max(operations),
         worker_calls=len(cycles),stack_bytes=cpu.stack_bytes),result(cpu)
