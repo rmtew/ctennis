@@ -606,8 +606,9 @@ tutorial_prepare_objects:
 .animate_index:
         cmp.w   d1,d2
         bcs     .index
-        clr.w   d2
-        clr.w   tutorial_animation_index
+        move.w  d1,d2
+        subq.w  #1,d2
+        move.w  d2,tutorial_animation_index
 .index: lsl.w   #1,d0
         lea     tutorial_paths,a0
         move.l  (a0,d0.w),a0
@@ -647,9 +648,22 @@ tutorial_animate:
         add.l   d1,d1
         cmp.l   d1,d0
         bcs     .done
+        moveq   #0,d0
+        move.b  tutorial_active_variant,d0
+        add.w   d0,d0
+        lea     tutorial_counts,a0
+        move.w  (a0,d0.w),d1
+        beq     .done
+        subq.w  #1,d1
+        cmp.w   tutorial_animation_index,d1
+        bls     .done ; retain the actual terminal sample, without wrapping
         move.l  last_timer_count,tutorial_animation_time
         move.b  #2,tutorial_ball_mode
         addq.w  #2,tutorial_animation_index
+        cmp.w   tutorial_animation_index,d1
+        bcc     .sample
+        move.w  d1,tutorial_animation_index
+.sample:
         move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
