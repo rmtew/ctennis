@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from acceptance_cases import cases
 from acceptance_campaign import dependencies,required_extent
-from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS,BODY_ARITIES
+from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS,BODY_ARITIES,SEEK_CPU_SHA,SEEK_CPU_RECEIPTS
 
 
 def receipt(ntsc=False):
@@ -46,9 +46,9 @@ def receipt(ntsc=False):
         old_position=[10,20],new_position=[11,20],replacement_resolver_operations=1,
         cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
         canceled_result_rejected=True,selected_history_output_preserved=True) for i,phase in enumerate(('resolve','held'))]
-    names=['game_history_freeze','game_history_seek',
+    names=['game_history_freeze','game_history_freeze',
         'game_preview_request','game_preview_step','game_preview_result','game_preview_result',
-        'game_history_seek','game_preview_request','game_preview_step','game_preview_result',
+        'game_history_freeze','game_preview_request','game_preview_step','game_preview_result',
         'game_preview_request','game_preview_step','game_preview_result',
         'game_preview_request','game_preview_step','game_preview_request','game_preview_step','game_preview_cancel',
         'game_preview_request','game_preview_step','game_preview_request','game_preview_step','game_preview_cancel',
@@ -78,7 +78,7 @@ def receipt(ntsc=False):
     observed=dict(CAPS,ordinary_operations=200,playing_dispatches=40,title_callbacks=2,
         paused_callbacks=30,video_fields=50,seconds=10,worker_calls_per_job=1,samples_per_path=2,raw_bytes=1024)
     stage=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
-        preview_storage_bytes=5550,preview_metadata_bytes=110,
+        preview_storage_bytes=5550,preview_metadata_bytes=110,seek_storage_bytes=734,
         acquisition=dict(seed=44257,seed_policy='DEMO_RECORDING-selection-only',ordinary_operations=200,
             playing_dispatches=40,title_callbacks=2,completed_index_kind=2,incoming_origin=64,
             probe_origin=120,selected_cursor=100,ordinal=1,end=0),
@@ -93,7 +93,7 @@ def receipt(ntsc=False):
         caps=dict(CAPS),observed_caps=observed,
         costs=dict(api_rows=rows,worker_distribution=distribution(7,10),callback_distribution=distribution(72,20),
             fresh_input_callback_distribution=distribution(1,30),minimum_callback_headroom_cck=budget-30,stack_bytes=300),
-        resources=dict(fixture_chip_free_bytes=100000,fixture_loaded_bytes=258600,product_static_loaded_bytes=257828),
+        resources=dict(fixture_chip_free_bytes=100000,fixture_loaded_bytes=258600,product_static_loaded_bytes=259456),
         compiled_identity=dict(loaded_hunks=[dict(hunk=0,start=4096,bytes=258600,expected_sha256='77'*32,
             actual_sha256='77'*32,matched=True)],normalized_shared_core=dict(matched=True,bytes=18020,
             relocations=257,sink_branches=14,sha256='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'),
@@ -127,7 +127,7 @@ def receipt(ntsc=False):
                 arguments=[0,0],before='00'*318,after='00'*318,state='00'*318,
                 entry_pc=body_pc+8,entry_sp=stack_top-100,return_pc=body_pc+100,
                 exit_pc=body_pc+100,exit_sp=stack_top-96,start=start,end=end,elapsed_cck=1,
-                depth=1,ownership=dict(active=2,status=3,variant=n%2),events=[],
+                depth=1,ownership=dict(active=2,status=3,variant=n%2,seek_active=0,seek_status=0,seek_generation=0,seek_cursor=0),events=[],
                 entry_registers=dict(d=[0]*8,a=[0]*7+[stack_top-100],pc=body_pc+8,sr=0x2000,stopped=False))
             frames.append(frame)
     for job,api_index in zip(jobs,(3,8,11)):
@@ -145,9 +145,77 @@ def receipt(ntsc=False):
         stack_bottom=stack_top-4096,stack_top=stack_top)
     stage['event_transcript']=dict(encoding='gzip-jsonl',path='build/tests/preview-native/events.jsonl.gz',
         sha256='ab'*32,compressed_bytes=100,uncompressed_bytes=200,notifications=100)
+    add_seek_shape(stage,files,ntsc)
     return dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
         evidence=dict(target_role='legacy-validator-reference',actual_target=target,files=files,
             compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32}),preview_native_validation=stage)
+
+
+def add_seek_shape(stage,files,ntsc):
+    """Synthetic control/readback structure, without a gameplay model."""
+    files.update({path:SEEK_CPU_SHA for path in SEEK_CPU_RECEIPTS})
+    stage['compiled_identity']['seek_storage']=dict(loaded_start=25000,loaded_end=25734,bytes=734,fixture_executable_sha256='99'*32)
+    stage['inherited_endpoint_validation'].update(current_ownership_cpu_receipt_sha256=SEEK_CPU_SHA,
+        worker_guard_closure=dict(passed=True,removed_entry_guards=3,current_source_sha256='33'*32,
+            guard_removed_source_sha256='40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d',scope='Synthetic exact guard closure shape'))
+    rows=stage['costs']['api_rows'];block=stage['body_observation'];frames=block['frames'];proof=[]
+    selected='00'*318;metadata=bytearray(72);metadata[0]=2;metadata[34:42]=(835).to_bytes(8,'big');metadata=metadata.hex()
+    def working(cursor):
+        state=bytearray(318);state[100:108]=cursor.to_bytes(8,'big');return state.hex()
+    cursor=512;hz=3579545 if ntsc else 3546895
+    def call(name,generation,requested=None,commit=False):
+        nonlocal cursor
+        index=len(rows);start=dict(cck=100*index,frame=0,seconds=100*index/hz,vpos=0,hpos=0)
+        end=dict(start,cck=start['cck']+10,seconds=(start['cck']+10)/hz,hpos=10)
+        if name=='game_history_seek_begin':cursor=512
+        previous=working(cursor);bodies=int(requested==1)
+        if bodies:cursor+=1
+        rows.append(dict(name=name,begin=start,end=end,bodies=bodies,irq=0,irq_acknowledgements=0,elapsed_cck=10))
+        if bodies:
+            template=copy.deepcopy(frames[0]);template.update(api_row_index=index,entry_index=len(frames),
+                before=previous,after=working(cursor),state=working(cursor),start=dict(start,cck=start['cck']+1),
+                end=dict(end,cck=start['cck']+2),elapsed_cck=1,events=[],
+                ownership=dict(active=0,status=7,variant=0,seek_active=1,seek_status=1,seek_generation=generation,seek_cursor=cursor-1))
+            frames.append(template)
+        if name.startswith('game_history_seek_'):
+            final_meta=bytearray.fromhex(metadata)
+            if commit:final_meta[34:42]=(569).to_bytes(8,'big')
+            proof.append(dict(api_row_index=index,name=name,generation=generation,
+                admission=None if requested is None else dict(current=1000,last=1000,phase=0,interval=11838,
+                    remaining=11838,reserve=10000,admitted=requested,requested_work=requested),
+                body_operations=bodies,logical_body_operations=bodies,working_cursor=cursor,
+                working_state=working(cursor),reference_working_state=working(cursor),
+                public_state=working(cursor) if commit else selected,public_metadata=final_meta.hex(),
+                selected_state=selected,selected_metadata=metadata,events=[],reference_events=[],
+                actual_core_equal=True,frozen_store_preserved=True))
+        return index
+    def finish(generation):return [call('game_history_seek_step',generation,1) for _ in range(57)]
+    cb=call('game_history_seek_begin',0);zero=call('game_history_seek_step',1,0)
+    reject_result=call('game_preview_result',4);reject_request=call('game_preview_request',4)
+    canceled_steps=finish(1);cancel=call('game_history_seek_cancel',1);oldcommit=call('game_history_seek_commit',1)
+    sb=call('game_history_seek_begin',2);superseded_steps=finish(3)
+    begin=call('game_history_seek_begin',3);stale=call('game_history_seek_commit',3);steps=finish(4);commit=call('game_history_seek_commit',4,commit=True)
+    finalmeta=bytearray.fromhex(metadata);finalmeta[34:42]=(569).to_bytes(8,'big')
+    job=dict(target=569,checkpoint=512,generation=4,selected_position=835,selected_state=selected,selected_metadata=metadata,
+        initial_begin_api_row_index=cb,admission_zero_api_row_index=zero,admission_zero_identity_preserved=True,
+        canceled_commit_preserved=True,superseded_commit_preserved=True,
+        canceled_job=dict(generation=1,begin_api_row_index=cb,step_api_row_indices=canceled_steps,
+            cancel_api_row_index=cancel,canceled_commit_api_row_index=oldcommit,ready_before_cancel=True),
+        superseded_job=dict(generation=3,begin_api_row_index=sb,step_api_row_indices=superseded_steps,
+            superseding_begin_api_row_index=begin,stale_commit_api_row_index=stale,ready_before_supersession=True),
+        preview_transition=dict(before=dict(generation=3,status=2,cache_valid=1),after=dict(generation=4,status=7,cache_valid=0),
+            retired=True,result_rejection_api_row_index=reject_result,request_rejection_api_row_index=reject_request),
+        begin_api_row_index=begin,step_api_row_indices=steps,commit_api_row_index=commit,
+        final_state=working(569),final_metadata=finalmeta.hex(),final_position=569)
+    stage['seek_validation']=dict(passed=True,cpu_receipt_sha256=SEEK_CPU_SHA,rows=proof,jobs=[job],
+        one_body_per_slice=True,selected_pending_preserved=True,actual_guest_timer_admission=True,
+        reserve_eclock_ticks=10000,reserve_scope='Initial estimate; finite measured callbacks remain required.')
+    stage['telemetry']['public_boundary_drain_checks']=len(rows)+1
+    stage['observed_caps']['paused_callbacks']=len(rows)+1
+    added=171
+    for key in ('actual_body_entries','outer_logical_calls'):block[key]+=added
+    for key in ('internal_stops','entry_return_observations'):block[key]+=2*added
+
 
 
 class NativePreviewExtent(unittest.TestCase):
@@ -221,6 +289,45 @@ class NativePreviewExtent(unittest.TestCase):
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
 
+    def test_seek_timer_identity_retirement_and_provenance_fail_closed(self):
+        for path,value in ((('rows',1,'admission','admitted'),1),
+                (('rows',1,'admission','requested_work'),True),
+                (('rows',1,'admission','remaining'),11839),
+                (('rows',1,'admission','reserve'),9999),
+                (('rows',1,'logical_body_operations'),1),
+                (('rows',1,'public_state'),'11'*318),
+                (('rows',1,'public_metadata'),'00'*72),
+                (('rows',1,'working_state'),'11'*318),
+                (('jobs',0,'target'),570),(('jobs',0,'checkpoint'),511),
+                (('jobs',0,'selected_position'),834),
+                (('jobs',0,'canceled_commit_preserved'),False),
+                (('jobs',0,'superseded_commit_preserved'),False),
+                (('jobs',0,'canceled_job','ready_before_cancel'),False),
+                (('jobs',0,'superseded_job','ready_before_supersession'),False),
+                (('jobs',0,'preview_transition','after','status'),0),
+                (('jobs',0,'preview_transition','after','cache_valid'),1),
+                (('jobs',0,'preview_transition','after','generation'),3),
+                (('jobs',0,'final_metadata'),'00'*72),
+                (('rows',3,'generation'),2),
+                (('reserve_scope',),'Measured universal bound')):
+            r=receipt();node=r['preview_native_validation']['seek_validation']
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
+        for path in SEEK_CPU_RECEIPTS:
+            r=receipt();r['evidence']['files'].pop(path)
+            self.assertFalse(required_extent(self.case(),r))
+        for key,value in (('removed_entry_guards',2),('guard_removed_source_sha256','00'*32)):
+            r=receipt();r['preview_native_validation']['inherited_endpoint_validation']['worker_guard_closure'][key]=value
+            self.assertFalse(required_extent(self.case(),r))
+        r=receipt();r['preview_native_validation']['compiled_identity']['seek_storage']['bytes']=733
+        self.assertFalse(required_extent(self.case(),r))
+        r=receipt();r['preview_native_validation']['seek_validation']['rows'].pop(1)
+        self.assertFalse(required_extent(self.case(),r))
+        r=receipt();frame=next(f for f in r['preview_native_validation']['body_observation']['frames'] if f['ownership']['seek_active'])
+        frame['ownership']['active']=1
+        self.assertFalse(required_extent(self.case(),r))
+
     def test_cross_job_prefix_and_self_consistent_counts_remain_bound(self):
         r=receipt();warm=r['preview_native_validation']['completed_jobs'][2]
         warm['paths']=['11'*8+'00'*8]*2
@@ -280,7 +387,7 @@ class NativePreviewExtent(unittest.TestCase):
         block['semantic_intents'].pop();block['frames'].pop()
         self.assertFalse(required_extent(self.case(),r))
 
-    def test_seek_bodies_can_observe_canceled_preview_metadata(self):
+    def test_nonworker_api_cannot_claim_seek_bodies(self):
         r=receipt();stage=r['preview_native_validation'];block=stage['body_observation']
         api=stage['costs']['api_rows'][1];api['bodies']=1
         frame=copy.deepcopy(block['frames'][0]);frame.update(api_row_index=1,before='00'*318)
@@ -290,7 +397,7 @@ class NativePreviewExtent(unittest.TestCase):
         for index,frame in enumerate(block['frames']):frame['entry_index']=index
         block['actual_body_entries']+=1;block['outer_logical_calls']+=1
         block['internal_stops']+=2;block['entry_return_observations']+=2
-        self.assertTrue(required_extent(self.case(),r))
+        self.assertFalse(required_extent(self.case(),r))
 
 
 if __name__=='__main__':unittest.main()

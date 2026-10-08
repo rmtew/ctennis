@@ -68,7 +68,11 @@ def body_observation(block,api_rows,hunks):
                 or frame.get('arguments')!=[v&65535 for v in registers['d'][:spec['arity']]]
                 or any(type(v) is not int for v in frame['arguments'])
                 or not isinstance(owner,dict) or not integer(owner.get('active'),0,2)
-                or not integer(owner.get('status'),0,7) or not integer(owner.get('variant'),0,1)):return False
+                or not integer(owner.get('status'),0,7) or not integer(owner.get('variant'),0,1)
+                or not integer(owner.get('seek_active'),0,1) or not integer(owner.get('seek_status'),0,3)
+                or not integer(owner.get('seek_generation'),0,2**32-1)
+                or not integer(owner.get('seek_cursor'),0,2**64-1)
+                or owner['seek_active'] and owner['active']):return False
         try:states=[bytes.fromhex(frame[k]) for k in ('before','after')]
         except (KeyError,TypeError,ValueError):return False
         if any(len(s)!=318 for s in states) or frame.get('state')!=frame['after']:return False
@@ -150,10 +154,12 @@ def distribution(row,budget,values=None):
 
 
 def api_row(row):
-    names=('game_history_freeze','game_history_seek','game_preview_request',
+    names=('game_history_freeze','game_history_seek_begin','game_history_seek_step',
+        'game_history_seek_commit','game_history_seek_cancel','game_preview_request',
         'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest')
     if (not isinstance(row,dict) or row.get('name') not in names
-            or not integer(row.get('bodies'),0,4 if row['name']=='game_preview_step' else 63)
+            or not integer(row.get('bodies'),0,
+                4 if row['name']=='game_preview_step' else 8192 if row['name']=='game_history_seek_step' else 0)
             or not integer(row.get('irq'),0)
             or not integer(row.get('irq_acknowledgements'),0)
             or row['irq_acknowledgements']!=2*row['irq']
@@ -167,6 +173,156 @@ def api_row(row):
                 or not integer(position.get('hpos'),0,511)):return False
     return (end['cck']-begin['cck']==row['elapsed_cck']
         and end['seconds']>=begin['seconds'] and end['frame']>=begin['frame'])
+
+
+
+SEEK_CPU_SHA='1a0a8cc933c5c9f42507ca8b2f1cc7c260db769fffbd0a50570b35beb712995c'
+SEEK_CPU_RECEIPTS=('build/tests/seek-sliced-cpu/report.json',
+    'build/acceptance/campaigns/69cd1780198c4e55a7f8d6c25484c239/attempts/seek-sliced-cpu/000004/receipt.json')
+
+
+def complete_bytes(value,length):
+    try:return isinstance(value,str) and len(bytes.fromhex(value))==length
+    except ValueError:return False
+
+
+def seek_validation(block,api_rows,frames,files):
+    """Private progress, timer admission and retirement bind actual API readbacks."""
+    if (not isinstance(block,dict) or block.get('passed') is not True
+            or block.get('cpu_receipt_sha256')!=SEEK_CPU_SHA
+            or any(files.get(path)!=SEEK_CPU_SHA for path in SEEK_CPU_RECEIPTS)
+            or any(block.get(k) is not True for k in ('one_body_per_slice',
+                'selected_pending_preserved','actual_guest_timer_admission'))
+            or type(block.get('reserve_eclock_ticks')) is not int
+            or block['reserve_eclock_ticks']!=10000
+            or not isinstance(block.get('reserve_scope'),str)
+            or 'estimate' not in block['reserve_scope'].lower()):return False
+    rows=block.get('rows');jobs=block.get('jobs')
+    if not isinstance(rows,list) or not rows or not isinstance(jobs,list) or not jobs:return False
+    if any(not isinstance(j,dict) or not integer(j.get('commit_api_row_index'),0,len(api_rows)-1) for j in jobs):return False
+    commits={j['commit_api_row_index'] for j in jobs};seen=set();by_index={};steps=set()
+    names={'game_history_seek_begin','game_history_seek_step','game_history_seek_commit','game_history_seek_cancel'}
+    for row in rows:
+        if (not isinstance(row,dict) or not integer(row.get('api_row_index'),0,len(api_rows)-1)
+                or row['api_row_index'] in seen or row.get('name') not in names
+                or not integer(row.get('generation'),0,2**32-1)
+                or not integer(row.get('body_operations'),0,8192)
+                or not integer(row.get('logical_body_operations'),0,1)
+                or not integer(row.get('working_cursor'),0,2**64-1)
+                or not complete_bytes(row.get('working_state'),318)
+                or row['working_state']!=row.get('reference_working_state')
+                or not complete_bytes(row.get('selected_state'),318)
+                or not complete_bytes(row.get('selected_metadata'),72)
+                or not complete_bytes(row.get('public_state'),318)
+                or not complete_bytes(row.get('public_metadata'),72)
+                or not isinstance(row.get('events'),list) or row['events']!=row.get('reference_events')
+                or row.get('actual_core_equal') is not True
+                or row.get('frozen_store_preserved') is not True):return False
+        index=row['api_row_index'];api=api_rows[index];seen.add(index);by_index[index]=row
+        outer=[f for f in frames if f['api_row_index']==index and f['depth']==1]
+        if (api['name']!=row['name'] or api['bodies']!=row['body_operations']
+                or len(outer)!=row['logical_body_operations']
+                or [e for f in outer for e in f['events']]!=row['events']):return False
+        if index not in commits and (row['public_state']!=row['selected_state']
+                or row['public_metadata']!=row['selected_metadata']):return False
+        metadata=bytes.fromhex(row['public_metadata'])
+        if metadata[0]!=2 or metadata[1]!=0:return False
+        if row['name']!='game_history_seek_step':
+            if row.get('admission') is not None or row['body_operations'] or row['events']:return False
+            continue
+        steps.add(index);admission=row.get('admission')
+        keys={'current','last','phase','interval','remaining','reserve','admitted','requested_work'}
+        if (not isinstance(admission,dict) or set(admission)!=keys
+                or any(not integer(admission[k],0,2**32-1) for k in keys)
+                or admission['reserve']!=block['reserve_eclock_ticks']
+                or admission['admitted'] not in (0,1) or admission['requested_work'] not in (0,1)):return False
+        elapsed=(admission['last']-admission['current'])&0xffffffff
+        available=admission['interval']-admission['phase']-elapsed
+        if (admission['remaining']!=max(0,available)
+                or admission['admitted']!=int(admission['requested_work']==1 and available>=admission['reserve'])
+                or row['logical_body_operations']!=admission['admitted']):return False
+        if not admission['admitted'] and (row['body_operations'] or row['events']):return False
+        if outer and (outer[-1]['after']!=row['working_state']
+                or any(f['ownership'].get('seek_active')!=1 or f['ownership']['active']!=0
+                    or f['ownership'].get('seek_generation')!=row['generation']
+                    or f['ownership'].get('seek_cursor')!=row['working_cursor']-1 for f in outer)):return False
+    if seen!={i for i,r in enumerate(api_rows) if r['name'] in names}:return False
+    used=set();retained=False
+    for job in jobs:
+        if (not integer(job.get('generation'),1,2**32-1)
+                or not integer(job.get('target'),0,2**64-1)
+                or not integer(job.get('checkpoint'),0,job['target'])
+                or job['checkpoint']!=job['target']//64*64
+                or not integer(job.get('selected_position'),0,2**64-1)
+                or not complete_bytes(job.get('selected_state'),318)
+                or not complete_bytes(job.get('selected_metadata'),72)
+                or not complete_bytes(job.get('final_state'),318)
+                or not complete_bytes(job.get('final_metadata'),72)
+                or type(job.get('final_position')) is not int or job['final_position']!=job['target']
+                or any(job.get(k) is not True for k in ('admission_zero_identity_preserved',
+                    'canceled_commit_preserved','superseded_commit_preserved'))):return False
+        if int.from_bytes(bytes.fromhex(job['selected_metadata'])[34:42],'big')!=job['selected_position']:return False
+        def api(index,name):
+            return integer(index,0,len(api_rows)-1) and index in by_index and api_rows[index]['name']==name
+        def sequence(begin,indices,generation,zero=None):
+            if (not api(begin,'game_history_seek_begin') or not isinstance(indices,list)
+                    or not indices or any(not api(i,'game_history_seek_step') or i<=begin for i in indices)
+                    or sorted(set(indices))!=indices
+                    or used.intersection(indices)):return False
+            cursor=job['checkpoint'];previous=by_index[begin]['working_state']
+            for index in indices:
+                row=by_index[index];cursor+=row['logical_body_operations']
+                if (row['generation']!=generation or row['working_cursor']!=cursor
+                        or row['selected_state']!=job['selected_state']
+                        or row['selected_metadata']!=job['selected_metadata']):return False
+                if row['logical_body_operations']==0 and row['working_state']!=previous:return False
+                previous=row['working_state']
+            used.update(indices)
+            return cursor==job['target']
+        zero=job.get('admission_zero_api_row_index');canceled=job.get('canceled_job');superseded=job.get('superseded_job')
+        if (not api(zero,'game_history_seek_step') or by_index[zero]['admission']['requested_work']!=0
+                or by_index[zero]['logical_body_operations'] or zero in used
+                or not isinstance(canceled,dict) or not isinstance(superseded,dict)
+                or canceled.get('ready_before_cancel') is not True or superseded.get('ready_before_supersession') is not True):return False
+        used.add(zero)
+        cb=canceled.get('begin_api_row_index');cancel=canceled.get('cancel_api_row_index');oldcommit=canceled.get('canceled_commit_api_row_index')
+        sb=superseded.get('begin_api_row_index');stale=superseded.get('stale_commit_api_row_index');begin=job.get('begin_api_row_index');commit=job['commit_api_row_index']
+        if (job.get('initial_begin_api_row_index')!=cb
+                or not integer(canceled.get('generation'),1,2**32-1)
+                or not integer(superseded.get('generation'),canceled['generation']+1,2**32-1)
+                or job['generation']<=superseded['generation']
+                or not sequence(cb,canceled.get('step_api_row_indices'),canceled['generation'])
+                or not sequence(sb,superseded.get('step_api_row_indices'),superseded['generation'])
+                or not sequence(begin,job.get('step_api_row_indices'),job['generation'])
+                or not api(cancel,'game_history_seek_cancel') or not api(oldcommit,'game_history_seek_commit')
+                or not api(stale,'game_history_seek_commit') or not api(commit,'game_history_seek_commit')
+                or not cb<zero<canceled['step_api_row_indices'][0]<=canceled['step_api_row_indices'][-1]<cancel<oldcommit<sb
+                or not sb<superseded['step_api_row_indices'][0]<=superseded['step_api_row_indices'][-1]<begin<stale<job['step_api_row_indices'][0]
+                or not job['step_api_row_indices'][-1]<commit
+                or superseded.get('superseding_begin_api_row_index')!=begin
+                or by_index[cancel]['generation']!=canceled['generation']
+                or by_index[oldcommit]['generation']!=canceled['generation']
+                or by_index[stale]['generation']!=superseded['generation']
+                or by_index[commit]['generation']!=job['generation']):return False
+        expected=bytearray.fromhex(job['selected_metadata']);expected[34:42]=job['target'].to_bytes(8,'big')
+        if (job['final_state']!=by_index[job['step_api_row_indices'][-1]]['working_state']
+                or job['final_state']!=by_index[commit]['public_state']
+                or bytes.fromhex(job['final_metadata'])!=expected
+                or job['final_metadata']!=by_index[commit]['public_metadata']):return False
+        transition=job.get('preview_transition')
+        if not isinstance(transition,dict) or transition.get('retired') is not True:return False
+        before=transition.get('before');after=transition.get('after')
+        if (not isinstance(before,dict) or not isinstance(after,dict)
+                or not integer(before.get('generation'),0,2**32-2)
+                or not integer(after.get('generation'),before['generation']+1,2**32-1)
+                or type(after.get('status')) is not int or after['status']!=7
+                or type(after.get('cache_valid')) is not int or after['cache_valid']!=0):return False
+        for key,name in (('result_rejection_api_row_index','game_preview_result'),
+                         ('request_rejection_api_row_index','game_preview_request')):
+            index=transition.get(key)
+            if not integer(index,zero+1,canceled['step_api_row_indices'][0]-1) or api_rows[index]['name']!=name or api_rows[index]['bodies']:return False
+        retained|=job['target']==569 and job['checkpoint']==512 and job['selected_position']==835
+    return used==steps and retained
 
 
 def completed_job(row):
@@ -293,7 +449,7 @@ def required_preview_native_extent(case_id,report):
             or not isinstance(stage,dict) or stage.get('passed') is not True
             or any(type(stage.get(key)) is not int or stage[key]!=value for key,value in dict(canonical_bytes=318,
                 history_metadata_bytes=72,preview_storage_bytes=5550,
-                preview_metadata_bytes=110).items())):return False
+                preview_metadata_bytes=110,seek_storage_bytes=734).items())):return False
     acquisition=stage.get('acquisition')
     if (not isinstance(acquisition,dict) or type(acquisition.get('seed')) is not int
             or acquisition['seed']!=44257
@@ -423,7 +579,8 @@ def required_preview_native_extent(case_id,report):
                                     abs_tol=1e-9,rel_tol=0)):return False
     intervals.sort()
     if any(a[1]>=b[0] for a,b in zip(intervals,intervals[1:])):return False
-    if ({r['name'] for r in rows}!={'game_history_freeze','game_history_seek',
+    if ({r['name'] for r in rows}!={'game_history_freeze','game_history_seek_begin',
+            'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel',
             'game_preview_request','game_preview_step','game_preview_result',
             'game_preview_cancel','game_history_resume_latest'}
             or sum(r['name']=='game_preview_request' for r in rows)<7
@@ -443,7 +600,7 @@ def required_preview_native_extent(case_id,report):
             or not integer(resources.get('fixture_chip_free_bytes'),1,512*1024)
             or not integer(resources.get('fixture_loaded_bytes'),1,512*1024)
             or type(resources.get('product_static_loaded_bytes')) is not int
-            or resources['product_static_loaded_bytes']!=257828
+            or resources['product_static_loaded_bytes']!=259456
             or resources['fixture_chip_free_bytes']+resources['fixture_loaded_bytes']>512*1024
             or not isinstance(identity,dict)):return False
     core=identity.get('normalized_shared_core')
@@ -467,7 +624,17 @@ def required_preview_native_extent(case_id,report):
     spans.sort()
     if any(a[1]>b[0] for a,b in zip(spans,spans[1:])):return False
     if not body_observation(stage.get('body_observation'),rows,hunks):return False
+    if not seek_validation(stage.get('seek_validation'),rows,stage['body_observation']['frames'],evidence.get('files') or {}):return False
     frames=stage['body_observation']['frames']
+    if any(f['ownership']['seek_active'] for f in frames if rows[f['api_row_index']]['name']=='game_preview_step'):return False
+    seek_storage=identity.get('seek_storage')
+    if (not isinstance(seek_storage,dict) or type(seek_storage.get('bytes')) is not int
+            or seek_storage['bytes']!=734
+            or not integer(seek_storage.get('loaded_start'),0,512*1024-734)
+            or type(seek_storage.get('loaded_end')) is not int
+            or seek_storage['loaded_end']!=seek_storage['loaded_start']+734
+            or not any(a<=seek_storage['loaded_start']<seek_storage['loaded_end']<=b for a,b in spans)
+            or seek_storage.get('fixture_executable_sha256')!=worker.get('fixture_executable_sha256')):return False
     for job in jobs:
         actual=[f for f in frames if f['depth']==1 and f['api_row_index'] in job['costs']['worker_api_row_indices']]
         if sum(f['ownership']['active']==1 for f in actual)!=job['costs']['resolver_operations']:return False
@@ -510,6 +677,13 @@ def required_preview_native_extent(case_id,report):
             or not isinstance(inherited,dict) or inherited.get('scope')!='CPU9-independent-endpoints; native-labels-only'
             or inherited.get('cpu_receipt_sha256')!=CPU9_SHA
             or any(files.get(path)!=CPU9_SHA for path in CPU9_RECEIPTS)):return False
+    closure=inherited.get('worker_guard_closure')
+    if (inherited.get('current_ownership_cpu_receipt_sha256')!=SEEK_CPU_SHA
+            or not isinstance(closure,dict) or closure.get('passed') is not True
+            or type(closure.get('removed_entry_guards')) is not int or closure['removed_entry_guards']!=3
+            or closure.get('current_source_sha256')!=files.get('amiga/game/preview.s')
+            or closure.get('guard_removed_source_sha256')!='40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d'
+            or not isinstance(closure.get('scope'),str) or not closure['scope']):return False
     event=stage.get('event_transcript')
     if (not isinstance(event,dict) or event.get('encoding')!='gzip-jsonl'
             or not isinstance(event.get('path'),str) or not sha256(event.get('sha256'))
