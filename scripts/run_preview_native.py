@@ -765,6 +765,17 @@ def native_report(executable,target,video,validation):
         scope='Finite physical/native paused worker and actual IRQ/input/audio isolation; no UI prototype or full release gate. Seed fixed only at ordinary selection by DEMO_RECORDING.')
 
 
+def native_receipt_artifacts(directory,path,report,external):
+    atomic_json(directory/'native-results-unvalidated.json',dict(report,receipt_validated=False))
+    diagnostic=directory/'receipt-unvalidated.json'
+    return [p for p in directory.iterdir() if p.is_file() and p not in (path,diagnostic)]+list(external)
+
+
+def native_saved_bytes(directory,external):
+    # Count all saved files, including excluded audit copies and fresh outputs.
+    return total_bytes([*directory.iterdir(),*external])
+
+
 def preserve_pre_status_receipt(path,diagnostic):
     # This audit copy carries finalized bindings, but is not a validated pass.
     # It is outside the receipt artifact set to avoid a recursive self-hash.
@@ -906,9 +917,8 @@ def run(standard):
             completed.append(row)
         validation.update(completed_jobs=completed,continuous_actual_core_equal=True)
         report=native_report(executable,target,video,validation)
-        artifacts=[p for p in directory.iterdir() if p.is_file() and p!=path]
-        artifacts += [Path(str(product)+'.compile.json'),Path(str(standalone)+'.compile.json')]
-        atomic_json(directory/'native-results-unvalidated.json',dict(report,receipt_validated=False))
+        external=[Path(str(product)+'.compile.json'),Path(str(standalone)+'.compile.json')]
+        artifacts=native_receipt_artifacts(directory,path,report,external)
         assert costs['minimum_callback_headroom_cck']>=0,('Actual native callback deadline miss',costs['minimum_callback_headroom_cck'])
         # Include the final receipt itself in the bound. Its size converges when
         # the decimal byte count has the same width; this only serializes evidence.
@@ -916,7 +926,7 @@ def run(standard):
         for _ in range(3):
             transaction.finalize(path,report,compiled=[product_manifest,core_manifest,manifest],artifacts=artifacts)
             preserve_pre_status_receipt(path,diagnostic)
-            observed['raw_bytes']=total_bytes(artifacts+[path,diagnostic])
+            observed['raw_bytes']=native_saved_bytes(directory,external)
         assert observed['raw_bytes']<CAPS['raw_bytes']
         assert status(path)['status']=='passed',status(path)
         print(json.dumps(dict(passed=True,report=str(path),costs=costs,observed_caps=observed)),flush=True)

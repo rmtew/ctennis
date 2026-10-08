@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement,fresh_seek_receipt,native_report,preserve_pre_status_receipt
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement,fresh_seek_receipt,native_report,preserve_pre_status_receipt,native_receipt_artifacts,native_saved_bytes
 from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
@@ -247,6 +247,23 @@ class NativePreviewTiming(unittest.TestCase):
             self.assertFalse(preserved.pop('receipt_validated'))
             self.assertEqual(preserved,report)
             self.assertEqual(json.loads(path.read_text()),report)
+
+    def test_native_artifacts_count_fresh_results_and_exclude_retry_diagnostic_hash(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder=Path(directory);path=folder/'report.json';diagnostic=folder/'receipt-unvalidated.json'
+            # Fresh NTSC output: the newly written unvalidated result is bound.
+            artifacts=native_receipt_artifacts(folder,path,{'passed':True},[])
+            results=folder/'native-results-unvalidated.json'
+            self.assertIn(results,artifacts)
+            self.assertEqual(native_saved_bytes(folder,[]),results.stat().st_size)
+            # Retry: a previous diagnostic must not be hashed then overwritten.
+            diagnostic.write_bytes(b'previous receipt audit');path.write_bytes(b'failed canonical receipt')
+            artifacts=native_receipt_artifacts(folder,path,{'passed':True},[])
+            self.assertNotIn(diagnostic,artifacts);self.assertNotIn(path,artifacts)
+            self.assertIn(results,artifacts)
+            self.assertEqual(native_saved_bytes(folder,[]),sum(p.stat().st_size for p in folder.iterdir()))
+            diagnostic.write_bytes(b'a longer newly finalized receipt audit copy')
+            self.assertEqual(native_saved_bytes(folder,[]),sum(p.stat().st_size for p in folder.iterdir()))
 
     def test_private_readback_serialization_does_not_mutate_observation(self):
         source={'selected':bytes([1,2]),'rows':[(3,bytes([4]))]}
