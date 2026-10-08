@@ -1,7 +1,8 @@
 # Isolated shot preview foundation
 
 This increment is under implementation. The first small actual CPU proof passed
-at `652c89d`; the cache extension and broader acceptance remain pending. It adds
+at `652c89d`. The cache extension passed its focused actual CPU proof at
+`96a158a` and independent receipt review; broader acceptance remains pending. It adds
 an internal frozen-history API and fixed scratch storage, with no tutorial UI or
 live branch commit. Preview execution uses the actual shared 68000 core.
 
@@ -24,7 +25,7 @@ Request and worker copying costs are additional to the operation cap. Total
 resolver work and repeated position-edit cost must be measured before making a
 responsiveness claim. The first return fixture required 773 resolver operations
 and about 12.4 million isolated CPU cycles for a repeated one-operation edit
-(~1.73 seconds at nominal 7.16 MHz), motivating the pending cache extension.
+(~1.73 seconds at nominal 7.16 MHz), motivating the compact cache extension.
 
 Four canonical scratch images hold the selected state, common edited start,
 held continuation and released continuation. Only the requested human X/Y change
@@ -100,11 +101,41 @@ restoration of the oldest checkpoint uses an explicit active-3 bypass.
 History seek now saves its 72 metadata bytes on the stack after pure range
 checks. Any rejected checkpoint envelope or operation restores those bytes;
 canonical restoration still occurs only after complete upfront validation. A
-failed seek preserves READY publication and cache. Stack and copy costs of this
-change remain to be measured by the focused cache proof, including request
-nesting. The new proof compares an actual warm edit against a forced cold edit
+failed seek preserves READY publication and cache. The focused CPU proof observed 204 bytes maximum stack, including request
+nesting and the backup; this is a finite observation, not a universal bound. The new proof compares an actual warm edit against a forced cold edit
 with identical position, both full contexts, paths and ordered outputs. It also
 checks prefix immutability and invalidation by seek/back, different attempt,
 cancel, eviction and generation exhaustion, plus READY corrupt checkpoint and
 operation negatives. These are CPU claims only; native sink/cadence and resource
 coverage remain pending.
+
+At `96a158a`, the three initial serve/return cases and cache proof passed using
+actual 68000 execution. The warm edit performed zero resolver operations versus
+773 for its identical forced-cold edit. Warm request cost was 18,200 CPU cycles;
+its workers used 6,177,874 cycles across 114 calls, with 81,450 maximum per call.
+Cold request cost was 21,572 cycles; workers used 15,137,104 cycles across 308
+calls, with 95,112 maximum. Both variants had identical full edited/final canonical
+states, paths and ordered outputs between warm and cold execution; 52 original
+incoming samples were preserved. Every edited byte outside requested human X/Y,
+including RNG, remained unchanged. READY checkpoint schema/simulation/state and
+operation failures preserved canonical/history/cache/generation/publication;
+observed failure costs were 12,082–12,818 cycles (190 for an out-of-range target).
+Seek/back, different attempt, cancel, actual eviction and exhaustion checks passed.
+
+The cache reduces this fixture's worker CPU cost about 59%, but the warm result
+still needs approximately 0.86 seconds at nominal 7.16 MHz. At one four-operation
+worker call per PAL frame, 114 calls would take about 2.28 seconds. No UI frame
+budget or instant edit response is established. Editing before READY, changing
+time/attempt, or canceling can require a cold resolver. Native interrupts, display
+work and DMA contention were absent from these CPU observations.
+
+The compiled standalone image is 109,436 loaded bytes, 280 more than the first
+small implementation (276 code and four fixed metadata bytes). This is a
+standalone compile measurement, not current native RAM/cadence acceptance. The
+fixed preview allocation is 5,550 bytes plus two enclosing alignment bytes;
+72 bytes of failed-seek rollback are stack storage. Current native resource
+metrics have not been refreshed with this product. Native/full outcome/eviction
+context coverage, practical performance, tutorial UI and branch commit remain
+pending. Historical failed attempt 000001 and first-small attempt 000002 remain
+preserved privately; current cache proof is attempt 000003 of its selective CPU
+campaign, with no complete native gate claim.
