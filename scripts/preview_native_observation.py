@@ -86,10 +86,14 @@ class Observer(TraceCollector):
         self.source_shadow={n:bytearray(read(symbols[n],size)) for n,size in
             (('back_copper',4),('ready_generation',2),('simulation_started_updates',2))}
         self.producer_bank=None
-        self.beam_reads={};self.rts_pcs=set()
+        self.beam_reads={};self.rts_pcs=set();self.restore_dummy_pcs=set()
         for row in _units(listing):
             pc=segments[row['hunk']]['start']+row['start']
             if row['encoded'].lower()=='4e75':self.rts_pcs.add(pc)
+            if (re.fullmatch(r'4cdf[0-9a-f]{4}',row['encoded'].lower())
+                    and int(row['encoded'][4:],16)
+                    and re.fullmatch(r'movem\.l\s+\(sp\)\+,[dDaA0-9/.-]+',row['statement'].split(';',1)[0].strip())):
+                self.restore_dummy_pcs.add(pc)
             if symbols['read_presentation_line']<=pc<symbols['select_video_standard']:
                 match=re.fullmatch(r'move\.w\s+\$(dff004|dff006),d[012]',row['statement'].strip())
                 if match:self.beam_reads[pc]=int(match[1],16)
@@ -240,6 +244,19 @@ class Observer(TraceCollector):
             return
         self.problems.append(f'Forbidden native API nonstate/hardware write {pc:#x}->{a:#x}/{size}')
 
+    def return_read(self,record):
+        """MOVEM's extra first-word read is not the actual RTS return."""
+        pc,address,size,value=record['pc'],record['addr'],record['size'],record['value']
+        if pc in self.rts_pcs:
+            result=self.return_reads.write(address-self.slot,value,size,pc)
+            if result is not None:
+                assert result==self.symbols['preview_native_after'],'RTS returns to another address'
+                self.pending['end']=record['position']
+            return
+        assert (pc in self.restore_dummy_pcs and address==self.slot and size==2
+                and value==self.symbols['preview_native_after']>>16), 'Return-slot read is not an exact emitted MOVEM dummy read or RTS'
+        self.pending.setdefault('restore_dummy_reads',[]).append(record)
+
     def input_write(self,name,address,data,position):
         """Physical edges come from raw native samples, not host commands/timers."""
         shadow=self.input_shadow[name];offset=address-self.symbols[name]
@@ -301,11 +318,7 @@ class Observer(TraceCollector):
             if not (self.beam_reads.get(r['pc'])==a and size==2):
                 self.problems.append('Forbidden native API hardware read')
         elif self.pending and self.slot<=a<a+size<=self.slot+4:
-            assert r['pc'] in self.rts_pcs,'Return-slot read is not an emitted RTS'
-            result=self.return_reads.write(a-self.slot,value,size,r['pc'])
-            if result is not None:
-                assert result==self.symbols['preview_native_after'],'RTS returns to another address'
-                self.pending['end']=r['position']
+            self.return_read(r)
         if a==self.marker and value in self.operations and self.pending:self.pending['bodies']+=1
         # Canonical copying outside logical bodies is already reconstructed above.
         # The existing mailbox decoder remains the independent semantic protocol.

@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from preview_native_observation import Observer
+from native_longword_observer import LongwordObserver
 
 
 class NativePreviewGuards(unittest.TestCase):
@@ -121,6 +122,32 @@ class NativePreviewGuards(unittest.TestCase):
         self.assertEqual(len(observer.joystick_pressed_observations),2)
         with self.assertRaisesRegex(AssertionError,'pressed mask differs'):
             write('ui_joystick_pressed',4)
+
+    def test_movem_dummy_read_does_not_complete_or_seed_the_rts(self):
+        observer=self.observer();observer.slot=0x28fd6
+        observer.symbols['preview_native_after']=0x2bfb6
+        observer.rts_pcs={0x25a70};observer.restore_dummy_pcs={0x25a6a}
+        observer.return_reads=LongwordObserver();observer.pending={'end':None}
+        def read(pc,address,size,value):
+            event=self.event(address,size,pc,value);event['position']={'cck':17}
+            observer.return_read(event)
+        read(0x25a6a,0x28fd6,2,2)
+        self.assertIsNone(observer.pending['end'])
+        self.assertEqual(observer.return_reads.seen,set())
+        self.assertEqual(len(observer.pending['restore_dummy_reads']),1)
+        for pc,address,size,value in ((0x25a68,0x28fd6,2,2),
+                (0x25a6a,0x28fd8,2,2),(0x25a6a,0x28fd6,4,0x2bfb6),
+                (0x25a6a,0x28fd6,2,3)):
+            with self.assertRaisesRegex(AssertionError,'exact emitted MOVEM'):
+                read(pc,address,size,value)
+        read(0x25a70,0x28fd8,2,0xbfb6)
+        self.assertIsNone(observer.pending['end']) # Dummy high word was ignored.
+        read(0x25a70,0x28fd6,2,2)
+        self.assertEqual(observer.pending['end'],{'cck':17})
+        observer.pending['end']=None
+        with self.assertRaisesRegex(AssertionError,'another address'):
+            read(0x25a70,0x28fd6,4,0x2bfb8)
+        self.assertIsNone(observer.pending['end'])
 
     def test_irq_ack_value_and_actual_api_interval(self):
         observer=self.observer()
