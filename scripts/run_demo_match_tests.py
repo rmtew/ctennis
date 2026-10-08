@@ -22,7 +22,7 @@ def load_trajectory(recording_path):
  assert hashlib.sha256(b''.join(bytes.fromhex(value) for value in expected)).hexdigest()==manifest['normalized_raw_digest_sha256']
  return expected,manifest
 
-def run(takeover=False):
+def run(takeover=False, takeover_tail=False):
  config,exe=build(flavor='enhanced'); config = emulator_config();compiled_modules=json.loads((exe.parent/'build-report.json').read_text())['native_modules'];symbols=code_symbols((exe.parent/'native.lst').read_text())
  recording_path=ROOT/'assets/interface/demo-inputs.json'
  recording=json.loads(recording_path.read_text());expected,fixture_manifest=load_trajectory(recording_path)
@@ -30,7 +30,7 @@ def run(takeover=False):
  assert recording['entropy_version']=='galois16-b400-v1' and 0<recording['seed']<65536 and recording['initial_game_random']==0
  compatibility=json.loads((ROOT/'assets/interface/demo-entropy-compat.json').read_text())
  assert demo_entropy_policy(recording_path.read_bytes(),compatibility)==1
- directory=ROOT/('build/tests/demo-mid-takeover' if takeover else 'build/tests/demo-full-repeat');checks=[];awards=[];seen_games=[0,0];index=0;contacts=0;previous_side=None
+ directory=ROOT/('build/tests/demo-tail-takeover' if takeover_tail else 'build/tests/demo-mid-takeover' if takeover else 'build/tests/demo-full-repeat');checks=[];awards=[];seen_games=[0,0];index=0;contacts=0;previous_side=None
  if not takeover:
   atomic_json(directory/'demo-end-state.json',{'state':'incomplete','passed':False})
   atomic_json(directory/'demo-end-events.json',[]);atomic_json(directory/'demo-end-publications.json',[])
@@ -49,12 +49,71 @@ def run(takeover=False):
    stop=s.inspect('run_until',args);time=stop['seconds'];return stop
   def mem(n,k=1):return bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':k})['data'])
   def num(n,k=1):return int.from_bytes(mem(n,k),'big')
-  def frozen():return mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)+mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock')+mem('ui_entropy_state',2)+mem('game_entropy_state',2)
+  def frozen():return mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)+mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock')+mem('ui_entropy_state',2)+mem('game_entropy_state',2)+mem('game_match_seed',2)
   until({'pc':base+symbols['ui_seed_entropy']});check('ordinary title idle starts seeded demo',num('ui_demo'),255)
   # The shared seed routine writes modern, then historical state.
   s.inspect('step',{'count':2});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
   check('modern shadow starts from same match seed',num('game_entropy_state',2),recording['seed'])
   check('historical playback policy is explicit',num('game_entropy_policy'),1)
+  def take_over(tail=False):
+   check('takeover begins in historical policy',num('game_entropy_policy'),1)
+   check('takeover begins with automatic playback',num('game_auto_continue')!=0,True)
+   s.inspect('input_key',{'rawkey':0x4f,'action':'press'})
+   for attempt in range(12):
+    until({'pc':base+symbols['ui_sample']});until({'pc':base+symbols['ui_input_draw']})
+    if num('ui_demo_choice')==1:break
+   check('left selects takeover',num('ui_demo_choice'),1)
+   s.inspect('input_key',{'rawkey':0x44,'action':'press'})
+   for attempt in range(12):
+    until({'pc':base+symbols['ui_sample']});before=frozen();confirmation_phase=num('game_lifecycle',2)
+    until({'pc':base+symbols['ui_input_draw']})
+    if not num('ui_demo'):
+     check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
+   else:raise AssertionError('Mid-match selected Enter never took over')
+   if tail:
+    check('takeover confirmation is in a natural round tail',confirmation_phase in (4,5),True)
+    until({'pc':base+symbols['simulation_menu']})
+    check('tail metadata changes only playback policy and controls',frozen().hex(),before.hex())
+    check('tail takeover switches policy before the tail dispatch',num('game_entropy_policy'),0)
+    s.inspect('input_key',{'rawkey':0x44,'action':'release'})
+    s.inspect('input_key',{'rawkey':0x4f,'action':'release'})
+    play_break=s.inspect('break_add',{'kind':'pc','addr':base+symbols['native_input_done']})
+    stopped=until({'seconds':time+5})
+    s.inspect('break_remove',{'id':play_break['id']})
+    check('actual round tail reaches playing within bound',stopped['pc'],base+symbols['native_input_done'])
+    check('playing assignment follows tail takeover',num('game_lifecycle',2),1)
+   else:
+    until({'pc':base+symbols['native_input_done']})
+   check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
+   check('takeover switches to corrected entropy policy',num('game_entropy_policy'),0)
+   from native_player_roles import assert_player_roles
+   roles=assert_player_roles(mem,num)
+   check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
+   if tail:
+    for port in (1,2):
+     s.inspect('input_set_port',{'port':port,'device':'joystick'})
+     s.inspect('input_joy',{'port':port,'red':True})
+   before=mem('game_play_state',60)
+   # The modern shadow has advanced from the original seed throughout playback.
+   # Live takeover consumes that stream; it never seeds from CIA or the zeroed
+   # historical observer word. Observe an actual call, not an assumed cadence.
+   entropy_pc=base+symbols['native_entropy_bit']
+   entropy_break=s.inspect('break_add',{'kind':'pc','addr':entropy_pc})
+   stop=until({'seconds':time+10})
+   s.inspect('break_remove',{'id':entropy_break['id']})
+   check('live takeover reaches shared entropy routine within bound',stop['pc'],entropy_pc)
+   state=mem('game_entropy_state',2)
+   check('live takeover shadow stream remains nonzero',int.from_bytes(state,'big')!=0,True)
+   s.inspect('step',{'count':1})
+   until({'pc':base+symbols['native_input_done']})
+   check('live takeover consumes preserved modern shadow state',mem('game_entropy_state',2)!=state,True)
+   check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
+   check('ordinary world continues after takeover',mem('game_play_state',60)!=before,True)
+   s.inspect('input_key',{'rawkey':0x44,'action':'release'})
+   s.inspect('input_key',{'rawkey':0x4f,'action':'release'})
+   s.inspect('capture_screenshot',{'path':str(directory/'taken-over.png')})
+   return confirmation_phase
+  takeover_confirmation_lifecycle=None
   for callback in range(30000):
    until({'pc':base+symbols['game_tick_dispatch']});life=num('game_lifecycle',2)
    if life in (6,7,8):break
@@ -62,6 +121,8 @@ def run(takeover=False):
     from native_player_roles import assert_player_roles
     roles=assert_player_roles(mem,num)
     check('demo records human A against AI B', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
+   if takeover_tail and life in (4,5):
+    takeover_confirmation_lifecycle=take_over(tail=True);break
    if life!=1:
     s.inspect('step',{'count':1});continue
    until({'pc':base+symbols['game_assignment_done']})
@@ -78,48 +139,16 @@ def run(takeover=False):
    previous_side=side
    if index in (len(expected)//4,len(expected)//2,3*len(expected)//4):
     s.inspect('capture_screenshot',{'path':str(directory/f'rally-{index}.png')})
-   if takeover and index==len(expected)//2:
-    s.inspect('input_key',{'rawkey':0x4f,'action':'press'})
-    for attempt in range(12):
-     until({'pc':base+symbols['ui_sample']});until({'pc':base+symbols['ui_input_draw']})
-     if num('ui_demo_choice')==1:break
-    check('left selects takeover',num('ui_demo_choice'),1)
-    s.inspect('input_key',{'rawkey':0x44,'action':'press'})
-    for attempt in range(12):
-     until({'pc':base+symbols['ui_sample']});before=frozen()
-     until({'pc':base+symbols['ui_input_draw']})
-     if not num('ui_demo'):
-      check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
-    else:raise AssertionError('Mid-match selected Enter never took over')
-    until({'pc':base+symbols['native_input_done']});check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
-    check('takeover switches to corrected entropy policy',num('game_entropy_policy'),0)
-    roles=assert_player_roles(mem,num)
-    check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
-    before=mem('game_play_state',60)
-    # The modern shadow has advanced from the original seed throughout playback.
-    # Live takeover consumes that stream; it never seeds from CIA or the zeroed
-    # historical observer word. Observe an actual call, not an assumed cadence.
-    entropy_pc=base+symbols['native_entropy_bit']
-    entropy_break=s.inspect('break_add',{'kind':'pc','addr':entropy_pc})
-    stop=until({'seconds':time+10})
-    s.inspect('break_remove',{'id':entropy_break['id']})
-    check('live takeover reaches shared entropy routine within bound',stop['pc'],entropy_pc)
-    state=mem('game_entropy_state',2)
-    check('live takeover shadow stream remains nonzero',int.from_bytes(state,'big')!=0,True)
-    s.inspect('step',{'count':1})
-    until({'pc':base+symbols['native_input_done']})
-    check('live takeover consumes preserved modern shadow state',mem('game_entropy_state',2)!=state,True)
-    check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
-    check('ordinary world continues after takeover',mem('game_play_state',60)!=before,True)
-    s.inspect('input_key',{'rawkey':0x44,'action':'release'})
-    s.inspect('input_key',{'rawkey':0x4f,'action':'release'})
-    s.inspect('capture_screenshot',{'path':str(directory/'taken-over.png')});index+=1;break
+   if takeover and not takeover_tail and index==len(expected)//2:
+    takeover_confirmation_lifecycle=take_over();index+=1;break
    if not takeover and index in (100,200,300,400):
     s.inspect('input_key',{'rawkey':(0x4f,0x4e,0x4c,0x4d)[index//100-1],'action':'press'})
    if not takeover and index in (150,250,350,450):
     s.inspect('input_key',{'rawkey':(0x4f,0x4e,0x4c,0x4d)[(index-50)//100-1],'action':'release'})
    index+=1;s.inspect('step',{'count':1})
   else:raise AssertionError('Full playback did not end within finite bound')
+  if takeover:
+   check('requested physical takeover occurred',takeover_confirmation_lifecycle is not None,True)
   if not takeover:
    check('all recorded input ticks reproduce native trajectory',index,len(expected))
    check('complete match award reproduced',list(mem('game_games_a',2)),recording['final_games'])
@@ -232,13 +261,15 @@ def run(takeover=False):
    assert_footer_raster(directory/'next-attract.png',{0:'',2:'A WINS GAME',3:'B WINS GAME',4:'YOUR SERVE'}[num('ui_overlay_kind')],'DEMO - TAKE OVER / EXIT','EXIT')
   deadlines=num('missed_presentation_deadlines',2)
  target_log(directory)
- report={'resource_metrics':metrics.result(),'passed':True,'takeover':takeover,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
+ report={'resource_metrics':metrics.result(),'passed':True,'takeover':takeover,'takeover_tail':takeover_tail,'takeover_confirmation_lifecycle':takeover_confirmation_lifecycle,'verified_input_ticks':index,'checks':checks,'awards':awards,'observed_flight_side_changes':contacts,'missed_publications':deadlines,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'native_modules':compiled_modules,'recording_sha256':hashlib.sha256(recording_path.read_bytes()).hexdigest(),'trajectory_fixture_sha256':fixture_manifest['payload_sha256'],'scope':'Local seeded native recording/replay equality, ordinary boot and physical input; no original-reference parity claim'}
  atomic_json(directory/'report.json',report);print(json.dumps({'passed':True,'takeover':takeover,'input_ticks':index,'flight_side_changes':contacts,'missed_publications':deadlines}))
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--takeover', action='store_true')
+    cases=parser.add_mutually_exclusive_group()
+    cases.add_argument('--takeover', action='store_true')
+    cases.add_argument('--takeover-tail', action='store_true')
     args = parser.parse_args()
-    path = ROOT / 'build/tests' / ('demo-mid-takeover' if args.takeover else 'demo-full-repeat') / 'report.json'
+    path = ROOT / 'build/tests' / ('demo-tail-takeover' if args.takeover_tail else 'demo-mid-takeover' if args.takeover else 'demo-full-repeat') / 'report.json'
     tracked_call([path], 'native-demo', 'maintained-native', 'ordinary title',
-                 'scripts/run_demo_match_tests.py', None, lambda: run(args.takeover),
+                 'scripts/run_demo_match_tests.py', None, lambda: run(args.takeover or args.takeover_tail,args.takeover_tail),
                  lambda path, report: [ROOT / 'build/amiga/interfaces/enhanced/baseline-rally'])
