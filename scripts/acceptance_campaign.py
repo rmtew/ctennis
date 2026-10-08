@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import shutil
 import subprocess
@@ -624,6 +625,87 @@ def preview_a3_extent(stage,a2):
             and integer(wrap.get('retained_operations')) and 4032<=wrap['retained_operations']<4096)
 
 
+def preview_batch_extent(stage):
+    """Require complete same-input continuations and bounded body counts."""
+    def integer(value,low=0,high=None):
+        return type(value) is int and value>=low and (high is None or value<=high)
+    transitions=['resolve->prime-held','prime-held->prime-released','prime-released->held',
+                 'held->released','released->ready']
+    if (not isinstance(stage,dict) or stage.get('passed') is not True
+            or any(stage.get(k)!=v for k,v in dict(canonical_bytes=318,history_metadata_bytes=72,
+                preview_storage_bytes=5550,preview_metadata_bytes=110,budgets=[1,2,3,4]).items())
+            or any(type(n) is not int for n in stage['budgets'])
+            or stage.get('required_owner_transitions')!=transitions
+            or any(stage.get(k) is not True for k in ('state_path_outcome_output_equal_across_budgets',
+                'independent_continuation_policy_equal'))):return False
+    rows=stage.get('cases')
+    if not isinstance(rows,list) or len(rows)!=4:return False
+    semantic=('seed','ordinal','selection','end','x','y','bounds','classes','selected_state','edited_state',
+              'final_states','paths','ordered_outputs','path_counts','prefix_samples','incoming_origin',
+              'action_boundary','actual_accepted_launches','actual_final_boundaries','coincident')
+    baseline=None;trace=None;total=None
+    for budget,row in zip((1,2,3,4),rows):
+        if (not isinstance(row,dict) or type(row.get('budget')) is not int or row.get('budget')!=budget
+                or any(row.get(k) is not True for k in ('passed','owner_transition_preservation',
+                    'selected_history_output_preserved','semantic_trace_equal_across_budgets'))
+                or not isinstance(row.get('owner_transitions'),list)
+                or any(not isinstance(name,str) for name in row['owner_transitions'])
+                or set(row['owner_transitions'])!=set(transitions)
+                or not integer(row.get('ownership_restore_checks'),1)
+                or not integer(row.get('worker_calls'),1,8192)
+                or row.get('public_restore_checks')!=row['worker_calls']+3):return False
+        counts=row.get('worker_body_counts')
+        if (not isinstance(counts,list) or len(counts)!=row['worker_calls']
+                or any(not integer(n,0,budget) for n in counts)
+                or not integer(row.get('actual_body_operations'),1)
+                or not integer(row.get('maximum_actual_body_operations_per_call'),1,budget)
+                or sum(counts)!=row['actual_body_operations']
+                or row.get('maximum_actual_body_operations_per_call')!=max(counts)):return False
+        digest=row.get('semantic_trace_sha256')
+        if not isinstance(digest,str) or not re.fullmatch('[0-9a-f]{64}',digest):return False
+        result=row.get('continuous')
+        if (not isinstance(result,dict) or any(result.get(k) is not True for k in ('passed',
+                'continuous_state_path_output_equal','independent_continuation_policy_equal',
+                'live_history_output_preserved','edited_only_position_changed'))
+                or any(k not in result for k in semantic)
+                or result.get('seed')!=0xace1 or not integer(result.get('end'),0,1)
+                or not integer(result.get('selection'),1,2049)
+                or not integer(result.get('ordinal'),0,127)
+                or not integer(result.get('prefix_samples'),0,255)):return False
+        bounds=result.get('bounds')
+        if (not isinstance(bounds,dict)
+                or any(not integer(bounds.get(k),0,255) for k in ('left','right','top','bottom'))
+                or not integer(result.get('x'),bounds['left'],bounds['right']-1)
+                or not integer(result.get('y'),bounds['top'],bounds['bottom']-1)
+                or type(result.get('coincident')) is not bool):return False
+        try:
+            selected=bytes.fromhex(result['selected_state']);edited=bytes.fromhex(result['edited_state'])
+            states=[bytes.fromhex(s) for s in result['final_states']]
+            paths=[bytes.fromhex(s) for s in result['paths']]
+        except (TypeError,ValueError):return False
+        if len(selected)!=318 or len(edited)!=318 or len(states)!=2 or any(len(s)!=318 for s in states):return False
+        player=10*result['end']
+        if (any(a!=b for n,(a,b) in enumerate(zip(selected,edited)) if n not in (player+2,player+3))
+                or edited[player+2]!=result['y'] or edited[player+3]!=result['x']
+                or len(paths)!=2 or any(not 8<=len(p)<=2048 or len(p)%8 for p in paths)
+                or result.get('path_counts')!=[len(p)//8 for p in paths]
+                or any(result['prefix_samples']>len(p)//8 for p in paths)
+                or paths[0][:8*result['prefix_samples']]!=paths[1][:8*result['prefix_samples']]
+                or not isinstance(result['ordered_outputs'],list) or len(result['ordered_outputs'])!=2):return False
+        costs=result.get('costs') or {}
+        if (not isinstance(costs,dict) or costs.get('worker_calls')!=row['worker_calls']
+                or not integer(costs.get('worker_calls'),1)
+                or costs.get('worker_body_counts')!=counts
+                or not integer(costs.get('maximum_worker_operations'),1,budget)
+                or costs.get('maximum_worker_operations')!=max(counts)
+                or any(not integer(costs.get(k),1) for k in ('request_cpu_cycles',
+                    'total_worker_cpu_cycles','maximum_worker_cpu_cycles','stack_bytes'))):return False
+        actual={k:result[k] for k in semantic}
+        if baseline is None:baseline,trace,total=actual,digest,row['actual_body_operations']
+        elif actual!=baseline or digest!=trace or row['actual_body_operations']!=total:return False
+    return True
+
+
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
@@ -718,7 +800,8 @@ def required_extent(case,report):
         if invalidation['oldest_after_eviction']<=invalidation['evicted_incoming_origin']:return False
         return (preview_a1_extent(validation.get('stage_a1_validation'))
                 and preview_a2_extent(validation.get('stage_a2_validation'))
-                and preview_a3_extent(validation.get('stage_a3_validation'),validation.get('stage_a2_validation')))
+                and preview_a3_extent(validation.get('stage_a3_validation'),validation.get('stage_a2_validation'))
+                and preview_batch_extent(validation.get('batch_validation')))
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}

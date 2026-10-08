@@ -191,6 +191,35 @@ def preview_a3_report(a2):
         semantic_state_path_outcome_output_equal=True)
 
 
+def preview_batch_report():
+    # This fixture tests receipt gating, not a model of gameplay.
+    transitions=['resolve->prime-held','prime-held->prime-released','prime-released->held',
+                 'held->released','released->ready']
+    edited=bytearray(318);edited[2]=100;edited[3]=80
+    cases=[]
+    for budget,counts in enumerate(([1]*8,[2]*4,[3,3,2],[4]*2),1):
+        costs=dict(worker_calls=len(counts),worker_body_counts=counts,maximum_worker_operations=max(counts),
+            request_cpu_cycles=1,total_worker_cpu_cycles=10,maximum_worker_cpu_cycles=1,stack_bytes=204)
+        continuous=dict(passed=True,continuous_state_path_output_equal=True,
+            independent_continuation_policy_equal=True,live_history_output_preserved=True,
+            edited_only_position_changed=True,seed=0xace1,ordinal=1,selection=800,end=0,x=80,y=100,
+            bounds=dict(left=40,right=200,top=98,bottom=154),classes=['landing','no-contact'],
+            selected_state='00'*318,edited_state=edited.hex(),final_states=['00'*318]*2,
+            paths=['00'*16]*2,path_counts=[2,2],prefix_samples=1,incoming_origin=544,action_boundary=800,
+            ordered_outputs=[[],[]],actual_accepted_launches={'0':[],'1':[]},
+            actual_final_boundaries=[{},{}],coincident=True,costs=costs)
+        cases.append(dict(budget=budget,passed=True,continuous=continuous,actual_body_operations=8,
+            maximum_actual_body_operations_per_call=max(counts),worker_body_counts=counts,
+            worker_calls=len(counts),public_restore_checks=len(counts)+3,ownership_restore_checks=5,
+            owner_transitions=transitions,owner_transition_preservation=True,
+            selected_history_output_preserved=True,semantic_trace_sha256='12'*32,
+            semantic_trace_equal_across_budgets=True))
+    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,preview_storage_bytes=5550,
+        preview_metadata_bytes=110,budgets=[1,2,3,4],cases=cases,
+        state_path_outcome_output_equal_across_budgets=True,independent_continuation_policy_equal=True,
+        required_owner_transitions=transitions)
+
+
 class CampaignTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
@@ -251,6 +280,7 @@ class CampaignTests(unittest.TestCase):
         report['preview_validation']['stage_a1_validation']=preview_a1_report()
         report['preview_validation']['stage_a2_validation']=preview_a2_report()
         report['preview_validation']['stage_a3_validation']=preview_a3_report(report['preview_validation']['stage_a2_validation'])
+        report['preview_validation']['batch_validation']=preview_batch_report()
         self.assertTrue(campaign.required_extent(case,report))
         for area,key,value in (('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
@@ -345,6 +375,26 @@ class CampaignTests(unittest.TestCase):
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(campaign.preview_a3_extent(partial,a2))
+
+    def test_preview_batch_extent_rejects_missing_restoration_and_unbounded_work(self):
+        report=preview_batch_report()
+        self.assertTrue(campaign.preview_batch_extent(report))
+        for path,value in ((('budgets',0),4),(('budgets',0),True),(('preview_storage_bytes',),5554),
+                (('cases',0,'worker_body_counts',0),2),
+                (('cases',1,'actual_body_operations'),9),
+                (('cases',2,'public_restore_checks'),3),
+                (('cases',3,'ownership_restore_checks'),0),
+                (('cases',2,'owner_transitions'),['held->released']),
+                (('cases',1,'selected_history_output_preserved'),False),
+                (('cases',3,'semantic_trace_sha256'),'34'*32),
+                (('cases',2,'continuous','paths',0),'00'),
+                (('cases',1,'continuous','final_states',0),'01'*318),
+                (('cases',0,'continuous','edited_state'),'01'*318),
+                (('cases',3,'continuous','costs','maximum_worker_operations'),5)):
+            partial=json.loads(json.dumps(report));node=partial
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(campaign.preview_batch_extent(partial))
 
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
