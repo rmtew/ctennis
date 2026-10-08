@@ -268,10 +268,14 @@ tutorial_draw_ghost:
         move.w  #3,tutorial_render_phase
 .done:  rts
 
-; One segment per callback, at most32 raster pixels; continuation is explicit.
+; One aggregate32-pixel slice, at most8 segment headers, including invisible
+; points. Stationary samples must not consume a whole callback each.
 tutorial_draw_paths:
+        moveq   #31,d7
+        moveq   #7,d6
         tst.b   tutorial_work_pending
         bne     .finished
+.segment:
         tst.b   tutorial_line_active
         bne     .line
         move.w  tutorial_render_path,d0
@@ -289,7 +293,7 @@ tutorial_draw_paths:
         addq.w  #1,tutorial_render_point
         move.b  6(a0),d0
         andi.b  #15,d0
-        beq     .done
+        beq     .header_spent
         moveq   #0,d0
         moveq   #0,d1
         move.b  2(a0),d0
@@ -332,7 +336,7 @@ tutorial_draw_paths:
         move.w  d2,tutorial_line_error
         st      tutorial_line_active
         clr.w   tutorial_line_dash
-.line:  moveq   #31,d7
+.line:
 .pixel: moveq   #6,d2
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
@@ -371,6 +375,10 @@ tutorial_draw_paths:
         rts
 .segment_done:
         clr.b   tutorial_line_active
+        subq.w  #1,d7
+        bmi     .done
+.header_spent:
+        dbra    d6,.segment
         rts
 .next_path:
         moveq   #0,d0
@@ -379,7 +387,7 @@ tutorial_draw_paths:
         beq     .finished
         move.w  d0,tutorial_render_path
         clr.w   tutorial_render_point
-        rts
+        bra     .header_spent
 .finished:
         move.w  #4,tutorial_render_phase
 .done:  rts
