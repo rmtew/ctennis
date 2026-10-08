@@ -1,5 +1,5 @@
 """Bounded-store proofs over the actual 68000 logical API, never tennis rules."""
-from collections import Counter
+from collections import Counter, defaultdict
 from build_match_core import load_image
 from match_core_cpu import Core
 from run_shared_match_core import READONLY
@@ -43,6 +43,14 @@ def seek(cpu, target):
     return cycles
 
 
+def cycle_distribution(values):
+    ordered = sorted(values)
+    return dict(samples=len(values), minimum_cpu_cycles=ordered[0],
+                median_cpu_cycles=(ordered[(len(values)-1)//2]+ordered[len(values)//2])/2,
+                p95_cpu_cycles=ordered[(95*len(values)+99)//100-1],
+                maximum_cpu_cycles=ordered[-1])
+
+
 def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=False, native_guards=False, stream_override=None):
     image,symbols = load_image(executable,base)
     offset = (1<<32)-512 if wrap else 0
@@ -80,6 +88,11 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             cpu.call('game_history_attach',{8:pointer,0:length})
             assert cpu.cpu.r_reg(0)==0 and cpu.state()==canonical and field(cpu,'game_history_mode',1)==0
         size = attach(cpu)
+        # Measure the actual copy independently into the owned interruption
+        # scratch area. Canonical/live recording state is never injected.
+        copy_cycles = cpu.call('game_history_copy_state',
+            {8:symbols['game_history_buffer']+size-318,9:symbols['game_core_state']})
+        assert cpu.state()==canonical and cursor(cpu)==0
         if wrap:
             # One-time history-only fixture origin, before the first operation.
             # Canonical state is untouched and no later expected state injected.
@@ -88,18 +101,33 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             cpu.mem.w_block(symbols['game_history_buffer']+14336,offset.to_bytes(8,'big'))
         outputs, record_cycles, checkpoint_cycles = {}, [], []
         regular_overhead, checkpoint_overhead = [], []
+        overhead_groups = defaultdict(list)
+        prior_pads = None
         counts = Counter()
         outcomes = set()
         tick_wraps = 0
         last_tick = field(cpu,'game_tick',1)
         for ordinal,(name,args) in enumerate(stream,1):
+            previous_oldest = cursor(cpu,'game_history_oldest')
             cpu.clear_events()
             cycles = cpu.call_logical(name,args)
             baseline_cycles, registers, sr = baseline[ordinal]
             assert (cpu.state(),cpu.events)==expected[offset+ordinal], ('recording alters core',name)
             assert [cpu.cpu.r_reg(r) for r in range(15)]==registers and cpu.cpu.r_sr()==sr, ('recording alters CPU ABI',name)
             boundary = cursor(cpu)
-            (checkpoint_overhead if boundary%64==0 else regular_overhead).append(cycles-baseline_cycles)
+            overhead = cycles-baseline_cycles
+            checkpoint = boundary%64==0
+            (checkpoint_overhead if checkpoint else regular_overhead).append(overhead)
+            overhead_groups['all/'+name].append(overhead)
+            overhead_groups['checkpoint' if checkpoint else 'regular'].append(overhead)
+            if checkpoint:
+                overhead_groups['checkpoint/'+name].append(overhead)
+                overhead_groups['checkpoint-eviction' if cursor(cpu,'game_history_oldest')!=previous_oldest
+                                else 'checkpoint-before-eviction'].append(overhead)
+            if name=='game_core_sample_pads':
+                if args!=prior_pads:
+                    overhead_groups['changed-pad-input'].append(overhead)
+                prior_pads = list(args)
             outputs[boundary] = list(cpu.events)
             counts[name] += 1
             tick = field(cpu,'game_tick',1)
@@ -201,6 +229,8 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
         import hashlib
         ordered_records = b''.join(bytes(cpu.mem.r_block(symbols['game_history_buffer']+(n&1023)*14,14)) for n in range(oldest,end))
         return {'record_arguments_sha256':hashlib.sha256(ordered_records).hexdigest(),'operations':len(stream),'buffer_bytes':size,'metadata_bytes':symbols['game_history_state_end']-symbols['game_history_state'],
+                'canonical_copy_cpu_cycles':copy_cycles,
+                'record_overhead_distributions':{name:cycle_distribution(values) for name,values in overhead_groups.items()},
                 'oldest':oldest,'latest':end,'retained_operations':end-oldest,
                 'boundaries_checked':len(boundaries),'seeks':len(seek_cycles),
                 'max_seek_cpu_cycles':max(seek_cycles),'max_regular_cpu_cycles':max(record_cycles),

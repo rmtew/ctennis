@@ -62,14 +62,23 @@ and cancels a pending origin before any later outcome can publish it. Each
 retained index identifies its operation boundary and physical court end; the
 canonical state resolves logical ownership. These are internal observations,
 not a second collision or trajectory model.
+An origin is the boundary before the recorded operation that first observes
+an eligible probe. If an incoming episode starts before retained history, later
+eligible probes can begin a retained origin after eviction. That origin is
+replayable, but its incoming context is truncated; the index does not guarantee
+retention of the complete flight or the preceding opponent shot.
 
 Seek currently runs synchronously while frozen. Isolated CPU cycles include
 observation traps and exclude native contention; they do not establish a display
 frame deadline. A future UI must schedule seek/preview work within its display
 budget. This increment does not claim preview performance or tutorial rendering.
 
-The focused campaign selects `history-cpu`, `history-pal`, `history-ntsc` and
-`ordinary-one-cold`. CPU proofs cover empty history, complete uninterrupted
+The initial four-case campaign remains failed: its third cold observation passed
+native deadlines, but the controller rejected generated version/title/product
+changes from the pre-commit build. The original attempts are preserved. A separate
+reviewed private revalidation is required to record the usable cold observation without
+changing that campaign's outcome; a new focused campaign selects only
+`history-cpu`, `history-pal` and `history-ntsc`. CPU proofs cover empty history, complete uninterrupted
 state/output equivalence, every retained boundary in both directions, repeated
 seeks, long play, byte tick/ring/low-longword wrap, invalid envelopes/operations,
 poison/relocation, all nine APIs and frozen external calls, pending-origin eviction,
@@ -78,3 +87,6 @@ PAL/NTSC captures compare native recorder bytes with isolated actual execution;
 the existing cold cadence case measures affected ordinary callback/RAM costs.
 Raw captures, binaries and receipts remain ignored and private. A focused pass
 does not establish a complete native gate or physical-hardware coverage.
+CPU reports distinguish isolated canonical-copy cost and recorded-call overhead
+by API, changed pad inputs, checkpoint creation and checkpoint eviction. Their
+sample distributions exclude native bus contention and hardware sink work.
