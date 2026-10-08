@@ -50,7 +50,9 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 'fields':list(memory[addresses['score_pointer_cache']+bank*6:addresses['score_pointer_cache']+bank*6+6]) if has_hud else None}
     initial = index(scalar('front_copper'))
     hardware = scalar('presentation_copper')
-    inherited_ambiguous = scalar('front_copper') != hardware
+    # Title intentionally retains a court front role while installing its
+    # separate list; only disagreement between court lists needs rebinding.
+    inherited_ambiguous = hardware in copper and scalar('front_copper') != hardware
     current = snapshot(initial, 'inherited') if initial is not None and hardware in copper else None
     # A snapshot can fall between COPJMP and software front-role cleanup, or
     # between the presentation marker and COPJMP. Neither RAM pointer alone

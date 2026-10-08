@@ -22,7 +22,7 @@ class InheritedCopperTests(unittest.TestCase):
                          sprite_third=6000, title_copper=7000)
         memory = bytearray(8000)
         for name, value in [('front_copper', banks[front]),
-                            ('presentation_copper', banks[marker])]:
+                            ('presentation_copper', banks[marker] if marker is not None else 7000)]:
             a = addresses[name]
             memory[a:a+4] = value.to_bytes(4, 'big')
         records = []
@@ -63,3 +63,7 @@ class InheritedCopperTests(unittest.TestCase):
         result = self.capture(front=0, marker=1, physical=1, evidence=False)
         self.assertTrue(any(f['reason'] == 'inherited physical list lacks Copper evidence'
                             for f in result['failures']))
+
+    def test_title_retains_court_front_without_sprite_dma(self):
+        result = self.capture(front=0, marker=None, physical=0, evidence=False)
+        self.assertTrue(result['passed'], result['failures'])
