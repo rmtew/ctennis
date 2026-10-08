@@ -1,16 +1,13 @@
 """Fresh actual 68000 history proof; execute only through native_acceptance.py."""
 import json
 import os
-from pathlib import Path
-import sys
-from importlib.metadata import distribution, version
 
 from build_match_core import build as build_core, load_image
 from build_native_game import build
 from history_proof import exercise, attach, seek, logical_api, pending_eviction
-from match_core_cpu import Core
+from match_core_cpu import Core, cpu_tool_inputs
 from run_shared_match_core import READONLY
-from native_evidence import ReportRun, compile_manifest, digest, python_inputs, snapshot, status
+from native_evidence import ReportRun, compile_manifest, digest, inputs_for, snapshot, status, atomic_json
 from native_tools import ROOT
 
 
@@ -33,17 +30,12 @@ def run():
     path = ROOT/'build/tests/history-cpu/report.json'
     transaction = ReportRun([path],'history-cpu','maintained-native','actual CPU, no emulator')
     try:
-        import machine68k
-        if version('machine68k') != '0.4.1':
-            raise ValueError('Use pinned machine68k 0.4.1')
+        paths,tools = inputs_for('build', 'scripts/run_history_proof.py')
+        cpu_paths,tools['machine68k'] = cpu_tool_inputs()
+        transaction.meta.update(files=snapshot(paths|cpu_paths),tools=tools)
+        transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
         _,native = build()
         standalone,_ = build_core()
-        paths = python_inputs(Path(__file__)) | {Path(sys.executable),Path(machine68k.__file__)}
-        paths.update(Path(distribution('machine68k').locate_file(p))
-                     for p in distribution('machine68k').files or []
-                     if str(p).endswith(('.so','.py','/METADATA')))
-        transaction.meta['files'] = snapshot(paths)
-        transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
         proofs = {'empty':empty(standalone)}
         for name,executable,options in (
                 ('long',standalone,dict(ticks=1536)),
@@ -65,6 +57,10 @@ def run():
                   'executable_sha256':digest(standalone),
                   'history_validation':{'passed':True,'proofs':proofs},
                   'scope':'Fresh actual CPU state/output/store proofs and emitted native replay sinks; no contended seek deadline claim'}
+        # Keep completed computation if receipt validation fails afterward.
+        # This diagnostic is never a passing acceptance receipt by itself.
+        atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
+            receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
         transaction.finalize(path,report,compiled=[
             compile_manifest(native,native.parent/'native.lst'),
             compile_manifest(standalone,standalone.parent/'match-core.lst')])

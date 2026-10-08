@@ -9,10 +9,10 @@ from build_match_core import build as build_core, load_image
 from build_native_game import build
 from copperline_test_session import NativeControlSession
 from match_core_capture import TraceCollector
-from match_core_cpu import Core
+from match_core_cpu import Core, cpu_tool_inputs
 from native_hunk import loaded_hunks
 from native_tools import ROOT, ASSEMBLER, run, emulator_config
-from native_evidence import snapshot, assembly_inputs, python_inputs, changed, ReportRun, compile_manifest
+from native_evidence import snapshot, assembly_inputs, python_inputs, changed, ReportRun, compile_manifest, inputs_for, atomic_json
 import os
 from match_core_state import inventory, validate_record, SCHEMA_VERSION, SIMULATION_VERSION
 from collections import Counter
@@ -114,6 +114,13 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     report_path = directory/'report.json'
     transaction = ReportRun([report_path], 'history-native', 'maintained-native', 'native title') if args.history else None
+    tool_paths = set()
+    if transaction:
+        tool_paths,tools = inputs_for('history-native', 'scripts/run_shared_match_core.py')
+        cpu_paths,tools['machine68k'] = cpu_tool_inputs()
+        tool_paths |= cpu_paths
+        transaction.meta.update(tools=tools,files=snapshot(tool_paths))
+        transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
     if not transaction:
         report_path.write_text(json.dumps({'passed':False, 'state':'incomplete'})+'\n')
     _, ordinary = build()
@@ -129,7 +136,7 @@ def main():
                  re.findall(r'^([A-Za-z_]\w*)\s+(\d\d):([0-9a-fA-F]{8})\s*$',
                             listing.read_text(),re.M)}
     config = emulator_config()
-    files = snapshot(assembly_inputs(ROOT/'amiga/main.s') |
+    files = snapshot(tool_paths | assembly_inputs(ROOT/'amiga/main.s') |
         assembly_inputs(ROOT/'amiga/standalone.s') | python_inputs(Path(__file__)) |
         set((ROOT/'assets/native').rglob('*.*')) |
         {ROOT/'tools.lock.json',ROOT/'config.local.ini',Path(ASSEMBLER),
@@ -259,6 +266,8 @@ def main():
                           for path in (ordinary,standalone,executable,Path(ASSEMBLER))},
                 'rows':collector.rows, 'history':args.history, 'history_validation':history_validation}
             if transaction:
+                atomic_json(directory/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
+                    receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
                 transaction.meta['files'] = files
                 transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
                 transaction.finalize(report_path,dict(report,executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest()),

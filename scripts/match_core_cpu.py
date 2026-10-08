@@ -16,6 +16,20 @@ STACK_BASE, STACK_TOP = 0x1f0000, 0x1ffff0
 RETURN_TRAP = 0x100000
 
 
+def cpu_tool_inputs():
+    """Hash the actual pinned CPU implementation, including its native module."""
+    import machine68k
+    from importlib.metadata import distribution
+    from pathlib import Path
+    if version('machine68k') != '0.4.1':
+        raise ValueError('Use pinned machine68k 0.4.1')
+    paths = {Path(machine68k.__file__)}
+    package = distribution('machine68k')
+    paths.update(Path(package.locate_file(p)) for p in package.files or []
+                 if str(p).endswith(('.so', '.py', '/METADATA')))
+    return paths, {'path':str(Path(machine68k.__file__)), 'version':version('machine68k')}
+
+
 class Core:
     """Load shared code/tables, poison working memory, and guard every CPU access.
 
