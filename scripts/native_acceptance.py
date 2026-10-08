@@ -43,6 +43,7 @@ def main():
         ['scripts/run_demo_match_tests.py'],
         ['scripts/run_demo_match_tests.py','--takeover'],
         ['scripts/run_demo_match_tests.py','--takeover-tail'],
+        ['scripts/run_demo_match_tests.py','--takeover-round-sound'],
         ['scripts/run_attract_cycle_tests.py'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=one','--self-test'],
         ['scripts/run_enhanced_feedback_tests.py','--mode=two'],
