@@ -35,6 +35,8 @@ def protected(cpu):
 
 
 def assert_preserved(cpu,saved):
+    from preview_native_proof import assert_native_entries
+    assert_native_entries(cpu)
     assert protected(cpu)==saved, 'Preview changes selected/history/live output or immutable image'
     assert field(cpu,'game_history_mode',1)==2
     assert field(cpu,'game_preview_active',1)==0

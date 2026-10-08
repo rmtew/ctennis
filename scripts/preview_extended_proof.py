@@ -109,11 +109,23 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name):
     return observation
 
 
-def continuous(image,symbols,observation):
+def continuous(image,symbols,observation,native_sinks=False):
     """One actual edited initialization, then uninterrupted original API policy."""
     result=observation['result'];selection=observation['selection'];stream=observation['stream']
     for variant in (0,1):
-        with Core(image,symbols,initial=result['edited'],readonly=READONLY) as cpu:
+        with Core(image,symbols,initial=None if native_sinks else result['edited'],readonly=READONLY) as cpu:
+            if native_sinks:
+                from preview_native_proof import native_entries,assert_native_entries,outside_canonical
+                # Real setup with observation traps is outside the reference.
+                # Establish frozen metadata before the one edited initial state.
+                cpu.call_logical('game_core_init',[]);attach(cpu)
+                native_entries(cpu,image)
+                cpu.call('game_history_freeze')
+                cpu.mem.w8(symbols['game_history_replaying'],1)
+                cpu.mem.w_block(cpu.start,result['edited'])
+                cpu.clear_events()
+                cpu.native_semantic_events.clear()
+                saved_nonstate=outside_canonical(cpu)
             generated=[result['paths'][variant][i:i+8] for i in range(0,result['prefix']*8,8)]
             for ordinal,(name,args,before) in enumerate(observation['traces'][variant]):
                 if ordinal==0:
@@ -134,10 +146,13 @@ def continuous(image,symbols,observation):
                 assert (name,args)==(expected_name,expected_args), 'Preview changes known API order or opponent/result input'
                 assert cpu.state()==before, 'Chunked state differs from uninterrupted actual core'
                 cpu.call_logical(name,args)
+                if native_sinks:
+                    assert_native_entries(cpu)
+                    assert outside_canonical(cpu)==saved_nonstate, 'Native continuous reference changes history/presentation/input/preview globals'
                 if name=='game_tick_dispatch' and len(generated)<256:generated.append(point(cpu.state(),symbols))
             assert cpu.state()==result['contexts'][variant]
             assert b''.join(generated)==result['paths'][variant]
-            assert cpu.events==result['outputs'][variant]
+            assert (cpu.native_semantic_events if native_sinks else cpu.events)==result['outputs'][variant]
             cpu.audit_reads()
     return dict(passed=True,continuous_state_path_output_equal=True,independent_continuation_policy_equal=True,
         name=observation['name'],seed=observation['seed'],ordinal=observation['ordinal'],selection=selection,

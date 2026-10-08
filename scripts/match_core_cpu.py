@@ -107,36 +107,39 @@ class Core:
         self.traps.append(trap)
         self.mem.w16(address, 0xa000 | trap)
 
+    def observe_adapter(self, name):
+        # Preview outputs are an observation ledger owned by the preview,
+        # never the interrupted live output queue. No core state changes.
+        active_address = self.symbols.get('game_preview_active')
+        active = self.mem.r8(active_address) if active_address else 0
+        events = self.preview_events if active else self.events
+        first = len(events)
+        def read(symbol, size):
+            address = self.symbols[symbol]
+            if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
+                raise AssertionError('Adapter observes out-of-state data: ' + symbol)
+            return bytes(self.mem.r_block(address, size))
+        if name == 'game_render_sprites':
+            events.append(['render', read('game_scene_objects', 65).hex(),
+                                read('field_values', 6).hex()])
+        elif name == 'game_scene_present_fields':
+            events.append(['fields', read('score_dirty', 1)[0],
+                                read('field_values', 6).hex()])
+        elif name == 'game_core_status_present':
+            events.append(['status', read('field_values', 6).hex()])
+        elif name == 'game_core_title_requested':
+            events.append(['title'])
+        else:
+            kind = 'period' if name == 'game_audio_write_period' else 'level'
+            events.append([kind, self.cpu.r_reg(7) & 0xffff,
+                                self.cpu.r_reg(0) & 0xffff])
+        if active:
+            variant = self.mem.r8(self.symbols['game_preview_variant'])
+            self.preview_event_groups.setdefault((active,variant),[]).extend(events[first:])
+
     def _adapter(self, name):
         def invoke(opcode, pc):
-            # Preview outputs are an observation ledger owned by the preview,
-            # never the interrupted live output queue. No core state changes.
-            active_address = self.symbols.get('game_preview_active')
-            active = self.mem.r8(active_address) if active_address else 0
-            events = self.preview_events if active else self.events
-            first = len(events)
-            def read(symbol, size):
-                address = self.symbols[symbol]
-                if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
-                    raise AssertionError('Adapter observes out-of-state data: ' + symbol)
-                return bytes(self.mem.r_block(address, size))
-            if name == 'game_render_sprites':
-                events.append(['render', read('game_scene_objects', 65).hex(),
-                                    read('field_values', 6).hex()])
-            elif name == 'game_scene_present_fields':
-                events.append(['fields', read('score_dirty', 1)[0],
-                                    read('field_values', 6).hex()])
-            elif name == 'game_core_status_present':
-                events.append(['status', read('field_values', 6).hex()])
-            elif name == 'game_core_title_requested':
-                events.append(['title'])
-            else:
-                kind = 'period' if name == 'game_audio_write_period' else 'level'
-                events.append([kind, self.cpu.r_reg(7) & 0xffff,
-                                    self.cpu.r_reg(0) & 0xffff])
-            if active:
-                variant = self.mem.r8(self.symbols['game_preview_variant'])
-                self.preview_event_groups.setdefault((active,variant),[]).extend(events[first:])
+            self.observe_adapter(name)
             # Emulate only the adapter's RTS. No gameplay registers are changed.
             sp = self.cpu.r_sp()
             if not STACK_BASE <= sp <= STACK_TOP:
