@@ -220,7 +220,8 @@ def main():
                 first = relevant[0]['start']['seconds'] if relevant else stopped['seconds']
                 history_validation = dict(passed=True, native_buffer_equal=True,
                     retained_operations=retained, retained_seconds=stopped['seconds']-first,
-                    retained_callbacks=len({row['start'].get('frame') for row in relevant}),
+                    retained_video_fields=len({row['start'].get('frame') for row in relevant}),
+                    retained_tick_dispatches=sum(row['operation']=='game_tick_dispatch' for row in relevant),
                     native_attempts=attempts(cpu),
                     seek=exercise(standalone,rows=collector.rows))
             negatives = replay_and_negatives(image,core_symbols,collector.rows,standalone)

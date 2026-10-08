@@ -12,6 +12,17 @@ at the cold one-player runtime peak and 218,632 bytes free in the two-player
 measurement. This buffer uses a modest part of that measured space. Final
 resource and callback evidence must establish the changed build's actual cost.
 
+The first two cold one-player attempts failed the title transition deadline
+by 1,226 and 1,068 CCK respectively. The latter callback included a 41,238 CCK
+menu copy followed by match initialization. The aligned 60-byte play, 28-byte
+score and 96-byte audio resets now use longword clears with the same final
+pointers and counters. A sequential comparison of the prior and changed actual
+68000 executables covered 1,165 logical operations across both selections,
+ticks, input clearing, return-to-title and reinitialization: canonical state,
+ordered outputs, all registers and SR matched at every boundary. Match
+initialization saved 2,668 isolated CPU cycles; this is a diagnostic measurement,
+not a native deadline pass. Fresh native evidence must supersede the failures.
+
 There are 1,024 14-byte logical-operation records, sixteen 330-byte canonical
 checkpoints, 128 twelve-byte shot/attempt entries and a separate 318-byte saved
 interruption state. Checkpoints occur every 64 logical operations. The oldest
