@@ -260,11 +260,15 @@ def required_preview_native_extent(case_id,report):
             or not integer(costs.get('stack_bytes'),1,4095)):return False
     rows=costs['api_rows'];workers=[r for r in rows if r['name']=='game_preview_step']
     if any(a['end']['cck']>b['begin']['cck'] for a,b in zip(rows,rows[1:])):return False
-    used=set()
+    used=set();intervals=[]
     for job in jobs:
         c=job['costs'];indices=[c['request_api_row_index'],*c['worker_api_row_indices'],c['result_api_row_index']]
         if max(indices)>=len(rows) or used.intersection(indices):return False
         used.update(indices)
+        intervals.append((indices[0],indices[-1]))
+        middle=range(indices[0]+1,indices[-1])
+        if (c['worker_api_row_indices']!=[i for i in middle if rows[i]['name']=='game_preview_step']
+                or any(rows[i]['name'] not in ('game_preview_step','game_preview_result') for i in middle)):return False
         request=rows[indices[0]];result=rows[indices[-1]];steps=[rows[i] for i in c['worker_api_row_indices']]
         if (request['name']!='game_preview_request' or result['name']!='game_preview_result'
                 or any(r['name']!='game_preview_step' for r in steps)
@@ -274,6 +278,8 @@ def required_preview_native_extent(case_id,report):
                 or c['fields_to_result']!=result['end']['frame']-request['begin']['frame']
                 or not math.isclose(c['seconds_to_result'],result['end']['seconds']-request['begin']['seconds'],
                                     abs_tol=1e-9,rel_tol=0)):return False
+    intervals.sort()
+    if any(a[1]>=b[0] for a,b in zip(intervals,intervals[1:])):return False
     if ({r['name'] for r in rows}!={'game_history_freeze','game_history_seek',
             'game_preview_request','game_preview_step','game_preview_result',
             'game_preview_cancel','game_history_resume_latest'}

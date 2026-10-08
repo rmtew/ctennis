@@ -38,7 +38,7 @@ def receipt(ntsc=False):
         cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
         canceled_result_rejected=True,selected_history_output_preserved=True) for i,phase in enumerate(('resolve','held'))]
     names=['game_history_freeze','game_history_seek',
-        'game_preview_request','game_preview_step','game_preview_result',
+        'game_preview_request','game_preview_step','game_preview_result','game_preview_result',
         'game_history_seek','game_preview_request','game_preview_step','game_preview_result',
         'game_preview_request','game_preview_step','game_preview_result',
         'game_preview_request','game_preview_step','game_preview_request','game_preview_step','game_preview_cancel',
@@ -50,9 +50,9 @@ def receipt(ntsc=False):
         begin=dict(cck=100*i,frame=0,seconds=100*i/hz,vpos=0,hpos=0)
         end=dict(begin,cck=100*i+10,seconds=(100*i+10)/hz,hpos=10)
         irq=int(name=='game_preview_step' and not any(r['irq'] for r in rows))
-        rows.append(dict(name=name,begin=begin,end=end,bodies=2 if i in (3,7,10) else 4 if name=='game_preview_step' else 0,
+        rows.append(dict(name=name,begin=begin,end=end,bodies=2 if i in (3,8,11) else 4 if name=='game_preview_step' else 0,
             irq=irq,irq_acknowledgements=2*irq,elapsed_cck=10))
-    for job,request,worker,result in zip(jobs,(2,6,9),(3,7,10),(4,8,11)):
+    for job,request,worker,result in zip(jobs,(2,7,10),(3,8,11),(5,9,12)):
         job['costs'].update(request_api_row_index=request,worker_api_row_indices=[worker],
             result_api_row_index=result,fields_to_result=0,
             seconds_to_result=rows[result]['end']['seconds']-rows[request]['begin']['seconds'])
@@ -153,6 +153,15 @@ class NativePreviewExtent(unittest.TestCase):
         self.assertFalse(required_extent(self.case(),r))
         r=receipt();warm=r['preview_native_validation']['completed_jobs'][2]
         warm['costs'].update(worker_body_counts=[1],maximum_worker_operations=1)
+        self.assertFalse(required_extent(self.case(),r))
+
+    def test_completed_intervals_cannot_omit_work_or_change_selection(self):
+        r=receipt();stage=r['preview_native_validation']
+        stage['costs']['api_rows'][4].update(name='game_preview_step',bodies=2)
+        stage['costs']['worker_distribution']['samples']=8
+        self.assertFalse(required_extent(self.case(),r))
+        r=receipt()
+        r['preview_native_validation']['costs']['api_rows'][4]['name']='game_preview_request'
         self.assertFalse(required_extent(self.case(),r))
 
     def test_native_fixture_assembly_changes_invalidate_dependencies(self):
