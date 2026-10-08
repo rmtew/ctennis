@@ -68,6 +68,58 @@ def commit_provenance(root):
     dirty=subprocess.run(['git','diff','--quiet','HEAD'],cwd=root,capture_output=True).returncode
     return {'commit':result.stdout.strip() if result.returncode==0 else None,'tracked_clean':dirty==0}
 
+def execution_records(case,deps,root=ROOT,directory=None):
+    key=canonical(deps);build=(Path(root)/'build').resolve()
+    index=build/'.acceptance-case-history'/case.id/key
+    starts=[p/'started.json' for p in index.glob('*') if p.is_dir()]
+    starts+=list((build/'acceptance/campaigns').glob('*/attempts/'+case.id+'/*/started.json'))
+    starts += [p.with_name('started.json') for p in (build/'acceptance/campaigns').glob('*/attempts/'+case.id+'/*/completion.json')]
+    if directory:starts+=list((Path(directory)/'attempts'/case.id).glob('*/started.json'))
+    runs=[]
+    for path in set(starts):
+        begin=read(path)
+        if path.is_relative_to(index) and (not begin or begin.get('dependency_key')!=key
+                                         or begin.get('action') not in ('run','reuse')):
+            runs.append((None,str(path),None));continue
+        if not begin:begin=read(path.with_name('completion.json'))
+        if not begin or begin.get('dependency_key')!=key or begin.get('action')=='reuse':continue
+        complete=read(path.with_name('completion.json'))
+        stamp=begin.get('started_utc')
+        runs.append((stamp,str(path),complete))
+    return runs
+
+def execution_blocker(case, deps, root=ROOT, directory=None):
+    """Latest actual execution wins; reused passes never clear a failed run."""
+    runs=execution_records(case,deps,root,directory)
+    for stamp,path,_ in runs:
+        if not isinstance(stamp,str):return 'Unverifiable actual execution in shared workspace: '+path
+    if not runs:return None
+    _,path,latest=max(runs)
+    if not latest or latest.get('state')!='complete' or latest.get('exit_code')!=0:
+        return 'Latest shared-workspace execution failed or was interrupted: '+path
+    return None
+
+def bound_receipt(case,deps,root=ROOT):
+    """Reuse only explicit environment bindings made by actual executions."""
+    runs=execution_records(case,deps,root)
+    if not runs or any(not isinstance(r[0],str) for r in runs):return None
+    for _,_,complete in sorted(runs,reverse=True):
+        if not complete or complete.get('state')!='complete' or complete.get('exit_code')!=0:continue
+        saved=complete.get('receipt') or {}
+        if (saved.get('classification')!='fresh-controller-bound'
+                or complete.get('dependency_key')!=canonical(deps)
+                or saved.get('environment')!=deps['environment']
+                or saved.get('environment')!={'RUST_LOG':'info','PYTHONPATH':os.environ.get('PYTHONPATH')}
+                or changed(complete.get('artifacts',{})) or changed(saved.get('artifacts',{}))):continue
+        path=Path(root)/'build'/case.report;report=read(path)
+        if saved.get('path')!=str(path) or digest(path)!=saved.get('sha256'):continue
+        if not report or not required_extent(case,report):continue
+        if report.get('evidence') and status(path)['status']!='passed':continue
+        environment=(report.get('evidence') or {}).get('environment',{})
+        if 'PYTHONPATH' in environment and environment['PYTHONPATH']!=os.environ.get('PYTHONPATH'):continue
+        return saved
+    return None
+
 def dependencies(case, root=ROOT):
     """Case observer closure plus conservative unclassified input fallback.
 
@@ -77,6 +129,7 @@ def dependencies(case, root=ROOT):
     root=Path(root)
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
     manifests=[]
+    optional_absence={}
     if case.category=='native':
         # The emitted development product and listing are shared by native
         # observers; fixture reports additionally bind their own actual hunks.
@@ -107,13 +160,34 @@ def dependencies(case, root=ROOT):
     for section, name in (('tools','copperline'),('inputs','amiga_rom')):
         paths.add(Path(cfg.get(section,name,fallback=str(root/('missing-'+name)))))
     paths.add(root/'.tools/vasm/vasmm68k_mot.exe')
+    environment={'RUST_LOG':'info','PYTHONPATH':os.environ.get('PYTHONPATH')}
+    if case.id=='metrics':
+        from native_metrics import CASES
+        product=root/'build/amiga/interfaces/enhanced'
+        paths.update((product/'baseline-rally',product/'baseline-rally.compile.json',product/'native.lst',product/'build-report.json'))
+        for relative in CASES.values():
+            report_path=root/relative;paths.add(report_path);report=read(report_path) or {}
+            if isinstance(report.get('capture'),str):paths.add(root/report['capture'])
+            meta=report.get('evidence') or {}
+            paths.update(root/name for name in meta.get('files',{}))
+            paths.update(root/name for name in meta.get('compiled_executables',{}))
+            for name in meta.get('optional_inputs_absent',[]):
+                optional=root/name;optional_absence[str(optional)]=not optional.exists()
+                if optional.exists():paths.add(optional)
+        composite=os.environ.get('CTENNIS_ACCEPTANCE_COMPOSITE')
+        environment['CTENNIS_ACCEPTANCE_COMPOSITE']=composite
+        if composite:paths.add(Path(composite))
     return {'policy':'compiled-product-and-observer-v1' if manifests else 'conservative-source-and-observer-closure-v1','files':snapshot(paths),
             'consumed_products':{m['executable']:m['executable_sha256'] for m in manifests},
-            'command':[sys.executable,*case.args],'environment':{'RUST_LOG':'info','PYTHONPATH':os.environ.get('PYTHONPATH')},
+            **({'optional_absence':optional_absence} if case.id=='metrics' else {}),
+            'command':[sys.executable,*case.args],'environment':environment,
             'target':'PAL/NTSC A500 68000 OCS 512K chip, case command/receipt defines exact extent'}
 
-def compatible_receipt(case, root=ROOT):
+def compatible_receipt(case, root=ROOT, check_history=True):
     """Import only the latest exact-CLI passing receipt, with original provenance."""
+    if check_history:
+        blocker=execution_blocker(case,dependencies(case,root),root)
+        if blocker:return None,blocker
     if case.category=='core-proof':
         from campaign_core_evidence import validate
         return validate(case,root)
@@ -125,8 +199,16 @@ def compatible_receipt(case, root=ROOT):
         return None,'Missing or unreadable latest receipt'
     row=status(path)
     if row['status']!='passed':
+        if case.id in ('startup','video-standard'):
+            bound=bound_receipt(case,dependencies(case,root),root)
+            if bound:return bound,'Compatible legacy observer bound by prior actual controller execution'
         return None,'Latest receipt '+row['status']+': '+str(row.get('reason',row.get('changed_dependencies','')))
     meta=report['evidence']
+    environment=meta.get('environment',{})
+    if 'PYTHONPATH' not in environment or environment['PYTHONPATH']!=os.environ.get('PYTHONPATH'):
+        bound=bound_receipt(case,dependencies(case,root),root) if 'PYTHONPATH' not in environment else None
+        if bound:return bound,'Compatible environment bound by prior actual controller execution'
+        return None,'Recorded PYTHONPATH differs or is unverified'
     command=meta.get('command',[])
     if not command or Path(command[0]).name!=Path(case.args[0]).name or command[1:]!=list(case.args[1:]):
         return None,'Full command/negative controls differ'
@@ -163,20 +245,48 @@ def fresh_receipt(case,root,dependency_key):
     """Bind newly executed legacy observers without upgrading historical results."""
     path=Path(root)/'build'/case.report; report=read(path)
     if not report or not required_extent(case,report):return None
-    if case.id not in ('startup','video-standard'):return None
+    meta=report.get('evidence')
+    standard=bool(meta)
+    if standard:
+        # ReportRun's historical environment records RUST_LOG only. A fresh
+        # controller execution may add its own binding, never rewrite that
+        # original receipt or infer an old missing environment.
+        if status(path)['status']!='passed':return None
+        command=meta.get('command',[])
+        if (not command or Path(command[0]).name!=Path(case.args[0]).name
+                or command[1:]!=list(case.args[1:])):return None
+        environment=meta.get('environment',{})
+        if 'PYTHONPATH' in environment and environment['PYTHONPATH']!=os.environ.get('PYTHONPATH'):return None
+    elif case.id not in ('startup','video-standard'):return None
     # These two observers lack ReportRun metadata. Only execution by this
     # controller can supply their missing identities; historical reports stay
     # ineligible. Capture emitted fixture/release bytes and all local artifacts.
-    artifacts=snapshot(p for p in path.parent.rglob('*') if p.is_file())
-    if case.id=='startup':
+    artifacts=dict(meta['files']) if standard else snapshot(p for p in path.parent.rglob('*') if p.is_file())
+    if not standard and case.id=='startup':
         product=Path(root)/'build/amiga/interfaces/enhanced'
         artifacts.update(snapshot([product/'delivery/baseline-rally',product/'delivery/baseline-rally.adf',product/'native.lst']))
         if (report.get('release_sha256')!=digest(product/'delivery/baseline-rally')
                 or report.get('adf_sha256')!=digest(product/'delivery/baseline-rally.adf')):return None
-    else:
+    elif not standard:
         if report.get('executable_sha256')!=digest(path.parent/'fixture'):return None
-    return {'path':str(path),'sha256':digest(path),'original_evidence':None,'artifacts':artifacts,
-            'classification':'fresh-controller-bound','dependency_key':dependency_key}
+    return {'path':str(path),'sha256':digest(path),'original_evidence':meta,'artifacts':artifacts,
+            'classification':'fresh-controller-bound','dependency_key':dependency_key,
+            'environment':{'RUST_LOG':'info','PYTHONPATH':os.environ.get('PYTHONPATH')}}
+
+def receipt_token(case,root):
+    if not case.report:return None
+    try:
+        stat=(Path(root)/'build'/case.report).stat()
+        return (stat.st_ino,stat.st_mtime_ns,stat.st_size)
+    except OSError:return None
+
+def produced_receipt(case,root,started,before):
+    report=read(Path(root)/'build'/case.report) or {}
+    meta=report.get('evidence') or {}
+    if meta:
+        return (receipt_token(case,root)!=before and isinstance(meta.get('started_utc'),str)
+                and meta['started_utc']>=started)
+    return receipt_token(case,root)!=before and receipt_token(case,root) is not None
 
 def attempt_valid(attempt, case, deps, root=ROOT):
     if not attempt or attempt.get('state')!='complete' or attempt.get('exit_code')!=0:
@@ -184,11 +294,14 @@ def attempt_valid(attempt, case, deps, root=ROOT):
     if attempt.get('dependency_key')!=canonical(deps) or changed(attempt.get('artifacts',{})):
         return False
     if attempt.get('orchestration')!=orchestration_identity():return False
+    if execution_blocker(case,deps,root):return False
     if case.report:
         saved=attempt.get('receipt',{})
         if saved.get('classification')=='fresh-controller-bound':
             path=Path(saved['path']);report=read(path)
             return bool(digest(path)==saved['sha256'] and not changed(saved['artifacts'])
+                        and saved.get('environment')==deps.get('environment')
+                        and saved.get('environment')=={'RUST_LOG':'info','PYTHONPATH':os.environ.get('PYTHONPATH')}
                         and report and required_extent(case,report))
         imported,_=compatible_receipt(case,root)
         # The mutable latest receipt is authoritative even if an old immutable
@@ -202,7 +315,10 @@ def plan(case_list, directory, root=ROOT):
         deps=dependencies(case,root)
         attempts=sorted((Path(directory)/'attempts'/case.id).glob('*'))
         latest=read(attempts[-1]/'completion.json') if attempts else None
-        if attempts and not attempt_valid(latest,case,deps,root):
+        blocker=execution_blocker(case,deps,root,directory)
+        if blocker:
+            receipt=None;reason=blocker
+        elif attempts and not attempt_valid(latest,case,deps,root):
             # A latest same-key failure must be run, never search older passes.
             receipt=None;reason='Latest campaign attempt failed, incomplete or invalidated'
             if (latest and latest.get('state')=='complete' and latest.get('exit_code')==0
@@ -213,7 +329,8 @@ def plan(case_list, directory, root=ROOT):
             receipt=latest.get('receipt');reason='Compatible completed campaign attempt'
         else:
             receipt,reason=compatible_receipt(case,root)
-        result.append({'id':case.id,'action':'reuse' if receipt or attempt_valid(latest,case,deps,root) else 'run',
+        reusable=not blocker and (receipt or attempt_valid(latest,case,deps,root))
+        result.append({'id':case.id,'action':'reuse' if reusable else 'run',
                        'reason':reason,'dependencies':deps,'dependency_key':canonical(deps),'receipt':receipt,
                        'prior_artifacts':dict(latest.get('artifacts',{}),**{str(attempts[-1]/'completion.json'):digest(attempts[-1]/'completion.json')}) if latest and attempt_valid(latest,case,deps,root) else {}})
     return result
@@ -326,13 +443,17 @@ def worker(directory, case_list, root=ROOT, lock_fd=None):
             attempt=base/f'{len(list(base.iterdir()))+1:06d}';attempt.mkdir()
             started=now(); artifact={}
             provenance=commit_provenance(root);orchestration=orchestration_identity()
-            atomic_json(attempt/'started.json',dict(decision,started_utc=started,controller=process_identity(),
-                        provenance=provenance,orchestration=orchestration))
+            begin=dict(decision,started_utc=started,controller=process_identity(),provenance=provenance,
+                       orchestration=orchestration,resolved_build=str((Path(root)/'build').resolve()),attempt=str(attempt))
+            history=(Path(root)/'build').resolve()/'.acceptance-case-history'/case.id/decision['dependency_key']/uuid.uuid4().hex
+            atomic_json(history/'started.json',begin)
+            atomic_json(attempt/'started.json',begin)
             if decision['action']=='reuse':
                 code=0;receipt=decision['receipt']
                 artifact.update(decision['prior_artifacts'])
             else:
                 receipt=None
+                before_receipt=receipt_token(case,root)
                 with (attempt/'child.log').open('wb') as output:
                     child=subprocess.Popen([sys.executable,*case.args],cwd=root,
                         env=dict(os.environ,RUST_LOG='info'),stdout=output,stderr=subprocess.STDOUT,
@@ -341,11 +462,15 @@ def worker(directory, case_list, root=ROOT, lock_fd=None):
                     code=child.wait()
                 artifact=snapshot([attempt/'child.log'])
                 if code==0 and case.report:
-                    receipt,reason=compatible_receipt(case,root)
-                    if not receipt:receipt=fresh_receipt(case,root,decision['dependency_key'])
+                    reason='Child did not produce a receipt for this actual invocation'
+                    if produced_receipt(case,root,started,before_receipt):
+                        receipt,reason=compatible_receipt(case,root,check_history=False)
+                        if not receipt:receipt=fresh_receipt(case,root,decision['dependency_key'])
                     if not receipt:code=1;decision['validation_error']=reason
                 if code==0 and changed(decision['dependencies']['files']):
                     code=1;decision['validation_error']='Dependencies changed during execution'
+                if code==0 and any((not Path(name).exists())!=absent for name,absent in decision['dependencies'].get('optional_absence',{}).items()):
+                    code=1;decision['validation_error']='Optional input presence changed during execution'
                 if code==0 and orchestration_identity()!=orchestration:
                     code=1;decision['validation_error']='Orchestration changed during execution'
                 if code==0:
@@ -362,6 +487,7 @@ def worker(directory, case_list, root=ROOT, lock_fd=None):
                           started_utc=started,completed_utc=now(),receipt=receipt,artifacts=artifact,
                           provenance=provenance,orchestration=orchestration)
             atomic_json(attempt/'completion.json',complete)
+            atomic_json(history/'completion.json',complete)
             rows.append({'id':case.id,'attempt':str(attempt),'exit_code':code,'classification':decision['action']})
             atomic_json(directory/'report.json',{'campaign':campaign['id'],'state':'incomplete' if code==0 else 'failed','passed':False,'cases':rows})
             if code:return code

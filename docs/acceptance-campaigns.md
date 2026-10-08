@@ -42,13 +42,24 @@ verified compiled manifest use a conservative source/asset fallback. Commit
 provenance is retained but a new documentation commit alone is not a rerun key.
 An unrelated host test edit does not invalidate declared native observers.
 
-Only compatible, complete passing evidence can be reused. The latest canonical
-receipt and latest campaign attempt remain authoritative: failure, interruption,
-missing provenance or a changed artifact cannot be replaced by an older pass.
-Preflight gives the reason. Older startup and video-selector reports lack the
-uniform receipt metadata and cannot be imported; execution through this
-controller supplies identities for subsequent resume without rewriting their
-original report format.
+Only compatible, complete passing evidence can be reused. Execution history is
+shared across campaigns in the same resolved build directory, for each exact
+case/dependency key. A failed or interrupted execution blocks older passes even
+when a new campaign is started and the child left the canonical report untouched.
+A successful reuse does not clear that block; a compatible successful execution
+does. The latest canonical receipt also remains authoritative. Preflight explains
+failure, interruption, missing provenance and changed artifacts.
+
+Imported native receipts must explicitly record the compatible Python provider
+environment, including `PYTHONPATH`; missing metadata is unverified, rather than
+an assumed unset value. Execution through this controller binds fresh results to
+the actual environment without rewriting their original report format. This
+also supplies the missing uniform provenance for older startup and video-selector
+observers. Historical unverified receipts require execution before reuse.
+
+The resource collector's freshness includes the runtime/build receipts and
+artifacts it consumes. Source equality alone cannot reuse a prior collector pass
+after a consumed resource receipt becomes failed or incomplete.
 
 Each campaign lives under ignored `build/acceptance/campaigns/ID/`. Its immutable
 numbered attempts retain start/child identity, logs, exact receipt copies and

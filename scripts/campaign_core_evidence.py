@@ -45,6 +45,7 @@ def validate(case, root=ROOT):
     meta = report['evidence']
     command = meta.get('command') or ['']
     if (report.get('proof') != case.id.removeprefix('core-') or
+            'PYTHONPATH' not in meta.get('environment', {}) or
             meta.get('environment', {}).get('PYTHONPATH') != os.environ.get('PYTHONPATH') or
             command[1:] != list(case.args[1:]) or
             Path(command[0]).name != Path(case.args[0]).name or

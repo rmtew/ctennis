@@ -76,6 +76,107 @@ class CampaignTests(unittest.TestCase):
         receipt=json.loads((self.directory/'attempts/fake/000001/completion.json').read_text())
         self.assertEqual(receipt['state'],'failed');self.assertEqual(receipt['exit_code'],7)
         self.assertIn(str(self.directory/'attempts/fake/000001/child.log'),receipt['artifacts'])
+    def test_new_campaign_rejects_old_native_pass_after_child_exit7(self):
+        self.child('raise SystemExit(7)\n')
+        self.case=Case('fake',('child.py',),'tests/old-native/report.json')
+        old=self.root/'build'/self.case.report;atomic_json(old,{'passed':True})
+        prior=self.directory/'attempts/fake/000001';prior.mkdir(parents=True)
+        atomic_json(prior/'started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:00+00:00'))
+        with patch.object(campaign,'compatible_receipt',return_value=({'path':str(old),'sha256':digest(old)},'old pass')):
+            self.assertEqual(self.run_worker(),7)
+            new=self.root/'new-campaign';new.mkdir()
+            decision=campaign.plan([self.case],new,self.root)[0]
+            self.assertEqual(decision['action'],'run');self.assertIn('shared-workspace',decision['reason'])
+        self.assertEqual(json.loads(old.read_text()),{'passed':True})
+    def test_new_campaign_rejects_unfinished_execution(self):
+        history=self.root/'build/.acceptance-case-history/fake'/campaign.canonical(self.deps)/'interrupted'
+        atomic_json(history/'started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:00+00:00'))
+        with patch.object(campaign,'compatible_receipt',return_value=({'sha256':'oldpass'},'old pass')):
+            self.assertEqual(campaign.plan([self.case],self.root/'new',self.root)[0]['action'],'run')
+    def test_later_reused_pass_does_not_clear_failed_actual_execution(self):
+        base=self.root/'build/.acceptance-case-history/fake'/campaign.canonical(self.deps)
+        for name,action,code in [('01','run',7),('02','reuse',0)]:
+            atomic_json(base/name/'started.json',dict(action=action,dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:0'+name[-1]+'+00:00'))
+            atomic_json(base/name/'completion.json',dict(state='failed' if code else 'complete',exit_code=code))
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+        atomic_json(base/'03/started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:03+00:00'))
+        atomic_json(base/'03/completion.json',dict(state='complete',exit_code=0))
+        self.assertIsNone(campaign.execution_blocker(self.case,self.deps,self.root))
+    def test_known_index_key_missing_or_corrupt_record_fails_closed(self):
+        base=self.root/'build/.acceptance-case-history/fake'/campaign.canonical(self.deps)/'known'
+        base.mkdir(parents=True)
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+        (base/'started.json').write_text('corrupt')
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+        atomic_json(base/'started.json',dict(action='run',dependency_key='different',started_utc='2026-01-01T00:00:00+00:00'))
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+        atomic_json(base/'started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:00+00:00'))
+        (base/'completion.json').write_text('corrupt')
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+    def test_legacy_campaign_failure_is_scanned_without_index(self):
+        old=self.root/'build/acceptance/campaigns/legacy/attempts/fake/000001'
+        atomic_json(old/'started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:00+00:00'))
+        atomic_json(old/'completion.json',dict(state='failed',exit_code=7))
+        self.assertIsNotNone(campaign.execution_blocker(self.case,self.deps,self.root))
+        self.assertIsNone(campaign.execution_blocker(self.case,{'different':'key'},self.root))
+    def test_imported_native_pythonpath_missing_and_different_rejected(self):
+        case=Case('fake',('child.py',),'tests/native/report.json')
+        path=self.root/'build'/case.report
+        report=dict(passed=True,evidence={'command':['child.py'],'files':{},'environment':{'RUST_LOG':'info'}})
+        with patch.object(campaign,'status',return_value={'status':'passed'}),patch.dict(os.environ,{'PYTHONPATH':'current'}):
+            atomic_json(path,report);self.assertIsNone(campaign.compatible_receipt(case,self.root)[0])
+            report['evidence']['environment']['PYTHONPATH']='other';atomic_json(path,report)
+            self.assertIsNone(campaign.compatible_receipt(case,self.root)[0])
+            report['evidence']['environment']['PYTHONPATH']='current';atomic_json(path,report)
+            self.assertIsNotNone(campaign.compatible_receipt(case,self.root)[0])
+    def test_fresh_environment_binding_reuses_in_new_campaign(self):
+        case=Case('fake',('child.py',),'tests/native/report.json')
+        self.deps['environment']={'RUST_LOG':'info','PYTHONPATH':None}
+        path=self.root/'build'/case.report
+        atomic_json(path,dict(passed=True,evidence={'command':['child.py'],'files':{},'environment':{'RUST_LOG':'info'}}))
+        with patch.object(campaign,'status',return_value={'status':'passed'}),patch.dict(os.environ,{},clear=True):
+            saved=campaign.fresh_receipt(case,self.root,campaign.canonical(self.deps));self.assertIsNotNone(saved)
+            history=self.root/'build/.acceptance-case-history/fake'/campaign.canonical(self.deps)/'actual'
+            atomic_json(history/'started.json',dict(action='run',dependency_key=campaign.canonical(self.deps),started_utc='2026-01-01T00:00:00+00:00'))
+            atomic_json(history/'completion.json',dict(state='complete',exit_code=0,dependency_key=campaign.canonical(self.deps),receipt=saved,artifacts={}))
+            self.assertEqual(campaign.plan([case],self.root/'new',self.root)[0]['action'],'reuse')
+            with patch.dict(os.environ,{'PYTHONPATH':'different'}):
+                self.assertIsNone(campaign.compatible_receipt(case,self.root)[0])
+    def test_exit0_cannot_bind_untouched_old_receipt(self):
+        case=Case('fake',('child.py',),'tests/native/report.json');path=self.root/'build'/case.report
+        atomic_json(path,dict(passed=True,evidence={'started_utc':'2026-01-01T00:00:00+00:00'}))
+        self.assertFalse(campaign.produced_receipt(case,self.root,'2026-01-02T00:00:00+00:00',campaign.receipt_token(case,self.root)))
+    def test_fresh_environment_binding_cannot_override_contradictory_header(self):
+        case=Case('fake',('child.py',),'tests/native/report.json');path=self.root/'build'/case.report
+        atomic_json(path,dict(passed=True,evidence={'command':['child.py'],'files':{},'environment':{'RUST_LOG':'info','PYTHONPATH':'old'}}))
+        with patch.object(campaign,'status',return_value={'status':'passed'}),patch.dict(os.environ,{'PYTHONPATH':'new'}):
+            self.assertIsNone(campaign.fresh_receipt(case,self.root,campaign.canonical(self.deps)))
+    def test_metrics_optional_absence_is_not_required_missing_file(self):
+        self.stub.stop()
+        try:
+            from native_metrics import CASES
+            path=self.root/next(iter(CASES.values()))
+            optional='build/tests/optional-never-run.json'
+            atomic_json(path,{'passed':True,'evidence':{'optional_inputs_absent':[optional]}})
+            case=Case('metrics',('scripts/native_metrics.py',),category='host')
+            deps=campaign.dependencies(case,self.root)
+            self.assertNotIn(str(self.root/optional),deps['files'])
+            self.assertTrue(deps['optional_absence'][str(self.root/optional)])
+        finally:self.stub.start()
+    def test_metrics_runtime_failure_and_composite_invalidate_identity(self):
+        self.stub.stop()
+        try:
+            from native_metrics import CASES
+            relative=next(iter(CASES.values()));path=self.root/relative;atomic_json(path,{'passed':True})
+            case=Case('metrics',('scripts/native_metrics.py',),category='host')
+            initial=campaign.canonical(campaign.dependencies(case,self.root))
+            atomic_json(path,{'passed':False})
+            self.assertNotEqual(initial,campaign.canonical(campaign.dependencies(case,self.root)))
+            plan=self.root/'composite.json';atomic_json(plan,{'passed':True})
+            with patch.dict(os.environ,{'CTENNIS_ACCEPTANCE_COMPOSITE':str(plan)}):
+                old=campaign.canonical(campaign.dependencies(case,self.root));atomic_json(plan,{'passed':False})
+                self.assertNotEqual(old,campaign.canonical(campaign.dependencies(case,self.root)))
+        finally:self.stub.start()
     def test_live_controller_not_reclaimed(self):
         atomic_json(self.directory/'owner.json',{'controller':campaign.process_identity()})
         with self.assertRaisesRegex(RuntimeError,'already running'):self.run_worker()

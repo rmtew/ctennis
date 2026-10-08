@@ -1,5 +1,6 @@
 """Compatibility rejection must precede expensive CPU replay or capture reuse."""
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -56,6 +57,22 @@ class CoreEvidenceTests(unittest.TestCase):
                 receipt, reason = evidence.validate(case, directory)
             self.assertIsNone(receipt)
             self.assertIn('failed', reason)
+
+    def test_import_requires_explicit_matching_python_environment(self):
+        case = evidence.core_cases()[0]
+        for environment, reusable in (({}, False), ({'PYTHONPATH': '/old/provider'}, False),
+                                       ({'PYTHONPATH': None}, True)):
+            with self.subTest(environment=environment), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory)/'build'/case.report
+                path.parent.mkdir(parents=True)
+                report = {'passed': True, 'proof': 'pal-demo',
+                          'execution': 'actual-68000-cpu-only', 'result': {'operations': 1},
+                          'evidence': {'command': list(case.args), 'environment': environment, 'files': {}}}
+                path.write_text(json.dumps(report))
+                with patch.object(evidence, 'status', return_value={'status': 'passed'}),\
+                     patch.dict(os.environ, {}, clear=True):
+                    receipt, _ = evidence.validate(case, directory)
+                self.assertEqual(receipt is not None, reusable)
 
 
 if __name__ == '__main__':
