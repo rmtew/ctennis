@@ -181,8 +181,8 @@ def add_seek_shape(stage,files,ntsc):
             final_meta=bytearray.fromhex(metadata)
             if commit:final_meta[34:42]=(569).to_bytes(8,'big')
             proof.append(dict(api_row_index=index,name=name,generation=generation,
-                admission=None if requested is None else dict(current=1000,last=1000,phase=0,interval=11838,
-                    remaining=11838,reserve=10000,admitted=requested,requested_work=requested),
+                admission=None if requested is None else dict(current=1000,last=1000,phase=0,interval=11947 if ntsc else 11838,
+                    remaining=11947 if ntsc else 11838,reserve=10000,admitted=requested,requested_work=requested),
                 body_operations=bodies,logical_body_operations=bodies,working_cursor=cursor,
                 working_state=working(cursor),reference_working_state=working(cursor),
                 public_state=working(cursor) if commit else selected,public_metadata=final_meta.hex(),
@@ -293,6 +293,7 @@ class NativePreviewExtent(unittest.TestCase):
         for path,value in ((('rows',1,'admission','admitted'),1),
                 (('rows',1,'admission','requested_work'),True),
                 (('rows',1,'admission','remaining'),11839),
+                (('rows',1,'admission','interval'),0xffffffff),
                 (('rows',1,'admission','reserve'),9999),
                 (('rows',1,'logical_body_operations'),1),
                 (('rows',1,'public_state'),'11'*318),

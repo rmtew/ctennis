@@ -186,7 +186,7 @@ def complete_bytes(value,length):
     except ValueError:return False
 
 
-def seek_validation(block,api_rows,frames,files):
+def seek_validation(block,api_rows,frames,files,interval_whole):
     """Private progress, timer admission and retirement bind actual API readbacks."""
     if (not isinstance(block,dict) or block.get('passed') is not True
             or block.get('cpu_receipt_sha256')!=SEEK_CPU_SHA
@@ -235,6 +235,7 @@ def seek_validation(block,api_rows,frames,files):
         if (not isinstance(admission,dict) or set(admission)!=keys
                 or any(not integer(admission[k],0,2**32-1) for k in keys)
                 or admission['reserve']!=block['reserve_eclock_ticks']
+                or admission['interval'] not in (interval_whole,interval_whole+1)
                 or admission['admitted'] not in (0,1) or admission['requested_work'] not in (0,1)):return False
         elapsed=(admission['last']-admission['current'])&0xffffffff
         available=admission['interval']-admission['phase']-elapsed
@@ -624,7 +625,7 @@ def required_preview_native_extent(case_id,report):
     spans.sort()
     if any(a[1]>b[0] for a,b in zip(spans,spans[1:])):return False
     if not body_observation(stage.get('body_observation'),rows,hunks):return False
-    if not seek_validation(stage.get('seek_validation'),rows,stage['body_observation']['frames'],evidence.get('files') or {}):return False
+    if not seek_validation(stage.get('seek_validation'),rows,stage['body_observation']['frames'],evidence.get('files') or {},video['simulation_interval_whole']):return False
     frames=stage['body_observation']['frames']
     if any(f['ownership']['seek_active'] for f in frames if rows[f['api_row_index']]['name']=='game_preview_step'):return False
     seek_storage=identity.get('seek_storage')
