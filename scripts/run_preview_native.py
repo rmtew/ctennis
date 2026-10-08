@@ -21,12 +21,15 @@ from native_metrics_observation import distribution
 from native_tools import ROOT,ASSEMBLER,run,emulator_config
 from ordinary_cadence import chip_memory
 from preview_extended_proof import continuous,table,value
+from preview_proof import point
 from preview_native_observation import Observer,INPUTS,RAW_CAP
 from run_shared_match_core import READONLY
 
 CAPS=dict(accepted_request_generations=7,playing_dispatches=512,ordinary_operations=2049,
     title_callbacks=256,paused_callbacks=2048,video_fields=4096,seconds=70,
     worker_calls_per_job=8192,samples_per_path=256,raw_bytes=RAW_CAP)
+CPU9_RECEIPT=ROOT/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json'
+CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
 COMMANDS=('game_history_freeze','game_history_seek','game_preview_request',
     'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest')
 
@@ -148,13 +151,14 @@ class Native:
         assert self.cpu.events==row['events'],('Actual native ordinary intents',row['index'])
         if row['operation']=='game_core_init':attach(self.cpu);self.states[0]=self.cpu.state();return
         self.normal.append((row['operation'],row['arguments']))
-        self.states[len(self.normal)]=self.cpu.state()
+        self.states[len(self.normal)]=bytes.fromhex(row['state'])
         if row['operation']=='game_core_select':
             assert row['arguments'][1]==0xace1,'Fixture selection must declare its actual seed'
             self.selected_seconds=row['end']['seconds'];self.selected_frame=row['end']['frame']
             self.selection_operation=len(self.normal)-1
 
     def check_caps(self):
+        self.session.flush_rpc();self.observer.raw.flush()
         assert total_bytes(self.directory.iterdir())<RAW_CAP-8*1024*1024,'All-artifact native cap approached'
         if self.selected_seconds is None:
             assert len(self.callback_stops)<=CAPS['title_callbacks'],'Title acquisition cap'
@@ -191,6 +195,7 @@ class Native:
         if not self.at_before:self.next_callback()
         self.session.flush_rpc()
         self.observer.finish() # Drain the genuine sampling interval before owning an API.
+        self.check_caps()
         before=self.block('game_core_state','game_core_state_end')
         metadata=self.block('game_history_state','game_history_state_end')
         store=self.block('game_history_buffer','game_history_buffer_end')
@@ -201,6 +206,7 @@ class Native:
             'data':b''.join(v.to_bytes(4,'big') for v in arguments).hex()})
         self.session.inspect('mem.write',{'addr':self.symbols['preview_native_command'],
             'data':(COMMANDS.index(name)+1).to_bytes(2,'big').hex()})
+        self.check_caps() # Include flushed snapshot RPCs before beginning native work.
         self.observer.begin(name);self.subscribe(True)
         self.session.inspect('break_remove',{'id':self.breakpoint})
         self.breakpoint=self.arm('preview_native_return')
@@ -340,6 +346,7 @@ class Native:
                 boundaries[variant].append(dict(contact=value(state,self.symbols,'game_contact'),
                     flight=value(state,self.symbols,'game_flight'),lifecycle=value(state,self.symbols,'game_lifecycle',2)))
         result['outputs']=[outputs[0],outputs[1]]
+        prefix_validation=verify_incoming_prefix(self,ordinal,selection,result)
         classes=[{1:'landing',2:'net',3:'out',4:'interception',5:'no-contact',6:'limit',7:'lifecycle'}[v] for v in result['outcomes']]
         self.maximum_job_calls=max(self.maximum_job_calls,len(costs))
         request_begin=self.observer.api_rows[request_index]['begin']
@@ -354,7 +361,7 @@ class Native:
         observation=dict(name=name,seed=0xace1,ordinal=ordinal,selection=selection,end=end,x=x,y=y,
             selected=selected,stream=list(self.normal),traces=traces,result=result,classes=classes,
             launches={0:[],1:[]},boundaries=boundaries,costs=costs_report,bounds=table(self.cpu,end),
-            coincident=bool(self.number('game_preview_coincident')))
+            coincident=bool(self.number('game_preview_coincident')),incoming_prefix_validation=prefix_validation)
         return observation
 
     def replacement(self,phase,ordinal,end,x,y):
@@ -396,13 +403,36 @@ class Native:
             canceled_result_rejected=True,selected_history_output_preserved=True)
 
 
+def verify_incoming_prefix(native,ordinal,selection,result):
+    """Expected points come only from independently captured native boundaries."""
+    if ordinal==0xffff:
+        operations=[];expected=b''
+    else:
+        probe,kind,end=attempts(native.cpu)[ordinal]
+        incoming=next((r for r in reversed(native.launches)
+            if r['end']!=end and r['origin']<probe),None)
+        assert kind in (1,2) and incoming is not None
+        assert result['incoming']==incoming['origin']<=selection<=probe
+        operations=[i for i in range(incoming['origin'],selection)
+            if native.normal[i][0]=='game_tick_dispatch']
+        expected=b''.join(point(native.states[i+1],native.symbols) for i in operations)
+    assert len(expected)//8==result['prefix'],'Native prefix count differs from retained actual dispatches'
+    assert all(path[:len(expected)]==expected for path in result['paths']), 'Native prefix differs from actual retained flight'
+    return dict(passed=True,source='actual-native-retained-dispatch-boundaries',
+        operation_cursors=operations,expected_samples=len(expected)//8,
+        expected_bytes=expected.hex(),expected_sha256=hashlib.sha256(expected).hexdigest())
+
+
 def qualify_resolver(native,generation):
-    """Budget one makes PRIME observable without executing either primer."""
+    """Stop at the first prepared generation, even if batching crossed PRIME."""
     for _ in range(CAPS['worker_calls_per_job']):
         state=native.number('game_preview_status')
-        if state==2:return
-        assert state==1,('Resolver qualification crossed PRIME without observing it',state)
-        native.step(generation,1)
+        assert native.number('game_preview_generation',4)==generation,'Replacement generation retired'
+        if 2<=state<=5:
+            assert native.number('game_preview_cache_valid')==1,'Post-resolve state has no prepared context'
+            return
+        assert state==1,('Replacement resolution became unavailable',state)
+        native.step(generation,4)
     raise AssertionError('Replacement resolver cap')
 
 
@@ -508,11 +538,15 @@ def run(standard):
     try:
         paths,tools=inputs_for('preview-native','scripts/run_preview_native.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
-        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s'}
+        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT}
+        assert digest(CPU9_RECEIPT)==CPU9_SHA,'Reviewed CPU endpoint receipt is unavailable or changed'
+        inherited=json.loads(CPU9_RECEIPT.read_text())
+        assert inherited['passed'] and inherited['evidence']['files']['amiga/game/preview.s']==digest(ROOT/'amiga/game/preview.s')
         transaction.meta.update(files=snapshot(paths),tools=tools)
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         print('Preparing bounded native preview',standard,flush=True)
         _,product=build_native();standalone,_=build_core()
+        assert {digest(product),digest(standalone)}==set(inherited['evidence']['compiled_executables'].values()),'Reviewed CPU9 products no longer match'
         product_listing=product.parent/'native.lst';core_listing=standalone.parent/'match-core.lst'
         executable,listing,manifest,overlay_identity=overlay(directory)
         product_manifest=compile_manifest(product,product_listing)
@@ -566,6 +600,10 @@ def run(standard):
                     physical_inputs=physical,telemetry=dict(notifications=observer.notifications,
                         dropped_notifications=0,dropped_accesses=0,public_boundary_drain_checks=observer.drain_checks),
                     caps=CAPS,observed_caps=observed,costs=costs,
+                    byte_cap_scope='stored-artifact-bytes; rpc-transcript-gzip; uncompressed-rpc-measured-separately',
+                    endpoint_classification_scope='inherited-reviewed-cpu9; no-fresh-native-launch-hook-qualification',
+                    inherited_endpoint_validation=dict(cpu_receipt_sha256=CPU9_SHA,
+                        scope='CPU9-independent-endpoints; native-labels-only'),
                     resources=dict(fixture_chip_free_bytes=memory['chip_free_bytes'],
                         fixture_loaded_bytes=sum(h['bytes'] for h in native.hunks),
                         product_static_loaded_bytes=hunk_layout(product)['loaded_payload_bytes']),
@@ -593,7 +631,10 @@ def run(standard):
         for observation in observations:
             print('Comparing uninterrupted actual core',observation['name'],flush=True)
             row=continuous(image,symbols,observation)
-            row.update(case_id=observation['name'],native_jsr_rts_preserved=True)
+            row.pop('actual_accepted_launches') # Native labels are not a new hook-qualified endpoint oracle.
+            row.update(case_id=observation['name'],native_jsr_rts_preserved=True,
+                incoming_prefix_validation=observation['incoming_prefix_validation'],
+                classification_scope='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9')
             completed.append(row)
         validation.update(completed_jobs=completed,continuous_actual_core_equal=True)
         report=dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
