@@ -53,4 +53,8 @@ def cases():
              'tests/shared-match-core-ntsc-history/report.json'),
         Case('preview-cpu', ('scripts/run_preview_proof.py',),
              'tests/preview-cpu/report.json', category='host'),
+        Case('preview-native-pal', ('scripts/run_preview_native.py',),
+             'tests/preview-native-pal/report.json'),
+        Case('preview-native-ntsc', ('scripts/run_preview_native.py','--ntsc'),
+             'tests/preview-native-ntsc/report.json'),
     ]

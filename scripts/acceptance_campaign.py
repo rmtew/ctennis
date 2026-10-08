@@ -129,6 +129,8 @@ def dependencies(case, root=ROOT):
     """
     root=Path(root)
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
+    if case.id in ('preview-native-pal','preview-native-ntsc'):
+        paths.add(root/'scripts/preview_native_fixture.s')
     manifests=[]
     optional_absence={}
     if case.category=='native':
@@ -710,6 +712,9 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id in ('preview-native-pal','preview-native-ntsc'):
+        from preview_native_extent import required_preview_native_extent
+        return required_preview_native_extent(case.id,report)
     if case.id=='preview-cpu':
         validation=report.get('preview_validation') or {}
         evidence=report.get('evidence') or {}
