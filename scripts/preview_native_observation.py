@@ -12,6 +12,7 @@ RESERVE=8*1024*1024
 PUBLICATION=('blank_seen','presentation_frames','presentation_copper','spare_copper',
     'front_copper','ready_copper','game_presented_generation','display_ready',
     'ready_completed','missed_presentation_deadlines','log_timer')
+PHYSICAL_INPUTS=('game_keyboard_matrix','ui_joystick_bits')
 INPUTS=(('game_keyboard_matrix',128),('ui_keyboard_entry_keys',128),
     ('ui_previous_keys',128),('ui_joystick_bits',2),('ui_joystick_previous',2),
     ('ui_joystick_pressed',2),('ui_joystick_entry',2),('game_native_pad_bits',2),
@@ -72,6 +73,7 @@ class Observer(TraceCollector):
         self.api_rows=[];self.frozen=False;self.problems=[];self.stack_min=symbols['game_stack_top']
         self.callback_rows=[];self.drain_checks=0;self.current_callback=None;self.timer_start=None;self.timer_origin=None
         self.input_shadow={n:bytearray(read(symbols[n],size)) for n,size in INPUTS}
+        self.physical_edges=[];self.joystick_pressed_observations=[];self.expected_joystick_pressed=[0,0]
         self.rules=irq_rules(listing,symbols,segments,locations)
         self.outside_publication_rules=outside_publication_rules(listing,symbols,segments)
         self.outside_publication_writes=[]
@@ -238,6 +240,25 @@ class Observer(TraceCollector):
             return
         self.problems.append(f'Forbidden native API nonstate/hardware write {pc:#x}->{a:#x}/{size}')
 
+    def input_write(self,name,address,data,position):
+        """Physical edges come from raw native samples, not host commands/timers."""
+        shadow=self.input_shadow[name];offset=address-self.symbols[name]
+        previous=bytes(shadow[offset:offset+len(data)])
+        for n,(old,new) in enumerate(zip(previous,data),offset):
+            if name in PHYSICAL_INPUTS and old!=new:
+                if name=='game_keyboard_matrix':assert old in (0,1) and new in (0,1)
+                self.physical_edges.append(dict(name=name,index=n,old=old,new=new,
+                    pressed_bits=new&~old,released_bits=old&~new,position=position,
+                    callback=self.current_callback['callback'] if self.current_callback is not None else None,
+                    frozen=self.frozen))
+                if self.current_callback is not None:self.current_callback['fresh_input']=True
+            if name=='ui_joystick_previous':self.expected_joystick_pressed[n]=new&~old
+            if name=='ui_joystick_pressed':
+                assert new==self.expected_joystick_pressed[n],'Native raw pressed mask differs from actual previous/current samples'
+                self.joystick_pressed_observations.append(dict(index=n,value=new,
+                    expected=self.expected_joystick_pressed[n],position=position))
+        shadow[offset:offset+len(data)]=data
+
     def observe(self,message):
         encoded=json.dumps(message,separators=(',',':'))+'\n'
         self.raw_bytes+=len(encoded.encode());self.notifications+=1
@@ -262,10 +283,7 @@ class Observer(TraceCollector):
             for name,shadow in self.input_shadow.items():
                 start=self.symbols[name]
                 if start<=a<a+size<=start+len(shadow):
-                    offset=a-start
-                    if shadow[offset:offset+size]!=data and self.current_callback is not None:
-                        self.current_callback['fresh_input']=True
-                    shadow[offset:offset+size]=data
+                    self.input_write(name,a,data,r['position'])
             for start,shadow in ((self.symbols['game_preview_state'],self.meta),
                                  (self.symbols['game_history_state'],self.history)):
                 if start<=a<a+size<=start+len(shadow):shadow[a-start:a-start+size]=data

@@ -91,6 +91,37 @@ class NativePreviewGuards(unittest.TestCase):
         observer._guard(self.event(observer.symbols['game_preview_storage']))
         self.assertIn('frozen preview context',observer.problems[-1])
 
+    def input_observer(self):
+        observer=self.observer()
+        names=('game_keyboard_matrix','ui_joystick_bits','ui_joystick_previous',
+            'ui_joystick_pressed','keyboard_ack_timer','ui_saved_volumes')
+        observer.symbols.update({name:0x30000+index*0x100 for index,name in enumerate(names)})
+        observer.input_shadow={name:bytearray(128 if name=='game_keyboard_matrix' else 6) for name in names}
+        observer.current_callback=dict(callback=1,fresh_input=False)
+        observer.physical_edges=[];observer.joystick_pressed_observations=[]
+        observer.expected_joystick_pressed=[0,0]
+        return observer
+
+    def test_ack_timers_and_audio_shadows_are_not_physical_edges(self):
+        observer=self.input_observer()
+        for name in ('keyboard_ack_timer','ui_saved_volumes'):
+            observer.input_write(name,observer.symbols[name],bytes([1]),{'cck':1})
+        self.assertFalse(observer.current_callback['fresh_input'])
+        self.assertEqual(observer.physical_edges,[])
+
+    def test_actual_physical_press_and_release_observations(self):
+        observer=self.input_observer();position={'cck':1}
+        def write(name,value):observer.input_write(name,observer.symbols[name],bytes([value]),position)
+        write('ui_joystick_bits',4);write('ui_joystick_previous',4);write('ui_joystick_pressed',4)
+        write('ui_joystick_bits',0);write('ui_joystick_previous',0);write('ui_joystick_pressed',0)
+        write('game_keyboard_matrix',1);write('game_keyboard_matrix',0)
+        self.assertTrue(observer.current_callback['fresh_input'])
+        self.assertEqual([(r['pressed_bits'],r['released_bits']) for r in observer.physical_edges],
+            [(4,0),(0,4),(1,0),(0,1)])
+        self.assertEqual(len(observer.joystick_pressed_observations),2)
+        with self.assertRaisesRegex(AssertionError,'pressed mask differs'):
+            write('ui_joystick_pressed',4)
+
     def test_irq_ack_value_and_actual_api_interval(self):
         observer=self.observer()
         observer.pending=dict(name='game_preview_step',begin=None,end=None,irq=0,irq_acknowledgements=0)

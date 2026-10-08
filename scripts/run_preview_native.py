@@ -375,10 +375,7 @@ class Native:
         self.call('game_preview_result',[generation],accepted=False)
         assert self.block('game_preview_storage','game_preview_storage_end')==before
         rows=len(self.observer.rows)
-        for _ in range(CAPS['worker_calls_per_job']):
-            if self.number('game_preview_status')==2:break
-            self.step(new_generation)
-        else:raise AssertionError('Replacement resolver cap')
+        qualify_resolver(self,new_generation)
         resolver=sum(r['ownership']['active']==1 for r in self.observer.rows[rows:])
         assert resolver>0
         selected=self.block('game_core_state','game_core_state_end');expected=bytearray(selected)
@@ -397,6 +394,16 @@ class Native:
             old_position=[x,y],new_position=[new_x,y],replacement_resolver_operations=resolver,
             cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
             canceled_result_rejected=True,selected_history_output_preserved=True)
+
+
+def qualify_resolver(native,generation):
+    """Budget one makes PRIME observable without executing either primer."""
+    for _ in range(CAPS['worker_calls_per_job']):
+        state=native.number('game_preview_status')
+        if state==2:return
+        assert state==1,('Resolver qualification crossed PRIME without observing it',state)
+        native.step(generation,1)
+    raise AssertionError('Replacement resolver cap')
 
 
 def json_value(value):
@@ -529,12 +536,14 @@ def run(standard):
                     loaded_start=worker_start,loaded_end=worker_start+len(native.worker),
                     fixture_executable_sha256=digest(executable))
                 observer=native.observer
-                physical=dict(joystick_press_edges=sum(a['kind']=='joystick' and a['pressed'] for a in native.input_actions),
-                    joystick_release_edges=sum(a['kind']=='joystick' and not a['pressed'] for a in native.input_actions),
-                    keyboard_presses=sum(a['kind']=='keyboard' and a['pressed'] for a in native.input_actions),
-                    keyboard_releases=sum(a['kind']=='keyboard' and not a['pressed'] for a in native.input_actions),
+                physical=dict(joystick_press_edges=sum(e['pressed_bits'].bit_count() for e in observer.physical_edges if e['name']=='ui_joystick_bits'),
+                    joystick_release_edges=sum(e['released_bits'].bit_count() for e in observer.physical_edges if e['name']=='ui_joystick_bits'),
+                    keyboard_presses=sum(bool(e['pressed_bits']) for e in observer.physical_edges if e['name']=='game_keyboard_matrix'),
+                    keyboard_releases=sum(bool(e['released_bits']) for e in observer.physical_edges if e['name']=='game_keyboard_matrix'),
                     pause_resume_observed=not native.number('ui_paused',1),
-                    fresh_input_callbacks=sum(r['fresh_input'] for r in observer.callback_rows),pause_volume_zero_writes=native.pause_volume_writes)
+                    fresh_input_callbacks=sum(r['fresh_input'] for r in observer.callback_rows),pause_volume_zero_writes=native.pause_volume_writes,
+                    observed_edges=observer.physical_edges,joystick_pressed_observations=observer.joystick_pressed_observations,
+                    requested_commands=native.input_actions,scope='Observed raw joystick-bit/keymatrix transitions; counters do not count host requests.')
                 ordinary=native.normal[native.selection_operation:]
                 acquisition=dict(seed=0xace1,seed_policy='DEMO_RECORDING-selection-only',
                     ordinary_operations=len(ordinary),playing_dispatches=sum(n=='game_tick_dispatch' for n,_ in ordinary),
