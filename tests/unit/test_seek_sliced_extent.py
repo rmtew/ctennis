@@ -29,6 +29,30 @@ def receipt():
         committed_metadata=committed.hex(),negatives=[dict(name=n,passed=True,preserved=True) for n in sorted(NEGATIVES)],
         costs=dict(begin_cpu_cycles=1,step_cpu_cycles=[r['cpu_cycles'] for r in rows],
             commit_cpu_cycles=1,cancel_cpu_cycles=1,maximum_stack_bytes=100))
+    older=bytearray(metadata);older[34:42]=(570).to_bytes(8,'big')
+    proof['preview_regression']=dict(accepted_after_commit=True,one_body_yield_preserved=True,
+        cancellation_preserved=True,seek_storage_preserved=True,ordinal=0,selection=569,end=0,x=1,y=1)
+    proof['sync_validation']=dict(passed=True,older_position=570,older_state='00'*318,older_metadata=older.hex(),
+        negatives=[dict(name=n,passed=True,preserved=True,cpu_cycles=1,
+            before_state='00'*318,after_state='00'*318,before_metadata=older.hex(),after_metadata=older.hex(),
+            before_store_sha256='03'*32,after_store_sha256='03'*32,before_job='00'*734,after_job='00'*734,
+            before_live_outputs=[],after_live_outputs=[],before_native_intents=[],after_native_intents=[])
+            for n in ('range','schema','simulation','state','opcode','select-mode')],
+        supersession=[dict(kind=k,target=t,position=t,actual_body_operations=c,state='00'*318,
+            reference_state='00'*318,generation_retired=True,stale_commit_preserved=True,cpu_cycles=1)
+            for k,t,c in (('zero-operation',512,0),('one-operation',513,1))])
+    origin=2**32-64;latest=origin+97;carry=[]
+    for target in (origin,2**32-1,2**32,2**32+1,2**32+17,latest):
+        checkpoint=target//64*64
+        carry.append(dict(target=target,origin=checkpoint,body_operations=target-checkpoint,
+            position=target,sync_state='00'*318,sliced_state='00'*318,sync_events=[],sliced_events=[],
+            begin_cpu_cycles=1,sync_cpu_cycles=1,commit_cpu_cycles=1,
+            working_rows=[dict(cursor=c,state='00'*318,reference_state='00'*318,actual_body_operations=1,cpu_cycles=1)
+                for c in range(checkpoint+1,target+1)]))
+    proof['carry_validation']=dict(passed=True,initial_origin=origin,operations=97,final_cursor=latest,
+        low_longword_carry_observed=True,maximum_stack_bytes=100,initialization_scope='Synthetic shapes only',rows=carry,
+        range_negatives=[dict(api=a,target=t,preserved=True,cpu_cycles=1)
+            for a in ('game_history_seek','game_history_seek_begin') for t in (origin-1,latest+1)])
     sha=hashlib.sha256(json.dumps([[r['operation'],r['arguments']] for r in rows],separators=(',',':')).encode()).hexdigest()
     return proof,sha
 
@@ -62,6 +86,23 @@ class SeekSlicedExtent(unittest.TestCase):
         proof,sha=receipt();proof['negatives'][0]=dict(proof['negatives'][1])
         self.assertFalse(proof_extent(proof,sha))
         proof,sha=receipt();proof['negatives'].pop();self.assertFalse(proof_extent(proof,sha))
+
+    def test_shared_validator_and_all_ledgers_remain_bound(self):
+        proof,sha=receipt()
+        for block,key,value in [('sync_validation','older_metadata','00'*72),
+                ('preview_regression','seek_storage_preserved',False)]:
+            changed=copy.deepcopy(proof);changed[block][key]=value
+            with self.subTest(key=key):self.assertFalse(proof_extent(changed,sha))
+        proof['sync_validation']['negatives'][0]['after_native_intents']=[['title']]
+        self.assertFalse(proof_extent(proof,sha))
+
+    def test_carry_checkpoint_and_one_body_edges_are_required(self):
+        proof,sha=receipt();proof['carry_validation']['rows'].pop(2)
+        self.assertFalse(proof_extent(proof,sha))
+        proof,sha=receipt();proof['carry_validation']['rows'][3]['working_rows'][0]['cursor']-=1
+        self.assertFalse(proof_extent(proof,sha))
+        proof,sha=receipt();proof['carry_validation']['range_negatives'][0]['api']=[]
+        self.assertFalse(proof_extent(proof,sha))
 
     def test_top_level_binds_source_core_and_three_actual_images(self):
         proof,sha=receipt();proofs={}

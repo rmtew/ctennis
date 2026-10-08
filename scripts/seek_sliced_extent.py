@@ -32,6 +32,80 @@ def encoded(value,length):
     return isinstance(value,str) and re.fullmatch('[0-9a-f]{'+str(2*length)+'}',value) is not None
 
 
+def integration_extent(proof):
+    preview=proof.get('preview_regression');sync=proof.get('sync_validation');carry=proof.get('carry_validation')
+    if (not isinstance(preview,dict) or any(preview.get(k) is not True for k in
+            ('accepted_after_commit','one_body_yield_preserved','cancellation_preserved','seek_storage_preserved'))
+            or type(preview.get('selection')) is not int or preview['selection']!=569
+            or not integer(preview.get('ordinal'),0,127) or not integer(preview.get('end'),0,1)
+            or any(not integer(preview.get(k),0,255) for k in ('x','y'))):return False
+    if (not isinstance(sync,dict) or sync.get('passed') is not True
+            or type(sync.get('older_position')) is not int or sync['older_position']!=570
+            or not encoded(sync.get('older_state'),318) or not encoded(sync.get('older_metadata'),72)):return False
+    if int.from_bytes(bytes.fromhex(sync['older_metadata'])[34:42],'big')!=570:return False
+    negatives=sync.get('negatives');success=sync.get('supersession')
+    if not isinstance(negatives,list) or len(negatives)!=6 or not isinstance(success,list) or len(success)!=2:return False
+    names=[]
+    for row in negatives:
+        if (not isinstance(row,dict) or row.get('passed') is not True or row.get('preserved') is not True
+                or not integer(row.get('cpu_cycles'),1)
+                or row.get('before_state')!=sync['older_state'] or row.get('after_state')!=sync['older_state']
+                or row.get('before_metadata')!=sync['older_metadata'] or row.get('after_metadata')!=sync['older_metadata']
+                or not encoded(row.get('before_store_sha256'),32)
+                or row.get('after_store_sha256')!=row['before_store_sha256']
+                or not encoded(row.get('before_job'),734) or row.get('after_job')!=row['before_job']
+                or not isinstance(row.get('before_live_outputs'),list)
+                or row.get('after_live_outputs')!=row['before_live_outputs']
+                or not isinstance(row.get('before_native_intents'),list)
+                or row.get('after_native_intents')!=row['before_native_intents']):return False
+        names.append(row.get('name'))
+    if any(not isinstance(n,str) for n in names) or set(names)!={'range','schema','simulation','state','opcode','select-mode'}:return False
+    for row,(kind,target,count) in zip(success,(('zero-operation',512,0),('one-operation',513,1))):
+        if (not isinstance(row,dict) or row.get('kind')!=kind
+                or any(type(row.get(k)) is not int or row[k]!=v for k,v in
+                    dict(target=target,position=target,actual_body_operations=count).items())
+                or not encoded(row.get('state'),318) or row.get('reference_state')!=row['state']
+                or row.get('generation_retired') is not True or row.get('stale_commit_preserved') is not True
+                or not integer(row.get('cpu_cycles'),1)):return False
+    return carry_extent(carry)
+
+
+def carry_extent(carry):
+    origin=2**32-64;latest=origin+97;targets=(origin,2**32-1,2**32,2**32+1,2**32+17,latest)
+    if (not isinstance(carry,dict) or carry.get('passed') is not True
+            or carry.get('low_longword_carry_observed') is not True
+            or any(type(carry.get(k)) is not int or carry[k]!=v for k,v in
+                dict(initial_origin=origin,operations=97,final_cursor=latest).items())
+            or not integer(carry.get('maximum_stack_bytes'),1,4095)
+            or not isinstance(carry.get('initialization_scope'),str) or not carry['initialization_scope']):return False
+    rows=carry.get('rows');negative=carry.get('range_negatives')
+    if not isinstance(rows,list) or len(rows)!=6 or not isinstance(negative,list) or len(negative)!=4:return False
+    for row,target in zip(rows,targets):
+        checkpoint=target//64*64;count=target-checkpoint
+        if (not isinstance(row,dict)
+                or any(type(row.get(k)) is not int or row[k]!=v for k,v in
+                    dict(target=target,position=target,origin=checkpoint,body_operations=count).items())
+                or not encoded(row.get('sync_state'),318) or row.get('sliced_state')!=row['sync_state']
+                or not isinstance(row.get('sync_events'),list) or row.get('sliced_events')!=row['sync_events']
+                or (count==0 and row['sync_events'])
+                or any(not integer(row.get(k),1) for k in ('begin_cpu_cycles','sync_cpu_cycles','commit_cpu_cycles'))):return False
+        working=row.get('working_rows')
+        if not isinstance(working,list) or len(working)!=count:return False
+        for boundary,item in enumerate(working,checkpoint+1):
+            if (not isinstance(item,dict) or type(item.get('cursor')) is not int or item['cursor']!=boundary
+                    or type(item.get('actual_body_operations')) is not int or item['actual_body_operations']!=1
+                    or not encoded(item.get('state'),318) or item.get('reference_state')!=item['state']
+                    or not integer(item.get('cpu_cycles'),1)):return False
+        if count and working[-1]['state']!=row['sync_state']:return False
+    pairs=[]
+    for row in negative:
+        if (not isinstance(row,dict) or row.get('preserved') is not True
+                or not integer(row.get('cpu_cycles'),1) or type(row.get('target')) is not int
+                or row.get('api') not in ('game_history_seek','game_history_seek_begin')):return False
+        pairs.append((row.get('api'),row['target']))
+    return set(pairs)=={(api,target) for api in ('game_history_seek','game_history_seek_begin') for target in (origin-1,latest+1)}
+
+
 def proof_extent(proof,operations_sha=SLICE_SHA):
     if (not isinstance(proof,dict) or proof.get('passed') is not True
             or any(type(proof.get(k)) is not int or proof[k]!=v for k,v in
@@ -77,7 +151,7 @@ def proof_extent(proof,operations_sha=SLICE_SHA):
             or proof.get('committed_metadata')!=expected_metadata.hex()
             or proof['committed_state']==proof['selected_state']
             or type(proof.get('committed_position')) is not int or proof['committed_position']!=569):return False
-    return True
+    return integration_extent(proof)
 
 
 def required_seek_sliced_extent(report):
