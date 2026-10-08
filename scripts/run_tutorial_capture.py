@@ -329,7 +329,7 @@ def run(standard='PAL'):
                     expected[obj+1] = (expected[obj+1]+dx)&255
                 assert bytes.fromhex(publication['objects'])[:48] == bytes(expected), 'Published player is not latest edited native pose'
                 assert not fields['tutorial_trails_enabled'], 'Trails unexpectedly gate the static proof'
-            assert not any(r['entry']['state'].get('tutorial_render_phase') == 3
+            assert not any(r['state'].get('tutorial_render_phase') == 3
                            for r in timing['callbacks']), 'Disabled trails still consume menu callbacks'
             moving = [p for p in active_publications
                       if movement_start <= p['position']['seconds'] < movement_end]
