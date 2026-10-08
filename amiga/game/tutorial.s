@@ -242,7 +242,7 @@ tutorial_tick:
         bsr     tutorial_presentation_admitted
         bra     .draw_admitted
 .menu_admission:
-        bsr     tutorial_work_admitted
+        bsr     tutorial_render_admitted
 .draw_admitted:
         tst.l   d0
         beq     .done

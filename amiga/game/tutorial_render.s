@@ -151,22 +151,46 @@ tutorial_released_wait:
 .done:  rts
 
 tutorial_render:
-        bsr     tutorial_work_admitted
+.next_unit:
+        bsr     tutorial_render_admitted
         tst.l   d0
         beq     .done
         move.w  tutorial_render_phase,d0
         beq     tutorial_animate
         cmpi.w  #1,d0
-        beq     tutorial_copy_court
+        beq     .copy
         cmpi.w  #2,d0
-        beq     tutorial_draw_ghost
+        beq     .ghost
         cmpi.w  #3,d0
-        beq     tutorial_draw_paths
+        beq     .paths
         cmpi.w  #4,d0
-        beq     tutorial_draw_text
+        beq     .text
         cmpi.w  #5,d0
         beq     tutorial_publish
 .done:  rts
+.copy:  bsr     tutorial_copy_court
+        bra     .next_unit
+.ghost: bsr     tutorial_draw_ghost
+        bra     .next_unit
+.paths: bsr     tutorial_draw_paths
+        bra     .next_unit
+.text:  bsr     tutorial_draw_text
+        bra     .next_unit
+
+; Measured bounded copy/text/publication units share the 5000-E hypothesis.
+; Ghost/path units retain their original reserve. Every iteration reads fresh
+; remaining time; publication ends construction and never loops into animation.
+tutorial_render_admitted:
+        move.w  tutorial_render_phase,d0
+        cmpi.w  #1,d0
+        beq     .simple
+        cmpi.w  #4,d0
+        beq     .simple
+        cmpi.w  #5,d0
+        beq     .simple
+        bra     tutorial_work_admitted
+.simple:
+        bra     tutorial_presentation_admitted
 
 ; Read the actual displayed/queued first bitplane from their copper banks.
 tutorial_copper_plane:
