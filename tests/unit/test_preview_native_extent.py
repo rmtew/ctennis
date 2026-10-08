@@ -1,6 +1,7 @@
 """Synthetic receipt shapes only; these tests make no gameplay claim."""
 import sys
 import hashlib
+import copy
 import tempfile
 import unittest
 from pathlib import Path
@@ -179,6 +180,7 @@ class NativePreviewExtent(unittest.TestCase):
                 (('body_observation','frames',0,'arguments'),[1,0]),
                 (('body_observation','frames',0,'entry_registers','sr'),0x2700),
                 (('body_observation','frames',0,'depth'),2),
+                (('body_observation','frames',0,'ownership','status'),8),
                 (('body_observation','frames',0,'elapsed_cck'),2),
                 (('body_observation','internal_stops'),1),
                 (('body_observation','unpaired_frames'),1),
@@ -277,6 +279,18 @@ class NativePreviewExtent(unittest.TestCase):
         self.assertFalse(required_extent(self.case(),r))
         block['semantic_intents'].pop();block['frames'].pop()
         self.assertFalse(required_extent(self.case(),r))
+
+    def test_seek_bodies_can_observe_canceled_preview_metadata(self):
+        r=receipt();stage=r['preview_native_validation'];block=stage['body_observation']
+        api=stage['costs']['api_rows'][1];api['bodies']=1
+        frame=copy.deepcopy(block['frames'][0]);frame.update(api_row_index=1,before='00'*318)
+        frame['start']=dict(api['begin'],cck=101);frame['end']=dict(api['end'],cck=102)
+        frame['ownership'].update(active=0,status=7)
+        block['frames'].insert(0,frame)
+        for index,frame in enumerate(block['frames']):frame['entry_index']=index
+        block['actual_body_entries']+=1;block['outer_logical_calls']+=1
+        block['internal_stops']+=2;block['entry_return_observations']+=2
+        self.assertTrue(required_extent(self.case(),r))
 
 
 if __name__=='__main__':unittest.main()

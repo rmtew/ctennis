@@ -174,6 +174,34 @@ blocker: callback 536 takes 167,076 CCK, including a 159,175-CCK synchronous see
 with observed deadline headroom of -108,565.44 CCK. That failed callback is not
 exempted from timing acceptance. Practical paused latency remains unresolved.
 
+### Seek scheduling decision for review
+
+The next small proof should use this retained failing selection: seek from the
+checkpoint at operation 512 to the selected completed probe at 569. Keep the
+same native callback deadline and independently observed complete states,
+ordered outputs, cursors and interrupted-live isolation. The existing CPU proof
+of at most 63 replay operations does not establish a native timing budget.
+
+A proposed follow-up is a bounded seek job advanced across paused callbacks,
+with its working state private between calls and publication only at a complete
+selected boundary. Review must settle its cancellation/replacement semantics,
+scratch ownership relative to preview resolution, and whether the existing
+synchronous API remains available for standalone callers. Each public return
+must restore the interrupted state and preserve the frozen recording; pending
+navigation must never expose a partial selected moment. No implementation of
+this scheduling proposal is included here. Architecture/scope approval remains
+with the user through the coordinating parent before new runtime changes.
+
+The existing history/preview author owns the proposed implementation. The root
+integrator owns controller execution and delivery; the coordinating parent
+assigns independent source and completed-evidence reviewers. Acceptance requires
+fresh PAL and NTSC input-transition and seek worst cases, full state/event/cursor
+comparisons, complete body accounting, initialized RAM/stack measurements and
+positive callback headroom. Measure typical rallies as well. Track added state
+and emitted code bytes and observed worst cycles; choose a work budget from those
+measurements rather than inventing one. Until then PR #37 stays draft/unmerged
+and the tutorial UI increment remains deferred.
+
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
 (000007), alongside passed scoped attempts. Native assembly-range and measurement

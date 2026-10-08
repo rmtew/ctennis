@@ -68,7 +68,7 @@ def body_observation(block,api_rows,hunks):
                 or frame.get('arguments')!=[v&65535 for v in registers['d'][:spec['arity']]]
                 or any(type(v) is not int for v in frame['arguments'])
                 or not isinstance(owner,dict) or not integer(owner.get('active'),0,2)
-                or not integer(owner.get('status'),0,6) or not integer(owner.get('variant'),0,1)):return False
+                or not integer(owner.get('status'),0,7) or not integer(owner.get('variant'),0,1)):return False
         try:states=[bytes.fromhex(frame[k]) for k in ('before','after')]
         except (KeyError,TypeError,ValueError):return False
         if any(len(s)!=318 for s in states) or frame.get('state')!=frame['after']:return False
