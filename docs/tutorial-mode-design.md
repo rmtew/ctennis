@@ -1,9 +1,11 @@
 # Tutorial mode: design and roadmap
 
 Status: implementation roadmap authorized on 7 October 2026. The shared core
-is merged. Bounded history/seek has passed its selective native campaign and is
-under final independent review; see [bounded history](bounded-history.md).
-Isolated previews are next. Tutorial UI and branching remain later increments.
+is merged. Bounded history/seek merged in PR #36 after selective native acceptance
+and independent review; see [bounded history](bounded-history.md). Isolated
+previews are under implementation with partial CPU acceptance; see
+[isolated previews](isolated-shot-previews.md). Tutorial UI and branching remain
+later increments.
 
 ## Purpose and scope
 
