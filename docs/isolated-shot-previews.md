@@ -180,7 +180,7 @@ operations, ended unavailable, and exposed no result/cache. The fixture used
 The current-serve limit required 323 four-operation workers and 15,680,438 CPU
 cycles; the missed-contact fixture required 328 workers and 16,131,256 cycles.
 Across the combined small/cache/A1 receipt, the maximum observed worker cost was
-95,112 CPU cycles and observed stack depth was 204 bytes. Every checked public
+95,158 CPU cycles and observed stack depth was 204 bytes. Every checked public
 call preserved selected canonical state, all 72 history metadata bytes, the
 history store and live output queue. These finite isolated CPU measurements
 exclude native interrupts, DMA, presentation and UI work.
