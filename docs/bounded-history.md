@@ -10,9 +10,11 @@ buffer, plus two bytes of hunk alignment and 72 bytes of recorder metadata.
 The measured baseline on the 512 KB, no-expansion target had 252,368 bytes free
 at the cold one-player runtime peak and 218,632 bytes free in the two-player
 measurement. A later reviewed cold observation with the original 21,470-byte history buffer
-had 228,520 bytes free at peak. The chosen capacity adds 58,848 bytes, projecting
-169,672 bytes free for the same covered case; this estimate is not a fresh RAM pass. Final
-resource and callback evidence must establish the changed build's actual cost.
+had 228,520 bytes free at peak. The chosen capacity adds 58,848 bytes. The fresh
+cold one-player case measured 354,632 bytes used and 169,656 bytes free at peak,
+with a largest free block of 168,464 bytes. This covers the initialized Exec pool
+through restarted flight; pre-pool bootstrap and other full runtime profiles
+remain unmeasured for this product.
 
 The first two cold one-player attempts failed the title transition deadline
 by 1,226 and 1,068 CCK respectively. The latter callback included a 41,238 CCK
@@ -23,7 +25,10 @@ pointers and counters. A sequential comparison of the prior and changed actual
 ticks, input clearing, return-to-title and reinitialization: canonical state,
 ordered outputs, all registers and SR matched at every boundary. Match
 initialization saved 2,668 isolated CPU cycles; this is a diagnostic measurement,
-not a native deadline pass. Fresh native evidence must supersede the failures.
+not a native deadline pass. The replacement cold observation passed with zero
+missed deadlines or publications, 4,062 one-player rally callbacks and 935.6 CCK
+minimum title deadline headroom. Its maximum callback work was 57,965 CCK;
+rally maximum was 30,695 CCK. The earlier failed observations remain preserved.
 
 There are 4,096 14-byte logical-operation records, sixty-four 330-byte canonical
 checkpoints, 128 twelve-byte shot/attempt entries and a separate 318-byte saved
@@ -90,26 +95,61 @@ are part of the replay contract.
 
 Seek currently runs synchronously while frozen. Isolated CPU cycles include
 observation traps and exclude native contention; they do not establish a display
-frame deadline. A future UI must schedule seek/preview work within its display
-budget. This increment does not claim preview performance or tutorial rendering.
+frame deadline. The maximum observed seek used 349,142 isolated CPU cycles, roughly 49 ms at
+7.16 MHz, and 136 bytes of stack. A future UI must schedule seek/preview work
+within its display budget or define display skipping. This increment does not
+claim preview performance or tutorial rendering.
 
 The initial four-case campaign remains failed: its third cold observation passed
 native deadlines, but the controller rejected generated version/title/product
-changes from the pre-commit build. The original attempts are preserved. A separate
-reviewed private revalidation is required to record the usable cold observation without
-changing that campaign's outcome; a new focused campaign selects only
-`history-cpu`, `history-pal` and `history-ntsc`. CPU proofs cover empty history, complete uninterrupted
-state/output equivalence, every retained boundary in both directions, repeated
-seeks, long play, byte tick/ring/low-longword wrap, invalid envelopes/operations,
-poison/relocation, all nine APIs and frozen external calls, pending-origin eviction,
-register/SR equivalence and actual emitted native sink suppression. Fresh twenty-four-second
-PAL/NTSC captures compare native recorder bytes with isolated actual execution;
-the existing cold cadence case measures affected ordinary callback/RAM costs.
+changes from the pre-commit build. A separate reviewed private revalidation
+preserves that usable observation without changing the campaign outcome. A
+subsequent three-case campaign passed the original small-buffer implementation;
+its evidence does not prove corrected terminal indexing or the larger capacity.
+
+The replacement selective campaign `e7ba28877dc44ac98611925eb714ec08` passed
+all four fresh cases at product commit `0079f04`: `ordinary-one-cold`,
+`history-cpu`, `history-pal` and `history-ntsc`. CPU proofs cover empty history,
+12,289 operations across three traversals of the fixed ring, every retained boundary in both
+directions, repeated seeks, byte tick/ring/low-longword wrap, invalid
+envelopes/operations, poison/relocation, all nine APIs and frozen external calls,
+pending-origin eviction, register/SR equivalence and actual emitted native sink
+suppression. Actual scoring bit 7 closes a miss and cannot create a new pending
+probe after terminal flight. The long proof observed three accepted returns and
+five misses; native captures each observed four misses and ended with three
+completed misses and three serves retained.
+
+Fresh 24-second PAL/NTSC captures matched native recorder bytes to isolated
+actual execution, including checkpoint eviction and terminal-outcome checks:
+
+| Capture | Operations | Retained operations / seconds | Video fields / tick dispatches | Boundaries / seeks |
+|---|---:|---:|---:|---:|
+| PAL | 5,749 | 4,085 / 17.0509 | 852 / 1,022 | 4,086 / 8,176 |
+| NTSC | 5,697 | 4,033 / 16.9889 | 1,008 / 1,009 | 4,034 / 8,072 |
+
+Video fields count observed frame IDs; tick dispatches count API calls, not
+necessarily byte-clock advances. A separate actual-CPU context measurement over
+these accepted rows observed 62–66 dispatches from actual preceding opponent
+launch to miss: PAL 1.037–1.104 seconds, NTSC 1.046–1.114 seconds. At the next
+human serves, one, two and then three prior completed misses retained their
+incoming origins. All three final retained misses had complete observed
+incoming context. This finite evidence supports the capacity choice; the raw
+index still requires the eligibility/fallback checks described above.
+
 Raw captures, binaries and receipts remain ignored and private. A focused pass
 does not establish a complete native gate or physical-hardware coverage.
 CPU reports distinguish isolated canonical-copy cost and recorded-call overhead
 by API, changed pad inputs, checkpoint creation and checkpoint eviction. Their
 sample distributions exclude native bus contention and hardware sink work.
+Canonical copy used 1,772 isolated CPU cycles. Long-proof recording overhead
+was 360 / 490 / 864 cycles (median / p95 / maximum) for ordinary operations and
+2,860 / 3,206 / 3,484 at checkpoints. Checkpoints before eviction had a maximum
+of 2,488 cycles; checkpoints with eviction reached 3,484. Changed-pad-input
+maximum was 428 cycles. These costs include actual observer index work and are
+reported separately from the contended ordinary callback measurements.
+The resource summary remains explicitly incomplete: full two-player, setup,
+demo, help and pause coverage was not refreshed, and the selected campaign is
+not the full native acceptance gate.
 History receipts label `evidence.target` as a legacy validator reference, never
 as their execution target. Native receipts record the exact actual video, CPU,
 chipset and RAM configuration in `evidence.actual_target` and the report target;
