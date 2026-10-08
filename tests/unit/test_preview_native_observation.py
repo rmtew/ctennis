@@ -68,6 +68,29 @@ class NativePreviewGuards(unittest.TestCase):
         observer._guard(self.event(0xdff097,value=0x8020))
         self.assertIn('DMA configuration',observer.problems[-1])
 
+    def test_external_ui_publication_requires_exact_instruction_and_value(self):
+        observer=self.observer()
+        observer.symbols.update(ready_copper=0x26000,spare_copper=0x26004,
+            ready_completed=0x26008,discard_ready_scene=0x600)
+        observer.publication=dict(ready_copper=bytearray.fromhex('00012340'),
+            spare_copper=bytearray(4),ready_completed=bytearray(1))
+        observer.source_shadow={};observer.producer_bank=None
+        observer.outside_publication_writes=[]
+        observer.outside_publication_rules={0x500:dict(address=0x26004,bytes=4,
+            destination='spare_copper',operation='move',source='ready_copper')}
+        observer._guard(self.event(0x26004,4,pc=0x500,value=0x12340))
+        self.assertEqual(observer.problems,[])
+        self.assertEqual(len(observer.outside_publication_writes),1)
+        observer._guard(self.event(0x26004,4,pc=0x500,value=0x12344))
+        self.assertIn('producer write value',observer.problems[-1])
+        observer._guard(self.event(0x26006,4,pc=0x500,value=0))
+        self.assertIn('Unattributed',observer.problems[-1])
+
+    def test_external_preview_scratch_cannot_change_between_calls(self):
+        observer=self.observer()
+        observer._guard(self.event(observer.symbols['game_preview_storage']))
+        self.assertIn('frozen preview context',observer.problems[-1])
+
     def test_irq_ack_value_and_actual_api_interval(self):
         observer=self.observer()
         observer.pending=dict(name='game_preview_step',begin=None,end=None,irq=0,irq_acknowledgements=0)

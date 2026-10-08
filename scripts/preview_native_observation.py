@@ -41,19 +41,49 @@ def irq_rules(listing,symbols,segments,locations):
     return rules
 
 
+def outside_publication_rules(listing,symbols,segments):
+    """Exact native scene/UI producer instructions, never API allowances."""
+    rules={}
+    for row in _units(listing):
+        pc=segments[row['hunk']]['start']+row['start']
+        if not symbols['complete_scene']<=pc<symbols['prepare_title_display']:continue
+        text=row['statement'].split(';',1)[0].strip()
+        match=re.fullmatch(r'(move|clr|st)\.(b|w|l)\s+(.+)',text)
+        if not match:
+            match=re.fullmatch(r'(st)\s+(.+)',text)
+            if not match:continue
+            operation,args=match.groups();width=1
+        else:
+            operation,width,args=match.groups();width={'b':1,'w':2,'l':4}[width]
+        arguments=args.split(',');destination=arguments[-1].strip()
+        if destination not in (*PUBLICATION,'ready_title_display','ready_game_generation','back_copper','ready_generation'):continue
+        rules[pc]=dict(pc=pc,address=symbols[destination],bytes=width,operation=operation,
+            source=arguments[0].strip() if len(arguments)>1 else None,
+            destination=destination,instruction=text)
+    assert rules
+    return rules
+
+
 class Observer(TraceCollector):
     def __init__(self,symbols,initial,read,regions,listing,segments,locations,path):
         super().__init__(symbols,initial,symbols['core_trace_marker'],symbols['core_trace_arguments'])
         self.read=read;self.regions=regions;self.raw=Path(path).open('w')
         self.raw_bytes=0;self.notifications=0;self.drops=0;self.pending=None
         self.api_rows=[];self.frozen=False;self.problems=[];self.stack_min=symbols['game_stack_top']
+        self.callback_rows=[];self.drain_checks=0;self.current_callback=None;self.timer_start=None;self.timer_origin=None
+        self.input_shadow={n:bytearray(read(symbols[n],size)) for n,size in INPUTS}
         self.rules=irq_rules(listing,symbols,segments,locations)
+        self.outside_publication_rules=outside_publication_rules(listing,symbols,segments)
+        self.outside_publication_writes=[]
         self.irq_writes=[];self.irq_inside=0;self.body_counts=[];self.audio_writes=[]
         acknowledgements=sorted(pc for pc,r in self.rules.items() if r['destination'].lower()=='$dff09c')
         self.irq_entry_pc,self.irq_exit_pc=acknowledgements
         self.publication={n:bytearray(read(symbols[n],4 if 'copper' in n else
             1 if n in ('blank_seen','display_ready','ready_completed','ready_title_display') else 2))
             for n in (*PUBLICATION,'ready_title_display','ready_game_generation')}
+        self.source_shadow={n:bytearray(read(symbols[n],size)) for n,size in
+            (('back_copper',4),('ready_generation',2),('simulation_started_updates',2))}
+        self.producer_bank=None
         self.beam_reads={};self.rts_pcs=set()
         for row in _units(listing):
             pc=segments[row['hunk']]['start']+row['start']
@@ -88,12 +118,15 @@ class Observer(TraceCollector):
 
     def watches(self,inside=False):
         ranges=super().watches()+[{'addr':self.symbols[n],'len':length,'access':'write'}
-            for n,length in [('game_preview_state',110),('game_history_state',72),
+            for n,length in [('game_preview_storage',5550),('game_history_state',72),
                              ('game_history_buffer',80318),*INPUTS]]
+        ranges += [{'addr':self.symbols['simulation_started_updates'],'len':2,'access':'write'},
+            {'addr':self.symbols['simulation_timer_origin'],'len':2,'access':'write'},
+            {'addr':0xbfde00,'len':1,'access':'write'}]
         ranges += [{'addr':0xdff0a0,'len':0x40,'access':'write'},
             {'addr':0xdff096,'len':2,'access':'write'},
             {'addr':0xdff09e,'len':2,'access':'write'}]
-        for name,data in self.publication.items():
+        for name,data in {**self.publication,**self.source_shadow}.items():
             ranges.append({'addr':self.symbols[name],'len':len(data),'access':'write'})
         if inside:
             ranges += [{'addr':0,'len':0x1000000,'access':'write'}]
@@ -107,6 +140,7 @@ class Observer(TraceCollector):
         self.pending=dict(name=name,begin=None,end=None,bodies=0,irq=0,irq_acknowledgements=0)
 
     def finish(self):
+        self.drain_checks+=1
         self.raw.flush()
         assert not self.drops, ('Native observation dropped notifications/accesses',self.drops)
         assert not self.problems,self.problems[0] if self.problems else None
@@ -129,6 +163,40 @@ class Observer(TraceCollector):
         audio=(a<0xdff0e0 and a+size>0xdff0a0) or (a<0xdff0a0 and a+size>0xdff09e)
         if audio:self.audio_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position'],frozen=self.frozen))
         if self.pending is None:
+            publication_write=any(a<s[name]+len(data) and a+size>s[name]
+                for name,data in {**self.publication,**{n:d for n,d in getattr(self,'source_shadow',{}).items() if n!='simulation_started_updates'}}.items())
+            if self.frozen and publication_write:
+                rule=self.rules.get(pc)
+                if rule is not None:
+                    # Reuse the exact source/value IRQ guard, without API counts.
+                    self.pending=dict(name='outside-presentation',begin=None,end=None)
+                    try:self._guard(r)
+                    finally:self.pending=None
+                else:
+                    rule=self.outside_publication_rules.get(pc)
+                    if not (rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']):
+                        self.problems.append('Unattributed frozen native publication write')
+                    else:
+                        if rule['destination']=='ready_completed' and pc<s['discard_ready_scene']:
+                            self.producer_bank=(int.from_bytes(self.publication['ready_copper'],'big')
+                                or int.from_bytes(self.publication['spare_copper'],'big'))
+                        if rule['operation']=='clr':expected=0
+                        elif rule['operation']=='st':expected=(1<<(8*rule['bytes']))-1
+                        elif rule['source'] in self.publication:expected=int.from_bytes(self.publication[rule['source']],'big')
+                        elif rule['source'] in self.source_shadow:expected=int.from_bytes(self.source_shadow[rule['source']],'big')
+                        elif rule['source'] in ('game_accept_count','game_title_display'):
+                            expected=self.number(rule['source'],rule['bytes'])
+                        elif rule['source']=='d0':
+                            assert self.producer_bank is not None,'No tracked native producer bank'
+                            expected=self.producer_bank
+                        elif rule['source'].startswith('#'):expected=int(rule['source'][1:])
+                        else:raise AssertionError('Unspecified native producer source: '+str(rule['source']))
+                        encoded=(expected&((1<<(rule['bytes']*8))-1)).to_bytes(rule['bytes'],'big')
+                        if value.to_bytes(size,'big')!=encoded[a-rule['address']:a-rule['address']+size]:
+                            self.problems.append('Incorrect actual native UI producer write value')
+                        self.outside_publication_writes.append(dict(pc=pc,address=a,size=size,
+                            value=value,position=r['position']))
+            if self.frozen and overlap('game_preview_storage',5550):self.problems.append('External caller writes frozen preview context')
             if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
             if self.frozen and a<0xdff098 and a+size>0xdff096:
                 rule=self.rules.get(pc)
@@ -176,15 +244,32 @@ class Observer(TraceCollector):
         if self.raw_bytes<=RAW_CAP:self.raw.write(encoded)
         else:self.problems.append('Native raw evidence cap exceeded')
         r=message.get('params',{})
+        if message.get('method','').startswith('event.') and 'dropped_notifications' not in r:
+            self.problems.append('Notification lacks explicit overflow telemetry')
         self.drops+=r.get('dropped_events',0)+r.get('dropped_notifications',0)
         if message.get('method')!='event.mmio':return
         a,size,value=r['addr'],r['size'],r['value'];data=value.to_bytes(size,'big')
         if r['access']=='write':
             self._guard(r)
+            if a==0xbfde00 and value==1 and self.timer_start is None:self.timer_start=r['position']['cck']
+            if a==self.symbols['simulation_timer_origin']:self.timer_origin=value
+            if a==self.symbols['simulation_started_updates']:
+                assert self.current_callback is None,'Missing native callback completion'
+                self.current_callback=dict(callback=value,entry=r['position'],fresh_input=False)
+            if a==self.symbols['simulation_updates'] and self.current_callback is not None:
+                assert value==self.current_callback['callback'],'Native callback ordinal mismatch'
+                self.current_callback['completion']=r['position'];self.callback_rows.append(self.current_callback);self.current_callback=None
+            for name,shadow in self.input_shadow.items():
+                start=self.symbols[name]
+                if start<=a<a+size<=start+len(shadow):
+                    offset=a-start
+                    if shadow[offset:offset+size]!=data and self.current_callback is not None:
+                        self.current_callback['fresh_input']=True
+                    shadow[offset:offset+size]=data
             for start,shadow in ((self.symbols['game_preview_state'],self.meta),
                                  (self.symbols['game_history_state'],self.history)):
                 if start<=a<a+size<=start+len(shadow):shadow[a-start:a-start+size]=data
-            for name,shadow in self.publication.items():
+            for name,shadow in {**self.publication,**self.source_shadow}.items():
                 start=self.symbols[name]
                 if start<=a<a+size<=start+len(shadow):shadow[a-start:a-start+size]=data
             if self.start<=a<a+size<=self.stop:
