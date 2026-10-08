@@ -21,7 +21,9 @@ not render, call a core body or modify admission timers; D5/D6 are preserved.
 Latest-placement readiness and continued `tutorial_work_pending` are independent,
 so a held result can publish while the released continuation still runs. Dense
 ball/shadow animation uses actual samples at the existing two-points per two-ticks
-cadence. Animation after worker slices requires its own fresh 10000-Eclock
+cadence, then holds the last actual sample and its actual visibility without
+wrapping. No ninth sprite or separate constant endpoint marker is introduced.
+Animation after worker slices requires its own fresh 10000-Eclock
 admission, including publication work.
 
 The native source exposes these presentation fields:
