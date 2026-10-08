@@ -697,7 +697,7 @@ def required_preview_native_extent(case_id,report):
     outside=stage.get('outside_publication')
     if (not isinstance(outside,dict) or not isinstance(outside.get('rules'),list)
             or not outside['rules'] or not isinstance(outside.get('writes'),list)
-            or not integer(outside.get('count'),1) or outside['count']!=len(outside['writes'])):return False
+            or not integer(outside.get('count'),0) or outside['count']!=len(outside['writes'])):return False
     outside_rules={}
     for rule in outside['rules']:
         if (not isinstance(rule,dict) or not integer(rule.get('pc'),0,0xffffff)

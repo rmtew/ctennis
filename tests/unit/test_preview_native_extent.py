@@ -334,6 +334,19 @@ class NativePreviewExtent(unittest.TestCase):
         frame['ownership']['active']=1
         self.assertFalse(required_extent(self.case(),r))
 
+    def test_stable_outside_publication_requires_complete_guarded_zero(self):
+        r=receipt();outside=r['preview_native_validation']['outside_publication']
+        outside.update(writes=[],count=0)
+        self.assertTrue(required_extent(self.case(),r))
+        for key,value in (('count',True),('count',-1),('count',1),('rules',[])):
+            candidate=copy.deepcopy(r);candidate['preview_native_validation']['outside_publication'][key]=value
+            with self.subTest(key=key,value=value):self.assertFalse(required_extent(self.case(),candidate))
+        candidate=copy.deepcopy(r);candidate['preview_native_validation']['outside_publication']['writes']=[dict(pc=999,address=10000,size=1,value=1,position=r['preview_native_validation']['costs']['api_rows'][0]['begin'])]
+        candidate['preview_native_validation']['outside_publication']['count']=1
+        self.assertFalse(required_extent(self.case(),candidate))
+        candidate=copy.deepcopy(r);candidate['preview_native_validation']['telemetry']['dropped_notifications']=1
+        self.assertFalse(required_extent(self.case(),candidate))
+
     def test_cross_job_prefix_and_self_consistent_counts_remain_bound(self):
         r=receipt();warm=r['preview_native_validation']['completed_jobs'][2]
         warm['paths']=['11'*8+'00'*8]*2
