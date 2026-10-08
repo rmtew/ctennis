@@ -1,9 +1,11 @@
 ; Fixed in-memory history of complete logical operations. No gameplay rules.
 ; Cursor is unsigned high/low longwords; tick bytes may wrap independently.
 HISTORY_RECORD_BYTES equ 14
-HISTORY_RECORDS equ 1024
+        ifnd HISTORY_RECORDS
+HISTORY_RECORDS equ 4096
+        endif
 HISTORY_SPACING equ 64
-HISTORY_CHECKPOINTS equ 16
+HISTORY_CHECKPOINTS equ HISTORY_RECORDS/HISTORY_SPACING
 HISTORY_CHECKPOINT_BYTES equ 12+GAME_CORE_STATE_SIZE
 HISTORY_CHECKPOINT_OFFSET equ HISTORY_RECORDS*HISTORY_RECORD_BYTES
 HISTORY_ATTEMPTS equ 128
@@ -99,7 +101,8 @@ game_history_after:
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne.s   .miss
         move.b  game_contact,d0
-        andi.b  #$0d,d0
+        ; Bit7 is the actual scoring outcome for a flight outside the court.
+        andi.b  #$8d,d0
         beq.s   .checkpoint_due
 .miss:
         moveq   #0,d0
@@ -442,6 +445,8 @@ game_history_contact_begin:
         cmpi.b  #1,game_history_mode
         bne.s   .done
         cmpi.w  #8,game_history_operation
+        bne.s   .done
+        btst    #7,game_contact
         bne.s   .done
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done

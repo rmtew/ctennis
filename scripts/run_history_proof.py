@@ -38,12 +38,14 @@ def run():
         transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
         _,native = build()
         standalone,_ = build_core()
+        _,symbols = load_image(standalone)
+        capacity = (symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
         proofs = {'empty':empty(standalone)}
         for name,executable,options in (
-                ('long',standalone,dict(ticks=1536)),
-                ('cursor-wrap',standalone,dict(ticks=272,wrap=True,poison=0x5a)),
-                ('relocated',standalone,dict(ticks=272,base=0x30000,poison=0x96)),
-                ('native-sinks',native,dict(ticks=272,native_guards=True))):
+                ('long',standalone,dict(ticks=3*capacity//4)),
+                ('cursor-wrap',standalone,dict(ticks=capacity//4+16,wrap=True,poison=0x5a)),
+                ('relocated',standalone,dict(ticks=capacity//4+16,base=0x30000,poison=0x96)),
+                ('native-sinks',native,dict(ticks=capacity//4+16,native_guards=True))):
             print('Running history proof',name,flush=True)
             proofs[name] = dict(passed=True,**exercise(executable,**options))
         print('Running history proof logical-api',flush=True)
@@ -52,7 +54,8 @@ def run():
         proofs['pending-eviction'] = dict(passed=True,**pending_eviction(standalone))
         assert len({proofs[name]['record_arguments_sha256'] for name in ('cursor-wrap','relocated','native-sinks')})==1, 'Omitted words depend on register poison/relocation'
         assert proofs['long']['tick_wraps'] > 0
-        assert proofs['long']['operations'] > 6*1024
+        assert proofs['long']['terminal_outcome_operations'] > 0
+        assert proofs['long']['operations'] > 3*capacity
         assert all(proofs['long']['completed_episode_kinds'].get(kind,0)>0 for kind in (1,2)), 'Actual hit/miss episodes absent'
         assert proofs['cursor-wrap']['latest']>>32 == 1
         report = {'passed':True,'execution':'actual-68000-cpu-only',

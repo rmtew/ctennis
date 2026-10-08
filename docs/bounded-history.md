@@ -5,11 +5,13 @@ branch command or persistent file is implemented here. Schema 2 / simulation 3
 canonical states remain exactly 318 bytes; record envelopes reject other versions
 and invalid audio clip IDs/offsets before restoration.
 
-The native and standalone programs reserve one fixed 21,470-byte history BSS
+The native and standalone programs reserve one fixed 80,318-byte history BSS
 buffer, plus two bytes of hunk alignment and 72 bytes of recorder metadata.
 The measured baseline on the 512 KB, no-expansion target had 252,368 bytes free
 at the cold one-player runtime peak and 218,632 bytes free in the two-player
-measurement. This buffer uses a modest part of that measured space. Final
+measurement. A later reviewed cold observation with the original 21,470-byte history buffer
+had 228,520 bytes free at peak. The chosen capacity adds 58,848 bytes, projecting
+169,672 bytes free for the same covered case; this estimate is not a fresh RAM pass. Final
 resource and callback evidence must establish the changed build's actual cost.
 
 The first two cold one-player attempts failed the title transition deadline
@@ -23,11 +25,11 @@ ordered outputs, all registers and SR matched at every boundary. Match
 initialization saved 2,668 isolated CPU cycles; this is a diagnostic measurement,
 not a native deadline pass. Fresh native evidence must supersede the failures.
 
-There are 1,024 14-byte logical-operation records, sixteen 330-byte canonical
+There are 4,096 14-byte logical-operation records, sixty-four 330-byte canonical
 checkpoints, 128 twelve-byte shot/attempt entries and a separate 318-byte saved
 interruption state. Checkpoints occur every 64 logical operations. The oldest
 checkpoint and its dependent records/index entries retire together: retained
-history spans 960–1,023 operations after filling. This counts polls, logical
+history spans 4,032–4,095 operations after filling. This counts polls, logical
 sampling and lifecycle commands as well as ticks; it is not a match-duration or
 shot-count guarantee. Deuce and a long match never stop recording permanently.
 
@@ -67,6 +69,24 @@ an eligible probe. If an incoming episode starts before retained history, later
 eligible probes can begin a retained origin after eviction. That origin is
 replayable, but its incoming context is truncated; the index does not guarantee
 retention of the complete flight or the preceding opponent shot.
+Future preview/navigation must derive the actual retained incoming-flight origin,
+distinguish complete-context candidates from probe-only or truncated entries, and
+choose a usable retained candidate or fallback when the requested context expired.
+
+An actual-68000 development comparison replayed the same saved PAL/NTSC rows
+with 1,024, 2,048 and 4,096 records, checking canonical state and ordered outputs
+at every operation. Each video sequence had three actual misses; their incoming
+flights lasted 62–64 dispatches (PAL 1.037–1.070 seconds, NTSC 1.046–1.080).
+The 1,024-record buffer retained none at the next human serve; 2,048 retained one;
+4,096 retained one then two with their preceding incoming origins available.
+A fixed-control sequence included two accepted returns and three misses, with
+52–88 dispatches of incoming flight. At its second subsequent serve, 2,048 had
+lost all previous outcomes while 4,096 retained three complete contexts. These
+finite observations justify the larger fixed budget without guaranteeing a
+number of shots or complete context for arbitrary play. Roughly 75% of recorded
+calls in the native fixtures were poll/input calls whose state and events were
+unchanged; they remain recorded because call order, arguments and caller outputs
+are part of the replay contract.
 
 Seek currently runs synchronously while frozen. Isolated CPU cycles include
 observation traps and exclude native contention; they do not establish a display
@@ -82,7 +102,7 @@ changing that campaign's outcome; a new focused campaign selects only
 state/output equivalence, every retained boundary in both directions, repeated
 seeks, long play, byte tick/ring/low-longword wrap, invalid envelopes/operations,
 poison/relocation, all nine APIs and frozen external calls, pending-origin eviction,
-register/SR equivalence and actual emitted native sink suppression. Fresh sixteen-second
+register/SR equivalence and actual emitted native sink suppression. Fresh twenty-four-second
 PAL/NTSC captures compare native recorder bytes with isolated actual execution;
 the existing cold cadence case measures affected ordinary callback/RAM costs.
 Raw captures, binaries and receipts remain ignored and private. A focused pass

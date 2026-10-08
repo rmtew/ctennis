@@ -26,7 +26,7 @@ def attempts(cpu):
     store = field(cpu,'game_history_store',4)
     result = []
     for index in range(count):
-        address = store+14336+5280+((first+index)&127)*12
+        address = store+cpu.symbols['game_history_attempts']-cpu.symbols['game_history_buffer']+((first+index)&127)*12
         raw = bytes(cpu.mem.r_block(address,12))
         origin = int.from_bytes(raw[:8],'big')
         kind, end = int.from_bytes(raw[8:10],'big'), int.from_bytes(raw[10:],'big')
@@ -88,6 +88,7 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             cpu.call('game_history_attach',{8:pointer,0:length})
             assert cpu.cpu.r_reg(0)==0 and cpu.state()==canonical and field(cpu,'game_history_mode',1)==0
         size = attach(cpu)
+        records = (symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
         # Measure the actual copy independently into the owned interruption
         # scratch area. Canonical/live recording state is never injected.
         copy_cycles = cpu.call('game_history_copy_state',
@@ -98,7 +99,7 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             # Canonical state is untouched and no later expected state injected.
             cpu.mem.w_block(symbols['game_history_cursor'],offset.to_bytes(8,'big'))
             cpu.mem.w_block(symbols['game_history_oldest'],offset.to_bytes(8,'big'))
-            cpu.mem.w_block(symbols['game_history_buffer']+14336,offset.to_bytes(8,'big'))
+            cpu.mem.w_block(symbols['game_history_checkpoints'],offset.to_bytes(8,'big'))
         outputs, record_cycles, checkpoint_cycles = {}, [], []
         regular_overhead, checkpoint_overhead = [], []
         overhead_groups = defaultdict(list)
@@ -106,6 +107,7 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
         counts = Counter()
         outcomes = set()
         tick_wraps = 0
+        terminal_outcome_operations = 0
         last_tick = field(cpu,'game_tick',1)
         for ordinal,(name,args) in enumerate(stream,1):
             previous_oldest = cursor(cpu,'game_history_oldest')
@@ -115,6 +117,10 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             assert (cpu.state(),cpu.events)==expected[offset+ordinal], ('recording alters core',name)
             assert [cpu.cpu.r_reg(r) for r in range(15)]==registers and cpu.cpu.r_sr()==sr, ('recording alters CPU ABI',name)
             boundary = cursor(cpu)
+            if field(cpu,'game_contact',1)&0x80:
+                terminal_outcome_operations += 1
+                assert field(cpu,'game_history_probe_active',1)==0, 'Pending episode survives actual terminal outcome'
+                assert all(kind!=0 for _,kind,_ in attempts(cpu)), 'Terminal outcome exposes pending index'
             overhead = cycles-baseline_cycles
             checkpoint = boundary%64==0
             (checkpoint_overhead if checkpoint else regular_overhead).append(overhead)
@@ -203,7 +209,7 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             negatives.append('checkpoint-byte-'+str(delta))
         invalid_target = end if end%64 else end-1
         if invalid_target>oldest:
-            address = symbols['game_history_buffer']+((invalid_target-1)&1023)*14
+            address = symbols['game_history_buffer']+((invalid_target-1)&(records-1))*14
             original = cpu.mem.r16(address)
             cpu.mem.w16(address,0xffff)
             saved_before = before
@@ -227,7 +233,7 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
         assert cpu.state()==live and cursor(cpu)==end and attempts(cpu)==index
         cpu.audit_reads()
         import hashlib
-        ordered_records = b''.join(bytes(cpu.mem.r_block(symbols['game_history_buffer']+(n&1023)*14,14)) for n in range(oldest,end))
+        ordered_records = b''.join(bytes(cpu.mem.r_block(symbols['game_history_buffer']+(n&(records-1))*14,14)) for n in range(oldest,end))
         return {'record_arguments_sha256':hashlib.sha256(ordered_records).hexdigest(),'operations':len(stream),'buffer_bytes':size,'metadata_bytes':symbols['game_history_state_end']-symbols['game_history_state'],
                 'canonical_copy_cpu_cycles':copy_cycles,
                 'record_overhead_distributions':{name:cycle_distribution(values) for name,values in overhead_groups.items()},
@@ -240,6 +246,8 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
                 'attempts':dict(Counter(kind for _,kind,_ in index)),
                 'negative_controls':negatives,'frozen_operations_checked':len(frozen_calls),'register_sr_equivalence_operations':len(stream),'failure_preserves_older_position':working_cursor==oldest,'low_longword_wrap':wrap,'tick_wraps':tick_wraps,'completed_episode_kinds':dict(Counter(kind for _,kind in outcomes)),
                 'actual_contact_probes':cpu.visits.get(symbols['game_player_contact'],0),
+                'terminal_outcome_operations':terminal_outcome_operations,
+                'record_capacity':records,
                 'operation_counts':dict(counts)}
 
 
@@ -258,6 +266,7 @@ def logical_api(executable):
 
 def pending_eviction(executable, verify_seek=True):
     image,symbols = load_image(executable)
+    records = (symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
     stream = []
     with Core(image,symbols,readonly=READONLY) as cpu:
         cpu.call_logical('game_core_init',[])
@@ -281,7 +290,7 @@ def pending_eviction(executable, verify_seek=True):
             raise AssertionError('Actual incoming human episode absent')
         origin = next(n for n,kind,_ in attempts(cpu) if kind==0)
         pending_state = cpu.state()
-        for _ in range(1100):
+        for _ in range(records+76):
             call('game_round_poll',[])
             assert cpu.state()==pending_state, 'Playing poll advances incoming state'
         assert cursor(cpu,'game_history_oldest')>origin

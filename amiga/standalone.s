@@ -23,7 +23,6 @@ game_apply_sound:
         rts
 
         section history,bss
-game_history_buffer: ds.b HISTORY_BUFFER_BYTES
-game_history_buffer_end:
+        include "amiga/game/history_storage.i"
 ; HUNK longword padding, outside the attach buffer
         ds.b 2

@@ -47,8 +47,8 @@ def cases():
     return rows + [
         Case('history-cpu', ('scripts/run_history_proof.py',),
              'tests/history-cpu/report.json', category='host'),
-        Case('history-pal', ('scripts/run_shared_match_core.py','--history','--seconds=16'),
+        Case('history-pal', ('scripts/run_shared_match_core.py','--history','--seconds=24'),
              'tests/shared-match-core-pal-history/report.json'),
-        Case('history-ntsc', ('scripts/run_shared_match_core.py','--history','--seconds=16','--ntsc'),
+        Case('history-ntsc', ('scripts/run_shared_match_core.py','--history','--seconds=24','--ntsc'),
              'tests/shared-match-core-ntsc-history/report.json'),
     ]

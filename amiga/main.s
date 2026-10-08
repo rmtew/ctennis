@@ -768,7 +768,6 @@ sprite_third: dcb.b 8*72,0
         include "amiga/square_score_storage.i"
 
         section history,bss
-game_history_buffer: ds.b HISTORY_BUFFER_BYTES
-game_history_buffer_end:
+        include "amiga/game/history_storage.i"
 ; HUNK longword padding, outside the attach buffer
         ds.b 2

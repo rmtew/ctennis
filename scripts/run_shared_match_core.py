@@ -268,6 +268,8 @@ def main():
                     retained_tick_dispatches=sum(row['operation']=='game_tick_dispatch' for row in relevant),
                     native_attempts=attempts(cpu),
                     seek=exercise(standalone,rows=collector.rows))
+                assert any(kind==2 for _,kind,_ in history_validation['native_attempts']), 'Actual native retained miss absent'
+                assert history_validation['seek']['terminal_outcome_operations']>0
             negatives = replay_and_negatives(image,core_symbols,collector.rows,standalone)
             if not args.demo:
                 selections = [row['arguments'][0] & 255 for row in collector.rows

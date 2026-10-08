@@ -257,7 +257,10 @@ def required_extent(case,report):
         operations={'game_core_init','game_core_select','game_core_sample_pads','game_core_sample_result',
                     'game_core_clear_inputs','game_core_return_title','game_round_poll','game_tick_dispatch','game_core_latch_actions'}
         argument_hashes=[proofs[name].get('record_arguments_sha256') for name in ('cursor-wrap','relocated','native-sinks')]
-        return (long.get('operations',0)>6*1024 and long.get('tick_wraps',0)>0
+        return (long.get('operations',0)>3*4096 and long.get('tick_wraps',0)>0
+                and long.get('buffer_bytes')==80318 and type(long.get('retained_operations')) is int
+                and 4032<=long['retained_operations']<4096
+                and type(long.get('terminal_outcome_operations')) is int and long['terminal_outcome_operations']>0
                 and all(kinds.get(str(kind),kinds.get(kind,0))>0 for kind in (1,2))
                 and wrap.get('low_longword_wrap') is True and wrap.get('latest',0)>>32==1
                 and all((api.get('operation_counts') or {}).get(name,0)>0 for name in operations)
@@ -277,7 +280,7 @@ def required_extent(case,report):
         seeks=seek.get('seeks')
         seconds=report.get('seconds')
         evidence=report.get('evidence') or {}
-        return (report.get('history') is True and isinstance(seconds,(int,float)) and seconds>=16
+        return (report.get('history') is True and isinstance(seconds,(int,float)) and seconds>=24
                 and evidence.get('target_role')=='legacy-validator-reference'
                 and evidence.get('actual_target')==report.get('target')
                 and report.get('native_video')==dict(
@@ -289,6 +292,12 @@ def required_extent(case,report):
                 and isinstance(rows,list) and bool(rows)
                 and (report.get('summary') or {}).get('operations')==len(rows)
                 and validation.get('passed') is True and validation.get('native_buffer_equal') is True
+                and type(seek.get('terminal_outcome_operations')) is int and seek['terminal_outcome_operations']>0
+                and type(seek.get('operations')) is int and seek['operations']>4096
+                and type(seek.get('oldest')) is int and seek['oldest']>0
+                and seek.get('buffer_bytes')==80318 and type(retained) is int and 4032<=retained<4096
+                and any(isinstance(row,list) and len(row)==3 and row[1]==2
+                        for row in validation.get('native_attempts',[]))
                 and type(retained) is int and retained>0 and seek.get('retained_operations')==retained
                 and type(boundaries) is int and boundaries==retained+1
                 and type(seeks) is int and seeks>=2*boundaries and history_boundary_extent(seek))
