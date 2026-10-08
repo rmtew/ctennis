@@ -738,6 +738,13 @@ def inherited_endpoints():
     return reviewed_execution(CPU9_RECEIPT,CPU9_CURRENT,CPU9_SHA,CPU9_START,CPU9_KEY)
 
 
+def fresh_seek_receipt():
+    receipt=reviewed_execution(SEEK_RECEIPT,SEEK_CURRENT,SEEK_SHA,SEEK_START)
+    validation=status(SEEK_CURRENT)
+    assert validation['status']=='passed', ('Fresh sliced CPU receipt inputs/tools/products drifted',validation)
+    return receipt
+
+
 def worker_guard_closure(inherited):
     """Only three entry guards changed; their removal reproduces reviewed bytes."""
     source=(ROOT/'amiga/game/preview.s').read_bytes()
@@ -765,7 +772,7 @@ def run(standard):
         paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT,CPU9_CURRENT,CPU9_START,SEEK_RECEIPT,SEEK_CURRENT,SEEK_START}
         inherited=inherited_endpoints()
         guard_closure=worker_guard_closure(inherited)
-        seek_receipt=reviewed_execution(SEEK_RECEIPT,SEEK_CURRENT,SEEK_SHA,SEEK_START)
+        seek_receipt=fresh_seek_receipt()
         transaction.meta.update(files=snapshot(paths),tools=tools)
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         print('Preparing bounded native preview',standard,flush=True)
