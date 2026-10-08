@@ -5,7 +5,8 @@ The active increment starts from merged PR #37, `d779dacc`. The approved
 The first visual checkpoint is deliberately small: current human serve, legal
 position edits, actual held/released alternatives, projected ball/shadow animation,
 ghost position, readable court/score, progress/hints and Resume latest. Play from
-here is visibly disabled until edited-checkpoint branching is proved. This
+here remains disabled until edited-checkpoint branching is proved; its menu
+caption is pending the appearance repair. This
 checkpoint does not finish retained-shot navigation or the tutorial release.
 
 ## Ownership and review
@@ -22,10 +23,10 @@ and a short animation before visual tuning is locked, as required by the roadmap
 - [x] Add finite `tutorial-court-pal` capture/controller case and negative observer
   controls for late/partial callbacks, missing loss telemetry and unbound evidence.
 - [x] Independently review the capture source at `8a3704a` for its stated scope.
-- [ ] Commit and independently review the current-serve runtime prototype.
-- [ ] Run the selected PAL case from a committed handoff; retain its campaign ID,
+- [x] Commit and independently review the current-serve runtime prototype.
+- [x] Run the selected PAL case from a committed handoff; retain its campaign ID,
   literal RPC, complete boundary readbacks, original viewport PNGs and animation.
-- [ ] Independently review completed evidence and report actual RAM, stack,
+- [x] Independently review completed evidence and report actual RAM, stack,
   complete callback timing, transition costs and preview/render wait.
 - [ ] Present the native court screenshots and animation for user visual review.
 - [ ] Add retained attempt selection, incoming flight, previous/next and time
@@ -151,3 +152,26 @@ restored at resume, prescribed history changes and no invented F edge across
 historical run were overwritten; this limits product identity verification.
 Future capture cases retain the just-built executable, listing and compile
 manifest before launching the emulator, including on failure.
+
+The selective PAL campaign `675b4408cdbf4431adf52fcfbcb643c1` at
+`13cb3e9daf754bf17445c60c0ce4e3653093dd0c` passed and was independently
+reviewed by `/root/native_receipt_review`. Its retained executable SHA256 is
+`680c5a1684cdf42edfed36b2f15d5e233759806a59951907b06510dd508911b6`.
+All five loaded hunks and the normalized actual core matched. The literal RPC
+SHA256 is `e86385ea264066f7d4782c79f32d67b8b0d3552da16f8f82ebf49fc18f14b7ee`.
+All 5,287 complete callbacks met unchanged deadlines: minimum absolute
+headroom 3,555.137 CCK, maximum work 54,951 CCK, zero dropped observations.
+There were 5,125 complete frozen boundaries, exact resume restoration and
+17 subsequent physically held F boundaries without an invented press.
+All 75 private queues and 72 actual publications preserved ownership;
+all 31 native images and the 24-source/16-frame GIF matched original pixels.
+These image bindings cover stable background, not latest sprite-bank scanout.
+
+Observed free chip RAM was 71,992 bytes, largest block 71,408 and stack use
+320 bytes. Development/code/data/BSS/loaded sizes were respectively
+203,592/54,928/112,700/145,380/313,008 bytes. Preview/render readiness took
+10.20–20.20 guest seconds in this finite sequence. The recorded standard
+resource report remains incomplete; full target/release coverage is unmeasured.
+This selective pass does not clear the observed menu appearance defect or
+turn the finite released attached-ball preview into a completed outgoing shot.
+Screenshots/GIF remain local: upload/publication is not authorized.
