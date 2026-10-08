@@ -41,7 +41,9 @@ game_audio_queue:
         move.b  d0,AV_CLIP(a0)
         lsl.w   #2,d0
         lea     native_audio_scores,a1
-        move.l  (a1,d0.w),AV_NEXT(a0)
+        move.l  (a1,d0.w),d2
+        sub.l   a1,d2
+        move.l  d2,AV_NEXT(a0)
         clr.b   AV_CURSOR(a0)
         clr.b   AV_DONE(a0)
         clr.b   AV_RELEASE(a0)
@@ -85,7 +87,8 @@ game_audio_tick:
 .load:
         tst.b   AV_DONE(a0)
         bne     .envelope
-        move.l  AV_NEXT(a0),a1
+        lea     native_audio_scores,a1
+        adda.l  AV_NEXT(a0),a1
         move.b  1(a1),d6
         btst    #0,d6
         beq.s   .base
@@ -116,8 +119,7 @@ game_audio_tick:
         move.b  11(a1),game_audio_rate
 .advance:
         addq.b  #1,AV_CURSOR(a0)
-        lea     16(a1),a2
-        move.l  a2,AV_NEXT(a0)
+        addi.l  #16,AV_NEXT(a0)
         move.b  (a1),d6
         btst    #3,d6
         beq.s   .note
@@ -278,10 +280,5 @@ game_audio_phrase_complete:
 .done:  movem.l (sp)+,d1/a0
         rts
         even
-game_audio_voices: dcb.b 3*AV_SIZE,0
-game_audio_rate: dc.b 2
-game_audio_wait: dc.b 2
-game_audio_transpose: dc.b 0
-game_audio_due: dc.b 0
         even
         include "assets/native/audio/data.i"

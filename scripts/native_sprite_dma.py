@@ -50,7 +50,16 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 'fields':list(memory[addresses['score_pointer_cache']+bank*6:addresses['score_pointer_cache']+bank*6+6]) if has_hud else None}
     initial = index(scalar('front_copper'))
     hardware = scalar('presentation_copper')
+    # Title intentionally retains a court front role while installing its
+    # separate list; only disagreement between court lists needs rebinding.
+    inherited_ambiguous = hardware in copper and scalar('front_copper') != hardware
     current = snapshot(initial, 'inherited') if initial is not None and hardware in copper else None
+    # A snapshot can fall between COPJMP and software front-role cleanup, or
+    # between the presentation marker and COPJMP. Neither RAM pointer alone
+    # identifies the inherited physical list. Bind it from the first actual
+    # pointer MOVE in the partial field, before any captured publication.
+    inherited_binding = None
+    captured_strobe = False
     frozen = {}
     event_frames = {}
     events_by_byte = {}
@@ -107,6 +116,8 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
         partial = frame['partial']
         if not partial:
             full_frames += 1
+            if inherited_ambiguous and inherited_binding is None and not captured_strobe:
+                fail('inherited physical list lacks Copper evidence', frame=number)
         reads = [dict(header=[], data=[], terminator=[]) for _ in range(8)]
         expected_field = current
         field_hardware = hardware
@@ -188,6 +199,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                     else:
                         cpu_pair.append((number, offset, value))
                 if reg == 0x1088:
+                    captured_strobe = True
                     if number in strobe_fields:fail('more than one presentation strobe in physical field',position=position)
                     strobe_fields.add(number)
                     if not scalar('ready_completed',1):fail('publication lacks completed scene latch',position=position)
@@ -246,6 +258,13 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 if not 0<=address<=len(memory)-2:
                     fail('Copper pointer MOVE has invalid source address',position=position,address=address)
                     continue
+                if partial and not captured_strobe and inherited_binding is None:
+                    source_bank = index(address-70-4*slot)
+                    if source_bank is not None:
+                        hardware = copper[source_bank]
+                        current = snapshot(source_bank, 'inherited')
+                        inherited_binding = dict(bank=source_bank, position=position,
+                                                 source_address=address)
                 operand=int.from_bytes(memory[address:address+2],'big')
                 if value!=operand:
                     reported_word_disagreements.append(dict(engine='copper',position=position,actual=value,expected=operand))
@@ -393,6 +412,7 @@ def analyse(path, addresses, standard='PAL', *, require_three=True, live_samples
                 minimum_strobe_to_field_end_cck=min(field_end_margins) if field_end_margins else None,
                 maximum_beam_sample_to_strobe_cck=maximum_cpu_handover,
                 field_geometries=[list(g) for g in sorted(geometries)],
+                inherited_binding=inherited_binding,
                 standard=standard, header_line=header_line,
                 baseline_sha256=hashlib.sha256((path/'chip-ram.bin').read_bytes()).hexdigest())
 

@@ -199,8 +199,6 @@ game_scene_animate:
 .done:
         rts
         even
-game_scene_objects: dcb.b 8*O_SIZE,0
-game_scene_ball_layer: dc.b 2
         even
 game_scene_order:
         dc.b 6,0,1,2,3,4,5,7

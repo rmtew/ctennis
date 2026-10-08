@@ -1,6 +1,13 @@
 ; One authored/private offline font; text rendered into UI-owned chip memory.
 ; Title uses four existing planes. Overlay uses one white bit pattern in all four.
 ui_render:
+        tst.b   ui_title_deferred
+        beq.s   .render
+        move.w  simulation_started_updates,d0
+        cmp.w   ui_title_request_epoch,d0
+        beq     .done
+        clr.b   ui_title_deferred
+.render:
         moveq   #0,d0
         move.b  ui_overlay_kind,d0
         tst.b   ui_paused
@@ -173,43 +180,7 @@ ui_render:
 .copy_plane:
         move.l  a3,a0
         move.l  a2,a1
-        ; Unroll each128-byte block to keep the full-page return callback
-        ; under the unchanged deadline without extra chip caches.
-        move.w  #116*32/128-1,d7
-.copy_word:
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        dbra    d7,.copy_word
+        bsr     ui_copy_cached_plane
         bsr     ui_construction_sample
         adda.w  #6144,a2
         tst.b   ui_page
@@ -342,6 +313,46 @@ ui_text_draw:
         addq.l  #1,a2
         bra.s   .char
 .done:  movem.l (sp)+,d0-d3/d5/d7/a0-a2/a4
+        rts
+
+; Copy exactly116 rows without changing the caller's plane/loop registers.
+; Register bursts reduce 68000 instruction-fetch overhead; no extra bitmap,
+; hardware blitter dependency or partial-publication boundary is introduced.
+ui_copy_cached_plane:
+        movem.l d0-d7/a2-a6,-(sp)
+        moveq   #18,d7
+.block:
+        movem.l (a0)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a1)
+        lea     48(a1),a1
+        movem.l (a0)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a1)
+        lea     48(a1),a1
+        movem.l (a0)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a1)
+        lea     48(a1),a1
+        movem.l (a0)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a1)
+        lea     48(a1),a1
+        dbra    d7,.block
+        ; 19*192 +64 =116*32 bytes.
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        move.l  (a0)+,(a1)+
+        movem.l (sp)+,d0-d7/a2-a6
         rts
 
 ; A0 ASCII, A2 footer-line origin. Court viewport is32 bytes/256 pixels;

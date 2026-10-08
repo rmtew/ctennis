@@ -1,7 +1,7 @@
 ; Three native monophonic voices. A note is a prepared 16-byte musical record;
 ; no source stream, source address or PSG register is used by the sequencer.
         rsset 0
-AV_NEXT rs.l 1
+AV_NEXT rs.l 1 ; byte offset from native_audio_scores, never a relocated address
 AV_CLIP rs.b 1
 AV_CURSOR rs.b 1
 AV_DONE rs.b 1

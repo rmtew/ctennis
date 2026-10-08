@@ -48,16 +48,11 @@ game_tick equ game_play_state+G_TICK
 game_serve_clock equ game_play_state+G_SERVE_CLOCK
 game_action_clock equ game_play_state+G_ACTION_CLOCK
 game_display equ game_play_state+G_DISPLAY
-game_score_flags: dc.b 0
 game_mode equ game_score_state+S_MODE
 game_point_a equ game_score_state+S_POINTS
 game_point_b equ game_score_state+S_POINTS+1
 game_games_a equ game_score_state+S_GAMES
 game_games_b equ game_score_state+S_GAMES+1
-game_directions: dc.b 0
-game_actions: dc.b 0
-game_aux_clock: dc.b 0
-game_status_clock: dc.b 0
 game_round_game_a equ game_score_state+S_ROUND_GAME_A
 game_round_game_b equ game_score_state+S_ROUND_GAME_B
         even

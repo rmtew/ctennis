@@ -196,6 +196,4 @@ game_score_new_serve:
 .return:
         rts
         even
-game_score_state: dcb.b S_SIZE,0
-game_score_initialized: dc.b 0
         even

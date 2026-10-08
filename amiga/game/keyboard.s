@@ -49,7 +49,7 @@ keyboard_enhanced_store:
         or.b    $42(a0),d1      ; Tab
         add.b   d1,d1
         or.b    d1,d0
-        move.b  d0,game_selection_keys
+        move.b  d0,game_native_selection_keys
         rts
 
 ; D0 pad bits, D3 logical player index. Combine before game_store_pad.
@@ -85,3 +85,6 @@ game_keyboard_mapping:
         even
 game_enhanced_interface:
 game_keyboard_matrix: dcb.b 128,0
+
+game_native_selection_keys: dc.b 0
+        even

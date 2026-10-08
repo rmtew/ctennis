@@ -31,51 +31,39 @@ game_result_poll:
         beq     .serve_sound
         bra     game_round_done
 .result:
-        tst.b   ui_paused
-        bne     game_round_done
         bsr     game_celebration_present
         tst.b   game_celebration_first_play
         beq     game_round_done
-        tst.b   ui_demo
+        tst.b   game_auto_continue
         beq.s   .human_continue
         ; Unattended attract playback returns only after the complete phrase.
-        ; A taken-over demo already cleared ui_demo and uses the human gate.
-        bsr     ui_return_title
+        ; A taken-over demo clears automatic continuation and uses the human gate.
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .human_continue:
-        move.b  game_input_bits,d0
-        or.b    game_input_bits+1,d0
-        or.b    ui_joystick_bits,d0
-        or.b    ui_joystick_bits+1,d0
-        andi.b  #$30,d0
-        or.b    game_keyboard_matrix+$44,d0
+        tst.b   game_continue_held
         bne.s   .held
         st      game_celebration_armed
         bra     game_round_done
 .held:
         tst.b   game_celebration_armed
         beq     game_round_done
-        move.b  game_input_pressed,d0
-        or.b    game_input_pressed+1,d0
-        andi.b  #$30,d0
-        move.b  ui_edges,d1
-        andi.b  #UI_ACTION,d1
-        or.b    d1,d0
+        tst.b   game_continue_pressed
         beq     game_round_done
-        bsr     ui_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .title_wait:
         cmpi.b  #$ff,game_serve_clock
         bne     game_round_done
         ; Legacy transition also returns directly to the title. It must
         ; never publish a court or trigger another intro after title return.
-        bsr     ui_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .title_sound:
         bsr     game_audio_cue_complete
         tst.b   d0
         beq     game_round_done
-        bsr     ui_return_title
+        bsr     game_core_return_title_internal
         bra     game_round_done
 .restart_sound:
         bsr     game_pair_sound_complete
@@ -168,11 +156,4 @@ game_celebration_reset:
         clr.b   game_celebration_audio_fraction
         rts
         even
-game_celebration_loops: dc.w 0
-game_celebration_first_play: dc.b 0
-game_celebration_armed: dc.b 0
-game_celebration_pose: dc.b 0
-game_celebration_winner: dc.b 0
-game_celebration_upper: dc.b 0
-game_celebration_audio_fraction: dc.b 0
         even

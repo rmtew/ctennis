@@ -39,7 +39,7 @@ def record():
    packet=mem('game_input_bits')[0]
    if rows and rows[-1][1]==packet:rows[-1][0]+=1
    else:rows.append([1,packet])
-   digests.append(hashlib.sha256(world+score+mem('ui_entropy_state',2)).hexdigest())
+   digests.append(hashlib.sha256(world+score+mem('game_entropy_state',2)).hexdigest())
    games=list(mem('game_games_a',2))
    if games!=lastgames:
     awards.append({'input_tick':len(digests)-1,'games':games,'seconds':time-started});lastgames=games
@@ -64,7 +64,7 @@ def record():
   else:raise AssertionError('No complete native match inside30000 active input ticks')
   finalgames=list(mem('game_games_a',2));assert max(finalgames)==6,(life,finalgames)
   s.inspect('capture_screenshot',{'path':str(directory/'match-award.png')})
- recording={'schema':2,'game_version':'native-rules-v1','input_clock':'input_update invocations; active callbacks only','entropy_version':'galois16-b400-v1','seed':44257,'initial_game_random':0,'origin':'ordinary native boot/title/one-player start, actual sampled physical port2 inputs; read-only performer; no world writes','target':'PAL A500 68000 OCS 512KB chip no expansion Kickstart1.3','frames':len(digests),'seconds':time-started,'packets':rows,'final_games':finalgames,'awards':awards,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
+ recording={'schema':2,'game_version':'native-rules-v3','input_clock':'input_update invocations; active callbacks only','entropy_version':'galois16-b400-v2','entropy_state_label':'game_entropy_state','seed':44257,'initial_game_random':0,'origin':'ordinary native boot/title/one-player start, actual sampled physical port2 inputs; read-only performer; no world writes','target':'PAL A500 68000 OCS 512KB chip no expansion Kickstart1.3','frames':len(digests),'seconds':time-started,'packets':rows,'final_games':finalgames,'awards':awards,'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}
  atomic_json(directory/'recording.json',recording);atomic_json(directory/'digests.json',digests)
  (ROOT/'assets/interface/demo-inputs.json').write_text(json.dumps(recording,indent=2)+'\n')
  print(json.dumps({'frames':len(digests),'runs':len(rows),'table_bytes':4*len(rows)+2,'seconds':time-started,'games':finalgames}),flush=True)

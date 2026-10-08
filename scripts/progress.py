@@ -1,6 +1,7 @@
 """Read native receipts. Keep missing, stale and incomplete results open."""
 import argparse
 import json
+from pathlib import Path
 from native_tools import ROOT
 from native_evidence import status, atomic_json
 from native_clock import clock_contract
@@ -50,9 +51,14 @@ def acceptance(name, report):
         return report.get('verified_input_ticks') == 10958 and report.get('missed_publications') == 0
     if name == 'attract-cycles':
         windows=report.get('windows',[])
-        return (len(windows)==2 and len(report.get('entries',[]))==3 and len(report.get('captures',[]))==8
+        captures=[Path(p).name for p in report.get('captures',[])]
+        expected={f'cycle-{cycle}-title-{suffix}.png' for cycle in (1,2)
+                  for suffix in ('4','first-complete','600','1200','1790')}
+        return (len(windows)==2 and len(report.get('entries',[]))==3
+                and len(captures)==len(expected) and set(captures)==expected
                 and all(w.get('stable') is True and w.get('unexpected_title_writes')==0
                         and w.get('publications',0)>0 and w.get('next_entry')
+                        and w.get('first_complete_title_capture',{}).get('reply')
                         and len(w.get('title_frame_digests',[]))>=1400 for w in windows))
     if name == 'takeover':
         return report.get('verified_input_ticks') == 5480 and report.get('takeover') is True and report.get('missed_publications') == 0

@@ -23,23 +23,33 @@ def run(winner, exchanged, mutant=False):
     source=(ROOT/'amiga/main.s').read_text().replace('        bsr     game_begin_title',init)
     if mutant:
         audio=(ROOT/'amiga/game/audio.s').read_text()
-        audio=audio.replace('        tst.b   AV_DURATION(a0)\n        bne.s   .done\n','')
+        duration_guard='        tst.b   AV_DURATION(a0)\n        bne.s   .done\n'
+        assert audio.count(duration_guard)==1
+        audio=audio.replace(duration_guard,'')
         path=directory/'premature-audio.s';path.write_text(audio)
         integration=(ROOT/'amiga/game/integration.s').read_text()
         marker='include "amiga/game/audio.s"'
         assert integration.count(marker)==1
         integration_path=directory/'premature-integration.s'
         integration_path.write_text(integration.replace(marker,f'include "{path}"'))
-        source=source.replace('include "amiga/game/integration.s"',f'include "{integration_path}"')
+        core=(ROOT/'amiga/game/core.s').read_text()
+        core_marker='include "amiga/game/integration.s"';assert core.count(core_marker)==1
+        core_path=directory/'premature-core.s';core_path.write_text(core.replace(core_marker,f'include "{integration_path}"'))
+        main_marker='include "amiga/game/core.s"';assert source.count(main_marker)==1
+        source=source.replace(main_marker,f'include "{core_path}"')
     fixture=directory/'fixture.s';fixture.write_text(source)
     exe=directory/'native-fixture';listing=directory/'native.lst'
     assemble([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1','-L',str(listing),'-o',str(exe),str(fixture)])
-    compile_manifest(exe,listing);sym=code_symbols(listing.read_text());checks=[];rows=[];photos=[]
+    compile_manifest(exe,listing);sym=code_symbols(listing.read_text());checks=[];rows=[];photos=[];events=[]
+    semantic=dict(started=0,completed=0,award=None,first=None,voice=bytearray(96))
     notes=json.loads((ROOT/'assets/native/audio/battle-hymn/notes.json').read_text())['voices']
     previous_cursors=[0,0,0]
     def check(label,actual,expected):
         checks.append(dict(label=label,actual=actual,expected=expected))
-        if actual!=expected:raise AssertionError(checks[-1])
+        if actual!=expected:
+            atomic_json(directory/'observations.json',rows)
+            atomic_json(directory/'semantic-timeline.json',dict(semantic,voice=semantic['voice'].hex(),events=events))
+            raise AssertionError(checks[-1])
     with NativeControlSession(directory) as s:
         s.inspect('session_launch',dict(binary=config['tools']['copperline'],run=str(exe),args=[
             '--chipset','OCS','--video','PAL','--cpu','68000','--chip','512K','--slow','0','--fast','0',
@@ -49,6 +59,23 @@ def run(winner, exchanged, mutant=False):
         def mem(name,n=1):return bytes.fromhex(s.inspect('mem_read',dict(addr=base+sym[name],len=n))['data'])
         def num(name,n=1):return int.from_bytes(mem(name,n),'big')
         def raw(a,n):return bytes.fromhex(s.inspect('mem_read',dict(addr=a,len=n))['data'])
+        def observe(message):
+            if message.get('method')!='event.mmio':return
+            row=message['params'];address=row['addr'];value=row['value'];size=row['size']
+            assert not row.get('dropped_events',0) and not row.get('dropped_notifications',0)
+            if address==base+sym['simulation_started_updates']:semantic['started']=value
+            if address==base+sym['simulation_updates']:semantic['completed']=value
+            voice=base+sym['game_audio_voices']
+            if voice<=address and address+size<=voice+96:
+                semantic['voice'][address-voice:address-voice+size]=value.to_bytes(size,'big')
+            if address==base+sym['game_lifecycle'] and value==6 and semantic['award'] is None:
+                semantic['award']=dict(started=semantic['started'],completed=semantic['completed'],position=row['position'])
+            if address==base+sym['game_celebration_first_play'] and value and semantic['first'] is None:
+                semantic['first']=dict(started=semantic['started'],completed=semantic['completed'],position=row['position'],voices=semantic['voice'].hex())
+            if semantic['award'] is not None:events.append(row)
+        s.notification_handler=observe
+        s.inspect('events.subscribe',{'events':['mmio'],'mmio':[{'addr':base+sym[name],'len':size,'access':'write'} for name,size in
+            [('simulation_started_updates',2),('simulation_updates',2),('game_lifecycle',2),('game_celebration_first_play',1),('game_audio_voices',96)]]})
         for port in (1,2):
             s.inspect('input_set_port',dict(port=port,device='joystick'))
             s.inspect('input_joy',dict(port=port,red=True))
@@ -60,7 +87,13 @@ def run(winner, exchanged, mutant=False):
             life=num('game_lifecycle',2);callback=num('simulation_updates',2)
             if life==6:
                 if award is None:
-                    award=callback;frozen=mem('game_point_a',2)+mem('game_games_a',2)
+                    # RESULT begins inside the callback's fixed pre-input poll.
+                    # This entry observer sees it only after that callback has
+                    # completed; anchor age to the actual semantic transition.
+                    assert semantic['award'], 'Semantic RESULT boundary missing'
+                    award=semantic['award']['completed']
+                    check('result begins in current callback',semantic['award']['started'],(award+1)&65535)
+                    frozen=mem('game_point_a',2)+mem('game_games_a',2)
                     initial_memory=chip_memory(raw)
                     check('logical final totals',list(mem('game_games_a',2)),[6,2] if blue else [2,6])
                     check('logical winner',num('game_celebration_winner'),0 if blue else 1)
@@ -110,6 +143,13 @@ def run(winner, exchanged, mutant=False):
                         photo=directory/f'bounce-{elapsed}.png';s.inspect('capture_screenshot',{'path':str(photo)})
                 if gate and first is None:
                     first=callback;check('early input discarded and winning hold blocked',num('game_celebration_armed'),0)
+                    assert semantic['first'], 'Semantic first-play boundary missing'
+                    terminal=bytes.fromhex(semantic['first']['voices'])
+                    check('first play terminal voices done',[terminal[v*32+6] for v in range(3)],[1]*3)
+                    check('first play terminal durations expired',[terminal[v*32+12] for v in range(3)],[0]*3)
+                    check('first play flag precedes current callback completion',semantic['first']['completed'],(first-1)&65535)
+                    atomic_json(directory/'observations.json',rows)
+                    atomic_json(directory/'semantic-timeline.json',dict(semantic,voice=semantic['voice'].hex(),events=events,observed_award=award,observed_first=first,observed_elapsed=elapsed))
                     check('gate waits full first duration',elapsed>=926,True)
                     check('last-loaded state observed before real completion',last_loaded,True)
                 if loop!=previous_loop:
@@ -191,8 +231,10 @@ def run(winner, exchanged, mutant=False):
     seam=pcm16_window(directory/'native.wav',loops[0]['seconds']-.15,.1)
     check('loop breath is digitally quiet',all(c['peak_pcm16']<=1 for c in seam['channels']),True)
     atomic_json(directory/'observations.json',rows)
+    atomic_json(directory/'semantic-timeline.json',dict(semantic,voice=semantic['voice'].hex(),events=events))
     report=dict(passed=True,winner=winner,exchanged=exchanged,checks=checks,photos=photos,
                 first_play_callback=first,award_callback=award,loop_boundaries=loops,title_callback=returned,
+                semantic_result=semantic['award'],semantic_first_play=semantic['first'],
                 memory=initial_memory,missed_publications=deadlines,emitted_audio=sound,
                 executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
                 scope='One-time native near-match fixture, actual dispatcher and physical inputs thereafter; emulator capture, no hardware/original-parity claim')
@@ -206,11 +248,12 @@ if __name__=='__main__':
         if a.self_test:
             try:run(a.winner,a.exchanged,True)
             except AssertionError as e:
-                if not any(label in str(e) for label in ('last-loaded cannot unlock first play','gate waits full first duration')):raise
+                if not any(label in str(e) for label in ('last-loaded cannot unlock first play','gate waits full first duration','first play terminal')):raise
                 fault_directory=directory.with_name(directory.name+'-premature-completion')
                 atomic_json(fault_directory/'report.json',dict(passed=False,expected_rejection=True,failure=str(e),
                     executable_sha256=hashlib.sha256((fault_directory/'native-fixture').read_bytes()).hexdigest()))
                 report=json.loads((directory/'report.json').read_text())
+                assert report['executable_sha256']!=hashlib.sha256((fault_directory/'native-fixture').read_bytes()).hexdigest(),'Mutant did not change assembled product'
                 report['premature_completion_control']={'rejected':True,'failure':str(e)}
                 atomic_json(directory/'report.json',report)
                 print('Premature-completion mutant rejected:',e)
