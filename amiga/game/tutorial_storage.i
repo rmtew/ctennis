@@ -34,7 +34,23 @@ tutorial_animation_time: ds.l 1
 tutorial_double_ticks: ds.l 1
 tutorial_repeat_ticks: ds.l 1
 tutorial_render_surface: ds.l 1
+tutorial_visible_surface: ds.l 1
 tutorial_render_offset: ds.l 1
+; Returned-worker observations; no additional court buffers.
+tutorial_presentation_generation: ds.l 1
+tutorial_marker_generation: ds.l 1
+tutorial_animation_generation: ds.l 1
+tutorial_available_counts: ds.w 2
+tutorial_available_outcomes: ds.w 2
+tutorial_placement_dirty: ds.b 1
+tutorial_placement_ready: ds.b 1
+tutorial_marker_ready: ds.b 1
+tutorial_animation_ready: ds.b 1
+tutorial_ball_mode: ds.b 1
+tutorial_waiting_ready: ds.b 1
+; Reserved optional-trail preference; default0, no trail passes scheduled.
+tutorial_trails_enabled: ds.b 1
+        ds.b 1
 tutorial_build_generation: ds.w 1
 tutorial_text_row: ds.w 1
 tutorial_render_phase: ds.w 1

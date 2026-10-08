@@ -4,6 +4,7 @@ TUTORIAL_COMPUTING equ 2
 TUTORIAL_RENDERING equ 3
 TUTORIAL_READY equ 4
 TUTORIAL_UNAVAILABLE equ 5
+TUTORIAL_WAITING equ 6
 
 ; Gesture thresholds are video-standard dependent and ready before sampling.
 tutorial_init:
@@ -11,7 +12,6 @@ tutorial_init:
         mulu.w  #15,d0
         move.l  d0,tutorial_double_ticks
         move.l  simulation_interval_whole,d0
-        mulu.w  #7,d0
         move.l  d0,tutorial_repeat_ticks
         rts
 
@@ -148,12 +148,13 @@ tutorial_tick:
         bsr     tutorial_controls
         tst.b   tutorial_active
         beq     .done
-        tst.w   tutorial_render_phase
+        ; Latest player/marker publication wins; trails never gate physics.
+        tst.b   tutorial_placement_dirty
         bne     .draw_only
         tst.b   tutorial_menu
         bne     .draw_only
-        cmpi.w  #TUTORIAL_COMPUTING,tutorial_status
-        bne     .draw_only
+        tst.b   tutorial_work_pending
+        beq     .draw_only
         cmpi.w  #PREVIEW_READY,game_preview_status
         bne     .preview_pending
         ; Result/footer preparation has its own admission, rather than hiding
@@ -183,9 +184,22 @@ tutorial_tick:
         move.l  d5,d1
         sub.w   game_preview_budget,d1
         add.w   d1,tutorial_progress_operations
+        bsr     tutorial_progress_returned ; metadata only; preserves D5/D6
+        tst.b   tutorial_placement_dirty
+        bne     .done ; new endpoint gets a separately admitted publication
         cmpi.w  #PREVIEW_READY,game_preview_status
-        beq     .done
+        beq     .worker_tail
         dbra    d6,.preview_slice
+        bra     .worker_tail
+.worker_tail:
+        ; Animation is independent of the other alternative. Never hide its
+        ; publication tail behind a worker's smaller reserve.
+        tst.b   tutorial_animation_ready
+        beq     .done
+        bsr     tutorial_work_admitted
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_animate
         bra     .done
 .preview_ready:
         move.l  tutorial_generation,d0
@@ -200,16 +214,20 @@ tutorial_tick:
         move.w  d4,tutorial_outcomes+2
         move.w  d5,tutorial_coincident
         clr.b   tutorial_work_pending
-        bsr     tutorial_redraw
+        bsr     tutorial_progress_status
+        bsr     tutorial_footer
         bra     .done
 .draw_only:
-        bsr     tutorial_render
+        bsr     tutorial_work_admitted
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_progress_slice
         bra     .done
 .unavailable:
         clr.b   tutorial_work_pending
         move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
         clr.b   tutorial_pending
-        bsr     tutorial_redraw
+        bsr     tutorial_progress_reset
 .done:
         movem.l (sp)+,d0-d7/a0-a6
         rts
@@ -298,13 +316,15 @@ tutorial_request:
         clr.w   tutorial_animation_index
         clr.w   tutorial_progress_operations
         clr.l   tutorial_counts
-        bra     tutorial_redraw
+        bsr     tutorial_progress_reset
+        bra     tutorial_footer
 .missing:
         clr.b   tutorial_work_pending
         move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
         clr.b   tutorial_pending
         clr.l   tutorial_counts
-        bra     tutorial_redraw
+        bsr     tutorial_progress_reset
+        bra     tutorial_footer
 
 ; Native key/direction intent only. Legal positions are read from actual tables.
 tutorial_controls:
@@ -318,9 +338,7 @@ tutorial_controls:
         beq     .menu
         move.b  d1,tutorial_active_variant
         clr.w   tutorial_animation_index
-        cmpi.w  #TUTORIAL_READY,tutorial_status
-        bne     .menu
-        bsr     tutorial_redraw
+        bsr     tutorial_progress_variant_changed
 .menu:
         tst.b   tutorial_menu
         beq     .movement
