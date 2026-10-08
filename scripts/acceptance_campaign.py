@@ -239,6 +239,39 @@ def history_boundary_extent(proof):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id=='preview-cpu':
+        validation=report.get('preview_validation') or {}
+        evidence=report.get('evidence') or {}
+        rows=validation.get('cases')
+        if (report.get('execution')!='actual-68000-cpu-only'
+                or evidence.get('target_role')!='legacy-validator-reference'
+                or evidence.get('actual_execution')!='actual-68000-cpu-only'
+                or validation.get('passed') is not True
+                or validation.get('preview_storage_bytes')!=5546 or validation.get('metadata_bytes')!=106
+                or type(validation.get('fixture_operations')) is not int or validation['fixture_operations']<2049
+                or not isinstance(rows,list) or len(rows)!=3
+                or {r.get('name') for r in rows if isinstance(r,dict)}!={
+                    'completed-serve','return-after-pads','return-before-dispatch'}):return False
+        required={'stale-step','stale-cancel','stale-request','zero-budget','excess-budget','unpublished-result'}
+        for row in rows:
+            calls=row.get('worker_calls');paths=row.get('path_counts')
+            if (row.get('passed') is not True or row.get('continuous_state_path_output_equal') is not True
+                    or row.get('live_history_output_preserved') is not True
+                    or type(calls) is not int or calls<=0
+                    or type(row.get('maximum_worker_operations')) is not int
+                    or not 0<row['maximum_worker_operations']<=4
+                    or type(row.get('preservation_checks')) is not int or row['preservation_checks']<calls
+                    or row.get('worker_restorations')!=calls
+                    or not isinstance(paths,list) or len(paths)!=2
+                    or any(type(count) is not int or not 1<=count<=256 for count in paths)
+                    or not required.issubset(set(row.get('negative_controls') or []))):return False
+            for field in ('request_cpu_cycles','total_worker_cpu_cycles','maximum_worker_cpu_cycles',
+                          'repeat_request_cpu_cycles'):
+                if type(row.get(field)) is not int or row[field]<=0:return False
+            for field in ('resolver_operations','resolver_worker_calls','resolver_inclusive_cpu_cycles',
+                          'repeat_resolver_operations','repeat_resolver_worker_calls','repeat_resolver_cpu_cycles'):
+                if type(row.get(field)) is not int or row[field]<0:return False
+        return True
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}

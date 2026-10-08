@@ -51,4 +51,6 @@ def cases():
              'tests/shared-match-core-pal-history/report.json'),
         Case('history-ntsc', ('scripts/run_shared_match_core.py','--history','--seconds=24','--ntsc'),
              'tests/shared-match-core-ntsc-history/report.json'),
+        Case('preview-cpu', ('scripts/run_preview_proof.py',),
+             'tests/preview-cpu/report.json', category='host'),
     ]
