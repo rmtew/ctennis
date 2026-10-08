@@ -226,7 +226,7 @@ def seek_validation(block,api_rows,frames,files,interval_whole):
         if index not in commits and (row['public_state']!=row['selected_state']
                 or row['public_metadata']!=row['selected_metadata']):return False
         metadata=bytes.fromhex(row['public_metadata'])
-        if metadata[0]!=2 or metadata[1]!=0:return False
+        if metadata[4]!=2 or metadata[71]!=0:return False
         if row['name']!='game_history_seek_step':
             if row.get('admission') is not None or row['body_operations'] or row['events']:return False
             continue

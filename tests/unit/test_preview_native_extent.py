@@ -159,7 +159,7 @@ def add_seek_shape(stage,files,ntsc):
         worker_guard_closure=dict(passed=True,removed_entry_guards=3,current_source_sha256='33'*32,
             guard_removed_source_sha256='40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d',scope='Synthetic exact guard closure shape'))
     rows=stage['costs']['api_rows'];block=stage['body_observation'];frames=block['frames'];proof=[]
-    selected='00'*318;metadata=bytearray(72);metadata[0]=2;metadata[34:42]=(835).to_bytes(8,'big');metadata=metadata.hex()
+    selected='00'*318;metadata=bytearray(72);metadata[:4]=bytes.fromhex("00030000");metadata[4]=2;metadata[34:42]=(835).to_bytes(8,'big');metadata=metadata.hex()
     def working(cursor):
         state=bytearray(318);state[100:108]=cursor.to_bytes(8,'big');return state.hex()
     cursor=512;hz=3579545 if ntsc else 3546895
@@ -315,6 +315,11 @@ class NativePreviewExtent(unittest.TestCase):
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
+        for offset,value in ((4,1),(71,1)):
+            r=receipt();node=r['preview_native_validation']['seek_validation']['rows'][1]
+            metadata=bytearray.fromhex(node['selected_metadata']);metadata[offset]=value
+            node['selected_metadata']=node['public_metadata']=metadata.hex()
+            self.assertFalse(required_extent(self.case(),r))
         for path in SEEK_CPU_RECEIPTS:
             r=receipt();r['evidence']['files'].pop(path)
             self.assertFalse(required_extent(self.case(),r))
