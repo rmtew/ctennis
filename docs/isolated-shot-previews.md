@@ -150,8 +150,37 @@ prelaunch boundaries, stale title and postlaunch rejection, no-contact and the
 256-sample limit, partial calculation replacement, resets between dispatches,
 and a retained completed probe whose earlier incoming launch has evicted. It
 uses uninterrupted actual-core continuations and checks recorded API order and
-inputs independently. A2 endpoint discovery and A3 relocation/native sink/history
-regression remain separate obligations. A1 has not executed yet. Its new request
-guards compile to a 109,464-byte standalone image, 28 bytes more than the tested
-cache image; this is a compile observation, without current native resource or
-frame acceptance. The saved cache receipt still applies to `96a158a`.
+inputs independently. A1 passed at `59152fa`, selective CPU attempt 000004, and
+independent receipt review cleared its source/tool/product bindings. Earlier
+attempts remain preserved. This is partial CPU acceptance; A2 endpoint discovery,
+A3 relocation/native sink/history regression, current native resources, practical
+performance, tutorial UI and branch commit remain pending. The current standalone
+image is 109,464 loaded bytes, 28 more than the previously tested cache image;
+this does not establish native RAM or frame acceptance.
+
+The A1 current human wait-phase fixture produced a held landing path of 66
+samples and a released limit of 256 samples with no human launch. The limit is
+incomplete attached-ball observation, without a claimed outgoing shot. Complete
+timed boundaries at clocks 15 and 16 were accepted before an actual launch; the
+launch hook read entry clock 16 and the first postlaunch complete boundary read
+17 and was rejected. A real returned-title state retained wait phase 64, but
+both fallback and historical requests rejected without changing frozen state.
+
+A completed actual miss produced two no-contact paths of 65 samples. Interrupted
+RESOLVE and HELD requests changed legal X from 111 to 112, retired old results,
+and restarted cold: each replacement resolver used 773 one-operation calls and
+12,406,566 CPU cycles. The edited 318-byte start changed only requested human
+coordinates, including unchanged RNG. Init/select/return-title operations after
+clear/latch/result calls stopped before reset execution, with zero path samples.
+The truncated-context fixture retained completed kind 1 at probe 696 while its
+actual incoming launch 564 was older than oldest 576. Its resolver used 325
+operations, ended unavailable, and exposed no result/cache. The fixture used
+193 dispatches and 4,608 logical operations within its declared 512/8,192 bounds.
+
+The current-serve limit required 323 four-operation workers and 15,680,438 CPU
+cycles; the missed-contact fixture required 328 workers and 16,131,256 cycles.
+Across the combined small/cache/A1 receipt, the maximum observed worker cost was
+95,112 CPU cycles and observed stack depth was 204 bytes. Every checked public
+call preserved selected canonical state, all 72 history metadata bytes, the
+history store and live output queue. These finite isolated CPU measurements
+exclude native interrupts, DMA, presentation and UI work.
