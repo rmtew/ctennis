@@ -38,17 +38,35 @@ game_native_menu_tick:
 game_native_commands:
         move.b  game_input_bits,d0
         or.b    game_input_bits+1,d0
+        btst    #7,game_mode
+        beq.s   .human_action
         or.b    ui_joystick_bits,d0
         or.b    ui_joystick_bits+1,d0
         andi.b  #$30,d0
+        bra.s   .enter_action
+.human_action:
+        andi.b  #16,d0
+.enter_action:
+        tst.b   ui_keyboard_entry_keys+$44
+        bne.s   .held_ready
         or.b    game_keyboard_matrix+$44,d0
+.held_ready:
         move.w  d0,-(sp)
         move.b  game_input_pressed,d0
         or.b    game_input_pressed+1,d0
+        btst    #7,game_mode
+        beq.s   .human_pressed
         andi.b  #$30,d0
         move.b  ui_edges,d1
         andi.b  #UI_ACTION,d1
         or.b    d1,d0
+        bra.s   .pressed_ready
+.human_pressed:
+        andi.b  #16,d0
+        tst.b   ui_keyboard_entry_keys+$44
+        bne.s   .pressed_ready
+        or.b    tutorial_enter_pressed,d0
+.pressed_ready:
         move.w  d0,-(sp)
         moveq   #0,d3
         tst.b   ui_paused

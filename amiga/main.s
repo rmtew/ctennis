@@ -393,6 +393,9 @@ simulation_poll_done:
         bsr     sample_amiga_joystick
         bsr     ui_sample
         bsr     game_native_commands
+        jsr     tutorial_tick
+        tst.b   tutorial_resume_defer
+        bne     ui_frozen_update
         tst.b   ui_paused
         bne     ui_frozen_update
         cmpi.w  #GAME_PLAYING,game_lifecycle
@@ -510,6 +513,8 @@ game_render_sprites:
 .history_live:
         move.w  (sp)+,sr
         movem.l d0-d7/a0-a4,-(sp)
+        move.l  #game_scene_objects,tutorial_sprite_source
+        move.b  game_scene_ball_layer,tutorial_scene_layer
         ; Score/status selection belongs to this prepared scene, just like
         ; its sprites. The subsequent native tick may select fields for the
         ; following scene; it must not repatch this generation after rendering.
@@ -520,18 +525,20 @@ prepare_scene_fields:
         move.b  (a0)+,(a1)+
         dbra    d7,prepare_scene_fields
         bsr     patch_score_pointers
+game_render_prepared_scene:
         clr.l   pair_colours
         clr.l   pair_colours+4
         clr.b   sprite_bridge_error
         move.b  #$ff,active_ball_slot
-        tst.b   game_scene_objects+SC_BALL+O_VISIBLE
+        move.l  tutorial_sprite_source,a0
+        tst.b   SC_BALL+O_VISIBLE(a0)
         beq.s   .order
-        move.b  game_scene_ball_layer,d0
+        move.b  tutorial_scene_layer,d0
         lsl.b   #2,d0
         move.b  d0,active_ball_slot ; diagnostic depth label only
 .order:
         moveq   #0,d0
-        move.b  game_scene_ball_layer,d0
+        move.b  tutorial_scene_layer,d0
         lsl.w   #3,d0
         lea     game_scene_order,a3
         adda.w  d0,a3
@@ -542,7 +549,7 @@ prepare_scene_fields:
         moveq   #0,d0
         move.b  (a3)+,d0
         lsl.w   #3,d0
-        lea     game_scene_objects,a0
+        move.l  tutorial_sprite_source,a0
         adda.w  d0,a0
         tst.b   O_VISIBLE(a0)
         beq     .skip
@@ -673,6 +680,8 @@ hex_digits:        dc.b "0123456789ABCDEF"
         include "amiga/game/core_trace.s"
         include "amiga/game/native_core_adapter.s"
         include "amiga/game/interface.s"
+        include "amiga/game/tutorial.s"
+        include "amiga/game/tutorial_render.s"
 
         even
 dos_entry_sp: dc.l 0
@@ -779,3 +788,4 @@ sprite_third: dcb.b 8*72,0
         ds.b 2
         include "amiga/game/preview_storage.i"
         include "amiga/game/history_seek_storage.i"
+        include "amiga/game/tutorial_storage.i"

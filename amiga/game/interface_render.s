@@ -212,10 +212,21 @@ ui_render:
         mulu.w  #11*32,d1
         lea     title_plane0+114*32,a2
         adda.w  d1,a2
+        cmpi.b  #3,d0
+        beq.s   .tutorial_selection
         lsl.w   #8,d0
         lea     ui_menu_options,a0
         adda.w  d0,a0
         bsr     ui_title_row_copy
+        lea     tutorial_title_text,a0
+        lea     title_plane0+147*32,a2
+        moveq   #1,d4
+        bsr     ui_footer_text
+        bra.s   .publish
+.tutorial_selection:
+        lea     tutorial_title_text,a0
+        moveq   #1,d4
+        bsr     ui_footer_selected
         bra.s   .publish
 .page_selection:
         moveq   #0,d0
