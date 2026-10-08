@@ -74,6 +74,14 @@ game_preview_request:
         move.b  P_PHASE(a3),d0
         andi.b  #$e0,d0
         beq     .invalid_saved
+        ; Match player-tick priority: setup/wait precede timed serve.
+        ; The complete timed boundary at $10 is still before launch; the
+        ; service tail advances it to $11 after the actual launch hook.
+        cmpi.b  #$20,d0
+        bne.s   .fallback_ready
+        cmpi.b  #$10,game_serve_clock
+        bhi     .invalid_saved
+.fallback_ready:
         moveq   #3,d6
         suba.l  a5,a5
 .bounds:

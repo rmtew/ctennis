@@ -13,7 +13,12 @@ requires its pre-launch boundary. A return or miss requires a retained preceding
 opponent launch and a selection from that launch through the original action's
 pre-operation boundary. A raw probe origin alone is insufficient. Missing or
 truncated incoming context is unavailable; fallback requires actual current serve
-setup and never resets the game.
+setup and never resets the game. Every request requires the selected lifecycle
+to be PLAYING, including historical candidates. A timed human serve remains
+selectable through its complete boundary at serve clock 16; the actual launch
+reads clock 16 on entry, then the service tail advances it to 17. Timed phase
+20 at a later clock is unavailable. Setup/wait phase priority follows the actual
+player dispatcher.
 
 The resolver replays from the oldest checkpoint through the original action.
 `game_preview_step` accepts a generation and a budget of one to four logical API
@@ -139,3 +144,14 @@ context coverage, practical performance, tutorial UI and branch commit remain
 pending. Historical failed attempt 000001 and first-small attempt 000002 remain
 preserved privately; current cache proof is attempt 000003 of its selective CPU
 campaign, with no complete native gate claim.
+
+The next focused proof is stage A1: actual current human serve fallback and timed
+prelaunch boundaries, stale title and postlaunch rejection, no-contact and the
+256-sample limit, partial calculation replacement, resets between dispatches,
+and a retained completed probe whose earlier incoming launch has evicted. It
+uses uninterrupted actual-core continuations and checks recorded API order and
+inputs independently. A2 endpoint discovery and A3 relocation/native sink/history
+regression remain separate obligations. A1 has not executed yet. Its new request
+guards compile to a 109,464-byte standalone image, 28 bytes more than the tested
+cache image; this is a compile observation, without current native resource or
+frame acceptance. The saved cache receipt still applies to `96a158a`.

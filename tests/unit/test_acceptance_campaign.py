@@ -13,6 +13,47 @@ import acceptance_campaign as campaign
 from acceptance_cases import Case,cases
 from native_evidence import atomic_json,digest
 
+def preview_a1_report():
+    costs=dict(generation=1,edited_only_position_changed=True,cache_hit=False,resolver_operations=1,
+               request_cpu_cycles=1,total_worker_cpu_cycles=1,maximum_worker_cpu_cycles=1,
+               maximum_worker_operations=4,worker_calls=1,stack_bytes=204)
+    def accepted():
+        return dict(passed=True,continuous_state_path_output_equal=True,independent_continuation_policy_equal=True,
+                    edited_only_position_changed=True,live_history_output_preserved=True,costs=dict(costs),end=0,
+                    classes=['landing','landing'],path_counts=[1,1],actual_accepted_launches={'0':[],'1':[]},
+                    actual_final_boundaries=[dict(contact=0,flight=0,lifecycle=1)]*2)
+    fallback=accepted();fallback.update(human=True,legal_position_verified=True,released_no_launch=True,
+        lifecycle=1,phase=64,released_outgoing_path_claimed=False,classes=['landing','limit'],path_counts=[1,256],
+        timed_prelaunch=dict(passed=True,phase=32,complete_boundary_clocks=[15,16],launch_entry_clock=16,
+            actual_launch_absent_before_requests=True,held_actual_launch_after_requests=True,
+            cases=[accepted(),accepted()]),
+        postlaunch_rejection=dict(passed=True,lifecycle=1,phase=32,serve_clock=17,operations=1,
+            actual_human_launch_observed=True,legal_position_verified=True,request_rejected=True,
+            full_live_history_output_preview_preserved=True,launch_entry_clock=16,first_postlaunch_boundary_clock=17))
+    miss=accepted();miss.update(classes=['no-contact','no-contact'],no_contact_outgoing_path_claimed=False)
+    def replacement(phase):
+        return dict(passed=True,phase=phase,retired_generation=1,new_generation=2,cold_restart=True,
+            old_and_partial_results_unavailable=True,full_live_history_output_preserved=True,partial_prefix_samples=0,
+            request_cpu_cycles=1,replacement_cpu_cycles=1,maximum_worker_cpu_cycles=1,worker_calls=1,maximum_stack_bytes=204)
+    lifecycle=[]
+    for _ in range(3):
+        row=accepted();row.update(classes=['lifecycle','lifecycle'],path_counts=[0,0],actual_final_boundaries=[None,None]);lifecycle.append(row)
+    rows={'human-serve-fallback':fallback,'no-contact':miss,
+          'title-dual-rejection':dict(passed=True,lifecycle=2,stale_phase=64,fallback_rejected=True,
+              historical_rejected=True,full_live_history_output_preview_preserved=True),
+          'limit-256':dict(passed=True,samples=256,total_sample_limit=256,no_actual_human_launch=True,
+              outgoing_path_claimed=False,incomplete=True,full_live_history_output_preserved=True,
+              continuous_state_path_output_equal=True,independent_continuation_policy_equal=True),
+          'replacement-resolve':replacement(1),'replacement-held':replacement(3),
+          'non-dispatch-lifecycle':dict(passed=True,clear_latch_result_order_preserved=True,reset_not_executed=True,
+              reset_operations=['game_core_init','game_core_select','game_core_return_title'],cases=lifecycle),
+          'truncated-completed-context':dict(passed=True,request_accepted=True,context_missing=True,result_rejected=True,
+              unavailable_scratch_preserved=True,full_live_history_output_preserved=True,cache_valid=False,
+              completed_kind=2,incoming_origin=1,oldest=64,probe_origin=65,dispatches=1,operations=129,
+              non_tick_calls_between_launch_and_probe=128,costs=dict(costs,edited_only_position_changed=False))}
+    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=256,
+                maximum_worker_operations=4,other_stages_pending=['A2-endpoint-discovery','A3-relocation-native-history'],cases=rows)
+
 class CampaignTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
@@ -70,6 +111,7 @@ class CampaignTests(unittest.TestCase):
                        after_cancel_resolver_operations=1,different_attempt_resolver_operations=1,
                        oldest_after_eviction=64,evicted_incoming_origin=1))
         report['preview_validation']['cache_validation']=cache
+        report['preview_validation']['stage_a1_validation']=preview_a1_report()
         self.assertTrue(campaign.required_extent(case,report))
         for area,key,value in (('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
@@ -97,6 +139,20 @@ class CampaignTests(unittest.TestCase):
         for key,value in (('cases',[]),('preview_storage_bytes',6000),('metadata_bytes',100),('fixture_operations',2048)):
             partial=json.loads(json.dumps(report));partial['preview_validation'][key]=value
             with self.subTest(key=key):self.assertFalse(campaign.required_extent(case,partial))
+    def test_preview_a1_extent_requires_boundaries_and_honest_unavailability(self):
+        report=preview_a1_report();self.assertTrue(campaign.preview_a1_extent(report))
+        changes=[('title-dual-rejection','lifecycle',1),('limit-256','samples',255),
+                 ('limit-256','outgoing_path_claimed',True),('replacement-held','phase',1),
+                 ('replacement-resolve','new_generation',1),('truncated-completed-context','completed_kind',0),
+                 ('truncated-completed-context','incoming_origin',64),('truncated-completed-context','cache_valid',True),
+                 ('non-dispatch-lifecycle','reset_not_executed',False)]
+        for name,key,value in changes:
+            partial=json.loads(json.dumps(report));partial['cases'][name][key]=value
+            with self.subTest(case=name,key=key):self.assertFalse(campaign.preview_a1_extent(partial))
+        partial=json.loads(json.dumps(report));partial['cases']['human-serve-fallback']['postlaunch_rejection']['serve_clock']=16
+        self.assertFalse(campaign.preview_a1_extent(partial))
+        partial=json.loads(json.dumps(report));partial['cases']['human-serve-fallback']['timed_prelaunch']['complete_boundary_clocks']=[15,17]
+        self.assertFalse(campaign.preview_a1_extent(partial))
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
         report={'passed':True,'history':True,'seconds':24,

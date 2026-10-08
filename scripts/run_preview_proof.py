@@ -7,6 +7,7 @@ from native_evidence import ReportRun,atomic_json,compile_manifest,digest,inputs
 from native_tools import ROOT
 from preview_proof import small
 from preview_cache_proof import exercise as cache_proof
+from preview_extended_proof import stage_a1
 
 
 def run():
@@ -24,6 +25,14 @@ def run():
         atomic_json(path.parent/('small-results-'+transaction.meta['run_id']+'-unvalidated.json'),
             dict(preview_validation=validation,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
         validation['cache_validation']=cache_proof(executable)
+        stage_a1_rows=[]
+        def progress(row):
+            stage_a1_rows.append(row)
+            atomic_json(path.parent/('stage-a1-progress-'+transaction.meta['run_id']+'-unvalidated.json'),
+                dict(rows=stage_a1_rows,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+            print(json.dumps(row),flush=True)
+        validation['stage_a1_validation']=stage_a1(executable,progress)
+        validation['scope']='Fresh actual 68000 CPU first-small, cache and A1 API/context/lifecycle proofs only; A2 endpoint discovery, A3 relocation/emitted native sinks/history regression, current native resources, performance and UI remain pending.'
         report=dict(passed=True,execution='actual-68000-cpu-only',executable_sha256=digest(executable),
             preview_validation=validation,scope=validation['scope'])
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,

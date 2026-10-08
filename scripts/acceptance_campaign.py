@@ -236,6 +236,102 @@ def history_boundary_extent(proof):
             and proof.get('register_sr_equivalence_operations')==proof.get('operations')
             and proof.get('failure_preserves_older_position') is True)
 
+def preview_a1_extent(stage):
+    """Finite A1 coverage; discovery and native-image proofs remain later stages."""
+    def integer(value, low=0, high=None):
+        return type(value) is int and value>=low and (high is None or value<=high)
+    def flags(row, names):
+        return isinstance(row,dict) and all(row.get(name) is True for name in names)
+    def costs(row, edited=True):
+        return (isinstance(row,dict) and row.get('edited_only_position_changed') is edited
+                and type(row.get('cache_hit')) is bool and integer(row.get('resolver_operations'))
+                and integer(row.get('maximum_worker_operations'),1,4)
+                and all(integer(row.get(name),1) for name in ('generation','request_cpu_cycles',
+                    'total_worker_cpu_cycles','maximum_worker_cpu_cycles','worker_calls','stack_bytes')))
+    def accepted(row, allow_empty=False):
+        if not flags(row, ('passed','continuous_state_path_output_equal','independent_continuation_policy_equal',
+                            'edited_only_position_changed','live_history_output_preserved')) or not costs(row.get('costs')):
+            return False
+        classes=row.get('classes');counts=row.get('path_counts');boundaries=row.get('actual_final_boundaries')
+        launches=row.get('actual_accepted_launches')
+        if (not isinstance(classes,list) or len(classes)!=2 or any(name not in
+                ('landing','net','out','interception','no-contact','limit','lifecycle','incomplete') for name in classes)
+                or not isinstance(counts,list) or len(counts)!=2
+                or any(not integer(n,0 if allow_empty else 1,256) for n in counts)
+                or not isinstance(boundaries,list) or len(boundaries)!=2
+                or not isinstance(launches,dict) or set(launches)!={'0','1'}):return False
+        for boundary in boundaries:
+            if boundary is not None and (not isinstance(boundary,dict)
+                    or any(not integer(boundary.get(name),0,255) for name in ('contact','flight'))
+                    or not integer(boundary.get('lifecycle'),0,65535)):return False
+        for events in launches.values():
+            if not isinstance(events,list):return False
+            for event in events:
+                if (not isinstance(event,dict) or not integer(event.get('end'),0,1)
+                        or event.get('kind') not in (1,3) or not integer(event.get('dispatch'))):return False
+        return True
+    names={'human-serve-fallback','title-dual-rejection','no-contact','limit-256',
+           'replacement-resolve','replacement-held','non-dispatch-lifecycle','truncated-completed-context'}
+    if (not isinstance(stage,dict) or stage.get('passed') is not True
+            or [stage.get(key) for key in ('canonical_bytes','history_metadata_bytes','total_samples_per_path',
+                                          'maximum_worker_operations')]!=[318,72,256,4]
+            or stage.get('other_stages_pending')!=['A2-endpoint-discovery','A3-relocation-native-history']
+            or not isinstance(stage.get('cases'),dict) or set(stage['cases'])!=names):return False
+    rows=stage['cases'];fallback=rows['human-serve-fallback'];miss=rows['no-contact']
+    if not accepted(fallback) or not accepted(miss):return False
+    if (not flags(fallback, ('human','legal_position_verified','released_no_launch'))
+            or fallback.get('lifecycle')!=1 or not integer(fallback.get('phase'),0,255)
+            or fallback['phase']&0xe0!=0x40 or fallback.get('released_outgoing_path_claimed') is not False
+            or fallback['classes'][1]!='limit' or fallback['path_counts'][1]!=256):return False
+    timed=fallback.get('timed_prelaunch') or {};post=fallback.get('postlaunch_rejection') or {}
+    if (not flags(timed, ('passed','actual_launch_absent_before_requests','held_actual_launch_after_requests'))
+            or timed.get('phase')!=32 or timed.get('complete_boundary_clocks')!=[15,16]
+            or timed.get('launch_entry_clock')!=16 or not isinstance(timed.get('cases'),list)
+            or len(timed['cases'])!=2 or not all(accepted(row) for row in timed['cases'])):return False
+    if (not flags(post, ('passed','actual_human_launch_observed','legal_position_verified','request_rejected',
+                         'full_live_history_output_preview_preserved'))
+            or post.get('lifecycle')!=1 or not integer(post.get('phase'),0,255) or post['phase']&0xe0!=32
+            or not integer(post.get('serve_clock'),17,255) or not integer(post.get('operations'),1)
+            or post.get('launch_entry_clock')!=16 or post.get('first_postlaunch_boundary_clock')!=17):return False
+    if ('no-contact' not in miss['classes'] or miss.get('no_contact_outgoing_path_claimed') is not False
+            or not integer(miss.get('end'),0,1)):return False
+    for variant,name in enumerate(miss['classes']):
+        if name=='no-contact' and any(event['end']==miss['end'] for event in miss['actual_accepted_launches'][str(variant)]):return False
+    title=rows['title-dual-rejection'];limit=rows['limit-256']
+    if (not flags(title, ('passed','fallback_rejected','historical_rejected','full_live_history_output_preview_preserved'))
+            or title.get('lifecycle')!=2 or not integer(title.get('stale_phase'),0,255)
+            or title['stale_phase']&0xe0==0):return False
+    if (not flags(limit, ('passed','no_actual_human_launch','incomplete','full_live_history_output_preserved',
+                          'continuous_state_path_output_equal','independent_continuation_policy_equal'))
+            or limit.get('samples')!=256 or limit.get('total_sample_limit')!=256
+            or limit.get('outgoing_path_claimed') is not False):return False
+    for name,phase in (('replacement-resolve',1),('replacement-held',3)):
+        row=rows[name]
+        if (not flags(row, ('passed','cold_restart','old_and_partial_results_unavailable','full_live_history_output_preserved'))
+                or row.get('phase')!=phase or not integer(row.get('retired_generation'),1,0xfffffffe)
+                or row.get('new_generation')!=row['retired_generation']+1 or not integer(row.get('partial_prefix_samples'))
+                or any(not integer(row.get(key),1) for key in ('request_cpu_cycles','replacement_cpu_cycles',
+                      'maximum_worker_cpu_cycles','worker_calls','maximum_stack_bytes'))):return False
+    lifecycle=rows['non-dispatch-lifecycle']
+    if (not flags(lifecycle, ('passed','clear_latch_result_order_preserved','reset_not_executed'))
+            or lifecycle.get('reset_operations')!=['game_core_init','game_core_select','game_core_return_title']
+            or not isinstance(lifecycle.get('cases'),list) or len(lifecycle['cases'])!=3):return False
+    for row in lifecycle['cases']:
+        if (not accepted(row,allow_empty=True) or row['classes']!=['lifecycle','lifecycle']
+                or row['path_counts']!=[0,0] or row['actual_final_boundaries']!=[None,None]):return False
+    truncated=rows['truncated-completed-context']
+    if (not flags(truncated, ('passed','request_accepted','context_missing','result_rejected',
+                             'unavailable_scratch_preserved','full_live_history_output_preserved'))
+            or truncated.get('cache_valid') is not False or truncated.get('completed_kind') not in (1,2)
+            or not costs(truncated.get('costs'),edited=False) or truncated['costs']['cache_hit'] is not False
+            or truncated['costs']['resolver_operations']<=0
+            or any(not integer(truncated.get(key)) for key in ('incoming_origin','oldest','probe_origin'))
+            or not truncated['incoming_origin']<truncated['oldest']<=truncated['probe_origin']
+            or not integer(truncated.get('dispatches'),1,512) or not integer(truncated.get('operations'),1,8192)
+            or truncated.get('non_tick_calls_between_launch_and_probe')!=128):return False
+    return True
+
+
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
@@ -328,7 +424,7 @@ def required_extent(case,report):
         for field in ('oldest_after_eviction','evicted_incoming_origin'):
             if type(invalidation.get(field)) is not int or invalidation[field]<0:return False
         if invalidation['oldest_after_eviction']<=invalidation['evicted_incoming_origin']:return False
-        return True
+        return preview_a1_extent(validation.get('stage_a1_validation'))
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}

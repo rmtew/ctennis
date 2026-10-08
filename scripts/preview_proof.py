@@ -46,11 +46,12 @@ def call_checked(cpu,name,args,saved):
     return cycles
 
 
-def fixture(cpu):
-    stream=[('game_core_select',[0,0xace1,0])]
-    for tick in range(512):
+def fixture(cpu,seed=0xace1,dispatches=512,controls=None):
+    assert 0<seed<=65535 and 0<dispatches<=512
+    stream=[('game_core_select',[0,seed,0])]
+    for tick in range(dispatches):
         stream.extend([('game_round_poll',[]),
-            ('game_core_sample_pads',[(0x10 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0]),
+            ('game_core_sample_pads',controls(tick) if controls else [(0x10 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0]),
             ('game_core_sample_result',[0]*6),('game_tick_dispatch',[])])
     states,ticks,launches={},[],[]
     original=cpu.instruction
@@ -60,8 +61,13 @@ def fixture(cpu):
             end=cpu.cpu.r_reg(7)&0xffff
             assert end in (0,1)
             player=cpu.symbols['game_play_state']+end*10
+            human=cpu.mem.r8(cpu.symbols['game_play_state']+54+end)==0
+            episode=None
+            if pc==cpu.symbols['game_history_contact'] and human and field(cpu,'game_history_probe_active',1):
+                address=cpu.symbols['game_history_attempts']+field(cpu,'game_history_probe_index')*12
+                episode=(cpu.mem.r32(address)<<32)|cpu.mem.r32(address+4)
             launches.append(dict(kind=3 if pc==cpu.symbols['game_history_serve'] else 1,
-                end=end,origin=cursor(cpu),human=cpu.mem.r8(cpu.symbols['game_play_state']+54+end)==0,
+                end=end,origin=cursor(cpu),human=human,episode_origin=episode,
                 x=cpu.mem.r8(player+3),y=cpu.mem.r8(player+2)))
     cpu.cpu.set_instr_hook_callback(observe)
     cpu.call_logical('game_core_init',[])

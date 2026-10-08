@@ -18,10 +18,10 @@ def result(cpu):
         incoming=cursor(cpu,'game_preview_incoming'),action=cursor(cpu,'game_preview_action'))
 
 
-def job(cpu,ordinal,x,y,expected_status=5):
+def job(cpu,ordinal,x,y,expected_status=5,observer=None):
     saved=protected(cpu)
     expected=bytearray(cpu.state())
-    end=attempts(cpu)[ordinal][2]
+    end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else attempts(cpu)[ordinal][2]
     player=cpu.symbols['game_play_state']-cpu.symbols['game_core_state']+end*10
     expected[player+3]=x;expected[player+2]=y
     bodies={cpu.symbols[n+'_body'] for n in OPERATIONS}
@@ -29,14 +29,17 @@ def job(cpu,ordinal,x,y,expected_status=5):
     def observe(pc):
         nonlocal resolver
         cpu.instruction(pc)
+        if observer is not None:observer(pc)
         if pc in bodies and field(cpu,'game_preview_active',1)==1:resolver+=1
     cpu.cpu.set_instr_hook_callback(observe)
     generation=field(cpu,'game_preview_generation',4)
     cpu.preview_events.clear();cpu.preview_event_groups.clear()
+    was_cache_valid=(bool(field(cpu,'game_preview_cache_valid'))
+        and field(cpu,'game_preview_status')==5 and field(cpu,'game_preview_ordinal')==ordinal)
     request_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:x,3:y},saved)
     assert cpu.cpu.r_reg(0)==1
     generation+=1
-    cache_hit=field(cpu,'game_preview_status')==2
+    cache_hit=was_cache_valid and field(cpu,'game_preview_status')==2
     cycles=[];operations=[]
     for _ in range(8192):
         if field(cpu,'game_preview_status')>=5:break
