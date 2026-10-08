@@ -4,7 +4,7 @@ game_history_seek_generation: ds.l 1
 game_history_seek_status: ds.w 1
 game_history_seek_remaining: ds.w 1
 game_history_seek_active: ds.b 1
-        even
+        ds.b 1 ; Explicit alignment byte keeps the private734B layout attributable.
 game_history_seek_target: ds.l 2
 game_history_seek_cursor: ds.l 2
 game_history_seek_history: ds.b game_history_state_end-game_history_state
