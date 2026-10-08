@@ -5,8 +5,8 @@ The active increment starts from merged PR #37, `d779dacc`. The approved
 The first visual checkpoint is deliberately small: current human serve, legal
 position edits, actual held/released alternatives, projected ball/shadow animation,
 ghost position, readable court/score, progress/hints and Resume latest. Play from
-here remains disabled until edited-checkpoint branching is proved; its menu
-caption is pending the appearance repair. This
+here is labelled NOT READY and remains disabled until edited-checkpoint
+branching is proved. This
 checkpoint does not finish retained-shot navigation or the tutorial release.
 
 ## Ownership and review
@@ -174,4 +174,45 @@ Observed free chip RAM was 71,992 bytes, largest block 71,408 and stack use
 resource report remains incomplete; full target/release coverage is unmeasured.
 This selective pass does not clear the observed menu appearance defect or
 turn the finite released attached-ball preview into a completed outgoing shot.
-Screenshots/GIF remain local: upload/publication is not authorized.
+Screenshots/GIF remain local. The user approved saving the screenshot and
+animation to their Library; that save is blocked by a network error. Public
+publication remains unauthorized.
+
+The appearance repair at `21542bc7ba1ee6e0cb49b88458a4b19f5eb7f240`
+passed selected PAL campaign `d7ae21e91a354e4993936730bf46dc5a` and independent
+source/native evidence review by `/root/native_receipt_review`. Native SHA256:
+`5b137c64b95c037f15583c1464af03692807c879ee4de0a78085fec67372187d`.
+Literal RPC SHA256:
+`e360238e5bca76bb04e3a9688fd2bf5231c86975e34b4bb1f060365ac91ffe79`.
+
+All four initial court pointers and eleven fixed court restores now select the
+same private surface. HUD/status strip pointers keep native ownership. Menu
+labels occupy rows 132/143/154, with no trail or ball/shadow overprinting.
+Normal rendering retires private pointers as each bank becomes writable.
+Independent literal reconstruction verified all 15 pointer/register contracts
+at 134 queues and 121 actual publications, including all three native banks
+after resume. Menu captions and highlights 0/1 matched authored font pixels.
+
+The released footer now says RELEASED - WAITING TO SERVE only for the verified
+current human serve, released variant, zero actual launches and final phase40.
+The underlying result remains the explicit 256-sample LIMIT outcome: this is
+an observed attached-ball wait, not a completed predicted outgoing trajectory.
+Other truncated contexts retain CALCULATION LIMIT - INCOMPLETE. Actual 318-byte
+readbacks, ordinal, launch count, phase and human flag bind this label.
+
+All 4,700 complete callbacks met unchanged deadlines; minimum absolute headroom
+was 3,594.137 CCK and maximum work 54,917 CCK, with zero dropped observations.
+There were 4,527 frozen boundaries and 29 held-F successor boundaries without
+an invented edge. The 34 native images match source pixels; the 24 sampled
+frames coalesce to an exact 18-frame GIF. Free chip RAM was 71,704 bytes,
+largest block 71,120 and stack use 320 bytes. Development/code/data/BSS/loaded
+sizes are 204,064/55,216/112,700/145,380/313,296 bytes. Preview readiness remains
+10.00–20.40 guest seconds; menu redraw improved to 0.80–1.00 seconds.
+
+Full native acceptance remains false and standard resource coverage incomplete.
+PR #38 stays draft/unmerged pending user appearance review. Retained-shot/time
+navigation, edited branch checkpoints, repeated/device/NTSC interaction checks
+and the full target/release gate remain the next roadmap work. The earlier
+reviewed `13cb3e9` artifacts are preserved at
+`build/tests/tutorial-court-pal-reviewed-675b4408`; latest original products and
+raw evidence remain at `build/tests/tutorial-court-pal`.
