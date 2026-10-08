@@ -30,10 +30,10 @@ def batching(executable,progress):
         for budget in (1,2,3,4):
             selection=candidate['origin'];seek(cpu,selection)
             assert cpu.state()==states[selection]
-            saved=protected(cpu);roles=[];body_trace=[];restores=0
+            saved=protected(cpu);roles=[];body_trace=[];restores=0;last_body_restore_count=0
             bodies={symbols[name+'_body']:name for name in OPERATIONS}
             def observe(pc):
-                nonlocal restores
+                nonlocal restores,last_body_restore_count
                 if pc==symbols['game_preview_context_released']:
                     assert_preserved(cpu,saved);restores+=1
                 if pc not in bodies:return
@@ -42,11 +42,15 @@ def batching(executable,progress):
                 status=field(cpu,'game_preview_status')
                 variant=field(cpu,'game_preview_variant',1)
                 role='resolve' if active==1 else ('prime-held' if variant==0 else 'prime-released') if status==2 else 'held' if variant==0 else 'released'
+                if roles and roles[-1]!=role:
+                    assert restores>last_body_restore_count, 'Owner transition enters a body before restoring selected/history/output'
                 if not roles or roles[-1]!=role:roles.append(role)
+                last_body_restore_count=restores
                 body_trace.append((role,bodies[pc]))
             observation=execute(cpu,candidate['ordinal'],selection,candidate['x'],candidate['y'],
                 stream,0xace1,f'batch-budget-{budget}',budget=budget,extra_observer=observe)
             result=observation['result'];costs=observation['costs']
+            assert restores>last_body_restore_count, 'READY publication lacks a restore after the final actual body'
             call_checked(cpu,'game_preview_result',{0:costs['generation']},saved)
             assert cpu.cpu.r_reg(0)==1
             assert [cpu.cpu.r_reg(r) for r in (1,2)]==[len(path)//8 for path in result['paths']]
