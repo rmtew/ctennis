@@ -145,7 +145,9 @@ def run():
                         elif first_resumed_boundary_matches:
                             assert not (block('game_input_pressed', 2)[0] & 0x10), 'Held menu action creates an invented shot edge'
                             held_resume_samples += 1
-                    if time >= target:
+                    # The protocol target is quantized to guest colour clocks.
+                    # Its returned seconds can round below the requested float.
+                    if stop.get('reason') == 'target' or time >= target:
                         break
                 else:
                     raise AssertionError('Finite complete-boundary observation cap')

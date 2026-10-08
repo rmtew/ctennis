@@ -109,3 +109,11 @@ before the signed delta branch. Upward or leftward segments could therefore
 walk indefinitely. The repair explicitly tests each computed delta immediately
 before selecting its sign. Passive path cursor/line telemetry and failure
 readbacks are retained for the next native proof; no timing exemption is added.
+
+The repaired renderer at `13f2771` completed the initial and edited views and
+24 held-shot animation samples. Attempt `6307797e8d6041ab8fd6fde3383630b2`
+then failed the observer iteration cap during menu readiness: the emulator
+repeatedly returned a reached `target` at the same 83.233847 guest seconds,
+slightly below the requested floating-point time. The capture now treats the
+protocol's reached-target result as completion, retaining actual returned time
+for subsequent requests. All original artifacts and callback guards remain.
