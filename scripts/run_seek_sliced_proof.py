@@ -57,10 +57,12 @@ def run():
         semantic=lambda p:[(r['operation'],r['arguments'],r['working_state'],r['events']) for r in p['rows']]
         assert semantic(validation['proofs']['standalone'])==semantic(validation['proofs']['relocated'])==semantic(validation['proofs']['native'])
         validation['passed']=True
-        report=dict(passed=True,execution='actual-68000-cpu-only',seek_sliced_validation=validation,
+        report=dict(passed=True,executable_sha256=digest(standalone),execution='actual-68000-cpu-only',seek_sliced_validation=validation,
             scope='Fresh bounded seek/preview ownership and complete actual boundaries at checkpoint512 through569; no real IRQ/input native deadline or whole release gate claim.')
+        unvalidated=path.parent/'report-unvalidated.json'
+        atomic_json(unvalidated,dict(report,receipt_validated=False))
         transaction.finalize(path,report,compiled=[compile_manifest(standalone,listing),compile_manifest(native,native.parent/'native.lst')],
-            artifacts=[path.parent/'proof-progress-unvalidated.json'])
+            artifacts=[path.parent/'proof-progress-unvalidated.json',unvalidated])
         assert status(path)['status']=='passed',status(path)
         print(json.dumps(dict(passed=True,report=str(path),proofs=list(validation['proofs']))),flush=True)
     except BaseException as error:
