@@ -93,6 +93,10 @@ tutorial_copper_plane:
         rts
 
 tutorial_choose_surface:
+        ; An IRQ can move ready to presentation and clear ready. Select from
+        ; one coherent ownership snapshot; bulk rendering remains interruptible.
+        move.w  sr,-(sp)
+        ori.w   #$0700,sr
         move.l  presentation_copper,a0
         cmpa.l  #title_copper,a0
         beq     .none_displayed
@@ -123,9 +127,11 @@ tutorial_choose_surface:
         beq     .busy
 .found: move.l  a1,tutorial_render_surface
         move.w  tutorial_render_generation,tutorial_build_generation
+        move.w  (sp)+,sr
         moveq   #1,d0
         rts
-.busy:  moveq   #0,d0
+.busy:  move.w  (sp)+,sr
+        moveq   #0,d0
         rts
 
 tutorial_copy_court:
