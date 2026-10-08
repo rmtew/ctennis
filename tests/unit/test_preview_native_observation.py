@@ -57,6 +57,17 @@ class NativePreviewGuards(unittest.TestCase):
         observer._guard(self.event(0xdff096,value=0x8200))
         self.assertIn('DMA configuration',observer.problems[-1])
 
+    def test_outside_dma_permission_cannot_be_borrowed_by_adjacent_store(self):
+        observer=self.observer()
+        observer.rules[0x400]=dict(address=0xdff096,bytes=2,operation='move',
+            source='#$8020',destination='$dff096')
+        observer._guard(self.event(0xdff096,value=0x8020))
+        self.assertEqual(observer.problems,[])
+        observer._guard(self.event(0xdff095,value=0x8020))
+        self.assertIn('DMA configuration',observer.problems[-1])
+        observer._guard(self.event(0xdff097,value=0x8020))
+        self.assertIn('DMA configuration',observer.problems[-1])
+
     def test_irq_ack_value_and_actual_api_interval(self):
         observer=self.observer()
         observer.pending=dict(name='game_preview_step',begin=None,end=None,irq=0,irq_acknowledgements=0)

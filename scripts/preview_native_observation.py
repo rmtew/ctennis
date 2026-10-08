@@ -132,7 +132,7 @@ class Observer(TraceCollector):
             if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
             if self.frozen and a<0xdff098 and a+size>0xdff096:
                 rule=self.rules.get(pc)
-                if not (rule and rule['address']==0xdff096 and size==2
+                if not (rule and a==0xdff096 and rule['address']==0xdff096 and size==2
                         and value==int(rule['source'][2:],16)):
                     self.problems.append('External frozen caller writes DMA configuration')
             if self.frozen and (overlap('game_core_state',318) or overlap('game_history_state',72)):
