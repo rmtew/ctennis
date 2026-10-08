@@ -94,6 +94,10 @@ History receipts label `evidence.target` as a legacy validator reference, never
 as their execution target. Native receipts record the exact actual video, CPU,
 chipset and RAM configuration in `evidence.actual_target` and the report target;
 CPU receipts explicitly identify isolated 68000 execution without an emulator.
+Native captures read the real selected presentation line and simulation interval
+after execution: PAL uses line 311 and 11838 + 14906/65536 E-clock ticks; NTSC
+uses line 261 and 11947 + 13180/65536. These reads verify the native selector's
+result independently of the command's video label.
 The trace-only fixture copies the exact main source and score include, relaxing
 only two renderer LEAs that exceed PC-relative range with instrumentation. It
 hashes original and generated sources and verifies that the emitted shared core

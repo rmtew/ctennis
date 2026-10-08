@@ -241,6 +241,12 @@ def main():
             assert stopped['pc'] == symbols['simulation_update'], stopped
             summary = collector.finish(read(symbols['game_core_state'],len(initial)))
             session.inspect('events.unsubscribe')
+            native_video = {name:int.from_bytes(read(symbols[name],width),'big')
+                for name,width in [('presentation_last_line',2),
+                                   ('simulation_interval_whole',4),
+                                   ('simulation_interval_fraction',2)]}
+            expected_video = (311,11838,14906) if standard=='PAL' else (261,11947,13180)
+            assert tuple(native_video.values())==expected_video, ('Actual native video selector',native_video,standard)
             cpu.audit_reads()
             history_validation = None
             if args.history:
@@ -276,7 +282,7 @@ def main():
                     'state':row['state']},core_symbols,rules_sha256)
             assert not changed(files), ('Inputs changed during comparison',changed(files))
             report = {'schema':1,'passed':True,'commit':run(['git','rev-parse','HEAD']).strip(),
-                'target':actual_target,'trace_fixture':trace_fixture,
+                'target':actual_target,'native_video':native_video,'trace_fixture':trace_fixture,
                 'scope':'Actual native trace and isolated CPU comparison; evidence.actual_target is the execution target, evidence.target is only a legacy validator reference. No trace-capture deadline claim.',
                 'seconds':args.seconds,'elapsed_seconds':stopped['seconds']-start_seconds,
                 'demo':args.demo,'restart':args.restart,'two':args.two,

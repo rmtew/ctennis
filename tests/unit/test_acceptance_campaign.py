@@ -40,6 +40,8 @@ class CampaignTests(unittest.TestCase):
                 'evidence':{'target_role':'legacy-validator-reference',
                             'actual_target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)},
                 'rows':[{}],'summary':{'operations':1},
+                'native_video':dict(presentation_last_line=311,simulation_interval_whole=11838,
+                                   simulation_interval_fraction=14906),
                 'history_validation':{'passed':True,'native_buffer_equal':True,'retained_operations':64,
                                       'seek':{'operations':100,'frozen_operations_checked':9,
                                               'register_sr_equivalence_operations':100,'failure_preserves_older_position':True,
@@ -52,7 +54,10 @@ class CampaignTests(unittest.TestCase):
                            (('history_validation','seek','boundaries_checked'),64),
                            (('history_validation','seek','seeks'),129),
                            (('history_validation','seek','negative_controls'),[]),
-                           (('evidence','target_role'),'execution-target'),(('evidence','actual_target'),{})):
+                           (('evidence','target_role'),'execution-target'),(('evidence','actual_target'),{}),
+                           (('native_video','presentation_last_line'),261),
+                           (('native_video','simulation_interval_whole'),11947),
+                           (('native_video','simulation_interval_fraction'),13180)):
             partial=json.loads(json.dumps(report));node=partial
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value

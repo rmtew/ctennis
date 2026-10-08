@@ -280,6 +280,10 @@ def required_extent(case,report):
         return (report.get('history') is True and isinstance(seconds,(int,float)) and seconds>=16
                 and evidence.get('target_role')=='legacy-validator-reference'
                 and evidence.get('actual_target')==report.get('target')
+                and report.get('native_video')==dict(
+                    presentation_last_line=261 if case.id=='history-ntsc' else 311,
+                    simulation_interval_whole=11947 if case.id=='history-ntsc' else 11838,
+                    simulation_interval_fraction=13180 if case.id=='history-ntsc' else 14906)
                 and report.get('target')==dict(video='NTSC' if case.id=='history-ntsc' else 'PAL',
                                               cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)
                 and isinstance(rows,list) and bool(rows)
