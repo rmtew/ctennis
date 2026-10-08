@@ -16,7 +16,9 @@
   reports are historical evidence. See [resource reporting](metrics/README.md).
 - The shared deterministic production core and bounded rolling history/seek are
   implemented. The focused history evidence is described in
-  [bounded history](bounded-history.md). The tutorial court UI, isolated previews
-  and branching remain subsequent [roadmap](tutorial-mode-design.md) increments;
-  persistent saves remain later work. Synchronous isolated seek cycles do not
-  establish native display-frame deadlines. Reboot remains intentional after play.
+  [bounded history](bounded-history.md). Isolated previews and bounded native seek scheduling are implemented with
+  independently reviewed selective CPU/PAL/NTSC evidence; see
+  [isolated previews](isolated-shot-previews.md). The tutorial court UI is the
+  active [roadmap](tutorial-mode-design.md) increment. Branching, persistent saves
+  and the full target/release gate remain later work. Finite observed callback
+  headroom does not establish a universal timing bound. Reboot remains intentional after play.

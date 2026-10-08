@@ -3,9 +3,11 @@
 Status: implementation roadmap authorized on 7 October 2026. The shared core
 is merged. Bounded history/seek merged in PR #36 after selective native acceptance
 and independent review; see [bounded history](bounded-history.md). Isolated
-previews are under implementation with partial CPU acceptance; see
-[isolated previews](isolated-shot-previews.md). Tutorial UI and branching remain
-later increments.
+previews and bounded native seek scheduling merged in PR #37 after independent
+source and completed selective CPU/PAL/NTSC evidence review; see
+[isolated previews](isolated-shot-previews.md). The court prototype is the active
+increment; visual tuning awaits native screenshots and animation review.
+Branching and the full target/release gate remain later work.
 
 ## Purpose and scope
 
