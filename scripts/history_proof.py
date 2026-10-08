@@ -43,11 +43,35 @@ def seek(cpu, target):
     return cycles
 
 
-def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=False, native_guards=False):
+def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=False, native_guards=False, stream_override=None):
     image,symbols = load_image(executable,base)
-    with Core(image,symbols,poison=poison,readonly=READONLY) as cpu, Core(image,symbols,poison=poison,readonly=READONLY) as uninterrupted:
-        cpu.call_logical('game_core_init',[])
+    offset = (1<<32)-512 if wrap else 0
+    if stream_override is not None:
+        stream = stream_override
+    elif rows is None:
+        stream = [('game_core_select',[0,0xace1,0])]
+        for tick in range(ticks):
+            # Controls are fixed inputs only. Outcomes come from 68000.
+            stream.extend([('game_round_poll',[]),
+                ('game_core_sample_pads',[(0x10 if tick%64>=8 else 0) | (8 if tick%96<48 else 4),0]),
+                ('game_core_sample_result',[0,0,0,0,0,0]),('game_tick_dispatch',[])])
+    else:
+        assert rows[0]['operation']=='game_core_init'
+        stream = [(row['operation'],row['arguments']) for row in rows[1:]]
+    expected, baseline = {}, {}
+    # machine68k has one active CPU context; independent executions are
+    # sequential, freshly initialized, with no intermediate state injection.
+    with Core(image,symbols,poison=poison,readonly=READONLY) as uninterrupted:
         uninterrupted.call_logical('game_core_init',[])
+        expected[offset] = (uninterrupted.state(),[])
+        for ordinal,(name,args) in enumerate(stream,1):
+            uninterrupted.clear_events()
+            cycles = uninterrupted.call_logical(name,args)
+            expected[offset+ordinal] = (uninterrupted.state(),list(uninterrupted.events))
+            baseline[ordinal] = (cycles,[uninterrupted.cpu.r_reg(r) for r in range(15)],uninterrupted.cpu.r_sr())
+        uninterrupted.audit_reads()
+    with Core(image,symbols,poison=poison,readonly=READONLY) as cpu:
+        cpu.call_logical('game_core_init',[])
         canonical = cpu.state()
         expected_size = symbols['game_history_buffer_end']-symbols['game_history_buffer']
         for pointer,length in ((0,expected_size),(symbols['game_history_buffer']+1,expected_size),
@@ -56,39 +80,26 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             cpu.call('game_history_attach',{8:pointer,0:length})
             assert cpu.cpu.r_reg(0)==0 and cpu.state()==canonical and field(cpu,'game_history_mode',1)==0
         size = attach(cpu)
-        offset = (1<<32)-512 if wrap else 0
         if wrap:
             # One-time history-only fixture origin, before the first operation.
             # Canonical state is untouched and no later expected state injected.
             cpu.mem.w_block(symbols['game_history_cursor'],offset.to_bytes(8,'big'))
             cpu.mem.w_block(symbols['game_history_oldest'],offset.to_bytes(8,'big'))
             cpu.mem.w_block(symbols['game_history_buffer']+14336,offset.to_bytes(8,'big'))
-        expected = {offset:(cpu.state(),[])}
         outputs, record_cycles, checkpoint_cycles = {}, [], []
         regular_overhead, checkpoint_overhead = [], []
         counts = Counter()
         outcomes = set()
         tick_wraps = 0
         last_tick = field(cpu,'game_tick',1)
-        if rows is None:
-            stream = [('game_core_select',[0,0xace1,0])]
-            for tick in range(ticks):
-                # Fixed controls are inputs only. Outcomes come from 68000.
-                stream.extend([('game_round_poll',[]),
-                    ('game_core_sample_pads',[(0x10 if tick%64>=8 else 0) | (8 if tick%96<48 else 4),0]),
-                    ('game_core_sample_result',[0,0,0,0,0,0]),
-                    ('game_tick_dispatch',[])])
-        else:
-            stream = [(row['operation'],row['arguments']) for row in rows if row['operation']!='game_core_init']
-        for name,args in stream:
+        for ordinal,(name,args) in enumerate(stream,1):
             cpu.clear_events()
             cycles = cpu.call_logical(name,args)
-            uninterrupted.clear_events()
-            baseline_cycles = uninterrupted.call_logical(name,args)
-            assert cpu.state()==uninterrupted.state() and cpu.events==uninterrupted.events, ('recording alters core',name)
+            baseline_cycles, registers, sr = baseline[ordinal]
+            assert (cpu.state(),cpu.events)==expected[offset+ordinal], ('recording alters core',name)
+            assert [cpu.cpu.r_reg(r) for r in range(15)]==registers and cpu.cpu.r_sr()==sr, ('recording alters CPU ABI',name)
             boundary = cursor(cpu)
             (checkpoint_overhead if boundary%64==0 else regular_overhead).append(cycles-baseline_cycles)
-            expected[boundary] = (cpu.state(),list(cpu.events))
             outputs[boundary] = list(cpu.events)
             counts[name] += 1
             tick = field(cpu,'game_tick',1)
@@ -106,8 +117,21 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
         cpu.call('game_history_freeze')
         assert cpu.cpu.r_reg(0) == 1
         # External logical controls while frozen cannot advance/edit live core.
-        cpu.call_logical('game_core_sample_pads',[0xffff,0xffff])
-        assert cpu.state() == live
+        frozen_calls = [('game_core_init',[]),('game_core_select',[1,65535,0]),
+            ('game_core_sample_pads',[0xffff,0xffff]),('game_core_sample_result',[65535]*6),
+            ('game_core_clear_inputs',[]),('game_core_return_title',[]),
+            ('game_round_poll',[]),('game_tick_dispatch',[]),('game_core_latch_actions',[])]
+        for name,args in frozen_calls:
+            count = cpu.logical_calls
+            registers = [((count*65537+r*0x1010101)^0x965aa569^cpu.context_seed)&0xffffffff for r in range(15)]
+            for r,value in enumerate(args):
+                registers[r] = (registers[r]&0xffff0000)|value
+            sr = 0x2700|((count^cpu.context_seed)&31)
+            cpu.clear_events()
+            cpu.call_logical(name,args)
+            assert cpu.state()==live and cpu.events==[] and cursor(cpu)==end
+            assert [cpu.cpu.r_reg(r) for r in range(15)]==registers and cpu.cpu.r_sr()==sr
+            assert bytes(cpu.mem.r_block(symbols['game_history_buffer'],size-318))==before
         seek_cycles = []
         boundaries = list(range(oldest,end+1))
         for target in boundaries[::-1] + boundaries + [oldest,end,oldest,end]:
@@ -121,31 +145,44 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
             assert cursor(cpu) == end and cursor(cpu,'game_history_oldest') == oldest
             assert bytes(cpu.mem.r_block(symbols['game_history_buffer'],size-318)) == before
         negatives = []
-        for target in (oldest-1,end+1):
-            state = cpu.state()
+        seek(cpu,end)
+        selected_checkpoint = field(cpu,'game_history_selected',4)
+        seek(cpu,oldest)
+        working = cpu.state()
+        working_cursor = cursor(cpu,'game_history_position')
+        assert working_cursor==oldest
+        def rejected(target):
             cpu.clear_events()
             cpu.call('game_history_seek',{0:(target>>32)&0xffffffff,1:target&0xffffffff})
-            assert cpu.cpu.r_reg(0)==0 and cpu.state()==state and cpu.events==[]
+            assert cpu.cpu.r_reg(0)==0 and cpu.state()==working and cpu.events==[]
+            assert cursor(cpu,'game_history_position')==working_cursor
+            assert cursor(cpu)==end and cursor(cpu,'game_history_oldest')==oldest
+            assert bytes(cpu.mem.r_block(symbols['game_history_buffer'],size-318))==before
+        for target in (oldest-1,end+1):
+            rejected(target)
             negatives.append('out-of-range-'+str(target))
-        # Selected checkpoint envelope/entropy corruption must reject before
-        # canonical writes. Restore only the corrupted store byte afterwards.
-        address = field(cpu,'game_history_selected',4)
+        # Corrupt a requested origin while the selected working state is older
+        # than the live backup. Failure cannot silently restore the live state.
+        address = selected_checkpoint
         for delta,value in ((8,255),(10,255),(12+314,255),(12+88+4,254)):
             original = cpu.mem.r8(address+delta)
             cpu.mem.w8(address+delta,value)
-            state = cpu.state()
-            cpu.call('game_history_seek',{0:end>>32,1:end&0xffffffff})
-            assert cpu.cpu.r_reg(0)==0 and cpu.state()==state
+            saved_before = before
+            before = bytes(cpu.mem.r_block(symbols['game_history_buffer'],size-318))
+            rejected(end)
             cpu.mem.w8(address+delta,original)
+            before = saved_before
             negatives.append('checkpoint-byte-'+str(delta))
-        if end%64:
-            address = symbols['game_history_buffer']+((end-1)&1023)*14
+        invalid_target = end if end%64 else end-1
+        if invalid_target>oldest:
+            address = symbols['game_history_buffer']+((invalid_target-1)&1023)*14
             original = cpu.mem.r16(address)
             cpu.mem.w16(address,0xffff)
-            state = cpu.state()
-            cpu.call('game_history_seek',{0:end>>32,1:end&0xffffffff})
-            assert cpu.cpu.r_reg(0)==0 and cpu.state()==state
+            saved_before = before
+            before = bytes(cpu.mem.r_block(symbols['game_history_buffer'],size-318))
+            rejected(invalid_target)
             cpu.mem.w16(address,original)
+            before = saved_before
             negatives.append('invalid-operation-id')
         if native_guards:
             from match_core_cpu import ADAPTERS, OPTIONAL_ADAPTERS
@@ -161,8 +198,9 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
         cpu.call('game_history_resume_latest')
         assert cpu.state()==live and cursor(cpu)==end and attempts(cpu)==index
         cpu.audit_reads()
-        uninterrupted.audit_reads()
-        return {'operations':len(stream),'buffer_bytes':size,'metadata_bytes':symbols['game_history_state_end']-symbols['game_history_state'],
+        import hashlib
+        ordered_records = b''.join(bytes(cpu.mem.r_block(symbols['game_history_buffer']+(n&1023)*14,14)) for n in range(oldest,end))
+        return {'record_arguments_sha256':hashlib.sha256(ordered_records).hexdigest(),'operations':len(stream),'buffer_bytes':size,'metadata_bytes':symbols['game_history_state_end']-symbols['game_history_state'],
                 'oldest':oldest,'latest':end,'retained_operations':end-oldest,
                 'boundaries_checked':len(boundaries),'seeks':len(seek_cycles),
                 'max_seek_cpu_cycles':max(seek_cycles),'max_regular_cpu_cycles':max(record_cycles),
@@ -170,6 +208,68 @@ def exercise(executable, rows=None, ticks=1536, poison=0xa5, base=0x10000, wrap=
                 'max_record_overhead_cpu_cycles':max(regular_overhead),
                 'max_checkpoint_overhead_cpu_cycles':max(checkpoint_overhead,default=0),'stack_bytes':cpu.stack_bytes,
                 'attempts':dict(Counter(kind for _,kind,_ in index)),
-                'negative_controls':negatives,'low_longword_wrap':wrap,'tick_wraps':tick_wraps,'completed_episode_kinds':dict(Counter(kind for _,kind in outcomes)),
+                'negative_controls':negatives,'frozen_operations_checked':len(frozen_calls),'register_sr_equivalence_operations':len(stream),'failure_preserves_older_position':working_cursor==oldest,'low_longword_wrap':wrap,'tick_wraps':tick_wraps,'completed_episode_kinds':dict(Counter(kind for _,kind in outcomes)),
                 'actual_contact_probes':cpu.visits.get(symbols['game_player_contact'],0),
                 'operation_counts':dict(counts)}
+
+
+def logical_api(executable):
+    stream = [('game_core_select',[0,0x3037,0]),
+        ('game_core_sample_pads',[0x10,0x20]),('game_core_latch_actions',[]),
+        ('game_core_clear_inputs',[]),('game_core_sample_result',[0,0,0,0,0,0]),
+        ('game_round_poll',[]),('game_tick_dispatch',[]),
+        ('game_core_return_title',[]),('game_core_init',[]),
+        ('game_core_select',[1,0xffff,0]),('game_core_sample_pads',[0x30,0x30]),
+        ('game_core_sample_result',[1,1,0,0,0,0]),('game_tick_dispatch',[]),
+        ('game_core_sample_pads',[0,0]),('game_core_latch_actions',[]),
+        ('game_core_clear_inputs',[]),('game_round_poll',[]),('game_tick_dispatch',[])]
+    return exercise(executable,stream_override=stream)
+
+
+def pending_eviction(executable, verify_seek=True):
+    image,symbols = load_image(executable)
+    stream = []
+    with Core(image,symbols,readonly=READONLY) as cpu:
+        cpu.call_logical('game_core_init',[])
+        attach(cpu)
+        def call(name,args):
+            stream.append((name,args))
+            cpu.clear_events()
+            cpu.call_logical(name,args)
+            attempts(cpu)
+        call('game_core_select',[0,0xace1,0])
+        def update(tick):
+            call('game_round_poll',[])
+            call('game_core_sample_pads',[(0x10 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0])
+            call('game_core_sample_result',[0,0,0,0,0,0])
+            call('game_tick_dispatch',[])
+        for tick in range(1024):
+            update(tick)
+            if field(cpu,'game_history_probe_active',1):
+                break
+        else:
+            raise AssertionError('Actual incoming human episode absent')
+        origin = next(n for n,kind,_ in attempts(cpu) if kind==0)
+        pending_state = cpu.state()
+        for _ in range(1100):
+            call('game_round_poll',[])
+            assert cpu.state()==pending_state, 'Playing poll advances incoming state'
+        assert cursor(cpu,'game_history_oldest')>origin
+        assert field(cpu,'game_history_probe_active',1)==0
+        assert all(n!=origin for n,_,_ in attempts(cpu))
+        eviction_oldest = cursor(cpu,'game_history_oldest')
+        for later in range(tick+1,tick+513):
+            update(later)
+            completed = [(n,kind) for n,kind,_ in attempts(cpu) if kind in (1,2)]
+            assert all(n>=eviction_oldest for n,_ in completed)
+            if completed:
+                new_origin, outcome = completed[-1]
+                break
+        else:
+            raise AssertionError('Post-eviction actual contact/miss outcome absent')
+        cpu.audit_reads()
+    extent = exercise(executable,stream_override=stream) if verify_seek else {'operations':len(stream),'development_phase_check_only':True}
+    return dict(extent,
+                evicted_pending_origin=origin,eviction_oldest=eviction_oldest,
+                pending_canceled=True,completed_new_origin=new_origin,
+                completed_new_episode_kind=outcome)

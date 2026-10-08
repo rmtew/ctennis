@@ -41,7 +41,7 @@ game_history_attach:
         moveq   #0,d0
         rts
 
-; Wrapper saved D0-D7/A0-A6 before this call; D6 operation ID.
+; Wrapper saved D6/D7/A0/A1 before this call; D6 operation ID.
 game_history_before:
         cmpi.b  #1,game_history_mode
         bne.s   .done
@@ -52,6 +52,24 @@ game_history_before:
         move.l  game_history_store,a0
         adda.l  d7,a0
         move.w  d6,(a0)+
+        lea     game_history_argument_counts,a1
+        moveq   #0,d7
+        move.b  -1(a1,d6.w),d7
+        cmpi.w  #6,d7
+        beq.s   .six
+        ; Omitted logical arguments are canonical zeros, never caller context.
+        clr.l   (a0)
+        clr.l   4(a0)
+        clr.l   8(a0)
+        tst.w   d7
+        beq.s   .done
+        move.w  d0,(a0)
+        move.w  d1,2(a0)
+        cmpi.w  #3,d7
+        bne.s   .done
+        move.w  d2,4(a0)
+        rts
+.six:
         move.w  d0,(a0)+
         move.w  d1,(a0)+
         move.w  d2,(a0)+
@@ -59,6 +77,11 @@ game_history_before:
         move.w  d4,(a0)+
         move.w  d5,(a0)+
 .done:  rts
+
+game_history_argument_counts:
+        dc.b 0,3,2,6,0,0,0,0,0
+game_history_argument_counts_end:
+        even
 
 game_history_after:
         cmpi.b  #1,game_history_mode
@@ -162,9 +185,21 @@ game_history_checkpoint:
 
 ; Copy all canonical bytes A1->A0; no normalization, including reserves.
 game_history_copy_state:
-        move.w  #GAME_CORE_STATE_SIZE/2-1,d7
-.copy:  move.w  (a1)+,(a0)+
+        movem.l d0-d6/a2-a6,-(sp)
+        moveq   #5,d7
+.copy:  movem.l (a1)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a0)
+        adda.w  #48,a0
         dbra    d7,.copy
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.l  (a1)+,(a0)+
+        move.w  (a1)+,(a0)+
+        movem.l (sp)+,d0-d6/a2-a6
         rts
 
 ; Freeze complete live state once. No later samples may reach the core until
@@ -177,6 +212,8 @@ game_history_freeze:
         lea     game_core_state,a1
         bsr     game_history_copy_state
         move.b  #2,game_history_mode
+        move.l  game_history_cursor,game_history_position
+        move.l  game_history_cursor+4,game_history_position+4
         moveq   #1,d0
         rts
 .invalid:
@@ -191,6 +228,8 @@ game_history_resume_latest:
         lea     game_core_state,a0
         bsr     game_history_copy_state
         move.b  #1,game_history_mode
+        move.l  game_history_cursor,game_history_position
+        move.l  game_history_cursor+4,game_history_position+4
         moveq   #1,d0
         rts
 .invalid:
@@ -314,6 +353,8 @@ game_history_seek:
         subq.w  #1,game_history_replay_count
         bra.s   .loop
 .success:
+        move.l  game_history_target,game_history_position
+        move.l  game_history_target+4,game_history_position+4
         clr.b   game_history_replaying
         moveq   #1,d0
         rts
@@ -489,6 +530,7 @@ game_history_checkpoint_count: dc.w 0
 game_history_attempt_next: dc.w 0
 game_history_attempt_first: dc.w 0
 game_history_attempt_count: dc.w 0
+game_history_position: dc.l 0,0
 game_history_target: dc.l 0,0
 game_history_origin: dc.l 0,0
 game_history_selected: dc.l 0

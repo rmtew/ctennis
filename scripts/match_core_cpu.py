@@ -211,6 +211,7 @@ class Core:
             allowed.update(range(low,high))
         allowed.update(range(self.symbols['game_history_operations'], self.symbols['game_history_operations']+36))
         allowed.update(range(self.symbols['game_history_clip_bounds'],self.symbols['game_history_clip_bounds_end']))
+        allowed.update(range(self.symbols['game_history_argument_counts'],self.symbols['game_history_argument_counts_end']))
         for symbol, size in self.readonly.items():
             address = self.symbols[symbol] if isinstance(symbol, str) else symbol
             allowed.update(range(address, address+size))

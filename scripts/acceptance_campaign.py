@@ -220,6 +220,22 @@ def compatible_receipt(case, root=ROOT, check_history=True):
     return {'path':str(path),'sha256':digest(path),'original_evidence':meta,
             'artifacts':meta['files'],'classification':'reused'}, 'Compatible latest receipt'
 
+def history_negative_extent(proof):
+    controls=proof.get('negative_controls')
+    if not isinstance(controls,list) or any(not isinstance(c,str) for c in controls):return False
+    controls=set(controls)
+    return ({'checkpoint-byte-8','checkpoint-byte-10','checkpoint-byte-326','checkpoint-byte-104'}<=controls
+            and len({c for c in controls if c.startswith('out-of-range-')})>=2)
+
+def history_boundary_extent(proof):
+    retained=proof.get('retained_operations');boundaries=proof.get('boundaries_checked');seeks=proof.get('seeks');operations=proof.get('operations')
+    return (type(operations) is int and operations>0 and type(retained) is int and retained>0
+            and type(boundaries) is int and boundaries==retained+1
+            and type(seeks) is int and seeks>=2*boundaries and history_negative_extent(proof)
+            and proof.get('frozen_operations_checked')==9
+            and proof.get('register_sr_equivalence_operations')==proof.get('operations')
+            and proof.get('failure_preserves_older_position') is True)
+
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
@@ -227,17 +243,27 @@ def required_extent(case,report):
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}
         if (report.get('execution')!='actual-68000-cpu-only' or validation.get('passed') is not True
-                or set(proofs)!={'empty','long','cursor-wrap','relocated','native-sinks'}
+                or set(proofs)!={'empty','long','cursor-wrap','relocated','native-sinks','logical-api','pending-eviction'}
                 or any(p.get('passed') is not True for p in proofs.values())):return False
         if proofs['empty'].get('operations')!=0 or proofs['empty'].get('boundaries_checked')!=1:return False
-        for name in ('long','cursor-wrap','relocated','native-sinks'):
-            proof=proofs[name];retained=proof.get('retained_operations');boundaries=proof.get('boundaries_checked');seeks=proof.get('seeks')
-            if (type(retained) is not int or retained<=0 or type(boundaries) is not int or boundaries!=retained+1
-                    or type(seeks) is not int or seeks<2*boundaries or not proof.get('negative_controls')):return False
+        for name in ('long','cursor-wrap','relocated','native-sinks','logical-api','pending-eviction'):
+            proof=proofs[name]
+            if not history_boundary_extent(proof) or 'invalid-operation-id' not in proof['negative_controls']:return False
         long=proofs['long'];kinds=long.get('completed_episode_kinds') or {};wrap=proofs['cursor-wrap']
+        api=proofs['logical-api'];eviction=proofs['pending-eviction']
+        operations={'game_core_init','game_core_select','game_core_sample_pads','game_core_sample_result',
+                    'game_core_clear_inputs','game_core_return_title','game_round_poll','game_tick_dispatch','game_core_latch_actions'}
+        argument_hashes=[proofs[name].get('record_arguments_sha256') for name in ('cursor-wrap','relocated','native-sinks')]
         return (long.get('operations',0)>6*1024 and long.get('tick_wraps',0)>0
                 and all(kinds.get(str(kind),kinds.get(kind,0))>0 for kind in (1,2))
                 and wrap.get('low_longword_wrap') is True and wrap.get('latest',0)>>32==1
+                and all((api.get('operation_counts') or {}).get(name,0)>0 for name in operations)
+                and eviction.get('pending_canceled') is True
+                and eviction.get('eviction_oldest',0)>eviction.get('evicted_pending_origin',0)
+                and eviction.get('completed_new_origin',-1)>=eviction.get('eviction_oldest',0)
+                and eviction.get('completed_new_episode_kind') in (1,2)
+                and isinstance(argument_hashes[0],str) and len(argument_hashes[0])==64
+                and len(set(argument_hashes))==1
                 and 'native-presentation-and-hardware-sinks-suppressed' in proofs['native-sinks']['negative_controls'])
     if case.id in ('history-pal','history-ntsc'):
         rows=report.get('rows',[])
@@ -255,7 +281,7 @@ def required_extent(case,report):
                 and validation.get('passed') is True and validation.get('native_buffer_equal') is True
                 and type(retained) is int and retained>0 and seek.get('retained_operations')==retained
                 and type(boundaries) is int and boundaries==retained+1
-                and type(seeks) is int and seeks>=2*boundaries and bool(seek.get('negative_controls')))
+                and type(seeks) is int and seeks>=2*boundaries and history_boundary_extent(seek))
     if case.id=='video-standard':
         rows=report.get('rows',[])
         return (report.get('state')=='complete' and [r.get('frequency') for r in rows]==list(range(256))

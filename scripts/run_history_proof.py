@@ -7,7 +7,7 @@ from importlib.metadata import distribution, version
 
 from build_match_core import build as build_core, load_image
 from build_native_game import build
-from history_proof import exercise, attach, seek
+from history_proof import exercise, attach, seek, logical_api, pending_eviction
 from match_core_cpu import Core
 from run_shared_match_core import READONLY
 from native_evidence import ReportRun, compile_manifest, digest, python_inputs, snapshot, status
@@ -52,6 +52,11 @@ def run():
                 ('native-sinks',native,dict(ticks=272,native_guards=True))):
             print('Running history proof',name,flush=True)
             proofs[name] = dict(passed=True,**exercise(executable,**options))
+        print('Running history proof logical-api',flush=True)
+        proofs['logical-api'] = dict(passed=True,**logical_api(standalone))
+        print('Running history proof pending-eviction',flush=True)
+        proofs['pending-eviction'] = dict(passed=True,**pending_eviction(standalone))
+        assert len({proofs[name]['record_arguments_sha256'] for name in ('cursor-wrap','relocated','native-sinks')})==1, 'Omitted words depend on register poison/relocation'
         assert proofs['long']['tick_wraps'] > 0
         assert proofs['long']['operations'] > 6*1024
         assert all(proofs['long']['completed_episode_kinds'].get(kind,0)>0 for kind in (1,2)), 'Actual hit/miss episodes absent'

@@ -6,7 +6,7 @@ canonical states remain exactly 318 bytes; record envelopes reject other version
 and invalid audio clip IDs/offsets before restoration.
 
 The native and standalone programs reserve one fixed 21,470-byte history BSS
-buffer, plus two bytes of hunk alignment and 64 bytes of recorder metadata.
+buffer, plus two bytes of hunk alignment and 72 bytes of recorder metadata.
 The measured baseline on the 512 KB, no-expansion target had 252,368 bytes free
 at the cold one-player runtime peak and 218,632 bytes free in the two-player
 measurement. This buffer uses a modest part of that measured space. Final
@@ -29,12 +29,15 @@ allocations per tick, checkpoint or shot. The existing OS LoadSeg allocation
 boundary precedes machine takeover; unavailable application storage prevents
 entry rather than an unchecked runtime allocator call.
 
-Every public logical core operation preserves its incoming register/SR context
-through recording. A seek restores the nearest retained canonical checkpoint
+Every public logical core operation preserves its incoming and outgoing register/SR
+context through recording. Only declared word arguments enter a record; omitted
+argument slots are zero, independent of caller register contents. A seek restores the nearest retained canonical checkpoint
 and replays at most 63 logical operations through the same actual routines.
 Freeze saves the complete interrupted state once and blocks external logical
 samples while allowing internal replay. Resume latest restores those exact
-318 bytes. Seek never writes records, indexes or the live cursor. The native
+318 bytes. Seek never writes records, indexes or the live cursor. Failed seeks preserve the
+selected canonical state and its persisted position cursor; target/origin/candidate
+fields are scratch and may change on rejection. The native
 presentation, title and Paula sinks suppress hardware work during replay.
 The API requires the caller to stop the physical dispatcher while frozen; there
 is no user entry path in this increment.
@@ -58,7 +61,8 @@ The focused campaign selects `history-cpu`, `history-pal`, `history-ntsc` and
 `ordinary-one-cold`. CPU proofs cover empty history, complete uninterrupted
 state/output equivalence, every retained boundary in both directions, repeated
 seeks, long play, byte tick/ring/low-longword wrap, invalid envelopes/operations,
-poison/relocation and actual emitted native sink suppression. Fresh sixteen-second
+poison/relocation, all nine APIs and frozen external calls, pending-origin eviction,
+register/SR equivalence and actual emitted native sink suppression. Fresh sixteen-second
 PAL/NTSC captures compare native recorder bytes with isolated actual execution;
 the existing cold cadence case measures affected ordinary callback/RAM costs.
 Raw captures, binaries and receipts remain ignored and private. A focused pass
