@@ -1,12 +1,13 @@
 """Synthetic receipt shapes only; these tests make no gameplay claim."""
 import sys
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from acceptance_cases import cases
 from acceptance_campaign import dependencies,required_extent
-from preview_native_extent import CAPS
+from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS
 
 
 def receipt(ntsc=False):
@@ -19,11 +20,17 @@ def receipt(ntsc=False):
             budget_cck=budget,minimum_headroom_cck=budget-value)
     def job(name,x,generation):
         edited=bytearray(318);edited[2]=20;edited[3]=x
+        prefix=0 if name=='current-human-serve' else 1
+        expected=bytes(8*prefix)
         return dict(case_id=name,passed=True,native_jsr_rts_preserved=True,
             continuous_state_path_output_equal=True,independent_continuation_policy_equal=True,
             live_history_output_preserved=True,edited_only_position_changed=True,
             seed=44257,selection=100,end=0,ordinal=65535 if name=='current-human-serve' else 1,
-            prefix_samples=1,incoming_origin=64,action_boundary=120,coincident=False,
+            prefix_samples=prefix,incoming_origin=64,action_boundary=120,coincident=False,
+            classification_scope='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9',
+            incoming_prefix_validation=dict(passed=True,source='actual-native-retained-dispatch-boundaries',
+                operation_cursors=[64] if prefix else [],expected_samples=prefix,
+                expected_bytes=expected.hex(),expected_sha256=hashlib.sha256(expected).hexdigest()),
             bounds=dict(left=1,right=100,top=1,bottom=100),x=x,y=20,
             selected_state='00'*318,edited_state=edited.hex(),final_states=['00'*318]*2,
             paths=['00'*16]*2,path_counts=[2,2],classes=['no-contact','no-contact'],ordered_outputs=[[],[]],
@@ -61,7 +68,10 @@ def receipt(ntsc=False):
     files={'amiga/main.s':'11'*32,'scripts/preview_native_fixture.s':'22'*32,
         'amiga/game/preview.s':'33'*32,'build/tests/preview-native/main.s':'44'*32,
         'build/tests/preview-native/fixture.compile.json':'55'*32,
-        'build/amiga/interfaces/enhanced/baseline-rally.compile.json':'66'*32}
+        'build/amiga/interfaces/enhanced/baseline-rally.compile.json':'66'*32,
+        'build/tests/preview-native/rpc.jsonl.gz':'aa'*32,
+        'build/tests/preview-cpu/report.json':'b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'}
+    files.update({path:CPU9_SHA for path in CPU9_RECEIPTS})
     observed=dict(CAPS,ordinary_operations=200,playing_dispatches=40,title_callbacks=2,
         paused_callbacks=30,video_fields=50,seconds=10,worker_calls_per_job=1,samples_per_path=2,raw_bytes=1024)
     stage=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
@@ -95,6 +105,16 @@ def receipt(ntsc=False):
             writes=[dict(pc=120,address=10000,size=1,value=1,position=rows[0]['begin'])],count=1))
     stage['preservation'].update(publication_scope='worker-api-irq-only; outside-api-native-ui-attributed',
         input_scope='worker-api-only; native-physical-sampling-before-hook')
+    stage['physical_inputs'].update(observed_edges=[
+        dict(name=name,index=0,old=old,new=new,pressed_bits=new&~old,released_bits=old&~new,
+            frozen=True,position=rows[0]['begin'])
+        for name in ('ui_joystick_bits','game_keyboard_matrix') for old,new in ((0,1),(1,0))],
+        joystick_pressed_observations=[dict(index=0,value=1,expected=1)])
+    stage.update(byte_cap_scope=BYTE_CAP_SCOPE,
+        rpc_transcript=dict(encoding='gzip-jsonl',path='build/tests/preview-native/rpc.jsonl.gz',
+            sha256='aa'*32,compressed_bytes=100,uncompressed_bytes=200,calls=2,records=4),
+        inherited_endpoint_validation=dict(cpu_receipt_sha256='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f',
+            scope='CPU9-independent-endpoints; native-labels-only'))
     return dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
         evidence=dict(target_role='legacy-validator-reference',actual_target=target,files=files,
             compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32}),preview_native_validation=stage)
@@ -115,6 +135,14 @@ class NativePreviewExtent(unittest.TestCase):
                 (('interrupts','inside_worker_entries'),0),(('interrupts','keyboard_irq_allowances'),1),
                 (('telemetry','dropped_accesses'),1),(('telemetry','public_boundary_drain_checks'),1),
                 (('physical_inputs','keyboard_releases'),0),(('observed_caps','seconds'),float('nan')),
+                (('physical_inputs','observed_edges'),[]),
+                (('physical_inputs','observed_edges',0,'frozen'),False),
+                (('physical_inputs','observed_edges',0,'pressed_bits'),0),
+                (('physical_inputs','joystick_pressed_observations',0,'expected'),0),
+                (('byte_cap_scope',),'all-uncompressed-bytes'),
+                (('rpc_transcript','records'),3),(('rpc_transcript','sha256'),'bb'*32),
+                (('rpc_transcript','compressed_bytes'),1025),
+                (('inherited_endpoint_validation','cpu_receipt_sha256'),'00'*32),
                 (('observed_caps','raw_bytes'),CAPS['raw_bytes']+1),
                 (('caps','worker_calls_per_job'),8192.0),(('completed_jobs',0,'ordinal'),1),
                 (('completed_jobs',1,'costs','worker_body_counts'),[5]),
@@ -127,6 +155,10 @@ class NativePreviewExtent(unittest.TestCase):
                 (('completed_jobs',1,'final_states'),['00']*2),
                 (('completed_jobs',1,'edited_state'),'01'*318),
                 (('completed_jobs',1,'paths'),['00']*2),
+                (('completed_jobs',1,'incoming_prefix_validation','source'),'preview-result'),
+                (('completed_jobs',1,'incoming_prefix_validation','operation_cursors'),[100]),
+                (('completed_jobs',1,'incoming_prefix_validation','expected_sha256'),'00'*32),
+                (('completed_jobs',1,'incoming_prefix_validation','expected_bytes'),'11'*8),
                 (('completed_jobs',1,'continuous_state_path_output_equal'),False),
                 (('replacement_cancel_cases',0,'partial_phase'),'held'),
                 (('replacement_cancel_cases',1,'new_generation'),6),
@@ -173,6 +205,20 @@ class NativePreviewExtent(unittest.TestCase):
             fixture.write_text('nop\nrts\n')
             after=dependencies(self.case(),root)['files'][str(fixture)]
             self.assertNotEqual(before,after)
+
+    def test_latest_cpu_receipt_is_a_required_dependency(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'scripts').mkdir()
+            (root/'scripts/run_preview_native.py').write_text('pass\n')
+            current=root/CPU9_RECEIPTS[0];current.parent.mkdir(parents=True)
+            current.write_text('{"passed":true}\n')
+            before=dependencies(self.case(),root)['files'][str(current)]
+            current.write_text('{"passed":false}\n')
+            after=dependencies(self.case(),root)['files'][str(current)]
+            self.assertNotEqual(before,after)
+        for path in CPU9_RECEIPTS:
+            r=receipt();r['evidence']['files'].pop(path)
+            with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
 
 
 if __name__=='__main__':unittest.main()

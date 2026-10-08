@@ -1,6 +1,7 @@
 """Required finite native preview evidence; malformed or partial reports fail."""
 import math
 import re
+import hashlib
 
 
 CAPS=dict(accepted_request_generations=7,playing_dispatches=512,
@@ -9,6 +10,10 @@ CAPS=dict(accepted_request_generations=7,playing_dispatches=512,
     samples_per_path=256,raw_bytes=268435456)
 PRESERVATION=('selected_canonical','history_metadata','frozen_store','live_backup',
     'caller_frame','input_globals','publication_irq_only','audio_cpu_configuration')
+BYTE_CAP_SCOPE='stored-artifact-bytes; rpc-transcript-gzip; uncompressed-rpc-measured-separately'
+CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
+CPU9_RECEIPTS=('build/tests/preview-cpu/report.json',
+    'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json')
 
 
 def integer(value,low=0,high=None):
@@ -77,13 +82,14 @@ def completed_job(row):
                 'independent_continuation_policy_equal','live_history_output_preserved',
                 'edited_only_position_changed'))
             or type(row.get('seed')) is not int or row['seed']!=44257
-            or not integer(row.get('selection'),1,2049)
+            or not integer(row.get('selection'),1,2**64-1)
             or not integer(row.get('end'),0,1)
             or not integer(row.get('prefix_samples'),0,255)
             or type(row.get('coincident')) is not bool):return False
     ordinal=row.get('ordinal')
     if not integer(ordinal,0,65535) or (ordinal>127 and ordinal!=65535):return False
     if (row['case_id']=='current-human-serve')!=(ordinal==65535):return False
+    if row.get('classification_scope')!='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9':return False
     if any(not integer(row.get(k),0,2**64-1) for k in ('incoming_origin','action_boundary')):return False
     bounds=row.get('bounds')
     if (not isinstance(bounds,dict)
@@ -108,6 +114,21 @@ def completed_job(row):
             or paths[0][:row['prefix_samples']*8]!=paths[1][:row['prefix_samples']*8]
             or not isinstance(row.get('ordered_outputs'),list) or len(row['ordered_outputs'])!=2
             or any(not isinstance(outputs,list) for outputs in row['ordered_outputs'])):return False
+    prefix=row.get('incoming_prefix_validation')
+    if (not isinstance(prefix,dict) or prefix.get('passed') is not True
+            or prefix.get('source')!='actual-native-retained-dispatch-boundaries'
+            or not integer(prefix.get('expected_samples'),0,255)
+            or prefix['expected_samples']!=row['prefix_samples']
+            or not isinstance(prefix.get('operation_cursors'),list)
+            or len(prefix['operation_cursors'])!=prefix['expected_samples']
+            or any(not integer(i,row['incoming_origin'],row['selection']-1) for i in prefix['operation_cursors'])
+            or sorted(set(prefix['operation_cursors']))!=prefix['operation_cursors']):return False
+    try:expected_prefix=bytes.fromhex(prefix['expected_bytes'])
+    except (KeyError,TypeError,ValueError):return False
+    if (len(expected_prefix)!=8*row['prefix_samples']
+            or any(p[:len(expected_prefix)]!=expected_prefix for p in paths)
+            or prefix.get('expected_sha256')!=hashlib.sha256(expected_prefix).hexdigest()
+            or ordinal==65535 and prefix['expected_samples']!=0):return False
     classes=row.get('classes')
     if (not isinstance(classes,list) or len(classes)!=2 or any(c not in
             ('landing','net','out','interception','no-contact','lifecycle','limit') for c in classes)):return False
@@ -219,13 +240,40 @@ def required_preview_native_extent(case_id,report):
     if (not isinstance(physical,dict) or physical.get('pause_resume_observed') is not True
             or any(not integer(physical.get(k),1) for k in ('joystick_press_edges',
                 'joystick_release_edges','keyboard_presses','keyboard_releases','fresh_input_callbacks'))):return False
+    edges=physical.get('observed_edges');pressed=physical.get('joystick_pressed_observations')
+    if not isinstance(edges,list) or not edges or not isinstance(pressed,list) or not pressed:return False
+    counts=dict(joystick_press_edges=0,joystick_release_edges=0,keyboard_presses=0,keyboard_releases=0)
+    frozen_counts=dict(counts)
+    for edge in edges:
+        if (not isinstance(edge,dict) or edge.get('name') not in ('ui_joystick_bits','game_keyboard_matrix')
+                or not integer(edge.get('index'),0,1 if edge['name']=='ui_joystick_bits' else 127)
+                or any(not integer(edge.get(k),0,255) for k in ('old','new','pressed_bits','released_bits'))
+                or edge['old']==edge['new'] or type(edge.get('frozen')) is not bool
+                or edge['pressed_bits']!=edge['new']&~edge['old']
+                or edge['released_bits']!=edge['old']&~edge['new']
+                or not isinstance(edge.get('position'),dict) or not integer(edge['position'].get('cck'),0)):return False
+        if edge['name']=='ui_joystick_bits':
+            additions=dict(joystick_press_edges=edge['pressed_bits'].bit_count(),joystick_release_edges=edge['released_bits'].bit_count())
+        else:
+            if edge['old'] not in (0,1) or edge['new'] not in (0,1):return False
+            additions=dict(keyboard_presses=int(bool(edge['pressed_bits'])),keyboard_releases=int(bool(edge['released_bits'])))
+        for key,value in additions.items():
+            counts[key]+=value
+            if edge['frozen']:frozen_counts[key]+=value
+    if any(physical[k]!=v or not frozen_counts[k] for k,v in counts.items()):return False
+    for observation in pressed:
+        if (not isinstance(observation,dict) or not integer(observation.get('index'),0,1)
+                or not integer(observation.get('value'),0,255)
+                or type(observation.get('expected')) is not int
+                or observation['expected']!=observation['value']):return False
     telemetry=stage.get('telemetry')
     if (not isinstance(telemetry,dict) or not integer(telemetry.get('notifications'),1)
             or not integer(telemetry.get('public_boundary_drain_checks'),1)
             or any(type(telemetry.get(k)) is not int or telemetry[k]!=0
                    for k in ('dropped_notifications','dropped_accesses'))):return False
     observed=stage.get('observed_caps')
-    if not exact_mapping(stage.get('caps'),CAPS) or not isinstance(observed,dict):return False
+    if (not exact_mapping(stage.get('caps'),CAPS) or not isinstance(observed,dict)
+            or stage.get('byte_cap_scope')!=BYTE_CAP_SCOPE):return False
     for key,limit in CAPS.items():
         if key=='seconds':
             if not number(observed.get(key),0,limit) or observed[key]==0:return False
@@ -346,6 +394,17 @@ def required_preview_native_extent(case_id,report):
                    (overlay['original_sources'],overlay['generated_sources']) for k,v in mapping.items())
             or 'amiga/main.s' not in overlay['original_sources']
             or 'scripts/preview_native_fixture.s' not in files):return False
+    rpc=stage.get('rpc_transcript');inherited=stage.get('inherited_endpoint_validation')
+    if (not isinstance(rpc,dict) or rpc.get('encoding')!='gzip-jsonl'
+            or not isinstance(rpc.get('path'),str) or not sha256(rpc.get('sha256'))
+            or files.get(rpc['path'])!=rpc['sha256']
+            or not integer(rpc.get('compressed_bytes'),1,observed['raw_bytes'])
+            or not integer(rpc.get('uncompressed_bytes'),rpc['compressed_bytes'])
+            or not integer(rpc.get('calls'),1) or type(rpc.get('records')) is not int
+            or rpc['records']!=2*rpc['calls']
+            or not isinstance(inherited,dict) or inherited.get('scope')!='CPU9-independent-endpoints; native-labels-only'
+            or inherited.get('cpu_receipt_sha256')!=CPU9_SHA
+            or any(files.get(path)!=CPU9_SHA for path in CPU9_RECEIPTS)):return False
     outside=stage.get('outside_publication')
     if (not isinstance(outside,dict) or not isinstance(outside.get('rules'),list)
             or not outside['rules'] or not isinstance(outside.get('writes'),list)

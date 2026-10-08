@@ -131,6 +131,8 @@ def dependencies(case, root=ROOT):
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
     if case.id in ('preview-native-pal','preview-native-ntsc'):
         paths.add(root/'scripts/preview_native_fixture.s')
+        paths.add(root/'build/tests/preview-cpu/report.json')
+        paths.add(root/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json')
     manifests=[]
     optional_absence={}
     if case.category=='native':
