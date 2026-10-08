@@ -75,6 +75,7 @@ def run(takeover=False, takeover_tail=False):
     until({'pc':base+symbols['simulation_menu']})
     check('tail metadata changes only playback policy and controls',frozen().hex(),before.hex())
     check('tail takeover switches policy before the tail dispatch',num('game_entropy_policy'),0)
+    check('tail takeover ends automatic playback before the tail dispatch',num('game_auto_continue'),0)
     s.inspect('input_key',{'rawkey':0x44,'action':'release'})
     s.inspect('input_key',{'rawkey':0x4f,'action':'release'})
     play_break=s.inspect('break_add',{'kind':'pc','addr':base+symbols['native_input_done']})
@@ -101,6 +102,14 @@ def run(takeover=False, takeover_tail=False):
    entropy_break=s.inspect('break_add',{'kind':'pc','addr':entropy_pc})
    stop=until({'seconds':time+10})
    s.inspect('break_remove',{'id':entropy_break['id']})
+   atomic_json(directory/'takeover-observation.json',{'confirmation_lifecycle':confirmation_phase,
+    'verified_input_ticks':index,'seconds':time,'stop_pc':stop['pc'],'expected_entropy_pc':entropy_pc,
+    'canonical_state':mem('game_core_state',symbols['game_core_state_end']-symbols['game_core_state']).hex(),
+    'fields':{name:num(name,size) for name,size in [('game_lifecycle',2),('game_mode',1),
+      ('game_auto_continue',1),('game_entropy_policy',1),('game_match_seed',2),('game_entropy_state',2),
+      ('ui_entropy_state',2),('game_input_bits',2),('game_player_controls',2),('game_actions',1),
+      ('game_serve_clock',1),('game_lower_phase',1),('game_upper_phase',1),('game_score_flags',1)]},
+    'checks':checks})
    check('live takeover reaches shared entropy routine within bound',stop['pc'],entropy_pc)
    state=mem('game_entropy_state',2)
    check('live takeover shadow stream remains nonzero',int.from_bytes(state,'big')!=0,True)
