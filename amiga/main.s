@@ -33,13 +33,16 @@ start:
         lea     game_stack_top,sp
         bsr     init_square_score_banks
         bsr     game_core_init
+        lea     game_history_buffer,a0
+        move.l  #HISTORY_BUFFER_BYTES,d0
+        bsr     game_history_attach
         bsr     game_begin_title
         ifd CORE_TRACE
         lea     pointer_sources,a0
         lea     pointer_targets,a1
         else
-        lea     pointer_sources(pc),a0
-        lea     pointer_targets(pc),a1
+        lea     pointer_sources,a0
+        lea     pointer_targets,a1
         endif
         moveq   #11,d7
 patch_pointers:
@@ -362,8 +365,8 @@ select_build_bank:
 
 patch_back_sprite_pointers:
         movem.l d0-d2/d7/a0-a2,-(sp)
-        lea     sprite_targets(pc),a0
-        lea     pointer_targets+16(pc),a1
+        lea     sprite_targets,a0
+        lea     pointer_targets+16,a1
         moveq   #7,d7
 next_back_sprite_pointer:
         move.l  (a0)+,d0
@@ -454,6 +457,13 @@ game_presented_generation: dc.w 0
 ; Hardware integration hooks: gameplay and service order live in game/.
 game_scene_present_fields:
         core_trace_sink $102
+        move.w  sr,-(sp)
+        cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        move.w  (sp)+,sr
+        rts
+.history_live:
+        move.w  (sp)+,sr
         tst.b   score_dirty
         beq.s   scoreboard_selection_done
         bsr     patch_score_pointers
@@ -465,6 +475,13 @@ game_show_returned_title:
         rts
 game_core_status_present:
         core_trace_sink $103
+        move.w  sr,-(sp)
+        cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        move.w  (sp)+,sr
+        rts
+.history_live:
+        move.w  (sp)+,sr
         bra     patch_score_pointers
 game_title_display: dc.b 0
         even
@@ -485,6 +502,13 @@ paula_events_done:
 ; Native two-plane sprite data.
 game_render_sprites:
         core_trace_sink $101
+        move.w  sr,-(sp)
+        cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        move.w  (sp)+,sr
+        rts
+.history_live:
+        move.w  (sp)+,sr
         movem.l d0-d7/a0-a4,-(sp)
         ; Score/status selection belongs to this prepared scene, just like
         ; its sprites. The subsequent native tick may select fields for the
@@ -511,7 +535,7 @@ prepare_scene_fields:
         lsl.w   #3,d0
         lea     game_scene_order,a3
         adda.w  d0,a3
-        lea     sprite_targets(pc),a1
+        lea     sprite_targets,a1
         moveq   #0,d6
         moveq   #7,d7
 .next:
@@ -632,6 +656,7 @@ hex_byte:
         include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
         include "amiga/game/core.s"
+        include "amiga/game/history.s"
         include "amiga/game/core_trace.s"
         include "amiga/game/native_core_adapter.s"
         include "amiga/game/interface.s"
@@ -741,3 +766,8 @@ sprite_third: dcb.b 8*72,0
         include "assets/native/title/display.i"
 
         include "amiga/square_score_storage.i"
+
+        section history,bss
+        include "amiga/game/history_storage.i"
+; HUNK longword padding, outside the attach buffer
+        ds.b 2

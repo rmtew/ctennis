@@ -133,7 +133,9 @@ game_serve_timed:
         rts
 .game_serve_launch:
         bset    #7,P_ANIMATION(a3)
-        bra     game_random_launch
+        bsr     game_random_launch
+        bsr     game_history_serve
+        rts
 .game_serve_handoff:
         lea     G_UPPER(a4),a0
         tst.w   d7

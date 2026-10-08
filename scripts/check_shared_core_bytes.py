@@ -11,7 +11,8 @@ from native_tools import ROOT
 
 SINKS = ('game_render_sprites', 'game_scene_present_fields', 'game_core_title_requested',
          'game_core_status_present', 'game_audio_write_period', 'game_audio_write_level',
-         'game_observe_pre_tail', 'game_apply_sound')
+         'game_observe_pre_tail', 'game_apply_sound',
+         'game_history_contact_begin', 'game_history_contact', 'game_history_serve')
 
 
 def normalized(executable, listing):

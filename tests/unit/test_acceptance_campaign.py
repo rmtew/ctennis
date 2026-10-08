@@ -30,9 +30,76 @@ class CampaignTests(unittest.TestCase):
         with patch.object(campaign,'tagged_processes',return_value=[]):
             return campaign.worker(self.directory,[self.case],self.root)
     def test_catalog_stable_complete(self):
-        self.assertEqual(len(cases()),41)
+        self.assertEqual(len(cases()),44)
         self.assertIn('takeover-tail',{c.id for c in cases()})
         self.assertIn('takeover-sound',{c.id for c in cases()})
+    def test_history_extent_requires_native_recorder_and_every_boundary(self):
+        case=next(c for c in cases() if c.id=='history-pal')
+        report={'passed':True,'history':True,'seconds':24,
+                'target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0),
+                'evidence':{'target_role':'legacy-validator-reference',
+                            'actual_target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)},
+                'rows':[{}],'summary':{'operations':1},
+                'native_video':dict(presentation_last_line=311,simulation_interval_whole=11838,
+                                   simulation_interval_fraction=14906),
+                'history_validation':{'passed':True,'native_buffer_equal':True,'retained_operations':4040,
+                                      'native_attempts':[[65,2,0]],
+                                      'seek':{'operations':5000,'oldest':960,'buffer_bytes':80318,'frozen_operations_checked':9,'terminal_outcome_operations':1,
+                                              'register_sr_equivalence_operations':5000,'failure_preserves_older_position':True,
+                                              'retained_operations':4040,'boundaries_checked':4041,
+                                              'seeks':8082,'negative_controls':['checkpoint-byte-8','checkpoint-byte-10',
+                                                  'checkpoint-byte-326','checkpoint-byte-104','out-of-range-1','out-of-range-65']}}}
+        self.assertTrue(campaign.required_extent(case,report))
+        for path,value in ((('history',),False),(('seconds',),23),(('target','video'),'NTSC'),
+                           (('history_validation','native_buffer_equal'),False),
+                           (('history_validation','seek','boundaries_checked'),4040),
+                           (('history_validation','seek','seeks'),8081),
+                           (('history_validation','seek','negative_controls'),[]),
+                           (('history_validation','seek','terminal_outcome_operations'),0),
+                           (('history_validation','seek','operations'),4096),
+                           (('history_validation','seek','oldest'),0),
+                           (('history_validation','seek','buffer_bytes'),21470),
+                           (('history_validation','native_attempts'),[[65,0,0]]),
+                           (('evidence','target_role'),'execution-target'),(('evidence','actual_target'),{}),
+                           (('native_video','presentation_last_line'),261),
+                           (('native_video','simulation_interval_whole'),11947),
+                           (('native_video','simulation_interval_fraction'),13180)):
+            partial=json.loads(json.dumps(report));node=partial
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(campaign.required_extent(case,partial))
+    def test_history_cpu_extent_requires_wrap_hits_misses_and_native_sinks(self):
+        case=next(c for c in cases() if c.id=='history-cpu')
+        proof={'passed':True,'operations':1089,'frozen_operations_checked':9,
+               'register_sr_equivalence_operations':1089,'failure_preserves_older_position':True,
+               'record_arguments_sha256':'a'*64,'retained_operations':64,'boundaries_checked':65,'seeks':130,
+               'negative_controls':['native-presentation-and-hardware-sinks-suppressed','invalid-operation-id',
+                                    'checkpoint-byte-8','checkpoint-byte-10','checkpoint-byte-326',
+                                    'checkpoint-byte-104','out-of-range-1','out-of-range-65']}
+        proofs={name:dict(proof) for name in ('long','cursor-wrap','relocated','native-sinks','logical-api','pending-eviction')}
+        proofs['empty']={'passed':True,'operations':0,'boundaries_checked':1}
+        proofs['long'].update(operations=12289,register_sr_equivalence_operations=12289,tick_wraps=1,
+                              completed_episode_kinds={'1':1,'2':1},terminal_outcome_operations=1,
+                              buffer_bytes=80318,retained_operations=4032,boundaries_checked=4033,seeks=8066)
+        proofs['cursor-wrap'].update(low_longword_wrap=True,latest=(1<<32)+1089)
+        proofs['logical-api']['operation_counts']={name:1 for name in (
+            'game_core_init','game_core_select','game_core_sample_pads','game_core_sample_result',
+            'game_core_clear_inputs','game_core_return_title','game_round_poll','game_tick_dispatch','game_core_latch_actions')}
+        proofs['pending-eviction'].update(pending_canceled=True,evicted_pending_origin=1,eviction_oldest=64,
+                                          completed_new_origin=65,completed_new_episode_kind=2)
+        report={'passed':True,'execution':'actual-68000-cpu-only',
+                'evidence':{'target_role':'legacy-validator-reference','actual_execution':'actual-68000-cpu-only'},
+                'history_validation':{'passed':True,'proofs':proofs}}
+        self.assertTrue(campaign.required_extent(case,report))
+        for name,key,value in (('long','operations',12288),('long','completed_episode_kinds',{'1':1}),
+                               ('long','terminal_outcome_operations',0),
+                               ('long','buffer_bytes',21470),('long','retained_operations',1023),
+                               ('cursor-wrap','latest',1089),('native-sinks','negative_controls',[]),
+                               ('relocated','boundaries_checked',64),('logical-api','frozen_operations_checked',8),
+                               ('logical-api','operation_counts',{}),('pending-eviction','pending_canceled',False),
+                               ('cursor-wrap','record_arguments_sha256','b'*64),('long','failure_preserves_older_position',False)):
+            partial=json.loads(json.dumps(report));partial['history_validation']['proofs'][name][key]=value
+            with self.subTest(name=name,key=key):self.assertFalse(campaign.required_extent(case,partial))
     def test_identity_start_not_pid_only(self):
         identity=campaign.process_identity();self.assertTrue(campaign.alive(identity))
         identity=dict(identity,start='wrong');self.assertFalse(campaign.alive(identity))

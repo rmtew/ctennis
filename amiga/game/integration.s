@@ -18,14 +18,16 @@ game_new_match:
         clr.b   game_score_initialized
         move.b  d0,game_new_mode
         lea     game_play_state,a0
-        moveq   #G_SIZE-1,d7
+        ; Even-aligned canonical blocks have whole-longword sizes. Preserve
+        ; the byte loop's final pointer, counter and zero-clear condition codes.
+        moveq   #G_SIZE/4-1,d7
 .clear_play:
-        clr.b   (a0)+
+        clr.l   (a0)+
         dbra    d7,.clear_play
         lea     game_score_state,a0
-        moveq   #S_SIZE-1,d7
+        moveq   #S_SIZE/4-1,d7
 .clear_score:
-        clr.b   (a0)+
+        clr.l   (a0)+
         dbra    d7,.clear_score
         bsr     ui_seed_entropy
         clr.b   game_directions

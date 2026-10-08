@@ -7,7 +7,7 @@ patch_score_pointers:
         adda.w  d0,a3
 score_cache_selected:
         move.l  a3,a2
-        lea     prepared_field_values(pc),a4
+        lea     prepared_field_values,a4
         moveq   #0,d3
         moveq   #0,d4
         cmpi.b  #$ff,(a2)
@@ -34,8 +34,8 @@ score_cache_changed:
         tst.b   d4
         beq     score_cache_commit
 score_patch_regions:
-        lea     score_patch_descriptors(pc),a0
-        lea     prepared_field_values(pc),a4
+        lea     score_patch_descriptors,a0
+        lea     prepared_field_values,a4
         move.w  #SCORE_PATCH_COUNT-1,d7
 patch_next_score_pointer:
         move.w  12(a0),d1

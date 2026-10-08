@@ -9,12 +9,14 @@ from build_match_core import build as build_core, load_image
 from build_native_game import build
 from copperline_test_session import NativeControlSession
 from match_core_capture import TraceCollector
-from match_core_cpu import Core
+from match_core_cpu import Core, cpu_tool_inputs
 from native_hunk import loaded_hunks
 from native_tools import ROOT, ASSEMBLER, run, emulator_config
-from native_evidence import snapshot, assembly_inputs, python_inputs, changed
+from native_evidence import snapshot, assembly_inputs, python_inputs, changed, ReportRun, compile_manifest, inputs_for, atomic_json, digest
+import os
 from match_core_state import inventory, validate_record, SCHEMA_VERSION, SIMULATION_VERSION
 from collections import Counter
+from check_shared_core_bytes import normalized
 
 READONLY = {
     'game_height_choices':9, 'game_lower_depth':9, 'game_lower_width':9,
@@ -35,6 +37,24 @@ AUDIO_TABLES = {
 }
 READONLY.update({name:(ROOT/'assets/native/audio'/path).stat().st_size
                  for name,path in AUDIO_TABLES.items()})
+
+
+def trace_source(directory):
+    """Relax only the two trace-only out-of-range renderer references."""
+    main_path,score_path = ROOT/'amiga/main.s',ROOT/'amiga/score_copper_patch.i'
+    main,score = main_path.read_text(),score_path.read_text()
+    for register in ('a4','a1'):
+        original = 'lea     prepared_field_values(pc),'+register
+        assert score.count(original)==1, ('Trace overlay contract',original)
+        score = score.replace(original,'lea     prepared_field_values,'+register)
+    overlay_score,overlay_main = directory/'score-copper-trace.i',directory/'main-trace.s'
+    overlay_score.write_text(score)
+    include = 'include "amiga/score_copper_patch.i"'
+    assert main.count(include)==1, 'Trace main include contract'
+    overlay_main.write_text(main.replace(include,'include "'+str(overlay_score.relative_to(ROOT))+'"'))
+    return overlay_main,dict(original_sources=snapshot([main_path,score_path]),
+        generated_sources=snapshot([overlay_main,overlay_score]),addressing_substitutions=2,
+        scope='Capture only: exact original main with one include replacement; exact score include with two LEA PC-relative-to-absolute substitutions. Shared core source unchanged.')
 
 
 def replay_and_negatives(image, symbols, rows, executable):
@@ -96,6 +116,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=float, default=8)
     parser.add_argument('--demo', action='store_true')
+    parser.add_argument('--history', action='store_true', help='Fresh native rolling-store equality and exhaustive actual CPU seek')
     parser.add_argument('--ntsc', action='store_true')
     parser.add_argument('--two', action='store_true',help='Select and sample both human players')
     parser.add_argument('--restart', action='store_true',help='Physically pause, return to title and select the other mode')
@@ -105,27 +126,48 @@ def main():
     if not 0 < args.seconds <= 300:
         parser.error('Use a finite extent of at most 300 emulated seconds')
     standard = 'NTSC' if args.ntsc else 'PAL'
-    case = standard.lower() + ('-demo' if args.demo else '-two' if args.two else '-physical')
+    actual_target = dict(video=standard,cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)
+    case = standard.lower() + ('-history' if args.history else '-demo' if args.demo else '-two' if args.two else '-physical')
     if args.restart:
         case += '-restart'
     directory = ROOT/'build/tests'/('shared-match-core-'+case)
     directory.mkdir(parents=True, exist_ok=True)
     report_path = directory/'report.json'
-    report_path.write_text(json.dumps({'passed':False, 'state':'incomplete'})+'\n')
+    transaction = ReportRun([report_path], 'history-native', 'maintained-native', 'native title') if args.history else None
+    tool_paths = set()
+    if transaction:
+        tool_paths,tools = inputs_for('history-native', 'scripts/run_shared_match_core.py')
+        cpu_paths,tools['machine68k'] = cpu_tool_inputs()
+        tool_paths |= cpu_paths
+        transaction.meta.update(tools=tools,files=snapshot(tool_paths))
+        transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
+        transaction.meta.update(target_role='legacy-validator-reference',actual_target=actual_target,
+            actual_machine='A500',target_scope='evidence.target is a legacy validation reference, not the execution target; actual_target records the actual native launch.')
+    if not transaction:
+        report_path.write_text(json.dumps({'passed':False, 'state':'incomplete'})+'\n')
     _, ordinary = build()
     standalone, _ = build_core()
     image, core_symbols = load_image(standalone)
     layout = inventory(core_symbols)
     rules_sha256 = hashlib.sha256(standalone.read_bytes()).hexdigest()
     executable, listing = directory/'native-trace', directory/'native-trace.lst'
+    entry,trace_fixture = trace_source(directory)
     run([str(ASSEMBLER), '-Fhunkexe', '-kick1hunks', '-m68000',
          '-DENHANCED_INTERFACE=1', '-DDEMO_RECORDING=1', '-DCORE_TRACE=1',
-         '-L',str(listing), '-o',str(executable), 'amiga/main.s'])
+         '-L',str(listing), '-o',str(executable), str(entry.relative_to(ROOT))])
+    actual,relocations,branches = normalized(executable,listing)
+    expected,other_relocations,other_branches = normalized(standalone,standalone.parent/'match-core.lst')
+    assert (actual,relocations,branches)==(expected,other_relocations,other_branches), 'Capture overlay shared emitted core differs'
+    trace_fixture.update(shared_core_bytes=len(actual),shared_core_sha256=hashlib.sha256(actual).hexdigest())
+    trace_manifest = compile_manifest(executable,listing)
+    trace_manifest['files'].update(trace_fixture['original_sources'])
+    trace_manifest['trace_fixture'] = trace_fixture
+    atomic_json(str(executable)+'.compile.json',trace_manifest)
     locations = {name:(int(hunk),int(offset,16)) for name,hunk,offset in
                  re.findall(r'^([A-Za-z_]\w*)\s+(\d\d):([0-9a-fA-F]{8})\s*$',
                             listing.read_text(),re.M)}
     config = emulator_config()
-    files = snapshot(assembly_inputs(ROOT/'amiga/main.s') |
+    files = snapshot(tool_paths | {entry,directory/'score-copper-trace.i'} | assembly_inputs(ROOT/'amiga/main.s') |
         assembly_inputs(ROOT/'amiga/standalone.s') | python_inputs(Path(__file__)) |
         set((ROOT/'assets/native').rglob('*.*')) |
         {ROOT/'tools.lock.json',ROOT/'config.local.ini',Path(ASSEMBLER),
@@ -153,6 +195,9 @@ def main():
                 assert cpu.state().hex() == row['state'], ('state',row['index'],row['operation'])
                 assert cpu.events == row['events'], ('outputs',row['index'],row['operation'],
                                                       cpu.events,row['events'])
+                if args.history and row['operation']=='game_core_init':
+                    from history_proof import attach
+                    attach(cpu)
                 if row['index'] % 1000 == 0:
                     print('Compared operation',row['index'],row['operation'],flush=True)
             collector = TraceCollector(symbols,initial,symbols['core_trace_marker'],
@@ -196,7 +241,35 @@ def main():
             assert stopped['pc'] == symbols['simulation_update'], stopped
             summary = collector.finish(read(symbols['game_core_state'],len(initial)))
             session.inspect('events.unsubscribe')
+            native_video = {name:int.from_bytes(read(symbols[name],width),'big')
+                for name,width in [('presentation_last_line',2),
+                                   ('simulation_interval_whole',4),
+                                   ('simulation_interval_fraction',2)]}
+            expected_video = (311,11838,14906) if standard=='PAL' else (261,11947,13180)
+            assert tuple(native_video.values())==expected_video, ('Actual native video selector',native_video,standard)
             cpu.audit_reads()
+            history_validation = None
+            if args.history:
+                from history_proof import exercise, cursor, attempts
+                length = symbols['game_history_buffer_end']-symbols['game_history_buffer']
+                native_store = read(symbols['game_history_buffer'],length-318)
+                cpu_store = bytes(cpu.mem.r_block(core_symbols['game_history_buffer'],length-318))
+                assert native_store == cpu_store, 'Native recorder bytes differ from actual CPU recorder'
+                for name,width in [('game_history_cursor',8),('game_history_oldest',8),
+                                   ('game_history_checkpoint_count',2),('game_history_attempt_count',2)]:
+                    assert read(symbols[name],width)==bytes(cpu.mem.r_block(core_symbols[name],width)), name
+                retained = cursor(cpu)-cursor(cpu,'game_history_oldest')
+                old = cursor(cpu,'game_history_oldest')
+                relevant = collector.rows[old+1:] # startup init isn't recorded
+                first = relevant[0]['start']['seconds'] if relevant else stopped['seconds']
+                history_validation = dict(passed=True, native_buffer_equal=True,
+                    retained_operations=retained, retained_seconds=stopped['seconds']-first,
+                    retained_video_fields=len({row['start'].get('frame') for row in relevant}),
+                    retained_tick_dispatches=sum(row['operation']=='game_tick_dispatch' for row in relevant),
+                    native_attempts=attempts(cpu),
+                    seek=exercise(standalone,rows=collector.rows))
+                assert any(kind==2 for _,kind,_ in history_validation['native_attempts']), 'Actual native retained miss absent'
+                assert history_validation['seek']['terminal_outcome_operations']>0
             negatives = replay_and_negatives(image,core_symbols,collector.rows,standalone)
             if not args.demo:
                 selections = [row['arguments'][0] & 255 for row in collector.rows
@@ -211,8 +284,9 @@ def main():
                     'state':row['state']},core_symbols,rules_sha256)
             assert not changed(files), ('Inputs changed during comparison',changed(files))
             report = {'schema':1,'passed':True,'commit':run(['git','rev-parse','HEAD']).strip(),
-                'target':{'video':standard,'cpu':'68000','chipset':'OCS','chip_kib':512,
-                'slow_kib':0,'fast_kib':0},'seconds':args.seconds,'elapsed_seconds':stopped['seconds']-start_seconds,
+                'target':actual_target,'native_video':native_video,'trace_fixture':trace_fixture,
+                'scope':'Actual native trace and isolated CPU comparison; evidence.actual_target is the execution target, evidence.target is only a legacy validator reference. No trace-capture deadline claim.',
+                'seconds':args.seconds,'elapsed_seconds':stopped['seconds']-start_seconds,
                 'demo':args.demo,'restart':args.restart,'two':args.two,
                 'state_bytes':len(initial),'summary':summary,'readonly':READONLY,'files':files,
                 'canonical_layout':layout,
@@ -230,8 +304,16 @@ def main():
                 'stack_bytes':cpu.stack_bytes,'cycles':cpu.total_cycles,'loaded_hunks':checks,
                 'sha256':{str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()
                           for path in (ordinary,standalone,executable,Path(ASSEMBLER))},
-                'rows':collector.rows}
-            report_path.write_text(json.dumps(report,indent=2)+'\n')
+                'rows':collector.rows, 'history':args.history, 'history_validation':history_validation}
+            if transaction:
+                atomic_json(directory/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
+                    receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+                transaction.meta['files'] = files
+                transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
+                transaction.finalize(report_path,dict(report,executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest()),
+                    compiled=[trace_manifest,compile_manifest(standalone,standalone.parent/'match-core.lst')])
+            else:
+                report_path.write_text(json.dumps(report,indent=2)+'\n')
             print(json.dumps({key:value for key,value in report.items()
                               if key not in ('rows','loaded_hunks','readonly','files','canonical_layout')},indent=2))
 

@@ -1,7 +1,9 @@
 # Tutorial mode: design and roadmap
 
-Status: implementation roadmap authorized on 7 October 2026. This document
-records the current tutorial design. It does not claim that the feature exists.
+Status: implementation roadmap authorized on 7 October 2026. The shared core
+is merged. Bounded history/seek has passed its selective native campaign and is
+under final independent review; see [bounded history](bounded-history.md).
+Isolated previews are next. Tutorial UI and branching remain later increments.
 
 ## Purpose and scope
 
@@ -22,15 +24,21 @@ work. Reboot remains the way to exit the program.
 
 ## Current foundation
 
-The inspected master is `4bcbfc8a74385916be9b8e30304980d8174076d7`.
-[PR #32](https://github.com/rmtew/ctennis/pull/32) added a
-[bounded deterministic proof](match-core-proof.md). It compared the actual 68000
-routines over 362 updates and 307 inventoried state bytes. It did not isolate a
-complete production match core or implement history, seek or tutorial UI.
+Bounded history started from master
+`429cb73cb0ff4b10f86fa992e4694f89620d46b9`, after reviewed
+[PR #34](https://github.com/rmtew/ctennis/pull/34) and
+[PR #35](https://github.com/rmtew/ctennis/pull/35) merged the actual shared
+68000 core and its behavior protection. Its complete canonical state is 318
+bytes, with schema 2 and simulation version 3. Native execution and standalone
+proofs use the same routines, including deterministic lifecycle and audio waits.
 
-Partial shared-core work was reported but is not merged into this baseline.
-Review any recovered work before use. A successful partial build is not evidence
-of complete lifecycle determinism. Do not restore retired source folders.
+[PR #32](https://github.com/rmtew/ctennis/pull/32)'s earlier
+[bounded proof](match-core-proof.md) covered 362 updates and 307 inventoried
+bytes. Those historical limits do not describe the current complete state.
+[PR #36](https://github.com/rmtew/ctennis/pull/36) adds fixed rolling history,
+checkpoints and seek. Its selective evidence does not establish a complete
+tutorial release or replace the final native acceptance gate. Do not restore
+retired source folders.
 
 This roadmap replaces conflicting tutorial and recording proposals in draft
 [PR #24](https://github.com/rmtew/ctennis/pull/24). It does not approve that old
@@ -46,6 +54,9 @@ stop permanently when the recording buffer fills.
 - Initially select the last relevant player shot or missed return attempt,
   with enough incoming flight visible to explain it. If there is no such event,
   use the current serve setup. A miss must remain inspectable without a contact.
+  A raw retained probe index alone is insufficient: preview/navigation must
+  verify its retained incoming context, distinguish truncated entries, and use
+  the serve fallback when no suitable completed attempt survives eviction.
 - In the tutorial view, directions without button 2 move the test player within
   the legal movement region for the selected serve or return.
 - Holding button 2 makes directions adjust tutorial navigation/options instead
@@ -176,9 +187,8 @@ limits are implementation choices to measure against the hardware budget.
 ## Roadmap and acceptance
 
 Keep one implementation increment active. Each increment needs focused evidence
-and independent review before merge. Start from the committed repository, then
-review any recoverable partial core work. Do not build the UI on an unproved
-state boundary.
+and independent review before merge. Start each increment from the reviewed
+committed foundation. Do not build the UI on an unproved state boundary.
 
 1. **Complete the shared deterministic core.** Inventory and isolate all match
    lifecycle paths. Compare complete state and ordered semantic outputs between

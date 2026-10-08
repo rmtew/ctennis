@@ -1,10 +1,6 @@
 ; Logical inputs only. Physical aliases/filtering remain in the native adapter.
 ; D0.b player A held, D1.b player B held. Preserve B across the first sampler.
-        ifd CORE_TRACE
 game_core_sample_pads_body:
-        else
-game_core_sample_pads:
-        endif
         move.w  d1,-(sp)
         lea     game_input_bits,a0
         bsr     game_store_pad
@@ -14,11 +10,7 @@ game_core_sample_pads:
 
 ; D0/D1 continue held/pressed; D2 automatic continuation; D3/D4 playback
 ; active/mask; D5 selection held. Boolean inputs use zero/nonzero semantics.
-        ifd CORE_TRACE
 game_core_sample_result_body:
-        else
-game_core_sample_result:
-        endif
         ; A paused demo keeps automatic continuation true. Its falling edge
         ; ends historical playback even in selection/round tails. Title exit
         ; clears the old value before this sampler. Preserve both streams.
@@ -39,11 +31,7 @@ game_core_sample_result:
         rts
 
 ; D0.b mode (0 one-player, 1 two-player), D1.w seed, D2.w entropy policy (0/1).
-        ifd CORE_TRACE
 game_core_select_body:
-        else
-game_core_select:
-        endif
         cmpi.w  #GAME_ENTROPY_LEGACY_SHIFT,d2
         bhi.s   .invalid_policy
         tst.w   d1
@@ -58,11 +46,7 @@ game_core_select:
         rts
 
 ; Takeover consumes carried logical controls while preserving action latches.
-        ifd CORE_TRACE
 game_core_clear_inputs_body:
-        else
-game_core_clear_inputs:
-        endif
         bsr     game_latch_old_actions
         clr.w   game_input_bits
         clr.w   game_input_pressed
@@ -70,9 +54,5 @@ game_core_clear_inputs:
         rts
 
 ; Resume retires held actions without clearing the sampled logical packet.
-        ifd CORE_TRACE
 game_core_latch_actions_body:
-        else
-game_core_latch_actions:
-        endif
         bra     game_latch_old_actions

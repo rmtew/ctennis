@@ -13,6 +13,7 @@ game_player_contact:
         tst.w   d7
         beq     game_no_contact
 .game_contact_geometry:
+        bsr     game_history_contact_begin
         moveq   #0,d5
         move.b  P_X(a3),d5
         lsl.w   #8,d5
@@ -182,6 +183,7 @@ game_return_vector:
 .game_return_end:
         move.b  #8,P_PHASE(a3)
         moveq   #1,d0
+        bsr     game_history_contact
         rts
 
 game_no_contact:

@@ -6,9 +6,10 @@
 game_audio_reset:
         movem.l d0-d7/a0-a3,-(sp)
         lea     game_audio_voices,a0
-        moveq   #95,d0
+        ; All three even-aligned 32-byte voices; same final A0 and D0.
+        moveq   #3*AV_SIZE/4-1,d0
 .clear:
-        clr.b   (a0)+
+        clr.l   (a0)+
         dbra    d0,.clear
         move.b  #2,game_audio_rate
         move.b  #2,game_audio_wait
