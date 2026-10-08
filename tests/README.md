@@ -19,6 +19,13 @@ and the versioned native inputs. Keep original-platform inputs outside the check
 RUST_LOG=info python scripts/native_acceptance.py
 ```
 
+Use `--plan` before starting, `--case ID` for focused coverage, and retain the
+printed campaign ID. Reconnect with `--campaign ID`; resume a stopped campaign
+with `--resume --campaign ID`. See [campaign usage and evidence rules](../docs/acceptance-campaigns.md).
+The detached controller owns one shared workspace lock and the active observer;
+do not hand-start overlapping native checks. Compatible passing receipts are
+reused and labeled; incomplete or failed latest evidence requires execution.
+
 The gate runs the checks below in sequence. It also packages the game twice and
 checks the embedded executable and artifact hashes. A failure stops the gate.
 Copperline is the maintained emulator target. These results do not establish
@@ -44,7 +51,9 @@ WinUAE or physical-hardware coverage.
 | `native_metrics.py --require-runtime` | Required resource-report coverage from existing receipts. |
 
 Paths in this table are relative to `scripts/`. The command list in
-`native_acceptance.py` defines the complete gate. Use focused checks for a bounded
+`acceptance_cases.py` defines the native cases; `campaign_core_evidence.py` adds
+actual shared-core CPU proofs. `native_acceptance.py` starts or monitors their
+durable controller. A subset pass does not establish full acceptance. Use focused checks for a bounded
 change. Host checks alone do not establish native acceptance.
 
 Native fixtures initialize state once through product initialization. They then
