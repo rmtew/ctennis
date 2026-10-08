@@ -209,7 +209,7 @@ def postlaunch_rejection(executable):
     with Core(image,symbols,readonly=READONLY) as cpu:
         stream,end,selection,phase=human_serve_wait(cpu,phase_wanted=0x20)
         clock=field(cpu,'game_serve_clock',1)
-        assert clock>=0x11 and field(cpu,'game_lifecycle')==PLAYING
+        assert clock==0x11 and field(cpu,'game_lifecycle')==PLAYING
         assert cpu.actual_serve_launch_observations and all(event['entry_clock']==0x10 for event in cpu.actual_serve_launch_observations)
         bounds=table(cpu,end);player=symbols['game_play_state']+end*10
         x,y=cpu.mem.r8(player+3),cpu.mem.r8(player+2)
@@ -221,7 +221,7 @@ def postlaunch_rejection(executable):
         cpu.audit_reads()
         return dict(passed=True,lifecycle=PLAYING,phase=phase,serve_clock=clock,operations=len(stream),
             actual_human_launch_observed=True,actual_launch_observations=cpu.actual_serve_launch_observations,
-            launch_entry_clock=0x10,first_postlaunch_boundary_clock=0x11,
+            launch_entry_clock=cpu.actual_serve_launch_observations[0]['entry_clock'],first_postlaunch_boundary_clock=clock,
             legal_position_verified=True,request_rejected=True,
             full_live_history_output_preview_preserved=True)
 
@@ -312,6 +312,9 @@ def partial_replacement(executable):
         candidate=eligible[0];ordinal=candidate['ordinal'];selection=candidate['origin']
         cpu.call('game_history_freeze');seek(cpu,selection)
         saved=protected(cpu);x,y=candidate['x'],candidate['y']
+        bounds=table(cpu,candidate['end'])
+        changed_x=x+1 if x+1<bounds['right'] else x-1
+        assert bounds['left']<=changed_x<bounds['right'] and changed_x!=x
         records=[]
         for wanted in (1,3):
             old=field(cpu,'game_preview_generation',4)
@@ -334,18 +337,33 @@ def partial_replacement(executable):
                 step()
                 assert cpu.cpu.r_reg(0)==1 and field(cpu,'game_preview_status')==3
             before_count=field(cpu,'game_preview_counts')
-            replace_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:x,3:y},saved)
+            replace_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:changed_x,3:y},saved)
             assert cpu.cpu.r_reg(0)==1 and field(cpu,'game_preview_generation',4)==generation+1
             assert field(cpu,'game_preview_status')==1 and field(cpu,'game_preview_cache_valid')==0
+            assert field(cpu,'game_preview_x')==changed_x and field(cpu,'game_preview_y')==y
             preview=block(cpu,'game_preview_storage','game_preview_storage_end')
             for api,args in (('game_preview_step',{0:generation,1:4}),
                     ('game_preview_cancel',{0:generation}),('game_preview_result',{0:generation}),
                     ('game_preview_result',{0:generation+1})):
                 call_checked(cpu,api,args,saved)
                 assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==preview
+            expected=bytearray(cpu.state())
+            player=symbols['game_play_state']-symbols['game_core_state']+candidate['end']*10
+            expected[player+3]=changed_x;expected[player+2]=y
+            replacement_cycles=[]
+            for _ in range(8192):
+                replacement_cycles.append(call_checked(cpu,'game_preview_step',{0:generation+1,1:1},saved))
+                assert cpu.cpu.r_reg(0)==1
+                if field(cpu,'game_preview_status')==2:break
+                assert field(cpu,'game_preview_status')==1
+            else:raise AssertionError('Replacement cold resolver did not reach edited PRIME within8192calls')
+            assert block(cpu,'game_preview_edited_state','game_preview_held_state')==bytes(expected)
             records.append(dict(phase=wanted,retired_generation=generation,new_generation=generation+1,
                 cold_restart=True,old_and_partial_results_unavailable=True,
                 full_live_history_output_preserved=True,partial_prefix_samples=before_count,
+                old_x=x,old_y=y,new_x=changed_x,new_y=y,edited_only_position_changed=True,
+                replacement_resolver_worker_calls=len(replacement_cycles),
+                replacement_resolver_cpu_cycles=sum(replacement_cycles),
                 request_cpu_cycles=request_cycles,replacement_cpu_cycles=replace_cycles,
                 maximum_worker_cpu_cycles=max(cycles),maximum_worker_operations=max(operations),
                 worker_calls=len(cycles)))
