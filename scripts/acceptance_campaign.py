@@ -542,6 +542,88 @@ def preview_a2_extent(stage):
     return covered==required and chosen_coverage==required
 
 
+def preview_a3_extent(stage,a2):
+    """Match relocation/native images to independently qualified chosen inputs."""
+    def integer(value,low=0):return type(value) is int and value>=low
+    if (not isinstance(stage,dict) or stage.get('passed') is not True
+            or stage.get('semantic_state_path_outcome_output_equal') is not True
+            or stage.get('seed')!=0xace1 or stage.get('dispatch_cap')!=512
+            or stage.get('ordinary_operation_cap')!=2049
+            or stage.get('descriptors')!=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]]):return False
+    audit=stage.get('shared_byte_audit') or {}
+    if (audit.get('passed') is not True or any(not integer(audit.get(k),1) for k in
+            ('matched_bytes','relocations_each','verified_sink_branches_each'))
+            or not isinstance(audit.get('normalized_sha256'),str) or len(audit['normalized_sha256'])!=64):return False
+    rows=stage.get('images')
+    if (not isinstance(rows,list) or len(rows)!=3 or
+            [(r.get('name'),r.get('base')) for r in rows if isinstance(r,dict)]!=
+            [('standalone',65536),('relocated',196608),('emitted-native',65536)]):return False
+    sources=a2.get('chosen_cases',[]) if isinstance(a2,dict) else []
+    seed_rows=a2.get('seeds',[]) if isinstance(a2,dict) else []
+    candidates=seed_rows[0].get('candidates',[]) if seed_rows and isinstance(seed_rows[0],dict) else []
+    if len(candidates)!=2:return False
+    semantic=('seed','ordinal','selection','end','x','y','selected_state','edited_state','final_states',
+        'paths','classes','ordered_outputs','actual_accepted_launches','actual_final_boundaries',
+        'prefix_samples','incoming_origin','action_boundary','qualification')
+    required=['coincidence','interception','net','out']
+    for row in rows:
+        native=row['name']=='emitted-native'
+        if (any(row.get(k) is not True for k in ('passed','semantic_equal','adapter_words_preserved',
+                'full_bus_nonstate_guard','frozen_history_write_guard','history_seek_full_state_store_equal',
+                'semantic_observer_read_only','setup_traps_outside_evidence'))
+                or row.get('actual_coverage')!=required or row.get('history_seek_cases_checked')!=3
+                or row.get('adapters_restored_before_freeze') is not native
+                or row.get('history_seek_live_output_preserved') is not native):return False
+        entries=row.get('restored_adapter_words')
+        names={'game_render_sprites','game_scene_present_fields','game_core_title_requested',
+               'game_audio_write_period','game_audio_write_level','game_core_status_present'}
+        if not isinstance(entries,dict) or (set(entries)!=names if native else bool(entries)):return False
+        if native and any(value!='40e7' for value in entries.values()):return False
+        cases=row.get('cases')
+        if not isinstance(cases,list) or len(cases)!=3:return False
+        covered=set()
+        for number,case in enumerate(cases):
+            if (not isinstance(case,dict) or any(case.get(k) is not True for k in ('passed',
+                    'continuous_state_path_output_equal','independent_continuation_policy_equal',
+                    'live_history_output_preserved','edited_only_position_changed'))):return False
+            descriptor=case.get('descriptor') or {};sample=descriptor.get('sampling_row') or {}
+            index,band,lateral=stage['descriptors'][number]
+            candidate=candidates[index]
+            if (descriptor.get('candidate_index')!=index or descriptor.get('band')!=band
+                    or descriptor.get('lateral_offset')!=lateral or sample.get('band')!=band
+                    or sample.get('available') is not True
+                    or any(descriptor.get(k)!=case.get(k) for k in ('ordinal','selection','x','y','incoming_origin'))
+                    or descriptor.get('original_action')!=case.get('action_boundary')
+                    or case.get('ordinal')!=candidate.get('ordinal')
+                    or descriptor.get('probe_origin')!=candidate.get('probe_origin')
+                    or sample not in candidate.get('sampling_rows',[])):return False
+            bounds=sample.get('bounds') or {}
+            if not all(integer(bounds.get(k)) for k in ('left','right')) or not integer(sample.get('center_x')):return False
+            expected_x=max(bounds['left'],min(bounds['right']-1,sample['center_x']+lateral))
+            if case.get('x')!=expected_x or case.get('y')!=sample.get('center_y') or case.get('selection')!=sample.get('selection'):return False
+            source=next((r for r in sources if all(r.get(k)==case.get(k) for k in ('seed','ordinal','selection','x','y'))),None)
+            if source is None or any(k not in case or case[k]!=source.get(k) for k in semantic):return False
+            covered.update(case['qualification']['coverage'])
+        if sorted(covered)!=required:return False
+    history=stage.get('history_regressions') or {};empty=history.get('empty') or {}
+    if (history.get('image')!='standalone' or history.get('base')!=65536
+            or history.get('failed_seek_all72_rollback_covered_by')!='cache_validation'
+            or empty.get('passed') is not True or empty.get('operations')!=0
+            or empty.get('boundaries_checked')!=1 or empty.get('selected_history_output_preserved') is not True):return False
+    for name in ('logical_api','ring_wrap'):
+        proof=history.get(name) or {}
+        if proof.get('passed') is not True or not history_boundary_extent(proof) or 'invalid-operation-id' not in proof['negative_controls']:return False
+    api=history['logical_api'];wrap=history['ring_wrap']
+    operations={'game_core_init','game_core_select','game_core_sample_pads','game_core_sample_result',
+        'game_core_clear_inputs','game_core_return_title','game_round_poll','game_tick_dispatch','game_core_latch_actions'}
+    return (all(integer((api.get('operation_counts') or {}).get(name),1) for name in operations)
+            and wrap.get('operations')==4161 and wrap.get('record_capacity')==4096
+            and wrap.get('buffer_bytes')==80318 and wrap.get('metadata_bytes')==72
+            and wrap.get('low_longword_wrap') is True and integer(wrap.get('tick_wraps'),1)
+            and integer(wrap.get('latest')) and wrap['latest']>>32==1
+            and integer(wrap.get('retained_operations')) and 4032<=wrap['retained_operations']<4096)
+
+
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
@@ -635,7 +717,8 @@ def required_extent(case,report):
             if type(invalidation.get(field)) is not int or invalidation[field]<0:return False
         if invalidation['oldest_after_eviction']<=invalidation['evicted_incoming_origin']:return False
         return (preview_a1_extent(validation.get('stage_a1_validation'))
-                and preview_a2_extent(validation.get('stage_a2_validation')))
+                and preview_a2_extent(validation.get('stage_a2_validation'))
+                and preview_a3_extent(validation.get('stage_a3_validation'),validation.get('stage_a2_validation')))
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}

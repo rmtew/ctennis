@@ -101,7 +101,7 @@ def preview_a2_report():
         chosen.append(dict(row,end=0,passed=True,continuous_state_path_output_equal=True,
             independent_continuation_policy_equal=True,live_history_output_preserved=True,
             edited_only_position_changed=True,prefix_samples=0,final_states=[state,state],paths=[path0,path1],
-            path_counts=[2,2],coverage_contributed=[coverage]))
+            path_counts=[2,2],classes=[classification,classification],coverage_contributed=[coverage]))
     stream=[('game_core_select',[0,0xace1,0])]
     for tick in range(512):
         stream.extend([('game_round_poll',[]),('game_core_sample_pads',[
@@ -127,6 +127,68 @@ def preview_a2_report():
         jobs=4,seeds=seeds,job_results=jobs,chosen_cases=chosen,
         required_coverage=['net','out','interception','coincidence'],
         actual_coverage=['coincidence','interception','net','out'],absent_classes=[])
+
+
+def preview_a3_report(a2):
+    # Receipt-shape fixtures test independent evidence gating, not tennis rules.
+    first=a2['seeds'][0]['candidates'][0]
+    second=json.loads(json.dumps(first));second.update(ordinal=1,incoming_origin=5,probe_origin=6,action_boundary=16)
+    for row in second['sampling_rows']:
+        if row['available']:row['selection']+=4;row['source_complete_boundary']+=4
+        elif 'duplicate_selection' in row:row['duplicate_selection']+=4
+    a2['seeds'][0]['candidates'].append(second);a2['seeds'][0]['recorded_completed_returns']=2
+    a2['job_results']=a2['job_results'][:3];a2['chosen_cases']=a2['chosen_cases'][:3];a2['jobs']=3
+    for number,(job,chosen) in enumerate(zip(a2['job_results'],a2['chosen_cases'])):
+        candidate=first if number==0 else second
+        sample=candidate['sampling_rows'][1 if number==0 else 0]
+        for row in (job,chosen):
+            row.update(candidate=candidate,ordinal=candidate['ordinal'],sampling_row=sample,
+                selection=sample['selection'],x=(112,144,112)[number],y=sample['center_y'])
+        if number==0:
+            facts=job['qualification'];facts.update(geometry_coincident=True,launched_outgoing_coincidence=True,
+                coverage=['coincidence','net'])
+            chosen['paths'][1]=chosen['paths'][0];chosen['coverage_contributed']=['coincidence','net']
+        chosen.update(selected_state='00'*318,edited_state='00'*318,
+            incoming_origin=candidate['incoming_origin'],action_boundary=candidate['action_boundary'],
+            actual_accepted_launches={str(v):[q['human_launch']]+([q['opponent_contact']] if q['opponent_contact'] else [])
+                for v,q in enumerate(chosen['qualification']['variants'])},
+            actual_final_boundaries=[q['last_sampled_boundary'] for q in chosen['qualification']['variants']],
+            ordered_outputs={'0':[['fields',0,'00'*6]],'1':[['fields',0,'00'*6]]})
+    cases=[]
+    for number,source_number in enumerate((0,2,1)):
+        row=json.loads(json.dumps(a2['chosen_cases'][source_number]));candidate=first if number==0 else second
+        row['descriptor']=dict(candidate_index=0 if number==0 else 1,band='low' if number==0 else 'regular',
+            lateral_offset=-16 if number<2 else 16,ordinal=row['ordinal'],incoming_origin=row['incoming_origin'],
+            probe_origin=candidate['probe_origin'],original_action=row['action_boundary'],selection=row['selection'],
+            x=row['x'],y=row['y'],sampling_row=row['sampling_row'])
+        cases.append(row)
+    images=[]
+    names=('game_render_sprites','game_scene_present_fields','game_core_title_requested',
+        'game_audio_write_period','game_audio_write_level','game_core_status_present')
+    for name,base in (('standalone',65536),('relocated',196608),('emitted-native',65536)):
+        native=name=='emitted-native'
+        images.append(dict(name=name,base=base,passed=True,cases=cases,semantic_equal=True,
+            actual_coverage=['coincidence','interception','net','out'],
+            restored_adapter_words={name:'40e7' for name in names} if native else {},
+            adapters_restored_before_freeze=native,adapter_words_preserved=True,full_bus_nonstate_guard=True,
+            frozen_history_write_guard=True,history_seek_cases_checked=3,history_seek_full_state_store_equal=True,
+            history_seek_live_output_preserved=native,semantic_observer_read_only=True,setup_traps_outside_evidence=True))
+    operations=('game_core_init','game_core_select','game_core_sample_pads','game_core_sample_result',
+        'game_core_clear_inputs','game_core_return_title','game_round_poll','game_tick_dispatch','game_core_latch_actions')
+    proof=dict(passed=True,operations=19,retained_operations=19,boundaries_checked=20,seeks=40,
+        frozen_operations_checked=9,register_sr_equivalence_operations=19,failure_preserves_older_position=True,
+        negative_controls=['checkpoint-byte-8','checkpoint-byte-10','checkpoint-byte-326','checkpoint-byte-104',
+            'out-of-range-1','out-of-range-65','invalid-operation-id'],operation_counts={name:1 for name in operations})
+    wrap=dict(proof,operations=4161,register_sr_equivalence_operations=4161,record_capacity=4096,
+        buffer_bytes=80318,metadata_bytes=72,low_longword_wrap=True,tick_wraps=4,latest=(1<<32)+3649,
+        retained_operations=4033,boundaries_checked=4034,seeks=8068)
+    return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=18020,relocations_each=257,
+        verified_sink_branches_each=14,normalized_sha256='a'*64),seed=0xace1,dispatch_cap=512,ordinary_operation_cap=2049,
+        descriptors=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]],images=images,
+        history_regressions=dict(image='standalone',base=65536,
+            empty=dict(passed=True,operations=0,boundaries_checked=1,selected_history_output_preserved=True),
+            logical_api=proof,ring_wrap=wrap,failed_seek_all72_rollback_covered_by='cache_validation'),
+        semantic_state_path_outcome_output_equal=True)
 
 
 class CampaignTests(unittest.TestCase):
@@ -188,6 +250,7 @@ class CampaignTests(unittest.TestCase):
         report['preview_validation']['cache_validation']=cache
         report['preview_validation']['stage_a1_validation']=preview_a1_report()
         report['preview_validation']['stage_a2_validation']=preview_a2_report()
+        report['preview_validation']['stage_a3_validation']=preview_a3_report(report['preview_validation']['stage_a2_validation'])
         self.assertTrue(campaign.required_extent(case,report))
         for area,key,value in (('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
@@ -263,6 +326,25 @@ class CampaignTests(unittest.TestCase):
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(campaign.preview_a2_extent(partial))
+
+    def test_preview_a3_extent_requires_actual_native_entries_and_equal_semantics(self):
+        a2=preview_a2_report();report=preview_a3_report(a2)
+        self.assertTrue(campaign.preview_a2_extent(a2));self.assertTrue(campaign.preview_a3_extent(report,a2))
+        for path,value in ((('shared_byte_audit','matched_bytes'),0),
+                (('images',2,'restored_adapter_words','game_render_sprites'),'a000'),
+                (('images',2,'adapters_restored_before_freeze'),False),
+                (('images',2,'semantic_observer_read_only'),False),
+                (('images',2,'history_seek_live_output_preserved'),False),
+                (('images',1,'cases',0,'paths',0),'00'),
+                (('images',0,'cases',0,'descriptor','lateral_offset'),16),
+                (('history_regressions','image'),'emitted-native'),
+                (('history_regressions','empty','selected_history_output_preserved'),False),
+                (('history_regressions','logical_api','operation_counts','game_core_latch_actions'),0),
+                (('history_regressions','ring_wrap','low_longword_wrap'),False)):
+            partial=json.loads(json.dumps(report));node=partial
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(campaign.preview_a3_extent(partial,a2))
 
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
