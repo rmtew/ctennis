@@ -117,3 +117,14 @@ repeatedly returned a reached `target` at the same 83.233847 guest seconds,
 slightly below the requested floating-point time. The capture now treats the
 protocol's reached-target result as completion, retaining actual returned time
 for subsequent requests. All original artifacts and callback guards remain.
+
+The full visual/resume run at `aeacdc6` (campaign
+`355efdb360ee474f9c149044898fdd29`) remained failed: independent reconstruction
+of 4,840,070 literal records found 5,191 complete callbacks with no drops, but
+the first title callback had −756.86 CCK headroom. Every later callback passed,
+with minimum headroom 12,412.38 CCK. The source repair initializes gesture
+thresholds before the CIA epoch, skips unused hint scanning on inactive idle
+screens and returns from an inactive tutorial tick before saving registers.
+Fresh physical input, active tutorial and gameplay keep their full input path.
+The deadline and all observers remain unchanged; a fresh run must prove the
+reduced first-callback cost.

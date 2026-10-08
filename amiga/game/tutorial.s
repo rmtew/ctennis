@@ -5,11 +5,34 @@ TUTORIAL_RENDERING equ 3
 TUTORIAL_READY equ 4
 TUTORIAL_UNAVAILABLE equ 5
 
+; Gesture thresholds are video-standard dependent and ready before sampling.
+tutorial_init:
+        move.l  simulation_interval_whole,d0
+        mulu.w  #15,d0
+        move.l  d0,tutorial_double_ticks
+        move.l  simulation_interval_whole,d0
+        mulu.w  #7,d0
+        move.l  d0,tutorial_repeat_ticks
+        rts
+
 ; D0/D1 physical A/B packets. B2 belongs to the one-player UI before sampling.
 tutorial_sample:
         movem.l d2-d7/a0-a2,-(sp)
         clr.b   tutorial_resume_defer
         clr.b   tutorial_enter_pressed
+        ; No tutorial hint is displayed on an idle non-playing screen. Fresh
+        ; pad/Return intent still selects its source before a title entry.
+        tst.b   tutorial_active
+        bne     .source_intent
+        cmpi.w  #GAME_PLAYING,game_lifecycle
+        beq     .source_intent
+        tst.b   d0
+        bne     .source_intent
+        tst.b   d1
+        bne     .source_intent
+        tst.b   game_keyboard_matrix+$44
+        beq     .source_done
+.source_intent:
         ; Only deliberate physical edges select hints, never held repeats.
         move.b  ui_joystick_bits,d2
         move.b  ui_joystick_previous,d3
@@ -100,16 +123,14 @@ tutorial_sample:
 
 ; Called after physical sampling/commands, before any native dispatcher body.
 tutorial_tick:
-        movem.l d0-d7/a0-a6,-(sp)
-        tst.l   tutorial_double_ticks
-        bne     .initialized
-        move.l  simulation_interval_whole,d0
-        mulu.w  #15,d0
-        move.l  d0,tutorial_double_ticks
-        move.l  simulation_interval_whole,d0
-        mulu.w  #7,d0
-        move.l  d0,tutorial_repeat_ticks
-.initialized:
+        tst.b   tutorial_active
+        bne     .work
+        tst.b   tutorial_enter_pending
+        bne     .work
+        tst.b   tutorial_title_pending
+        bne     .work
+        rts
+.work:  movem.l d0-d7/a0-a6,-(sp)
         tst.b   tutorial_title_pending
         beq     .entry
         cmpi.w  #GAME_PLAYING,game_lifecycle

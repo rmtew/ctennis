@@ -101,6 +101,7 @@ copy_third_copper:
         bclr    #6,$bfee01
         bsr     game_init_controls
         bsr     paula_tone_init
+        bsr     tutorial_init
         ; CIA-B A is the low E-clock word; B counts A underflows.
         ; Start the high word first, so the continuous epoch loses no carry.
         move.b  #0,$bfde00
