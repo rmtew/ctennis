@@ -411,9 +411,16 @@ def preview_a2_extent(stage):
                 returns_per_seed_cap=2,positions_per_return_cap=9,job_cap=72,worker_call_cap=8192,
                 maximum_worker_operations=4,total_samples_per_path=256).items())
             or stage.get('frozen_history_write_guard') is not True
-            or stage.get('position_policy')!='recorded-contact-plus-minus8-clamped-to-actual-phase-limits'
+            or stage.get('position_policy')!='actual-recorded-court-contact-center-plus-minus16-lateral-selected-phase-limits'
+            or stage.get('time_policy')!='first-regular-height8-28-first-low-height0-7-last-legal-incoming-pre-dispatch'
             or stage.get('required_coverage')!=['net','out','interception','coincidence']
             or stage.get('actual_coverage')!=sorted(required) or stage.get('absent_classes')!=[]):return False
+    contract=stage.get('contact_geometry_contract')
+    if (not isinstance(contract,dict) or contract.get('source')!='amiga/game/gameplay_contact.s'
+            or contract.get('tick_source')!='amiga/game/gameplay.s' or contract.get('players_before_ball') is not True
+            or any(contract.get(k)!=v for k,v in dict(x_offset=8,lower_y_offset=27,upper_y_offset=35,lateral_offsets=[-16,0,16]).items())
+            or contract.get('source_sha256')!=digest(ROOT/contract['source'])
+            or contract.get('tick_source_sha256')!=digest(ROOT/contract['tick_source'])):return False
     seeds=stage.get('seeds');jobs=stage.get('job_results');chosen=stage.get('chosen_cases')
     if (not isinstance(seeds,list) or len(seeds)!=4 or [row.get('seed') for row in seeds if isinstance(row,dict)]!=seeds_expected
             or not isinstance(jobs,list) or not integer(stage.get('jobs'),1,72) or stage['jobs']!=len(jobs)
@@ -446,13 +453,51 @@ def preview_a2_extent(stage):
                     or any(not integer(candidate.get(key),0,255) for key in ('recorded_x','recorded_y'))):return False
             key=(row['seed'],candidate['ordinal'])
             if key in identities:return False
+            samples=candidate.get('sampling_rows')
+            if (not isinstance(samples,list) or len(samples)!=3
+                    or [s.get('band') for s in samples if isinstance(s,dict)]!=['regular','low','late']):return False
+            selections=set()
+            for sample in samples:
+                if type(sample.get('available')) is not bool:return False
+                if not sample['available']:
+                    if not isinstance(sample.get('reason'),str) or not sample['reason']:return False
+                    continue
+                bounds=sample.get('bounds')
+                if (not integer(sample.get('source_complete_boundary'),candidate['incoming_origin']+1,candidate['action_boundary'])
+                        or not integer(sample.get('selection'),candidate['incoming_origin'],candidate['action_boundary'])
+                        or sample['source_complete_boundary']!=sample['selection']-3
+                        or sample['selection']%4!=0 or sample['selection'] in selections
+                        or sample.get('source_geometry_equal_at_selection') is not True
+                        or any(not integer(sample.get(k),0,255) for k in
+                            ('court_x','court_y','ball_x','ball_y','contact','player_phase','player_animation'))
+                        or not integer(sample.get('height'),0,28)
+                        or sample['height']!=sample['court_y']-sample['ball_y']
+                        or (sample['band']=='regular' and sample['height']<8)
+                        or (sample['band']=='low' and sample['height']>7)
+                        or sample['contact']&0x0d or bool(sample['contact']&0x40)!=(candidate['end']==0)
+                        or sample['player_phase']&0xec or not sample['player_phase']&0x12
+                        or not isinstance(bounds,dict) or any(not integer(bounds.get(k),0,255) for k in ('left','right','top','bottom'))
+                        or bounds.get('phase_offset')!=((sample['player_animation']>>3)&12)
+                        or not bounds['left']<bounds['right'] or not bounds['top']<bounds['bottom']
+                        or sample.get('center_x')!=sample['court_x']-8
+                        or sample.get('center_y')!=sample['court_y']-(27 if candidate['end']==0 else 35)
+                        or not integer(sample['center_x'],bounds['left'],bounds['right']-1)
+                        or not integer(sample['center_y'],bounds['top'],bounds['bottom']-1)):return False
+                xs=sorted({max(bounds['left'],min(bounds['right']-1,sample['center_x']+d)) for d in (-16,0,16)})
+                clamped=[d for d in (-16,0,16) if not bounds['left']<=sample['center_x']+d<bounds['right']]
+                if sample.get('x_positions')!=xs or sample.get('clamped_lateral_offsets')!=clamped:return False
+                selections.add(sample['selection'])
             identities[key]=candidate;previous=candidate['action_boundary']
     names={};positions={};covered=set()
     for row in jobs:
         if not isinstance(row,dict):return False
         if not integer(row.get('seed'),1,65535) or not integer(row.get('ordinal')):return False
         key=(row.get('seed'),row.get('ordinal'));candidate=identities.get(key);bounds=row.get('bounds')
-        if (candidate is None or row.get('candidate')!=candidate or row.get('selection')!=candidate['action_boundary']
+        sample=row.get('sampling_row')
+        if (candidate is None or row.get('candidate')!=candidate
+                or not isinstance(sample,dict) or sample not in candidate['sampling_rows'] or sample.get('available') is not True
+                or row.get('selection')!=sample['selection'] or row.get('bounds')!=sample['bounds']
+                or row.get('pre_dispatch_geometry_verified') is not True
                 or not isinstance(row.get('name'),str) or row['name'] in names or not costs(row.get('costs'))
                 or any(row.get(k)!=v for k,v in dict(worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256).items())
                 or row.get('frozen_history_write_guard') is not True
@@ -461,10 +506,8 @@ def preview_a2_extent(stage):
                 or not integer(bounds.get('phase_offset')) or bounds['phase_offset'] not in (0,4,8,12)
                 or not integer(row.get('x'),bounds['left'],bounds['right']-1)
                 or not integer(row.get('y'),bounds['top'],bounds['bottom']-1)):return False
-        xs={max(bounds['left'],min(bounds['right']-1,candidate['recorded_x']+d)) for d in (-8,0,8)}
-        ys={max(bounds['top'],min(bounds['bottom']-1,candidate['recorded_y']+d)) for d in (-8,0,8)}
-        grid=positions.setdefault(key,set());point=(row['x'],row['y'])
-        if point in grid or point[0] not in xs or point[1] not in ys:return False
+        grid=positions.setdefault(key,set());point=(row['selection'],row['x'],row['y'])
+        if point in grid or row['x'] not in sample['x_positions'] or row['y']!=sample['center_y']:return False
         grid.add(point)
         if len(grid)>9:return False
         facts=qualification(row.get('qualification'),candidate['end'])

@@ -59,12 +59,20 @@ def preview_a1_report():
 
 def preview_a2_report():
     candidate=dict(ordinal=0,completed_kind=1,end=0,incoming_origin=1,incoming_kind=3,
-        incoming_end=1,probe_origin=2,action_boundary=3,recorded_x=128,recorded_y=128,
+        incoming_end=1,probe_origin=2,action_boundary=12,recorded_x=128,recorded_y=128,
         full_incoming_retained=True,selected_lifecycle=1)
     costs=dict(generation=1,edited_only_position_changed=True,cache_hit=False,resolver_operations=1,
         maximum_worker_operations=4,worker_calls=1,request_cpu_cycles=1,total_worker_cpu_cycles=1,
         maximum_worker_cpu_cycles=1,stack_bytes=204)
     bounds=dict(left=1,right=255,top=1,bottom=255,phase_offset=0)
+    sampling=[]
+    for band,selection,height in (('regular',8,24),('low',12,7)):
+        sampling.append(dict(band=band,available=True,source_complete_boundary=selection-3,selection=selection,
+            court_x=136,court_y=155,ball_x=136,ball_y=155-height,contact=64,height=height,
+            player_phase=18,player_animation=0,center_x=128,center_y=128,bounds=dict(bounds),
+            source_geometry_equal_at_selection=True,x_positions=[112,128,144],clamped_lateral_offsets=[]))
+    sampling.append(dict(band='late',available=False,reason='Duplicate selected time',duplicate_selection=12))
+    candidate['sampling_rows']=sampling
     state='00'*318;state_hash=hashlib.sha256(bytes.fromhex(state)).hexdigest();jobs=[];chosen=[]
     for number,(coverage,classification,contact) in enumerate((('net','net',1),('out','out',128),
             ('interception','interception',0),('coincidence','landing',2))):
@@ -82,8 +90,10 @@ def preview_a2_report():
             launched_outgoing_coincidence=coverage=='coincidence',coverage=[coverage],
             classifier_priority=['interception','net','out','landing'],
             source='actual-full-canonical-and-accepted-hooks',geometry_source='actual-sampled-drawn-geometry-visibility-ticks')
-        row=dict(name=str(number),seed=0xace1,ordinal=0,candidate=dict(candidate),selection=3,
-            x=(120,128,136,120)[number],y=(120,120,120,128)[number],bounds=dict(bounds),
+        sample=sampling[1 if coverage=='coincidence' else 0]
+        row=dict(name=str(number),seed=0xace1,ordinal=0,candidate=dict(candidate),selection=sample['selection'],
+            sampling_row=sample,pre_dispatch_geometry_verified=True,
+            x=(112,128,144,112)[number],y=128,bounds=dict(bounds),
             costs=dict(costs),qualification=facts,worker_call_cap=8192,maximum_worker_operations=4,
             total_samples_per_path=256,frozen_history_write_guard=True)
         jobs.append(row)
@@ -107,7 +117,12 @@ def preview_a2_report():
         release_modulus=64,release_prefix=8,direction_modulus=96,first_direction_ticks=48,
         direction_first=8,direction_second=4,opponent_packet=0,result_words=[0]*6),
         dispatch_cap=512,ordinary_operation_cap=2049,returns_per_seed_cap=2,positions_per_return_cap=9,
-        position_policy='recorded-contact-plus-minus8-clamped-to-actual-phase-limits',job_cap=72,
+        position_policy='actual-recorded-court-contact-center-plus-minus16-lateral-selected-phase-limits',
+        time_policy='first-regular-height8-28-first-low-height0-7-last-legal-incoming-pre-dispatch',
+        contact_geometry_contract=dict(source='amiga/game/gameplay_contact.s',
+            source_sha256=digest(campaign.ROOT/'amiga/game/gameplay_contact.s'),tick_source='amiga/game/gameplay.s',
+            tick_source_sha256=digest(campaign.ROOT/'amiga/game/gameplay.s'),x_offset=8,lower_y_offset=27,
+            upper_y_offset=35,players_before_ball=True,lateral_offsets=[-16,0,16]),job_cap=72,
         worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,frozen_history_write_guard=True,
         jobs=4,seeds=seeds,job_results=jobs,chosen_cases=chosen,
         required_coverage=['net','out','interception','coincidence'],
@@ -224,6 +239,12 @@ class CampaignTests(unittest.TestCase):
             with self.subTest(key=key):self.assertFalse(campaign.preview_a2_extent(partial))
         for path,value in ((('seeds',0,'candidates',0,'full_incoming_retained'),False),
                 (('seeds',0,'input_stream_sha256'),'a'*64),
+                (('contact_geometry_contract','lower_y_offset'),28),
+                (('contact_geometry_contract','source_sha256'),'a'*64),
+                (('seeds',0,'candidates',0,'sampling_rows',0,'source_geometry_equal_at_selection'),False),
+                (('seeds',0,'candidates',0,'sampling_rows',0,'height'),7),
+                (('job_results',0,'pre_dispatch_geometry_verified'),False),
+                (('job_results',0,'selection'),12),
                 (('seeds',0,'candidates',0,'incoming_origin'),2),
                 (('job_results',0,'x'),127),(('job_results',0,'costs','maximum_worker_operations'),5),
                 (('job_results',0,'qualification','variants',0,'human_launch','kind'),3),
