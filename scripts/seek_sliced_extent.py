@@ -16,7 +16,8 @@ ARITIES=dict(game_core_init=0,game_core_select=3,game_core_sample_pads=2,
     game_core_sample_result=6,game_core_clear_inputs=0,game_core_return_title=0,
     game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0)
 NEGATIVES={'admission-zero','stale-step','stale-commit','stale-cancel',
-    'failed-begin-range','failed-begin-schema','failed-begin-state','failed-begin-opcode',
+    'failed-begin-range','failed-begin-schema','failed-begin-simulation',
+    'failed-begin-state','failed-begin-opcode','canceled-commit',
     'cancel-before-commit','supersede-before-commit','newer-selection-preserved',
     'preview-request-overlap','preview-result-overlap','generation-exhaustion'}
 PRESERVED=('public_canonical_preserved','public_metadata_preserved',
