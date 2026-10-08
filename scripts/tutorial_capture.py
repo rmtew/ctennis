@@ -14,6 +14,55 @@ from fractions import Fraction
 from copperline_test_session import NativeControlSession
 
 
+def assert_native_text(path, y, text, selected=False):
+    """Authored ASCII/font-cell contract against actual 256x208 scanout."""
+    from PIL import Image
+    from native_tools import ROOT
+    assert len(text) <= 32 and 0 <= y <= 200
+    font = (ROOT/'assets/native/title/font.bin').read_bytes()
+    left = ((32-len(text))//2)*8
+    with Image.open(path) as source:
+        assert source.size == (256, 208)
+        raster = source.convert('RGB')
+        for column, char in enumerate(text):
+            for row in range(8):
+                byte = font[ord(char)*8+row] ^ (255 if selected else 0)
+                for bit in range(8):
+                    expected = (255,255,255) if byte & (128 >> bit) else (0,0,0)
+                    actual = raster.getpixel((left+column*8+bit, y+row))
+                    assert actual == expected, dict(text=text, selected=selected,
+                        pixel=[left+column*8+bit, y+row], actual=actual, expected=expected)
+    return dict(text=text, y=y, selected=selected, matched=True,
+                pixels=len(text)*64)
+
+
+def assert_tutorial_menu(path, selection):
+    assert selection in (0,1,2)
+    return [assert_native_text(path, y, text, selection == index)
+            for index, (y, text) in enumerate(((132,'PLAY FROM HERE (NOT READY)'),
+                (143,'RESUME LATEST'), (154,'CLOSE MENU')))]
+
+
+def assert_court_origins(bank, symbols, base):
+    """All initial and fixed restore operands, preserving native HUD strips."""
+    entries = [('cop_bpl'+str(n)+'h', None, n, 0) for n in range(4)]
+    entries += [('score_cop_'+str(244+n)+'_hi', 'score_cop_'+str(244+n)+'_lo', n, 42)
+                for n in range(4)]
+    entries += [('score_cop_point_restore'+str(n)+'_hi',
+                 'score_cop_point_restore'+str(n)+'_lo', n, 64) for n in (0,2,3)]
+    entries += [('score_cop_'+str(224+n)+'_hi', 'score_cop_'+str(224+n)+'_lo', n, 104)
+                for n in (0,2,3)]
+    entries += [('score_cop_games_restore_hi','score_cop_games_restore_lo',1,120)]
+    for hi, lo, plane, row in entries:
+        h = symbols[hi]-symbols['copperlist']+2
+        l = symbols[lo]-symbols['copperlist']+2 if lo else h+4
+        assert int.from_bytes(bank[h-2:h], 'big') == 0xe0+plane*4, hi
+        assert int.from_bytes(bank[l-2:l], 'big') == 0xe2+plane*4, lo or hi
+        pointer = int.from_bytes(bank[h:h+2], 'big')*65536+int.from_bytes(bank[l:l+2], 'big')
+        assert pointer == base+plane*6144+row*32, (hi, pointer, base)
+    return dict(matched=True, base=base, entries=len(entries))
+
+
 class CaptureSession(NativeControlSession):
     # First attempt measured 128 MiB over 8.66 observed guest seconds.
     # A 2 GiB streaming budget allows that rate over 120 seconds with margin;
@@ -171,8 +220,11 @@ class SurfaceObserver:
     """Reconstruct actual Copper banks and guard queued/displayed pixel storage."""
     SIZE = 4*6144
 
-    def __init__(self, symbols, read):
+    def __init__(self, symbols, read, verify_court_restores=False):
         self.symbols = symbols
+        self.verify_court_restores = verify_court_restores
+        self.court_queues = []
+        self.court_publications = []
         length = symbols['copperlist_end']-symbols['copperlist']
         self.banks = {symbols[n]:bytearray(read(symbols[n], length))
                       for n in ('copperlist','copperlist_back','copperlist_third')}
@@ -246,6 +298,11 @@ class SurfaceObserver:
         if 0xdff080 <= a and a+size <= 0xdff084:
             self.cop1lc[a-0xdff080:a-0xdff080+size] = data
         if a == self.symbols['ready_completed'] and row['value']:
+            if self.verify_court_restores and queued_copper in self.banks:
+                base = self.surface(queued_copper) or self.symbols['plane0']
+                check = assert_court_origins(self.banks[queued_copper], self.symbols, base)
+                self.court_queues.append(dict(check, copper=queued_copper,
+                    position=dict(row['position']), after_resume=bool(state['tutorial_resume_count'])))
             self.queued = self.snapshot(queued_copper,state,row['position'])
             if self.queued:
                 self.queue_records.append(self.queued)
@@ -258,6 +315,11 @@ class SurfaceObserver:
                 assert target == expected == state['presentation_copper'], 'Actual COPJMP selects an uncompleted bank'
                 assert 253 <= row['position']['vpos'] <= 311, 'Court publication outside guarded PAL bottom interval'
             self.hardware_copper = target
+            if self.verify_court_restores and target in self.banks:
+                base = self.surface(target) or self.symbols['plane0']
+                check = assert_court_origins(self.banks[target], self.symbols, base)
+                self.court_publications.append(dict(check, copper=target,
+                    position=dict(row['position']), after_resume=bool(state['tutorial_resume_count'])))
             self.displayed = self.snapshot(target,state,row['position'])
             if self.displayed:
                 assert self.queued is not None
@@ -284,9 +346,16 @@ class SurfaceObserver:
 
     def result(self):
         assert self.surface_writes and self.bank_writes and self.publications and self.queue_records
+        if self.verify_court_restores:
+            assert self.court_queues and self.court_publications
+            resumed = {r['copper'] for r in self.court_publications
+                       if r['after_resume'] and r['base'] == self.symbols['plane0']}
+            assert resumed == set(self.banks), 'Not all resumed native banks were published'
         return dict(surface_write_count=self.surface_writes, bank_write_count=self.bank_writes,
                     protected_surface_writes=0, protected_bank_writes=0,
                     queues=self.queue_records, publications=self.publications,
+                    court_queues=self.court_queues, court_publications=self.court_publications,
+                    court_restores_verified=self.verify_court_restores,
                     exact_queued_image_published=True,
                     scope='Literal full-surface/Copper writes and actual COP1LC/COPJMP; no displayed or eligible queued writes.')
 
@@ -338,6 +407,8 @@ def required_capture_extent(report):
     core = report.get('shared_core') or {}
     hunks = report.get('loaded_hunks') or []
     surfaces = report.get('surface_ownership') or {}
+    visuals = report.get('visual_checks') or {}
+    waiting = visuals.get('released-wait') or {}
     headroom = timing.get('minimum_absolute_headroom_cck')
     return (report.get('complete_state_bytes') == 318
             and report.get('public_history_bytes') == 72
@@ -357,7 +428,8 @@ def required_capture_extent(report):
             and type(raw.get('uncompressed_bytes')) is int
             and 0 < raw['uncompressed_bytes'] <= CaptureSession.MAX_RAW_BYTES
             and {'title','released-serve','edited-serve','held-serve',
-                 'released-edited-serve','options','resumed'} <= names
+                 'released-edited-serve','options','options-resume',
+                 'resumed','resumed-1','resumed-2'} <= names
             and len([n for n in names if isinstance(n,str) and n.startswith('animation-')]) == 24
             and all(bound(r.get('source')) and bound(r.get('native'))
                     and r.get('source_geometry') == [716,285]
@@ -370,7 +442,21 @@ def required_capture_extent(report):
                     and type(r['observed_surface'].get('first_publication_frame')) is int
                     and type(r['observed_surface'].get('observation_frame')) is int
                     and r['observed_surface']['observation_frame'] >= r['observed_surface']['first_publication_frame']+2
-                    for r in rows if r.get('name') not in ('title','resumed'))
+                    for r in rows if r.get('name') != 'title' and not r.get('name','').startswith('resumed'))
+            and all(len(visuals.get(name, [])) == 3
+                    and all(r.get('matched') is True and r.get('selected') is (index == selection)
+                            for index,r in enumerate(visuals[name]))
+                    for name, selection in (('options',0), ('options-resume',1)))
+            and (waiting.get('raster') or {}).get('matched') is True
+            and isinstance(waiting.get('state'),str) and len(waiting['state']) == 636
+            and re.fullmatch(r'[0-9a-f]{636}', waiting['state'])
+            and waiting.get('end') in (0,1) and waiting.get('ordinal') == 0xffff
+            and waiting['state'][waiting['end']*20:waiting['end']*20+2] == '40'
+            and waiting['state'][108+waiting['end']*2:110+waiting['end']*2] == '00'
+            and waiting.get('phase') == 0x40 and waiting.get('ai') == 0
+            and waiting.get('launches') == 0 and waiting.get('outcome') == 6
+            and waiting.get('sample_count') == waiting.get('sample_limit') == 256
+            and waiting.get('incomplete') is True and waiting.get('outgoing_shot_claimed') is False
             and bound(report.get('animation'))
             and report.get('animation_geometry') == [256,208]
             and type(report.get('animation_frames')) is int
@@ -389,6 +475,8 @@ def required_capture_extent(report):
             and surfaces.get('protected_surface_writes') == 0
             and surfaces.get('protected_bank_writes') == 0
             and surfaces.get('exact_queued_image_published') is True
+            and surfaces.get('court_restores_verified') is True
+            and surfaces.get('resumed_native_banks') == 3
             and all(type(surfaces.get(n)) is int and surfaces[n] > 0 for n in
                     ('surface_write_count','bank_write_count','queued_images','actual_publications'))
             and type((report.get('native_memory') or {}).get('chip_free_bytes')) is int

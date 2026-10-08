@@ -17,7 +17,9 @@ from native_metrics import memory_summary
 from native_observation import target_log
 from native_tools import ROOT, emulator_config
 from ordinary_cadence import chip_memory
-from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver, native_view, animation
+from tutorial_capture import (CaptureSession, CallbackObserver, SurfaceObserver,
+                              native_view, animation, assert_native_text, assert_tutorial_menu,
+                              assert_court_origins)
 
 FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_x=1, tutorial_y=1, tutorial_end=1, tutorial_active_variant=1,
@@ -64,6 +66,7 @@ def run():
             '9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d')
         config = emulator_config()
         screenshots, boundaries, actions, waits = [], [], [], []
+        visual_checks = {}
         selected = metadata = live_backup = None
         resume_readback = None
         awaiting_resumed_boundary = False
@@ -88,7 +91,7 @@ def run():
                 return int.from_bytes(block(name, FIELDS.get(name, 2) if size is None else size), 'big')
             loaded = loaded_hunks(executable, segments, read)
             observer = CallbackObserver(0, symbols)
-            observer.surfaces = SurfaceObserver(symbols, read)
+            observer.surfaces = SurfaceObserver(symbols, read, verify_court_restores=True)
             session.observer = observer
             subscription = session.inspect('events.subscribe',
                 dict(events=['mmio','frame'], mmio=(observer.watches(FIELDS, read)+
@@ -184,6 +187,12 @@ def run():
                 surface = None
                 if number('tutorial_active') and not number('tutorial_pending'):
                     surface = observer.surfaces.completed_surface(number('tutorial_published_generation'))
+                if surface or name.startswith('resumed'):
+                    # Explicit independent court-restore contract. HUD/status
+                    # strip pointers retain their existing native ownership.
+                    bank = observer.surfaces.banks[observer.surfaces.hardware_copper]
+                    base = surface['surface'] if surface else symbols['plane0']
+                    visual_checks[name+'-court-origins'] = assert_court_origins(bank, symbols, base)
                 screenshots.append(dict(name=name, source=str(source.relative_to(ROOT)),
                                         native=str(native.relative_to(ROOT)),
                                         source_geometry=[716,285], native_geometry=[256,208],
@@ -196,7 +205,24 @@ def run():
             assert number('game_lifecycle', 2) == 1
             key(0x24, True); key(0x24, False, .08)
             key(0x24, True); key(0x24, False)
-            ready(); photo('released-serve')
+            ready(); released_picture = photo('released-serve')
+            # The fixed released continuation remains honestly bounded at256.
+            # Its observed state is an attached human serve waiting for action.
+            released_state = block('game_preview_released_state', 318)
+            end = number('tutorial_end')
+            phase = released_state[symbols['game_upper_phase' if end else 'game_lower_phase']-symbols['game_core_state']]
+            # ABI2 native60-byte gameplay packet: end AI flags are bytes54/55.
+            ai = released_state[symbols['game_play_state']-symbols['game_core_state']+54+end]
+            assert number('tutorial_active_variant') == 1
+            assert number('game_preview_ordinal',2) == 0xffff
+            assert int.from_bytes(block('game_preview_outcomes',4)[2:], 'big') == 6
+            assert block('game_preview_launches',2)[1] == 0 and phase == 0x40 and ai == 0
+            assert int.from_bytes(block('game_preview_counts',4)[2:], 'big') == 256
+            visual_checks['released-wait'] = dict(
+                raster=assert_native_text(released_picture,200,'RELEASED - WAITING TO SERVE'),
+                state=released_state.hex(), end=end, ordinal=0xffff,
+                phase=phase, ai=ai, launches=0, outcome=6,
+                sample_count=256, sample_limit=256, incomplete=True, outgoing_shot_claimed=False)
             old_xy = (number('tutorial_x'), number('tutorial_y'))
             key(0x22, True, .15); key(0x22, False)
             assert (number('tutorial_x'), number('tutorial_y')) != old_xy
@@ -215,14 +241,19 @@ def run():
             key(0x24, True); key(0x22, True); key(0x22, False); key(0x24, False)
             assert not number('tutorial_menu')
             key(0x24, True); key(0x24, False)
-            advance(.2); assert number('tutorial_menu'); ready(); photo('options')
+            advance(.2); assert number('tutorial_menu'); ready()
+            visual_checks['options'] = assert_tutorial_menu(photo('options'), 0)
             # Resume latest is the enabled action after disabled Play from here.
             key(0x4d, True); key(0x4d, False)
+            ready(); visual_checks['options-resume'] = assert_tutorial_menu(photo('options-resume'), 1)
             key(0x44, True); key(0x44, False)
             advance(.2)
             assert not number('tutorial_active') and number('tutorial_resume_count') == 1
             assert first_resumed_boundary_matches and held_resume_samples >= 2
             photo('resumed')
+            for index in range(2):
+                advance(.1)
+                photo(f'resumed-{index+1}')
             # Finish at a real outer-callback boundary, retaining no partial one.
             stop = session.inspect('run_until', dict(seconds=time+.1))
             assert stop.get('pc') == symbols['simulation_update'] and observer.pending is None
@@ -243,7 +274,8 @@ def run():
         target_log(directory)
         capture = directory/'capture.json'
         atomic_json(capture, dict(boundaries=boundaries, actions=actions, waits=waits, timing=timing,
-                                 memory=memory, loaded_hunks=loaded, surfaces=surfaces))
+                                 memory=memory, loaded_hunks=loaded, surfaces=surfaces,
+                                 visual_checks=visual_checks))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
             target=TARGET, native_video=video, waits=waits,
             missed_presentation_deadlines=missed_publications,
@@ -253,6 +285,7 @@ def run():
             literal_rpc_path=str((directory/'literal-rpc.jsonl.gz').relative_to(ROOT)),
             animation_frames=movie_info['frames'], animation_geometry=movie_info['geometry'],
             animation_source_frames=movie_info['source_frames'],
+            visual_checks=visual_checks,
             shared_core=dict(bytes=len(shared), relocations=relocations, sink_branches=sinks,
                              normalized_sha256=hashlib.sha256(shared).hexdigest()), loaded_hunks=loaded,
             resume_readback=resume_readback, first_resumed_boundary_matches=first_resumed_boundary_matches,
@@ -261,7 +294,10 @@ def run():
                 bank_write_count=surfaces['bank_write_count'],
                 protected_surface_writes=0, protected_bank_writes=0,
                 exact_queued_image_published=True,
-                queued_images=len(surfaces['queues']), actual_publications=len(surfaces['publications'])),
+                queued_images=len(surfaces['queues']), actual_publications=len(surfaces['publications']),
+                court_restores_verified=surfaces['court_restores_verified'],
+                resumed_native_banks=len({r['copper'] for r in surfaces['court_publications']
+                    if r['after_resume'] and r['base'] == symbols['plane0']})),
             complete_state_bytes=318, public_history_bytes=72,
             native_memory=memory_summary(memory), timing=timing,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),

@@ -2,15 +2,62 @@ import copy
 from pathlib import Path
 import sys
 import io
+import tempfile
 from unittest.mock import patch
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts'))
-from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver, required_capture_extent
+from tutorial_capture import (CaptureSession, CallbackObserver, SurfaceObserver,
+                              required_capture_extent, assert_native_text, assert_court_origins)
 from copperline_test_session import NativeControlSession
 
 
 class TutorialCaptureTests(unittest.TestCase):
+    def test_authored_font_contract_rejects_absent_and_wrong_highlight(self):
+        from PIL import Image
+        text = 'RESUME LATEST'
+        font = (Path(__file__).resolve().parents[2]/'assets/native/title/font.bin').read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'menu.png'
+            image = Image.new('RGB',(256,208),'black')
+            image.save(path)
+            with self.assertRaises(AssertionError):
+                assert_native_text(path,143,text,True)
+            left = ((32-len(text))//2)*8
+            for column,char in enumerate(text):
+                for row in range(8):
+                    byte = font[ord(char)*8+row] ^ 255
+                    for bit in range(8):
+                        image.putpixel((left+column*8+bit,143+row),
+                            (255,255,255) if byte & (128>>bit) else (0,0,0))
+            image.save(path)
+            self.assertTrue(assert_native_text(path,143,text,True)['matched'])
+            with self.assertRaises(AssertionError):
+                assert_native_text(path,143,text,False)
+
+    def test_fixed_court_restore_contract_rejects_original_surface(self):
+        symbols = dict(copperlist=0)
+        bank = bytearray(512)
+        entries = [('cop_bpl'+str(n)+'h',None,n,0) for n in range(4)]
+        entries += [('score_cop_'+str(244+n)+'_hi','score_cop_'+str(244+n)+'_lo',n,42) for n in range(4)]
+        entries += [('score_cop_point_restore'+str(n)+'_hi','score_cop_point_restore'+str(n)+'_lo',n,64) for n in (0,2,3)]
+        entries += [('score_cop_'+str(224+n)+'_hi','score_cop_'+str(224+n)+'_lo',n,104) for n in (0,2,3)]
+        entries += [('score_cop_games_restore_hi','score_cop_games_restore_lo',1,120)]
+        for index,(hi,lo,plane,row) in enumerate(entries):
+            offset = index*8
+            symbols[hi] = offset
+            if lo: symbols[lo] = offset+4
+            pointer = 100000+plane*6144+row*32
+            bank[offset:offset+2] = (0xe0+plane*4).to_bytes(2,'big')
+            bank[offset+4:offset+6] = (0xe2+plane*4).to_bytes(2,'big')
+            bank[offset+2:offset+4] = (pointer>>16).to_bytes(2,'big')
+            bank[offset+6:offset+8] = (pointer&65535).to_bytes(2,'big')
+        self.assertEqual(assert_court_origins(bank,symbols,100000)['entries'],15)
+        offset = symbols['score_cop_games_restore_lo']+2
+        bank[offset:offset+2] = bytes(2)
+        with self.assertRaises(AssertionError):
+            assert_court_origins(bank,symbols,100000)
+
     def test_raw_overflow_preserves_failure_and_allows_shutdown(self):
         session = CaptureSession(Path('/tmp'))
         session.raw = io.StringIO()
@@ -43,7 +90,7 @@ class TutorialCaptureTests(unittest.TestCase):
 
     def test_capture_gate_rejects_missing_or_lossy_evidence(self):
         names = ['title','released-serve','edited-serve','held-serve',
-                 'released-edited-serve','options','resumed']
+                 'released-edited-serve','options','options-resume','resumed','resumed-1','resumed-2']
         names += [f'animation-{i:02d}' for i in range(24)]
         report = dict(complete_state_bytes=318, public_history_bytes=72,
                       frozen_boundaries=100, animation='build/tests/tutorial/movie.gif',
@@ -68,7 +115,14 @@ class TutorialCaptureTests(unittest.TestCase):
             first_resumed_boundary_matches=True, held_resume_no_pressed_edge=True)
         report['surface_ownership'] = dict(surface_write_count=1, bank_write_count=1,
             protected_surface_writes=0, protected_bank_writes=0,
-            exact_queued_image_published=True, queued_images=1, actual_publications=1)
+            exact_queued_image_published=True, queued_images=1, actual_publications=1,
+            court_restores_verified=True, resumed_native_banks=3)
+        report['visual_checks'] = dict(
+            options=[dict(matched=True, selected=n==0) for n in range(3)],
+            **{'options-resume':[dict(matched=True, selected=n==1) for n in range(3)],
+               'released-wait':dict(raster=dict(matched=True),state='40'+'00'*317,
+                   end=0,ordinal=0xffff,phase=0x40,ai=0,launches=0,outcome=6,
+                   sample_count=256,sample_limit=256,incomplete=True,outgoing_shot_claimed=False)})
         files = {report[n]:'a'*64 for n in ('capture','literal_rpc_path','animation')}
         for row in report['screenshots']:
             row.update(source='build/tests/tutorial-court-pal/'+row['name']+'-viewport.png',
@@ -100,6 +154,12 @@ class TutorialCaptureTests(unittest.TestCase):
         broken = copy.deepcopy(report); broken['missed_presentation_deadlines'] = 1
         self.assertFalse(required_capture_extent(broken))
         broken = copy.deepcopy(report); broken['resume_readback']['state'] = 'ff'*318
+        self.assertFalse(required_capture_extent(broken))
+        broken = copy.deepcopy(report); broken['visual_checks']['options'][0]['matched'] = False
+        self.assertFalse(required_capture_extent(broken))
+        broken = copy.deepcopy(report); broken['visual_checks']['released-wait']['launches'] = 1
+        self.assertFalse(required_capture_extent(broken))
+        broken = copy.deepcopy(report); broken['surface_ownership']['resumed_native_banks'] = 2
         self.assertFalse(required_capture_extent(broken))
 
     def test_partial_longword_metadata_reconstructs_literal_bytes(self):

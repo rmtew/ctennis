@@ -54,6 +54,12 @@ tutorial_footer:
         beq     .count_ready
         cmpi.w  #PREVIEW_LIFECYCLE,d1
         bhi     .count_ready
+        bsr     tutorial_released_wait
+        tst.l   d0
+        beq     .outcome
+        lea     tutorial_wait_text,a0
+        bra     .count_ready
+.outcome:
         subq.w  #1,d1
         lsl.w   #2,d1
         lea     tutorial_outcome_texts,a1
@@ -65,6 +71,27 @@ tutorial_footer:
         lea     ui_overlay_plane+256,a2
         bsr     ui_footer_text
         rts
+
+; A bounded released preview can settle in the actual human serve-wait phase.
+; Describe that observed attached-ball state, never a completed outgoing shot.
+tutorial_released_wait:
+        moveq   #0,d0
+        tst.b   tutorial_active_variant
+        beq     .done
+        cmpi.w  #$ffff,game_preview_ordinal
+        bne     .done
+        cmpi.w  #PREVIEW_LIMIT,tutorial_outcomes+2
+        bne     .done
+        tst.b   game_preview_launches+1
+        bne     .done
+        lea     game_preview_released_state+(game_lower_phase-game_core_state),a1
+        tst.b   tutorial_end
+        beq     .phase
+        lea     game_preview_released_state+(game_upper_phase-game_core_state),a1
+.phase: cmpi.b  #$40,(a1)
+        bne     .done
+        moveq   #1,d0
+.done:  rts
 
 tutorial_render:
         bsr     tutorial_work_admitted
@@ -151,6 +178,12 @@ tutorial_copy_court:
         addi.l  #1024,tutorial_render_offset
         cmpi.l  #4*6144,tutorial_render_offset
         bne     .done
+        ; Menu labels occupy the clear lower court, without path overprinting.
+        tst.b   tutorial_menu
+        beq     .ghost
+        move.w  #4,tutorial_render_phase
+        rts
+.ghost:
         clr.w   tutorial_ghost_actor
         clr.w   tutorial_ghost_row
         move.w  #2,tutorial_render_phase
@@ -368,7 +401,7 @@ tutorial_draw_text:
         move.w  d0,d1
         subq.w  #1,d1
         mulu.w  #11*32,d1
-        addi.w  #90*32,d1
+        addi.w  #132*32,d1
         move.l  tutorial_render_surface,a2
         adda.w  d1,a2
         lea     tutorial_branch_text,a0
@@ -399,6 +432,8 @@ tutorial_draw_text:
 
 ; Patch only the writable building copper bank, then publish complete objects.
 tutorial_patch_planes:
+        movem.l d2-d3/a1-a3,-(sp)
+        move.l  a0,a1
         move.l  back_copper,a2
         adda.w  #cop_bpl0h-copperlist,a2
         moveq   #3,d7
@@ -410,7 +445,50 @@ tutorial_patch_planes:
         adda.w  #6144,a0
         adda.w  #8,a2
         dbra    d7,.loop
+        ; Native HUD/status strips keep their own pointers. Every fixed court
+        ; restore must resume this same surface, rather than the original court.
+        lea     tutorial_court_restores,a3
+        move.l  back_copper,a2
+        moveq   #10,d7
+.restore:
+        moveq   #0,d0
+        move.w  4(a3),d0
+        add.l   a1,d0
+        move.l  d0,d1
+        swap    d1
+        move.w  (a3)+,d2
+        move.w  (a3)+,d3
+        addq.l  #2,a3
+        move.w  d1,(a2,d2.w)
+        move.w  d0,(a2,d3.w)
+        dbra    d7,.restore
+        movem.l (sp)+,d2-d3/a1-a3
         rts
+
+; Copper high/low word offsets and the corresponding native court row/plane.
+tutorial_court_restores:
+        dc.w score_cop_244_hi+2-copperlist,score_cop_244_lo+2-copperlist,42*32
+        dc.w score_cop_245_hi+2-copperlist,score_cop_245_lo+2-copperlist,6144+42*32
+        dc.w score_cop_246_hi+2-copperlist,score_cop_246_lo+2-copperlist,12288+42*32
+        dc.w score_cop_247_hi+2-copperlist,score_cop_247_lo+2-copperlist,18432+42*32
+        dc.w score_cop_point_restore0_hi+2-copperlist,score_cop_point_restore0_lo+2-copperlist,64*32
+        dc.w score_cop_point_restore2_hi+2-copperlist,score_cop_point_restore2_lo+2-copperlist,12288+64*32
+        dc.w score_cop_point_restore3_hi+2-copperlist,score_cop_point_restore3_lo+2-copperlist,18432+64*32
+        dc.w score_cop_224_hi+2-copperlist,score_cop_224_lo+2-copperlist,104*32
+        dc.w score_cop_226_hi+2-copperlist,score_cop_226_lo+2-copperlist,12288+104*32
+        dc.w score_cop_227_hi+2-copperlist,score_cop_227_lo+2-copperlist,18432+104*32
+        dc.w score_cop_games_restore_hi+2-copperlist,score_cop_games_restore_lo+2-copperlist,6144+120*32
+
+; Retire tutorial pointers only when a formerly private bank becomes writable.
+; Displayed/queued banks remain immutable; normal banks pay only the comparison.
+tutorial_restore_build_planes:
+        move.l  back_copper,a0
+        bsr     tutorial_copper_plane
+        cmpi.l  #plane0,d0
+        beq     .done
+        lea     plane0,a0
+        bsr     tutorial_patch_planes
+.done:  rts
 
 tutorial_publish:
         move.w  tutorial_render_generation,d0
@@ -462,6 +540,8 @@ tutorial_prepare_objects:
         dbra    d7,.actor
         clr.b   tutorial_scene_objects+SC_BALL+O_VISIBLE
         clr.b   tutorial_scene_objects+SC_SHADOW+O_VISIBLE
+        tst.b   tutorial_menu
+        bne     .done
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
         add.w   d0,d0
@@ -547,6 +627,7 @@ tutorial_out_text: dc.b 'OUT - ACTUAL GAME PATH',0
 tutorial_intercept_text: dc.b 'OPPONENT CONTACT',0
 tutorial_miss_text: dc.b 'NO CONTACT - NO OUTGOING SHOT',0
 tutorial_limit_text: dc.b 'CALCULATION LIMIT - INCOMPLETE',0
+tutorial_wait_text: dc.b 'RELEASED - WAITING TO SERVE',0
 tutorial_lifecycle_text: dc.b 'GAME TRANSITION - PATH STOPPED',0
         even
 tutorial_outcome_texts:

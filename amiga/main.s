@@ -514,6 +514,7 @@ game_render_sprites:
 .history_live:
         move.w  (sp)+,sr
         movem.l d0-d7/a0-a4,-(sp)
+        bsr     tutorial_restore_build_planes
         move.l  #game_scene_objects,tutorial_sprite_source
         move.b  game_scene_ball_layer,tutorial_scene_layer
         ; Score/status selection belongs to this prepared scene, just like
