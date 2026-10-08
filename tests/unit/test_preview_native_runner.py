@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement,fresh_seek_receipt
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement,fresh_seek_receipt,native_report,preserve_pre_status_receipt
 from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
@@ -232,6 +232,21 @@ class NativePreviewTiming(unittest.TestCase):
                 patch('run_preview_native.CPU9_KEY',None), \
                 patch('acceptance_campaign.execution_blocker',return_value='Latest execution interrupted'):
             with self.assertRaisesRegex(AssertionError,'interrupted'):inherited_endpoints()
+
+    def test_native_report_binds_fixture_executable_and_preserves_finalized_failure_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable=Path(directory)/'fixture';executable.write_bytes(b'actual emitted fixture bytes')
+            report=native_report(executable,{'video':'PAL'},{'presentation_last_line':311},{'passed':True})
+            self.assertEqual(report['executable_sha256'],hashlib.sha256(executable.read_bytes()).hexdigest())
+            report['evidence']={'compiled_executables':{'fixture':report['executable_sha256']},
+                'files':{'source':'bound-source-hash'},'artifacts':{'events':'bound-events-hash'}}
+            path=Path(directory)/'report.json';path.write_text(json.dumps(report))
+            diagnostic=Path(directory)/'receipt-unvalidated.json'
+            preserve_pre_status_receipt(path,diagnostic)
+            preserved=json.loads(diagnostic.read_text())
+            self.assertFalse(preserved.pop('receipt_validated'))
+            self.assertEqual(preserved,report)
+            self.assertEqual(json.loads(path.read_text()),report)
 
     def test_private_readback_serialization_does_not_mutate_observation(self):
         source={'selected':bytes([1,2]),'rows':[(3,bytes([4]))]}

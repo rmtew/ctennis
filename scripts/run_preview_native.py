@@ -758,6 +758,20 @@ def worker_guard_closure(inherited):
         scope='Exact source equality after removal of three seek-owner guards; physics/endpoints inherited, current ownership freshly proven.')
 
 
+def native_report(executable,target,video,validation):
+    return dict(passed=True,executable_sha256=digest(executable),
+        execution='actual-native-paused-preview',target=target,native_video=video,
+        preview_native_validation=validation,
+        scope='Finite physical/native paused worker and actual IRQ/input/audio isolation; no UI prototype or full release gate. Seed fixed only at ordinary selection by DEMO_RECORDING.')
+
+
+def preserve_pre_status_receipt(path,diagnostic):
+    # This audit copy carries finalized bindings, but is not a validated pass.
+    # It is outside the receipt artifact set to avoid a recursive self-hash.
+    complete=json.loads(path.read_text())
+    atomic_json(diagnostic,dict(complete,receipt_validated=False))
+
+
 def run(standard):
     directory=ROOT/'build/tests'/('preview-native-'+standard.lower());directory.mkdir(parents=True,exist_ok=True)
     path=directory/'report.json'
@@ -891,18 +905,18 @@ def run(standard):
                 classification_scope='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9')
             completed.append(row)
         validation.update(completed_jobs=completed,continuous_actual_core_equal=True)
-        report=dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
-            preview_native_validation=validation,
-            scope='Finite physical/native paused worker and actual IRQ/input/audio isolation; no UI prototype or full release gate. Seed fixed only at ordinary selection by DEMO_RECORDING.')
+        report=native_report(executable,target,video,validation)
         artifacts=[p for p in directory.iterdir() if p.is_file() and p!=path]
         artifacts += [Path(str(product)+'.compile.json'),Path(str(standalone)+'.compile.json')]
         atomic_json(directory/'native-results-unvalidated.json',dict(report,receipt_validated=False))
         assert costs['minimum_callback_headroom_cck']>=0,('Actual native callback deadline miss',costs['minimum_callback_headroom_cck'])
         # Include the final receipt itself in the bound. Its size converges when
         # the decimal byte count has the same width; this only serializes evidence.
+        diagnostic=directory/'receipt-unvalidated.json'
         for _ in range(3):
             transaction.finalize(path,report,compiled=[product_manifest,core_manifest,manifest],artifacts=artifacts)
-            observed['raw_bytes']=total_bytes(artifacts+[path])
+            preserve_pre_status_receipt(path,diagnostic)
+            observed['raw_bytes']=total_bytes(artifacts+[path,diagnostic])
         assert observed['raw_bytes']<CAPS['raw_bytes']
         assert status(path)['status']=='passed',status(path)
         print(json.dumps(dict(passed=True,report=str(path),costs=costs,observed_caps=observed)),flush=True)
