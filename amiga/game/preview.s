@@ -873,8 +873,8 @@ game_preview_context_address:
 ; Successful external history mutations retire publication/generation. The
 ; request-owned zero-op oldest checkpoint seek uses active3 and is exempt.
 game_preview_invalidate:
-        tst.b   game_preview_active
-        bne.s   .done
+        cmpi.b  #3,game_preview_active
+        beq.s   .done
         clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
         move.w  #PREVIEW_CANCELED,game_preview_status
