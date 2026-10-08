@@ -131,7 +131,7 @@ normalized shared simulation bytes match at 18,020 bytes with 257 verified
 relocations and 14 sink branches; fixture/worker identities have separate input
 and compiled-artifact bindings.
 
-The combined receipt's maximum observed worker cost is 96,482 CPU cycles and
+The combined receipt's maximum observed worker cost is 96,924 CPU cycles and
 preview stack depth is 204 bytes. Focused history seek observes 208 stack bytes
 and a 350,326-cycle maximum. These are finite observations, not universal bounds
 or native frame headroom. The representative warm edit resolves zero operations
