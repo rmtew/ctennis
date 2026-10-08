@@ -200,7 +200,7 @@ tutorial_progress_fast_publish:
         bsr     tutorial_render_objects
         jsr     complete_scene
         move.l  #plane0,tutorial_visible_surface
-        move.l  last_timer_count,tutorial_animation_time
+        move.w  simulation_started_updates,tutorial_animation_callback
         move.w  tutorial_render_generation,tutorial_published_generation
         clr.b   tutorial_placement_dirty
         bsr     tutorial_progress_status

@@ -30,7 +30,8 @@ tutorial_generation: ds.l 1
 tutorial_selected_cursor: ds.l 2
 tutorial_tap_time: ds.l 1
 tutorial_repeat_time: ds.l 1
-tutorial_animation_time: ds.l 1
+; Native callback cursor; word subtraction preserves counter wrap.
+tutorial_animation_callback: ds.w 1
 tutorial_double_ticks: ds.l 1
 tutorial_repeat_ticks: ds.l 1
 tutorial_render_surface: ds.l 1

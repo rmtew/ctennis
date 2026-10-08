@@ -582,7 +582,7 @@ tutorial_publish:
         bra     .done
 .computing:
         move.w  #TUTORIAL_COMPUTING,tutorial_status
-.done:  move.l  last_timer_count,tutorial_animation_time
+.done:  move.w  simulation_started_updates,tutorial_animation_callback
         rts
 
 ; Actors retain actual immutable pose/frame geometry; edit changes only XY.
@@ -681,7 +681,9 @@ tutorial_animate:
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
         bls     .done ; retain the actual terminal sample, without wrapping
-        move.l  last_timer_count,tutorial_animation_time
+        ; Advance the nominal cursor, rather than adopting late callback entry
+        ; time. A delayed publication catches up without accumulating drift.
+        addq.w  #2,tutorial_animation_callback
         move.b  #2,tutorial_ball_mode
         addq.w  #2,tutorial_animation_index
         cmp.w   tutorial_animation_index,d1
@@ -701,11 +703,10 @@ tutorial_animation_due:
         beq     .no
         tst.b   tutorial_menu
         bne     .no
-        move.l  tutorial_animation_time,d0
-        sub.l   last_timer_count,d0
-        move.l  simulation_interval_whole,d1
-        add.l   d1,d1
-        cmp.l   d1,d0
+        moveq   #0,d0
+        move.w  simulation_started_updates,d0
+        sub.w   tutorial_animation_callback,d0
+        cmpi.w  #2,d0
         bcs     .no
         moveq   #0,d0
         move.b  tutorial_active_variant,d0

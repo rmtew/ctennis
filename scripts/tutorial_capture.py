@@ -533,6 +533,10 @@ def required_capture_extent(report):
     expected_video = dict(zip(('presentation_last_line','simulation_interval_whole',
                               'simulation_interval_fraction'),
                              (311,11838,14906) if standard == 'PAL' else (261,11947,13180)))
+    cck_hz = 3546895 if standard == 'PAL' else 3579545
+    tick_seconds = ((expected_video['simulation_interval_whole']*65536+
+                     expected_video['simulation_interval_fraction'])*5/(65536*cck_hz))
+    maximum_drift = (312.5 if standard == 'PAL' else 262.5)*227/cck_hz+tick_seconds
     restored = report.get('resume_readback') or {}
     core = report.get('shared_core') or {}
     hunks = report.get('loaded_hunks') or []
@@ -542,8 +546,24 @@ def required_capture_extent(report):
     responsiveness = report.get('responsiveness') or {}
     responses = responsiveness.get('requests') or []
     animation_steps = responsiveness.get('animation_steps') or []
+    animation_cadence = responsiveness.get('animation_cadence') or []
     def latency(value):
         return type(value) in (int,float) and math.isfinite(value) and value >= 0
+    def cadence(row):
+        ticks = row.get('ticks')
+        producer_ticks = row.get('producer_ticks')
+        drift = row.get('drift_seconds')
+        elapsed = row.get('elapsed_seconds')
+        nominal = row.get('nominal_seconds')
+        tolerance = row.get('maximum_drift_seconds')
+        return (type(ticks) is int and ticks >= 20
+                and type(producer_ticks) is int and abs(producer_ticks-ticks) <= 1
+                and type(drift) in (int,float) and math.isfinite(drift)
+                and latency(elapsed) and latency(nominal) and latency(tolerance)
+                and math.isclose(nominal,ticks*tick_seconds,rel_tol=1e-9,abs_tol=1e-9)
+                and math.isclose(drift,elapsed-nominal,rel_tol=1e-9,abs_tol=1e-9)
+                and math.isclose(tolerance,maximum_drift,rel_tol=1e-9,abs_tol=1e-9)
+                and abs(drift) <= maximum_drift)
     headroom = timing.get('minimum_absolute_headroom_cck')
     return (report.get('complete_state_bytes') == 318
             and report.get('public_history_bytes') == 72
@@ -619,6 +639,9 @@ def required_capture_extent(report):
             and type(responsiveness.get('native_sprite_checks')) is int
             and responsiveness['native_sprite_checks'] > 0
             and responsiveness.get('animation_dense_samples') is True
+            and responsiveness.get('animation_normal_speed') is True
+            and animation_cadence
+            and all(cadence(r) for r in animation_cadence)
             and len(animation_steps) >= 2
             and all(latency(r.get('interval_seconds')) and r['interval_seconds'] > 0
                     and type(r.get('previous_index')) is int

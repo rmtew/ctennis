@@ -41,7 +41,8 @@ The native source exposes these presentation fields:
   `tutorial_animation_generation`, `tutorial_visible_surface`: longs.
 - `tutorial_available_counts`, `tutorial_available_outcomes`: two words each.
 
-The added declared storage is 40 bytes, including two caption-pointer cache longs;
+The added declared storage is 38 bytes, including two caption-pointer cache longs
+and narrowing the old timer to a word callback cursor;
 actual layout/resource measurement remains pending.
 READY (status 4) describes published stopped-alternative presentation, not backend
 pair completion. Marker-ready additionally requires an actual accepted launch,
@@ -68,3 +69,9 @@ prepared latest actor and actual sampled ball/shadow positions. It records reque
 to player/endpoint/waiting publication latency and dense animation step intervals.
 PNG metadata proves a stable background; it does not identify an exact current
 animation sample. Host rejection checks do not establish a native pass.
+
+The first static PAL proof found entry-timer quantization made playback about
+21.5% slower than game time. The narrow repair schedules two samples per two
+native callbacks using a wrapping word cursor. Advancing that nominal cursor
+instead of resetting it to a late entry preserves cadence without accumulating
+delay. Fresh complete-callback and aggregate animation timing remain required.

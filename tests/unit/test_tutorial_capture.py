@@ -143,8 +143,13 @@ class TutorialCaptureTests(unittest.TestCase):
             protected_surface_writes=0, protected_bank_writes=0,
             exact_queued_image_published=True, queued_images=1, actual_publications=1,
             court_restores_verified=True, resumed_native_banks=3)
+        tick_seconds = (11838*65536+14906)*5/(65536*3546895)
+        maximum_drift = 312.5*227/3546895+tick_seconds
         report['responsiveness'] = dict(latest_pose_matches=True, trails_enabled=False,
             moving_publications=2, native_sprite_checks=2, animation_dense_samples=True,
+            animation_normal_speed=True, animation_cadence=[dict(ticks=20,producer_ticks=20,
+                nominal_seconds=20*tick_seconds,elapsed_seconds=20*tick_seconds+.01,
+                drift_seconds=.01,maximum_drift_seconds=maximum_drift)],
             animation_steps=[dict(previous_index=n,index=n+2,interval_seconds=.04) for n in (2,4)],
             requests=[dict(player_publication_seconds=.02, endpoint_publication_seconds=1.,
                            waiting_publication_seconds=None),
@@ -180,6 +185,10 @@ class TutorialCaptureTests(unittest.TestCase):
                 row[name] = row[name].replace('-pal/','-ntsc/')
         ntsc['evidence']['files'] = {k.replace('-pal/','-ntsc/'):v
                                    for k,v in ntsc['evidence']['files'].items()}
+        tick_seconds_ntsc = (11947*65536+13180)*5/(65536*3579545)
+        ntsc['responsiveness']['animation_cadence'][0].update(
+            nominal_seconds=20*tick_seconds_ntsc,elapsed_seconds=20*tick_seconds_ntsc+.01,
+            maximum_drift_seconds=262.5*227/3579545+tick_seconds_ntsc)
         self.assertTrue(required_capture_extent(ntsc))
         ntsc['native_video']['presentation_last_line'] = 311
         self.assertFalse(required_capture_extent(ntsc))
@@ -212,12 +221,21 @@ class TutorialCaptureTests(unittest.TestCase):
         self.assertFalse(required_capture_extent(broken))
         for key,value in [('latest_pose_matches',False),('trails_enabled',True),
                           ('moving_publications',1),('native_sprite_checks',0),
-                          ('animation_steps',[]),('animation_dense_samples',False),('requests',[])]:
+                          ('animation_steps',[]),('animation_dense_samples',False),
+                          ('animation_normal_speed',False),('animation_cadence',[]),('requests',[])]:
             broken = copy.deepcopy(report); broken['responsiveness'][key] = value
             self.assertFalse(required_capture_extent(broken),key)
         broken = copy.deepcopy(report)
         broken['responsiveness']['requests'][0]['endpoint_publication_seconds'] = float('nan')
         self.assertFalse(required_capture_extent(broken))
+        broken = copy.deepcopy(report)
+        broken['responsiveness']['animation_cadence'][0]['drift_seconds'] = .2
+        self.assertFalse(required_capture_extent(broken))
+        for key,value in [('maximum_drift_seconds',1.),('drift_seconds',0.),
+                          ('nominal_seconds',1.),('elapsed_seconds',float('inf'))]:
+            broken = copy.deepcopy(report)
+            broken['responsiveness']['animation_cadence'][0][key] = value
+            self.assertFalse(required_capture_extent(broken),key)
 
     def test_partial_longword_metadata_reconstructs_literal_bytes(self):
         symbols = dict(game_stack_top=1024, game_stack_bottom=512,

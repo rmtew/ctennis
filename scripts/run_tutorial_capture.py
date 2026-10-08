@@ -47,6 +47,7 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_presentation_generation=4, tutorial_marker_generation=4,
               tutorial_animation_generation=4, tutorial_visible_surface=4,
               tutorial_menu_selection=1, game_preview_status=2)
+FIELDS['tutorial_animation_callback'] = 2
 
 
 def run(standard='PAL'):
@@ -345,6 +346,7 @@ def run(standard='PAL'):
             assert any(r.get('waiting_publication_seconds') is not None for r in responses)
             animation_steps = []
             previous = {}
+            animation_epochs = {}
             for publication in active_publications:
                 fields = publication['tutorial_fields']
                 if fields['tutorial_ball_mode'] != 2 or fields['tutorial_menu']:
@@ -353,19 +355,43 @@ def run(standard='PAL'):
                             fields['tutorial_render_generation'])
                 old = previous.get(identity)
                 index = fields['tutorial_animation_index']
+                animation_epochs.setdefault(identity, []).append(publication)
                 if old and index != old['tutorial_fields']['tutorial_animation_index']:
                     old_index = old['tutorial_fields']['tutorial_animation_index']
                     count = (fields['tutorial_counts'] >> (16 if identity[1] == 0 else 0)) & 65535
                     assert index == min(old_index+2, count-1), 'Dense native animation skipped samples or wrapped'
                     animation_steps.append(dict(generation=identity[0], variant=identity[1],
                         previous_index=old_index, index=index,
+                        callback_interval=(publication['ready_generation']-old['ready_generation']) & 65535,
                         interval_seconds=publication['position']['seconds']-old['position']['seconds']))
                 if old is None or index != old['tutorial_fields']['tutorial_animation_index']:
                     previous[identity] = publication
             assert len(animation_steps) >= 2, 'Insufficient actual native animation publications'
+            cck_hz = 3546895 if standard == 'PAL' else 3579545
+            tick_seconds = interval*5/(65536*cck_hz)
+            field_seconds = (312.5 if standard == 'PAL' else 262.5)*227/cck_hz
+            animation_cadence = []
+            for identity, pubs in animation_epochs.items():
+                first,last = pubs[0],pubs[-1]
+                ticks = (last['tutorial_fields']['tutorial_animation_callback']-
+                         first['tutorial_fields']['tutorial_animation_callback']) & 65535
+                if ticks < 20:
+                    continue
+                elapsed = last['position']['seconds']-first['position']['seconds']
+                nominal = ticks*tick_seconds
+                drift = elapsed-nominal
+                assert abs(drift) <= field_seconds+tick_seconds, 'Native ball playback accumulates game-time drift'
+                producer_ticks = (last['ready_generation']-first['ready_generation']) & 65535
+                assert abs(producer_ticks-ticks) <= 1, 'Animation loses nominal callback cadence'
+                animation_cadence.append(dict(generation=identity[0], variant=identity[1],
+                    ticks=ticks, producer_ticks=producer_ticks, elapsed_seconds=elapsed,
+                    nominal_seconds=nominal, drift_seconds=drift,
+                    maximum_drift_seconds=field_seconds+tick_seconds))
+            assert animation_cadence, 'Insufficient normal-speed native playback extent'
             responsiveness = dict(requests=responses, moving_publications=len(moving),
                 native_sprite_checks=len(surfaces['native_sprite_checks']),
                 animation_steps=animation_steps, animation_dense_samples=True,
+                animation_cadence=animation_cadence, animation_normal_speed=True,
                 latest_pose_matches=True, trails_enabled=False,
                 scope='Accepted request stores to specific actual native player/endpoint/waiting/animation publications; superseded requests need no prediction result.')
         target_log(directory, standard)
