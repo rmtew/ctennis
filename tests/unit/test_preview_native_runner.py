@@ -1,11 +1,14 @@
 """Native report timing retains every real callback and deadline failure."""
 import sys
+import json
+import hashlib
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import measurement,json_value,qualify_resolver,verify_incoming_prefix
+from run_preview_native import measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints
 
 
 class NativePreviewTiming(unittest.TestCase):
@@ -64,6 +67,22 @@ class NativePreviewTiming(unittest.TestCase):
             result['paths']=[bytes(24),bytes(24)]
             with self.assertRaisesRegex(AssertionError,'actual retained flight'):
                 verify_incoming_prefix(native,0,4,result)
+
+    def test_immutable_cpu_pass_cannot_override_latest_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            saved=Path(directory)/'saved.json';current=Path(directory)/'current.json'
+            data=json.dumps({'passed':True,'run':'reviewed'}).encode()
+            saved.write_bytes(data);current.write_bytes(data)
+            with patch('run_preview_native.CPU9_RECEIPT',saved), \
+                    patch('run_preview_native.CPU9_CURRENT',current), \
+                    patch('run_preview_native.CPU9_SHA',hashlib.sha256(data).hexdigest()):
+                self.assertTrue(inherited_endpoints()['passed'])
+                current.write_text(json.dumps({'passed':False,'run':'newer-failed'}))
+                with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
+                    inherited_endpoints()
+                current.write_text(json.dumps({'passed':True,'run':'unreviewed-newer'}))
+                with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
+                    inherited_endpoints()
 
     def test_private_readback_serialization_does_not_mutate_observation(self):
         source={'selected':bytes([1,2]),'rows':[(3,bytes([4]))]}

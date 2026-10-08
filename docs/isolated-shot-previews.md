@@ -153,6 +153,13 @@ compile measurements do not establish actual initialized chip-RAM free space,
 stack safety or native deadlines. Current runtime metrics remain incomplete;
 older PR36 runtime observations are historical.
 
+The bounded native observer cases inherit endpoint qualification from the private,
+independently reviewed CPU9 receipt. Both its immutable saved receipt and the
+canonical latest CPU report must be the same pinned passing bytes; a newer failed
+or changed report blocks inheritance. These cases currently continue that private
+selective campaign. A fresh checkout without both receipts fails closed, and a new
+CPU receipt needs a reviewed pin before these observer cases can use it.
+
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
 (000007), alongside passed scoped attempts. Native assembly-range and measurement

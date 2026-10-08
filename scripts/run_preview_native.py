@@ -29,6 +29,7 @@ CAPS=dict(accepted_request_generations=7,playing_dispatches=512,ordinary_operati
     title_callbacks=256,paused_callbacks=2048,video_fields=4096,seconds=70,
     worker_calls_per_job=8192,samples_per_path=256,raw_bytes=RAW_CAP)
 CPU9_RECEIPT=ROOT/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json'
+CPU9_CURRENT=ROOT/'build/tests/preview-cpu/report.json'
 CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
 COMMANDS=('game_history_freeze','game_history_seek','game_preview_request',
     'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest')
@@ -527,6 +528,15 @@ def total_bytes(paths):
     return sum(path.stat().st_size for path in set(paths) if path.is_file())
 
 
+def inherited_endpoints():
+    """An immutable older pass cannot bypass the canonical latest invocation."""
+    assert digest(CPU9_RECEIPT)==CPU9_SHA,'Reviewed CPU endpoint receipt is unavailable or changed'
+    assert digest(CPU9_CURRENT)==CPU9_SHA,'Latest CPU proof is not the reviewed passing receipt'
+    inherited=json.loads(CPU9_CURRENT.read_text())
+    assert inherited.get('passed') is True,'Latest CPU proof did not pass'
+    return inherited
+
+
 def run(standard):
     directory=ROOT/'build/tests'/('preview-native-'+standard.lower());directory.mkdir(parents=True,exist_ok=True)
     path=directory/'report.json'
@@ -538,10 +548,9 @@ def run(standard):
     try:
         paths,tools=inputs_for('preview-native','scripts/run_preview_native.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
-        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT}
-        assert digest(CPU9_RECEIPT)==CPU9_SHA,'Reviewed CPU endpoint receipt is unavailable or changed'
-        inherited=json.loads(CPU9_RECEIPT.read_text())
-        assert inherited['passed'] and inherited['evidence']['files']['amiga/game/preview.s']==digest(ROOT/'amiga/game/preview.s')
+        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT,CPU9_CURRENT}
+        inherited=inherited_endpoints()
+        assert inherited['evidence']['files']['amiga/game/preview.s']==digest(ROOT/'amiga/game/preview.s')
         transaction.meta.update(files=snapshot(paths),tools=tools)
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         print('Preparing bounded native preview',standard,flush=True)
