@@ -123,9 +123,16 @@ def completed_job(row):
             or costs['maximum_worker_operations']!=max(costs['worker_body_counts'])
             or not integer(costs.get('worker_elapsed_cck'),1)
             or not integer(costs.get('maximum_worker_elapsed_cck'),1,costs['worker_elapsed_cck'])
-            or not integer(costs.get('fields_to_result'),1,4096)
+            or not integer(costs.get('fields_to_result'),0,4096)
             or not number(costs.get('seconds_to_result'),0,70)
-            or costs['seconds_to_result']==0):return False
+            or costs['seconds_to_result']==0
+            or not integer(costs.get('request_api_row_index'),0)
+            or not integer(costs.get('result_api_row_index'),costs['request_api_row_index']+1)
+            or not isinstance(costs.get('worker_api_row_indices'),list)
+            or len(costs['worker_api_row_indices'])!=costs['worker_calls']
+            or any(not integer(i,costs['request_api_row_index']+1,costs['result_api_row_index']-1)
+                   for i in costs['worker_api_row_indices'])
+            or sorted(set(costs['worker_api_row_indices']))!=costs['worker_api_row_indices']):return False
     if row['case_id']=='warm-position-edit':
         return costs['cache_hit'] is True and costs['resolver_operations']==0
     if row['case_id']=='cold-incoming':
@@ -185,7 +192,9 @@ def required_preview_native_extent(case_id,report):
                    ('incoming_origin','probe_origin','selected_cursor'))
             or not acquisition['incoming_origin']<=acquisition['selected_cursor']<=acquisition['probe_origin']):return False
     preservation=stage.get('preservation')
-    if not isinstance(preservation,dict) or any(preservation.get(k) is not True for k in PRESERVATION):return False
+    if (not isinstance(preservation,dict) or any(preservation.get(k) is not True for k in PRESERVATION)
+            or preservation.get('publication_scope')!='worker-api-irq-only; outside-api-native-ui-attributed'
+            or preservation.get('input_scope')!='worker-api-only; native-physical-sampling-before-hook'):return False
     interrupts=stage.get('interrupts')
     if (not isinstance(interrupts,dict)
             or not integer(interrupts.get('inside_worker_entries'),1)
@@ -236,7 +245,9 @@ def required_preview_native_extent(case_id,report):
     if (any(cold[k]!=acquisition[a] for k,a in (('selection','selected_cursor'),
             ('ordinal','ordinal'),('end','end'),('incoming_origin','incoming_origin')))
             or any(cold[k]!=warm[k] for k in ('selected_state','selection','ordinal','end',
-            'incoming_origin','action_boundary'))
+            'incoming_origin','action_boundary','prefix_samples'))
+            or any(bytes.fromhex(cold['paths'][v])[:cold['prefix_samples']*8]
+                   !=bytes.fromhex(warm['paths'][v])[:warm['prefix_samples']*8] for v in (0,1))
             or (cold['x'],cold['y'])==(warm['x'],warm['y'])):return False
     if (observed['worker_calls_per_job']<max(r['costs']['worker_calls'] for r in jobs)
             or observed['samples_per_path']<max(n for r in jobs for n in r['path_counts'])
@@ -248,6 +259,21 @@ def required_preview_native_extent(case_id,report):
             or not number(costs.get('minimum_callback_headroom_cck'))
             or not integer(costs.get('stack_bytes'),1,4095)):return False
     rows=costs['api_rows'];workers=[r for r in rows if r['name']=='game_preview_step']
+    if any(a['end']['cck']>b['begin']['cck'] for a,b in zip(rows,rows[1:])):return False
+    used=set()
+    for job in jobs:
+        c=job['costs'];indices=[c['request_api_row_index'],*c['worker_api_row_indices'],c['result_api_row_index']]
+        if max(indices)>=len(rows) or used.intersection(indices):return False
+        used.update(indices)
+        request=rows[indices[0]];result=rows[indices[-1]];steps=[rows[i] for i in c['worker_api_row_indices']]
+        if (request['name']!='game_preview_request' or result['name']!='game_preview_result'
+                or any(r['name']!='game_preview_step' for r in steps)
+                or c['worker_body_counts']!=[r['bodies'] for r in steps]
+                or c['worker_elapsed_cck']!=sum(r['elapsed_cck'] for r in steps)
+                or c['maximum_worker_elapsed_cck']!=max(r['elapsed_cck'] for r in steps)
+                or c['fields_to_result']!=result['end']['frame']-request['begin']['frame']
+                or not math.isclose(c['seconds_to_result'],result['end']['seconds']-request['begin']['seconds'],
+                                    abs_tol=1e-9,rel_tol=0)):return False
     if ({r['name'] for r in rows}!={'game_history_freeze','game_history_seek',
             'game_preview_request','game_preview_step','game_preview_result',
             'game_preview_cancel','game_history_resume_latest'}
@@ -314,4 +340,26 @@ def required_preview_native_extent(case_id,report):
                    (overlay['original_sources'],overlay['generated_sources']) for k,v in mapping.items())
             or 'amiga/main.s' not in overlay['original_sources']
             or 'scripts/preview_native_fixture.s' not in files):return False
+    outside=stage.get('outside_publication')
+    if (not isinstance(outside,dict) or not isinstance(outside.get('rules'),list)
+            or not outside['rules'] or not isinstance(outside.get('writes'),list)
+            or not integer(outside.get('count'),1) or outside['count']!=len(outside['writes'])):return False
+    outside_rules={}
+    for rule in outside['rules']:
+        if (not isinstance(rule,dict) or not integer(rule.get('pc'),0,0xffffff)
+                or rule['pc'] in outside_rules or not integer(rule.get('address'),0,0xffffff)
+                or type(rule.get('bytes')) is not int or rule['bytes'] not in (1,2,4)
+                or rule.get('operation') not in ('move','clr','addq','subq','st')
+                or not isinstance(rule.get('destination'),str)
+                or not isinstance(rule.get('instruction'),str)):return False
+        outside_rules[rule['pc']]=rule
+    for write in outside['writes']:
+        if (not isinstance(write,dict) or not integer(write.get('pc'),0,0xffffff)
+                or not integer(write.get('address'),0,0xffffff)
+                or type(write.get('size')) is not int or write['size'] not in (1,2,4)
+                or not integer(write.get('value'),0,2**(8*write['size'])-1)
+                or not isinstance(write.get('position'),dict)
+                or not integer(write['position'].get('cck'),0)):return False
+        rule=outside_rules.get(write['pc'])
+        if (not rule or not rule['address']<=write['address']<write['address']+write['size']<=rule['address']+rule['bytes']):return False
     return stage.get('continuous_actual_core_equal') is True

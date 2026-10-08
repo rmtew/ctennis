@@ -1,11 +1,11 @@
 """Synthetic receipt shapes only; these tests make no gameplay claim."""
-import copy
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from acceptance_cases import cases
-from acceptance_campaign import required_extent
+from acceptance_campaign import dependencies,required_extent
 from preview_native_extent import CAPS
 
 
@@ -37,15 +37,25 @@ def receipt(ntsc=False):
         old_position=[10,20],new_position=[11,20],replacement_resolver_operations=1,
         cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
         canceled_result_rejected=True,selected_history_output_preserved=True) for i,phase in enumerate(('resolve','held'))]
-    names=['game_history_freeze','game_history_seek',*(['game_preview_request']*7),
-        *(['game_preview_step']*7),'game_preview_result','game_preview_cancel','game_history_resume_latest']
+    names=['game_history_freeze','game_history_seek',
+        'game_preview_request','game_preview_step','game_preview_result',
+        'game_history_seek','game_preview_request','game_preview_step','game_preview_result',
+        'game_preview_request','game_preview_step','game_preview_result',
+        'game_preview_request','game_preview_step','game_preview_request','game_preview_step','game_preview_cancel',
+        'game_preview_request','game_preview_step','game_preview_request','game_preview_step','game_preview_cancel',
+        'game_history_resume_latest']
     rows=[]
+    hz=3579545 if ntsc else 3546895
     for i,name in enumerate(names):
-        begin=dict(cck=100*i,frame=0,seconds=100*i/3546895,vpos=0,hpos=0)
-        end=dict(begin,cck=100*i+10,seconds=(100*i+10)/3546895,hpos=10)
+        begin=dict(cck=100*i,frame=0,seconds=100*i/hz,vpos=0,hpos=0)
+        end=dict(begin,cck=100*i+10,seconds=(100*i+10)/hz,hpos=10)
         irq=int(name=='game_preview_step' and not any(r['irq'] for r in rows))
-        rows.append(dict(name=name,begin=begin,end=end,bodies=4 if name=='game_preview_step' else 0,
+        rows.append(dict(name=name,begin=begin,end=end,bodies=2 if i in (3,7,10) else 4 if name=='game_preview_step' else 0,
             irq=irq,irq_acknowledgements=2*irq,elapsed_cck=10))
+    for job,request,worker,result in zip(jobs,(2,6,9),(3,7,10),(4,8,11)):
+        job['costs'].update(request_api_row_index=request,worker_api_row_indices=[worker],
+            result_api_row_index=result,fields_to_result=0,
+            seconds_to_result=rows[result]['end']['seconds']-rows[request]['begin']['seconds'])
     rules=[dict(pc=100+i*10,address=0xdff09c,bytes=2,operation='move',source='#$0010',
         destination='$dff09c',instruction='move.w #$0010,$dff09c') for i in range(2)]
     files={'amiga/main.s':'11'*32,'scripts/preview_native_fixture.s':'22'*32,
@@ -79,7 +89,12 @@ def receipt(ntsc=False):
             overlay=dict(original_sources={'amiga/main.s':'11'*32},generated_sources={'build/tests/preview-native/main.s':'44'*32},
                 insertion_anchor='        bsr     game_native_commands\n        tst.b   ui_paused\n',
                 seed_policy='DEMO_RECORDING-selection-only',scope='Synthetic receipt shape'),
-            fixture_manifest_sha256='55'*32,product_manifest_sha256='66'*32),continuous_actual_core_equal=True)
+            fixture_manifest_sha256='55'*32,product_manifest_sha256='66'*32),continuous_actual_core_equal=True,
+        outside_publication=dict(rules=[dict(pc=120,address=10000,bytes=1,operation='move',
+            source='#1',destination='display_ready',instruction='move.b #1,display_ready')],
+            writes=[dict(pc=120,address=10000,size=1,value=1,position=rows[0]['begin'])],count=1))
+    stage['preservation'].update(publication_scope='worker-api-irq-only; outside-api-native-ui-attributed',
+        input_scope='worker-api-only; native-physical-sampling-before-hook')
     return dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
         evidence=dict(target_role='legacy-validator-reference',actual_target=target,files=files,
             compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32}),preview_native_validation=stage)
@@ -105,6 +120,10 @@ class NativePreviewExtent(unittest.TestCase):
                 (('completed_jobs',1,'costs','worker_body_counts'),[5]),
                 (('completed_jobs',2,'costs','cache_hit'),False),
                 (('completed_jobs',2,'costs','resolver_operations'),1),
+                (('completed_jobs',2,'prefix_samples'),0),
+                (('completed_jobs',2,'costs','worker_elapsed_cck'),11),
+                (('completed_jobs',2,'costs','seconds_to_result'),1),
+                (('completed_jobs',2,'costs','worker_api_row_indices'),[9]),
                 (('completed_jobs',1,'final_states'),['00']*2),
                 (('completed_jobs',1,'edited_state'),'01'*318),
                 (('completed_jobs',1,'paths'),['00']*2),
@@ -114,17 +133,37 @@ class NativePreviewExtent(unittest.TestCase):
                 (('replacement_cancel_cases',0,'old_result_rejected'),False),
                 (('costs','minimum_callback_headroom_cck'),-1),
                 (('costs','api_rows',0,'elapsed_cck'),11),
-                (('costs','api_rows',9,'irq_acknowledgements'),1),
+                (('costs','api_rows',3,'irq_acknowledgements'),1),
                 (('costs','worker_distribution','samples'),1),
                 (('compiled_identity','loaded_hunks',0,'matched'),False),
                 (('compiled_identity','worker_bytes','source_sha256'),'00'*32),
                 (('compiled_identity','worker_bytes','loaded_end'),10239),
                 (('compiled_identity','normalized_shared_core','bytes'),18021),
+                (('outside_publication','writes',0,'address'),10001),
+                (('preservation','publication_scope'),'whole-frozen-interval-irq-only'),
                 (('continuous_actual_core_equal',),False)):
             r=receipt();node=r['preview_native_validation']
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
+
+    def test_cross_job_prefix_and_self_consistent_counts_remain_bound(self):
+        r=receipt();warm=r['preview_native_validation']['completed_jobs'][2]
+        warm['paths']=['11'*8+'00'*8]*2
+        self.assertFalse(required_extent(self.case(),r))
+        r=receipt();warm=r['preview_native_validation']['completed_jobs'][2]
+        warm['costs'].update(worker_body_counts=[1],maximum_worker_operations=1)
+        self.assertFalse(required_extent(self.case(),r))
+
+    def test_native_fixture_assembly_changes_invalidate_dependencies(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'scripts').mkdir()
+            (root/'scripts/run_preview_native.py').write_text('pass\n')
+            fixture=root/'scripts/preview_native_fixture.s';fixture.write_text('rts\n')
+            before=dependencies(self.case(),root)['files'][str(fixture)]
+            fixture.write_text('nop\nrts\n')
+            after=dependencies(self.case(),root)['files'][str(fixture)]
+            self.assertNotEqual(before,after)
 
 
 if __name__=='__main__':unittest.main()
