@@ -3,7 +3,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from match_core_capture import TraceCollector
+from match_core_capture import TraceCollector, SINKS
 from native_longword_observer import LongwordObserver
 from native_size import _units
 
@@ -18,6 +18,54 @@ INPUTS=(('game_keyboard_matrix',128),('ui_keyboard_entry_keys',128),
     ('ui_joystick_pressed',2),('ui_joystick_entry',2),('game_native_pad_bits',2),
     ('game_native_selection_keys',1),('keyboard_ack',1),('keyboard_ack_timer',2),
     ('ui_saved_volumes',6))
+
+
+class BodyFrames:
+    """Read-only emitted entry/stack-return pairs, including nested core bodies."""
+    def __init__(self,body_map,stack_bottom,stack_top,return_pcs):
+        self.body_map=body_map;self.stack_bottom=stack_bottom;self.stack_top=stack_top
+        self.return_pcs=return_pcs;self.stack=[];self.records=[];self.internal_stops=0;self.entries=0
+
+    def entry(self,pc,registers,return_pc,state,position,owner,api_row_index):
+        assert pc in self.body_map,'Unknown emitted core body entry'
+        assert registers['pc']==pc,'Body stop/register PC mismatch'
+        assert len(registers['a'])==len(registers['d'])==8,'Incomplete actual body register capture'
+        sp=registers['a'][7]
+        assert self.stack_bottom<=sp<=self.stack_top-4 and sp%2==0,'Body entry stack outside native stack'
+        assert return_pc in self.return_pcs,'Body return is not an emitted instruction boundary'
+        assert len(state)==318,'Body entry lacks complete canonical state'
+        assert len(self.stack)<9,'Native body nesting exceeds declared nine-body bound'
+        if self.stack:
+            parent=self.stack[-1]
+            assert (sp<parent['entry_sp'] or (sp==parent['entry_sp'] and return_pc==parent['return_pc'])), 'Nested body stack does not descend or share a tail return'
+        spec=self.body_map[pc]
+        frame=dict(api_row_index=api_row_index,entry_index=self.entries,operation=spec['operation'],arity=spec['arity'],
+            arguments=[v&0xffff for v in registers['d'][:spec['arity']]],
+            before=state.hex(),entry_pc=pc,entry_sp=sp,return_pc=return_pc,
+            start=dict(position),depth=len(self.stack)+1,ownership=dict(owner),events=[],
+            entry_registers=registers)
+        self.entries+=1;self.stack.append(frame);self.internal_stops+=1
+        return frame
+
+    def sink(self,event):
+        assert self.stack,'Semantic intent outside an observed actual body'
+        for frame in self.stack:frame['events'].append(event)
+
+    def exit(self,pc,sp,state,position):
+        assert self.stack,'Body return without entry'
+        frame=self.stack[-1]
+        assert pc==frame['return_pc'] and sp==frame['entry_sp']+4,'Body return PC/SP does not match innermost entry'
+        assert len(state)==318,'Body return lacks complete canonical state'
+        assert position['cck']>=frame['start']['cck'],'Body return precedes entry'
+        completed=[];self.internal_stops+=1
+        # A genuine tail entry shares its caller's return, so one physical stop
+        # may complete several frames. Never resume to invent a second return.
+        while self.stack and (self.stack[-1]['return_pc'],self.stack[-1]['entry_sp']+4)==(pc,sp):
+            frame=self.stack.pop()
+            frame.update(state=state.hex(),after=state.hex(),exit_pc=pc,exit_sp=sp,end=dict(position),
+                elapsed_cck=position['cck']-frame['start']['cck'])
+            self.records.append(frame);completed.append(frame)
+        return completed
 
 
 def irq_rules(listing,symbols,segments,locations):
@@ -86,9 +134,11 @@ class Observer(TraceCollector):
         self.source_shadow={n:bytearray(read(symbols[n],size)) for n,size in
             (('back_copper',4),('ready_generation',2),('simulation_started_updates',2))}
         self.producer_bank=None
-        self.beam_reads={};self.rts_pcs=set();self.restore_dummy_pcs=set()
+        self.beam_reads={};self.rts_pcs=set();self.restore_dummy_pcs=set();return_pcs=set()
         for row in _units(listing):
             pc=segments[row['hunk']]['start']+row['start']
+            statement=row['statement'].split(';',1)[0].strip().lower()
+            if row['encoded'] and not re.match(r'(dc|ds|dcb)\.',statement):return_pcs.add(pc)
             if row['encoded'].lower()=='4e75':self.rts_pcs.add(pc)
             if (re.fullmatch(r'4cdf[0-9a-f]{4}',row['encoded'].lower())
                     and int(row['encoded'][4:],16)
@@ -102,6 +152,12 @@ class Observer(TraceCollector):
         self.history=bytearray(read(symbols['game_history_state'],72))
         self.slot=symbols['game_stack_top']-74 # callback+hook+SR+15 registers+JSR
         self.return_store=LongwordObserver();self.return_reads=LongwordObserver()
+        body_map={symbols[name+'_body']:dict(operation=name,arity=arity,
+            label=name+'_body',entry_bytes=read(symbols[name+'_body'],4).hex())
+            for name,arity in self.operations.values()}
+        assert len(body_map)==9,'Emitted core body map must have nine distinct entries'
+        self.body_frames=BodyFrames(body_map,symbols['game_stack_bottom'],symbols['game_stack_top'],return_pcs)
+        self.body_sink_events=[]
 
     def field(self,name,size):
         if self.start<=self.symbols[name]<self.stop:return super().field(name,size)
@@ -114,6 +170,19 @@ class Observer(TraceCollector):
     def number(self,name,size=2):return int.from_bytes(self.field(name,size),'big')
 
     def _marker(self,value,position):
+        if self.inside_api():
+            # Recorded wrappers emit markers, but prime/synthetic calls go
+            # straight to bodies. Body PC/stack pairs are the sole row source.
+            assert self.active is None,'Ordinary trace overlaps an owned API'
+            if value in self.operations or value==0:
+                self.argwritten.clear();return
+            assert value in SINKS,'Unknown owned core semantic marker'
+            super()._marker(value,position)
+            event=self.outside_events[-1]['event']
+            self.body_frames.sink(event)
+            self.body_sink_events.append(dict(event=event,position=position,
+                api_row_index=len(self.api_rows)))
+            return
         if value in self.operations:
             before=self.state().hex()
             ownership=dict(active=self.number('game_preview_active',1),
@@ -152,6 +221,7 @@ class Observer(TraceCollector):
         assert not self.problems,self.problems[0] if self.problems else None
         assert self.raw_bytes<RAW_CAP-RESERVE,'Native raw cap approached at completed public boundary'
         if self.pending is None:return None
+        assert not self.body_frames.stack,'Public API returned with unpaired body frames'
         row=self.pending;self.pending=None
         assert row['begin'] is not None and row['end'] is not None,'Incomplete actual JSR/RTS bracket'
         assert row['end']['cck']>=row['begin']['cck']
@@ -337,7 +407,6 @@ class Observer(TraceCollector):
                 self.problems.append('Forbidden native API hardware read')
         elif self.pending and self.slot<=a<a+size<=self.slot+4:
             self.return_read(r)
-        if a==self.marker and value in self.operations and self.inside_api():self.pending['bodies']+=1
         # Canonical copying outside logical bodies is already reconstructed above.
         # The existing mailbox decoder remains the independent semantic protocol.
         if a==self.marker or self.arguments<=a<a+size<=self.arguments+12 or a==self.symbols['simulation_updates']:

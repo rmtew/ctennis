@@ -8,11 +8,66 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay
+from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
 
 class NativePreviewTiming(unittest.TestCase):
+    def body_native(self,stops):
+        native=object.__new__(Native)
+        native.symbols={'preview_native_return':0x900};native.stop={'seconds':0};native.internal_body_stops=0
+        frames=BodyFrames({0x400:dict(operation='game_core_sample_pads',arity=2)},0x1000,0x2000,{0x500})
+        native.observer=SimpleNamespace(body_frames=frames,active=None,drops=0,problems=[],
+            api_rows=[],rows=[],pending={'bodies':0},inside_api=lambda:True,
+            number=lambda n,w=2:2 if n=='game_preview_active' else 0,
+            state=lambda:native.current_state)
+        native.current_state=bytes(318)
+        native.block=lambda a,b:native.current_state
+        native.read=lambda a,b:(0x500).to_bytes(4,'big')
+        native.check_caps=lambda:None
+        class Session:
+            def __init__(self):self.calls=[];self.identifier=0;self.stops=iter(stops);self.current=None
+            def inspect(self,method,args=None):
+                self.calls.append((method,args))
+                if method=='break_add':self.identifier+=1;return {'id':self.identifier}
+                if method=='break_remove':return {}
+                if method=='run_until':
+                    self.current=next(self.stops)
+                    native.current_state=bytes([self.current[3]])*318
+                    pc,sp,cck,_=self.current
+                    return dict(pc=pc,cck=cck,seconds=cck/1000000,frame=0,vpos=0,hpos=0)
+                if method=='regs.get':
+                    return dict(pc=self.current[0],a=[0]*7+[self.current[1]],d=[0xdead0010,0xbeef0000]+[0]*6,sr=0x2300)
+                raise AssertionError(method)
+        native.session=Session()
+        return native
+
+    def test_direct_unmarked_body_is_paired_and_counted_read_only(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x500,0x1804,9,1),(0x900,0x1900,10,1)])
+        stop=native.run_owned_api('game_preview_step',1)
+        self.assertEqual(stop['pc'],0x900)
+        self.assertEqual(native.observer.pending['bodies'],1)
+        self.assertEqual(native.observer.rows[0]['arguments'],[16,0])
+        self.assertEqual(native.observer.rows[0]['before'],'00'*318)
+        self.assertEqual(native.observer.rows[0]['after'],'01'*318)
+        self.assertEqual(native.internal_body_stops,2)
+        methods=[m for m,_ in native.session.calls]
+        self.assertNotIn('regs.set',methods);self.assertNotIn('mem.write',methods)
+        returns=[a for m,a in native.session.calls if m=='break_add' and 'cond' in a]
+        self.assertEqual(returns,[dict(kind='pc',addr=0x500,cond=dict(lhs='sp',op='eq',rhs=0x1804))])
+
+    def test_body_protocol_rejects_stalled_resume_unpaired_and_budget_excess(self):
+        for stops,error in (
+                ([(0x400,0x1800,1,0)]*2,'without progress'),
+                ([(0x400,0x1800,1,0),(0x900,0x1900,2,0)],'precedes actual body'),
+                ([(0x400,0x1800,1,0),(0x500,0x1804,2,0),(0x400,0x1800,3,0)],'exceed requested')):
+            native=self.body_native(stops)
+            with self.assertRaisesRegex(AssertionError,error):native.run_owned_api('game_preview_step',1)
+            added=[a for m,a in native.session.calls if m=='break_add']
+            removed=[a for m,a in native.session.calls if m=='break_remove']
+            self.assertEqual(len(added),len(removed),'Failed observation leaks debugger traps')
+
     def test_overlay_dispatches_to_tool_helper_without_campaign_recursion(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as directory:
             with patch('run_preview_native.run_command') as tool, \

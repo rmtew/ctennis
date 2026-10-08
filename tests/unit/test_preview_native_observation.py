@@ -3,7 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from preview_native_observation import Observer
+from preview_native_observation import Observer, BodyFrames
 from native_longword_observer import LongwordObserver
 
 
@@ -195,6 +195,90 @@ class NativePreviewGuards(unittest.TestCase):
         self.assertEqual(observer.irq_inside,1)
         observer._guard(self.event(0xdff09c,value=32))
         self.assertIn('Incorrect actual presentation IRQ',observer.problems[-1])
+
+    def test_owned_sink_ledger_does_not_depend_on_wrapper_markers(self):
+        observer=self.observer();observer.pending=dict(begin={'cck':0},end=None,bodies=1)
+        observer.operations={3:('game_core_sample_pads',2)};observer.active=None
+        observer.argbytes=bytearray(12);observer.argwritten=set();observer.outside_events=[]
+        observer.api_rows=[];observer.body_sink_events=[]
+        observer.body_frames=BodyFrames({0x400:dict(operation='game_core_sample_pads',arity=2)},
+            0x1000,0x2000,{0x500})
+        observer.body_frames.entry(0x400,dict(pc=0x400,a=[0]*7+[0x1800],d=[0]*8),
+            0x500,bytes(318),{'cck':1},{'active':2},0)
+        observer._marker(3,{'cck':1}) # Recorded wrapper header does not duplicate the actual body.
+        observer.argbytes[:4]=bytes.fromhex('00000007');observer.argwritten=set(range(4))
+        observer._marker(0x106,{'cck':2})
+        observer._marker(0,{'cck':3})
+        self.assertIsNone(observer.active)
+        self.assertEqual(observer.pending['bodies'],1)
+        self.assertEqual(observer.body_frames.stack[0]['events'],[['level',0,7]])
+        self.assertEqual(observer.body_sink_events,[dict(event=['level',0,7],position={'cck':2},api_row_index=0)])
+        observer.body_frames.exit(0x500,0x1804,bytes(318),{'cck':4})
+        observer.argwritten=set(range(4))
+        with self.assertRaisesRegex(AssertionError,'outside an observed'):
+            observer._marker(0x106,{'cck':5})
+
+
+class NativeBodyPairs(unittest.TestCase):
+    def frames(self):
+        return BodyFrames({0x400:dict(operation='game_core_sample_pads',arity=2),
+            0x420:dict(operation='game_round_poll',arity=0)},0x1000,0x2000,{0x500,0x520})
+
+    def entry(self,frames,pc=0x400,sp=0x1800,return_pc=0x500):
+        registers=dict(pc=pc,a=[0]*7+[sp],d=[0xdead0010,0xbeef0002]+[0x12345678]*6,sr=0x2300)
+        return frames.entry(pc,registers,return_pc,bytes(318),{'cck':1},
+            {'active':2,'status':3,'variant':0},7)
+
+    def test_declared_arity_and_complete_state_are_actual_capture(self):
+        frames=self.frames();row=self.entry(frames)
+        self.assertEqual(row['arguments'],[16,2])
+        self.assertEqual(row['entry_registers']['d'][2],0x12345678)
+        frames.sink(['title'])
+        done=frames.exit(0x500,0x1804,bytes([1])*318,{'cck':8})
+        self.assertEqual(done[0]['events'],[['title']])
+        self.assertEqual(done[0]['after'],'01'*318)
+        self.assertEqual(frames.internal_stops,2)
+
+    def test_nested_same_return_pc_requires_exact_innermost_stack(self):
+        frames=self.frames();self.entry(frames)
+        self.entry(frames,0x420,0x1700,0x500)
+        frames.sink(['level',0,7])
+        with self.assertRaisesRegex(AssertionError,'innermost'):
+            frames.exit(0x500,0x1804,bytes(318),{'cck':3})
+        child=frames.exit(0x500,0x1704,bytes(318),{'cck':4})[0]
+        parent=frames.exit(0x500,0x1804,bytes(318),{'cck':5})[0]
+        self.assertEqual(child['arguments'],[])
+        self.assertEqual(parent['events'],child['events'])
+        self.assertEqual(parent['depth'],1);self.assertEqual(child['depth'],2)
+
+    def test_tail_frames_drain_at_one_physical_return(self):
+        frames=self.frames();self.entry(frames)
+        self.entry(frames,0x420,0x1800,0x500)
+        completed=frames.exit(0x500,0x1804,bytes(318),{'cck':5})
+        self.assertEqual(len(completed),2)
+        self.assertEqual(frames.stack,[])
+        self.assertEqual(frames.internal_stops,3)
+
+    def test_invalid_stack_return_state_and_missing_entry_reject(self):
+        for pc,sp,return_pc in ((0x444,0x1800,0x500),(0x400,0x1801,0x500),
+                (0x400,0x2000,0x500),(0x400,0x1800,0x501)):
+            with self.assertRaises(AssertionError):self.entry(self.frames(),pc,sp,return_pc)
+        frames=self.frames()
+        with self.assertRaisesRegex(AssertionError,'without entry'):
+            frames.exit(0x500,0x1804,bytes(318),{'cck':5})
+        with self.assertRaisesRegex(AssertionError,'outside an observed'):
+            frames.sink(['title'])
+        self.entry(frames)
+        with self.assertRaisesRegex(AssertionError,'complete canonical'):
+            frames.exit(0x500,0x1804,bytes(317),{'cck':5})
+
+    def test_nesting_and_non_descending_frames_are_bounded(self):
+        frames=self.frames();self.entry(frames)
+        with self.assertRaisesRegex(AssertionError,'does not descend'):
+            self.entry(frames,0x420,0x1810,0x520)
+        for index in range(1,9):self.entry(frames,0x420,0x1800-4*index,0x520)
+        with self.assertRaisesRegex(AssertionError,'nine-body'):
+            self.entry(frames,0x420,0x1700,0x520)
 
 
 if __name__=='__main__':unittest.main()

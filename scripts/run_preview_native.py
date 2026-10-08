@@ -96,6 +96,7 @@ class Native:
         self.session=session;self.cpu=cpu;self.normal=[];self.states={};self.launches=[]
         self.selected_seconds=None;self.selected_frame=None;self.requests=0;self.paused_callbacks=0
         self.public_checks=0;self.callback_stops=[];self.input_actions=[];self.frozen_intervals=[];self.pause_volume_writes=[]
+        self.internal_body_stops=0
         config=emulator_config()
         session.inspect('session_launch',dict(binary=config['tools']['copperline'],run=str(executable),
             args=['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K',
@@ -192,6 +193,57 @@ class Native:
         assert self.stop['pc']==self.symbols['preview_native_return'],self.stop
         self.at_before=False;self.observer.finish();self.next_callback()
 
+    def run_owned_api(self,name,budget):
+        """Observe emitted bodies with read-only stops; never alter CPU state."""
+        observer=self.observer;frames=observer.body_frames
+        assert not frames.stack and observer.active is None,'Unfinished trace at owned API entry'
+        entry_ids=[self.session.inspect('break_add',{'kind':'pc','addr':pc})['id']
+            for pc in frames.body_map]
+        return_ids={};deadline=self.stop['seconds']+1;previous=None;entry_count=0
+        try:
+            for _ in range(16385): # <=8192 actual entries, paired exits, one public return.
+                stop=self.session.inspect('run_until',{'seconds':deadline})
+                registers=self.session.inspect('regs.get')
+                pc,sp=registers['pc'],registers['a'][7]
+                identity=(pc,sp,stop['cck'])
+                assert identity!=previous,'Read-only body breakpoint resumed without progress'
+                previous=identity
+                assert pc==stop['pc'],'Body stop/register PC disagreement'
+                assert not observer.drops and not observer.problems,'Body stop observation dropped or rejected accesses'
+                if pc==self.symbols['preview_native_return']:
+                    assert not frames.stack,'Public return precedes actual body return'
+                    return stop
+                self.internal_body_stops+=1
+                # Notification delivery is drained by the synchronous run reply.
+                state=self.block('game_core_state','game_core_state_end')
+                assert state==observer.state(),'Actual body state differs from full write reconstruction'
+                position={k:stop[k] for k in ('cck','frame','vpos','hpos','seconds')}
+                if frames.stack and (pc,sp)==(frames.stack[-1]['return_pc'],frames.stack[-1]['entry_sp']+4):
+                    for row in frames.exit(pc,sp,state,position):
+                        self.session.inspect('break_remove',{'id':return_ids.pop(row['entry_index'])})
+                        if row['depth']==1:
+                            row['index']=len(observer.rows);observer.rows.append(row)
+                    # A return may land at another real body entry (tail/caller
+                    # sequence); process that entry at this same genuine stop.
+                    if pc not in frames.body_map:continue
+                assert pc in frames.body_map,'Unexpected stop inside actual native API'
+                assert observer.inside_api(),'Body entry outside actual mailbox JSR bracket'
+                entry_count+=1
+                assert entry_count<=8192,'Native API body-entry observation bound exceeded'
+                if name=='game_preview_step':assert entry_count<=budget,'Actual preview body entries exceed requested operation budget'
+                return_pc=int.from_bytes(self.read(sp,4),'big')
+                owner=dict(active=observer.number('game_preview_active',1),
+                    status=observer.number('game_preview_status'),variant=observer.number('game_preview_variant',1))
+                row=frames.entry(pc,registers,return_pc,state,position,owner,len(observer.api_rows))
+                observer.pending['bodies']+=1
+                return_ids[row['entry_index']]=self.session.inspect('break_add',{'kind':'pc','addr':return_pc,
+                    'cond':{'lhs':'sp','op':'eq','rhs':sp+4}})['id']
+                self.check_caps()
+            raise AssertionError('Native body entry/return stop bound exhausted')
+        finally:
+            for identifier in [*entry_ids,*return_ids.values()]:
+                self.session.inspect('break_remove',{'id':identifier})
+
     def call(self,name,args=(),accepted=True):
         if not self.at_before:self.next_callback()
         self.session.flush_rpc()
@@ -211,7 +263,7 @@ class Native:
         self.observer.begin(name);self.subscribe(True)
         self.session.inspect('break_remove',{'id':self.breakpoint})
         self.breakpoint=self.arm('preview_native_return')
-        self.stop=self.session.inspect('run_until',{'seconds':self.stop['seconds']+1})
+        self.stop=self.run_owned_api(name,arguments[1] if name=='game_preview_step' else 4)
         assert self.stop['pc']==self.symbols['preview_native_return'],self.stop
         self.at_before=False;cost=self.observer.finish();self.public_checks+=1
         assert self.read(self.symbols['game_stack_top']-70,62)==frame,'Caller register/SR frame overwritten'
@@ -622,6 +674,18 @@ def run(standard):
                         fixture_manifest_sha256=digest(Path(str(executable)+'.compile.json')),
                         product_manifest_sha256=digest(Path(str(product)+'.compile.json'))),
                     continuous_actual_core_equal=False)
+                frames=observer.body_frames
+                assert frames.entries==len(frames.records) and not frames.stack,'Unpaired actual body observations'
+                validation['body_observation']=dict(
+                    protocol='read-only-emitted-body-pc-and-matched-stack-return',
+                    loaded_body_map=[dict(pc=pc,**spec) for pc,spec in frames.body_map.items()],
+                    frames=sorted(frames.records,key=lambda row:row['entry_index']),
+                    semantic_intents=observer.body_sink_events,internal_stops=native.internal_body_stops,
+                    entry_return_observations=frames.internal_stops,
+                    actual_body_entries=frames.entries,outer_logical_calls=sum(r['depth']==1 for r in frames.records),
+                    unpaired_frames=0,maximum_nesting=9,maximum_entries_per_api=8192,
+                    source_closure='Exact fixture manifest and loaded core/worker bytes bound in compiled_identity.',
+                    scope='Read-only internal debugger stops; no register/core writes or physical commands inside APIs. API JSR/RTS CCK includes all body/IRQ execution; host stop/RPC delay is not emulated work.')
                 validation['preservation'].update(publication_scope='worker-api-irq-only; outside-api-native-ui-attributed',
                     input_scope='worker-api-only; native-physical-sampling-before-hook')
                 validation['outside_publication']=dict(rules=list(observer.outside_publication_rules.values()),
@@ -665,7 +729,10 @@ def run(standard):
         if native is not None:
             atomic_json(directory/'failure-progress.json',dict(error=str(error),requests=native.requests,
                 normal_operations=len(native.normal),api_rows=native.observer.api_rows,
-                callback_rows=native.observer.callback_rows,guard_problems=native.observer.problems))
+                callback_rows=native.observer.callback_rows,guard_problems=native.observer.problems,
+                body_frames=native.observer.body_frames.records,
+                unpaired_body_frames=native.observer.body_frames.stack,
+                body_map=native.observer.body_frames.body_map))
             native.observer.close()
         transaction.abort(error)
         raise
