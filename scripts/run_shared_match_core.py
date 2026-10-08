@@ -43,7 +43,7 @@ def replay_and_negatives(image, symbols, rows, executable):
         with Core(image,symbols,poison=poison,readonly=READONLY) as cpu:
             for row in rows:
                 cpu.clear_events()
-                cpu.call(row['operation'],dict(enumerate(row['arguments'])))
+                cpu.call_logical(row['operation'],row['arguments'])
                 assert cpu.state().hex() == row['state'], ('poison replay',poison,row['index'])
                 assert cpu.events == row['events'], ('poison outputs',poison,row['index'])
             cpu.audit_reads()
@@ -51,7 +51,7 @@ def replay_and_negatives(image, symbols, rows, executable):
     with Core(relocated,relocated_symbols,poison=0x96,readonly=READONLY) as cpu:
         for row in rows[:2000]:
             cpu.clear_events()
-            cpu.call(row['operation'],dict(enumerate(row['arguments'])))
+            cpu.call_logical(row['operation'],row['arguments'])
             assert cpu.state().hex() == row['state'], ('relocated state',row['index'])
             assert cpu.events == row['events'], ('relocated outputs',row['index'])
         cpu.audit_reads()
@@ -142,7 +142,7 @@ def main():
         with Core(image, core_symbols, initial, readonly=READONLY) as cpu:
             def compare(row):
                 cpu.clear_events()
-                cpu.call(row['operation'], dict(enumerate(row['arguments'])))
+                cpu.call_logical(row['operation'], row['arguments'])
                 assert cpu.state().hex() == row['state'], ('state',row['index'],row['operation'])
                 assert cpu.events == row['events'], ('outputs',row['index'],row['operation'],
                                                       cpu.events,row['events'])

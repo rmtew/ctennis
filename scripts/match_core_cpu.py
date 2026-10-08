@@ -5,6 +5,7 @@ include trap dispatch and exclude native presentation/physical audio work; they
 are CPU measurements, not Amiga elapsed-time bounds.
 """
 from importlib.metadata import version
+from match_core_capture import OPERATIONS
 
 ADAPTERS = ('game_render_sprites', 'game_scene_present_fields',
             'game_core_title_requested', 'game_audio_write_period',
@@ -45,6 +46,8 @@ class Core:
         self.instructions, self.pcs, self.visits = set(), set(), {}
         self.stack_low = STACK_TOP
         self.total_cycles = self.last_cycles = 0
+        self.logical_calls = 0
+        self.context_seed = poison * 0x01010101
         self.mem.w_block(0, bytes([poison]) * RAM_SIZE)
         for address, data in image:
             end = address + len(data)
@@ -161,6 +164,30 @@ class Core:
         self.last_cycles = result.cycles
         self.total_cycles += result.cycles
         return result.cycles
+
+    def call_logical(self, name, arguments, max_cycles=2000000):
+        """Call a declared API with freshly poisoned non-argument CPU context.
+
+        The trace collector already records only declared logical arguments;
+        its six-word physical mailbox is not six inputs for every operation.
+        Poison every D/A register and condition code to detect hidden context
+        carried between calls, then supply only the operation's actual words.
+        """
+        counts = dict(OPERATIONS.values())
+        if name not in counts or len(arguments) != counts[name]:
+            raise ValueError('Wrong logical argument shape: ' + name)
+        if any(type(value) is not int or not 0 <= value <= 65535 for value in arguments):
+            raise ValueError('Logical argument must be a captured unsigned word')
+        for register in range(15):
+            value = ((self.logical_calls * 65537 + register * 0x1010101)
+                     ^ 0x965aa569 ^ self.context_seed) & 0xffffffff
+            self.cpu.w_reg(register, value)
+        self.cpu.w_sr(0x2700 | ((self.logical_calls ^ self.context_seed) & 31))
+        self.logical_calls += 1
+        # These are word arguments: their unobserved upper halves remain poison.
+        registers = {index: (self.cpu.r_reg(index) & 0xffff0000) | value
+                     for index, value in enumerate(arguments)}
+        return self.call(name, registers, max_cycles)
 
     def state(self):
         # AV_NEXT is a product-owned table offset, so no address normalization.

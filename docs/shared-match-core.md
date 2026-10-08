@@ -293,3 +293,37 @@ The current ordinary file is 181,192 bytes; release-symbol stripping yields
 do not establish whole-machine RAM headroom. The clean-head finite native gate,
 fresh resource coverage and independent review are still required. No merge,
 readiness or history/tutorial UI claim is implied by this boundary.
+
+### Celebration observer and CPU-context guards
+
+The clean `1f16910` native campaign stopped at its blue celebration check;
+commands 0–22 completed, but this is a failed gate, not acceptance. The old
+entry breakpoint observed RESULT only after its first sequencer callback had
+completed. Actual semantic writes show RESULT beginning with completed counter
+130 / started counter 131, and first-play completion flagged inside callback
+1056 with completed counter 1055. The first subsequent entry observes completed
+1056: the authored phrase remains exactly 926 callbacks from semantic start.
+Subtracting the late entry observation 131 instead gave the erroneous age 925.
+The corrected observer uses the semantic transition, retains the 926 minimum
+and 924 loop interval, and checks all three voices DONE with zero duration at
+the actual first-play flag. Held-input, last-loaded and audio/pixel checks remain.
+
+The corrected working-harness blue self-test completed and rejected an actual
+compiled premature-completion control with terminal durations `[1, 1, 1]`
+instead of `[0, 0, 0]`. The old mutation targeted a removed direct integration
+include and therefore changed nothing; the corrected route asserts each unique
+main/core/integration/audio include and verifies distinct assembled identities.
+The original failed gate and command log are archived privately. Its original
+blue case metadata was overwritten during diagnosis; that missing case receipt
+is not represented as preserved. Fresh committed celebration cases and a fresh
+full frozen run are still required before another complete clean-head gate.
+
+Logical replay now freshly poisons D0–D7, A0–A6 and CCR before every operation.
+Only declared word arguments replace their low halves; unused upper halves
+remain poisoned. Instance memory poison also seeds CPU context so identical
+logical sequences run with distinct working registers. The collector already
+recorded the declared arity correctly; this is additional hidden-context
+coverage, not a correction to argument counts. Complete-state and ordered-output
+comparisons plus narrow immutable-read auditing remain mandatory. These finite
+replays do not establish arbitrary checkpoint restoration or corrupt-state
+safety, which remain later-increment requirements.

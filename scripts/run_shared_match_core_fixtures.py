@@ -68,7 +68,7 @@ def check_case(case, seconds):
         with Core(image,core_symbols,initial=initial,readonly=READONLY) as cpu:
             def compare(row):
                 cpu.clear_events()
-                cpu.call(row['operation'],dict(enumerate(row['arguments'])))
+                cpu.call_logical(row['operation'],row['arguments'])
                 assert cpu.state().hex() == row['state'], ('fixture state',case,row['index'],row['operation'])
                 assert cpu.events == row['events'], ('fixture outputs',case,row['index'],row['operation'])
             collector = TraceCollector(symbols,initial,symbols['core_trace_marker'],
@@ -96,7 +96,7 @@ def check_case(case, seconds):
             with Core(relocated,relocated_symbols,initial=initial,poison=poison,readonly=READONLY) as cpu:
                 for row in collector.rows:
                     cpu.clear_events()
-                    cpu.call(row['operation'],dict(enumerate(row['arguments'])))
+                    cpu.call_logical(row['operation'],row['arguments'])
                     assert cpu.state().hex() == row['state'], ('fixture replay',case,poison,row['index'])
                     assert cpu.events == row['events'], ('fixture replay output',case,poison,row['index'])
                 cpu.audit_reads()

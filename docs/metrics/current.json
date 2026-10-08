@@ -1931,7 +1931,7 @@
       "build/native/ui-title-pages.bin": "7b12a2e86d63431cc569623628290cb6f38527a0be3fca19ba6385973572478f",
       "build/native/version.bin": "bd8fca2dab92fd17f5f975f638ed4c4376353a785734400377e35a039e24b50f"
     },
-    "build_receipt_sha256": "fbd0a35df29ddf68ee61e61cc5b8a4b3c4e45bb689f168ee844ef25d6f42ae77"
+    "build_receipt_sha256": "9eae4bd2d90b99c94f40f1deba3621585e8b62bdd47814655f90f019c27175f3"
   },
   "runtime": {
     "cold-one": {

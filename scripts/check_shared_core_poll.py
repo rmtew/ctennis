@@ -27,7 +27,7 @@ def main():
         for row in report['rows']:
             before = cpu.state()
             cpu.clear_events()
-            cycles = cpu.call(row['operation'],dict(enumerate(row['arguments'])))
+            cycles = cpu.call_logical(row['operation'],row['arguments'])
             assert cpu.state().hex() == row['state'], ('recorded state',row['index'])
             assert cpu.events == row['events'], ('recorded outputs',row['index'])
             max_cycles[row['operation']] = max(cycles,max_cycles.get(row['operation'],0))
@@ -39,7 +39,7 @@ def main():
                     transitions[(int.from_bytes(before[216:218],'big'),life)] += 1
                 for repeat in range(2):
                     cpu.clear_events()
-                    cpu.call('game_round_poll')
+                    cpu.call_logical('game_round_poll',[])
                     assert cpu.state() == first, ('Repeated poll changes state',row['index'],life,repeat)
                     assert cpu.events == [], ('Repeated poll emits outputs',row['index'],life,repeat,cpu.events)
             if row['index'] % 10000 == 0:
@@ -47,6 +47,8 @@ def main():
         cpu.audit_reads()
     result = {'passed':True,'capture_sha256':hashlib.sha256(args.report.read_bytes()).hexdigest(),
         'standalone_sha256':hashlib.sha256(executable.read_bytes()).hexdigest(),
+        'cpu_guard_sha256':hashlib.sha256((ROOT/'scripts/match_core_cpu.py').read_bytes()).hexdigest(),
+        'context_guard':'Fresh D/A/CCR poison every call; declared word arguments preserve poisoned upper halves',
         'operations':len(report['rows']),'extra_polls_per_boundary':2,
         'poll_lifecycle_counts':dict(counts),
         'observed_transitions':{f'{a}->{b}':count for (a,b),count in transitions.items()},
