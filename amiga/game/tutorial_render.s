@@ -5,13 +5,10 @@ TUTORIAL_Y_ORIGIN equ $2d-$2c
 
 tutorial_redraw:
         addq.w  #1,tutorial_render_generation
-        st      tutorial_pending
-        move.w  #1,tutorial_render_phase
-        clr.l   tutorial_render_offset
+        st      tutorial_placement_dirty
+        clr.w   tutorial_render_phase
         clr.b   tutorial_line_active
-        clr.w   tutorial_text_row
-        bsr     tutorial_footer
-        rts
+        bra     tutorial_footer
 
 tutorial_footer:
         lea     ui_overlay_plane,a1
@@ -19,9 +16,36 @@ tutorial_footer:
         move.w  #512/4-1,d1
 .clear: move.l  d0,(a1)+
         dbra    d1,.clear
-        lea     tutorial_computing_text,a0
-        tst.b   tutorial_work_pending
+        tst.b   tutorial_menu
+        beq     .context
+        lea     tutorial_branch_text,a0
+        tst.b   tutorial_menu_selection
+        beq     .text
+        lea     tutorial_resume_text,a0
+        cmpi.b  #1,tutorial_menu_selection
+        beq     .text
+        lea     tutorial_close_text,a0
+        bra     .text
+.context:
+        lea     tutorial_unavailable_text,a0
+        cmpi.w  #TUTORIAL_UNAVAILABLE,tutorial_status
+        beq     .text
+        lea     tutorial_wait_hint_text,a0
+        tst.b   tutorial_waiting_ready
         bne     .text
+        lea     tutorial_computing_text,a0
+        tst.b   tutorial_placement_ready
+        beq     .text
+        moveq   #0,d0
+        move.b  tutorial_active_variant,d0
+        eori.w  #1,d0
+        add.w   d0,d0
+        lea     tutorial_available_outcomes,a1
+        tst.w   (a1,d0.w)
+        bne     .ready_hint
+        lea     tutorial_other_pending_text,a0
+        bra     .text
+.ready_hint:
         lea     tutorial_hint_text,a0
         tst.b   tutorial_active_variant
         bne     .keyboard_hint
@@ -43,9 +67,18 @@ tutorial_footer:
 .text:  lea     ui_overlay_plane,a2
         moveq   #0,d4
         bsr     ui_footer_selected
-        lea     tutorial_count_text,a0
-        tst.b   tutorial_work_pending
+        lea     tutorial_menu_text,a0
+        tst.b   tutorial_menu
         bne     .count_ready
+        lea     tutorial_empty_text,a0
+        cmpi.w  #TUTORIAL_UNAVAILABLE,tutorial_status
+        beq     .count_ready
+        lea     tutorial_wait_text,a0
+        tst.b   tutorial_waiting_ready
+        bne     .count_ready
+        lea     tutorial_count_text,a0
+        tst.b   tutorial_placement_ready
+        beq     .count_ready
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
         add.w   d0,d0
@@ -80,8 +113,12 @@ tutorial_released_wait:
         beq     .done
         cmpi.w  #$ffff,game_preview_ordinal
         bne     .done
-        cmpi.w  #PREVIEW_LIMIT,tutorial_outcomes+2
-        bne     .done
+        cmpi.w  #PREVIEW_RELEASED,game_preview_status
+        bcs     .done
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        bhi     .done
+        tst.w   game_preview_dispatches+2
+        beq     .done
         tst.b   game_preview_launches+1
         bne     .done
         lea     game_preview_released_state+(game_lower_phase-game_core_state),a1
@@ -218,7 +255,7 @@ tutorial_plot:
 .done:  movem.l (sp)+,d0-d6/a0
         rts
 
-; Ghost pixels come from the actual selected sprite frames, two rows/callback.
+; Ghost pixels come from the actual selected sprite frames, two rows/unit.
 tutorial_draw_ghost:
         moveq   #0,d0
         move.b  tutorial_end,d0
@@ -550,6 +587,11 @@ tutorial_prepare_objects:
         clr.b   tutorial_scene_objects+SC_SHADOW+O_VISIBLE
         tst.b   tutorial_menu
         bne     .done
+        tst.b   tutorial_ball_mode
+        beq     .done
+        move.l  tutorial_presentation_generation,d0
+        cmp.l   game_preview_generation,d0
+        bne     .done
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
         add.w   d0,d0
@@ -557,6 +599,11 @@ tutorial_prepare_objects:
         move.w  (a0,d0.w),d1
         beq     .done
         move.w  tutorial_animation_index,d2
+        cmpi.b  #1,tutorial_ball_mode
+        bne     .animate_index
+        move.w  d1,d2
+        subq.w  #1,d2
+.animate_index:
         cmp.w   d1,d2
         bcs     .index
         clr.w   d2
@@ -590,8 +637,8 @@ tutorial_render_objects:
         jmp     game_render_prepared_scene
 
 tutorial_animate:
-        cmpi.w  #TUTORIAL_READY,tutorial_status
-        bne     .done
+        tst.b   tutorial_animation_ready
+        beq     .done
         tst.b   tutorial_menu
         bne     .done
         move.l  tutorial_animation_time,d0
@@ -601,8 +648,9 @@ tutorial_animate:
         cmp.l   d1,d0
         bcs     .done
         move.l  last_timer_count,tutorial_animation_time
+        move.b  #2,tutorial_ball_mode
         addq.w  #2,tutorial_animation_index
-        move.l  tutorial_render_surface,a0
+        move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
         bsr     tutorial_render_objects
@@ -618,13 +666,15 @@ tutorial_restore_court:
 tutorial_empty_text: dc.b 'UNAVAILABLE - RESUME FROM MENU',0
 tutorial_title_text: dc.b 'Tutorial',0
 tutorial_banner_text: dc.b 'TUTORIAL',0
-tutorial_computing_text: dc.b 'COMPUTING - PLEASE WAIT',0
-tutorial_hint_text: dc.b 'WASD MOVE  F RELEASED  G MENU',0
-tutorial_held_hint_text: dc.b 'WASD MOVE  F HELD  G MENU',0
-tutorial_joystick_hint_text: dc.b 'MOVE TEST  B1 RELEASED  B2 MENU',0
-tutorial_joystick_held_hint_text: dc.b 'MOVE TEST  B1 HELD  B2 MENU',0
+tutorial_computing_text: dc.b 'TUTORIAL - CALCULATING PATHS',0
+tutorial_hint_text: dc.b 'TUTORIAL F RELEASED / WASD / G',0
+tutorial_held_hint_text: dc.b 'TUTORIAL F HELD / WASD / G MENU',0
+tutorial_joystick_hint_text: dc.b 'TUTORIAL B1 RELEASED / B2 MENU',0
+tutorial_joystick_held_hint_text: dc.b 'TUTORIAL B1 HELD / MOVE / B2',0
 tutorial_unavailable_text: dc.b 'NO CURRENT HUMAN SERVE CONTEXT',0
 tutorial_menu_text: dc.b 'UP/DOWN SELECT - F/ENTER OK',0
+tutorial_wait_hint_text: dc.b 'TUTORIAL - HOLD F/B1 TO SERVE',0
+tutorial_other_pending_text: dc.b 'TUTORIAL: OTHER PATH CALCULATING',0
 tutorial_count_text: dc.b '1/1  CURRENT SERVE',0
 tutorial_branch_text: dc.b 'PLAY FROM HERE (NOT READY)',0
 tutorial_resume_text: dc.b 'RESUME LATEST',0

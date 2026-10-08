@@ -684,6 +684,7 @@ hex_digits:        dc.b "0123456789ABCDEF"
         include "amiga/game/interface.s"
         include "amiga/game/tutorial.s"
         include "amiga/game/tutorial_render.s"
+        include "amiga/game/tutorial_progressive.s"
 
         even
 dos_entry_sp: dc.l 0
