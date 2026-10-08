@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from acceptance_cases import cases
 from acceptance_campaign import dependencies,required_extent
-from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS
+from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS,BODY_ARITIES
 
 
 def receipt(ntsc=False):
@@ -39,6 +39,7 @@ def receipt(ntsc=False):
                 worker_body_counts=[2],maximum_worker_operations=2,worker_elapsed_cck=10,
                 maximum_worker_elapsed_cck=10,fields_to_result=1,seconds_to_result=.001))
     jobs=[job('current-human-serve',10,1),job('cold-incoming',10,2),job('warm-position-edit',11,3)]
+    jobs[1]['costs'].update(worker_body_counts=[3],maximum_worker_operations=3)
     replacements=[dict(case_id='replacement-'+phase,passed=True,partial_phase=phase,
         partial_body_operations=1,old_generation=4+i*2,new_generation=5+i*2,
         old_position=[10,20],new_position=[11,20],replacement_resolver_operations=1,
@@ -57,7 +58,7 @@ def receipt(ntsc=False):
         begin=dict(cck=100*i,frame=0,seconds=100*i/hz,vpos=0,hpos=0)
         end=dict(begin,cck=100*i+10,seconds=(100*i+10)/hz,hpos=10)
         irq=int(name=='game_preview_step' and not any(r['irq'] for r in rows))
-        rows.append(dict(name=name,begin=begin,end=end,bodies=2 if i in (3,8,11) else 4 if name=='game_preview_step' else 0,
+        rows.append(dict(name=name,begin=begin,end=end,bodies=3 if i==8 else 2 if i in (3,11) else 4 if name=='game_preview_step' else 0,
             irq=irq,irq_acknowledgements=2*irq,elapsed_cck=10))
     for job,request,worker,result in zip(jobs,(2,7,10),(3,8,11),(5,9,12)):
         job['costs'].update(request_api_row_index=request,worker_api_row_indices=[worker],
@@ -70,6 +71,7 @@ def receipt(ntsc=False):
         'build/tests/preview-native/fixture.compile.json':'55'*32,
         'build/amiga/interfaces/enhanced/baseline-rally.compile.json':'66'*32,
         'build/tests/preview-native/rpc.jsonl.gz':'aa'*32,
+        'build/tests/preview-native/events.jsonl.gz':'ab'*32,
         'build/tests/preview-cpu/report.json':'b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'}
     files.update({path:CPU9_SHA for path in CPU9_RECEIPTS})
     observed=dict(CAPS,ordinary_operations=200,playing_dispatches=40,title_callbacks=2,
@@ -115,6 +117,33 @@ def receipt(ntsc=False):
             sha256='aa'*32,compressed_bytes=100,uncompressed_bytes=200,calls=2,records=4),
         inherited_endpoint_validation=dict(cpu_receipt_sha256='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f',
             scope='CPU9-independent-endpoints; native-labels-only'))
+    frames=[];body_pc=12000;stack_top=24000
+    for api_index,row in enumerate(rows):
+        for n in range(row['bodies']):
+            start=dict(row['begin'],cck=row['begin']['cck']+1+n*2)
+            end=dict(start,cck=start['cck']+1)
+            frame=dict(api_row_index=api_index,entry_index=len(frames),operation='game_core_sample_pads',arity=2,
+                arguments=[0,0],before='00'*318,after='00'*318,state='00'*318,
+                entry_pc=body_pc+8,entry_sp=stack_top-100,return_pc=body_pc+100,
+                exit_pc=body_pc+100,exit_sp=stack_top-96,start=start,end=end,elapsed_cck=1,
+                depth=1,ownership=dict(active=2,status=3,variant=n%2),events=[],
+                entry_registers=dict(d=[0]*8,a=[0]*7+[stack_top-100],pc=body_pc+8,sr=0x2000,stopped=False))
+            frames.append(frame)
+    for job,api_index in zip(jobs,(3,8,11)):
+        selected=[f for f in frames if f['api_row_index']==api_index]
+        if api_index==8:
+            selected[0]['ownership'].update(active=1,status=1)
+            selected=selected[1:]
+        for variant,frame in enumerate(selected):
+            frame['ownership']['variant']=variant;frame['before']=job['edited_state']
+    stage['body_observation']=dict(protocol='read-only-emitted-body-pc-and-matched-stack-return',
+        loaded_body_map=[dict(pc=body_pc+4*i,operation=name,arity=arity,label=name+'_body',entry_bytes='4e714e71')
+            for i,(name,arity) in enumerate(BODY_ARITIES.items())],frames=frames,semantic_intents=[],
+        actual_body_entries=len(frames),outer_logical_calls=len(frames),internal_stops=2*len(frames),
+        entry_return_observations=2*len(frames),unpaired_frames=0,maximum_nesting=9,maximum_entries_per_api=8192,
+        stack_bottom=stack_top-4096,stack_top=stack_top)
+    stage['event_transcript']=dict(encoding='gzip-jsonl',path='build/tests/preview-native/events.jsonl.gz',
+        sha256='ab'*32,compressed_bytes=100,uncompressed_bytes=200,notifications=100)
     return dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
         evidence=dict(target_role='legacy-validator-reference',actual_target=target,files=files,
             compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32}),preview_native_validation=stage)
@@ -142,6 +171,17 @@ class NativePreviewExtent(unittest.TestCase):
                 (('byte_cap_scope',),'all-uncompressed-bytes'),
                 (('rpc_transcript','records'),3),(('rpc_transcript','sha256'),'bb'*32),
                 (('rpc_transcript','compressed_bytes'),1025),
+                (('event_transcript','notifications'),99),(('event_transcript','sha256'),'bb'*32),
+                (('event_transcript','uncompressed_bytes'),99),
+                (('body_observation','frames'),[]),(('body_observation','actual_body_entries'),0),
+                (('body_observation','frames',0,'exit_sp'),23900),
+                (('body_observation','frames',0,'after'),'00'),
+                (('body_observation','frames',0,'arguments'),[1,0]),
+                (('body_observation','frames',0,'entry_registers','sr'),0x2700),
+                (('body_observation','frames',0,'depth'),2),
+                (('body_observation','frames',0,'elapsed_cck'),2),
+                (('body_observation','internal_stops'),1),
+                (('body_observation','unpaired_frames'),1),
                 (('inherited_endpoint_validation','cpu_receipt_sha256'),'00'*32),
                 (('observed_caps','raw_bytes'),CAPS['raw_bytes']+1),
                 (('caps','worker_calls_per_job'),8192.0),(('completed_jobs',0,'ordinal'),1),
@@ -219,6 +259,24 @@ class NativePreviewExtent(unittest.TestCase):
         for path in CPU9_RECEIPTS:
             r=receipt();r['evidence']['files'].pop(path)
             with self.subTest(path=path):self.assertFalse(required_extent(self.case(),r))
+
+    def test_body_boundaries_bind_counts_and_tail_intents_once(self):
+        r=receipt();block=r['preview_native_validation']['body_observation']
+        parent,child=[f for f in block['frames'] if f['api_row_index']==14][:2]
+        self.assertEqual(parent['api_row_index'],child['api_row_index'])
+        parent['end']=dict(child['end']);parent['elapsed_cck']=parent['end']['cck']-parent['start']['cck']
+        child.update(depth=2,entry_sp=parent['entry_sp'],exit_sp=parent['exit_sp'],
+            return_pc=parent['return_pc'],exit_pc=parent['exit_pc'])
+        child['entry_registers']['a'][7]=child['entry_sp']
+        parent['events']=child['events']=[['title']]
+        block['semantic_intents']=[dict(event=['title'],position=child['start'],api_row_index=parent['api_row_index'])]
+        block['outer_logical_calls']-=1
+        block['internal_stops']-=1;block['entry_return_observations']-=1
+        self.assertTrue(required_extent(self.case(),r))
+        block['semantic_intents'].append(dict(block['semantic_intents'][0]))
+        self.assertFalse(required_extent(self.case(),r))
+        block['semantic_intents'].pop();block['frames'].pop()
+        self.assertFalse(required_extent(self.case(),r))
 
 
 if __name__=='__main__':unittest.main()

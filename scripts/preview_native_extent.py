@@ -10,10 +10,105 @@ CAPS=dict(accepted_request_generations=7,playing_dispatches=512,
     samples_per_path=256,raw_bytes=268435456)
 PRESERVATION=('selected_canonical','history_metadata','frozen_store','live_backup',
     'caller_frame','input_globals','publication_irq_only','audio_cpu_configuration')
-BYTE_CAP_SCOPE='stored-artifact-bytes; rpc-transcript-gzip; uncompressed-rpc-measured-separately'
+BYTE_CAP_SCOPE='stored-artifact-bytes; rpc-and-event-transcripts-gzip; uncompressed-transcripts-measured-separately'
 CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
 CPU9_RECEIPTS=('build/tests/preview-cpu/report.json',
     'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json')
+BODY_ARITIES=dict(game_core_init=0,game_core_select=3,game_core_sample_pads=2,
+    game_core_sample_result=6,game_core_clear_inputs=0,game_core_return_title=0,
+    game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0)
+
+
+def body_observation(block,api_rows,hunks):
+    """Every actual body entry, including unmarked calls, has a matched return."""
+    if (not isinstance(block,dict)
+            or block.get('protocol')!='read-only-emitted-body-pc-and-matched-stack-return'
+            or type(block.get('unpaired_frames')) is not int or block['unpaired_frames']!=0
+            or type(block.get('maximum_nesting')) is not int or block['maximum_nesting']!=9
+            or type(block.get('maximum_entries_per_api')) is not int or block['maximum_entries_per_api']!=8192
+            or not integer(block.get('stack_bottom'),0,524287)
+            or not integer(block.get('stack_top'),4096,524288)
+            or block['stack_top']-block['stack_bottom']!=4096):return False
+    def loaded(pc,length=2):
+        return integer(pc,0,524287) and pc%2==0 and any(h['start']<=pc<pc+length<=h['start']+h['bytes'] for h in hunks)
+    if not loaded(block['stack_bottom'],4096):return False
+    mapping=block.get('loaded_body_map');frames=block.get('frames');intents=block.get('semantic_intents')
+    if (not isinstance(mapping,list) or len(mapping)!=9
+            or not isinstance(frames,list) or not frames or not isinstance(intents,list)):return False
+    specs={}
+    for spec in mapping:
+        if (not isinstance(spec,dict) or spec.get('operation') not in BODY_ARITIES
+                or type(spec.get('arity')) is not int or spec['arity']!=BODY_ARITIES[spec['operation']]
+                or spec.get('label')!=spec['operation']+'_body' or not loaded(spec.get('pc'),4)
+                or spec['operation'] in specs or not isinstance(spec.get('entry_bytes'),str)
+                or re.fullmatch(r'[0-9a-f]{8}',spec['entry_bytes']) is None):return False
+        specs[spec['operation']]=spec
+    if len({r['pc'] for r in mapping})!=9:return False
+    counts=[0]*len(api_rows);entry_stops=set();return_stops=set();stack=[];outer=[]
+    for index,frame in enumerate(frames):
+        if (not isinstance(frame,dict) or type(frame.get('entry_index')) is not int or frame['entry_index']!=index
+                or not integer(frame.get('api_row_index'),0,len(api_rows)-1)
+                or frame.get('operation') not in specs):return False
+        spec=specs[frame['operation']];api_index=frame['api_row_index'];api=api_rows[api_index]
+        if (type(frame.get('arity')) is not int or frame['arity']!=spec['arity']
+                or frame.get('entry_pc')!=spec['pc'] or type(frame.get('entry_pc')) is not int
+                or not integer(frame.get('entry_sp'),block['stack_bottom'],block['stack_top']-4)
+                or frame['entry_sp']%2 or not loaded(frame.get('return_pc'))
+                or frame.get('exit_pc')!=frame['return_pc'] or type(frame.get('exit_pc')) is not int
+                or type(frame.get('exit_sp')) is not int or frame['exit_sp']!=frame['entry_sp']+4
+                or not integer(frame.get('depth'),1,9)
+                or not isinstance(frame.get('events'),list)):return False
+        registers=frame.get('entry_registers');owner=frame.get('ownership')
+        if (not isinstance(registers,dict) or registers.get('pc')!=frame['entry_pc']
+                or type(registers.get('pc')) is not int or not integer(registers.get('sr'),0,65535)
+                or registers['sr']&0x700 or type(registers.get('stopped')) is not bool
+                or any(not isinstance(registers.get(k),list) or len(registers[k])!=8
+                    or any(not integer(v,0,2**32-1) for v in registers[k]) for k in ('d','a'))
+                or registers['a'][7]!=frame['entry_sp']
+                or frame.get('arguments')!=[v&65535 for v in registers['d'][:spec['arity']]]
+                or any(type(v) is not int for v in frame['arguments'])
+                or not isinstance(owner,dict) or not integer(owner.get('active'),0,2)
+                or not integer(owner.get('status'),0,6) or not integer(owner.get('variant'),0,1)):return False
+        try:states=[bytes.fromhex(frame[k]) for k in ('before','after')]
+        except (KeyError,TypeError,ValueError):return False
+        if any(len(s)!=318 for s in states) or frame.get('state')!=frame['after']:return False
+        for key in ('start','end'):
+            pos=frame.get(key)
+            if (not isinstance(pos,dict) or not integer(pos.get('cck'),api['begin']['cck'],api['end']['cck'])
+                    or not integer(pos.get('frame'),api['begin']['frame'],api['end']['frame'])
+                    or not number(pos.get('seconds'),api['begin']['seconds'],api['end']['seconds'])
+                    or not integer(pos.get('vpos'),0,1023) or not integer(pos.get('hpos'),0,511)):return False
+        if (not integer(frame.get('elapsed_cck'),1)
+                or frame['elapsed_cck']!=frame['end']['cck']-frame['start']['cck']):return False
+        if index and (api_index<frames[index-1]['api_row_index']
+                or frame['start']['cck']<frames[index-1]['start']['cck']):return False
+        while stack and (stack[-1]['api_row_index']!=api_index or stack[-1]['end']['cck']<=frame['start']['cck']):stack.pop()
+        if frame['depth']!=len(stack)+1:return False
+        if stack:
+            parent=stack[-1]
+            if (frame['end']['cck']>parent['end']['cck']
+                    or not (frame['entry_sp']<parent['entry_sp'] or
+                        (frame['entry_sp']==parent['entry_sp'] and frame['return_pc']==parent['return_pc']))):return False
+        else:outer.append(frame)
+        stack.append(frame);counts[api_index]+=1
+        entry_stops.add((api_index,frame['entry_pc'],frame['entry_sp'],frame['start']['cck']))
+        return_stops.add((api_index,frame['exit_pc'],frame['exit_sp'],frame['end']['cck']))
+    if (counts!=[r['bodies'] for r in api_rows] or any(n>8192 for n in counts)
+            or type(block.get('actual_body_entries')) is not int or block['actual_body_entries']!=len(frames)
+            or type(block.get('outer_logical_calls')) is not int or block['outer_logical_calls']!=len(outer)
+            or type(block.get('internal_stops')) is not int or block['internal_stops']!=len(entry_stops|return_stops)
+            or type(block.get('entry_return_observations')) is not int
+            or block['entry_return_observations']!=len(frames)+len(return_stops)):return False
+    expected=[(f['api_row_index'],e) for f in outer for e in f['events']]
+    actual=[]
+    for intent in intents:
+        if (not isinstance(intent,dict) or not integer(intent.get('api_row_index'),0,len(api_rows)-1)
+                or not isinstance(intent.get('event'),list) or not intent['event']
+                or not isinstance(intent.get('position'),dict)):return False
+        api=api_rows[intent['api_row_index']]
+        if not integer(intent['position'].get('cck'),api['begin']['cck'],api['end']['cck']):return False
+        actual.append((intent['api_row_index'],intent['event']))
+    return actual==expected
 
 
 def integer(value,low=0,high=None):
@@ -371,6 +466,16 @@ def required_preview_native_extent(case_id,report):
             or sum(h['bytes'] for h in hunks)!=resources['fixture_loaded_bytes']):return False
     spans.sort()
     if any(a[1]>b[0] for a,b in zip(spans,spans[1:])):return False
+    if not body_observation(stage.get('body_observation'),rows,hunks):return False
+    frames=stage['body_observation']['frames']
+    for job in jobs:
+        actual=[f for f in frames if f['depth']==1 and f['api_row_index'] in job['costs']['worker_api_row_indices']]
+        if sum(f['ownership']['active']==1 for f in actual)!=job['costs']['resolver_operations']:return False
+        for variant in (0,1):
+            branch=[f for f in actual if f['ownership']['active']==2 and f['ownership']['variant']==variant]
+            if (not branch or branch[0]['before']!=job['edited_state']
+                    or branch[-1]['after']!=job['final_states'][variant]
+                    or [e for f in branch for e in f['events']]!=job['ordered_outputs'][variant]):return False
     if (any(not sha256(worker.get(k)) for k in
             ('source_sha256','loaded_sha256','fixture_executable_sha256'))
             or not integer(worker.get('bytes'),1)
@@ -405,6 +510,15 @@ def required_preview_native_extent(case_id,report):
             or not isinstance(inherited,dict) or inherited.get('scope')!='CPU9-independent-endpoints; native-labels-only'
             or inherited.get('cpu_receipt_sha256')!=CPU9_SHA
             or any(files.get(path)!=CPU9_SHA for path in CPU9_RECEIPTS)):return False
+    event=stage.get('event_transcript')
+    if (not isinstance(event,dict) or event.get('encoding')!='gzip-jsonl'
+            or not isinstance(event.get('path'),str) or not sha256(event.get('sha256'))
+            or files.get(event['path'])!=event['sha256'] or event['path']==rpc['path']
+            or not integer(event.get('compressed_bytes'),1,observed['raw_bytes'])
+            or event['compressed_bytes']+rpc['compressed_bytes']>observed['raw_bytes']
+            or not integer(event.get('uncompressed_bytes'),event['compressed_bytes'])
+            or type(event.get('notifications')) is not int
+            or event['notifications']!=telemetry['notifications']):return False
     outside=stage.get('outside_publication')
     if (not isinstance(outside,dict) or not isinstance(outside.get('rules'),list)
             or not outside['rules'] or not isinstance(outside.get('writes'),list)
