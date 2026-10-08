@@ -116,8 +116,9 @@ do not replace normal lifecycle, pixel, DMA or acceptance checks.
 ## Retained evidence
 
 `current.json` and `current.md` describe the recorded product and its limits.
-The committed runtime resource coverage is incomplete. Historical measurements
-do not certify the current executable.
+The committed required runtime resource coverage is complete for the recorded
+finite workloads. Its explicit unmeasured fields remain limits; historical
+measurements do not certify another executable.
 
 The current delta chain uses `baselines/pre-title-score-current.json`, which in
 turn binds `baselines/pre-pr19-release.json`. Keep these exact JSON bytes.

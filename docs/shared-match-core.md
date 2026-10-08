@@ -380,12 +380,92 @@ takeover fixtures in states 1/3/4/5, pause, and actual title-command exclusion.
 Observed isolated entropy costs were 96/106 CPU cycles for modern low bits 0/1
 and 134/144 for the legacy policy; zero-seed selection was 108 and takeover
 sampling 196. These include the harness return trap and establish no Amiga
-contention or deadline bound. A dedicated physical UI tail-takeover variant is
-still required; these logical fixtures do not establish that integration.
+contention or deadline bound. Fresh physical takeover checks now cover PLAY,
+ROUND_PAUSE and ROUND_SOUND (lifecycles 1/4/5). Mid-play takeover observes an
+actual live entropy request. Both 1,608-tick tail cases preserve seed and both
+stream words, select modern policy without reseeding, consume menu controls,
+accept fresh human input and return naturally to PLAY. Their bounded quiet
+observation makes no claim of an entropy request; that request is unnecessary
+while the AI is serving rather than tracking a return.
 
-The final dirty-candidate PAL eight-second capture compares all 318 bytes and
-ordered outputs through TITLE/selection/play. Full relocated replay now consumes
-every captured operation and checks lifecycle counts. Longer current PAL/NTSC
-captures, unchanged historical frozen replay, current native resource coverage,
-the complete clean-head gate and independent re-review remain required.
-Earlier 314-byte state receipts cannot be reused as 318-byte acceptance.
+### Current complete-state and integration evidence
+
+The production native SHA256 is
+`82225743796c9e35476daa71fc291e03dc4a62c07473113361352ca2848d7e6f`;
+the standalone SHA256 is
+`eea5e3d068866057cc2d1b3e046358504e456057f1714647293e02a6408caded`.
+Earlier 314-byte receipts cannot establish 318-byte acceptance.
+
+Current PAL 300-second capture compares 71,907 logical operations / 17,976
+callbacks through TITLE, selection, PLAY, ROUND_PAUSE, ROUND_SOUND, result and
+the next selection. NTSC two-player/pause/title/one-player restart compares
+2,850 operations / 771 callbacks. Both compare all 318 state bytes and ordered
+outputs with differently poisoned working state and complete relocated replay;
+all owned bytes are written. Five scoring fixtures each compare 1,920 operations
+/ 480 callbacks. Two extra polls after every recorded PAL poll are state/event
+inert. Omitted-init, hardware-read, out-of-state-write and undeclared-read
+controls reject. These receipts are retained under
+`build/tests/history/690bf54-current-proofs` and
+`build/tests/history/5906997-before-full-gate`; later observer-only commits
+preserve these exact product bytes.
+
+The byte audit matches 18,006 shared code/table/alignment bytes, 257 relocations
+and 11 named sink fixups. Loaded standalone bytes reconcile without duplication:
+
+| Component | Bytes |
+| --- | ---: |
+| Actual shared CPU instructions | 7,608 |
+| Immutable simulation tables | 10,396 |
+| Shared alignment | 2 |
+| Complete canonical state | 318 |
+| Eight standalone RTS sinks | 16 |
+| Total loaded standalone | 18,340 |
+
+Observed isolated stack maximum is 128 bytes. Maximum observed isolated cycles
+in the PAL proof are init 7,176; poll 13,724; pads 248; result sample 178;
+dispatch 24,446; selection 102. The separate zero-seed/entropy tests above cover
+additional branches. These finite CPU observations exclude Amiga contention,
+input sampling and presentation; they are not universal worst-case bounds.
+
+The clean `2085982c5066c56578bcc5c65105669e5a0e59d0` campaign completed all 41
+commands with EXIT 0. It covers cold stripped-release menu, physical inputs,
+PAL/NTSC publication/DMA, scoring/status/audio, all celebration orientations,
+the unchanged 10,958-tick demo and next demo, three physical takeover phases,
+two unattended attract cycles, feedback, ordinary match/restart cadence,
+early-release/audio, setup and packaging. Demo has 31 flight-side changes and
+zero missed publications. Cold-release one-player has 12,399 callbacks;
+two-player has 23,796; both have zero deadline/publication misses.
+
+The original aggregate still records EXIT 1: its attract summary expected eight
+captures while the actual test independently checked ten, including both first
+complete title fields. `b34ab6f` corrects the summary to require all ten named
+captures and first-complete replies, retaining the other conditions. Checker
+negatives and all 86 host tests pass. Existing native receipt provenance and
+coverage were revalidated without emulation; original false aggregate and logs
+remain in `build/tests/history/2085982-complete-campaign-summary-mismatch`.
+`build/acceptance/completed-revalidation.json` binds that original receipt,
+validator source, artifacts and fresh/compatible passing case receipts; SHA256
+`757b8bfddea14dd8b6f22d48415aa7496d10513898c28d0a7cf8f34b5a9d9910`.
+
+Earlier PAL DMA failures also remain archived. A snapshot between physical
+COPJMP and software front-role cleanup caused the decoder to inherit the wrong
+court bank. It now binds the inherited bank from actual Copper pointer source
+addresses, requires physical evidence for ambiguous court pointers and keeps
+the separate title list distinct. Fresh PAL/NTSC suites and compiled negative
+controls pass. Independent review cleared product and decoder at `2085982`;
+the summary-only delta requires review before merge.
+
+[Current resource reports](metrics/current.md) are recorded from the completed
+workloads. Native loaded payload is 166,388 bytes; stripped release is 160,072
+bytes with SHA256
+`0adeee75a6ca79719f279a5e15266b7a03dee3831271ae13094e8496106b17d8`.
+Cold one-player initialized chip peak is 271,920 bytes, largest free block
+251,176; direct two-player peak is 305,656, largest free block 218,056. Different
+startup environments are not paired memory comparisons. Minimum observed title
+deadline margins are 2,020.064 CCK (cold one-player) and 1,387.160 CCK
+(two-player). Future history work must budget against measured available memory
+and transition margins, not a 512 KB history allowance. Pause-only UI
+construction, allocation-failure instrumentation, pre-Exec bootstrap peak and
+physical-board coverage remain unmeasured. No history buffer or tutorial UI is
+implemented. PR #34 remains a reviewed draft pending final summary review and
+integration; no merge or next tutorial increment is implied.
