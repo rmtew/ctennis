@@ -16,6 +16,7 @@ class NativePreviewGuards(unittest.TestCase):
             ('game_stack_bottom',0x24000),('game_stack_top',0x25000)]}
         observer.frozen=True;observer.pending=None;observer.problems=[]
         observer.rules={};observer.irq_writes=[];observer.irq_inside=0
+        observer.irq_entry_pc=0x400;observer.irq_exit_pc=0x420;observer.audio_writes=[]
         observer.publication={};observer.stack_min=0x25000
         return observer
 
@@ -43,9 +44,22 @@ class NativePreviewGuards(unittest.TestCase):
         observer._guard(self.event(0xdff0a8,value=64))
         self.assertIn('Forbidden native API',observer.problems[-1])
 
+    def test_continuous_audio_guard_allows_pause_only_before_freeze(self):
+        observer=self.observer()
+        observer._guard(self.event(0xdff0a8,value=0))
+        self.assertIn('frozen audio/config',observer.problems[-1])
+        observer.frozen=False;observer.problems.clear()
+        observer._guard(self.event(0xdff0a8,value=0))
+        self.assertEqual(observer.problems,[])
+        observer.frozen=True
+        observer._guard(self.event(0xdff09e,value=0x8000))
+        self.assertIn('frozen audio/config',observer.problems[-1])
+        observer._guard(self.event(0xdff096,value=0x8200))
+        self.assertIn('DMA configuration',observer.problems[-1])
+
     def test_irq_ack_value_and_actual_api_interval(self):
         observer=self.observer()
-        observer.pending=dict(name='game_preview_step',begin=None,end=None,irq=0)
+        observer.pending=dict(name='game_preview_step',begin=None,end=None,irq=0,irq_acknowledgements=0)
         observer.rules[0x400]=dict(address=0xdff09c,bytes=2,operation='move',
             source='#$0010',destination='$dff09c')
         observer._guard(self.event(0xdff09c,value=16))
@@ -53,6 +67,10 @@ class NativePreviewGuards(unittest.TestCase):
         observer.pending['begin']={'cck':0}
         observer._guard(self.event(0xdff09c,value=16))
         self.assertEqual(observer.irq_inside,1)
+        observer.rules[0x420]=dict(observer.rules[0x400])
+        observer._guard(self.event(0xdff09c,value=16,pc=0x420))
+        self.assertEqual(observer.irq_inside,1)
+        self.assertEqual(observer.pending['irq_acknowledgements'],2)
         observer.pending['end']={'cck':2}
         observer._guard(self.event(0xdff09c,value=16))
         self.assertEqual(observer.irq_inside,1)

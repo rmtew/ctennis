@@ -48,7 +48,9 @@ class Observer(TraceCollector):
         self.raw_bytes=0;self.notifications=0;self.drops=0;self.pending=None
         self.api_rows=[];self.frozen=False;self.problems=[];self.stack_min=symbols['game_stack_top']
         self.rules=irq_rules(listing,symbols,segments,locations)
-        self.irq_writes=[];self.irq_inside=0;self.body_counts=[]
+        self.irq_writes=[];self.irq_inside=0;self.body_counts=[];self.audio_writes=[]
+        acknowledgements=sorted(pc for pc,r in self.rules.items() if r['destination'].lower()=='$dff09c')
+        self.irq_entry_pc,self.irq_exit_pc=acknowledgements
         self.publication={n:bytearray(read(symbols[n],4 if 'copper' in n else
             1 if n in ('blank_seen','display_ready','ready_completed','ready_title_display') else 2))
             for n in (*PUBLICATION,'ready_title_display','ready_game_generation')}
@@ -88,6 +90,9 @@ class Observer(TraceCollector):
         ranges=super().watches()+[{'addr':self.symbols[n],'len':length,'access':'write'}
             for n,length in [('game_preview_state',110),('game_history_state',72),
                              ('game_history_buffer',80318),*INPUTS]]
+        ranges += [{'addr':0xdff0a0,'len':0x40,'access':'write'},
+            {'addr':0xdff096,'len':2,'access':'write'},
+            {'addr':0xdff09e,'len':2,'access':'write'}]
         for name,data in self.publication.items():
             ranges.append({'addr':self.symbols[name],'len':len(data),'access':'write'})
         if inside:
@@ -99,7 +104,7 @@ class Observer(TraceCollector):
 
     def begin(self,name):
         assert self.pending is None
-        self.pending=dict(name=name,begin=None,end=None,bodies=0,irq=0)
+        self.pending=dict(name=name,begin=None,end=None,bodies=0,irq=0,irq_acknowledgements=0)
 
     def finish(self):
         self.raw.flush()
@@ -110,6 +115,7 @@ class Observer(TraceCollector):
         row=self.pending;self.pending=None
         assert row['begin'] is not None and row['end'] is not None,'Incomplete actual JSR/RTS bracket'
         assert row['end']['cck']>=row['begin']['cck']
+        assert row['irq_acknowledgements']==row['irq']*2,'Unpaired actual presentation IRQ acknowledgements'
         row['elapsed_cck']=row['end']['cck']-row['begin']['cck']
         self.api_rows.append(row);return row
 
@@ -120,7 +126,15 @@ class Observer(TraceCollector):
         contained=lambda name,length:s[name]<=a<a+size<=s[name]+length
         if self.frozen and overlap('game_history_buffer',80318):
             self.problems.append('CPU writes frozen history/live backup')
+        audio=(a<0xdff0e0 and a+size>0xdff0a0) or (a<0xdff0a0 and a+size>0xdff09e)
+        if audio:self.audio_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position'],frozen=self.frozen))
         if self.pending is None:
+            if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
+            if self.frozen and a<0xdff098 and a+size>0xdff096:
+                rule=self.rules.get(pc)
+                if not (rule and rule['address']==0xdff096 and size==2
+                        and value==int(rule['source'][2:],16)):
+                    self.problems.append('External frozen caller writes DMA configuration')
             if self.frozen and (overlap('game_core_state',318) or overlap('game_history_state',72)):
                 self.problems.append('External native caller writes frozen selected/history state')
             return
@@ -151,7 +165,8 @@ class Observer(TraceCollector):
             self.irq_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position']))
             if (rule['destination'].lower()=='$dff09c' and self.pending['begin'] is not None
                     and self.pending['end'] is None):
-                self.pending['irq']+=1;self.irq_inside+=1
+                self.pending['irq_acknowledgements']+=1
+                if pc==self.irq_entry_pc:self.pending['irq']+=1;self.irq_inside+=1
             return
         self.problems.append(f'Forbidden native API nonstate/hardware write {pc:#x}->{a:#x}/{size}')
 
