@@ -244,6 +244,7 @@ def small(executable):
                 resolver_inclusive_cpu_cycles=resolver_cycles,
                 maximum_worker_cpu_cycles=max(cycles),maximum_worker_operations=max(operations),
                 actual_operations=sum(operations),preservation_checks=len(cycles)+10,worker_restorations=len(cycles),stack_bytes=cpu.stack_bytes))
+            generation=field(cpu,'game_preview_generation',4)
             call_checked(cpu,'game_preview_cancel',{0:generation},saved)
             assert cpu.cpu.r_reg(0)==1
             before=block(cpu,'game_preview_storage','game_preview_storage_end')

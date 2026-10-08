@@ -1,6 +1,7 @@
 # Isolated shot preview foundation
 
-This increment is under implementation and has no acceptance result yet. It adds
+This increment is under implementation. The first small actual CPU proof passed
+at `652c89d`; the cache extension and broader acceptance remain pending. It adds
 an internal frozen-history API and fixed scratch storage, with no tutorial UI or
 live branch commit. Preview execution uses the actual shared 68000 core.
 
@@ -21,7 +22,9 @@ bytes before yielding. The original recorder mode remains frozen (mode 2); the
 history ring, live backup, cursors, and existing output state are preserved.
 Request and worker copying costs are additional to the operation cap. Total
 resolver work and repeated position-edit cost must be measured before making a
-responsiveness claim.
+responsiveness claim. The first return fixture required 773 resolver operations
+and about 12.4 million isolated CPU cycles for a repeated one-operation edit
+(~1.73 seconds at nominal 7.16 MHz), motivating the pending cache extension.
 
 Four canonical scratch images hold the selected state, common edited start,
 held continuation and released continuation. Only the requested human X/Y change
@@ -46,7 +49,7 @@ model is introduced. Common incoming samples precede each alternative. Coinciden
 compares court/projected geometry and visibility at matching sample ordinals and
 ticks, while retaining contact, phase and outcome diagnostics separately.
 
-Storage is 5,546 bytes: 106 metadata, 72 saved history metadata, four 318-byte
+Storage is 5,550 bytes: 110 metadata, 72 saved history metadata, four 318-byte
 canonical images and 4,096 sample bytes. The enclosing hunk adds two alignment
 bytes. Counts and generations guard unpublished storage. Results become visible
 only after both current variants finish or honestly truncate. Stale requests,
@@ -82,3 +85,26 @@ The AI-serving negative uses a separate actual init/select/control sequence.
 selection chooses the human end. In a genuine AI serve setup the human end has
 no serve phase; rejection proves unavailable human serve context. It does not
 isolate the defensive AI-ownership check with fabricated inconsistent flags.
+
+The compact cache reuses a fully published original incoming prefix, action
+boundary and context identity only when the selected 318 canonical bytes, all
+72 history metadata bytes, requested ordinal, retained origin, kind and end still
+match. It stores only a validity word and ordinal. A warm position edit starts a
+new generation and clears all variant bookkeeping; old outgoing suffix bytes
+stay inaccessible until both new variants finish. Cancellation and successful
+external history mutations invalidate cache and publication and retire the old
+generation. Generation retirement saturates at `ffffffff`; history operations
+continue, but new preview requests reject rather than alias. Internal request
+restoration of the oldest checkpoint uses an explicit active-3 bypass.
+
+History seek now saves its 72 metadata bytes on the stack after pure range
+checks. Any rejected checkpoint envelope or operation restores those bytes;
+canonical restoration still occurs only after complete upfront validation. A
+failed seek preserves READY publication and cache. Stack and copy costs of this
+change remain to be measured by the focused cache proof, including request
+nesting. The new proof compares an actual warm edit against a forced cold edit
+with identical position, both full contexts, paths and ordered outputs. It also
+checks prefix immutability and invalidation by seek/back, different attempt,
+cancel, eviction and generation exhaustion, plus READY corrupt checkpoint and
+operation negatives. These are CPU claims only; native sink/cadence and resource
+coverage remain pending.

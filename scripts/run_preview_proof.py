@@ -6,6 +6,7 @@ from match_core_cpu import cpu_tool_inputs
 from native_evidence import ReportRun,atomic_json,compile_manifest,digest,inputs_for,snapshot,status
 from native_tools import ROOT
 from preview_proof import small
+from preview_cache_proof import exercise as cache_proof
 
 
 def run():
@@ -20,6 +21,9 @@ def run():
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         executable,listing=build()
         validation=small(executable)
+        atomic_json(path.parent/('small-results-'+transaction.meta['run_id']+'-unvalidated.json'),
+            dict(preview_validation=validation,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+        validation['cache_validation']=cache_proof(executable)
         report=dict(passed=True,execution='actual-68000-cpu-only',executable_sha256=digest(executable),
             preview_validation=validation,scope=validation['scope'])
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,

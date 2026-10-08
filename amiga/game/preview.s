@@ -27,6 +27,8 @@ game_preview_request:
         bcc     .invalid
         cmpi.b  #2,game_history_mode
         bne     .invalid
+        tst.b   game_preview_active
+        bne     .invalid
         cmpi.w  #255,d2
         bhi     .invalid
         cmpi.w  #255,d3
@@ -36,6 +38,7 @@ game_preview_request:
         movem.l d2-d7/a2-a6,-(sp)
         move.w  d2,d4
         move.w  d3,d5
+        move.w  d1,d2
         cmpi.w  #$ffff,d1
         beq.s   .fallback
         cmp.w   game_history_attempt_count,d1
@@ -92,6 +95,33 @@ game_preview_request:
         bcc     .invalid_saved
         cmp.b   1(a0),d5
         bcs     .invalid_saved
+        ; Reuse only a fully published, unchanged selection and attempt.
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        bne.s   .cold
+        tst.w   game_preview_cache_valid
+        beq.s   .cold
+        cmp.w   game_preview_ordinal,d2
+        bne.s   .cold
+        cmp.w   game_preview_kind,d6
+        bne.s   .cold
+        cmp.w   game_preview_end,d7
+        bne.s   .cold
+        bsr     game_preview_selection_unchanged
+        tst.l   d0
+        beq.s   .cold
+        move.l  a5,d0
+        beq.s   .reuse
+        lea     game_preview_origin,a0
+        move.l  a5,a1
+        bsr     game_preview_compare_cursor
+        tst.l   d0
+        bne.s   .cold
+.reuse: addq.l  #1,game_preview_generation
+        move.w  d4,game_preview_x
+        move.w  d5,game_preview_y
+        bsr     game_preview_prepare
+        bra     .restore
+.cold:
         ; Only after all guards: replace the prior generation and its counts.
         lea     game_preview_state+4,a0
         move.w  #(game_preview_state_end-game_preview_state-4)/2-1,d0
@@ -100,6 +130,7 @@ game_preview_request:
         addq.l  #1,game_preview_generation
         move.w  d7,game_preview_end
         move.w  d6,game_preview_kind
+        move.w  d2,game_preview_ordinal
         move.w  d4,game_preview_x
         move.w  d5,game_preview_y
         move.l  game_history_position,game_preview_selected
@@ -118,7 +149,9 @@ game_preview_request:
         ; Oldest CP restoration performs zero logical replay operations.
         move.l  game_history_oldest,d0
         move.l  game_history_oldest+4,d1
+        move.b  #3,game_preview_active
         bsr     game_history_seek
+        clr.b   game_preview_active
         tst.l   d0
         beq.s   .missing
         move.l  game_history_oldest,game_preview_cursor
@@ -160,11 +193,12 @@ game_preview_step:
         bsr     game_preview_selection_unchanged
         tst.l   d0
         beq     .invalid
-        move.w  d1,game_preview_budget
         cmpi.w  #PREVIEW_READY,game_preview_status
-        bcc     .valid
+        bhi     .invalid
+        beq     .valid
         tst.w   game_preview_status
         beq     .invalid
+        move.w  d1,game_preview_budget
         movem.l d2-d7/a2-a6,-(sp)
 .next:
         cmpi.w  #PREVIEW_RESOLVE,game_preview_status
@@ -233,6 +267,7 @@ game_preview_cancel:
         beq     .invalid
         addq.l  #1,game_preview_generation
         move.w  #PREVIEW_CANCELED,game_preview_status
+        clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
         clr.b   game_preview_active
         moveq   #1,d0
@@ -379,6 +414,12 @@ game_preview_resolved:
 .ready: bra     game_preview_prepare
 
 game_preview_prepare:
+        ; Keep original incoming prefix; discard all variant bookkeeping.
+        lea     game_preview_counts,a0
+        moveq   #(game_preview_state_end-game_preview_counts)/2-1,d0
+.clear: clr.w   (a0)+
+        dbra    d0,.clear
+        move.w  #1,game_preview_cache_valid
         lea     game_preview_edited_state,a0
         lea     game_preview_selected_state,a1
         bsr     game_history_copy_state
@@ -827,4 +868,17 @@ game_preview_context_address:
         tst.w   d7
         beq.s   .done
         lea     game_preview_released_state,a0
+.done:  rts
+
+; Successful external history mutations retire publication/generation. The
+; request-owned zero-op oldest checkpoint seek uses active3 and is exempt.
+game_preview_invalidate:
+        tst.b   game_preview_active
+        bne.s   .done
+        clr.w   game_preview_cache_valid
+        clr.l   game_preview_counts
+        move.w  #PREVIEW_CANCELED,game_preview_status
+        cmpi.l  #$ffffffff,game_preview_generation
+        beq.s   .done
+        addq.l  #1,game_preview_generation
 .done:  rts

@@ -9,6 +9,8 @@ game_preview_budget: ds.w 1
 game_preview_operation: ds.w 1
 game_preview_end: ds.w 1
 game_preview_kind: ds.w 1
+game_preview_ordinal: ds.w 1
+game_preview_cache_valid: ds.w 1
 game_preview_x: ds.w 1
 game_preview_y: ds.w 1
 game_preview_selected: ds.l 2

@@ -47,12 +47,39 @@ class CampaignTests(unittest.TestCase):
                  repeat_resolver_worker_calls=1,repeat_resolver_cpu_cycles=1)
         report=dict(passed=True,execution='actual-68000-cpu-only',
                     evidence=dict(target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only'),
-                    preview_validation=dict(passed=True,preview_storage_bytes=5546,metadata_bytes=106,
+                    preview_validation=dict(passed=True,preview_storage_bytes=5550,metadata_bytes=110,
                         ai_serve_setup_fixture=dict(passed=True,ai=True,frozen=True,legal_position_verified=True,
                             rejection_scope='ai-serving-context',ai_guard_isolated=False,human_phase=0,
                             operations=4,end=1,phase=128,legal_x=8,legal_y=8),
                         fixture_operations=2049,cases=[dict(row,name=name) for name in names]))
+        job=dict(generation=1,resolver_operations=1,request_cpu_cycles=1,total_worker_cpu_cycles=1,
+                 maximum_worker_cpu_cycles=1,maximum_worker_operations=4,worker_calls=1,stack_bytes=256)
+        failed=dict(passed=True,all_72_metadata_preserved=True,canonical_preserved=True,
+                    history_bytes_preserved=True,cache_generation_status_preserved=True,
+                    ready_result_preserved=True,failed_seek_cpu_cycles=1)
+        cache=dict(passed=True,maximum_stack_bytes=256,
+                   cold_warm=dict(passed=True,state_path_output_equal=True,prefix_equal=True,
+                       live_history_output_preserved=True,original=dict(job,cache_hit=False),
+                       cold=dict(job,cache_hit=False),warm=dict(job,cache_hit=True,resolver_operations=0)),
+                   failed_seek_controls=[dict(failed,name=name) for name in
+                       ('corrupt-checkpoint-schema','corrupt-checkpoint-simulation','corrupt-checkpoint-state',
+                        'corrupt-operation-id','out-of-range-high')],
+                   invalidation=dict(passed=True,generation_exhausted=True,
+                       negative_controls=['seek-back-ready','failed-seek-preserves','different-attempt',
+                           'cancel','eviction','exhaustion','stale-generation'],
+                       after_cancel_resolver_operations=1,different_attempt_resolver_operations=1,
+                       oldest_after_eviction=64,evicted_incoming_origin=1))
+        report['preview_validation']['cache_validation']=cache
         self.assertTrue(campaign.required_extent(case,report))
+        for area,key,value in (('cold_warm','state_path_output_equal',False),
+                               ('invalidation','generation_exhausted',False),
+                               ('invalidation','oldest_after_eviction',1)):
+            partial=json.loads(json.dumps(report));partial['preview_validation']['cache_validation'][area][key]=value
+            with self.subTest(cache=(area,key)):self.assertFalse(campaign.required_extent(case,partial))
+        partial=json.loads(json.dumps(report));partial['preview_validation']['cache_validation']['cold_warm']['warm']['resolver_operations']=1
+        self.assertFalse(campaign.required_extent(case,partial))
+        partial=json.loads(json.dumps(report));partial['preview_validation']['cache_validation']['failed_seek_controls'][0]['all_72_metadata_preserved']=False
+        self.assertFalse(campaign.required_extent(case,partial))
         for key,value in (('passed',False),('ai',False),('frozen',False),('legal_position_verified',False),
                           ('operations',0),('end',2),('phase',31),('legal_x',256),('human_phase',128),
                           ('ai_guard_isolated',True),('rejection_scope','ai-flag-alone')):

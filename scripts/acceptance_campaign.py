@@ -248,7 +248,7 @@ def required_extent(case,report):
                 or evidence.get('target_role')!='legacy-validator-reference'
                 or evidence.get('actual_execution')!='actual-68000-cpu-only'
                 or validation.get('passed') is not True
-                or validation.get('preview_storage_bytes')!=5546 or validation.get('metadata_bytes')!=106
+                or validation.get('preview_storage_bytes')!=5550 or validation.get('metadata_bytes')!=110
                 or type(validation.get('fixture_operations')) is not int or validation['fixture_operations']<2049
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={
@@ -292,6 +292,42 @@ def required_extent(case,report):
             for field in ('resolver_operations','resolver_worker_calls','resolver_inclusive_cpu_cycles',
                           'repeat_resolver_operations','repeat_resolver_worker_calls','repeat_resolver_cpu_cycles'):
                 if type(row.get(field)) is not int or row[field]<0:return False
+        cache=validation.get('cache_validation') or {}
+        paired=cache.get('cold_warm') or {}
+        failures=cache.get('failed_seek_controls')
+        invalidation=cache.get('invalidation') or {}
+        if (cache.get('passed') is not True
+                or any(paired.get(key) is not True for key in
+                       ('passed','state_path_output_equal','prefix_equal','live_history_output_preserved'))
+                or type(cache.get('maximum_stack_bytes')) is not int or cache['maximum_stack_bytes']<=0):return False
+        for name in ('original','cold','warm'):
+            job=paired.get(name) or {}
+            if (job.get('cache_hit') is not (name=='warm')
+                    or type(job.get('resolver_operations')) is not int
+                    or (job['resolver_operations']!=0 if name=='warm' else job['resolver_operations']<=0)
+                    or type(job.get('maximum_worker_operations')) is not int
+                    or not 0<job['maximum_worker_operations']<=4):return False
+            for field in ('generation','request_cpu_cycles','total_worker_cpu_cycles','maximum_worker_cpu_cycles',
+                          'worker_calls','stack_bytes'):
+                if type(job.get(field)) is not int or job[field]<=0:return False
+            if job['stack_bytes']>cache['maximum_stack_bytes']:return False
+        if (not isinstance(failures,list) or len(failures)!=5
+                or {row.get('name') for row in failures if isinstance(row,dict)}!={
+                    'corrupt-checkpoint-schema','corrupt-checkpoint-simulation','corrupt-checkpoint-state',
+                    'corrupt-operation-id','out-of-range-high'}):return False
+        for row in failures:
+            if (any(row.get(key) is not True for key in ('passed','all_72_metadata_preserved',
+                    'canonical_preserved','history_bytes_preserved','cache_generation_status_preserved',
+                    'ready_result_preserved'))
+                    or type(row.get('failed_seek_cpu_cycles')) is not int or row['failed_seek_cpu_cycles']<=0):return False
+        if (invalidation.get('passed') is not True or invalidation.get('generation_exhausted') is not True
+                or not {'seek-back-ready','failed-seek-preserves','different-attempt','cancel','eviction',
+                        'exhaustion','stale-generation'}.issubset(set(invalidation.get('negative_controls') or []))):return False
+        for field in ('after_cancel_resolver_operations','different_attempt_resolver_operations'):
+            if type(invalidation.get(field)) is not int or invalidation[field]<=0:return False
+        for field in ('oldest_after_eviction','evicted_incoming_origin'):
+            if type(invalidation.get(field)) is not int or invalidation[field]<0:return False
+        if invalidation['oldest_after_eviction']<=invalidation['evicted_incoming_origin']:return False
         return True
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
