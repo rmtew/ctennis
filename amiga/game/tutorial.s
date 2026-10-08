@@ -154,19 +154,40 @@ tutorial_tick:
         bne     .draw_only
         cmpi.w  #TUTORIAL_COMPUTING,tutorial_status
         bne     .draw_only
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        bne     .preview_pending
+        ; Result/footer preparation has its own admission, rather than hiding
+        ; that extra tail behind the smaller worker reserve.
         bsr     tutorial_work_admitted
         tst.l   d0
         beq     .done
+        bra     .preview_ready
+.preview_pending:
+        moveq   #3,d6
+.preview_slice:
+        ; Re-sample remaining time at every public yield. A smaller logical
+        ; budget can use headroom that cannot admit the four-operation worker.
+        bsr     tutorial_work_remaining
+        moveq   #4,d5
+        cmpi.l  #10000,d0
+        bcc     .preview_admitted
+        moveq   #2,d5
+        cmpi.l  #7000,d0
+        bcs     .done
+.preview_admitted:
         move.l  tutorial_generation,d0
-        moveq   #4,d1
+        move.l  d5,d1
         jsr     game_preview_step
         tst.l   d0
         beq     .unavailable
-        moveq   #4,d1
+        move.l  d5,d1
         sub.w   game_preview_budget,d1
         add.w   d1,tutorial_progress_operations
         cmpi.w  #PREVIEW_READY,game_preview_status
-        bne     .done
+        beq     .done
+        dbra    d6,.preview_slice
+        bra     .done
+.preview_ready:
         move.l  tutorial_generation,d0
         jsr     game_preview_result
         tst.l   d0
@@ -195,6 +216,17 @@ tutorial_tick:
 
 ; Guest elapsed timer gates one work owner. Estimate until native measurement.
 tutorial_work_admitted:
+        bsr     tutorial_work_remaining
+        cmpi.l  #10000,d0
+        bcs     .decline
+        moveq   #1,d0
+        rts
+.decline:
+        moveq   #0,d0
+        rts
+
+; Remaining E-clock ticks under the original callback epoch and deadline.
+tutorial_work_remaining:
         jsr     read_sim_timer
         move.l  last_timer_count,d1
         sub.l   d0,d1
@@ -203,9 +235,6 @@ tutorial_work_admitted:
         bcs     .decline
         sub.l   d1,d0
         bcs     .decline
-        cmpi.l  #10000,d0
-        bcs     .decline
-        moveq   #1,d0
         rts
 .decline:
         moveq   #0,d0
