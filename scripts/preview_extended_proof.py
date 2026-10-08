@@ -350,9 +350,12 @@ def partial_replacement(executable):
             expected=bytearray(cpu.state())
             player=symbols['game_play_state']-symbols['game_core_state']+candidate['end']*10
             expected[player+3]=changed_x;expected[player+2]=y
-            replacement_cycles=[]
+            replacement_cycles=[];replacement_operations=[]
             for _ in range(8192):
+                before=sum(cpu.visits.get(pc,0) for pc in bodies)
                 replacement_cycles.append(call_checked(cpu,'game_preview_step',{0:generation+1,1:1},saved))
+                replacement_operations.append(sum(cpu.visits.get(pc,0) for pc in bodies)-before)
+                assert replacement_operations[-1]<=1
                 assert cpu.cpu.r_reg(0)==1
                 if field(cpu,'game_preview_status')==2:break
                 assert field(cpu,'game_preview_status')==1
@@ -365,8 +368,11 @@ def partial_replacement(executable):
                 replacement_resolver_worker_calls=len(replacement_cycles),
                 replacement_resolver_cpu_cycles=sum(replacement_cycles),
                 request_cpu_cycles=request_cycles,replacement_cpu_cycles=replace_cycles,
-                maximum_worker_cpu_cycles=max(cycles),maximum_worker_operations=max(operations),
-                worker_calls=len(cycles)))
+                maximum_worker_cpu_cycles=max(cycles+replacement_cycles),
+                maximum_worker_operations=max(operations+replacement_operations),
+                old_phase_worker_calls=len(cycles),
+                maximum_replacement_resolver_cpu_cycles=max(replacement_cycles),
+                worker_calls=len(cycles)+len(replacement_cycles)))
             call_checked(cpu,'game_preview_cancel',{0:generation+1},saved);assert cpu.cpu.r_reg(0)==1
         cpu.audit_reads()
         return dict(passed=True,cases=records,maximum_stack_bytes=cpu.stack_bytes)

@@ -307,11 +307,15 @@ def preview_a1_extent(stage):
             or limit.get('outgoing_path_claimed') is not False):return False
     for name,phase in (('replacement-resolve',1),('replacement-held',3)):
         row=rows[name]
-        if (not flags(row, ('passed','cold_restart','old_and_partial_results_unavailable','full_live_history_output_preserved'))
+        if (not flags(row, ('passed','cold_restart','old_and_partial_results_unavailable',
+                           'full_live_history_output_preserved','edited_only_position_changed'))
                 or row.get('phase')!=phase or not integer(row.get('retired_generation'),1,0xfffffffe)
                 or row.get('new_generation')!=row['retired_generation']+1 or not integer(row.get('partial_prefix_samples'))
+                or any(not integer(row.get(key),0,255) for key in ('old_x','old_y','new_x','new_y'))
+                or (row['old_x'],row['old_y'])==(row['new_x'],row['new_y'])
                 or any(not integer(row.get(key),1) for key in ('request_cpu_cycles','replacement_cpu_cycles',
-                      'maximum_worker_cpu_cycles','worker_calls','maximum_stack_bytes'))):return False
+                      'maximum_worker_cpu_cycles','worker_calls','maximum_stack_bytes',
+                      'replacement_resolver_worker_calls','replacement_resolver_cpu_cycles'))):return False
     lifecycle=rows['non-dispatch-lifecycle']
     if (not flags(lifecycle, ('passed','clear_latch_result_order_preserved','reset_not_executed'))
             or lifecycle.get('reset_operations')!=['game_core_init','game_core_select','game_core_return_title']

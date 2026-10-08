@@ -33,6 +33,8 @@ def preview_a1_report():
     miss=accepted();miss.update(classes=['no-contact','no-contact'],no_contact_outgoing_path_claimed=False)
     def replacement(phase):
         return dict(passed=True,phase=phase,retired_generation=1,new_generation=2,cold_restart=True,
+            old_x=128,old_y=128,new_x=129,new_y=128,edited_only_position_changed=True,
+            replacement_resolver_worker_calls=1,replacement_resolver_cpu_cycles=1,
             old_and_partial_results_unavailable=True,full_live_history_output_preserved=True,partial_prefix_samples=0,
             request_cpu_cycles=1,replacement_cpu_cycles=1,maximum_worker_cpu_cycles=1,worker_calls=1,maximum_stack_bytes=204)
     lifecycle=[]
@@ -143,6 +145,7 @@ class CampaignTests(unittest.TestCase):
         report=preview_a1_report();self.assertTrue(campaign.preview_a1_extent(report))
         changes=[('title-dual-rejection','lifecycle',1),('limit-256','samples',255),
                  ('limit-256','outgoing_path_claimed',True),('replacement-held','phase',1),
+                 ('replacement-held','new_x',128),('replacement-resolve','replacement_resolver_worker_calls',0),
                  ('replacement-resolve','new_generation',1),('truncated-completed-context','completed_kind',0),
                  ('truncated-completed-context','incoming_origin',64),('truncated-completed-context','cache_valid',True),
                  ('non-dispatch-lifecycle','reset_not_executed',False)]
