@@ -59,4 +59,6 @@ def cases():
              'tests/preview-native-pal/report.json'),
         Case('preview-native-ntsc', ('scripts/run_preview_native.py','--ntsc'),
              'tests/preview-native-ntsc/report.json'),
+        Case('tutorial-court-pal', ('scripts/run_tutorial_capture.py',),
+             'tests/tutorial-court-pal/report.json'),
     ]
