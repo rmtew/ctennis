@@ -236,8 +236,17 @@ def tagged_processes(campaign_id, owner=None):
                 if identity:found.append(identity)
         except FileNotFoundError:pass
         except PermissionError:
+            # /proc/environ can deny access while a process is exiting, after
+            # its first stat read. Recheck the complete identity before calling
+            # that a live ownership ambiguity; never waive a live denial.
+            current_identity=process_identity(int(item.name))
+            if not current_identity or current_identity!=identity:continue
             # Other users are outside this controller's process ownership.
-            if item.stat().st_uid==os.getuid():raise RuntimeError('Cannot verify owned descendant identity')
+            try:
+                same_user=item.stat().st_uid==os.getuid()
+            except FileNotFoundError:
+                continue
+            if same_user:raise RuntimeError('Cannot verify owned descendant identity')
     return found
 
 def require_idle_workspace(root=ROOT):

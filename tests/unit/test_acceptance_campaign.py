@@ -159,5 +159,27 @@ class CampaignTests(unittest.TestCase):
     def test_different_host_workspace_owner_is_ambiguous(self):
         atomic_json(self.root/'build/acceptance-active.json',{'campaign':'old','controller':{'host':'other'}})
         with self.assertRaisesRegex(RuntimeError,'another host'):campaign.require_idle_workspace(self.root)
+    def test_exiting_process_permission_race_is_not_live_owner(self):
+        from unittest.mock import Mock
+        owner=dict(campaign.process_identity(),start='1',group=-1)
+        item=Mock();item.name='999999'
+        item.__truediv__=Mock(return_value=Mock())
+        (item/'environ').read_bytes.side_effect=PermissionError('exiting')
+        identity=dict(owner,pid=999999,start='2',group=-2)
+        with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'process_identity',side_effect=[owner,identity,None]):
+            self.assertEqual(campaign.tagged_processes('old',owner),[])
+    def test_live_same_user_permission_denial_still_blocks(self):
+        from unittest.mock import Mock
+        owner=dict(campaign.process_identity(),start='1',group=-1)
+        item=Mock();item.name='999999'
+        item.__truediv__=Mock(return_value=Mock())
+        (item/'environ').read_bytes.side_effect=PermissionError('live')
+        item.stat.return_value.st_uid=os.getuid()
+        identity=dict(owner,pid=999999,start='2',group=-2)
+        with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'process_identity',side_effect=[owner,identity,identity]):
+            with self.assertRaisesRegex(RuntimeError,'Cannot verify'):
+                campaign.tagged_processes('old',owner)
 
 if __name__=='__main__':unittest.main()
