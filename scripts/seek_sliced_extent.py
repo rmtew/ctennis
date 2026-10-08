@@ -109,7 +109,7 @@ def required_seek_sliced_extent(report):
     if compiled[IMAGES['native'][0]]==compiled[IMAGES['standalone'][0]]:return False
     native=proofs['native'];words=native.get('restored_adapter_words')
     if (not isinstance(words,dict) or set(words)!=ADAPTERS
-            or any(not encoded(v,2) for v in words.values())
+            or any(v!='40e7' for v in words.values())
             or any(native.get(k) is not True for k in ('adapters_restored_before_freeze',
                 'adapter_words_preserved','full_bus_nonstate_guard','frozen_history_write_guard',
                 'semantic_observer_read_only','setup_traps_outside_evidence'))):return False

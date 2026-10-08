@@ -69,7 +69,7 @@ class SeekSlicedExtent(unittest.TestCase):
         for role,(path,base) in IMAGES.items():
             item=copy.deepcopy(proof);item.update(image_role=role,base=base,
                 executable_path=path,image_sha256=compiled[path]);proofs[role]=item
-        proofs['native'].update(restored_adapter_words={n:'4e71' for n in ADAPTERS},
+        proofs['native'].update(restored_adapter_words={n:'40e7' for n in ADAPTERS},
             **{k:True for k in ('adapters_restored_before_freeze','adapter_words_preserved',
                 'full_bus_nonstate_guard','frozen_history_write_guard','semantic_observer_read_only',
                 'setup_traps_outside_evidence')})
@@ -89,6 +89,7 @@ class SeekSlicedExtent(unittest.TestCase):
                     (('proofs','native','image_sha256'),'01'*32),
                     (('proofs','native','image_role'),'standalone'),
                     (('proofs','native','restored_adapter_words'),{}),
+                    (('proofs','native','restored_adapter_words'),{n:'4e71' for n in ADAPTERS}),
                     (('proofs','native','adapter_words_preserved'),False)]:
                 changed=copy.deepcopy(report);node=changed['seek_sliced_validation']
                 for key in path[:-1]:node=node[key]
