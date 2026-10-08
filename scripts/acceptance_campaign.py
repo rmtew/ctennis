@@ -650,9 +650,10 @@ def preview_batch_extent(stage):
                     'selected_history_output_preserved','semantic_trace_equal_across_budgets'))
                 or not isinstance(row.get('owner_transitions'),list)
                 or any(not isinstance(name,str) for name in row['owner_transitions'])
-                or set(row['owner_transitions'])!=set(transitions)
+                or row['owner_transitions']!=transitions
                 or not integer(row.get('ownership_restore_checks'),1)
                 or not integer(row.get('worker_calls'),1,8192)
+                or not integer(row.get('public_restore_checks'),1)
                 or row.get('public_restore_checks')!=row['worker_calls']+3):return False
         counts=row.get('worker_body_counts')
         if (not isinstance(counts,list) or len(counts)!=row['worker_calls']
