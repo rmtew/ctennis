@@ -653,6 +653,17 @@ hex_byte:
         move.b  (a1,d0.w),(a0)+
         rts
 
+; Keep the renderer's small PC-relative working tables beside its code. The
+; shared core/history/preview below can grow without widening these hot LEAs.
+prepared_field_values: dc.b 0,0,0,0,0,1
+palette_targets:
+        dc.l cop_spr_pair0_c1+2,cop_spr_pair0_c2+2
+        dc.l cop_spr_pair1_c1+2,cop_spr_pair1_c2+2
+        dc.l cop_spr_pair2_c1+2,cop_spr_pair2_c2+2
+        dc.l cop_spr_pair3_c1+2,cop_spr_pair3_c2+2
+hex_digits:        dc.b "0123456789ABCDEF"
+        even
+
         include "amiga/game/paula_output.s"
         include "amiga/game/keyboard.s"
         include "amiga/game/core.s"
@@ -698,7 +709,6 @@ simulation_started_updates: dc.w 0
 presentation_frames: dc.w 0
 missed_presentation_deadlines: dc.w 0
 log_timer:         dc.w 50
-prepared_field_values: dc.b 0,0,0,0,0,1
         even
 pair_colours:      dcb.b 8,0
 sprite_bridge_error: dc.b 0
@@ -706,11 +716,6 @@ active_ball_slot: dc.b $ff
         even
 sprite_targets:
         dc.l sprite0,sprite1,sprite2,sprite3,sprite4,sprite5,sprite6,sprite7
-palette_targets:
-        dc.l cop_spr_pair0_c1+2,cop_spr_pair0_c2+2
-        dc.l cop_spr_pair1_c1+2,cop_spr_pair1_c2+2
-        dc.l cop_spr_pair2_c1+2,cop_spr_pair2_c2+2
-        dc.l cop_spr_pair3_c1+2,cop_spr_pair3_c2+2
 log_text:          dc.b "LIVE F="
 log_frames:        dc.b "00 U="
 log_updates:       dc.b "00 I="
@@ -735,7 +740,6 @@ log_mode:         dc.b "00 DG="
 log_display_game_b: dc.b "00 DL="
 log_deadlines: dc.b "0000"
                   dc.b 0
-hex_digits:        dc.b "0123456789ABCDEF"
         even
 pointer_sources:
         dc.l plane0,plane1,plane2,plane3
