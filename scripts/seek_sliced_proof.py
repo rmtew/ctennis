@@ -17,7 +17,8 @@ TARGET=569
 
 def public(cpu):
     return dict(state=cpu.state(),metadata=block(cpu,'game_history_state','game_history_state_end'),
-        store=block(cpu,'game_history_buffer','game_history_buffer_end'),events=deepcopy(cpu.events))
+        store=block(cpu,'game_history_buffer','game_history_buffer_end'),events=deepcopy(cpu.events),
+        native_intents=deepcopy(getattr(cpu,'native_semantic_events',[])))
 
 
 def full(cpu):
@@ -148,7 +149,7 @@ def proof(executable,stream,base=0x10000,native=False,role='standalone'):
         position_offset=symbols['game_history_position']-symbols['game_history_state']
         expected_metadata[position_offset:position_offset+8]=TARGET.to_bytes(8,'big')
         assert final['state']==references[TARGET][0] and final['state']!=selected['state']
-        assert final['metadata']==bytes(expected_metadata) and final['store']==selected['store'] and final['events']==selected['events']
+        assert final['metadata']==bytes(expected_metadata) and final['store']==selected['store'] and final['events']==selected['events'] and final['native_intents']==selected['native_intents']
         # The new owner guards must still permit a real preview after commit.
         candidate=next(((ordinal,row) for ordinal,row in enumerate(attempts(cpu))
             if row[0]==TARGET and row[1] in (1,2)),None)
@@ -183,7 +184,8 @@ def proof(executable,stream,base=0x10000,native=False,role='standalone'):
                 before_metadata=before['metadata'].hex(),after_metadata=after['metadata'].hex(),
                 before_store_sha256=hashlib.sha256(before['store']).hexdigest(),after_store_sha256=hashlib.sha256(after['store']).hexdigest(),
                 before_job=saved[1].hex(),after_job=block(cpu,'game_history_seek_storage','game_history_seek_storage_end').hex(),
-                before_live_outputs=before['events'],after_live_outputs=after['events']))
+                before_live_outputs=before['events'],after_live_outputs=after['events'],
+                before_native_intents=before['native_intents'],after_native_intents=after['native_intents']))
         sync_failure('range',836)
         for name,offset in (('schema',8),('simulation',10),('state',12+symbols['game_entropy_policy']-symbols['game_core_state'])):
             address=cp+offset;original=cpu.mem.r8(address);cpu.mem.w8(address,0xff)
@@ -254,7 +256,7 @@ def carry_proof(executable,base,native):
         assert cursor(cpu)==offset+97 and cursor(cpu)>>32==1
         bodies={symbols[n+'_body'] for n in OPERATIONS}
         rows=[]
-        for target in (offset,(1<<32)-1,(1<<32)+17,offset+97):
+        for target in (offset,(1<<32)-1,1<<32,(1<<32)+1,(1<<32)+17,offset+97):
             ledger=cpu.native_semantic_events if native else cpu.events
             start=len(ledger)
             sync_cycles=checked(cpu,'game_history_seek',{0:target>>32,1:target&0xffffffff})
@@ -280,6 +282,7 @@ def carry_proof(executable,base,native):
             assert events==sync_events
             commit_cycles=checked(cpu,'game_history_seek_commit',{0:generation(cpu)})
             assert cpu.state()==sync_state and cursor(cpu,'game_history_position')==target
+            assert public(cpu)['events']==selected['events'] and public(cpu)['native_intents']==selected['native_intents']
             rows.append(dict(target=target,origin=origin,body_operations=count,sync_state=sync_state.hex(),
                 sliced_state=cpu.state().hex(),sync_events=sync_events,sliced_events=events,position=target,
                 working_rows=working_rows,begin_cpu_cycles=begin_cycles,sync_cpu_cycles=sync_cycles,commit_cpu_cycles=commit_cycles))

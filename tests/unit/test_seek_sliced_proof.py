@@ -8,7 +8,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from match_core_cpu import Core
-from run_seek_sliced_proof import input_stream,INPUT_SHA
+from run_seek_sliced_proof import input_stream,proof_inputs,INPUT,INPUT_SHA
+from native_tools import ROOT
 
 
 class SeekObservationOwner(unittest.TestCase):
@@ -45,6 +46,16 @@ class SeekObservationOwner(unittest.TestCase):
 
 
 class ActualPrefixContract(unittest.TestCase):
+    def test_provenance_call_arity_and_build_tools_are_preserved(self):
+        with patch('run_seek_sliced_proof.inputs_for',return_value=({ROOT/'amiga/main.s'},
+                {'assembler':{'sha256':'assembler-pin'},'copperline':{'sha256':'emulator-pin'}})) as declared, \
+                patch('run_seek_sliced_proof.cpu_tool_inputs',return_value=({ROOT/'cpu-provider'}, {'version':'cpu-pin'})):
+            paths,tools=proof_inputs({'source_files':{'raw-source':'hash'}})
+        declared.assert_called_once_with('build','scripts/run_seek_sliced_proof.py')
+        self.assertEqual(paths,{ROOT/'amiga/main.s',ROOT/'cpu-provider',ROOT/'raw-source',INPUT})
+        self.assertEqual(tools,{'assembler':{'sha256':'assembler-pin'},'copperline':{'sha256':'emulator-pin'},
+            'machine68k':{'version':'cpu-pin'}})
+
     def document(self):
         return dict(initialization=dict(operation='game_core_init',arguments=[]),
             source_files={'retained-source':'source-sha'},

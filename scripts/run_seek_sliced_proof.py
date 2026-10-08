@@ -23,14 +23,21 @@ def input_stream():
     return document,[(r['operation'],r['arguments']) for r in document['rows']]
 
 
+def proof_inputs(document):
+    paths,tools=inputs_for('build','scripts/run_seek_sliced_proof.py')
+    paths|={INPUT}|{ROOT/p for p in document['source_files']}
+    cpu_paths,machine=cpu_tool_inputs();paths|=cpu_paths
+    tools=dict(tools,machine68k=machine)
+    return paths,tools
+
+
 def run():
     path=ROOT/'build/tests/seek-sliced-cpu/report.json'
     transaction=ReportRun([path],'seek-sliced-cpu','maintained-native','bounded actual CPU paused navigation')
     try:
         document,stream=input_stream()
-        paths=inputs_for('scripts/run_seek_sliced_proof.py')|{INPUT}|{ROOT/p for p in document['source_files']}
-        cpu_paths,machine=cpu_tool_inputs();paths|=cpu_paths
-        transaction.meta.update(files=snapshot(paths),tools={'machine68k':machine},
+        paths,tools=proof_inputs(document)
+        transaction.meta.update(files=snapshot(paths),tools=tools,
             target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only',
             target_scope='evidence.target is a compatibility reference; no actual native display execution.')
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
