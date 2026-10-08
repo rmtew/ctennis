@@ -223,6 +223,39 @@ def compatible_receipt(case, root=ROOT, check_history=True):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id=='history-cpu':
+        validation=report.get('history_validation') or {}
+        proofs=validation.get('proofs') or {}
+        if (report.get('execution')!='actual-68000-cpu-only' or validation.get('passed') is not True
+                or set(proofs)!={'empty','long','cursor-wrap','relocated','native-sinks'}
+                or any(p.get('passed') is not True for p in proofs.values())):return False
+        if proofs['empty'].get('operations')!=0 or proofs['empty'].get('boundaries_checked')!=1:return False
+        for name in ('long','cursor-wrap','relocated','native-sinks'):
+            proof=proofs[name];retained=proof.get('retained_operations');boundaries=proof.get('boundaries_checked');seeks=proof.get('seeks')
+            if (type(retained) is not int or retained<=0 or type(boundaries) is not int or boundaries!=retained+1
+                    or type(seeks) is not int or seeks<2*boundaries or not proof.get('negative_controls')):return False
+        long=proofs['long'];kinds=long.get('completed_episode_kinds') or {};wrap=proofs['cursor-wrap']
+        return (long.get('operations',0)>6*1024 and long.get('tick_wraps',0)>0
+                and all(kinds.get(str(kind),kinds.get(kind,0))>0 for kind in (1,2))
+                and wrap.get('low_longword_wrap') is True and wrap.get('latest',0)>>32==1
+                and 'native-presentation-and-hardware-sinks-suppressed' in proofs['native-sinks']['negative_controls'])
+    if case.id in ('history-pal','history-ntsc'):
+        rows=report.get('rows',[])
+        validation=report.get('history_validation') or {}
+        seek=validation.get('seek') or {}
+        retained=validation.get('retained_operations')
+        boundaries=seek.get('boundaries_checked')
+        seeks=seek.get('seeks')
+        seconds=report.get('seconds')
+        return (report.get('history') is True and isinstance(seconds,(int,float)) and seconds>=16
+                and report.get('target')==dict(video='NTSC' if case.id=='history-ntsc' else 'PAL',
+                                              cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)
+                and isinstance(rows,list) and bool(rows)
+                and (report.get('summary') or {}).get('operations')==len(rows)
+                and validation.get('passed') is True and validation.get('native_buffer_equal') is True
+                and type(retained) is int and retained>0 and seek.get('retained_operations')==retained
+                and type(boundaries) is int and boundaries==retained+1
+                and type(seeks) is int and seeks>=2*boundaries and bool(seek.get('negative_controls')))
     if case.id=='video-standard':
         rows=report.get('rows',[])
         return (report.get('state')=='complete' and [r.get('frequency') for r in rows]==list(range(256))

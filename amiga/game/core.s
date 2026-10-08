@@ -12,11 +12,7 @@ GAME_ENTROPY_LEGACY_SHIFT equ 1
         include "amiga/game/integration.s"
 
 ; Complete initialization, including reserved bytes. D0/D7/A0 are scratch.
-        ifd CORE_TRACE
 game_core_init_body:
-        else
-game_core_init:
-        endif
         lea     game_core_state,a0
         move.w  #GAME_CORE_STATE_SIZE-1,d7
 .clear: clr.b   (a0)+
@@ -61,13 +57,8 @@ ui_demo_entropy:
         rts
 
 ; A title request is a simulation command. UI publication is a separate sink.
-        ifd CORE_TRACE
 game_core_return_title_body:
 game_core_return_title_internal equ game_core_return_title_body
-        else
-game_core_return_title:
-game_core_return_title_internal equ game_core_return_title
-        endif
         clr.b   game_auto_continue
         clr.b   game_playback_active
         clr.b   game_core_command

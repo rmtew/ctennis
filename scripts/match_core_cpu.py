@@ -43,6 +43,9 @@ class Core:
         self.regions = []
         self.readonly = dict(readonly or {})
         self.events, self.writes, self.reads = [], set(), set()
+        self.mutable_regions = [(symbols['game_history_state'], symbols['game_history_state_end']),
+                                (symbols['game_history_buffer'], symbols['game_history_buffer_end'])]
+
         self.instructions, self.pcs, self.visits = set(), set(), {}
         self.stack_low = STACK_TOP
         self.total_cycles = self.last_cycles = 0
@@ -91,7 +94,7 @@ class Core:
         def invoke(opcode, pc):
             def read(symbol, size):
                 address = self.symbols[symbol]
-                if not self.start <= address <= self.stop-size:
+                if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
                     raise AssertionError('Adapter observes out-of-state data: ' + symbol)
                 return bytes(self.mem.r_block(address, size))
             if name == 'game_render_sprites':
@@ -139,7 +142,7 @@ class Core:
                 return
             raise AssertionError(f'Forbidden return-trap access {mode}{size} at {address:#x}')
         if mode == 'W':
-            if not self.start <= address <= self.stop-size:
+            if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
                 raise AssertionError(f'Out-of-state write {address:#x}')
             self.writes.update(range(address, address+size))
         else:
@@ -204,6 +207,10 @@ class Core:
 
     def audit_reads(self):
         allowed = set(range(self.start, self.stop)) | self.instructions
+        for low,high in self.mutable_regions:
+            allowed.update(range(low,high))
+        allowed.update(range(self.symbols['game_history_operations'], self.symbols['game_history_operations']+36))
+        allowed.update(range(self.symbols['game_history_clip_bounds'],self.symbols['game_history_clip_bounds_end']))
         for symbol, size in self.readonly.items():
             address = self.symbols[symbol] if isinstance(symbol, str) else symbol
             allowed.update(range(address, address+size))

@@ -1,11 +1,7 @@
 ; Shared main-path round lifecycle. Poll between callbacks, never from a
 ; captured callback kind. Scoring owns the service mode; tail clocks/audio
 ; continue while gameplay is paused. Presentation/audio remain native integration fields.
-        ifd CORE_TRACE
 game_round_poll_body:
-        else
-game_round_poll:
-        endif
         movem.l d0-d7/a0-a4,-(sp)
         tst.b   game_restart_context
         beq.s   .non_menu

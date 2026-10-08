@@ -30,9 +30,43 @@ class CampaignTests(unittest.TestCase):
         with patch.object(campaign,'tagged_processes',return_value=[]):
             return campaign.worker(self.directory,[self.case],self.root)
     def test_catalog_stable_complete(self):
-        self.assertEqual(len(cases()),41)
+        self.assertEqual(len(cases()),44)
         self.assertIn('takeover-tail',{c.id for c in cases()})
         self.assertIn('takeover-sound',{c.id for c in cases()})
+    def test_history_extent_requires_native_recorder_and_every_boundary(self):
+        case=next(c for c in cases() if c.id=='history-pal')
+        report={'passed':True,'history':True,'seconds':16,
+                'target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0),
+                'rows':[{}],'summary':{'operations':1},
+                'history_validation':{'passed':True,'native_buffer_equal':True,'retained_operations':64,
+                                      'seek':{'retained_operations':64,'boundaries_checked':65,
+                                              'seeks':130,'negative_controls':['invalid-schema']}}}
+        self.assertTrue(campaign.required_extent(case,report))
+        for path,value in ((('history',),False),(('seconds',),15),(('target','video'),'NTSC'),
+                           (('history_validation','native_buffer_equal'),False),
+                           (('history_validation','seek','boundaries_checked'),64),
+                           (('history_validation','seek','seeks'),129),
+                           (('history_validation','seek','negative_controls'),[])):
+            partial=json.loads(json.dumps(report));node=partial
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(campaign.required_extent(case,partial))
+    def test_history_cpu_extent_requires_wrap_hits_misses_and_native_sinks(self):
+        case=next(c for c in cases() if c.id=='history-cpu')
+        proof={'passed':True,'retained_operations':64,'boundaries_checked':65,'seeks':130,
+               'negative_controls':['native-presentation-and-hardware-sinks-suppressed']}
+        proofs={name:dict(proof) for name in ('long','cursor-wrap','relocated','native-sinks')}
+        proofs['empty']={'passed':True,'operations':0,'boundaries_checked':1}
+        proofs['long'].update(operations=6145,tick_wraps=1,completed_episode_kinds={'1':1,'2':1})
+        proofs['cursor-wrap'].update(low_longword_wrap=True,latest=(1<<32)+1089)
+        report={'passed':True,'execution':'actual-68000-cpu-only',
+                'history_validation':{'passed':True,'proofs':proofs}}
+        self.assertTrue(campaign.required_extent(case,report))
+        for name,key,value in (('long','operations',6144),('long','completed_episode_kinds',{'1':1}),
+                               ('cursor-wrap','latest',1089),('native-sinks','negative_controls',[]),
+                               ('relocated','boundaries_checked',64)):
+            partial=json.loads(json.dumps(report));partial['history_validation']['proofs'][name][key]=value
+            with self.subTest(name=name,key=key):self.assertFalse(campaign.required_extent(case,partial))
     def test_identity_start_not_pid_only(self):
         identity=campaign.process_identity();self.assertTrue(campaign.alive(identity))
         identity=dict(identity,start='wrong');self.assertFalse(campaign.alive(identity))

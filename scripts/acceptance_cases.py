@@ -44,4 +44,11 @@ def cases():
         Case('metrics',('scripts/native_metrics.py','--require-runtime'),category='host'),
     ]
     assert len(rows)==41 and len({r.id for r in rows})==41
-    return rows
+    return rows + [
+        Case('history-cpu', ('scripts/run_history_proof.py',),
+             'tests/history-cpu/report.json', category='host'),
+        Case('history-pal', ('scripts/run_shared_match_core.py','--history','--seconds=16'),
+             'tests/shared-match-core-pal-history/report.json'),
+        Case('history-ntsc', ('scripts/run_shared_match_core.py','--history','--seconds=16','--ntsc'),
+             'tests/shared-match-core-ntsc-history/report.json'),
+    ]

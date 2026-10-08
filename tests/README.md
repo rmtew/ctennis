@@ -34,6 +34,8 @@ WinUAE or physical-hardware coverage.
 | Entry point | Protection |
 |---|---|
 | `build_native_adf.py --self-test` | Repeatable packaging and release executable bytes. |
+| `run_history_proof.py` | Actual 68000 rolling checkpoint/seek boundaries, wrap, eviction, poison and native sink suppression. |
+| `run_shared_match_core.py --history --seconds=16` | Fresh PAL/NTSC recorder bytes and complete canonical/output equality; use campaign IDs `history-pal` / `history-ntsc`. |
 | `run_enhanced_menu_tests.py --adf` | Cold load, menu, help, pause and lifecycle through physical input. |
 | `run_native_inputs.py` | Raw input packets and key aliases through the native sampler. |
 | `run_video_standard_tests.py` | Actual startup selector for all 256 OS frequency-byte values. |

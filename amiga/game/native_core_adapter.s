@@ -75,6 +75,13 @@ game_native_commands:
 ; Called only after the core completed its semantic title transition.
 game_core_title_requested:
         core_trace_sink $104
+        move.w  sr,-(sp)
+        cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        move.w  (sp)+,sr
+        rts
+.history_live:
+        move.w  (sp)+,sr
         clr.b   ui_edges
         clr.b   ui_demo
         bsr     ui_begin_title

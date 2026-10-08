@@ -1,7 +1,8 @@
 # Tutorial mode: design and roadmap
 
-Status: implementation roadmap authorized on 7 October 2026. This document
-records the current tutorial design. It does not claim that the feature exists.
+Status: implementation roadmap authorized on 7 October 2026. The shared core
+and bounded history/seek are implemented; see [bounded history](bounded-history.md).
+Tutorial UI, previews and branching remain later increments.
 
 ## Purpose and scope
 

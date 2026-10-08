@@ -14,8 +14,9 @@
   is separate from the unexpanded target.
 - The current resource report has incomplete runtime coverage. Older complete
   reports are historical evidence. See [resource reporting](metrics/README.md).
-- Tutorial mode, bounded recording and seek are authorized in the
-  [tutorial roadmap](tutorial-mode-design.md) but are not implemented by that
-  document. The merged match-core proof is bounded; it is not a complete
-  deterministic production core. Persistent saves remain later work.
-  Reboot remains intentional after play.
+- The shared deterministic production core and bounded rolling history/seek are
+  implemented. The focused history evidence is described in
+  [bounded history](bounded-history.md). The tutorial court UI, isolated previews
+  and branching remain subsequent [roadmap](tutorial-mode-design.md) increments;
+  persistent saves remain later work. Synchronous isolated seek cycles do not
+  establish native display-frame deadlines. Reboot remains intentional after play.

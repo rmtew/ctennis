@@ -34,7 +34,7 @@ score_cache_changed:
         tst.b   d4
         beq     score_cache_commit
 score_patch_regions:
-        lea     score_patch_descriptors(pc),a0
+        lea     score_patch_descriptors,a0
         lea     prepared_field_values(pc),a4
         move.w  #SCORE_PATCH_COUNT-1,d7
 patch_next_score_pointer:
