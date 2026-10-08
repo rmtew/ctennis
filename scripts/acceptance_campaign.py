@@ -714,6 +714,9 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id=='seek-sliced-cpu':
+        from seek_sliced_extent import required_seek_sliced_extent
+        return required_seek_sliced_extent(report)
     if case.id in ('preview-native-pal','preview-native-ntsc'):
         from preview_native_extent import required_preview_native_extent
         return required_preview_native_extent(case.id,report)
