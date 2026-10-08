@@ -34,12 +34,16 @@ game_history_attach:
         move.l  a0,game_history_store
         move.b  #1,game_history_mode
         bsr     game_history_checkpoint
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         movem.l (sp)+,d2-d7/a1-a6
         moveq   #1,d0
         rts
 .invalid:
         clr.b   game_history_mode
         clr.l   game_history_store
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #0,d0
         rts
 
@@ -217,6 +221,8 @@ game_history_freeze:
         move.b  #2,game_history_mode
         move.l  game_history_cursor,game_history_position
         move.l  game_history_cursor+4,game_history_position+4
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #1,d0
         rts
 .invalid:
@@ -233,6 +239,8 @@ game_history_resume_latest:
         move.b  #1,game_history_mode
         move.l  game_history_cursor,game_history_position
         move.l  game_history_cursor+4,game_history_position+4
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #1,d0
         rts
 .invalid:
@@ -244,6 +252,67 @@ game_history_resume_latest:
 ; Replay emits the actual ordered semantic outputs; native sinks suppress their
 ; hardware/presentation work while mode=2. CPU adapters still observe outputs.
 game_history_seek:
+        cmpi.b  #2,game_history_mode
+        bne     .invalid
+        ; Keep failed envelope/opcode validation atomic for all 72 metadata bytes.
+        suba.w  #game_history_state_end-game_history_state,sp
+        lea     game_history_state,a0
+        move.l  sp,a1
+        moveq   #(game_history_state_end-game_history_state)/4-1,d6
+.backup:move.l  (a0)+,(a1)+
+        dbra    d6,.backup
+        bsr     game_history_seek_prepare
+        tst.l   d0
+        beq     .invalid_saved
+.restore:
+        move.l  game_history_selected,a1
+        adda.w  #12,a1
+        lea     game_core_state,a0
+        bsr     game_history_copy_state
+        move.l  game_history_origin+4,game_history_replay_low
+        st      game_history_replaying
+.loop:
+        tst.w   game_history_replay_count
+        beq.s   .success
+        bsr     game_history_record_address
+        moveq   #0,d6
+        move.w  (a0)+,d6
+        subq.w  #1,d6
+        lsl.w   #2,d6
+        lea     game_history_operations,a1
+        move.l  (a1,d6.w),a1
+        move.w  (a0)+,d0
+        move.w  (a0)+,d1
+        move.w  (a0)+,d2
+        move.w  (a0)+,d3
+        move.w  (a0)+,d4
+        move.w  (a0)+,d5
+        jsr     (a1)
+        addq.l  #1,game_history_replay_low
+        subq.w  #1,game_history_replay_count
+        bra.s   .loop
+.success:
+        move.l  game_history_target,game_history_position
+        move.l  game_history_target+4,game_history_position+4
+        clr.b   game_history_replaying
+        adda.w  #game_history_state_end-game_history_state,sp
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
+        moveq   #1,d0
+        rts
+.invalid_saved:
+        move.l  sp,a0
+        lea     game_history_state,a1
+        moveq   #(game_history_state_end-game_history_state)/4-1,d6
+.rollback:move.l (a0)+,(a1)+
+        dbra    d6,.rollback
+        adda.w  #game_history_state_end-game_history_state,sp
+.invalid:
+        moveq   #0,d0
+        rts
+
+; Shared bounded validation only: no canonical restoration or body execution.
+game_history_seek_prepare:
         cmpi.b  #2,game_history_mode
         bne     .invalid
         cmp.l   game_history_oldest,d0
@@ -313,7 +382,7 @@ game_history_seek:
         move.w  d6,game_history_replay_count
         move.l  game_history_origin+4,game_history_replay_low
         move.w  d6,d5
-        beq.s   .restore
+        beq.s   .valid
         subq.w  #1,d5
 .validate:
         bsr     game_history_record_address
@@ -328,38 +397,7 @@ game_history_seek:
 .validated:
         addq.l  #1,game_history_replay_low
         dbra    d5,.validate
-.restore:
-        move.l  game_history_selected,a1
-        adda.w  #12,a1
-        lea     game_core_state,a0
-        bsr     game_history_copy_state
-        move.l  game_history_origin+4,game_history_replay_low
-        st      game_history_replaying
-.loop:
-        tst.w   game_history_replay_count
-        beq.s   .success
-        bsr     game_history_record_address
-        moveq   #0,d6
-        move.w  (a0)+,d6
-        subq.w  #1,d6
-        lsl.w   #2,d6
-        lea     game_history_operations,a1
-        move.l  (a1,d6.w),a1
-        move.w  (a0)+,d0
-        move.w  (a0)+,d1
-        move.w  (a0)+,d2
-        move.w  (a0)+,d3
-        move.w  (a0)+,d4
-        move.w  (a0)+,d5
-        jsr     (a1)
-        addq.l  #1,game_history_replay_low
-        subq.w  #1,game_history_replay_count
-        bra.s   .loop
-.success:
-        move.l  game_history_target,game_history_position
-        move.l  game_history_target+4,game_history_position+4
-        clr.b   game_history_replaying
-        moveq   #1,d0
+.valid: moveq   #1,d0
         rts
 .invalid:
         moveq   #0,d0
@@ -443,7 +481,7 @@ game_history_contact_begin:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         cmpi.w  #8,game_history_operation
         bne.s   .done
         btst    #7,game_contact
@@ -461,12 +499,17 @@ game_history_contact_begin:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        bsr     game_preview_contact_begin
+        bra.s   .done
 
 game_history_contact:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         tst.b   game_history_probe_active
@@ -480,13 +523,19 @@ game_history_contact:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        moveq   #1,d6
+        bsr     game_preview_launch
+        bra.s   .done
 
 ; Actual completed human serve launch, kind3. Preserve the rules' registers.
 game_history_serve:
         move.w  sr,-(sp)
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
-        bne.s   .done
+        bne.s   .preview
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         move.w  d7,d5
@@ -496,6 +545,12 @@ game_history_serve:
         movem.l (sp)+,d0-d7/a0-a6
         move.w  (sp)+,sr
         rts
+.preview:
+        cmpi.b  #2,game_history_mode
+        bne.s   .done
+        moveq   #3,d6
+        bsr     game_preview_launch
+        bra.s   .done
 
 game_history_add_index:
         moveq   #0,d0

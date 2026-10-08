@@ -47,6 +47,30 @@ class MetricsTests(unittest.TestCase):
             listing.write_text(listing.read_text().replace('ds.b 8','ds.b 4'))
             with self.assertRaisesRegex(ValueError,'BSS declaration'):executable_attribution(exe,listing,{'files':{}})
 
+    def test_bss_final_longword_padding_is_ram_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            exe=Path(directory)/'game';listing=Path(directory)/'game.lst'
+            words=[1011,0,1,0,0,2,1003,2,1010]
+            exe.write_bytes(struct.pack('>'+len(words)*'I',*words))
+            for declared in (5,6,7):
+                with self.subTest(declared=declared):
+                    listing.write_text(f'Source: "amiga/game/preview_storage.i"\n00:00000000 00 1: paths: ds.b {declared}\n')
+                    result=executable_attribution(exe,listing,{'files':{}})
+                    self.assertEqual(result['bss_ram_bytes'],8)
+                    self.assertEqual(result['bss_declared_ram_bytes'],declared)
+                    self.assertEqual(result['bss_alignment_ram_bytes'],8-declared)
+                    self.assertEqual(result['accounted_file_bytes'],len(exe.read_bytes()))
+                    self.assertEqual(result['bss_instances'][0]['bytes'],declared)
+                    padding=result['bss_instances'][1]
+                    self.assertEqual((padding['category'],padding['offset'],padding['bytes'],padding['file_bytes']),
+                        ('hunk_bss_alignment_padding',declared,8-declared,0))
+            for declared in (4,9):
+                listing.write_text(f'Source: "amiga/game/preview_storage.i"\n00:00000000 00 1: paths: ds.b {declared}\n')
+                with self.assertRaisesRegex(ValueError,'BSS declaration'):executable_attribution(exe,listing,{'files':{}})
+            # Final HUNK rounding must not excuse an interior missing byte.
+            listing.write_text('Source: "amiga/game/preview_storage.i"\n00:00000000 00 1: first: ds.b 3\n00:00000004 00 2: last: ds.b 4\n')
+            with self.assertRaisesRegex(ValueError,'BSS declaration'):executable_attribution(exe,listing,{'files':{}})
+
     def test_size_attribution_reconciles_instructions_reserves_and_nop_padding(self):
         with tempfile.TemporaryDirectory() as directory:
             exe=Path(directory)/'game'; listing=Path(directory)/'game.lst'

@@ -56,9 +56,14 @@ class Core:
         self.traps = []
         self.regions = []
         self.readonly = dict(readonly or {})
-        self.events, self.writes, self.reads = [], set(), set()
+        self.events, self.preview_events, self.seek_events, self.writes, self.reads = [], [], [], set(), set()
+        self.preview_event_groups = {}
         self.mutable_regions = [(symbols['game_history_state'], symbols['game_history_state_end']),
                                 (symbols['game_history_buffer'], symbols['game_history_buffer_end'])]
+        if 'game_preview_storage' in symbols:
+            self.mutable_regions.append((symbols['game_preview_storage'],symbols['game_preview_storage_end']))
+        if 'game_history_seek_storage' in symbols:
+            self.mutable_regions.append((symbols['game_history_seek_storage'],symbols['game_history_seek_storage_end']))
 
         self.instructions, self.pcs, self.visits = set(), set(), {}
         self.stack_low = STACK_TOP
@@ -104,27 +109,42 @@ class Core:
         self.traps.append(trap)
         self.mem.w16(address, 0xa000 | trap)
 
+    def observe_adapter(self, name):
+        # Preview outputs are an observation ledger owned by the preview,
+        # never the interrupted live output queue. No core state changes.
+        active_address = self.symbols.get('game_preview_active')
+        active = self.mem.r8(active_address) if active_address else 0
+        seek_address = self.symbols.get('game_history_seek_active')
+        seek_active = self.mem.r8(seek_address) if seek_address else 0
+        assert not (active and seek_active), 'Preview and seek cannot own one actual body'
+        events = self.seek_events if seek_active else self.preview_events if active else self.events
+        first = len(events)
+        def read(symbol, size):
+            address = self.symbols[symbol]
+            if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
+                raise AssertionError('Adapter observes out-of-state data: ' + symbol)
+            return bytes(self.mem.r_block(address, size))
+        if name == 'game_render_sprites':
+            events.append(['render', read('game_scene_objects', 65).hex(),
+                                read('field_values', 6).hex()])
+        elif name == 'game_scene_present_fields':
+            events.append(['fields', read('score_dirty', 1)[0],
+                                read('field_values', 6).hex()])
+        elif name == 'game_core_status_present':
+            events.append(['status', read('field_values', 6).hex()])
+        elif name == 'game_core_title_requested':
+            events.append(['title'])
+        else:
+            kind = 'period' if name == 'game_audio_write_period' else 'level'
+            events.append([kind, self.cpu.r_reg(7) & 0xffff,
+                                self.cpu.r_reg(0) & 0xffff])
+        if active:
+            variant = self.mem.r8(self.symbols['game_preview_variant'])
+            self.preview_event_groups.setdefault((active,variant),[]).extend(events[first:])
+
     def _adapter(self, name):
         def invoke(opcode, pc):
-            def read(symbol, size):
-                address = self.symbols[symbol]
-                if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
-                    raise AssertionError('Adapter observes out-of-state data: ' + symbol)
-                return bytes(self.mem.r_block(address, size))
-            if name == 'game_render_sprites':
-                self.events.append(['render', read('game_scene_objects', 65).hex(),
-                                    read('field_values', 6).hex()])
-            elif name == 'game_scene_present_fields':
-                self.events.append(['fields', read('score_dirty', 1)[0],
-                                    read('field_values', 6).hex()])
-            elif name == 'game_core_status_present':
-                self.events.append(['status', read('field_values', 6).hex()])
-            elif name == 'game_core_title_requested':
-                self.events.append(['title'])
-            else:
-                kind = 'period' if name == 'game_audio_write_period' else 'level'
-                self.events.append([kind, self.cpu.r_reg(7) & 0xffff,
-                                    self.cpu.r_reg(0) & 0xffff])
+            self.observe_adapter(name)
             # Emulate only the adapter's RTS. No gameplay registers are changed.
             sp = self.cpu.r_sp()
             if not STACK_BASE <= sp <= STACK_TOP:
@@ -214,6 +234,9 @@ class Core:
 
     def clear_events(self):
         self.events.clear()
+        self.preview_events.clear()
+        self.preview_event_groups.clear()
+        self.seek_events.clear()
 
     @property
     def stack_bytes(self):

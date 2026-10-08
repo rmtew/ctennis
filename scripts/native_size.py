@@ -98,9 +98,17 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
                 token,expression=body.split(None,1)
                 if token not in ('ds.b','ds.w','ds.l'):raise ValueError('Unsupported BSS declaration')
                 size=_count(expression,symbols)*{'b':1,'w':2,'l':4}[token[-1]]
-                if size!=stop-unit['start']:raise ValueError('BSS declaration does not reconcile')
+                slack=stop-unit['start']-size
+                if slack and (index+1!=len(rows) or slack!=(-(unit['start']+size)&3)):
+                    raise ValueError('BSS declaration does not reconcile')
                 bss_instances.append({'category':'hud_strips_and_tiles' if unit['source']=='amiga/square_score_storage.i' else 'reserved_bss',
                     'source':unit['source'],'hunk':hunk['index'],'offset':unit['start'],'bytes':size,'file_bytes':0})
+                if slack:
+                    # HUNK_BSS has no payload bytes; its allocation is rounded
+                    # to longwords just like code/data payload extents.
+                    bss_instances.append({'category':'hunk_bss_alignment_padding',
+                        'source':None,'hunk':hunk['index'],'offset':unit['start']+size,
+                        'bytes':slack,'file_bytes':0})
             continue
         for index,unit in enumerate(rows):
             stop=rows[index+1]['start'] if index+1<len(rows) else hunk['bytes']
@@ -177,4 +185,6 @@ def executable_attribution(executable, listing_path, manifest, layout=None):
             'identical_incbin_payload_groups':repeated,
             'identical_incbin_duplicate_bytes':sum(g['duplicate_bytes_beyond_first'] for g in repeated),
             'bss_instances':bss_instances,'bss_ram_bytes':sum(r['bytes'] for r in bss_instances),
+            'bss_declared_ram_bytes':sum(r['bytes'] for r in bss_instances if r['category']!='hunk_bss_alignment_padding'),
+            'bss_alignment_ram_bytes':sum(r['bytes'] for r in bss_instances if r['category']=='hunk_bss_alignment_padding'),
             'scope':'Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately.'}

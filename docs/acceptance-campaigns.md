@@ -3,8 +3,9 @@
 Use the campaign controller for native acceptance and focused native checks.
 It serializes the shared build/test output directory, prints why each stable case
 will run or reuse evidence, and keeps completed attempts when a session ends.
-The catalog retains the existing 41 finite gate commands and adds nine actual
-shared-core proof cases. A selected subset is reported as a subset pass; only
+The catalog retains the existing 41 finite gate commands, seven history/preview
+cases (including the focused sliced-seek CPU proof), and nine actual shared-core
+proof cases. A selected subset is reported as a subset pass; only
 complete compatible mandatory coverage establishes acceptance.
 
 ```sh
