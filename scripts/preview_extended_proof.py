@@ -50,7 +50,11 @@ def candidates(index,launches):
 
 def execute(cpu,ordinal,selection,x,y,stream,seed,name):
     """Observe actual accepted-launch hooks and complete dispatch boundaries."""
-    if cursor(cpu,'game_history_position')!=selection:seek(cpu,selection)
+    if cursor(cpu,'game_history_position')!=selection:
+        if hasattr(cpu,'native_entries'):
+            from preview_native_proof import seek_preserving_ledger
+            seek_preserving_ledger(cpu,selection)
+        else:seek(cpu,selection)
     selected=cpu.state()
     end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else attempts(cpu)[ordinal][2]
     bodies={cpu.symbols[n+'_body']:(n,a) for n,a in zip(OPERATIONS,ARITY)}

@@ -1,6 +1,12 @@
 """Emitted native sinks: setup traps end before the frozen proof begins."""
-from history_proof import field
 from match_core_cpu import ADAPTERS, OPTIONAL_ADAPTERS
+
+
+def seek_preserving_ledger(cpu,target):
+    """Call the actual seek without clearing or replacing interrupted outputs."""
+    cycles=cpu.call('game_history_seek',{0:target>>32,1:target&0xffffffff})
+    assert cpu.cpu.r_reg(0)==1, ('seek rejected',target)
+    return cycles
 
 
 def native_entries(cpu,image):
@@ -20,7 +26,7 @@ def native_entries(cpu,image):
                 sr=cpu.cpu.r_sr();sp=cpu.cpu.r_sp();before_pc=cpu.cpu.r_pc()
                 # Frozen external seek/reference intents belong to an isolated
                 # observation ledger, never the interrupted live output queue.
-                if field(cpu,'game_preview_active',1):cpu.observe_adapter(name)
+                if cpu.mem.r8(cpu.symbols['game_preview_active']):cpu.observe_adapter(name)
                 else:
                     live=cpu.events
                     try:
@@ -35,7 +41,7 @@ def native_entries(cpu,image):
     cpu.cpu.set_instr_hook_callback(observe)
     original_trace=cpu.trace
     def guard(mode,width,address,value):
-        if (mode=='W' and field(cpu,'game_history_mode',1)==2
+        if (mode=='W' and cpu.mem.r8(cpu.symbols['game_history_mode'])==2
                 and address<cpu.symbols['game_history_buffer_end']
                 and address+(1<<width)>cpu.symbols['game_history_buffer']):
             raise AssertionError('Emitted frozen sink/reference writes history or live backup')

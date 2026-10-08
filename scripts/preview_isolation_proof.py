@@ -2,12 +2,12 @@
 import hashlib
 from build_match_core import load_image
 from check_shared_core_bytes import normalized
-from history_proof import attach,attempts,seek,logical_api,exercise
+from history_proof import attach,attempts,cursor,logical_api,exercise
 from match_core_cpu import Core
 from preview_proof import fixture,protected,call_checked
 from preview_extended_proof import candidates,execute,continuous,table
 from preview_discovery_proof import sampling_rows,qualification
-from preview_native_proof import native_entries,assert_native_entries
+from preview_native_proof import native_entries,assert_native_entries,seek_preserving_ledger
 from run_shared_match_core import READONLY
 
 # Input descriptors only. No expected intermediate gameplay state is supplied.
@@ -20,7 +20,7 @@ def empty_boundary(executable):
         cpu.call_logical('game_core_init',[]);attach(cpu)
         selected=cpu.state();cpu.clear_events();cpu.call('game_history_freeze')
         size=symbols['game_history_buffer_end']-symbols['game_history_buffer']
-        saved=bytes(cpu.mem.r_block(symbols['game_history_buffer'],size));seek(cpu,0)
+        saved=bytes(cpu.mem.r_block(symbols['game_history_buffer'],size));seek_preserving_ledger(cpu,0)
         assert cpu.state()==selected and cpu.events==[]
         assert bytes(cpu.mem.r_block(symbols['game_history_buffer'],size))==saved
         cpu.audit_reads()
@@ -61,7 +61,8 @@ def isolation(standalone,native,progress):
                 sample=next((row for row in sampling_rows(cpu,candidate,stream,states)
                     if row['band']==band and row['available']),None)
                 assert sample is not None, 'A3 descriptor lacks actual recorded time row: '+band
-                selection=sample['selection'];seek(cpu,selection);assert_native_entries(cpu)
+                selection=sample['selection'];seek_preserving_ledger(cpu,selection);assert_native_entries(cpu)
+                assert cursor(cpu,'game_history_position')==selection
                 assert cpu.state()==states[selection], 'Image-specific history seek differs from recorded actual full state'
                 if is_native:assert cpu.events==live_outputs
                 assert bytes(cpu.mem.r_block(symbols['game_history_buffer'],len(frozen_store)))==frozen_store
