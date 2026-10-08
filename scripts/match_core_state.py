@@ -4,9 +4,9 @@ Packet interiors use the existing G_/S_/AV_/D_/O_ assembly field definitions.
 Every byte, including packet reserves and trailing alignment, is checkpointed.
 No hardware/UI buffer or relocated address belongs to this inventory.
 """
-SCHEMA_VERSION = 1
-SIMULATION_VERSION = 2
-STATE_BYTES = 314
+SCHEMA_VERSION = 2
+SIMULATION_VERSION = 3
+STATE_BYTES = 318
 FIELDS = (
     ('game_play_state',60), ('game_score_state',28), ('game_audio_voices',96),
     ('game_audio_rate',1), ('game_audio_wait',1), ('game_audio_transpose',1),
@@ -16,7 +16,7 @@ FIELDS = (
     ('game_celebration_upper',1), ('game_celebration_audio_fraction',1),
     ('game_input_bits',2), ('game_input_pressed',2), ('game_input_released',2),
     ('game_player_controls',2), ('game_lower_owner',1), ('game_upper_owner',1),
-    ('game_old_action_latches',2), ('game_lifecycle',2), ('game_entropy_state',2),
+    ('game_old_action_latches',2), ('game_lifecycle',2), ('game_legacy_entropy_state',2),
     ('game_match_seed',2), ('game_selection_delay',2), ('game_accept_count',2),
     ('game_selection_keys',1), ('game_selected_mode',1), ('game_restart_context',1),
     ('game_score_initialized',1), ('game_scene_objects',64),
@@ -25,6 +25,7 @@ FIELDS = (
     ('game_new_mode',1), ('score_dirty',1), ('field_values',6),
     ('game_continue_held',1), ('game_continue_pressed',1), ('game_auto_continue',1),
     ('game_playback_active',1), ('game_playback_mask',1), ('game_core_command',1),
+    ('game_entropy_policy',1), ('game_entropy_alignment',1), ('game_entropy_state',2),
 )
 
 
@@ -64,6 +65,8 @@ def validate_record(record, symbols, rules_sha256):
         raise ValueError('Invalid canonical state encoding') from error
     if len(data) != STATE_BYTES:
         raise ValueError('Incomplete canonical state')
+    if data[314] not in (0,1):
+        raise ValueError('Invalid entropy policy')
     clips = (('native_audio_score_0','native_audio_score_1'),
              ('native_audio_score_1','native_audio_score_4'),
              ('native_victory_melody','native_victory_bass'),

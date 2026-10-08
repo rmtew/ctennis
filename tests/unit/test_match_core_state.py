@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from match_core_state import FIELDS, STATE_BYTES, inventory, validate_record
+from match_core_state import FIELDS, STATE_BYTES, SCHEMA_VERSION, SIMULATION_VERSION, inventory, validate_record
 
 
 class StateContractTests(unittest.TestCase):
@@ -18,7 +18,7 @@ class StateContractTests(unittest.TestCase):
             native_audio_score_5=0x205ec,native_audio_periods=0x205fc,
             native_victory_melody=0x21000,native_victory_bass=0x21220,
             native_victory_arpeggio=0x21430,native_victory_periods=0x21840)
-        self.record = {'schema_version':1,'simulation_version':2,
+        self.record = {'schema_version':SCHEMA_VERSION,'simulation_version':SIMULATION_VERSION,
                        'rules_sha256':'build-a','state':bytes(STATE_BYTES).hex()}
 
     def test_entire_inventory_including_reserved_bytes(self):
@@ -31,7 +31,7 @@ class StateContractTests(unittest.TestCase):
 
     def test_reject_incompatible_envelopes(self):
         self.assertEqual(bytes(STATE_BYTES),validate_record(self.record,self.symbols,'build-a'))
-        for key,value in [('schema_version',2),('simulation_version',1),
+        for key,value in [('schema_version',1),('simulation_version',2),
                           ('rules_sha256','build-b'),('state','00')]:
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validate_record(dict(self.record,**{key:value}),self.symbols,'build-a')
@@ -46,6 +46,12 @@ class StateContractTests(unittest.TestCase):
             data[92] = clip
             with self.subTest(offset=offset,clip=clip),self.assertRaises(ValueError):
                 validate_record(dict(self.record,state=data.hex()),self.symbols,'build-a')
+
+    def test_reject_unknown_entropy_policy(self):
+        data = bytearray(STATE_BYTES)
+        data[314] = 2
+        with self.assertRaisesRegex(ValueError,'entropy policy'):
+            validate_record(dict(self.record,state=data.hex()),self.symbols,'build-a')
 
 
 if __name__ == '__main__':

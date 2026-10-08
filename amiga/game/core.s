@@ -2,8 +2,10 @@
 ; Public phases: init; poll previous logical input; sample pads/commands; tick.
 ; Sink calls are synchronous and preserve registers; they never advance state.
 game_core_code_begin:
-GAME_CORE_SCHEMA_VERSION equ 1
-GAME_CORE_SIMULATION_VERSION equ 2
+GAME_CORE_SCHEMA_VERSION equ 2
+GAME_CORE_SIMULATION_VERSION equ 3
+GAME_ENTROPY_MODERN equ 0
+GAME_ENTROPY_LEGACY_SHIFT equ 1
         include "amiga/game/core_input.s"
         include "amiga/game/core_controls.s"
         include "amiga/game/tick.s"
@@ -32,19 +34,29 @@ game_core_init:
 ui_seed_entropy:
 game_core_seed_entropy:
         move.w  game_match_seed,game_entropy_state
+        move.w  game_match_seed,game_legacy_entropy_state
         rts
 
-; Galois16-b400-v1, unchanged demo algorithm; live play now uses it too.
-; The game PRNG still owns its original 8-bit state and call order.
+; Galois16-b400-v2. MOVEQ precedes LSR so its cleared carry cannot erase the bit.
+; Advance the modern stream even during historical playback. That recording's
+; original carry-clearing bug is explicit legacy-shift16-v1 compatibility only.
+; Takeover keeps the already advanced modern stream, with no second seed.
 native_entropy_bit:
 ui_demo_entropy:
+        moveq   #0,d0
         move.w  game_entropy_state,d1
         lsr.w   #1,d1
-        moveq   #0,d0
         bcc.s   .store
         eori.w  #$b400,d1
         moveq   #1,d0
 .store: move.w  d1,game_entropy_state
+        tst.b   game_entropy_policy
+        beq.s   .done
+        move.w  game_legacy_entropy_state,d1
+        lsr.w   #1,d1
+        move.w  d1,game_legacy_entropy_state
+        moveq   #0,d0
+.done:
         rts
 
 ; A title request is a simulation command. UI publication is a separate sink.

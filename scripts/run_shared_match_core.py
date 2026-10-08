@@ -49,11 +49,18 @@ def replay_and_negatives(image, symbols, rows, executable):
             cpu.audit_reads()
     relocated, relocated_symbols = load_image(executable,base=0x30000)
     with Core(relocated,relocated_symbols,poison=0x96,readonly=READONLY) as cpu:
-        for row in rows[:2000]:
+        # Relocate the complete stream, including selection, play and return.
+        # A fixed prefix can cover only TITLE in an attract recording.
+        relocated_lifecycles = Counter()
+        for row in rows:
             cpu.clear_events()
             cpu.call_logical(row['operation'],row['arguments'])
             assert cpu.state().hex() == row['state'], ('relocated state',row['index'])
             assert cpu.events == row['events'], ('relocated outputs',row['index'])
+            relocated_lifecycles[int.from_bytes(cpu.state()[216:218],'big')] += 1
+        expected_lifecycles = Counter(int.from_bytes(bytes.fromhex(row['state'])[216:218],'big')
+                                     for row in rows)
+        assert relocated_lifecycles == expected_lifecycles, 'Incomplete relocated lifecycle coverage'
         cpu.audit_reads()
     negatives = {}
     for fault in ('omitted-init','hardware-read','out-of-state-write','undeclared-read'):
@@ -216,7 +223,9 @@ def main():
                     'selection_commands':[row['arguments'] for row in collector.rows
                                           if row['operation']=='game_core_select']},
                 'poisoned_replay':[165,90], 'negative_controls':negatives,
-                'relocated_replay':{'base':0x30000,'poison':0x96,'operations':min(2000,len(collector.rows))},
+                'relocated_replay':{'base':0x30000,'poison':0x96,'operations':len(collector.rows),
+                    'lifecycle_counts':dict(Counter(int.from_bytes(bytes.fromhex(row['state'])[216:218],'big')
+                                                   for row in collector.rows))},
                 'code_and_immutable_tables_bytes':core_symbols['game_core_code_end']-core_symbols['game_core_code_begin'],
                 'stack_bytes':cpu.stack_bytes,'cycles':cpu.total_cycles,'loaded_hunks':checks,
                 'sha256':{str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()

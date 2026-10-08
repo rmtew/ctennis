@@ -7,6 +7,7 @@ from copperline_test_session import NativeControlSession
 from native_metrics_observation import MetricsObserver
 from native_evidence import ROOT,atomic_json,tracked_call
 from native_observation import target_log
+from native_assets import demo_entropy_policy
 
 def load_trajectory(recording_path):
  fixture=ROOT/'tests/fixtures/native-demo'
@@ -27,6 +28,8 @@ def run(takeover=False):
  recording=json.loads(recording_path.read_text());expected,fixture_manifest=load_trajectory(recording_path)
  assert recording['schema']==2 and len(expected)==recording['frames']
  assert recording['entropy_version']=='galois16-b400-v1' and 0<recording['seed']<65536 and recording['initial_game_random']==0
+ compatibility=json.loads((ROOT/'assets/interface/demo-entropy-compat.json').read_text())
+ assert demo_entropy_policy(recording_path.read_bytes(),compatibility)==1
  directory=ROOT/('build/tests/demo-mid-takeover' if takeover else 'build/tests/demo-full-repeat');checks=[];awards=[];seen_games=[0,0];index=0;contacts=0;previous_side=None
  if not takeover:
   atomic_json(directory/'demo-end-state.json',{'state':'incomplete','passed':False})
@@ -46,9 +49,12 @@ def run(takeover=False):
    stop=s.inspect('run_until',args);time=stop['seconds'];return stop
   def mem(n,k=1):return bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols[n],'len':k})['data'])
   def num(n,k=1):return int.from_bytes(mem(n,k),'big')
-  def frozen():return mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)+mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock')+mem('ui_entropy_state',2)
+  def frozen():return mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)+mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock')+mem('ui_entropy_state',2)+mem('game_entropy_state',2)
   until({'pc':base+symbols['ui_seed_entropy']});check('ordinary title idle starts seeded demo',num('ui_demo'),255)
-  s.inspect('step',{'count':1});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
+  # The shared seed routine writes modern, then historical state.
+  s.inspect('step',{'count':2});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
+  check('modern shadow starts from same match seed',num('game_entropy_state',2),recording['seed'])
+  check('historical playback policy is explicit',num('game_entropy_policy'),1)
   for callback in range(30000):
    until({'pc':base+symbols['game_tick_dispatch']});life=num('game_lifecycle',2)
    if life in (6,7,8):break
@@ -86,20 +92,23 @@ def run(takeover=False):
       check('mid-match takeover preserves world score audio clocks entropy',frozen().hex(),before.hex());break
     else:raise AssertionError('Mid-match selected Enter never took over')
     until({'pc':base+symbols['native_input_done']});check('takeover held direction and confirmation consumed',num('game_input_bits',2),0)
+    check('takeover switches to corrected entropy policy',num('game_entropy_policy'),0)
     roles=assert_player_roles(mem,num)
     check('takeover preserves A human/B robot', {row['owner']:row['role'] for row in roles}, {'A':'human','B':'robot'})
     before=mem('game_play_state',60)
-    # Takeover keeps the canonical current LFSR, then live play consumes the
-    # same generator. Observe an actual call rather than assuming one per tick.
+    # The modern shadow has advanced from the original seed throughout playback.
+    # Live takeover consumes that stream; it never seeds from CIA or the zeroed
+    # historical observer word. Observe an actual call, not an assumed cadence.
     entropy_pc=base+symbols['native_entropy_bit']
     entropy_break=s.inspect('break_add',{'kind':'pc','addr':entropy_pc})
     stop=until({'seconds':time+10})
     s.inspect('break_remove',{'id':entropy_break['id']})
     check('live takeover reaches shared entropy routine within bound',stop['pc'],entropy_pc)
-    state=mem('ui_entropy_state',2)
+    state=mem('game_entropy_state',2)
+    check('live takeover shadow stream remains nonzero',int.from_bytes(state,'big')!=0,True)
     s.inspect('step',{'count':1})
     until({'pc':base+symbols['native_input_done']})
-    check('live takeover consumes preserved shared entropy state',mem('ui_entropy_state',2)!=state,True)
+    check('live takeover consumes preserved modern shadow state',mem('game_entropy_state',2)!=state,True)
     check('AI remains assigned after takeover',num('game_score_flags')&3,2 if num('game_mode')&16 else 1)
     check('ordinary world continues after takeover',mem('game_play_state',60)!=before,True)
     s.inspect('input_key',{'rawkey':0x44,'action':'release'})

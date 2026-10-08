@@ -13,11 +13,12 @@ The standalone executable does not include physical input, UI construction,
 graphics banks, hardware output or hardware clocks. It has synchronous output
 sinks. All simulation rules and lifecycle decisions execute on the 68000.
 
-The canonical block is 314 contiguous bytes, including reserved packet bytes.
+The canonical block is 318 contiguous bytes, including reserved packet bytes.
 The machine-checked ownership and checkpoint-envelope contract is
 `scripts/match_core_state.py`; packet interiors retain the assembly G_, S_, AV_,
-D_ and O_ definitions. Schema version 1 and simulation version 2 bind the current
-layout and seeded-entropy policy. A checkpoint envelope binds the exact compiled
+D_ and O_ definitions. Schema version 2 and simulation version 3 bind the current
+layout and seeded-entropy policy. The previous 314-byte block is historical;
+old checkpoint envelopes are rejected. A checkpoint envelope binds the exact compiled
 standalone rules hash as well as both versions and complete byte length.
 The validator checks audio clip IDs and aligned offsets, including completion
 at the exclusive clip boundary. It does not certify arbitrary corrupt state:
@@ -25,14 +26,16 @@ other table-index validation remains a requirement for a future restore API.
 
 `game_core_init` clears the complete block and enters TITLE. A new match gets
 one explicit 16-bit seed; zero maps to `$ace1`. Live play samples a hardware seed
-only at native selection. Both live play and the attract demo thereafter use
-the existing Galois16-b400-v1 generator, alongside the unchanged game PRNG.
-The full current generator state is canonical. Audio AV_NEXT stores an offset
+only at native selection. Fresh live play uses corrected Galois16-b400-v2,
+alongside the unchanged game PRNG. Historical playback explicitly retains its
+original shift-only entropy rule while advancing a corrected shadow stream;
+logical takeover selects that already advanced stream without another seed.
+Both words and the policy are canonical. Audio AV_NEXT stores an offset
 from the immutable audio-table base; no relocated pointer is checkpointed.
 
 ## Logical boundary
 
-The public boundary comprises init, select(mode, seed), sample_pads(A, B),
+The public boundary comprises init, select(mode, seed, entropy policy), sample_pads(A, B),
 sample_result(continue held/pressed, automatic continuation, playback active/
 mask, selection held), clear_inputs, latch_actions, return_title, round_poll
 and tick_dispatch. Selection and title requests are commands, not direct
@@ -75,6 +78,7 @@ RUST_LOG=info python scripts/run_shared_match_core.py --two --restart --seconds 
 RUST_LOG=info python scripts/run_shared_match_core.py --demo --seconds 300
 RUST_LOG=info python scripts/run_shared_match_core_fixtures.py --case all
 python scripts/check_shared_core_poll.py build/tests/shared-match-core-pal-demo/report.json
+python scripts/check_core_entropy.py
 RUST_LOG=info python scripts/run_demo_match_tests.py
 ```
 
@@ -90,7 +94,9 @@ calls, compares complete state and ordered outputs after every operation, and
 audits reads against narrow immutable-table declarations. Independent replays
 start from the initializer with two poison patterns and consume only recorded
 arguments. Negative controls must detect omitted initialization, hardware reads,
-out-of-state writes and undeclared data reads. These are safety and determinism
+out-of-state writes and undeclared data reads. Relocated replay consumes the
+complete captured stream and verifies its lifecycle coverage, rather than a
+prefix that could finish before match selection. These are safety and determinism
 checks, not a second implementation of the game.
 
 Case-specific receipts under ignored `build/tests/shared-match-core-*` identify
@@ -102,6 +108,9 @@ or a worst-case budget. Native acceptance, resource reports and independent
 review remain required before calling the increment complete.
 
 ## Focused evidence at the reviewed boundaries
+
+The 314-byte receipts below describe earlier source boundaries. They do not
+establish complete-state equivalence for the new 318-byte schema.
 
 Production assembly boundary: `228c31ecbdc27c32a34c08d5da7588dfa48ad4ad`.
 Validation/schema boundary: `3ba1babc0396421ca36743a502cfc5f7340b91ee`.
@@ -327,3 +336,56 @@ coverage, not a correction to argument counts. Complete-state and ordered-output
 comparisons plus narrow immutable-read auditing remain mandatory. These finite
 replays do not establish arbitrary checkpoint restoration or corrupt-state
 safety, which remain later-increment requirements.
+
+### Entropy review correction: schema 2 / simulation 3
+
+Independent review of `d702414` found that the old shared entropy routine put
+MOVEQ between LSR and BCC. MOVEQ clears carry, so the conditional feedback never
+ran: `$ace1` became `$5670`, returned zero and decayed to zero after 16 draws.
+The same error exists in the immutable
+[original demo routine](https://github.com/rmtew/ctennis/blob/17d6d050c07fac6ead6202bec2d1bf5a0db38079/amiga/game/interface_demo.s#L33).
+The condition-code behavior is specified in the
+[M68000 reference manual, MOVEQ](https://www.nxp.com/docs/en/reference-manual/M68000PRM.pdf#page=238).
+Native/standalone equality could reproduce that shared mistake; independent
+known answers are required in addition to differential replay.
+
+Modern `galois16-b400-v2` moves MOVEQ before LSR. Both entropy words are seeded
+once from the same nonzero match seed. Every request advances the correct
+modern stream. Only explicit `legacy-shift16-v1` playback also shifts the
+historical observer word and returns zero to preserve its recorded physics.
+`assets/interface/demo-entropy-compat.json` permits that policy only for the exact
+immutable recording checksum. Neither the original recording JSON, fixture
+manifest nor 10,958 digest payload was rewritten. New recordings name the
+correct generator and digest the modern word; they require separate provenance.
+
+The falling edge of logical automatic playback selects modern entropy without
+changing either stored word or seeding again. It applies during selection,
+play and round tails: the UI can accept takeover in those phases. Pausing keeps
+automatic playback true even when active input playback is false. A title
+command clears the old automatic value before the subsequent metadata sample,
+so that exit is distinct from takeover. Unsupported selection policies are
+rejected by the host logical interface and cause no owned writes in the core.
+
+The old 314-byte offsets remain intact. Offset 218 is now explicitly named
+`game_legacy_entropy_state` (with historical `ui_entropy_state` alias); policy
+is appended at 314, owned alignment at 315, and modern `game_entropy_state` at
+316. The block grows by four bytes to 318; it had no spare old alignment byte.
+Schema 2 / simulation 3 reject incompatible old checkpoint envelopes.
+
+`check_core_entropy.py` executed both actual candidate images against authored
+mathematical answers (`1 -> $b400/1`, `2 -> 1/0`, `$ace1 -> $e270/1`), a 16-draw
+sequence and all 65,535 distinct nonzero states returning to `$ace1`. It also
+checked zero-seed mapping, historical shadow behavior, initial-once logical
+takeover fixtures in states 1/3/4/5, pause, and actual title-command exclusion.
+Observed isolated entropy costs were 96/106 CPU cycles for modern low bits 0/1
+and 134/144 for the legacy policy; zero-seed selection was 108 and takeover
+sampling 196. These include the harness return trap and establish no Amiga
+contention or deadline bound. A dedicated physical UI tail-takeover variant is
+still required; these logical fixtures do not establish that integration.
+
+The final dirty-candidate PAL eight-second capture compares all 318 bytes and
+ordered outputs through TITLE/selection/play. Full relocated replay now consumes
+every captured operation and checks lifecycle counts. Longer current PAL/NTSC
+captures, unchanged historical frozen replay, current native resource coverage,
+the complete clean-head gate and independent re-review remain required.
+Earlier 314-byte state receipts cannot be reused as 318-byte acceptance.

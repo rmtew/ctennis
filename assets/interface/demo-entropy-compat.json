@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "recording_sha256": "4684b75c22a085644e32b09de749ba119aac0fd9649270aab09b3f8c3cbf8289",
+  "original_entropy_label": "galois16-b400-v1",
+  "effective_entropy_policy": "legacy-shift16-v1",
+  "policy": 1,
+  "explanation": "The original MOVEQ cleared carry after LSR, so every returned bit was zero and the stored word shifted to zero. Preserve that immutable recording with an explicit policy; simultaneously advance the corrected seeded stream for live takeover."
+}

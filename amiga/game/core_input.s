@@ -19,6 +19,17 @@ game_core_sample_result_body:
         else
 game_core_sample_result:
         endif
+        ; A paused demo keeps automatic continuation true. Its falling edge
+        ; ends historical playback even in selection/round tails. Title exit
+        ; clears the old value before this sampler. Preserve both streams.
+        tst.b   game_entropy_policy
+        beq.s   .store
+        tst.b   game_auto_continue
+        beq.s   .store
+        tst.b   d2
+        bne.s   .store
+        clr.b   game_entropy_policy
+.store:
         move.b  d0,game_continue_held
         move.b  d1,game_continue_pressed
         move.b  d2,game_auto_continue
@@ -27,19 +38,23 @@ game_core_sample_result:
         move.b  d5,game_selection_keys
         rts
 
-; D0.b mode (0 one-player, 1 two-player), D1.w match seed.
+; D0.b mode (0 one-player, 1 two-player), D1.w seed, D2.w entropy policy (0/1).
         ifd CORE_TRACE
 game_core_select_body:
         else
 game_core_select:
         endif
+        cmpi.w  #GAME_ENTROPY_LEGACY_SHIFT,d2
+        bhi.s   .invalid_policy
         tst.w   d1
         bne.s   .seed_ready
         move.w  #$ace1,d1
 .seed_ready:
         move.w  d1,game_match_seed
+        move.b  d2,game_entropy_policy
         addq.b  #1,d0
         move.b  d0,game_core_command
+.invalid_policy:
         rts
 
 ; Takeover consumes carried logical controls while preserving action latches.

@@ -27,7 +27,7 @@ game_lower_owner: dc.b 0
 game_upper_owner: dc.b 1
 game_old_action_latches: dc.b 0,0
 game_lifecycle: dc.w GAME_SERVICE
-game_entropy_state: dc.w 0
+game_legacy_entropy_state: dc.w 0
 game_match_seed: dc.w $ace1
 game_selection_delay: dc.w 0
 game_accept_count: dc.w 0
@@ -51,6 +51,10 @@ game_auto_continue: dc.b 0
 game_playback_active: dc.b 0
 game_playback_mask: dc.b 0
 game_core_command: dc.b 0
+game_entropy_policy: dc.b GAME_ENTROPY_MODERN
+game_entropy_alignment:
         even
+game_entropy_state:
+game_modern_entropy_state: dc.w 0
 game_core_state_end:
 GAME_CORE_STATE_SIZE equ game_core_state_end-game_core_state

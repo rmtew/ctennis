@@ -20,6 +20,11 @@ game_latch_choice:
 .seed_nonzero:
 .seed_ready:
         endif
+        moveq   #GAME_ENTROPY_MODERN,d2
+        tst.b   ui_demo
+        beq.s   .policy_ready
+        moveq   #UI_DEMO_ENTROPY_POLICY,d2
+.policy_ready:
         bra     game_core_select
 
 game_native_menu_tick:

@@ -63,7 +63,7 @@ def check_case(case, seconds):
         stopped = session.inspect('run_until',{'seconds':stopped['seconds']+2})
         session.inspect('break_remove',{'id':breakpoint['id']})
         assert stopped['pc'] == symbols['main_loop'],stopped
-        initial = read(symbols['game_core_state'],314)
+        initial = read(symbols['game_core_state'],symbols['game_core_state_end']-symbols['game_core_state'])
         assert list(initial[66:68]) == points and list(initial[68:70]) == games
         with Core(image,core_symbols,initial=initial,readonly=READONLY) as cpu:
             def compare(row):
@@ -83,7 +83,7 @@ def check_case(case, seconds):
             stopped = session.inspect('run_until',{'seconds':stopped['seconds']+1})
             session.inspect('break_remove',{'id':breakpoint['id']})
             assert stopped['pc'] == symbols['simulation_update'],stopped
-            summary = collector.finish(read(symbols['game_core_state'],314))
+            summary = collector.finish(read(symbols['game_core_state'],symbols['game_core_state_end']-symbols['game_core_state']))
             session.inspect('events.unsubscribe')
             cpu.audit_reads()
             first = next(row for row in collector.rows if row['operation']=='game_tick_dispatch')

@@ -8,7 +8,7 @@ here. Callers own the native session and drive ordinary physical inputs.
 
 OPERATIONS = {
     1: ('game_core_init', 0),
-    2: ('game_core_select', 2),
+    2: ('game_core_select', 3),
     3: ('game_core_sample_pads', 2),
     4: ('game_core_sample_result', 6),
     5: ('game_core_clear_inputs', 0),

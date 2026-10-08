@@ -178,6 +178,8 @@ class Core:
             raise ValueError('Wrong logical argument shape: ' + name)
         if any(type(value) is not int or not 0 <= value <= 65535 for value in arguments):
             raise ValueError('Logical argument must be a captured unsigned word')
+        if name == 'game_core_select' and arguments[2] not in (0,1):
+            raise ValueError('Unsupported selection entropy policy')
         for register in range(15):
             value = ((self.logical_calls * 65537 + register * 0x1010101)
                      ^ 0x965aa569 ^ self.context_seed) & 0xffffffff
