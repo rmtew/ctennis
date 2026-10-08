@@ -90,3 +90,14 @@ does not establish a complete native gate or physical-hardware coverage.
 CPU reports distinguish isolated canonical-copy cost and recorded-call overhead
 by API, changed pad inputs, checkpoint creation and checkpoint eviction. Their
 sample distributions exclude native bus contention and hardware sink work.
+History receipts label `evidence.target` as a legacy validator reference, never
+as their execution target. Native receipts record the exact actual video, CPU,
+chipset and RAM configuration in `evidence.actual_target` and the report target;
+CPU receipts explicitly identify isolated 68000 execution without an emulator.
+The trace-only fixture copies the exact main source and score include, relaxing
+only two renderer LEAs that exceed PC-relative range with instrumentation. It
+hashes original and generated sources and verifies that the emitted shared core
+matches the standalone core after address-fixup normalization. The ordinary
+product and its cold observation retain their exact bytes. Failed receipt and
+trace-build attempts remain saved; completed proof computations are separately
+saved as unvalidated diagnostics until their acceptance receipt passes.

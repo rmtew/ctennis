@@ -33,6 +33,8 @@ def run():
         paths,tools = inputs_for('build', 'scripts/run_history_proof.py')
         cpu_paths,tools['machine68k'] = cpu_tool_inputs()
         transaction.meta.update(files=snapshot(paths|cpu_paths),tools=tools)
+        transaction.meta.update(target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only',
+            target_scope='evidence.target is a legacy validation reference; this proof executes an isolated 68000 CPU with no actual display or emulator target.')
         transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
         _,native = build()
         standalone,_ = build_core()
@@ -56,7 +58,7 @@ def run():
         report = {'passed':True,'execution':'actual-68000-cpu-only',
                   'executable_sha256':digest(standalone),
                   'history_validation':{'passed':True,'proofs':proofs},
-                  'scope':'Fresh actual CPU state/output/store proofs and emitted native replay sinks; no contended seek deadline claim'}
+                  'scope':'Fresh actual CPU state/output/store proofs and emitted native replay sinks; no contended seek deadline claim. evidence.target is a legacy validator reference, not an execution target.'}
         # Keep completed computation if receipt validation fails afterward.
         # This diagnostic is never a passing acceptance receipt by itself.
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,

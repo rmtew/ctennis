@@ -37,6 +37,8 @@ class CampaignTests(unittest.TestCase):
         case=next(c for c in cases() if c.id=='history-pal')
         report={'passed':True,'history':True,'seconds':16,
                 'target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0),
+                'evidence':{'target_role':'legacy-validator-reference',
+                            'actual_target':dict(video='PAL',cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)},
                 'rows':[{}],'summary':{'operations':1},
                 'history_validation':{'passed':True,'native_buffer_equal':True,'retained_operations':64,
                                       'seek':{'operations':100,'frozen_operations_checked':9,
@@ -49,7 +51,8 @@ class CampaignTests(unittest.TestCase):
                            (('history_validation','native_buffer_equal'),False),
                            (('history_validation','seek','boundaries_checked'),64),
                            (('history_validation','seek','seeks'),129),
-                           (('history_validation','seek','negative_controls'),[])):
+                           (('history_validation','seek','negative_controls'),[]),
+                           (('evidence','target_role'),'execution-target'),(('evidence','actual_target'),{})):
             partial=json.loads(json.dumps(report));node=partial
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
@@ -72,6 +75,7 @@ class CampaignTests(unittest.TestCase):
         proofs['pending-eviction'].update(pending_canceled=True,evicted_pending_origin=1,eviction_oldest=64,
                                           completed_new_origin=65,completed_new_episode_kind=2)
         report={'passed':True,'execution':'actual-68000-cpu-only',
+                'evidence':{'target_role':'legacy-validator-reference','actual_execution':'actual-68000-cpu-only'},
                 'history_validation':{'passed':True,'proofs':proofs}}
         self.assertTrue(campaign.required_extent(case,report))
         for name,key,value in (('long','operations',6144),('long','completed_episode_kinds',{'1':1}),

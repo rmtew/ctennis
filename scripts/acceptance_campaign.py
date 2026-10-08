@@ -242,7 +242,10 @@ def required_extent(case,report):
     if case.id=='history-cpu':
         validation=report.get('history_validation') or {}
         proofs=validation.get('proofs') or {}
+        evidence=report.get('evidence') or {}
         if (report.get('execution')!='actual-68000-cpu-only' or validation.get('passed') is not True
+                or evidence.get('target_role')!='legacy-validator-reference'
+                or evidence.get('actual_execution')!='actual-68000-cpu-only'
                 or set(proofs)!={'empty','long','cursor-wrap','relocated','native-sinks','logical-api','pending-eviction'}
                 or any(p.get('passed') is not True for p in proofs.values())):return False
         if proofs['empty'].get('operations')!=0 or proofs['empty'].get('boundaries_checked')!=1:return False
@@ -273,7 +276,10 @@ def required_extent(case,report):
         boundaries=seek.get('boundaries_checked')
         seeks=seek.get('seeks')
         seconds=report.get('seconds')
+        evidence=report.get('evidence') or {}
         return (report.get('history') is True and isinstance(seconds,(int,float)) and seconds>=16
+                and evidence.get('target_role')=='legacy-validator-reference'
+                and evidence.get('actual_target')==report.get('target')
                 and report.get('target')==dict(video='NTSC' if case.id=='history-ntsc' else 'PAL',
                                               cpu='68000',chipset='OCS',chip_kib=512,slow_kib=0,fast_kib=0)
                 and isinstance(rows,list) and bool(rows)
