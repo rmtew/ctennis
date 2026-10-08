@@ -35,6 +35,7 @@ game_history_attach:
         move.b  #1,game_history_mode
         bsr     game_history_checkpoint
         bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         movem.l (sp)+,d2-d7/a1-a6
         moveq   #1,d0
         rts
@@ -42,6 +43,7 @@ game_history_attach:
         clr.b   game_history_mode
         clr.l   game_history_store
         bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #0,d0
         rts
 
@@ -220,6 +222,7 @@ game_history_freeze:
         move.l  game_history_cursor,game_history_position
         move.l  game_history_cursor+4,game_history_position+4
         bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #1,d0
         rts
 .invalid:
@@ -237,6 +240,7 @@ game_history_resume_latest:
         move.l  game_history_cursor,game_history_position
         move.l  game_history_cursor+4,game_history_position+4
         bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
         moveq   #1,d0
         rts
 .invalid:
@@ -248,6 +252,67 @@ game_history_resume_latest:
 ; Replay emits the actual ordered semantic outputs; native sinks suppress their
 ; hardware/presentation work while mode=2. CPU adapters still observe outputs.
 game_history_seek:
+        cmpi.b  #2,game_history_mode
+        bne     .invalid
+        ; Keep failed envelope/opcode validation atomic for all 72 metadata bytes.
+        suba.w  #game_history_state_end-game_history_state,sp
+        lea     game_history_state,a0
+        move.l  sp,a1
+        moveq   #(game_history_state_end-game_history_state)/4-1,d6
+.backup:move.l  (a0)+,(a1)+
+        dbra    d6,.backup
+        bsr     game_history_seek_prepare
+        tst.l   d0
+        beq     .invalid_saved
+.restore:
+        move.l  game_history_selected,a1
+        adda.w  #12,a1
+        lea     game_core_state,a0
+        bsr     game_history_copy_state
+        move.l  game_history_origin+4,game_history_replay_low
+        st      game_history_replaying
+.loop:
+        tst.w   game_history_replay_count
+        beq.s   .success
+        bsr     game_history_record_address
+        moveq   #0,d6
+        move.w  (a0)+,d6
+        subq.w  #1,d6
+        lsl.w   #2,d6
+        lea     game_history_operations,a1
+        move.l  (a1,d6.w),a1
+        move.w  (a0)+,d0
+        move.w  (a0)+,d1
+        move.w  (a0)+,d2
+        move.w  (a0)+,d3
+        move.w  (a0)+,d4
+        move.w  (a0)+,d5
+        jsr     (a1)
+        addq.l  #1,game_history_replay_low
+        subq.w  #1,game_history_replay_count
+        bra.s   .loop
+.success:
+        move.l  game_history_target,game_history_position
+        move.l  game_history_target+4,game_history_position+4
+        clr.b   game_history_replaying
+        adda.w  #game_history_state_end-game_history_state,sp
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
+        moveq   #1,d0
+        rts
+.invalid_saved:
+        move.l  sp,a0
+        lea     game_history_state,a1
+        moveq   #(game_history_state_end-game_history_state)/4-1,d6
+.rollback:move.l (a0)+,(a1)+
+        dbra    d6,.rollback
+        adda.w  #game_history_state_end-game_history_state,sp
+.invalid:
+        moveq   #0,d0
+        rts
+
+; Shared bounded validation only: no canonical restoration or body execution.
+game_history_seek_prepare:
         cmpi.b  #2,game_history_mode
         bne     .invalid
         cmp.l   game_history_oldest,d0
@@ -262,13 +327,6 @@ game_history_seek:
         cmp.l   game_history_cursor+4,d1
         bhi     .invalid
 .upper_ok:
-        ; Keep failed envelope/opcode validation atomic for all 72 metadata bytes.
-        suba.w  #game_history_state_end-game_history_state,sp
-        lea     game_history_state,a0
-        move.l  sp,a1
-        moveq   #(game_history_state_end-game_history_state)/4-1,d6
-.backup:move.l  (a0)+,(a1)+
-        dbra    d6,.backup
         move.l  d0,game_history_target
         move.l  d1,game_history_target+4
         clr.l   game_history_origin
@@ -305,82 +363,42 @@ game_history_seek:
         cmp.w   game_history_checkpoint_count,d6
         bcs.s   .find
         tst.l   game_history_selected
-        beq     .invalid_saved
+        beq     .invalid
         move.l  game_history_selected,a0
         cmpi.w  #GAME_CORE_SCHEMA_VERSION,8(a0)
-        bne     .invalid_saved
+        bne     .invalid
         cmpi.w  #GAME_CORE_SIMULATION_VERSION,10(a0)
-        bne     .invalid_saved
+        bne     .invalid
         lea     12(a0),a1
         bsr     game_history_validate_state
         tst.b   d0
-        beq     .invalid_saved
+        beq     .invalid
         move.l  game_history_target+4,d6
         sub.l   game_history_origin+4,d6
         ; Modular low subtraction covers a low-longword carry. Origins are
         ; at most63 operations away, never an unbounded replay request.
         cmpi.l  #HISTORY_SPACING-1,d6
-        bhi     .invalid_saved
+        bhi     .invalid
         move.w  d6,game_history_replay_count
         move.l  game_history_origin+4,game_history_replay_low
         move.w  d6,d5
-        beq.s   .restore
+        beq.s   .valid
         subq.w  #1,d5
 .validate:
         bsr     game_history_record_address
         move.w  (a0),d0
-        beq     .invalid_saved
+        beq     .invalid
         cmpi.w  #9,d0
-        bhi     .invalid_saved
+        bhi     .invalid
         cmpi.w  #2,d0
         bne.s   .validated
         cmpi.w  #1,6(a0)
-        bhi     .invalid_saved
+        bhi     .invalid
 .validated:
         addq.l  #1,game_history_replay_low
         dbra    d5,.validate
-.restore:
-        move.l  game_history_selected,a1
-        adda.w  #12,a1
-        lea     game_core_state,a0
-        bsr     game_history_copy_state
-        move.l  game_history_origin+4,game_history_replay_low
-        st      game_history_replaying
-.loop:
-        tst.w   game_history_replay_count
-        beq.s   .success
-        bsr     game_history_record_address
-        moveq   #0,d6
-        move.w  (a0)+,d6
-        subq.w  #1,d6
-        lsl.w   #2,d6
-        lea     game_history_operations,a1
-        move.l  (a1,d6.w),a1
-        move.w  (a0)+,d0
-        move.w  (a0)+,d1
-        move.w  (a0)+,d2
-        move.w  (a0)+,d3
-        move.w  (a0)+,d4
-        move.w  (a0)+,d5
-        jsr     (a1)
-        addq.l  #1,game_history_replay_low
-        subq.w  #1,game_history_replay_count
-        bra.s   .loop
-.success:
-        move.l  game_history_target,game_history_position
-        move.l  game_history_target+4,game_history_position+4
-        clr.b   game_history_replaying
-        adda.w  #game_history_state_end-game_history_state,sp
-        bsr     game_preview_invalidate
-        moveq   #1,d0
+.valid: moveq   #1,d0
         rts
-.invalid_saved:
-        move.l  sp,a0
-        lea     game_history_state,a1
-        moveq   #(game_history_state_end-game_history_state)/4-1,d6
-.rollback:move.l (a0)+,(a1)+
-        dbra    d6,.rollback
-        adda.w  #game_history_state_end-game_history_state,sp
 .invalid:
         moveq   #0,d0
         rts

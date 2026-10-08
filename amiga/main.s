@@ -668,6 +668,7 @@ hex_digits:        dc.b "0123456789ABCDEF"
         include "amiga/game/keyboard.s"
         include "amiga/game/core.s"
         include "amiga/game/history.s"
+        include "amiga/game/history_seek_job.s"
         include "amiga/game/preview.s"
         include "amiga/game/core_trace.s"
         include "amiga/game/native_core_adapter.s"
@@ -777,3 +778,4 @@ sprite_third: dcb.b 8*72,0
 ; HUNK longword padding, outside the attach buffer
         ds.b 2
         include "amiga/game/preview_storage.i"
+        include "amiga/game/history_seek_storage.i"

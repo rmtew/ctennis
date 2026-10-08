@@ -3,6 +3,7 @@
         section match_core,code
         include "amiga/game/core.s"
         include "amiga/game/history.s"
+        include "amiga/game/history_seek_job.s"
         include "amiga/game/preview.s"
         include "amiga/game/core_trace.s"
 
@@ -28,3 +29,4 @@ game_apply_sound:
 ; HUNK longword padding, outside the attach buffer
         ds.b 2
         include "amiga/game/preview_storage.i"
+        include "amiga/game/history_seek_storage.i"

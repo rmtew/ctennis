@@ -21,6 +21,10 @@ PREVIEW_LIFECYCLE equ 7
 ; D2/D3 requested byte X/Y. Current history_position is the selected boundary.
 ; Invalid/stale requests make no changes. D0=1 accepted, D0=0 rejected.
 game_preview_request:
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
         cmp.l   game_preview_generation,d0
         bne     .invalid
         cmpi.l  #$fffffffe,d0
@@ -192,6 +196,10 @@ game_preview_request:
 ; D0 generation, D1 logical-operation budget1..4. No dispatch/tick hidden in
 ; copying, guards or context selection. D0=1 valid call, D0=0 stale/invalid.
 game_preview_step:
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
         cmp.l   game_preview_generation,d0
         bne     .invalid
         cmpi.w  #1,d1
@@ -326,6 +334,10 @@ game_preview_cancel:
 ; Publish only a complete current generation (limits remain honest outcomes).
 ; A0/A1 paths, D1/D2 counts, D3/D4 outcomes, D5 geometry coincidence.
 game_preview_result:
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
         cmp.l   game_preview_generation,d0
         bne.s   .invalid
         cmpi.w  #PREVIEW_READY,game_preview_status
