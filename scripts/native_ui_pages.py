@@ -10,7 +10,10 @@ def prepare(version, release_version=None):
         raise ValueError('Release version must be major.minor')
     source = (ROOT/'amiga/game/interface_text.s').read_text()
     text = dict(re.findall(r"^(ui_\w+): dc.b '([^']*)',0$", source, re.M))
-    text.update(ui_empty='', ui_version=version.rstrip(b'\0').decode('ascii'))
+    tutorial_source=(ROOT/'amiga/game/tutorial_render.s').read_text()
+    tutorial_caption=re.search(r"^tutorial_title_text: dc.b '([^']*)',0$",tutorial_source,re.M)
+    if tutorial_caption is None:raise ValueError('Missing authored tutorial title caption')
+    text.update(tutorial_title=tutorial_caption[1],ui_empty='', ui_version=version.rstrip(b'\0').decode('ascii'))
     identity=re.fullmatch(r'BUILD ([0-9a-f]{7,12})(?: \+ LOCAL)?',text['ui_version'])
     if identity is None:raise ValueError('Title requires the native build identity')
     title_hash=identity[1]
@@ -55,6 +58,7 @@ def prepare(version, release_version=None):
         plane=bytearray(116*32)
         if page==0:
             entries=[(38+i*11,name,menu_left) for i,name in enumerate(menu_names)]
+            entries.append((71,'tutorial_title',96))
         elif page==1:
             entries=[(8,'ui_how',(256-len(text['ui_how'])*8)//2)]
             entries.extend((24+i*10,'ui_play_prose'+str(i),24 if i>=5 else 16) for i in range(7))

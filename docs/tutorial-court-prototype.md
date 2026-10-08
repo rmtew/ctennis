@@ -128,3 +128,18 @@ screens and returns from an inactive tutorial tick before saving registers.
 Fresh physical input, active tutorial and gameplay keep their full input path.
 The deadline and all observers remain unchanged; a fresh run must prove the
 reduced first-callback cost.
+
+A read-only early check of the next run at `3a1d720` found the first callback
+still short by 77.86 CCK (58,589 CCK work). The verified owned observer was
+interrupted and its partial evidence preserved. The next repair bakes the normal
+Tutorial caption at X96/Y71 into the existing title page cache, removing its
+repeated native font draw without adding allocation. The selected fourth row
+retains native inversion before the three-entry selection-cache lookup. The
+independent authored raster contract now includes the fourth caption.
+
+Appearance review can use the preserved complete visual/resume run at `aeacdc6`
+while timing repair continues. Its native court, held-shot view and 24 captured
+animation samples are actual emulator output, but the run is timing FAILED.
+Independent inspection also found that the options view lacks its three central
+menu captions/highlight; that appearance is defective and remains pending.
+Do not describe this visual checkpoint as accepted native gameplay or a release.
