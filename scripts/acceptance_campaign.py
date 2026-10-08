@@ -218,6 +218,20 @@ def plan(case_list, directory, root=ROOT):
                        'prior_artifacts':dict(latest.get('artifacts',{}),**{str(attempts[-1]/'completion.json'):digest(attempts[-1]/'completion.json')}) if latest and attempt_valid(latest,case,deps,root) else {}})
     return result
 
+def caller_ancestors():
+    """Read the reconnect caller's own identity chain, without environment data."""
+    result=set();pid=os.getpid()
+    while pid and pid not in {p for p,_ in result}:
+        identity=process_identity(pid)
+        if not identity:break
+        result.add((pid,identity['start']))
+        try:
+            fields=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+            pid=int(fields[1])
+        except (OSError,ValueError,IndexError):
+            break
+    return result
+
 def tagged_processes(campaign_id, owner=None):
     """Missing /proc access is ambiguous and blocks reclaim; never PID-only."""
     found=[]
@@ -225,6 +239,10 @@ def tagged_processes(campaign_id, owner=None):
     current=process_identity()
     if owner.get('boot')!=current['boot']:return found
     marker=('CTENNIS_CAMPAIGN_ID='+campaign_id).encode()
+    # Exclude the external reconnect launcher, which is an ancestor of this
+    # scan, after checking owned group membership. A caller already tagged as
+    # campaign work gets no exclusion. All other live permission denials block.
+    ancestors=caller_ancestors() if os.environ.get('CTENNIS_CAMPAIGN_ID')!=campaign_id else set()
     for item in Path('/proc').iterdir():
         if not item.name.isdigit() or int(item.name)==os.getpid():continue
         try:
@@ -232,6 +250,7 @@ def tagged_processes(campaign_id, owner=None):
             if not identity or int(identity['start'])<int(owner['start']):continue
             if identity['group']==owner['group']:
                 found.append(identity);continue
+            if (identity['pid'],identity['start']) in ancestors:continue
             if marker in (item/'environ').read_bytes().split(b'\0'):
                 if identity:found.append(identity)
         except FileNotFoundError:pass

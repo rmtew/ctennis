@@ -167,6 +167,7 @@ class CampaignTests(unittest.TestCase):
         (item/'environ').read_bytes.side_effect=PermissionError('exiting')
         identity=dict(owner,pid=999999,start='2',group=-2)
         with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'caller_ancestors',return_value=set()),\
              patch.object(campaign,'process_identity',side_effect=[owner,identity,None]):
             self.assertEqual(campaign.tagged_processes('old',owner),[])
     def test_live_same_user_permission_denial_still_blocks(self):
@@ -178,8 +179,24 @@ class CampaignTests(unittest.TestCase):
         item.stat.return_value.st_uid=os.getuid()
         identity=dict(owner,pid=999999,start='2',group=-2)
         with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'caller_ancestors',return_value=set()),\
              patch.object(campaign,'process_identity',side_effect=[owner,identity,identity]):
             with self.assertRaisesRegex(RuntimeError,'Cannot verify'):
                 campaign.tagged_processes('old',owner)
+    def test_reconnect_launcher_identity_is_not_descendant(self):
+        from unittest.mock import Mock
+        owner=dict(campaign.process_identity(),start='1',group=-1)
+        item=Mock();item.name='999999';item.__truediv__=Mock()
+        identity=dict(owner,pid=999999,start='2',group=-2)
+        with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'caller_ancestors',return_value={(999999,'2')}),\
+             patch.object(campaign,'process_identity',side_effect=[owner,identity]):
+            self.assertEqual(campaign.tagged_processes('old',owner),[])
+        item.__truediv__.assert_not_called()
+        owned=dict(identity,group=owner['group'])
+        with patch.object(campaign.Path,'iterdir',return_value=[item]),\
+             patch.object(campaign,'caller_ancestors',return_value={(999999,'2')}),\
+             patch.object(campaign,'process_identity',side_effect=[owner,owned]):
+            self.assertEqual(campaign.tagged_processes('old',owner),[owned])
 
 if __name__=='__main__':unittest.main()

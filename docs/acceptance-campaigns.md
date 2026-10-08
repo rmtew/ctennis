@@ -61,6 +61,8 @@ The single lock belongs to the resolved physical build directory, so symlinked
 worktrees sharing outputs also share ownership. Linux host, boot ID and process
 start time establish process identity; PID or a stale heartbeat alone cannot
 authorize reclaim. Live or ambiguous descendants block another controller.
+The reconnect caller's verified ancestor identities are excluded after checking
+owned group membership; unrelated live permission denials still block reclaim.
 Use this entry point consistently; a manually launched builder or observer does
 not acquire the controller lock and must not overlap a campaign.
 
