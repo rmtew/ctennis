@@ -160,6 +160,20 @@ or changed report blocks inheritance. These cases currently continue that privat
 selective campaign. A fresh checkout without both receipts fails closed, and a new
 CPU receipt needs a reviewed pin before these observer cases can use it.
 
+Native observer attempts remain failed and preserved. Direct prime/synthetic
+body calls require read-only emitted-entry and stack-matched return observations;
+wrapper markers alone do not capture them. The observer now pairs complete
+318-byte states and ordered intents at those bodies without changing gameplay
+bytes, and archives literal RPC and event transcripts with lossless gzip under
+the unchanged 256 MiB stored-artifact cap. Compressed storage and uncompressed
+transcript lengths are reported separately. This correction has host checks,
+with fresh native execution still pending.
+
+The preserved failed PAL observer attempt 000003 also exposes a real timing
+blocker: callback 536 takes 167,076 CCK, including a 159,175-CCK synchronous seek,
+with observed deadline headroom of -108,565.44 CCK. That failed callback is not
+exempted from timing acceptance. Practical paused latency remains unresolved.
+
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
 (000007), alongside passed scoped attempts. Native assembly-range and measurement

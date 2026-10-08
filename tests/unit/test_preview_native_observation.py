@@ -1,7 +1,11 @@
 """Guard full write extents and precise IRQ values without an emulator."""
 import sys
+import gzip
+import json
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from preview_native_observation import Observer, BodyFrames
 from native_longword_observer import LongwordObserver
@@ -279,6 +283,44 @@ class NativeBodyPairs(unittest.TestCase):
         for index in range(1,9):self.entry(frames,0x420,0x1800-4*index,0x520)
         with self.assertRaisesRegex(AssertionError,'nine-body'):
             self.entry(frames,0x420,0x1700,0x520)
+
+
+class NativeEventArchive(unittest.TestCase):
+    def observer(self,directory):
+        observer=object.__new__(Observer)
+        observer.raw_path=Path(directory)/'events.jsonl.gz'
+        observer.raw=gzip.open(observer.raw_path,'wt',encoding='utf-8',compresslevel=3)
+        observer.raw_bytes=observer.raw_uncompressed_bytes=observer.notifications=observer.drops=0
+        observer.problems=[]
+        return observer
+
+    def test_all_literal_notifications_survive_gzip_in_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            observer=self.observer(directory)
+            records=[dict(method='event.frame',params=dict(index=index,dropped_notifications=0,
+                note='literal repeated notification')) for index in range(513)]
+            for record in records:observer.observe(record)
+            self.assertGreater(observer.raw_bytes,0) # Incremental 512-record flush happened.
+            observer.close()
+            with gzip.open(observer.raw_path,'rt',encoding='utf-8') as archive:
+                self.assertEqual([json.loads(line) for line in archive],records)
+            self.assertEqual(observer.notifications,len(records))
+            expected=sum(len((json.dumps(r,separators=(',',':'))+'\n').encode()) for r in records)
+            self.assertEqual(observer.raw_uncompressed_bytes,expected)
+            self.assertEqual(observer.raw_bytes,observer.raw_path.stat().st_size)
+            self.assertLess(observer.raw_bytes,observer.raw_uncompressed_bytes)
+
+    def test_saved_cap_counts_other_artifacts_and_does_not_drop_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            observer=self.observer(directory)
+            (Path(directory)/'other-artifact').write_bytes(bytes(256))
+            record=dict(method='event.frame',params=dict(dropped_notifications=0))
+            with patch('preview_native_observation.RAW_CAP',128),patch('preview_native_observation.RESERVE',0):
+                for _ in range(512):observer.observe(record)
+            self.assertIn('Native stored-artifact cap approached',observer.problems)
+            observer.close()
+            with gzip.open(observer.raw_path,'rt',encoding='utf-8') as archive:
+                self.assertEqual(len(list(archive)),512)
 
 
 if __name__=='__main__':unittest.main()

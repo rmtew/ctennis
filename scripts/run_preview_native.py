@@ -112,7 +112,7 @@ class Native:
         regions=[(row['start'],row['size']) for row in self.segments]
         s=self.symbols
         self.observer=Observer(s,self.read(s['game_core_state'],318),self.read,regions,
-            listing.read_text(),self.segments,locations,executable.parent/'events.jsonl')
+            listing.read_text(),self.segments,locations,executable.parent/'events.jsonl.gz')
         self.observer.on_row=self.logical
         session.notification_handler=self.observer.observe
         old=cpu.instruction
@@ -661,7 +661,7 @@ def run(standard):
                     physical_inputs=physical,telemetry=dict(notifications=observer.notifications,
                         dropped_notifications=0,dropped_accesses=0,public_boundary_drain_checks=observer.drain_checks),
                     caps=CAPS,observed_caps=observed,costs=costs,
-                    byte_cap_scope='stored-artifact-bytes; rpc-transcript-gzip; uncompressed-rpc-measured-separately',
+                    byte_cap_scope='stored-artifact-bytes; rpc-and-event-transcripts-gzip; uncompressed-transcripts-measured-separately',
                     endpoint_classification_scope='inherited-reviewed-cpu9; no-fresh-native-launch-hook-qualification',
                     inherited_endpoint_validation=dict(cpu_receipt_sha256=CPU9_SHA,
                         scope='CPU9-independent-endpoints; native-labels-only'),
@@ -684,6 +684,7 @@ def run(standard):
                     entry_return_observations=frames.internal_stops,
                     actual_body_entries=frames.entries,outer_logical_calls=sum(r['depth']==1 for r in frames.records),
                     unpaired_frames=0,maximum_nesting=9,maximum_entries_per_api=8192,
+                    stack_bottom=native.symbols['game_stack_bottom'],stack_top=native.symbols['game_stack_top'],
                     source_closure='Exact fixture manifest and loaded core/worker bytes bound in compiled_identity.',
                     scope='Read-only internal debugger stops; no register/core writes or physical commands inside APIs. API JSR/RTS CCK includes all body/IRQ execution; host stop/RPC delay is not emulated work.')
                 validation['preservation'].update(publication_scope='worker-api-irq-only; outside-api-native-ui-attributed',
@@ -699,7 +700,10 @@ def run(standard):
         validation['rpc_transcript']=dict(encoding='gzip-jsonl',path=str(session.rpc_path.relative_to(ROOT)),
             sha256=digest(session.rpc_path),compressed_bytes=session.rpc_path.stat().st_size,
             uncompressed_bytes=session.rpc_uncompressed_bytes,records=session.rpc_records,calls=session.rpc_calls,
-            scope='Literal observer-local requests/replies; notifications are preserved separately in events.jsonl.')
+            scope='Literal observer-local requests/replies; notifications are preserved separately in events.jsonl.gz.')
+        validation['event_transcript']=dict(encoding='gzip-jsonl',path=str(observer.raw_path.relative_to(ROOT)),
+            sha256=digest(observer.raw_path),compressed_bytes=observer.raw_path.stat().st_size,
+            uncompressed_bytes=observer.raw_uncompressed_bytes,notifications=observer.notifications)
         completed=[]
         for observation in observations:
             print('Comparing uninterrupted actual core',observation['name'],flush=True)

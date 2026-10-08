@@ -1,5 +1,6 @@
 """Lossless native API brackets and frozen write guards; no gameplay oracle."""
 import hashlib
+import gzip
 import json
 import re
 from pathlib import Path
@@ -116,8 +117,9 @@ def outside_publication_rules(listing,symbols,segments):
 class Observer(TraceCollector):
     def __init__(self,symbols,initial,read,regions,listing,segments,locations,path):
         super().__init__(symbols,initial,symbols['core_trace_marker'],symbols['core_trace_arguments'])
-        self.read=read;self.regions=regions;self.raw=Path(path).open('w')
-        self.raw_bytes=0;self.notifications=0;self.drops=0;self.pending=None
+        self.read=read;self.regions=regions;self.raw_path=Path(path)
+        self.raw=gzip.open(self.raw_path,'wt',encoding='utf-8',compresslevel=3)
+        self.raw_bytes=0;self.raw_uncompressed_bytes=0;self.notifications=0;self.drops=0;self.pending=None
         self.api_rows=[];self.frozen=False;self.problems=[];self.stack_min=symbols['game_stack_top']
         self.callback_rows=[];self.drain_checks=0;self.current_callback=None;self.timer_start=None;self.timer_origin=None
         self.input_shadow={n:bytearray(read(symbols[n],size)) for n,size in INPUTS}
@@ -216,7 +218,7 @@ class Observer(TraceCollector):
 
     def finish(self):
         self.drain_checks+=1
-        self.raw.flush()
+        self.check_saved_capture()
         assert not self.drops, ('Native observation dropped notifications/accesses',self.drops)
         assert not self.problems,self.problems[0] if self.problems else None
         assert self.raw_bytes<RAW_CAP-RESERVE,'Native raw cap approached at completed public boundary'
@@ -369,9 +371,9 @@ class Observer(TraceCollector):
 
     def observe(self,message):
         encoded=json.dumps(message,separators=(',',':'))+'\n'
-        self.raw_bytes+=len(encoded.encode());self.notifications+=1
-        if self.raw_bytes<=RAW_CAP:self.raw.write(encoded)
-        else:self.problems.append('Native raw evidence cap exceeded')
+        self.raw_uncompressed_bytes+=len(encoded.encode());self.notifications+=1
+        self.raw.write(encoded) # Lossless literal archive; never discard a record.
+        if self.notifications%512==0:self.check_saved_capture()
         r=message.get('params',{})
         if message.get('method','').startswith('event.') and 'dropped_notifications' not in r:
             self.problems.append('Notification lacks explicit overflow telemetry')
@@ -412,4 +414,11 @@ class Observer(TraceCollector):
         if a==self.marker or self.arguments<=a<a+size<=self.arguments+12 or a==self.symbols['simulation_updates']:
             super().observe(message)
 
-    def close(self):self.raw.close()
+    def check_saved_capture(self):
+        self.raw.flush();self.raw_bytes=self.raw_path.stat().st_size
+        stored=sum(p.stat().st_size for p in self.raw_path.parent.iterdir() if p.is_file())
+        if stored>=RAW_CAP-RESERVE and 'Native stored-artifact cap approached' not in self.problems:
+            self.problems.append('Native stored-artifact cap approached')
+
+    def close(self):
+        self.raw.close();self.raw_bytes=self.raw_path.stat().st_size
