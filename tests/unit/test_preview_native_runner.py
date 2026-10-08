@@ -8,10 +8,28 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints
+from run_preview_native import measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay
+from native_tools import ROOT,ASSEMBLER
 
 
 class NativePreviewTiming(unittest.TestCase):
+    def test_overlay_dispatches_to_tool_helper_without_campaign_recursion(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            with patch('run_preview_native.run_command') as tool, \
+                    patch('run_preview_native.compile_manifest',return_value={'files':{}}):
+                executable,listing,manifest,identity=overlay(Path(directory))
+            tool.assert_called_once()
+            command=tool.call_args.args[0]
+            self.assertEqual(command[0],str(ASSEMBLER))
+            self.assertIn('-DCORE_TRACE=1',command)
+            self.assertIn('-DDEMO_RECORDING=1',command)
+            self.assertEqual(command[-1],str((Path(directory)/'main-preview-observer.s').relative_to(ROOT)))
+            self.assertIn('        jsr     preview_native_hook',
+                (Path(directory)/'main-preview-observer.s').read_text())
+            self.assertEqual(executable.name,'preview-native')
+            self.assertEqual(listing.name,'preview-native.lst')
+            self.assertIn('scripts/preview_native_fixture.s',identity['original_sources'])
+
     def test_transition_callback_miss_and_fresh_input_are_not_excluded(self):
         rows=[dict(callback=1,entry={'cck':0},completion={'cck':40},fresh_input=False),
               dict(callback=2,entry={'cck':50},completion={'cck':111},fresh_input=True)]

@@ -18,7 +18,7 @@ from native_evidence import (ReportRun,atomic_json,assembly_inputs,python_inputs
 from native_hunk import loaded_hunks,hunk_layout
 from native_metrics import memory_summary
 from native_metrics_observation import distribution
-from native_tools import ROOT,ASSEMBLER,run,emulator_config
+from native_tools import ROOT,ASSEMBLER,run as run_command,emulator_config
 from ordinary_cadence import chip_memory
 from preview_extended_proof import continuous,table,value
 from preview_proof import point
@@ -46,7 +46,7 @@ def overlay(directory):
     source=directory/'main-preview-observer.s'
     source.write_text(text+'\n        include "scripts/preview_native_fixture.s"\n')
     executable,listing=directory/'preview-native',directory/'preview-native.lst'
-    run([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1',
+    run_command([str(ASSEMBLER),'-Fhunkexe','-kick1hunks','-m68000','-DENHANCED_INTERFACE=1',
         '-DCORE_TRACE=1','-DDEMO_RECORDING=1','-L',str(listing),'-o',str(executable),
         str(source.relative_to(ROOT))])
     manifest=compile_manifest(executable,listing)
