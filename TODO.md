@@ -9,5 +9,9 @@
   Preserve fixed initialization, per-bank caches and DMA tests.
 - Full-match files, disk flushing and portable saves remain later work.
   Bounded rolling history and seek are part of the tutorial roadmap.
+- Optional ball sprite echoes follow the simple placement/normal-ball-animation
+  baseline; see the [separate opt-in milestone](docs/tutorial-mode-design.md#optional-ball-sprite-echoes).
+  Defining the milestone does not authorize implementation. Richard's future
+  explicit go-ahead is required; primary objects win and clashes are skipped.
 
 Exit-game work was cancelled; reboot remains the intended behavior.

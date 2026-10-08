@@ -7,6 +7,10 @@ previews and bounded native seek scheduling merged in PR #37 after independent
 source and completed selective CPU/PAL/NTSC evidence review; see
 [isolated previews](isolated-shot-previews.md). The court prototype is the active
 increment; visual tuning awaits native screenshots and animation review.
+The current proof prioritizes immediate player placement, the latest shot result
+and normal-speed native ball/shadow animation on the existing court. Trails and
+sprite echoes are optional; neither gates placement readiness. Echo implementation
+requires Richard's future go-ahead, separate from approval of this roadmap entry.
 Branching and the full target/release gate remain later work.
 
 ## Purpose and scope
@@ -95,7 +99,8 @@ shot, not the stored original shot. Legal positions follow the game's serve and
 return rules. Do not claim that every legal test position could have been reached
 from the original position in the available time.
 
-Show the incoming path and both outgoing alternatives computed by the game:
+Optional paths can show the incoming path and both outgoing alternatives computed
+by the game:
 button 1 held and button 1 released. Use a solid active path and a dashed
 inactive path as the first prototype. Test whether a slightly thicker active
 path improves clarity at native resolution. Style must distinguish paths without
@@ -109,9 +114,11 @@ from actual simulation events, not a second set of trajectory rules.
 
 Animate a preview ball along the incoming path and the active outgoing path.
 Use the game's height projection and shadow where useful so that height and
-landing are clear. The animation is a display loop over a computed preview; it
+landing are clear. Advance dense actual samples at normal game speed and retain
+the final sample without wrapping in the simple baseline. Animation displays a
+computed preview; it
 does not advance the selected simulation moment. Repositioning, time selection
-or changing button 1 invalidates the preview and restarts the display loop when
+or changing button 1 invalidates the preview and restarts playback when
 the new result is ready. Never show an old path as the result of a new position.
 
 At the bottom, show `< n/m >`, where n is the selected retained shot and m is
@@ -126,6 +133,36 @@ source. Ignore idle samples and key-repeat noise for source selection. Avoid
 rapid label changes when devices are mixed. Context feedback takes priority over
 general hints; do not rotate away an important result before it can be read.
 Hint timing is presentation state, separate from simulation time.
+
+### Optional ball sprite echoes
+
+Purpose: make direction and height easier to read by showing a few earlier ball
+positions alongside the primary ball. This is a separate opt-in milestone after
+the simple placement and normal-ball-animation baseline has passed focused review.
+Defining it does not authorize implementation: obtain Richard's future explicit
+go-ahead before any echo runtime changes. It is not a prerequisite for retained
+navigation, branching or the tutorial release gate.
+
+Consume existing completed preview samples as they arrive; add no simulation,
+trajectory model or filled-trail requirement. Use a bounded number of prebuilt
+compact ball sprite records. First evaluate available vertical gaps on the
+ball/shadow channels; optionally reuse player/AI channel gaps outside their native
+vertical spans if that remains cheap. Preserve primary player, AI, ball and shadow
+intervals and priority. Skip clashes and unavailable slots rather than shifting
+objects or postponing placement. Prefer bounded DMA chaining where supported;
+do not introduce a general sprite allocator or repeated Copper-pointer scheduling
+without measured need and further review. Palette feasibility, including any
+unused sprite pixel code, remains to be verified against all native palette pairs
+before choosing a dim echo style.
+
+Exit: fresh focused PAL/NTSC evidence on the unexpanded A500 binds the exact build
+and demonstrates actual published/fetched echo headers, payloads, pixels and
+vertical intervals, including clashes, skipped echoes and input supersession.
+Primary objects, scoreboards and native colors must remain correct. Compare
+placement/result latency and normal-speed animation with the no-echo baseline;
+every complete callback, including input, IRQ/DMA and publication tails, must
+retain its deadline. Record added code/RAM/stack and worst observed contended
+work. Richard reviews native screenshots/animation before appearance is accepted.
 
 ## Resume rules
 
@@ -211,13 +248,20 @@ committed foundation. Do not build the UI on an unproved state boundary.
    coincident-path cases. Exit: replaying a chosen alternative produces the same
    trajectory/outcome, and preview leaves live state/history unchanged.
 4. **Integrate the court UI and branching.** Add title entry, one-player
-   double-tap, modifier navigation, menu, banner, trails, animation and hints.
+   double-tap, modifier navigation, menu, banner, animation and hints. Prove the
+   simple static-court placement/normal-ball-animation baseline first; trails are
+   optional and never a READY or usability prerequisite.
    Show native-resolution screenshots and a short animation before locking
    visual tuning. Test tap/hold discrimination, input-source switching, both
    resume commands and repeated enter/leave cycles. Exit: the committed branch
    replays from its edited checkpoint; Resume latest remains byte-equivalent at
    the canonical interruption boundary; two-human play cannot enter tutorial.
-5. **Prove the target build and release.** Run the applicable existing tests and
+5. **Optional: add opportunistic ball sprite echoes.** After the simple baseline,
+   and only after Richard's explicit future go-ahead, implement the bounded
+   existing-sample presentation described above. Preserve primary-object priority,
+   skip clashes and prove focused PAL/NTSC timing and actual native visual output.
+   This opt-in milestone may be skipped without blocking the main roadmap.
+6. **Prove the target build and release.** Run the applicable existing tests and
    new tutorial checks, then the finite native acceptance gate. Exercise PAL and
    NTSC on A500, 68000, OCS, 512 KB chip RAM, no expansion. Check actual scanout,
    sprite/HUD publication and cold-loaded release bytes. Exit: reviewed evidence
