@@ -50,7 +50,9 @@ tutorial_ball_mode: ds.b 1
 tutorial_waiting_ready: ds.b 1
 ; Reserved optional-trail preference; default0, no trail passes scheduled.
 tutorial_trails_enabled: ds.b 1
-        ds.b 1
+tutorial_footer_dirty: ds.b 1
+tutorial_footer_first: ds.l 1
+tutorial_footer_second: ds.l 1
 tutorial_build_generation: ds.w 1
 tutorial_text_row: ds.w 1
 tutorial_render_phase: ds.w 1

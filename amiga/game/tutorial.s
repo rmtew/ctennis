@@ -153,6 +153,24 @@ tutorial_tick:
         bne     .draw_only
         tst.b   tutorial_menu
         bne     .draw_only
+        ; Coalesce changed captions before worker slices; unchanged text has
+        ; no pixel work. Due animation has priority over the other alternative.
+        tst.b   tutorial_footer_dirty
+        beq     .animation
+        bsr     tutorial_work_admitted
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_footer
+        clr.b   tutorial_footer_dirty
+.animation:
+        bsr     tutorial_animation_due
+        tst.l   d0
+        beq     .preview_work
+        bsr     tutorial_presentation_admitted
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_animate
+.preview_work:
         tst.b   tutorial_work_pending
         beq     .draw_only
         cmpi.w  #PREVIEW_READY,game_preview_status
@@ -213,12 +231,19 @@ tutorial_tick:
         move.w  d3,tutorial_outcomes
         move.w  d4,tutorial_outcomes+2
         move.w  d5,tutorial_coincident
+        bsr     tutorial_progress_returned
         clr.b   tutorial_work_pending
         bsr     tutorial_progress_status
-        bsr     tutorial_footer
+        st      tutorial_footer_dirty
         bra     .done
 .draw_only:
+        tst.b   tutorial_menu
+        bne     .menu_admission
+        bsr     tutorial_presentation_admitted
+        bra     .draw_admitted
+.menu_admission:
         bsr     tutorial_work_admitted
+.draw_admitted:
         tst.l   d0
         beq     .done
         bsr     tutorial_progress_slice
@@ -236,6 +261,18 @@ tutorial_tick:
 tutorial_work_admitted:
         bsr     tutorial_work_remaining
         cmpi.l  #10000,d0
+        bcs     .decline
+        moveq   #1,d0
+        rts
+.decline:
+        moveq   #0,d0
+        rts
+
+; Pure sprite/plane publication; footer raster has a separate admission.
+; 5000 ticks is a focused timing hypothesis, not a universal native bound.
+tutorial_presentation_admitted:
+        bsr     tutorial_work_remaining
+        cmpi.l  #5000,d0
         bcs     .decline
         moveq   #1,d0
         rts
@@ -270,6 +307,8 @@ tutorial_enter:
         beq     .done
         st      tutorial_active
         st      ui_paused
+        clr.l   tutorial_footer_first
+        clr.l   tutorial_footer_second
         clr.b   tutorial_menu
         clr.b   tutorial_modifier_used
         clr.b   tutorial_tap_pending
@@ -328,6 +367,10 @@ tutorial_request:
 
 ; Native key/direction intent only. Legal positions are read from actual tables.
 tutorial_controls:
+        ; Menu confirmation owns F/B1; preserve the chosen shot alternative
+        ; while the menu is open instead of turning its confirm into an edit.
+        tst.b   tutorial_menu
+        bne     .menu
         move.b  tutorial_packet,d0
         moveq   #1,d1
         btst     #4,d0

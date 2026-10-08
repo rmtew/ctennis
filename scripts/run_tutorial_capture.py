@@ -39,7 +39,14 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_line_end_x=2, tutorial_line_end_y=2,
               tutorial_line_dx=2, tutorial_line_dy=2, tutorial_line_error=2,
               tutorial_line_sx=2, tutorial_line_sy=2,
-              tutorial_counts=4)
+              tutorial_counts=4, tutorial_available_counts=4, tutorial_available_outcomes=4,
+              tutorial_placement_dirty=1, tutorial_placement_ready=1,
+              tutorial_marker_ready=1, tutorial_animation_ready=1, tutorial_ball_mode=1,
+              tutorial_scene_layer=1,
+              tutorial_waiting_ready=1, tutorial_trails_enabled=1, tutorial_footer_dirty=1,
+              tutorial_presentation_generation=4, tutorial_marker_generation=4,
+              tutorial_animation_generation=4, tutorial_visible_surface=4,
+              tutorial_menu_selection=1, game_preview_status=2)
 
 
 def run(standard='PAL'):
@@ -100,7 +107,8 @@ def run(standard='PAL'):
             loaded = loaded_hunks(executable, segments, read)
             observer = CallbackObserver(0, symbols)
             observer.surfaces = SurfaceObserver(symbols, read, verify_court_restores=True,
-                                               last_line=expected_video['presentation_last_line'])
+                                               last_line=expected_video['presentation_last_line'],
+                                               verify_sprites=True)
             session.observer = observer
             subscription = session.inspect('events.subscribe',
                 dict(events=['mmio','frame'], mmio=(observer.watches(FIELDS, read)+
@@ -175,19 +183,33 @@ def run(standard='PAL'):
                 wait_start = time
                 for _ in range(200):
                     advance(.2)
-                    if (number('tutorial_active') and number('tutorial_status') == 4
+                    scene = observer.surfaces.current_presentation(observer.state)
+                    if (number('tutorial_active') and number('tutorial_status') in (4,6)
                             and not number('tutorial_pending')
+                            and not number('tutorial_placement_dirty')
+                            and not number('tutorial_footer_dirty')
                             and number('tutorial_published_generation') == number('tutorial_render_generation')
+                            and scene
                             and observer.surfaces.current(number('tutorial_published_generation'))):
                         waits.append(dict(start_seconds=wait_start, ready_seconds=time,
                                           elapsed_seconds=time-wait_start,
-                                          generation=number('tutorial_published_generation')))
+                                          generation=number('tutorial_published_generation'),
+                                          state='waiting' if number('tutorial_waiting_ready') else 'placement',
+                                          first_actual_publication_seconds=scene['position']['seconds'],
+                                          first_actual_ready_generation=scene['ready_generation']))
                         return
                 atomic_json(directory/'readiness-failure.json', dict(
                     waits=waits, boundaries=boundaries, stop=stop,
                     fields={n:number(n) for n in FIELDS},
                     surface_publications=observer.surfaces.publications))
                 raise AssertionError('No current complete tutorial scene within finite wait')
+            def prediction_complete():
+                # Pair completion is an evidence check, never the UI READY gate.
+                for _ in range(200):
+                    if number('game_preview_status') == 5 and not number('tutorial_work_pending'):
+                        return
+                    advance(.2)
+                raise AssertionError('Bounded preview pair did not complete')
             def photo(name):
                 source = directory/(name+'-viewport.png')
                 native = directory/(name+'.png')
@@ -217,7 +239,7 @@ def run(standard='PAL'):
             assert number('game_lifecycle', 2) == 1
             key(0x24, True); key(0x24, False, .08)
             key(0x24, True); key(0x24, False)
-            ready(); released_picture = photo('released-serve')
+            ready(); prediction_complete(); ready(); released_picture = photo('released-serve')
             # The fixed released continuation remains honestly bounded at256.
             # Its observed state is an attached human serve waiting for action.
             released_state = block('game_preview_released_state', 318)
@@ -236,7 +258,9 @@ def run(standard='PAL'):
                 phase=phase, ai=ai, launches=0, outcome=6,
                 sample_count=256, sample_limit=256, incomplete=True, outgoing_shot_claimed=False)
             old_xy = (number('tutorial_x'), number('tutorial_y'))
+            movement_start = time
             key(0x22, True, .15); key(0x22, False)
+            movement_end = actions[-1]['at_seconds']
             assert (number('tutorial_x'), number('tutorial_y')) != old_xy
             ready(); photo('edited-serve')
             key(0x23, True); ready(); photo('held-serve')
@@ -282,13 +306,76 @@ def run(standard='PAL'):
             raw = dict(records=session.records, uncompressed_bytes=session.raw_bytes,
                        cap_uncompressed_bytes=session.MAX_RAW_BYTES)
             surfaces = observer.surfaces.result()
+            scene_offset = symbols['game_scene_objects']-symbols['game_core_state']
+            original_objects = selected[scene_offset:scene_offset+64]
+            active_publications = [p for p in surfaces['publications']
+                                   if p['tutorial_fields']['tutorial_active']]
+            for publication in active_publications:
+                fields = publication['tutorial_fields']
+                end = fields['tutorial_end']
+                expected = bytearray(original_objects[:48])
+                dx = fields['tutorial_x']-selected[end*10+3]
+                dy = fields['tutorial_y']-selected[end*10+2]
+                for obj in range(end*24,end*24+24,8):
+                    expected[obj] = (expected[obj]+dy)&255
+                    expected[obj+1] = (expected[obj+1]+dx)&255
+                assert bytes.fromhex(publication['objects'])[:48] == bytes(expected), 'Published player is not latest edited native pose'
+                assert not fields['tutorial_trails_enabled'], 'Trails unexpectedly gate the static proof'
+            moving = [p for p in active_publications
+                      if movement_start <= p['position']['seconds'] < movement_end]
+            assert len({(p['tutorial_fields']['tutorial_x'],p['tutorial_fields']['tutorial_y'])
+                        for p in moving}) >= 2, 'Continuous movement failed to publish changing player sprites'
+            responses = []
+            for request in observer.presentation_requests:
+                pubs = [p for p in active_publications if
+                        p['tutorial_fields']['tutorial_presentation_generation'] == request['generation']]
+                if not pubs:
+                    responses.append(dict(request, superseded_without_publication=True))
+                    continue
+                first = pubs[0]
+                marker = next((p for p in pubs if p['tutorial_fields']['tutorial_marker_ready']),None)
+                waiting = next((p for p in pubs if p['tutorial_fields']['tutorial_waiting_ready']),None)
+                animation_pub = next((p for p in pubs if p['tutorial_fields']['tutorial_ball_mode'] == 2),None)
+                origin = request['position']['seconds']
+                responses.append(dict(request, player_publication_seconds=first['position']['seconds']-origin,
+                    endpoint_publication_seconds=marker['position']['seconds']-origin if marker else None,
+                    waiting_publication_seconds=waiting['position']['seconds']-origin if waiting else None,
+                    animation_publication_seconds=animation_pub['position']['seconds']-origin if animation_pub else None))
+            assert any(r.get('endpoint_publication_seconds') is not None for r in responses)
+            assert any(r.get('waiting_publication_seconds') is not None for r in responses)
+            animation_steps = []
+            previous = {}
+            for publication in active_publications:
+                fields = publication['tutorial_fields']
+                if fields['tutorial_ball_mode'] != 2 or fields['tutorial_menu']:
+                    continue
+                identity = (fields['tutorial_presentation_generation'], fields['tutorial_active_variant'],
+                            fields['tutorial_render_generation'])
+                old = previous.get(identity)
+                index = fields['tutorial_animation_index']
+                if old and index != old['tutorial_fields']['tutorial_animation_index']:
+                    old_index = old['tutorial_fields']['tutorial_animation_index']
+                    count = (fields['tutorial_counts'] >> (16 if identity[1] == 0 else 0)) & 65535
+                    assert index == min(old_index+2, count-1), 'Dense native animation skipped samples or wrapped'
+                    animation_steps.append(dict(generation=identity[0], variant=identity[1],
+                        previous_index=old_index, index=index,
+                        interval_seconds=publication['position']['seconds']-old['position']['seconds']))
+                if old is None or index != old['tutorial_fields']['tutorial_animation_index']:
+                    previous[identity] = publication
+            assert len(animation_steps) >= 2, 'Insufficient actual native animation publications'
+            responsiveness = dict(requests=responses, moving_publications=len(moving),
+                native_sprite_checks=len(surfaces['native_sprite_checks']),
+                animation_steps=animation_steps, animation_dense_samples=True,
+                latest_pose_matches=True, trails_enabled=False,
+                scope='Accepted request stores to specific actual native player/endpoint/waiting/animation publications; superseded requests need no prediction result.')
         target_log(directory, standard)
         capture = directory/'capture.json'
         atomic_json(capture, dict(boundaries=boundaries, actions=actions, waits=waits, timing=timing,
                                  memory=memory, loaded_hunks=loaded, surfaces=surfaces,
-                                 visual_checks=visual_checks))
+                                 visual_checks=visual_checks, responsiveness=responsiveness))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
             target=target, native_video=video, waits=waits,
+            responsiveness=responsiveness,
             missed_presentation_deadlines=missed_publications,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             capture=str(capture.relative_to(ROOT)), screenshots=screenshots,

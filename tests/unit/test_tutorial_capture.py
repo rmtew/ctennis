@@ -8,11 +8,37 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts'))
 from tutorial_capture import (CaptureSession, CallbackObserver, SurfaceObserver,
-                              required_capture_extent, assert_native_text, assert_court_origins)
+                              required_capture_extent, assert_native_text, assert_court_origins,
+                              check_native_presentation)
 from copperline_test_session import NativeControlSession
 
 
 class TutorialCaptureTests(unittest.TestCase):
+    def test_native_sprite_contract_rejects_header_and_stale_sample(self):
+        image = (Path(__file__).resolve().parents[2]/'assets/native/scene/sprite-images.bin').read_bytes()
+        objects = bytearray(64)
+        objects[48:56] = bytes((11,10,0,0,1,1,0,0))
+        sprites = bytearray(576)
+        sprites[:72] = bytes((56,85,72,0))+image[:64]+bytes(4)
+        paths = bytearray(4096)
+        paths[8:16] = bytes((0,0,10,11,0,0,1,0))
+        snapshot = dict(objects=objects.hex(),sprite_bytes=sprites.hex(),
+            tutorial_fields=dict(tutorial_scene_layer=2,tutorial_ball_mode=1,tutorial_menu=0,
+                tutorial_presentation_generation=7,tutorial_generation=7,
+                tutorial_active_variant=0,tutorial_counts=2<<16,tutorial_animation_index=0))
+        self.assertTrue(check_native_presentation(snapshot,paths)['matched'])
+        broken = copy.deepcopy(snapshot)
+        broken['sprite_bytes'] = '37'+broken['sprite_bytes'][2:]
+        with self.assertRaises(AssertionError):
+            check_native_presentation(broken,paths)
+        broken = copy.deepcopy(snapshot)
+        broken['tutorial_fields']['tutorial_generation'] = 8
+        with self.assertRaises(AssertionError):
+            check_native_presentation(broken,paths)
+        paths[10] = 12
+        with self.assertRaises(AssertionError):
+            check_native_presentation(snapshot,paths)
+
     def test_authored_font_contract_rejects_absent_and_wrong_highlight(self):
         from PIL import Image
         text = 'RESUME LATEST'
@@ -117,6 +143,12 @@ class TutorialCaptureTests(unittest.TestCase):
             protected_surface_writes=0, protected_bank_writes=0,
             exact_queued_image_published=True, queued_images=1, actual_publications=1,
             court_restores_verified=True, resumed_native_banks=3)
+        report['responsiveness'] = dict(latest_pose_matches=True, trails_enabled=False,
+            moving_publications=2, native_sprite_checks=2, animation_dense_samples=True,
+            animation_steps=[dict(previous_index=n,index=n+2,interval_seconds=.04) for n in (2,4)],
+            requests=[dict(player_publication_seconds=.02, endpoint_publication_seconds=1.,
+                           waiting_publication_seconds=None),
+                      dict(player_publication_seconds=.02, waiting_publication_seconds=.2)])
         report['visual_checks'] = dict(
             options=[dict(matched=True, selected=n==0) for n in range(3)],
             **{'options-resume':[dict(matched=True, selected=n==1) for n in range(3)],
@@ -178,6 +210,14 @@ class TutorialCaptureTests(unittest.TestCase):
         self.assertFalse(required_capture_extent(broken))
         broken = copy.deepcopy(report); broken['surface_ownership']['resumed_native_banks'] = 2
         self.assertFalse(required_capture_extent(broken))
+        for key,value in [('latest_pose_matches',False),('trails_enabled',True),
+                          ('moving_publications',1),('native_sprite_checks',0),
+                          ('animation_steps',[]),('animation_dense_samples',False),('requests',[])]:
+            broken = copy.deepcopy(report); broken['responsiveness'][key] = value
+            self.assertFalse(required_capture_extent(broken),key)
+        broken = copy.deepcopy(report)
+        broken['responsiveness']['requests'][0]['endpoint_publication_seconds'] = float('nan')
+        self.assertFalse(required_capture_extent(broken))
 
     def test_partial_longword_metadata_reconstructs_literal_bytes(self):
         symbols = dict(game_stack_top=1024, game_stack_bottom=512,
@@ -228,11 +268,18 @@ class TutorialCaptureTests(unittest.TestCase):
 
     def test_actual_publication_requires_complete_queue(self):
         observer, state, event = self.surface_fixture()
+        state.update(tutorial_render_generation=1,tutorial_ball_mode=1)
         observer.observe(event(8,255,1), state)
         observer.observe(event(0xdff080,600,4), state)
         observer.observe(event(0xdff088,0), state)
         observer.last_frame = 3
         self.assertTrue(observer.current(1))
+        self.assertIsNotNone(observer.current_presentation(state))
+        state['tutorial_render_generation'] = 2
+        self.assertIsNone(observer.current_presentation(state))
+        state['tutorial_render_generation'] = 1
+        state['tutorial_ball_mode'] = 2
+        self.assertIsNone(observer.current_presentation(state))
         self.assertEqual(observer.displayed['surface'], 34576)
         # Animation can publish another Copper bank for the same background.
         # Screenshot metadata must bind only the stable surface, never that bank.

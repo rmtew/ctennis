@@ -13,6 +13,10 @@ from fractions import Fraction
 
 from copperline_test_session import NativeControlSession
 
+PRESENTATION_KEYS = ('tutorial_presentation_generation','tutorial_render_generation','tutorial_x','tutorial_y',
+    'tutorial_active_variant','tutorial_marker_ready','tutorial_waiting_ready',
+    'tutorial_placement_ready','tutorial_ball_mode','tutorial_menu','tutorial_menu_selection')
+
 
 def assert_native_text(path, y, text, selected=False):
     """Authored ASCII/font-cell contract against actual 256x208 scanout."""
@@ -61,6 +65,46 @@ def assert_court_origins(bank, symbols, base):
         pointer = int.from_bytes(bank[h:h+2], 'big')*65536+int.from_bytes(bank[l:l+2], 'big')
         assert pointer == base+plane*6144+row*32, (hi, pointer, base)
     return dict(matched=True, base=base, entries=len(entries))
+
+
+def check_native_presentation(snapshot, paths):
+    """Device-coordinate/immutable-image contract, not a trajectory oracle."""
+    from native_tools import ROOT
+    objects = bytes.fromhex(snapshot['objects'])
+    sprites = bytes.fromhex(snapshot['sprite_bytes'])
+    fields = snapshot['tutorial_fields']
+    assert fields['tutorial_scene_layer'] == 2, 'Tutorial sprite order differs from native foreground order'
+    visible = [objects[n:n+8] for n in range(0,64,8) if objects[n+5]]
+    emitted = [sprites[n:n+72] for n in range(0,576,72) if any(sprites[n:n+4])]
+    assert len(visible) == len(emitted), 'Native sprite visibility differs from prepared scene'
+    image = (ROOT/'assets/native/scene/sprite-images.bin').read_bytes()
+    for obj, stream in zip(visible,emitted):
+        pos, ctl = int.from_bytes(stream[:2],'big'), int.from_bytes(stream[2:4],'big')
+        x = ((pos&255)<<1)|(ctl&1)
+        y = (pos>>8)|((ctl&4)<<6)
+        stop = (ctl>>8)|((ctl&2)<<7)
+        assert (x,y,stop) == (obj[1]+160,obj[0]+45,obj[0]+61), 'Native sprite header projection differs'
+        frame = int.from_bytes(obj[2:4],'big')
+        assert stream[4:68] in (image[frame:frame+64],image[frame+64:frame+128]), 'Sprite image is not the retained native frame'
+        assert stream[68:72] == bytes(4), 'Native sprite terminator missing'
+    ball = fields['tutorial_ball_mode']
+    if fields['tutorial_menu'] or not ball:
+        assert not objects[53] and not objects[61], 'Old ball/shadow shown during menu or pending generation'
+        point = None
+    else:
+        assert fields['tutorial_presentation_generation'] == fields['tutorial_generation']
+        variant = fields['tutorial_active_variant']
+        count = (fields['tutorial_counts']>>(16 if variant == 0 else 0))&65535
+        index = count-1 if ball == 1 else fields['tutorial_animation_index']
+        assert 0 <= index < count <= 256
+        point = bytes(paths[variant*2048+index*8:variant*2048+index*8+8])
+        assert objects[48:50] == bytes((point[3],point[2]))
+        assert objects[56:58] == bytes((point[1],point[0]))
+        assert bool(objects[53]) == bool(point[6]&15 and point[3]<192)
+        assert bool(objects[61]) == bool(point[6]&240 and point[1]<192)
+    return dict(matched=True, visible_sprites=len(visible),
+                native_headers_and_images=True, actual_sample=point.hex() if point else None,
+                scope='Queued/published native sprite RAM and actual completed path sample; DMA fetch coverage remains separate.')
 
 
 class CaptureSession(NativeControlSession):
@@ -128,6 +172,7 @@ class CallbackObserver:
         self.stack_min = base + symbols['game_stack_top']
         self.dropped = 0
         self.positions = []
+        self.presentation_requests = []
         self.state = {}
         self.surfaces = None
 
@@ -175,6 +220,10 @@ class CallbackObserver:
                 data = value.to_bytes(size, 'big')
                 self.bytes[name][left-address:right-address] = data[left-a:right-a]
                 self.state[name] = int.from_bytes(self.bytes[name], 'big')
+                if name == 'tutorial_generation' and right == address+width:
+                    self.presentation_requests.append(dict(generation=self.state[name],
+                        x=self.state.get('tutorial_x'),y=self.state.get('tutorial_y'),
+                        callback=self.started,position=dict(position)))
         if 'missed_presentation_deadlines' in self.state:
             assert self.state['missed_presentation_deadlines'] == 0, 'Native presentation missed its deadline'
         if self.surfaces:
@@ -220,7 +269,8 @@ class SurfaceObserver:
     """Reconstruct actual Copper banks and guard queued/displayed pixel storage."""
     SIZE = 4*6144
 
-    def __init__(self, symbols, read, verify_court_restores=False, last_line=311):
+    def __init__(self, symbols, read, verify_court_restores=False, last_line=311,
+                 verify_sprites=False):
         assert last_line in (261,311)
         self.last_line = last_line
         self.symbols = symbols
@@ -234,6 +284,14 @@ class SurfaceObserver:
                        for n in ('tutorial_surface0','tutorial_surface1')}
         self.static_base = symbols['plane0']
         self.static_image = bytes(read(self.static_base, self.SIZE))
+        self.verify_sprites = verify_sprites
+        self.sprite_images = ({symbols[n]:bytearray(read(symbols[n],576))
+                               for n in ('sprite0','sprite_back','sprite_third')}
+                              if verify_sprites else {})
+        self.objects = bytearray(read(symbols['tutorial_scene_objects'],64)) if verify_sprites else bytearray()
+        self.path_bytes = bytearray(read(symbols['game_preview_paths'],4096)) if verify_sprites else bytearray()
+        self.sprite_checks = []
+        self.scene_first_fields = {}
         assert symbols['tutorial_surfaces_end']-symbols['tutorial_surface0'] == 2*self.SIZE
         self.offset = symbols['cop_bpl0h']-symbols['copperlist']
         self.cop1lc = bytearray(4)
@@ -248,11 +306,25 @@ class SurfaceObserver:
         self.bank_writes = 0
 
     def watches(self):
-        return [dict(addr=a,len=len(data),access='write')
-                for a,data in (*self.banks.items(),*self.images.items())] + [
+        watches = [dict(addr=a,len=len(data),access='write')
+                for a,data in (*self.banks.items(),*self.images.items(),*self.sprite_images.items())] + [
                     dict(addr=self.static_base,len=self.SIZE,access='write'),
                     dict(addr=0xdff080,len=4,access='write'),
                     dict(addr=0xdff088,len=2,access='write')]
+        if self.verify_sprites:
+            watches += [dict(addr=self.symbols['tutorial_scene_objects'],len=64,access='write'),
+                        dict(addr=self.symbols['game_preview_paths'],len=4096,access='write')]
+        return watches
+
+    def sprite_base(self, copper):
+        bank = self.banks.get(copper)
+        if bank is None or not self.verify_sprites:
+            return None
+        offset = self.symbols['cop_spr0h']-self.symbols['copperlist']
+        pointers = [int.from_bytes(bank[offset+n*8+2:offset+n*8+4],'big')*65536+
+                    int.from_bytes(bank[offset+n*8+6:offset+n*8+8],'big') for n in range(8)]
+        assert pointers[0] in self.sprite_images and pointers == [pointers[0]+72*n for n in range(8)], 'Mixed native sprite banks'
+        return pointers[0]
 
     def surface(self, copper):
         data = self.banks.get(copper)
@@ -270,17 +342,32 @@ class SurfaceObserver:
         assert pointers == [pointers[0]+n*6144 for n in range(4)], 'Mixed court bitplane origins'
         return pointers[0]
 
-    def snapshot(self, copper, state, position):
+    def snapshot(self, copper, state, position, actual=False):
         image = self.surface(copper)
         if image is None:
             return None
         bank = self.banks[copper]
         pixels = self.static_image if image == self.static_base else self.images[image]
-        return dict(copper=copper, bank=bytes(bank).hex(),
+        queued = self.queued if actual and self.queued and self.queued['copper'] == copper else None
+        result = dict(copper=copper, bank=bytes(bank).hex(),
                     bank_sha256=hashlib.sha256(bank).hexdigest(), surface=image,
                     surface_sha256=hashlib.sha256(pixels).hexdigest(),
-                    generation=state['tutorial_published_generation'],
-                    ready_generation=state['ready_generation'], position=dict(position))
+                    generation=queued['generation'] if queued else state['tutorial_published_generation'],
+                    ready_generation=state['ready_generation'], position=dict(position),
+                    tutorial_fields=queued['tutorial_fields'] if queued else
+                        {n:v for n,v in state.items() if n.startswith('tutorial_')})
+        if self.verify_sprites:
+            base = self.sprite_base(copper)
+            result.update(sprite_base=base, sprite_bytes=bytes(self.sprite_images[base]).hex(),
+                          sprite_sha256=hashlib.sha256(self.sprite_images[base]).hexdigest(),
+                          objects=queued['objects'] if queued else bytes(self.objects).hex())
+            if queued:
+                result['native_sprite_check'] = queued.get('native_sprite_check')
+            elif state['tutorial_active']:
+                check = check_native_presentation(result, self.path_bytes)
+                self.sprite_checks.append(dict(check, position=dict(position)))
+                result['native_sprite_check'] = check
+        return result
 
     def observe(self, row, state):
         a,size = row['addr'], row['size']
@@ -289,6 +376,19 @@ class SurfaceObserver:
         displayed_image = self.surface(self.hardware_copper)
         queued_image = self.surface(queued_copper)
         assert not (max(a,self.static_base) < min(a+size,self.static_base+self.SIZE)), 'Write to immutable original court'
+        if self.verify_sprites:
+            displayed_sprites = self.sprite_base(self.hardware_copper)
+            queued_sprites = self.sprite_base(queued_copper)
+            for start, shadow in self.sprite_images.items():
+                if max(a,start) < min(a+size,start+len(shadow)):
+                    assert start not in (displayed_sprites,queued_sprites), 'Write to displayed or eligible queued sprites'
+                    assert start <= a and a+size <= start+len(shadow)
+                    shadow[a-start:a-start+size] = data
+            for name, shadow in (('tutorial_scene_objects',self.objects),('game_preview_paths',self.path_bytes)):
+                start = self.symbols[name]
+                if max(a,start) < min(a+size,start+len(shadow)):
+                    assert start <= a and a+size <= start+len(shadow)
+                    shadow[a-start:a-start+size] = data
         for start, shadow in self.images.items():
             if max(a,start) < min(a+size,start+len(shadow)):
                 assert start not in (displayed_image,queued_image), 'Write to displayed or eligible queued tutorial surface'
@@ -327,20 +427,35 @@ class SurfaceObserver:
                 check = assert_court_origins(self.banks[target], self.symbols, base)
                 self.court_publications.append(dict(check, copper=target,
                     position=dict(row['position']), after_resume=bool(state['tutorial_resume_count'])))
-            self.displayed = self.snapshot(target,state,row['position'])
+            self.displayed = self.snapshot(target,state,row['position'],actual=True)
             if self.displayed:
                 assert self.queued is not None
                 for name in ('copper','bank_sha256','surface','surface_sha256','generation','ready_generation'):
                     assert self.displayed[name] == self.queued[name], ('Publication changes queued image', name)
+                if self.verify_sprites:
+                    assert self.displayed['sprite_sha256'] == self.queued['sprite_sha256'], 'Publication changes queued sprites'
                 self.publications.append(self.displayed)
                 identity = (self.displayed['surface'],self.displayed['generation'])
                 self.first_fields.setdefault(identity,row['position']['frame'])
+                fields = self.displayed['tutorial_fields']
+                key = tuple(fields.get(n) for n in PRESENTATION_KEYS)
+                self.scene_first_fields.setdefault(key,dict(frame=row['position']['frame'],
+                    position=dict(row['position']), ready_generation=self.displayed['ready_generation']))
 
     def current(self, generation):
         if not self.displayed or self.displayed['generation'] != generation:
             return False
         identity = (self.displayed['surface'],generation)
         return self.last_frame >= self.first_fields[identity]+2
+
+    def current_presentation(self, fields):
+        if not self.displayed:
+            return None
+        key = tuple(fields.get(n) for n in PRESENTATION_KEYS)
+        if key != tuple(self.displayed['tutorial_fields'].get(n) for n in PRESENTATION_KEYS):
+            return None
+        first = self.scene_first_fields.get(key)
+        return first if first and self.last_frame >= first['frame']+2 else None
 
     def completed_surface(self, generation):
         """Bind stable background only; latest sprite bank may not have scanned out."""
@@ -363,6 +478,7 @@ class SurfaceObserver:
                     queues=self.queue_records, publications=self.publications,
                     court_queues=self.court_queues, court_publications=self.court_publications,
                     court_restores_verified=self.verify_court_restores,
+                    native_sprite_checks=self.sprite_checks,
                     exact_queued_image_published=True,
                     scope='Literal full-surface/Copper writes and actual COP1LC/COPJMP; no displayed or eligible queued writes.')
 
@@ -423,6 +539,11 @@ def required_capture_extent(report):
     surfaces = report.get('surface_ownership') or {}
     visuals = report.get('visual_checks') or {}
     waiting = visuals.get('released-wait') or {}
+    responsiveness = report.get('responsiveness') or {}
+    responses = responsiveness.get('requests') or []
+    animation_steps = responsiveness.get('animation_steps') or []
+    def latency(value):
+        return type(value) in (int,float) and math.isfinite(value) and value >= 0
     headroom = timing.get('minimum_absolute_headroom_cck')
     return (report.get('complete_state_bytes') == 318
             and report.get('public_history_bytes') == 72
@@ -491,6 +612,22 @@ def required_capture_extent(report):
             and surfaces.get('exact_queued_image_published') is True
             and surfaces.get('court_restores_verified') is True
             and surfaces.get('resumed_native_banks') == 3
+            and responsiveness.get('latest_pose_matches') is True
+            and responsiveness.get('trails_enabled') is False
+            and type(responsiveness.get('moving_publications')) is int
+            and responsiveness['moving_publications'] >= 2
+            and type(responsiveness.get('native_sprite_checks')) is int
+            and responsiveness['native_sprite_checks'] > 0
+            and responsiveness.get('animation_dense_samples') is True
+            and len(animation_steps) >= 2
+            and all(latency(r.get('interval_seconds')) and r['interval_seconds'] > 0
+                    and type(r.get('previous_index')) is int
+                    and type(r.get('index')) is int
+                    and 0 < r['index']-r['previous_index'] <= 2 for r in animation_steps)
+            and any(latency(r.get('endpoint_publication_seconds')) for r in responses)
+            and any(latency(r.get('waiting_publication_seconds')) for r in responses)
+            and all(r.get('superseded_without_publication') is True
+                    or latency(r.get('player_publication_seconds')) for r in responses)
             and all(type(surfaces.get(n)) is int and surfaces[n] > 0 for n in
                     ('surface_write_count','bank_write_count','queued_images','actual_publications'))
             and type((report.get('native_memory') or {}).get('chip_free_bytes')) is int

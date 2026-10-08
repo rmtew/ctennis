@@ -8,14 +8,17 @@ tutorial_redraw:
         st      tutorial_placement_dirty
         clr.w   tutorial_render_phase
         clr.b   tutorial_line_active
+        ; Preserve the reviewed three-choice menu and highlight. Its private
+        ; canvas is exceptional UI work, never a placement/trail prerequisite.
+        tst.b   tutorial_menu
+        beq     .footer
+        move.w  #1,tutorial_render_phase
+        clr.l   tutorial_render_offset
+        clr.w   tutorial_text_row
+.footer:
         bra     tutorial_footer
 
 tutorial_footer:
-        lea     ui_overlay_plane,a1
-        moveq   #0,d0
-        move.w  #512/4-1,d1
-.clear: move.l  d0,(a1)+
-        dbra    d1,.clear
         tst.b   tutorial_menu
         beq     .context
         lea     tutorial_branch_text,a0
@@ -64,9 +67,7 @@ tutorial_footer:
 .menu:  tst.b   tutorial_menu
         beq     .text
         lea     tutorial_menu_text,a0
-.text:  lea     ui_overlay_plane,a2
-        moveq   #0,d4
-        bsr     ui_footer_selected
+.text:  move.l  a0,d6
         lea     tutorial_menu_text,a0
         tst.b   tutorial_menu
         bne     .count_ready
@@ -101,8 +102,27 @@ tutorial_footer:
         bne     .count_ready
         lea     tutorial_empty_text,a0
 .count_ready:
+        cmp.l   tutorial_footer_first,d6
+        bne     .paint
+        cmpa.l  tutorial_footer_second,a0
+        beq     .done
+.paint:
+        move.l  d6,tutorial_footer_first
+        move.l  a0,tutorial_footer_second
+        move.l  a0,d7
+        lea     ui_overlay_plane,a1
+        moveq   #0,d0
+        move.w  #512/4-1,d1
+.clear: move.l  d0,(a1)+
+        dbra    d1,.clear
+        move.l  d6,a0
+        lea     ui_overlay_plane,a2
+        moveq   #0,d4
+        bsr     ui_footer_selected
+        move.l  d7,a0
         lea     ui_overlay_plane+256,a2
         bsr     ui_footer_text
+.done:
         rts
 
 ; A bounded released preview can settle in the actual human serve-wait phase.
@@ -546,6 +566,13 @@ tutorial_publish:
         jsr     complete_scene
         move.w  tutorial_render_generation,tutorial_published_generation
         clr.w   tutorial_render_phase
+        tst.b   tutorial_menu
+        beq     .placement
+        move.l  tutorial_render_surface,tutorial_visible_surface
+        clr.b   tutorial_placement_dirty
+        bsr     tutorial_progress_status
+        bra     .done
+.placement:
         tst.b   tutorial_work_pending
         bne     .computing
         clr.b   tutorial_pending
@@ -621,12 +648,16 @@ tutorial_prepare_objects:
         move.b  6(a0),d0
         andi.b  #15,d0
         beq     .shadow
+        cmpi.b  #192,tutorial_scene_objects+SC_BALL+O_Y
+        bcc     .shadow
         st      tutorial_scene_objects+SC_BALL+O_VISIBLE
         move.b  #COLOUR_WHITE,tutorial_scene_objects+SC_BALL+O_COLOUR
 .shadow:
         move.b  6(a0),d0
         andi.b  #$f0,d0
         beq     .done
+        cmpi.b  #192,tutorial_scene_objects+SC_SHADOW+O_Y
+        bcc     .done
         st      tutorial_scene_objects+SC_SHADOW+O_VISIBLE
         move.b  #COLOUR_BLACK,tutorial_scene_objects+SC_SHADOW+O_COLOUR
 .done:  rts
@@ -638,16 +669,9 @@ tutorial_render_objects:
         jmp     game_render_prepared_scene
 
 tutorial_animate:
-        tst.b   tutorial_animation_ready
+        bsr     tutorial_animation_due
+        tst.l   d0
         beq     .done
-        tst.b   tutorial_menu
-        bne     .done
-        move.l  tutorial_animation_time,d0
-        sub.l   last_timer_count,d0
-        move.l  simulation_interval_whole,d1
-        add.l   d1,d1
-        cmp.l   d1,d0
-        bcs     .done
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
         add.w   d0,d0
@@ -670,6 +694,32 @@ tutorial_animate:
         bsr     tutorial_render_objects
         jsr     complete_scene
 .done:  rts
+
+; Cheap query; the scheduler admits actual publication separately.
+tutorial_animation_due:
+        tst.b   tutorial_animation_ready
+        beq     .no
+        tst.b   tutorial_menu
+        bne     .no
+        move.l  tutorial_animation_time,d0
+        sub.l   last_timer_count,d0
+        move.l  simulation_interval_whole,d1
+        add.l   d1,d1
+        cmp.l   d1,d0
+        bcs     .no
+        moveq   #0,d0
+        move.b  tutorial_active_variant,d0
+        add.w   d0,d0
+        lea     tutorial_counts,a0
+        move.w  (a0,d0.w),d1
+        beq     .no
+        subq.w  #1,d1
+        cmp.w   tutorial_animation_index,d1
+        bls     .no
+        moveq   #1,d0
+        rts
+.no:    moveq   #0,d0
+        rts
 
 tutorial_restore_court:
         lea     plane0,a0

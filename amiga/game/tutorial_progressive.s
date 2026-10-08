@@ -23,7 +23,8 @@ tutorial_progress_reset:
         st      tutorial_placement_dirty
         rts
 
-; Call ONLY after game_preview_step has returned and restored selected318/all72.
+; Call after a successful public step or READY result has returned. Public
+; steps have restored selected318/all72; READY results contain complete counts.
 ; PRIME-or-later has a resolved immutable prefix; RESOLVE can reset its prefix
 ; and is intentionally not exposed. Thereafter this generation only appends.
 ; Preserve scheduler D5/D6 and every other caller register.
@@ -167,6 +168,11 @@ tutorial_progress_status:
 tutorial_progress_slice:
         tst.b   tutorial_active
         beq     .done
+        tst.b   tutorial_menu
+        beq     .placement
+        tst.w   tutorial_render_phase
+        bne     tutorial_render
+.placement:
         tst.b   tutorial_placement_dirty
         bne     tutorial_progress_fast_publish
         bra     tutorial_animate
@@ -198,6 +204,6 @@ tutorial_progress_fast_publish:
         move.w  tutorial_render_generation,tutorial_published_generation
         clr.b   tutorial_placement_dirty
         bsr     tutorial_progress_status
-        bsr     tutorial_footer
+        st      tutorial_footer_dirty
 .done:  rts
 
