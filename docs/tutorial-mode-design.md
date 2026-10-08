@@ -72,7 +72,8 @@ stop permanently when the recording buffer fills.
   shot and up/down for time within the selected shot. These axes are prototype
   defaults, not a further design approval requirement.
 - Button 1 selects the held-action alternative while held, and the released
-  alternative while released. Both possible return paths remain visible.
+  alternative while released. Both alternatives remain selectable. In an
+  optional trail-enabled view, both possible return paths remain visible.
 - A single button-2 tap opens a small options menu. It offers Play from here,
   Resume latest and a way to close the menu without leaving the view. In a fresh
   title-menu tutorial, Resume latest returns to its saved initial serve state.
@@ -308,8 +309,9 @@ committed foundation. Do not build the UI on an unproved state boundary.
 
 Measure executable/code/data size, total and added RAM, stack high-water use,
 history capacity, checkpoint/seek work, preview cost and worst observed frame
-time/spare time. Include ordinary play and the busiest tutorial view, with both
-paths and animation visible. Separate standalone CPU cycles from contended
+time/spare time. Include ordinary play and the busiest tutorial view with native
+ball animation. For optional trail-enabled variants, also measure both paths
+and animation visible together. Separate standalone CPU cycles from contended
 native timing. Use the existing [resource workflow](metrics/README.md); establish
 budgets from the measured baseline before allocating the buffers. A large host
 test or a short rally does not prove a native worst-case bound.
