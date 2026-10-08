@@ -7,6 +7,11 @@ INPUT_PATH='build/acceptance/campaigns/e61e095609b8412e95275345f78e9421/attempts
 INPUT_SHA='c46ef840c63608511f941fdab06b3c3a8586f0dcc79ee039e3532f1138621348'
 SLICE_SHA='b99b6c3e2f87f86266d97e4eacabc0ebc12af6a18adb79149593c70f3b3a840a'
 CORE_SHA='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'
+IMAGES={'standalone':('build/standalone/match-core',65536),
+    'relocated':('build/standalone/match-core',196608),
+    'native':('build/amiga/interfaces/enhanced/baseline-rally',65536)}
+ADAPTERS={'game_render_sprites','game_scene_present_fields','game_core_title_requested',
+    'game_audio_write_period','game_audio_write_level','game_core_status_present'}
 ARITIES=dict(game_core_init=0,game_core_select=3,game_core_sample_pads=2,
     game_core_sample_result=6,game_core_clear_inputs=0,game_core_return_title=0,
     game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0)
@@ -93,7 +98,22 @@ def required_seek_sliced_extent(report):
                 dict(bytes=18020,relocations=257,sink_branches=14).items())):return False
     proofs=stage.get('proofs')
     if not isinstance(proofs,dict) or set(proofs)!={'standalone','relocated','native'}:return False
-    if not all(proof_extent(p) for p in proofs.values()):return False
+    compiled=evidence.get('compiled_executables')
+    if not isinstance(compiled,dict):return False
+    for role,(path,base) in IMAGES.items():
+        proof=proofs[role];sha=compiled.get(path)
+        if (not isinstance(proof,dict) or not encoded(sha,32)
+                or proof.get('image_role')!=role or proof.get('executable_path')!=path
+                or proof.get('image_sha256')!=sha
+                or type(proof.get('base')) is not int or proof['base']!=base):return False
+    if compiled[IMAGES['native'][0]]==compiled[IMAGES['standalone'][0]]:return False
+    native=proofs['native'];words=native.get('restored_adapter_words')
+    if (not isinstance(words,dict) or set(words)!=ADAPTERS
+            or any(not encoded(v,2) for v in words.values())
+            or any(native.get(k) is not True for k in ('adapters_restored_before_freeze',
+                'adapter_words_preserved','full_bus_nonstate_guard','frozen_history_write_guard',
+                'semantic_observer_read_only','setup_traps_outside_evidence'))):return False
+    if not all(proof_extent(p,SLICE_SHA) for p in proofs.values()):return False
     comparable=lambda p:[(r['operation'],r['arguments'],r['working_state'],r['events'],r['working_cursor']) for r in p['rows']]
     first=comparable(proofs['standalone'])
     return all(comparable(p)==first for p in proofs.values())

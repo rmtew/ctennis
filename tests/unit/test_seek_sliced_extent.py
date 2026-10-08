@@ -5,9 +5,11 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from seek_sliced_extent import NEGATIVES,PRESERVED,proof_extent
+from seek_sliced_extent import (NEGATIVES,PRESERVED,proof_extent,required_seek_sliced_extent,
+    INPUT_PATH,INPUT_SHA,CORE_SHA,IMAGES,ADAPTERS)
 
 
 def receipt():
@@ -60,6 +62,40 @@ class SeekSlicedExtent(unittest.TestCase):
         proof,sha=receipt();proof['negatives'][0]=dict(proof['negatives'][1])
         self.assertFalse(proof_extent(proof,sha))
         proof,sha=receipt();proof['negatives'].pop();self.assertFalse(proof_extent(proof,sha))
+
+    def test_top_level_binds_source_core_and_three_actual_images(self):
+        proof,sha=receipt();proofs={}
+        compiled={IMAGES['standalone'][0]:'01'*32,IMAGES['native'][0]:'02'*32}
+        for role,(path,base) in IMAGES.items():
+            item=copy.deepcopy(proof);item.update(image_role=role,base=base,
+                executable_path=path,image_sha256=compiled[path]);proofs[role]=item
+        proofs['native'].update(restored_adapter_words={n:'4e71' for n in ADAPTERS},
+            **{k:True for k in ('adapters_restored_before_freeze','adapter_words_preserved',
+                'full_bus_nonstate_guard','frozen_history_write_guard','semantic_observer_read_only',
+                'setup_traps_outside_evidence')})
+        report=dict(passed=True,execution='actual-68000-cpu-only',
+            evidence=dict(actual_execution='actual-68000-cpu-only',target_role='legacy-validator-reference',
+                files={INPUT_PATH:INPUT_SHA},compiled_executables=compiled),
+            seek_sliced_validation=dict(passed=True,schema=1,canonical_bytes=318,
+                history_metadata_bytes=72,seek_storage_bytes=734,proofs=proofs,
+                input_stream=dict(path=INPUT_PATH,sha256=INPUT_SHA,operations=835,target_probe=569),
+                normalized_shared_core=dict(matched=True,bytes=18020,relocations=257,
+                    sink_branches=14,sha256=CORE_SHA)))
+        with patch('seek_sliced_extent.SLICE_SHA',sha):
+            self.assertTrue(required_seek_sliced_extent(report))
+            for path,value in [(('input_stream','sha256'),'ff'*32),
+                    (('normalized_shared_core','sha256'),'ff'*32),
+                    (('proofs','relocated','base'),65536),
+                    (('proofs','native','image_sha256'),'01'*32),
+                    (('proofs','native','image_role'),'standalone'),
+                    (('proofs','native','restored_adapter_words'),{}),
+                    (('proofs','native','adapter_words_preserved'),False)]:
+                changed=copy.deepcopy(report);node=changed['seek_sliced_validation']
+                for key in path[:-1]:node=node[key]
+                node[path[-1]]=value
+                with self.subTest(path=path):self.assertFalse(required_seek_sliced_extent(changed))
+            report['seek_sliced_validation']['proofs']['native']=copy.deepcopy(proofs['standalone'])
+            self.assertFalse(required_seek_sliced_extent(report))
 
 
 if __name__=='__main__':unittest.main()
