@@ -100,3 +100,12 @@ Deadline compliance alone does not establish useful interaction latency. If the
 actual view exceeds available memory or callback headroom, reduce rendering work
 before capture approval; do not add a timing exemption. Standard runtime metrics
 and cold release coverage remain incomplete until their own checks complete.
+
+The 40-second attempt (`0fc4d3a70e5548c2a5922736de8522e7`, head
+`f558be1`) also failed readiness, with preview complete but path phase unchanged
+from 19.92 through 48.48 absolute guest seconds. Source review identified a
+Bresenham sign bug: initializing the step direction changed the condition flags
+before the signed delta branch. Upward or leftward segments could therefore
+walk indefinitely. The repair explicitly tests each computed delta immediately
+before selecting its sign. Passive path cursor/line telemetry and failure
+readbacks are retained for the next native proof; no timing exemption is added.

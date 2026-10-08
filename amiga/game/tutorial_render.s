@@ -281,6 +281,7 @@ tutorial_draw_paths:
         move.w  tutorial_line_end_x,d2
         sub.w   d0,d2
         move.w  #1,tutorial_line_sx
+        tst.w   d2
         bpl     .dx
         neg.w   d2
         move.w  #-1,tutorial_line_sx
@@ -288,6 +289,7 @@ tutorial_draw_paths:
         move.w  tutorial_line_end_y,d3
         sub.w   d1,d3
         move.w  #1,tutorial_line_sy
+        tst.w   d3
         bpl     .dy
         neg.w   d3
         move.w  #-1,tutorial_line_sy

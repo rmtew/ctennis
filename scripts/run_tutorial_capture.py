@@ -29,7 +29,13 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               presentation_copper=4, display_ready=1, ready_completed=1,
               ready_generation=2, ready_game_generation=2,
               game_presented_generation=2, ready_title_display=1,
-              missed_presentation_deadlines=2)
+              missed_presentation_deadlines=2,
+              tutorial_work_pending=1, tutorial_render_path=2, tutorial_render_point=2,
+              tutorial_line_active=1, tutorial_line_x=2, tutorial_line_y=2,
+              tutorial_line_end_x=2, tutorial_line_end_y=2,
+              tutorial_line_dx=2, tutorial_line_dy=2, tutorial_line_error=2,
+              tutorial_line_sx=2, tutorial_line_sy=2,
+              tutorial_counts=4)
 
 
 def run():
@@ -159,6 +165,10 @@ def run():
                                           elapsed_seconds=time-wait_start,
                                           generation=number('tutorial_published_generation')))
                         return
+                atomic_json(directory/'readiness-failure.json', dict(
+                    waits=waits, boundaries=boundaries, stop=stop,
+                    fields={n:number(n) for n in FIELDS},
+                    surface_publications=observer.surfaces.publications))
                 raise AssertionError('No current complete tutorial scene within finite wait')
             def photo(name):
                 source = directory/(name+'-viewport.png')
