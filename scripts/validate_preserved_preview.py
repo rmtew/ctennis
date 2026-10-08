@@ -31,6 +31,23 @@ def gate_projection(current,expected):
     assert hashlib.sha256(restored).hexdigest()==expected,'Validator changed beyond the one count predicate'
 
 
+ARCHIVE_NAMES={'preview-native.compile.json','report.json','preview-native.lst','rpc.jsonl.gz',
+    'emulator.log','native-results-unvalidated.json','main-preview-observer.s','receipt-unvalidated.json',
+    'events.jsonl.gz','preview-native','observations-unvalidated.json'}
+
+
+def archive_coverage(archive,files):
+    assert archive['commit']==SOURCE_COMMIT,'Archive belongs to another execution'
+    rows=archive['files']
+    assert len(rows)==11 and {Path(r['archive']).name for r in rows}==ARCHIVE_NAMES,'Incomplete archived case coverage'
+    for row in rows:
+        name=Path(row['archive']).name
+        assert row['archive']==str((SOURCE_DIR/'failed-artifacts'/name).relative_to(ROOT))
+        assert row['source']==str(Path('build/tests/preview-native-pal')/name)
+        if name=='report.json':assert row['sha256']==SOURCE_SHA
+        elif name!='receipt-unvalidated.json':assert files[row['source']]==row['sha256'],'Archive differs from receipt-bound artifact'
+
+
 def validate():
     source=SOURCE_DIR/'failed-artifacts/report.json'
     assert digest(source)==SOURCE_SHA,'Preserved execution receipt changed'
@@ -55,6 +72,7 @@ def validate():
     assert len(products)==3 and report['executable_sha256'] in products.values()
     for name,expected in products.items():assert digest(ROOT/name)==expected,('Compiled product drift',name)
     archive=json.loads((SOURCE_DIR/'failure-archive-audit.json').read_text())
+    archive_coverage(archive,files)
     raw={}
     for item in archive['files']:
         path=ROOT/item['archive']
