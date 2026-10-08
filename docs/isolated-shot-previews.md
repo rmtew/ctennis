@@ -2,7 +2,8 @@
 
 The isolated-preview implementation has passed independently reviewed actual
 68000 CPU proofs through relocation, emitted native sink suppression and focused
-history regressions at `f649a22` (selective attempt 000008). Real native interrupt
+history regressions and bounded same-owner batching at `9648bfc` (selective
+attempt 000009). Real native interrupt
 isolation, paused execution latency and runtime resources remain pending. This
 increment has no tutorial UI or live branch commit and is not a complete native
 acceptance gate.
@@ -28,8 +29,10 @@ flag guard using inconsistent injected state.
 The resolver replays from the oldest checkpoint through the original action.
 `game_preview_step` accepts one to four logical API operations, including resolver
 work. The current implementation saves its working context and restores the
-selected 318 canonical bytes and all 72 history metadata bytes after each
-operation and before every public return. Recorder mode remains frozen (2).
+selected 318 canonical bytes and all 72 history metadata bytes at each ownership
+transition and before every public return. Within one call, up to four operations
+sharing an owner retain their working canonical context; owner identity is
+recomputed from persistent phase metadata after every actual body. Recorder mode remains frozen (2).
 History storage, live backup, cursors and the interrupted output queue stay
 unchanged. Copying and request costs are additional to the operation count.
 
@@ -128,28 +131,33 @@ normalized shared simulation bytes match at 18,020 bytes with 257 verified
 relocations and 14 sink branches; fixture/worker identities have separate input
 and compiled-artifact bindings.
 
-The combined receipt's maximum observed worker cost is 95,534 CPU cycles and
+The combined receipt's maximum observed worker cost is 96,482 CPU cycles and
 preview stack depth is 204 bytes. Focused history seek observes 208 stack bytes
 and a 350,326-cycle maximum. These are finite observations, not universal bounds
 or native frame headroom. The representative warm edit resolves zero operations
-and uses about 6.18 million worker cycles over 114 calls, versus 773 resolver
-operations and about 15.14 million cycles cold. The cache saves about 59% of CPU
-work, yet roughly 0.86 seconds of nominal CPU work for the warm pair remains too
-slow to establish practical interactive latency. Pending work must measure
-actual callbacks, fresh input/ownership transitions, interrupts and contention.
+and costs 4,176,756 worker cycles plus 18,232 request cycles over 114 calls.
+Cold resolution uses 773 operations and costs 9,667,676 worker cycles plus
+21,604 request cycles over 308 calls. Compared with the reviewed pre-batching
+attempt 000008 on the same descriptors, total CPU work falls 32.3917% warm and
+36.1326% cold; call counts remain unchanged. The finite A3 peak rises slightly
+from 95,534 to 96,482 cycles. These observations do not establish practical
+native latency or frame deadlines. Budget-1/2/3/4 proofs independently compare
+actual body counts, all five owner transitions, restoration before each next
+owner/READY, and full uninterrupted state/path/outcome/output equality.
 
-The standalone image has 109,464 loaded bytes. Fresh native static attribution
-reconciles 49,736 code, 112,700 data and 95,296 BSS bytes (257,732 loaded bytes);
-BSS is 95,294 declared bytes plus two final HUNK alignment bytes. The native file
-is 192,516 bytes. These compile measurements do not establish actual initialized
-chip-RAM free space, stack safety or native deadlines. Current runtime metrics
-remain incomplete; older PR36 runtime observations are historical.
+The standalone image has 109,560 loaded bytes. Fresh native static attribution
+reconciles 49,832 code, 112,700 data and 95,296 BSS bytes (257,828 loaded bytes),
+adding 96 code bytes with no storage growth. BSS remains 95,294 declared bytes
+plus two final HUNK alignment bytes. The native file is 192,788 bytes. These
+compile measurements do not establish actual initialized chip-RAM free space,
+stack safety or native deadlines. Current runtime metrics remain incomplete;
+older PR36 runtime observations are historical.
 
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
 (000007), alongside passed scoped attempts. Native assembly-range and measurement
-alignment preflight failures are also preserved. Attempt 000008 and its source,
+alignment preflight failures are also preserved. Attempt 000009 and its source,
 tool, product and artifact bindings passed independent review. Remaining work
-is compact worker-copy/latency measurement, real paused native isolation and
-resources, then independent increment review. Tutorial UI and live branch commit
+is real paused native interrupt/input/audio/presentation isolation, practical
+latency and resources, then independent increment review. Tutorial UI and live branch commit
 remain later increments.
