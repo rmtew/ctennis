@@ -16,14 +16,19 @@ from native_metrics import memory_summary
 from native_observation import target_log
 from native_tools import ROOT, emulator_config
 from ordinary_cadence import chip_memory
-from tutorial_capture import CaptureSession, CallbackObserver, native_view, animation
+from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver, native_view, animation
 
 FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_x=1, tutorial_y=1, tutorial_end=1, tutorial_active_variant=1,
               tutorial_input_source=1, tutorial_status=2, tutorial_animation_index=2,
               tutorial_progress_operations=2, tutorial_render_generation=2,
               tutorial_published_generation=2, tutorial_resume_count=2,
-              tutorial_generation=4)
+              tutorial_generation=4, tutorial_build_generation=2,
+              tutorial_render_phase=2, tutorial_render_surface=4,
+              front_copper=4, back_copper=4, ready_copper=4, spare_copper=4,
+              presentation_copper=4, display_ready=1, ready_completed=1,
+              ready_generation=2, ready_game_generation=2,
+              game_presented_generation=2, ready_title_display=1)
 
 
 def run():
@@ -72,9 +77,11 @@ def run():
                 return int.from_bytes(block(name, FIELDS.get(name, 2) if size is None else size), 'big')
             loaded = loaded_hunks(executable, segments, read)
             observer = CallbackObserver(0, symbols)
+            observer.surfaces = SurfaceObserver(symbols, read)
             session.observer = observer
             subscription = session.inspect('events.subscribe',
-                dict(events=['mmio','frame'], mmio=observer.watches(FIELDS, read)))
+                dict(events=['mmio','frame'], mmio=(observer.watches(FIELDS, read)+
+                                                  observer.surfaces.watches())))
             assert not subscription.get('dropped_notifications', 0)
             session.inspect('break_add', dict(kind='pc', addr=symbols['simulation_update']))
             session.inspect('break_add', dict(kind='pc', addr=symbols['tutorial_resume_restored']))
@@ -144,7 +151,8 @@ def run():
                     advance(.2)
                     if (number('tutorial_active') and number('tutorial_status') == 4
                             and not number('tutorial_pending')
-                            and number('tutorial_published_generation') == number('tutorial_render_generation')):
+                            and number('tutorial_published_generation') == number('tutorial_render_generation')
+                            and observer.surfaces.current(number('tutorial_published_generation'))):
                         return
                 raise AssertionError('No current complete tutorial scene within finite wait')
             def photo(name):
@@ -152,10 +160,14 @@ def run():
                 native = directory/(name+'.png')
                 session.inspect('capture_screenshot', dict(path=str(source)))
                 native_view(source, native)
+                publication = observer.surfaces.displayed
+                if number('tutorial_active') and not number('tutorial_pending'):
+                    assert observer.surfaces.current(number('tutorial_published_generation'))
                 screenshots.append(dict(name=name, source=str(source.relative_to(ROOT)),
                                         native=str(native.relative_to(ROOT)),
                                         source_geometry=[716,285], native_geometry=[256,208],
-                                        stop=dict(stop), fields={n:number(n) for n in FIELDS}))
+                                        stop=dict(stop), fields={n:number(n) for n in FIELDS},
+                                        observed_publication=publication))
                 return native
             advance(.7)
             photo('title')
@@ -182,7 +194,7 @@ def run():
             key(0x24, True); key(0x22, True); key(0x22, False); key(0x24, False)
             assert not number('tutorial_menu')
             key(0x24, True); key(0x24, False)
-            advance(.2); assert number('tutorial_menu'); photo('options')
+            advance(.2); assert number('tutorial_menu'); ready(); photo('options')
             # Resume latest is the enabled action after disabled Play from here.
             key(0x4d, True); key(0x4d, False)
             key(0x44, True); key(0x44, False)
@@ -204,10 +216,11 @@ def run():
             timing = observer.result(interval)
             raw = dict(records=session.records, uncompressed_bytes=session.raw_bytes,
                        cap_uncompressed_bytes=session.MAX_RAW_BYTES)
+            surfaces = observer.surfaces.result()
         target_log(directory)
         capture = directory/'capture.json'
         atomic_json(capture, dict(boundaries=boundaries, actions=actions, timing=timing,
-                                 memory=memory, loaded_hunks=loaded))
+                                 memory=memory, loaded_hunks=loaded, surfaces=surfaces))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
             target=TARGET, native_video=video,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
@@ -220,6 +233,11 @@ def run():
                              normalized_sha256=hashlib.sha256(shared).hexdigest()), loaded_hunks=loaded,
             resume_readback=resume_readback, first_resumed_boundary_matches=first_resumed_boundary_matches,
             held_resume_no_pressed_edge=held_resume_samples >= 2,
+            surface_ownership=dict(surface_write_count=surfaces['surface_write_count'],
+                bank_write_count=surfaces['bank_write_count'],
+                protected_surface_writes=0, protected_bank_writes=0,
+                exact_queued_image_published=True,
+                queued_images=len(surfaces['queues']), actual_publications=len(surfaces['publications'])),
             complete_state_bytes=318, public_history_bytes=72,
             native_memory=memory_summary(memory), timing=timing,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),

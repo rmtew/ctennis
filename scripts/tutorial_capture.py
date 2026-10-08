@@ -5,6 +5,7 @@ the native view only selects the existing active pixels without interpolation.
 This observer neither changes guest state nor supplies expected trajectories.
 """
 import gzip
+import hashlib
 import json
 import math
 import re
@@ -14,7 +15,7 @@ from copperline_test_session import NativeControlSession
 
 
 class CaptureSession(NativeControlSession):
-    MAX_RAW_BYTES = 64 * 1024 * 1024
+    MAX_RAW_BYTES = 128 * 1024 * 1024
 
     def __enter__(self):
         super().__enter__()
@@ -70,6 +71,7 @@ class CallbackObserver:
         self.dropped = 0
         self.positions = []
         self.state = {}
+        self.surfaces = None
 
     def watches(self, fields, read):
         self.fields = dict(fields, simulation_started_updates=2,
@@ -98,6 +100,8 @@ class CallbackObserver:
         if self.dropped:
             raise AssertionError('Tutorial capture dropped literal notifications')
         if message.get('method') != 'event.mmio':
+            if self.surfaces and message.get('method') == 'event.frame':
+                self.surfaces.last_frame = row['position']['frame']
             return
         a, value, size, position = row['addr'], row['value'], row['size'], row['position']
         bottom = self.base+self.symbols['game_stack_bottom']
@@ -113,6 +117,8 @@ class CallbackObserver:
                 data = value.to_bytes(size, 'big')
                 self.bytes[name][left-address:right-address] = data[left-a:right-a]
                 self.state[name] = int.from_bytes(self.bytes[name], 'big')
+        if self.surfaces:
+            self.surfaces.observe(row, self.state)
         if a == self.base+self.symbols['simulation_timer_origin']:
             self.timer_origin = value
         if a == self.base+self.symbols['simulation_started_updates']:
@@ -148,6 +154,121 @@ class CallbackObserver:
                     stack_bytes=self.base+self.symbols['game_stack_top']-self.stack_min,
                     pending_callback=self.pending, callbacks=self.rows,
                     scope='Finite complete callback counter boundaries; all transitions retain deadlines.')
+
+
+class SurfaceObserver:
+    """Reconstruct actual Copper banks and guard queued/displayed pixel storage."""
+    SIZE = 4*6144
+
+    def __init__(self, symbols, read):
+        self.symbols = symbols
+        length = symbols['copperlist_end']-symbols['copperlist']
+        self.banks = {symbols[n]:bytearray(read(symbols[n], length))
+                      for n in ('copperlist','copperlist_back','copperlist_third')}
+        self.images = {symbols[n]:bytearray(read(symbols[n], self.SIZE))
+                       for n in ('tutorial_surface0','tutorial_surface1')}
+        assert symbols['tutorial_surfaces_end']-symbols['tutorial_surface0'] == 2*self.SIZE
+        self.offset = symbols['cop_bpl0h']-symbols['copperlist']
+        self.cop1lc = bytearray(4)
+        self.displayed = None
+        self.queued = None
+        self.hardware_copper = 0
+        self.last_frame = 0
+        self.first_fields = {}
+        self.publications = []
+        self.queue_records = []
+        self.surface_writes = 0
+        self.bank_writes = 0
+
+    def watches(self):
+        return [dict(addr=a,len=len(data),access='write')
+                for a,data in (*self.banks.items(),*self.images.items())] + [
+                    dict(addr=0xdff080,len=4,access='write'),
+                    dict(addr=0xdff088,len=2,access='write')]
+
+    def surface(self, copper):
+        data = self.banks.get(copper)
+        if data is None:
+            return None
+        pointers = []
+        for n in range(4):
+            p = self.offset+n*8
+            assert int.from_bytes(data[p:p+2],'big') == 0xe0+n*4
+            assert int.from_bytes(data[p+4:p+6],'big') == 0xe2+n*4
+            pointers.append(int.from_bytes(data[p+2:p+4],'big')*65536+
+                            int.from_bytes(data[p+6:p+8],'big'))
+        if pointers[0] not in self.images:
+            return None
+        assert pointers == [pointers[0]+n*6144 for n in range(4)], 'Mixed private bitplane origins'
+        return pointers[0]
+
+    def snapshot(self, copper, state, position):
+        image = self.surface(copper)
+        if image is None:
+            return None
+        bank = self.banks[copper]
+        return dict(copper=copper, bank=bytes(bank).hex(),
+                    bank_sha256=hashlib.sha256(bank).hexdigest(), surface=image,
+                    surface_sha256=hashlib.sha256(self.images[image]).hexdigest(),
+                    generation=state['tutorial_published_generation'],
+                    ready_generation=state['ready_generation'], position=dict(position))
+
+    def observe(self, row, state):
+        a,size = row['addr'], row['size']
+        data = row['value'].to_bytes(size,'big')
+        queued_copper = state['ready_copper'] if state['display_ready'] and state['ready_completed'] else 0
+        displayed_image = self.surface(self.hardware_copper)
+        queued_image = self.surface(queued_copper)
+        for start, shadow in self.images.items():
+            if max(a,start) < min(a+size,start+len(shadow)):
+                assert start not in (displayed_image,queued_image), 'Write to displayed or eligible queued tutorial surface'
+                assert start <= a and a+size <= start+len(shadow)
+                assert state['tutorial_render_surface'] == start, 'Write outside private drawing owner'
+                shadow[a-start:a-start+size] = data
+                self.surface_writes += 1
+        for start, shadow in self.banks.items():
+            if max(a,start) < min(a+size,start+len(shadow)):
+                assert start not in (self.hardware_copper,queued_copper), 'Write to displayed or eligible queued Copper bank'
+                assert start <= a and a+size <= start+len(shadow)
+                shadow[a-start:a-start+size] = data
+                self.bank_writes += 1
+        if 0xdff080 <= a and a+size <= 0xdff084:
+            self.cop1lc[a-0xdff080:a-0xdff080+size] = data
+        if a == self.symbols['ready_completed'] and row['value']:
+            self.queued = self.snapshot(queued_copper,state,row['position'])
+            if self.queued:
+                self.queue_records.append(self.queued)
+        if a == 0xdff088:
+            target = int.from_bytes(self.cop1lc,'big')
+            expected = self.symbols['title_copper'] if state['ready_title_display'] else state['ready_copper']
+            # Startup has no completed producer; all runtime strobes do.
+            if state['simulation_started_updates']:
+                assert state['display_ready'] and state['ready_completed']
+                assert target == expected == state['presentation_copper'], 'Actual COPJMP selects an uncompleted bank'
+                assert row['position']['vpos'] >= 253, 'Court publication outside guarded bottom interval'
+            self.hardware_copper = target
+            self.displayed = self.snapshot(target,state,row['position'])
+            if self.displayed:
+                assert self.queued is not None
+                for name in ('copper','bank_sha256','surface','surface_sha256','generation','ready_generation'):
+                    assert self.displayed[name] == self.queued[name], ('Publication changes queued image', name)
+                self.publications.append(self.displayed)
+                identity = (self.displayed['surface'],self.displayed['generation'])
+                self.first_fields.setdefault(identity,row['position']['frame'])
+
+    def current(self, generation):
+        if not self.displayed or self.displayed['generation'] != generation:
+            return False
+        identity = (self.displayed['surface'],generation)
+        return self.last_frame >= self.first_fields[identity]+2
+
+    def result(self):
+        assert self.surface_writes and self.bank_writes and self.publications and self.queue_records
+        return dict(surface_write_count=self.surface_writes, bank_write_count=self.bank_writes,
+                    protected_surface_writes=0, protected_bank_writes=0,
+                    queues=self.queue_records, publications=self.publications,
+                    exact_queued_image_published=True,
+                    scope='Literal full-surface/Copper writes and actual COP1LC/COPJMP; no displayed or eligible queued writes.')
 
 
 def native_view(source, target):
@@ -196,6 +317,7 @@ def required_capture_extent(report):
     restored = report.get('resume_readback') or {}
     core = report.get('shared_core') or {}
     hunks = report.get('loaded_hunks') or []
+    surfaces = report.get('surface_ownership') or {}
     headroom = timing.get('minimum_absolute_headroom_cck')
     return (report.get('complete_state_bytes') == 318
             and report.get('public_history_bytes') == 72
@@ -218,6 +340,11 @@ def required_capture_extent(report):
             and all(bound(r.get('source')) and bound(r.get('native'))
                     and r.get('source_geometry') == [716,285]
                     and r.get('native_geometry') == [256,208] for r in rows)
+            and all(isinstance(r.get('observed_publication'),dict)
+                    and r['observed_publication'].get('generation') == (r.get('fields') or {}).get('tutorial_published_generation')
+                    and isinstance(r['observed_publication'].get('surface_sha256'),str)
+                    and re.fullmatch(r'[0-9a-f]{64}', r['observed_publication']['surface_sha256'])
+                    for r in rows if r.get('name') not in ('title','resumed'))
             and bound(report.get('animation'))
             and report.get('animation_geometry') == [256,208]
             and type(report.get('animation_frames')) is int
@@ -233,5 +360,10 @@ def required_capture_extent(report):
             and restored.get('history') == restored.get('expected_history')
             and report.get('first_resumed_boundary_matches') is True
             and report.get('held_resume_no_pressed_edge') is True
+            and surfaces.get('protected_surface_writes') == 0
+            and surfaces.get('protected_bank_writes') == 0
+            and surfaces.get('exact_queued_image_published') is True
+            and all(type(surfaces.get(n)) is int and surfaces[n] > 0 for n in
+                    ('surface_write_count','bank_write_count','queued_images','actual_publications'))
             and type((report.get('native_memory') or {}).get('chip_free_bytes')) is int
             and report['native_memory']['chip_free_bytes'] > 0)

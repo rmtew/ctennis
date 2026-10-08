@@ -4,7 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts'))
-from tutorial_capture import CallbackObserver, required_capture_extent
+from tutorial_capture import CallbackObserver, SurfaceObserver, required_capture_extent
 
 
 class TutorialCaptureTests(unittest.TestCase):
@@ -48,11 +48,16 @@ class TutorialCaptureTests(unittest.TestCase):
             resume_readback=dict(state='00'*318, expected_state='00'*318, backup='00'*318,
                 history='00'*72, expected_history='00'*72),
             first_resumed_boundary_matches=True, held_resume_no_pressed_edge=True)
+        report['surface_ownership'] = dict(surface_write_count=1, bank_write_count=1,
+            protected_surface_writes=0, protected_bank_writes=0,
+            exact_queued_image_published=True, queued_images=1, actual_publications=1)
         files = {report[n]:'a'*64 for n in ('capture','literal_rpc_path','animation')}
         for row in report['screenshots']:
             row.update(source='build/tests/tutorial-court-pal/'+row['name']+'-viewport.png',
                        native='build/tests/tutorial-court-pal/'+row['name']+'.png',
                        source_geometry=[716,285], native_geometry=[256,208])
+            row.update(fields=dict(tutorial_published_generation=1),
+                       observed_publication=dict(generation=1, surface_sha256='a'*64))
             files[row['source']] = files[row['native']] = 'a'*64
         report['evidence'] = dict(files=files, actual_target=TARGET)
         self.assertTrue(required_capture_extent(report))
@@ -85,6 +90,49 @@ class TutorialCaptureTests(unittest.TestCase):
             observer.observe(dict(method='event.frame', params=dict(dropped_notifications=1)))
         with self.assertRaises(AssertionError):
             observer.observe(dict(method='event.frame', params={}))
+
+    def surface_fixture(self):
+        symbols = dict(copperlist=400, copperlist_end=432, cop_bpl0h=400,
+                       copperlist_back=600, copperlist_third=800,
+                       tutorial_surface0=10000, tutorial_surface1=34576,
+                       tutorial_surfaces_end=59152, title_copper=90000, ready_completed=8)
+        def read(address, size):
+            if address not in (400,600,800): return bytes(size)
+            base = 10000 if address == 400 else 34576
+            data = bytearray()
+            for plane in range(4):
+                ptr = base+plane*6144
+                for word in (0xe0+plane*4, ptr>>16, 0xe2+plane*4, ptr&65535):
+                    data.extend(word.to_bytes(2,'big'))
+            return bytes(data)
+        observer = SurfaceObserver(symbols, read)
+        state = dict(ready_copper=600, display_ready=1, ready_completed=255,
+                     tutorial_render_surface=10000, tutorial_published_generation=1,
+                     ready_generation=5, simulation_started_updates=5,
+                     ready_title_display=0, presentation_copper=600)
+        def event(addr, value, size=2):
+            return dict(addr=addr, value=value, size=size,
+                        position=dict(cck=10, frame=1, vpos=253))
+        return observer, state, event
+
+    def test_surface_guard_rejects_visible_and_queued_writes(self):
+        observer, state, event = self.surface_fixture()
+        observer.hardware_copper = 400
+        for address in (10000,34576,400,600):
+            with self.assertRaises(AssertionError):
+                observer.observe(event(address,0), state)
+
+    def test_actual_publication_requires_complete_queue(self):
+        observer, state, event = self.surface_fixture()
+        observer.observe(event(8,255,1), state)
+        observer.observe(event(0xdff080,600,4), state)
+        observer.observe(event(0xdff088,0), state)
+        observer.last_frame = 3
+        self.assertTrue(observer.current(1))
+        self.assertEqual(observer.displayed['surface'], 34576)
+        state['ready_completed'] = 0
+        with self.assertRaises(AssertionError):
+            observer.observe(event(0xdff088,0), state)
 
 
 if __name__ == '__main__':
