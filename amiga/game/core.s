@@ -35,6 +35,7 @@ ui_seed_entropy:
 game_core_seed_entropy:
         move.w  game_match_seed,game_entropy_state
         move.w  game_match_seed,game_legacy_entropy_state
+game_core_seed_entropy_done:
         rts
 
 ; Galois16-b400-v2. MOVEQ precedes LSR so its cleared carry cannot erase the bit.

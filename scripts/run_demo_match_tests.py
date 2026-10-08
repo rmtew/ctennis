@@ -51,8 +51,8 @@ def run(takeover=False, takeover_tail=False):
   def num(n,k=1):return int.from_bytes(mem(n,k),'big')
   def frozen():return mem('game_play_state',60)+mem('game_score_state',28)+mem('game_audio_voices',96)+mem('game_audio_wait')+mem('game_action_clock')+mem('game_status_clock')+mem('game_aux_clock')+mem('ui_entropy_state',2)+mem('game_entropy_state',2)+mem('game_match_seed',2)
   until({'pc':base+symbols['ui_seed_entropy']});check('ordinary title idle starts seeded demo',num('ui_demo'),255)
-  # The shared seed routine writes modern, then historical state.
-  s.inspect('step',{'count':2});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
+  # Observe both completed writes at their actual return boundary.
+  until({'pc':base+symbols['game_core_seed_entropy_done']});check('actual initialized seed matches metadata',num('ui_entropy_state',2),recording['seed'])
   check('modern shadow starts from same match seed',num('game_entropy_state',2),recording['seed'])
   check('historical playback policy is explicit',num('game_entropy_policy'),1)
   def take_over(tail=False):
