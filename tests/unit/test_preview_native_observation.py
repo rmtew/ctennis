@@ -32,14 +32,14 @@ class NativePreviewGuards(unittest.TestCase):
         self.assertIn('External native caller',observer.problems[-1])
 
     def test_owned_canonical_extent_does_not_permit_adjacent_bytes(self):
-        observer=self.observer();observer.pending={'name':'game_preview_step'}
+        observer=self.observer();observer.pending={'name':'game_preview_step','begin':{'cck':0},'end':None}
         observer._guard(self.event(0x1000+318-2,4))
         self.assertIn('Forbidden native API',observer.problems[-1])
         observer._guard(self.event(0xdead00))
         self.assertEqual(len(observer.problems),2)
 
     def test_audio_write_cannot_use_presentation_pc_allowance(self):
-        observer=self.observer();observer.pending={'name':'game_preview_step'}
+        observer=self.observer();observer.pending={'name':'game_preview_step','begin':{'cck':0},'end':None}
         observer.rules[0x400]=dict(address=0xdff09c,bytes=2,operation='move',
             source='#$0010',destination='$dff09c')
         observer._guard(self.event(0xdff0a8,value=64))
@@ -123,11 +123,38 @@ class NativePreviewGuards(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'pressed mask differs'):
             write('ui_joystick_pressed',4)
 
+    def test_pre_and_post_api_irq_frames_do_not_change_return_bracket(self):
+        observer=self.observer();observer.slot=0x28fd6
+        observer.symbols.update(preview_native_call=0x2bfb4,preview_native_after=0x2bfb6)
+        observer.rts_pcs={0x25a70};observer.restore_dummy_pcs=set()
+        observer.return_store=LongwordObserver();observer.return_reads=LongwordObserver()
+        observer.pending=dict(name='game_preview_request',begin=None,end=None)
+        irq=self.event(0x28fd8,2,0x2bfa8,0xbfac)
+        observer.return_slot_write(irq)
+        observer.return_read(irq) # RTE reads the exception frame before JSR.
+        self.assertIsNone(observer.pending['begin'])
+        self.assertEqual(observer.return_store.seen,set())
+        self.assertEqual(observer.return_reads.seen,set())
+        # Frozen selected state remains protected even while a mailbox is pending.
+        observer._guard(self.event(0x1000,2,0x2bfa8,0))
+        self.assertIn('External native caller',observer.problems[-1])
+        jsr=self.event(0x28fd6,4,0x2bfb4,0x2bfb6)
+        observer.return_slot_write(jsr)
+        self.assertEqual(observer.pending['begin'],jsr['position'])
+        with self.assertRaisesRegex(AssertionError,'return slot overwritten'):
+            observer.return_slot_write(irq)
+        observer.return_read(self.event(0x28fd6,4,0x25a70,0x2bfb6))
+        completed=dict(observer.pending['end'])
+        observer.return_slot_write(irq);observer.return_read(irq)
+        self.assertEqual(observer.pending['end'],completed)
+        self.assertEqual(observer.return_store.seen,set())
+        self.assertEqual(observer.return_reads.seen,set())
+
     def test_movem_dummy_read_does_not_complete_or_seed_the_rts(self):
         observer=self.observer();observer.slot=0x28fd6
         observer.symbols['preview_native_after']=0x2bfb6
         observer.rts_pcs={0x25a70};observer.restore_dummy_pcs={0x25a6a}
-        observer.return_reads=LongwordObserver();observer.pending={'end':None}
+        observer.return_reads=LongwordObserver();observer.pending={'begin':{'cck':1},'end':None}
         def read(pc,address,size,value):
             event=self.event(address,size,pc,value);event['position']={'cck':17}
             observer.return_read(event)

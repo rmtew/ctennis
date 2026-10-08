@@ -159,6 +159,9 @@ class Observer(TraceCollector):
         row['elapsed_cck']=row['end']['cck']-row['begin']['cck']
         self.api_rows.append(row);return row
 
+    def inside_api(self):
+        return self.pending is not None and self.pending.get('begin') is not None and self.pending.get('end') is None
+
     def _guard(self,r):
         a,size,pc,value=r['addr'],r['size'],r['pc'],r['value']
         s=self.symbols
@@ -168,16 +171,14 @@ class Observer(TraceCollector):
             self.problems.append('CPU writes frozen history/live backup')
         audio=(a<0xdff0e0 and a+size>0xdff0a0) or (a<0xdff0a0 and a+size>0xdff09e)
         if audio:self.audio_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position'],frozen=self.frozen))
-        if self.pending is None:
+        if not self.inside_api():
             publication_write=any(a<s[name]+len(data) and a+size>s[name]
                 for name,data in {**self.publication,**{n:d for n,d in getattr(self,'source_shadow',{}).items() if n!='simulation_started_updates'}}.items())
             if self.frozen and publication_write:
                 rule=self.rules.get(pc)
                 if rule is not None:
                     # Reuse the exact source/value IRQ guard, without API counts.
-                    self.pending=dict(name='outside-presentation',begin=None,end=None)
-                    try:self._guard(r)
-                    finally:self.pending=None
+                    self.irq_write(r,rule)
                 else:
                     rule=self.outside_publication_rules.get(pc)
                     if not (rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']):
@@ -202,6 +203,9 @@ class Observer(TraceCollector):
                             self.problems.append('Incorrect actual native UI producer write value')
                         self.outside_publication_writes.append(dict(pc=pc,address=a,size=size,
                             value=value,position=r['position']))
+            rule=self.rules.get(pc)
+            if not publication_write and rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']:
+                self.irq_write(r,rule)
             if self.frozen and overlap('game_preview_storage',5550):self.problems.append('External caller writes frozen preview context')
             if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
             if self.frozen and a<0xdff098 and a+size>0xdff096:
@@ -221,31 +225,37 @@ class Observer(TraceCollector):
         if self.pending['name']=='game_history_freeze' and overlap('game_history_buffer',80318):return
         rule=self.rules.get(pc)
         if rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']:
-            source=rule['source'];operation=rule['operation']
-            current=int.from_bytes(self.publication.get(rule['destination'],b'\0'),'big')
-            if operation=='clr':expected=0
-            elif operation in ('addq','subq'):
-                amount=int(source[1:]);expected=current+(amount if operation=='addq' else -amount)
-            elif source.startswith('#'):
-                text=source[1:];expected=int(text[1:],16) if text.startswith('$') else int(text)
-            elif source in self.publication:expected=int.from_bytes(self.publication[source],'big')
-            elif source=='d0':
-                expected=s['title_copper'] if self.publication['ready_title_display'][0] else int.from_bytes(self.publication['ready_copper'],'big')
-            else:raise AssertionError('Unspecified presentation IRQ value source: '+str(source))
-            expected=(expected&((1<<(8*rule['bytes']))-1)).to_bytes(rule['bytes'],'big')
-            offset=a-rule['address']
-            if value.to_bytes(size,'big')!=expected[offset:offset+size]:
-                self.problems.append('Incorrect actual presentation IRQ write value')
-            self.irq_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position']))
-            if (rule['destination'].lower()=='$dff09c' and self.pending['begin'] is not None
-                    and self.pending['end'] is None):
-                self.pending['irq_acknowledgements']+=1
-                if pc==self.irq_entry_pc:self.pending['irq']+=1;self.irq_inside+=1
-            return
+            self.irq_write(r,rule);return
         self.problems.append(f'Forbidden native API nonstate/hardware write {pc:#x}->{a:#x}/{size}')
+
+    def irq_write(self,r,rule):
+        a,size,pc,value=r['addr'],r['size'],r['pc'],r['value']
+        s=self.symbols
+        source=rule['source'];operation=rule['operation']
+        current=int.from_bytes(self.publication.get(rule['destination'],b'\0'),'big')
+        if operation=='clr':expected=0
+        elif operation in ('addq','subq'):
+            amount=int(source[1:]);expected=current+(amount if operation=='addq' else -amount)
+        elif source.startswith('#'):
+            text=source[1:];expected=int(text[1:],16) if text.startswith('$') else int(text)
+        elif source in self.publication:expected=int.from_bytes(self.publication[source],'big')
+        elif source=='d0':
+            expected=s['title_copper'] if self.publication['ready_title_display'][0] else int.from_bytes(self.publication['ready_copper'],'big')
+        else:raise AssertionError('Unspecified presentation IRQ value source: '+str(source))
+        expected=(expected&((1<<(8*rule['bytes']))-1)).to_bytes(rule['bytes'],'big')
+        offset=a-rule['address']
+        if value.to_bytes(size,'big')!=expected[offset:offset+size]:
+            self.problems.append('Incorrect actual presentation IRQ write value')
+        self.irq_writes.append(dict(pc=pc,address=a,size=size,value=value,position=r['position']))
+        if rule['destination'].lower()=='$dff09c' and self.inside_api():
+            self.pending['irq_acknowledgements']+=1
+            if pc==self.irq_entry_pc:self.pending['irq']+=1;self.irq_inside+=1
+        return
+
 
     def return_read(self,record):
         """MOVEM's extra first-word read is not the actual RTS return."""
+        if not self.inside_api():return
         pc,address,size,value=record['pc'],record['addr'],record['size'],record['value']
         if pc in self.rts_pcs:
             result=self.return_reads.write(address-self.slot,value,size,pc)
@@ -256,6 +266,17 @@ class Observer(TraceCollector):
         assert (pc in self.restore_dummy_pcs and address==self.slot and size==2
                 and value==self.symbols['preview_native_after']>>16), 'Return-slot read is not an exact emitted MOVEM dummy read or RTS'
         self.pending.setdefault('restore_dummy_reads',[]).append(record)
+
+    def return_slot_write(self,record):
+        # A presentation IRQ before JSR or after RTS legitimately reuses this
+        # future/free stack slot. It is outside the actual API return bracket.
+        if not self.inside_api():
+            if self.pending.get('begin') is not None or record['pc']!=self.symbols['preview_native_call']:return
+            self.pending['begin']=record['position']
+            self.stack_min=min(self.stack_min,record['addr'])
+        assert record['pc']==self.symbols['preview_native_call'],'Actual JSR return slot overwritten'
+        result=self.return_store.write(record['addr']-self.slot,record['value'],record['size'],record['pc'])
+        if result is not None:assert result==self.symbols['preview_native_after']
 
     def input_write(self,name,address,data,position):
         """Physical edges come from raw native samples, not host commands/timers."""
@@ -310,16 +331,13 @@ class Observer(TraceCollector):
             if self.start<=a<a+size<=self.stop:
                 self.shadow[a-self.start:a-self.start+size]=data;return
             if self.pending and self.slot<=a<a+size<=self.slot+4:
-                assert r['pc']==self.symbols['preview_native_call'],'Actual JSR return slot overwritten'
-                result=self.return_store.write(a-self.slot,value,size,r['pc'])
-                if self.pending['begin'] is None:self.pending['begin']=r['position']
-                if result is not None:assert result==self.symbols['preview_native_after']
-        elif self.pending and a>=0xbf0000:
+                self.return_slot_write(r)
+        elif self.inside_api() and a>=0xbf0000:
             if not (self.beam_reads.get(r['pc'])==a and size==2):
                 self.problems.append('Forbidden native API hardware read')
         elif self.pending and self.slot<=a<a+size<=self.slot+4:
             self.return_read(r)
-        if a==self.marker and value in self.operations and self.pending:self.pending['bodies']+=1
+        if a==self.marker and value in self.operations and self.inside_api():self.pending['bodies']+=1
         # Canonical copying outside logical bodies is already reconstructed above.
         # The existing mailbox decoder remains the independent semantic protocol.
         if a==self.marker or self.arguments<=a<a+size<=self.arguments+12 or a==self.symbols['simulation_updates']:
