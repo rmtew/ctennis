@@ -220,7 +220,9 @@ class SurfaceObserver:
     """Reconstruct actual Copper banks and guard queued/displayed pixel storage."""
     SIZE = 4*6144
 
-    def __init__(self, symbols, read, verify_court_restores=False):
+    def __init__(self, symbols, read, verify_court_restores=False, last_line=311):
+        assert last_line in (261,311)
+        self.last_line = last_line
         self.symbols = symbols
         self.verify_court_restores = verify_court_restores
         self.court_queues = []
@@ -230,6 +232,8 @@ class SurfaceObserver:
                       for n in ('copperlist','copperlist_back','copperlist_third')}
         self.images = {symbols[n]:bytearray(read(symbols[n], self.SIZE))
                        for n in ('tutorial_surface0','tutorial_surface1')}
+        self.static_base = symbols['plane0']
+        self.static_image = bytes(read(self.static_base, self.SIZE))
         assert symbols['tutorial_surfaces_end']-symbols['tutorial_surface0'] == 2*self.SIZE
         self.offset = symbols['cop_bpl0h']-symbols['copperlist']
         self.cop1lc = bytearray(4)
@@ -246,6 +250,7 @@ class SurfaceObserver:
     def watches(self):
         return [dict(addr=a,len=len(data),access='write')
                 for a,data in (*self.banks.items(),*self.images.items())] + [
+                    dict(addr=self.static_base,len=self.SIZE,access='write'),
                     dict(addr=0xdff080,len=4,access='write'),
                     dict(addr=0xdff088,len=2,access='write')]
 
@@ -260,9 +265,9 @@ class SurfaceObserver:
             assert int.from_bytes(data[p+4:p+6],'big') == 0xe2+n*4
             pointers.append(int.from_bytes(data[p+2:p+4],'big')*65536+
                             int.from_bytes(data[p+6:p+8],'big'))
-        if pointers[0] not in self.images:
+        if pointers[0] not in self.images and pointers[0] != self.static_base:
             return None
-        assert pointers == [pointers[0]+n*6144 for n in range(4)], 'Mixed private bitplane origins'
+        assert pointers == [pointers[0]+n*6144 for n in range(4)], 'Mixed court bitplane origins'
         return pointers[0]
 
     def snapshot(self, copper, state, position):
@@ -270,9 +275,10 @@ class SurfaceObserver:
         if image is None:
             return None
         bank = self.banks[copper]
+        pixels = self.static_image if image == self.static_base else self.images[image]
         return dict(copper=copper, bank=bytes(bank).hex(),
                     bank_sha256=hashlib.sha256(bank).hexdigest(), surface=image,
-                    surface_sha256=hashlib.sha256(self.images[image]).hexdigest(),
+                    surface_sha256=hashlib.sha256(pixels).hexdigest(),
                     generation=state['tutorial_published_generation'],
                     ready_generation=state['ready_generation'], position=dict(position))
 
@@ -282,6 +288,7 @@ class SurfaceObserver:
         queued_copper = state['ready_copper'] if state['display_ready'] and state['ready_completed'] else 0
         displayed_image = self.surface(self.hardware_copper)
         queued_image = self.surface(queued_copper)
+        assert not (max(a,self.static_base) < min(a+size,self.static_base+self.SIZE)), 'Write to immutable original court'
         for start, shadow in self.images.items():
             if max(a,start) < min(a+size,start+len(shadow)):
                 assert start not in (displayed_image,queued_image), 'Write to displayed or eligible queued tutorial surface'
@@ -313,7 +320,7 @@ class SurfaceObserver:
             if state['simulation_started_updates']:
                 assert state['display_ready'] and state['ready_completed']
                 assert target == expected == state['presentation_copper'], 'Actual COPJMP selects an uncompleted bank'
-                assert 253 <= row['position']['vpos'] <= 311, 'Court publication outside guarded PAL bottom interval'
+                assert 253 <= row['position']['vpos'] <= self.last_line, 'Court publication outside guarded bottom interval'
             self.hardware_copper = target
             if self.verify_court_restores and target in self.banks:
                 base = self.surface(target) or self.symbols['plane0']
@@ -363,7 +370,7 @@ class SurfaceObserver:
 def native_view(source, target):
     from PIL import Image
     with Image.open(source) as picture:
-        assert picture.size == (716, 285), 'Review native PAL viewport geometry'
+        assert picture.size in ((716,285),(716,235)), 'Review native viewport geometry'
         rgb = picture.convert('RGB')
         image = Image.new('RGB', (256, 208))
         pixels = [(rgb.getpixel((126+2*x, 16+y)))
@@ -396,13 +403,20 @@ def required_capture_extent(report):
     names = {r.get('name') for r in rows}
     count = report.get('frozen_boundaries')
     files = (report.get('evidence') or {}).get('files') or {}
+    standard = (report.get('target') or {}).get('video')
+    if standard not in ('PAL','NTSC'):
+        return False
+    directory = 'build/tests/tutorial-court-'+standard.lower()+'/'
     def bound(path):
         return (isinstance(path, str)
-                and re.fullmatch(r'build/tests/tutorial-court-pal/[\w.-]+', path)
+                and re.fullmatch(re.escape(directory)+r'[\w.-]+', path)
                 and isinstance(files.get(path), str)
                 and re.fullmatch(r'[0-9a-f]{64}', files[path]))
-    target = dict(model='A500', cpu='68000', chipset='OCS', video='PAL',
+    target = dict(model='A500', cpu='68000', chipset='OCS', video=standard,
                   chip_bytes=524288, slow_bytes=0, fast_bytes=0, kickstart='1.3')
+    expected_video = dict(zip(('presentation_last_line','simulation_interval_whole',
+                              'simulation_interval_fraction'),
+                             (311,11838,14906) if standard == 'PAL' else (261,11947,13180)))
     restored = report.get('resume_readback') or {}
     core = report.get('shared_core') or {}
     hunks = report.get('loaded_hunks') or []
@@ -414,8 +428,7 @@ def required_capture_extent(report):
             and report.get('public_history_bytes') == 72
             and report.get('target') == target
             and (report.get('evidence') or {}).get('actual_target') == target
-            and report.get('native_video') == dict(presentation_last_line=311,
-                simulation_interval_whole=11838, simulation_interval_fraction=14906)
+            and report.get('native_video') == expected_video
             and type(report.get('missed_presentation_deadlines')) is int
             and report['missed_presentation_deadlines'] == 0
             and bound(report.get('capture')) and bound(report.get('literal_rpc_path'))
@@ -432,7 +445,8 @@ def required_capture_extent(report):
                  'resumed','resumed-1','resumed-2'} <= names
             and len([n for n in names if isinstance(n,str) and n.startswith('animation-')]) == 24
             and all(bound(r.get('source')) and bound(r.get('native'))
-                    and r.get('source_geometry') == [716,285]
+                    and r.get('source_geometry') in ([[716,285]] if standard == 'PAL'
+                                                   else [[716,235],[716,285]])
                     and r.get('native_geometry') == [256,208] for r in rows)
             and all(isinstance(r.get('observed_surface'),dict)
                     and r['observed_surface'].get('generation') == (r.get('fields') or {}).get('tutorial_published_generation')

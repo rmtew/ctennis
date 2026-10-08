@@ -1,4 +1,4 @@
-"""Finite PAL court prototype capture through real one-player keyboard controls.
+"""Finite PAL/NTSC court prototype capture through real physical controls.
 
 This is a prototype review case, not tutorial release acceptance. It observes
 complete callback boundaries and retains literal RPC/notifications, source PNGs
@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import shutil
+import argparse
 
 from build_native_game import build
 from check_shared_core_bytes import normalized
@@ -41,8 +42,13 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_counts=4)
 
 
-def run():
-    directory = ROOT/'build/tests/tutorial-court-pal'
+def run(standard='PAL'):
+    assert standard in ('PAL','NTSC')
+    target = dict(TARGET, video=standard)
+    expected_video = dict(zip(('presentation_last_line','simulation_interval_whole',
+                              'simulation_interval_fraction'),
+                             (311,11838,14906) if standard == 'PAL' else (261,11947,13180)))
+    directory = ROOT/('build/tests/tutorial-court-'+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -50,7 +56,9 @@ def run():
     try:
         paths, tools = inputs_for('native-feedback', 'scripts/run_tutorial_capture.py')
         transaction.meta.update(files=snapshot(paths), tools=tools,
-                                runner='scripts/run_tutorial_capture.py', actual_target=TARGET)
+                                runner='scripts/run_tutorial_capture.py', actual_target=target,
+                                target_role='legacy-validator-reference',
+                                target_scope='evidence.target is a legacy validator reference; actual_target and report.target identify the executed video standard.')
         import subprocess
         transaction.meta['commit'] = subprocess.check_output(
             ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -74,7 +82,7 @@ def run():
         held_resume_samples = 0
         with CaptureSession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
-                run=str(executable), args=['--chipset','OCS','--video','PAL',
+                run=str(executable), args=['--chipset','OCS','--video',standard,
                 '--cpu','68000','--chip','512K','--slow','0','--fast','0',
                 '--noaudio',config['inputs']['amiga_rom']]))
             stop = session.inspect('run_until', dict(seconds=30))
@@ -91,7 +99,8 @@ def run():
                 return int.from_bytes(block(name, FIELDS.get(name, 2) if size is None else size), 'big')
             loaded = loaded_hunks(executable, segments, read)
             observer = CallbackObserver(0, symbols)
-            observer.surfaces = SurfaceObserver(symbols, read, verify_court_restores=True)
+            observer.surfaces = SurfaceObserver(symbols, read, verify_court_restores=True,
+                                               last_line=expected_video['presentation_last_line'])
             session.observer = observer
             subscription = session.inspect('events.subscribe',
                 dict(events=['mmio','frame'], mmio=(observer.watches(FIELDS, read)+
@@ -184,6 +193,9 @@ def run():
                 native = directory/(name+'.png')
                 session.inspect('capture_screenshot', dict(path=str(source)))
                 native_view(source, native)
+                from PIL import Image
+                with Image.open(source) as viewport:
+                    source_geometry = list(viewport.size)
                 surface = None
                 if number('tutorial_active') and not number('tutorial_pending'):
                     surface = observer.surfaces.completed_surface(number('tutorial_published_generation'))
@@ -195,7 +207,7 @@ def run():
                     visual_checks[name+'-court-origins'] = assert_court_origins(bank, symbols, base)
                 screenshots.append(dict(name=name, source=str(source.relative_to(ROOT)),
                                         native=str(native.relative_to(ROOT)),
-                                        source_geometry=[716,285], native_geometry=[256,208],
+                                        source_geometry=source_geometry, native_geometry=[256,208],
                                         stop=dict(stop), fields={n:number(n) for n in FIELDS},
                                         observed_surface=surface))
                 return native
@@ -263,21 +275,20 @@ def run():
             video = dict(presentation_last_line=number('presentation_last_line', 2),
                          simulation_interval_whole=number('simulation_interval_whole', 4),
                          simulation_interval_fraction=number('simulation_interval_fraction', 2))
-            assert video == dict(presentation_last_line=311, simulation_interval_whole=11838,
-                                 simulation_interval_fraction=14906), 'Actual PAL selector/deadline contract differs'
+            assert video == expected_video, 'Actual video selector/deadline contract differs'
             timing = observer.result(interval)
             missed_publications = number('missed_presentation_deadlines')
             assert missed_publications == 0
             raw = dict(records=session.records, uncompressed_bytes=session.raw_bytes,
                        cap_uncompressed_bytes=session.MAX_RAW_BYTES)
             surfaces = observer.surfaces.result()
-        target_log(directory)
+        target_log(directory, standard)
         capture = directory/'capture.json'
         atomic_json(capture, dict(boundaries=boundaries, actions=actions, waits=waits, timing=timing,
                                  memory=memory, loaded_hunks=loaded, surfaces=surfaces,
                                  visual_checks=visual_checks))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
-            target=TARGET, native_video=video, waits=waits,
+            target=target, native_video=video, waits=waits,
             missed_presentation_deadlines=missed_publications,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             capture=str(capture.relative_to(ROOT)), screenshots=screenshots,
@@ -301,15 +312,17 @@ def run():
             complete_state_bytes=318, public_history_bytes=72,
             native_memory=memory_summary(memory), timing=timing,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
-            scope='Finite PAL current-human-serve court prototype; physical double-tap/edit/hold/release/modifier/menu/resume. No retained-shot navigation, live branching, full native gate or release claim.')
+            scope=f'Finite {standard} current-human-serve court prototype; physical double-tap/edit/hold/release/modifier/menu/resume. No retained-shot navigation, live branching, full native gate or release claim.')
         manifest = json.loads((executable.parent/'baseline-rally.compile.json').read_text())
         artifacts = [p for p in directory.iterdir() if p.is_file() and p != output]
         transaction.finalize(output, report, [manifest], artifacts)
-        print('tutorial-court-pal prototype capture PASS', flush=True)
+        print('tutorial-court-'+standard.lower()+' prototype capture PASS', flush=True)
     except BaseException as error:
         transaction.abort(error)
         raise
 
 
 if __name__ == '__main__':
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ntsc', action='store_true')
+    run('NTSC' if parser.parse_args().ntsc else 'PAL')

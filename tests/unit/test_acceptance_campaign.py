@@ -237,7 +237,7 @@ class CampaignTests(unittest.TestCase):
         with patch.object(campaign,'tagged_processes',return_value=[]):
             return campaign.worker(self.directory,[self.case],self.root)
     def test_catalog_stable_complete(self):
-        self.assertEqual(len(cases()),49)
+        self.assertEqual(len(cases()),50)
         self.assertIn('takeover-tail',{c.id for c in cases()})
         self.assertIn('takeover-sound',{c.id for c in cases()})
     def test_preview_extent_requires_isolation_budget_and_continuous_replay(self):

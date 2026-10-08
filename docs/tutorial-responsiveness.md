@@ -80,6 +80,8 @@ worker JSR stack write to the caller's progress write. Across 640 calls, observe
 cost was at most 20,834 CCK, median 15,981, total 10,225,192. This includes return
 and caller bookkeeping but excludes admission and subsequent footer/publication.
 It covers two current-serve previews, not arbitrary retained-shot resolution.
+The independent reviewer reproduced every matched call and cleared the completed
+batching evidence, including full state, publication, line and raster contracts.
 
 The next reviewed source increment rechecks remaining time after every public
 worker return, with at most four calls per callback. It retains the original
@@ -89,3 +91,43 @@ the added native IRQ/tail margin is an estimate pending fresh native validation.
 READY result/footer processing has its own original-reserve admission on the
 following callback. The public core budget and canonical restore contract do
 not change. This does not yet certify lower-reserve retained-return execution.
+
+## Display recommendation
+
+Use the existing static four-plane court and native sprite publication for the
+first placement/animation proof, with trails disabled. This skips the 24,576-byte
+copy and bitmap ghost/path work on each edit. Keep the shared three Copper/sprite
+banks and immutable displayed/queued ownership; frozen scoreboard strips already
+exist, and the prepared-sprite path does not redraw them. Removing the scoreboard
+would change appearance and Copper layout without removing the measured main
+cost. Native ball/shadow samples remain dense and advance at game time.
+
+| Option | Chip storage calculation | CPU/DMA/appearance consequence |
+| --- | --- | --- |
+| Static court + native sprites | No additional canvas beyond current assets | Best first proof: publish current player/result without background copy; preserve existing four-plane palette and sprite path. |
+| Current optional full-color trails | Two 24,576-byte private canvases = 49,152 bytes | Reuse reviewed ownership; rebuild only during idle refinement. Measured complete copy-phase callback maximum 30,406 CCK and path-phase maximum 26,450 CCK at `44d9c86`, including input/tail, not isolated worker cost. |
+| Separate single-plane trail buffers | Two 6,144-byte planes = 12,288 bytes | A software-composited mask still needs backing/restore work. A fifth displayed single-playfield plane uses color indices16–31, overlapping native sprite colors; it is not a transparent overlay preserving the existing palette. |
+| Dual playfield | Two one-plane trail buffers = 12,288 bytes, plus any court conversion/unused-plane storage | Can give hardware transparency and independent trail buffers, but each playfield is limited to three bitplanes. The retained court uses11 color indices, so it needs a reviewed palette conversion. Additional fetched planes change DMA/CPU contention and sprite priorities. |
+| Tutorial-only reduced-color display | Depends on agreed replacement court and buffers | Could reduce DMA/storage and remove fixed HUD restores, but changes user-visible colors/layout. Evaluate only if the simple sprite proof fails measured needs. |
+
+The storage rows are byte arithmetic at the current 256×192 court, not measured
+allocations for unimplemented alternatives. Current initialized free chip RAM at
+`8e66edc` is 71,632 bytes with both private canvases present. The original court
+assets use indices0,2,3,4,5,6,9,10,13,14,15 (49,152 decoded pixels audited directly).
+Existing Copper registers select four planes (`BPLCON0=$4200`) and put sprite
+pair colors in registers17–31. Hardware dual-playfield bitplane/color restrictions
+and higher-depth DMA contention follow the original
+[Hardware Reference Manual](https://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node0078.html),
+its [color-register table](https://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node007A.html)
+and [DMA discussion](https://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node012B.html).
+No alternative architecture has an execution-time measurement or acceptance
+claim. A broad native campaign is unnecessary for this comparison.
+
+Idle rendering should repeat bounded work units while fresh remaining time
+admits them, with a finishing reserve including IRQ/DMA and publication. Pixel
+and header quotas bound each unit, not the total work allowed per callback.
+Input/latest-position simulation and current placement publication take priority;
+trail completion is never a usability/READY prerequisite. Record placement,
+animation and trail times separately. A sub-second latest-placement target is a
+candidate goal, not a demonstrated result; first-result measurements determine
+the actual achievable target before further architecture changes.

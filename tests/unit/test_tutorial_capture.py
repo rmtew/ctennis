@@ -134,6 +134,23 @@ class TutorialCaptureTests(unittest.TestCase):
             files[row['source']] = files[row['native']] = 'a'*64
         report['evidence'] = dict(files=files, actual_target=TARGET)
         self.assertTrue(required_capture_extent(report))
+        ntsc = copy.deepcopy(report)
+        ntsc['target']['video'] = ntsc['evidence']['actual_target']['video'] = 'NTSC'
+        # A region label cannot substitute for the actual timer/line selectors.
+        self.assertFalse(required_capture_extent(ntsc))
+        ntsc['native_video'] = dict(presentation_last_line=261,
+            simulation_interval_whole=11947, simulation_interval_fraction=13180)
+        self.assertFalse(required_capture_extent(ntsc))  # PAL artifact paths
+        for name in ('capture','literal_rpc_path','animation'):
+            ntsc[name] = ntsc[name].replace('-pal/','-ntsc/')
+        for row in ntsc['screenshots']:
+            for name in ('source','native'):
+                row[name] = row[name].replace('-pal/','-ntsc/')
+        ntsc['evidence']['files'] = {k.replace('-pal/','-ntsc/'):v
+                                   for k,v in ntsc['evidence']['files'].items()}
+        self.assertTrue(required_capture_extent(ntsc))
+        ntsc['native_video']['presentation_last_line'] = 311
+        self.assertFalse(required_capture_extent(ntsc))
         for key, value in [('screenshots',[]), ('frozen_boundaries',0),
                            ('complete_state_bytes',88), ('animation',None)]:
             broken = copy.deepcopy(report); broken[key] = value
@@ -181,7 +198,8 @@ class TutorialCaptureTests(unittest.TestCase):
         symbols = dict(copperlist=400, copperlist_end=432, cop_bpl0h=400,
                        copperlist_back=600, copperlist_third=800,
                        tutorial_surface0=10000, tutorial_surface1=34576,
-                       tutorial_surfaces_end=59152, title_copper=90000, ready_completed=8)
+                       tutorial_surfaces_end=59152, plane0=65000,
+                       title_copper=90000, ready_completed=8)
         def read(address, size):
             if address not in (400,600,800): return bytes(size)
             base = 10000 if address == 400 else 34576
@@ -230,6 +248,22 @@ class TutorialCaptureTests(unittest.TestCase):
         late = event(0xdff088,0); late['position']['vpos'] = 312
         with self.assertRaises(AssertionError):
             observer.observe(late, state)
+
+    def test_static_court_publication_retains_immutable_assets(self):
+        observer, state, event = self.surface_fixture()
+        bank = observer.banks[600]
+        for plane in range(4):
+            pointer = observer.static_base+plane*6144
+            bank[plane*8+2:plane*8+4] = (pointer>>16).to_bytes(2,'big')
+            bank[plane*8+6:plane*8+8] = (pointer&65535).to_bytes(2,'big')
+        observer.observe(event(8,255,1), state)
+        observer.observe(event(0xdff080,600,4), state)
+        observer.observe(event(0xdff088,0), state)
+        observer.last_frame = 3
+        self.assertTrue(observer.current(1))
+        self.assertEqual(observer.displayed['surface'], observer.static_base)
+        with self.assertRaisesRegex(AssertionError,'immutable original court'):
+            observer.observe(event(observer.static_base,0), state)
 
 
 if __name__ == '__main__':
