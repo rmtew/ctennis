@@ -72,6 +72,13 @@ artifacts are preserved. The first observed event was at 6.02 seconds, so 128 Mi
 about 1.73 GiB; the streaming capture budget is 2 GiB with margin. This is an
 estimate, and the finite 120-second limit remains unchanged. No writes are
 filtered, and overflow still fails the attempt and permits emulator shutdown.
+The next attempt (`ac28e589b3c0464b800dbcca004ad891`, head `46287b1`)
+failed the 20-second view wait. Actual writes show preview completion at 18.49
+absolute guest seconds and path rendering starting at 19.92, still in progress
+at 28.48. The renderer processes one segment per callback, so the capture now
+allows up to 40 seconds per view while retaining the overall 120-second limit,
+all callback deadlines and loss checks. Each actual view wait is recorded for
+latency review; the longer capture allowance does not establish usable latency.
 Screenshot metadata binds the stable background surface after two fields. Full
 queued and actual Copper publications are retained separately. Animation changes
 sprite banks without changing the background generation; the screenshot metadata

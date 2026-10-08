@@ -53,7 +53,7 @@ def run():
             18020, 257, 14,
             '9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d')
         config = emulator_config()
-        screenshots, boundaries, actions = [], [], []
+        screenshots, boundaries, actions, waits = [], [], [], []
         selected = metadata = live_backup = None
         resume_readback = None
         awaiting_resumed_boundary = False
@@ -148,12 +148,16 @@ def run():
                 actions.append(dict(rawkey=rawkey, held=held, at_seconds=time))
                 advance(seconds)
             def ready():
-                for _ in range(100):
+                wait_start = time
+                for _ in range(200):
                     advance(.2)
                     if (number('tutorial_active') and number('tutorial_status') == 4
                             and not number('tutorial_pending')
                             and number('tutorial_published_generation') == number('tutorial_render_generation')
                             and observer.surfaces.current(number('tutorial_published_generation'))):
+                        waits.append(dict(start_seconds=wait_start, ready_seconds=time,
+                                          elapsed_seconds=time-wait_start,
+                                          generation=number('tutorial_published_generation')))
                         return
                 raise AssertionError('No current complete tutorial scene within finite wait')
             def photo(name):
@@ -222,10 +226,10 @@ def run():
             surfaces = observer.surfaces.result()
         target_log(directory)
         capture = directory/'capture.json'
-        atomic_json(capture, dict(boundaries=boundaries, actions=actions, timing=timing,
+        atomic_json(capture, dict(boundaries=boundaries, actions=actions, waits=waits, timing=timing,
                                  memory=memory, loaded_hunks=loaded, surfaces=surfaces))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
-            target=TARGET, native_video=video,
+            target=TARGET, native_video=video, waits=waits,
             missed_presentation_deadlines=missed_publications,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             capture=str(capture.relative_to(ROOT)), screenshots=screenshots,
