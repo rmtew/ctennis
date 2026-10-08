@@ -117,6 +117,8 @@ class CallbackObserver:
                 data = value.to_bytes(size, 'big')
                 self.bytes[name][left-address:right-address] = data[left-a:right-a]
                 self.state[name] = int.from_bytes(self.bytes[name], 'big')
+        if 'missed_presentation_deadlines' in self.state:
+            assert self.state['missed_presentation_deadlines'] == 0, 'Native presentation missed its deadline'
         if self.surfaces:
             self.surfaces.observe(row, self.state)
         if a == self.base+self.symbols['simulation_timer_origin']:
@@ -245,7 +247,7 @@ class SurfaceObserver:
             if state['simulation_started_updates']:
                 assert state['display_ready'] and state['ready_completed']
                 assert target == expected == state['presentation_copper'], 'Actual COPJMP selects an uncompleted bank'
-                assert row['position']['vpos'] >= 253, 'Court publication outside guarded bottom interval'
+                assert 253 <= row['position']['vpos'] <= 311, 'Court publication outside guarded PAL bottom interval'
             self.hardware_copper = target
             self.displayed = self.snapshot(target,state,row['position'])
             if self.displayed:
@@ -261,6 +263,15 @@ class SurfaceObserver:
             return False
         identity = (self.displayed['surface'],generation)
         return self.last_frame >= self.first_fields[identity]+2
+
+    def completed_surface(self, generation):
+        """Bind stable background only; latest sprite bank may not have scanned out."""
+        assert self.current(generation)
+        identity = (self.displayed['surface'], generation)
+        return dict(surface=self.displayed['surface'], generation=generation,
+                    surface_sha256=self.displayed['surface_sha256'],
+                    first_publication_frame=self.first_fields[identity],
+                    observation_frame=self.last_frame, scope='stable-background-only')
 
     def result(self):
         assert self.surface_writes and self.bank_writes and self.publications and self.queue_records
@@ -325,6 +336,8 @@ def required_capture_extent(report):
             and (report.get('evidence') or {}).get('actual_target') == target
             and report.get('native_video') == dict(presentation_last_line=311,
                 simulation_interval_whole=11838, simulation_interval_fraction=14906)
+            and type(report.get('missed_presentation_deadlines')) is int
+            and report['missed_presentation_deadlines'] == 0
             and bound(report.get('capture')) and bound(report.get('literal_rpc_path'))
             and type(count) is int and count >= 2
             and type(timing.get('completed_callbacks')) is int
@@ -340,10 +353,14 @@ def required_capture_extent(report):
             and all(bound(r.get('source')) and bound(r.get('native'))
                     and r.get('source_geometry') == [716,285]
                     and r.get('native_geometry') == [256,208] for r in rows)
-            and all(isinstance(r.get('observed_publication'),dict)
-                    and r['observed_publication'].get('generation') == (r.get('fields') or {}).get('tutorial_published_generation')
-                    and isinstance(r['observed_publication'].get('surface_sha256'),str)
-                    and re.fullmatch(r'[0-9a-f]{64}', r['observed_publication']['surface_sha256'])
+            and all(isinstance(r.get('observed_surface'),dict)
+                    and r['observed_surface'].get('generation') == (r.get('fields') or {}).get('tutorial_published_generation')
+                    and isinstance(r['observed_surface'].get('surface_sha256'),str)
+                    and re.fullmatch(r'[0-9a-f]{64}', r['observed_surface']['surface_sha256'])
+                    and r['observed_surface'].get('scope') == 'stable-background-only'
+                    and type(r['observed_surface'].get('first_publication_frame')) is int
+                    and type(r['observed_surface'].get('observation_frame')) is int
+                    and r['observed_surface']['observation_frame'] >= r['observed_surface']['first_publication_frame']+2
                     for r in rows if r.get('name') not in ('title','resumed'))
             and bound(report.get('animation'))
             and report.get('animation_geometry') == [256,208]

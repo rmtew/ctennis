@@ -28,7 +28,8 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               front_copper=4, back_copper=4, ready_copper=4, spare_copper=4,
               presentation_copper=4, display_ready=1, ready_completed=1,
               ready_generation=2, ready_game_generation=2,
-              game_presented_generation=2, ready_title_display=1)
+              game_presented_generation=2, ready_title_display=1,
+              missed_presentation_deadlines=2)
 
 
 def run():
@@ -160,14 +161,14 @@ def run():
                 native = directory/(name+'.png')
                 session.inspect('capture_screenshot', dict(path=str(source)))
                 native_view(source, native)
-                publication = observer.surfaces.displayed
+                surface = None
                 if number('tutorial_active') and not number('tutorial_pending'):
-                    assert observer.surfaces.current(number('tutorial_published_generation'))
+                    surface = observer.surfaces.completed_surface(number('tutorial_published_generation'))
                 screenshots.append(dict(name=name, source=str(source.relative_to(ROOT)),
                                         native=str(native.relative_to(ROOT)),
                                         source_geometry=[716,285], native_geometry=[256,208],
                                         stop=dict(stop), fields={n:number(n) for n in FIELDS},
-                                        observed_publication=publication))
+                                        observed_surface=surface))
                 return native
             advance(.7)
             photo('title')
@@ -214,6 +215,8 @@ def run():
             assert video == dict(presentation_last_line=311, simulation_interval_whole=11838,
                                  simulation_interval_fraction=14906), 'Actual PAL selector/deadline contract differs'
             timing = observer.result(interval)
+            missed_publications = number('missed_presentation_deadlines')
+            assert missed_publications == 0
             raw = dict(records=session.records, uncompressed_bytes=session.raw_bytes,
                        cap_uncompressed_bytes=session.MAX_RAW_BYTES)
             surfaces = observer.surfaces.result()
@@ -223,6 +226,7 @@ def run():
                                  memory=memory, loaded_hunks=loaded, surfaces=surfaces))
         report = dict(passed=True, subject='maintained-native', interface_flavor='enhanced',
             target=TARGET, native_video=video,
+            missed_presentation_deadlines=missed_publications,
             executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             capture=str(capture.relative_to(ROOT)), screenshots=screenshots,
             animation=str(movie.relative_to(ROOT)), literal_rpc=raw,

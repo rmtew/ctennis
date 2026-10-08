@@ -36,7 +36,8 @@ class TutorialCaptureTests(unittest.TestCase):
                                   dropped_notifications=0, minimum_absolute_headroom_cck=100),
                       literal_rpc=dict(uncompressed_bytes=123))
         from native_evidence import TARGET
-        report.update(target=TARGET, native_video=dict(presentation_last_line=311,
+        report.update(target=TARGET, missed_presentation_deadlines=0,
+            native_video=dict(presentation_last_line=311,
             simulation_interval_whole=11838, simulation_interval_fraction=14906),
             capture='build/tests/tutorial-court-pal/capture.json',
             literal_rpc_path='build/tests/tutorial-court-pal/literal-rpc.jsonl.gz',
@@ -57,7 +58,8 @@ class TutorialCaptureTests(unittest.TestCase):
                        native='build/tests/tutorial-court-pal/'+row['name']+'.png',
                        source_geometry=[716,285], native_geometry=[256,208])
             row.update(fields=dict(tutorial_published_generation=1),
-                       observed_publication=dict(generation=1, surface_sha256='a'*64))
+                       observed_surface=dict(generation=1, surface_sha256='a'*64,
+                           scope='stable-background-only', first_publication_frame=1, observation_frame=3))
             files[row['source']] = files[row['native']] = 'a'*64
         report['evidence'] = dict(files=files, actual_target=TARGET)
         self.assertTrue(required_capture_extent(report))
@@ -72,6 +74,13 @@ class TutorialCaptureTests(unittest.TestCase):
             self.assertFalse(required_capture_extent(broken), key)
         broken = copy.deepcopy(report)
         broken['evidence']['files'].pop(broken['screenshots'][0]['source'])
+        self.assertFalse(required_capture_extent(broken))
+        for field, value in [('observation_frame', 2), ('scope', 'latest-bank'),
+                             ('first_publication_frame', None)]:
+            broken = copy.deepcopy(report)
+            broken['screenshots'][1]['observed_surface'][field] = value
+            self.assertFalse(required_capture_extent(broken), field)
+        broken = copy.deepcopy(report); broken['missed_presentation_deadlines'] = 1
         self.assertFalse(required_capture_extent(broken))
         broken = copy.deepcopy(report); broken['resume_readback']['state'] = 'ff'*318
         self.assertFalse(required_capture_extent(broken))
@@ -130,9 +139,20 @@ class TutorialCaptureTests(unittest.TestCase):
         observer.last_frame = 3
         self.assertTrue(observer.current(1))
         self.assertEqual(observer.displayed['surface'], 34576)
+        # Animation can publish another Copper bank for the same background.
+        # Screenshot metadata must bind only the stable surface, never that bank.
+        surface = observer.completed_surface(1)
+        self.assertEqual(surface['scope'], 'stable-background-only')
+        self.assertNotIn('copper', surface)
+        self.assertNotIn('bank_sha256', surface)
+        self.assertEqual(surface['first_publication_frame'], 1)
         state['ready_completed'] = 0
         with self.assertRaises(AssertionError):
             observer.observe(event(0xdff088,0), state)
+        state['ready_completed'] = 255
+        late = event(0xdff088,0); late['position']['vpos'] = 312
+        with self.assertRaises(AssertionError):
+            observer.observe(late, state)
 
 
 if __name__ == '__main__':

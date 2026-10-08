@@ -65,6 +65,10 @@ Source viewport PNGs are retained. The 256×208 review views select the original
 low-resolution active pixels with no interpolation; the GIF uses captured native
 frames. These are actual product output, not a mockup or a separate tennis model.
 All artifacts and source/tool/product inputs are bound in the receipt.
+Screenshot metadata binds the stable background surface after two fields. Full
+queued and actual Copper publications are retained separately. Animation changes
+sprite banks without changing the background generation; the screenshot metadata
+does not claim that its latest published sprite bank has completed scanout.
 
 ## Resource decision
 
