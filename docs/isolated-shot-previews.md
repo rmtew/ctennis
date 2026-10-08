@@ -1,15 +1,12 @@
 # Isolated shot preview foundation
 
-The isolated-preview implementation has independently reviewed actual 68000 CPU
-evidence at `9648bfc` (selective attempt 000009). The seek scheduling repair has
-fresh independently reviewed CPU evidence at `363fad8` (sliced-seek attempt
-000004), including emitted native instructions and relocation. The earlier
-preview proof remains historical evidence for its exact worker/product; unchanged
-simulation endpoint qualification is the only proposed inheritance for the new
-native cases. Real native interrupt isolation, paused execution latency and
-runtime resources remain pending. This
-increment has no tutorial UI or live branch commit and is not a complete native
-acceptance gate.
+The isolated-preview foundation and incremental seek repair have reviewed actual
+68000 CPU evidence. Selective native PAL evidence is independently accepted by a
+separate corrected validation receipt that reuses the preserved execution;
+fresh NTSC selected acceptance and its completed independent evidence review
+have passed. These prove the bounded worker in the observed native workload, not a
+complete native release gate. This increment has no tutorial court UI or live
+branch commit.
 
 ## API and isolation contract
 
@@ -89,7 +86,7 @@ canonical scratch image.
 
 ## Current evidence and limits
 
-The accepted CPU receipt covers independent uninterrupted actual-core
+The historical preview CPU receipt covers independent uninterrupted actual-core
 continuations from each edited start, complete canonical/path/ordered-output
 comparisons, independently known API/input policy and only-X/Y edits. Checked
 public returns preserve the full loaded image outside preview scratch and the
@@ -127,7 +124,7 @@ metadata before installing the edited canonical start once. Full canonical
 states, path bytes, outcomes and ordered intents agree across images. This is
 emitted-code CPU evidence, not execution with real native interrupts or DMA.
 
-Focused current history regressions cover the empty boundary, all nine logical
+The historical focused history regressions cover the empty boundary, all nine logical
 APIs with register/SR equivalence, and a ring/cursor-wrap stream of 4,161
 operations: 4,034 retained boundaries and 8,072 seeks. Native image-specific seeks
 also preserve the interrupted ledger and reproduce recorded full states. The
@@ -168,14 +165,14 @@ sliced-seek receipt must independently bind current products, inputs, tools and
 latest execution, and new native cases must compare actual complete states,
 paths and ordered events. Missing or failed evidence blocks inheritance.
 
-Native observer attempts remain failed and preserved. Direct prime/synthetic
+Earlier native observer failures remain preserved. Direct prime/synthetic
 body calls require read-only emitted-entry and stack-matched return observations;
 wrapper markers alone do not capture them. The observer now pairs complete
 318-byte states and ordered intents at those bodies without changing gameplay
 bytes, and archives literal RPC and event transcripts with lossless gzip under
 the unchanged 256 MiB stored-artifact cap. Compressed storage and uncompressed
-transcript lengths are reported separately. This correction has host checks,
-with fresh native execution still pending.
+transcript lengths are reported separately. Actual PAL and NTSC captures now exercise these observations, with complete
+readbacks and exact input/tool/product bindings.
 
 The preserved failed PAL observer attempt 000003 also exposes a real timing
 blocker: callback 536 takes 167,076 CCK, including a 159,175-CCK synchronous seek,
@@ -220,26 +217,98 @@ The first three failed attempts remain preserved: two static declaration/parser
 failures before execution and one completed computation with a missing receipt
 identity field. Only attempt 000004 is an acceptance pass for this selective case.
 
-The native-only fixture is being adapted to admit work using actual remaining
-CIA callback time; any reserve is an estimate until measured. Begin validation,
-state swaps, admission-zero returns, interrupts, commit/cancel and callback tails
-remain inside unchanged timing acceptance. Required fresh PAL and NTSC evidence
-includes the actual retained seek, cancellation/supersession, owner transitions,
-physical input edges, full state/event/cursor equality, audio/publication isolation,
-initialized RAM/stack and positive complete callback headroom. Older failed PAL
-callback 536 remains a blocker until the affected fresh native gate passes.
+### Selective native evidence
 
-The history/preview author owns the repair; the root integrator owns the single
-controller and delivery. The coordinating parent assigns independent source and
-completed-evidence reviewers. PR #37 stays draft/unmerged until those native
-checks and reviews clear. The approved on-court tutorial prototype then requires
-user visual review; live branch commit remains later work.
+The native fixture admits a seek operation from the stable cascaded CIA
+counter: remaining time is the next interval minus residual phase and elapsed
+time since the callback sample. The caller may decline work; it cannot force
+admission. The 10,000-E-clock reserve is an initial CPU-derived estimate,
+checked against actual callback timing; it is not a universal worst-case bound.
+Seek and preview never run separate batches in the same callback. Begin
+validation, admission-zero returns, swaps, IRQs, commit/cancel and callback tails
+stay within the unchanged timing checks. Preview callbacks include sample
+copies, comparisons and owner transitions.
+
+PAL execution at `4550f3d` completed all comparisons and timing checks, but
+campaign `4d8f6f5f8685498095c52a36e304b273` remains failed. Its first attempt
+omitted the receipt executable identity; its second produced a bound passing
+runtime report but the campaign validator incorrectly required at least one
+outside-worker UI publication. Complete raw observation found zero such writes
+with all watches active. The same thirteen producer PCs were observed writing
+outside frozen intervals. The corrected predicate permits a typed zero while
+retaining exact rules, count/list equality and all no-loss/ownership guards.
+
+No third PAL execution was needed. The separate validation-only receipt
+`build/acceptance/validations/preview-native-pal/000001/receipt.json`, SHA256
+`145a278e11ef957ba36e942daed3fd57fa026e6e86e1c95587000d0494bc289b`,
+passed independent source and completed-evidence review. It binds the original
+report SHA256 `8f31716c571ca5fea05b7f1eebc621b2d523ea00dc885ea1c790a7f07e361f87`,
+all 257 consumed inputs, four tools, three products and eleven preserved files.
+Exact source projection proves that only the activity-count predicate changed.
+It explicitly reuses the original PAL execution and preserves its failed
+campaign, completion and receipt. It does not claim new runtime or full acceptance.
+
+Fresh NTSC campaign `4f54e17148a04721a8600dac633b1a49`, selected attempt
+`preview-native-ntsc/000001`, passes at `1e8dc435`. Receipt SHA256 is
+`a5326c14481de40855f350a43eb16695507caa4b7ccc8b1bba479a115b23c156`.
+Its completed independent evidence review passed. The nested legacy validator
+reference names PAL, explicitly marked `legacy-validator-reference`;
+`actual_target`, top-level target, launch command and literal video observations
+all bind NTSC. Both cases bind the same
+native product `fd737e529671d005041b9252338788a52a0b9905031dbad1dacdfc0c88b3c56d`,
+standalone `2ccbedd5e65665793fac66b4e57caf5c769348f4c22ce87cde99a20d5c456ec3`
+and compiled native fixture
+`d55c8b2ba5922be4d7f51a6d1adb212b0a6090712c0d88075b816eb4fad749a0`.
+
+Each native case observes 1,818 complete callbacks, 207 playing dispatches,
+836 ordinary operations, seven accepted preview requests, 1,400 preview-worker
+calls and eight fresh-input callbacks. Checkpoint 512 to target 569 preserves
+selection 835 through zero-work, canceled-ready and superseded-ready jobs,
+rejects their old commits, and publishes only the complete current job. All
+171 executed seek boundaries compare complete states/events/cursors. Native
+bodies have read-only entry/return observation, including direct prime/synthetic
+calls; uninterrupted references use the actual core. Complete frozen
+state/store/live backup, input globals, caller frame, audio configuration and
+IRQ publication ownership remain checked.
+
+| Finite native measurement | PAL reused | NTSC fresh |
+|---|---:|---:|
+| Maximum complete callback, CCK | 54,998 | 55,139 |
+| Minimum absolute deadline headroom, CCK | 3,506.137 | 3,905.006 |
+| Maximum preview worker, CCK | 29,952 | 30,084 |
+| Maximum seek begin / step / commit / cancel, CCK | 12,711 / 19,687 / 4,221 / 149 | 13,092 / 20,454 / 4,220 / 148 |
+| Maximum fresh-input callback, CCK | 23,558 | 23,617 |
+| Native stack high-water, bytes | 330 | 330 |
+| Initialized fixture chip free, bytes | 124,608 | 133,568 |
+| Fixture loaded bytes | 260,384 | 260,384 |
+
+Timing includes bus contention and interrupts. Absolute headroom includes entry
+lateness; it is not budget minus an independent work maximum. These finite
+workloads include ordinary acquisition and paused work; a per-rally timing
+profile and the future busiest tutorial view remain unmeasured. The standard
+resource report still has incomplete phase/cold-loading coverage. Physical
+hardware, WinUAE and a cold release pass are not established here.
+
+Practical latency is measured rather than assumed. Current serve, cold incoming
+and warm edit take approximately 5.391 / 5.608 / 2.170 seconds in PAL and
+5.441 / 5.660 / 2.190 seconds in NTSC. Their worker call counts are 320 / 333 /
+127; the warm edit resolves zero historical operations. These native descriptors
+differ from the historical CPU timing descriptors. Pending work must display
+honest progress and never show an old path as the result of a new edit. Whether
+this latency feels adequate is part of the authorized court prototype review;
+passing deadlines alone does not settle interaction quality.
+
+The root integrator owns the single controller and delivery; the history/preview
+author owns the implementation. Independent source and completed-evidence
+review precede integration. The next increment starts from that reviewed
+foundation and implements the court prototype for native-resolution screenshot
+and animation review before locking visual tuning. Tutorial branching and the
+full target/release gate remain later roadmap work.
 
 Private campaign receipts preserve the missing-AI-fixture failure (000001),
 bounded discovery failure (000005), and native-proof ledger-helper failure
 (000007), alongside passed scoped attempts. Native assembly-range and measurement
 alignment preflight failures are also preserved. Attempt 000009 and its source,
-tool, product and artifact bindings passed independent review. Remaining work
-is real paused native interrupt/input/audio/presentation isolation, practical
-latency and resources, then independent increment review. Tutorial UI and live branch commit
-remain later increments.
+tool, product and artifact bindings passed independent review. Those historical passes do not certify another worker/product. Current selective
+native evidence and its limits are listed above. Tutorial UI and live branch
+commit remain later increments.
