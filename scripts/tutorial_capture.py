@@ -15,12 +15,16 @@ from copperline_test_session import NativeControlSession
 
 
 class CaptureSession(NativeControlSession):
-    MAX_RAW_BYTES = 128 * 1024 * 1024
+    # First attempt measured 128 MiB over 8.66 observed guest seconds.
+    # A 2 GiB streaming budget allows that rate over 120 seconds with margin;
+    # it is an estimate, and overflow remains a failure.
+    MAX_RAW_BYTES = 2048 * 1024 * 1024
 
     def __enter__(self):
         super().__enter__()
         self.raw_bytes = 0
         self.records = 0
+        self.raw_overflow = False
         self.raw = gzip.open(self.directory / 'literal-rpc.jsonl.gz', 'wt')
         self.notification_handler = self.notification
         self.observer = None
@@ -30,6 +34,7 @@ class CaptureSession(NativeControlSession):
         row = json.dumps(value, separators=(',', ':')) + '\n'
         self.raw_bytes += len(row.encode())
         if self.raw_bytes > self.MAX_RAW_BYTES:
+            self.raw_overflow = True
             raise AssertionError('Finite tutorial capture raw-byte cap exceeded')
         self.records += 1
         self.raw.write(row)
@@ -40,11 +45,15 @@ class CaptureSession(NativeControlSession):
             self.observer.observe(value)
 
     def inspect(self, method, arguments=None):
+        # A failed bounded recording must still shut down the owned emulator.
+        if method == 'shutdown' and self.raw_overflow:
+            return super().inspect(method, arguments)
         self.record(dict(type='request', method=method, arguments=arguments or {}))
         try:
             result = super().inspect(method, arguments)
         except BaseException as error:
-            self.record(dict(type='error', error=str(error)))
+            if not self.raw_overflow:
+                self.record(dict(type='error', error=str(error)))
             raise
         self.record(dict(type='reply', method=method, result=result))
         self.raw.flush()

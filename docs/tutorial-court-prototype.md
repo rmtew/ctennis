@@ -65,6 +65,13 @@ Source viewport PNGs are retained. The 256×208 review views select the original
 low-resolution active pixels with no interpolation; the GIF uses captured native
 frames. These are actual product output, not a mockup or a separate tennis model.
 All artifacts and source/tool/product inputs are bound in the receipt.
+The first attempt (`0d576e5814b34362930663c0a71ed313`, head `6fec023`)
+failed the original 128 MiB raw-log cap at 14.68 guest seconds; its original
+artifacts are preserved. The first observed event was at 6.02 seconds, so 128 MiB covered
+8.66 observed guest seconds. At that measured rate, 120 seconds would need
+about 1.73 GiB; the streaming capture budget is 2 GiB with margin. This is an
+estimate, and the finite 120-second limit remains unchanged. No writes are
+filtered, and overflow still fails the attempt and permits emulator shutdown.
 Screenshot metadata binds the stable background surface after two fields. Full
 queued and actual Copper publications are retained separately. Animation changes
 sprite banks without changing the background generation; the screenshot metadata

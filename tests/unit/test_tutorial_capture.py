@@ -1,13 +1,30 @@
 import copy
 from pathlib import Path
 import sys
+import io
+from unittest.mock import patch
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts'))
-from tutorial_capture import CallbackObserver, SurfaceObserver, required_capture_extent
+from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver, required_capture_extent
+from copperline_test_session import NativeControlSession
 
 
 class TutorialCaptureTests(unittest.TestCase):
+    def test_raw_overflow_preserves_failure_and_allows_shutdown(self):
+        session = CaptureSession(Path('/tmp'))
+        session.raw = io.StringIO()
+        session.raw_bytes = session.records = 0
+        session.raw_overflow = False
+        session.MAX_RAW_BYTES = 1
+        with self.assertRaisesRegex(AssertionError, 'raw-byte cap'):
+            session.record(dict(type='request', method='run_until'))
+        self.assertTrue(session.raw_overflow)
+        self.assertEqual(session.raw.getvalue(), '')
+        with patch.object(NativeControlSession, 'inspect', return_value={'shutdown': True}) as stop:
+            self.assertEqual(session.inspect('shutdown'), {'shutdown': True})
+        stop.assert_called_once_with('shutdown', None)
+
     def test_complete_callback_rejects_late_or_partial_work(self):
         observer = CallbackObserver(0, dict(game_stack_top=1024))
         observer.timer_start = dict(cck=0)
