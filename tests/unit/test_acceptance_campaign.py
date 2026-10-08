@@ -37,9 +37,10 @@ class CampaignTests(unittest.TestCase):
         case=next(c for c in cases() if c.id=='preview-cpu')
         names=('completed-serve','return-after-pads','return-before-dispatch')
         row=dict(passed=True,continuous_state_path_output_equal=True,live_history_output_preserved=True,
+                 independent_continuation_policy_equal=True,first_dispatch_controls={'0':16,'1':0},
                  worker_calls=4,maximum_worker_operations=4,preservation_checks=4,worker_restorations=4,
                  path_counts=[2,256],negative_controls=['stale-step','stale-cancel','stale-request',
-                     'zero-budget','excess-budget','unpublished-result'],
+                     'zero-budget','excess-budget','unpublished-result','changed-selection-result','ai-serve-fallback'],
                  request_cpu_cycles=1,total_worker_cpu_cycles=4,maximum_worker_cpu_cycles=1,
                  repeat_request_cpu_cycles=1,resolver_operations=1,resolver_worker_calls=1,
                  resolver_inclusive_cpu_cycles=1,repeat_resolver_operations=1,
@@ -50,10 +51,14 @@ class CampaignTests(unittest.TestCase):
                         fixture_operations=2049,cases=[dict(row,name=name) for name in names]))
         self.assertTrue(campaign.required_extent(case,report))
         for key,value in (('continuous_state_path_output_equal',False),('live_history_output_preserved',False),
+                          ('independent_continuation_policy_equal',False),
                           ('maximum_worker_operations',5),('worker_restorations',3),('preservation_checks',3),
                           ('path_counts',[0,256]),('negative_controls',[]),('repeat_resolver_cpu_cycles',None)):
             partial=json.loads(json.dumps(report));partial['preview_validation']['cases'][0][key]=value
             with self.subTest(key=key):self.assertFalse(campaign.required_extent(case,partial))
+        for controls in ({},{'0':0,'1':0},{'0':16,'1':16},{'0':17,'1':0},{'0':True,'1':0}):
+            partial=json.loads(json.dumps(report));partial['preview_validation']['cases'][1]['first_dispatch_controls']=controls
+            with self.subTest(controls=controls):self.assertFalse(campaign.required_extent(case,partial))
         for key,value in (('cases',[]),('preview_storage_bytes',6000),('metadata_bytes',100),('fixture_operations',2048)):
             partial=json.loads(json.dumps(report));partial['preview_validation'][key]=value
             with self.subTest(key=key):self.assertFalse(campaign.required_extent(case,partial))

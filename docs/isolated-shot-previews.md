@@ -60,3 +60,19 @@ its edited start, including canonical state, projected path and ordered semantic
 outputs. Every yield snapshots the entire loaded image outside preview scratch
 and the existing output queue; frozen history writes are forbidden. Native sink,
 cadence, eviction/fallback and wider outcome coverage remain pending.
+
+Publication also requires that the selected canonical state and complete history
+metadata still match the request. Current-serve fallback rejects an AI server.
+Continuation stops before retained init/select/title operations and checks
+lifecycle after every operation, so a reset cannot silently become a new preview.
+The small proof checks its observed call stream independently against the known
+fixture and explicit continuation policy, preserving every opponent/result
+argument and observing the first dispatch's actual assigned human action.
+
+Completion of this increment additionally requires eviction/truncated-context
+and current-human fallback proofs; lifecycle operations between dispatches;
+no-contact/net/out/interception/limit/coincidence coverage; generation exhaustion
+and cancellation; relocation and full-image native sink suppression; measured
+native typical and fresh-input/transition costs; and a measured decision on total
+resolver latency and repeated-position edits. A first-small CPU pass satisfies
+only its stated finite extent.

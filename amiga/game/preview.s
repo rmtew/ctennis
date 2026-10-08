@@ -62,6 +62,9 @@ game_preview_request:
         beq.s   .fallback_end
         moveq   #1,d7
 .fallback_end:
+        lea     game_play_state+G_LOWER_AI,a1
+        tst.b   (a1,d7.w)
+        bne     .invalid_saved
         bsr     game_preview_player_address
         move.b  P_PHASE(a3),d0
         andi.b  #$e0,d0
@@ -245,6 +248,9 @@ game_preview_result:
         bne.s   .invalid
         cmpi.w  #PREVIEW_READY,game_preview_status
         bne.s   .invalid
+        bsr     game_preview_selection_unchanged
+        tst.l   d0
+        beq.s   .invalid
         lea     game_preview_paths,a0
         lea     game_preview_paths+PREVIEW_POINTS*PREVIEW_POINT_BYTES,a1
         moveq   #0,d1
@@ -488,6 +494,14 @@ game_preview_continue_one:
         bpl.s   .synthetic
         move.l  4(a0),game_history_replay_low
         bsr     game_history_record_address
+        ; A preview never crosses retained initialization/selection/title reset.
+        move.w  (a0),d0
+        cmpi.w  #1,d0
+        beq     .invalid_record
+        cmpi.w  #2,d0
+        beq     .invalid_record
+        cmpi.w  #6,d0
+        beq     .invalid_record
         bsr     game_preview_execute_record
         tst.l   d0
         beq     .invalid_record
@@ -539,7 +553,11 @@ game_preview_continue_one:
         bra.s   .after
 .tick:  move.w  #8,game_preview_operation
         bsr     game_tick_dispatch_body
-.after: cmpi.w  #8,game_preview_operation
+.after: cmpi.w  #GAME_PLAYING,game_lifecycle
+        beq.s   .sample
+        cmpi.w  #GAME_PLAYING,game_preview_selected_state+(game_lifecycle-game_core_state)
+        beq     .invalid_record
+.sample:cmpi.w  #8,game_preview_operation
         bne.s   .done
         moveq   #0,d7
         move.b  game_preview_variant,d7

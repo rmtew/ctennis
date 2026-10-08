@@ -108,15 +108,23 @@ def small(executable):
             generation=field(cpu,'game_preview_generation',4)
             traces={0:[],1:[]}
             resolver_operations=0
+            first_dispatch_controls={}
+            dispatch_pending=set()
             def observe(pc):
                 nonlocal resolver_operations
                 cpu.instruction(pc)
                 if pc in bodies and field(cpu,'game_preview_active',1)==1:
                     resolver_operations+=1
+                if pc==symbols['game_assignment_done'] and field(cpu,'game_preview_active',1)==2:
+                    variant=field(cpu,'game_preview_variant',1)
+                    if variant in dispatch_pending and variant not in first_dispatch_controls:
+                        owner=cpu.mem.r8(symbols['game_lower_owner']+event['end'])
+                        first_dispatch_controls[variant]=cpu.mem.r8(symbols['game_player_controls']+owner)
                 if pc in bodies and field(cpu,'game_preview_active',1)==2:
                     op,arity=bodies[pc]
                     variant=field(cpu,'game_preview_variant',1)
                     traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.state()))
+                    if op=='game_tick_dispatch':dispatch_pending.add(variant)
             cpu.cpu.set_instr_hook_callback(observe)
             cpu.preview_events.clear();cpu.preview_event_groups.clear()
             request_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:event['x'],3:event['y']},saved)
@@ -168,10 +176,22 @@ def small(executable):
             original_prefix=[point(states[t],symbols) for t in ticks if incoming is not None and incoming<t<=selection]
             assert paths[0][:prefix]==paths[1][:prefix]==original_prefix
             outcomes=[cpu.mem.r16(symbols['game_preview_outcomes']+2*v) for v in (0,1)]
+            outputs={v:deepcopy(cpu.preview_event_groups.get((2,v),[])) for v in (0,1)}
+            # A completed generation cannot publish into a different selection.
+            seek(cpu,selection+1)
+            changed=protected(cpu)
+            before=block(cpu,'game_preview_storage','game_preview_storage_end')
+            call_checked(cpu,'game_preview_result',{0:generation},changed)
+            assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
+            negatives.append('changed-selection-result')
+            seek(cpu,selection)
+            assert_preserved(cpu,saved)
+            if name.startswith('return'):
+                assert first_dispatch_controls[0]&0x3f==16 and first_dispatch_controls[1]&0x3f==0
             observations.append(dict(name=name,selection=selection,original_action_boundary=contact['origin'] if name.startswith('return') else serve['origin'],
                 edited=block(cpu,'game_preview_edited_state','game_preview_held_state'),
                 traces=traces,paths=paths,contexts=contexts,prefix=prefix,outcomes=outcomes,
-                outputs={v:deepcopy(cpu.preview_event_groups.get((2,v),[])) for v in (0,1)},
+                outputs=outputs,first_dispatch_controls=first_dispatch_controls,
                 incoming_origin=incoming,end=event['end'],coincident=bool(coincident),negative_controls=negatives,
                 worker_calls=len(cycles),request_cpu_cycles=request_cycles,total_worker_cpu_cycles=sum(cycles),
                 resolver_worker_calls=resolver_calls,resolver_operations=resolver_operations,
@@ -209,6 +229,14 @@ def small(executable):
                 repeat_resolver_cpu_cycles=sum(repeat_cycles))
             call_checked(cpu,'game_preview_cancel',{0:generation},saved)
             assert cpu.cpu.r_reg(0)==1
+        ai_serve=next(x for x in launches if not x['human'] and x['kind']==3)
+        seek(cpu,ai_serve['origin'])
+        saved=protected(cpu)
+        before=block(cpu,'game_preview_storage','game_preview_storage_end')
+        call_checked(cpu,'game_preview_request',{0:field(cpu,'game_preview_generation',4),
+            1:0xffff,2:ai_serve['x'],3:ai_serve['y']},saved)
+        assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
+        for observation in observations:observation['negative_controls'].append('ai-serve-fallback')
         cpu.audit_reads()
     # Independent uninterrupted executions, each initialized ONCE from the
     # intended edited snapshot. No subsequent canonical injection is used.
@@ -217,7 +245,28 @@ def small(executable):
         for variant in (0,1):
             with Core(image,symbols,initial=observation['edited'],readonly=READONLY) as cpu:
                 generated=observation['paths'][variant][:observation['prefix']]
-                for name,args,before in observation['traces'][variant]:
+                for ordinal,(name,args,before) in enumerate(observation['traces'][variant]):
+                    # Independent API policy: original trace order/arguments,
+                    # plus one deliberate edge sampler and documented tail.
+                    if ordinal==0:
+                        expected_name='game_core_sample_pads'
+                        start=symbols['game_core_state'];offset=symbols['game_input_bits']-start
+                        expected_args=list(observation['edited'][offset:offset+2])
+                    else:
+                        position=observation['selection']+ordinal-1
+                        if position<len(stream):
+                            expected_name,expected_args=stream[position]
+                            expected_args=list(expected_args)
+                        else:
+                            phase=(position-len(stream))%4
+                            expected_name=('game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch')[phase]
+                            offset=symbols['game_input_bits']-symbols['game_core_state']
+                            expected_args=list(before[offset:offset+2]) if phase==1 else [0]*6 if phase==2 else []
+                    if expected_name=='game_core_sample_pads':
+                        offset=symbols['game_lower_owner']-symbols['game_core_state']+observation['end']
+                        owner=before[offset]
+                        expected_args[owner]=(expected_args[owner]&0xffc0)|(16 if variant==0 else 0)
+                    assert (name,args)==(expected_name,expected_args), 'Preview changes original API order/non-human arguments'
                     assert cpu.state()==before, 'Chunked preview differs from uninterrupted actual core'
                     if name=='game_core_sample_pads':
                         owner=cpu.mem.r8(symbols['game_lower_owner']+observation['end'])
@@ -230,7 +279,7 @@ def small(executable):
                 cpu.audit_reads()
         report={k:v for k,v in observation.items() if k not in ('edited','traces','paths','contexts','outputs')}
         report.update(passed=True,continuous_state_path_output_equal=True,
-                      live_history_output_preserved=True,path_counts=[len(p) for p in observation['paths']])
+                      live_history_output_preserved=True,independent_continuation_policy_equal=True,path_counts=[len(p) for p in observation['paths']])
         reports.append(report)
     return dict(passed=True,cases=reports,preview_storage_bytes=symbols['game_preview_storage_end']-symbols['game_preview_storage'],
                 metadata_bytes=symbols['game_preview_state_end']-symbols['game_preview_state'],fixture_operations=len(stream),

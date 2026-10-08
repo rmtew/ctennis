@@ -252,10 +252,12 @@ def required_extent(case,report):
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={
                     'completed-serve','return-after-pads','return-before-dispatch'}):return False
-        required={'stale-step','stale-cancel','stale-request','zero-budget','excess-budget','unpublished-result'}
+        required={'stale-step','stale-cancel','stale-request','zero-budget','excess-budget',
+                  'unpublished-result','changed-selection-result','ai-serve-fallback'}
         for row in rows:
             calls=row.get('worker_calls');paths=row.get('path_counts')
             if (row.get('passed') is not True or row.get('continuous_state_path_output_equal') is not True
+                    or row.get('independent_continuation_policy_equal') is not True
                     or row.get('live_history_output_preserved') is not True
                     or type(calls) is not int or calls<=0
                     or type(row.get('maximum_worker_operations')) is not int
@@ -265,6 +267,11 @@ def required_extent(case,report):
                     or not isinstance(paths,list) or len(paths)!=2
                     or any(type(count) is not int or not 1<=count<=256 for count in paths)
                     or not required.issubset(set(row.get('negative_controls') or []))):return False
+            if row['name'].startswith('return'):
+                controls=row.get('first_dispatch_controls')
+                if (not isinstance(controls,dict) or set(controls)!={'0','1'}
+                        or any(type(value) is not int for value in controls.values())
+                        or controls['0']&0x3f!=16 or controls['1']&0x3f!=0):return False
             for field in ('request_cpu_cycles','total_worker_cpu_cycles','maximum_worker_cpu_cycles',
                           'repeat_request_cpu_cycles'):
                 if type(row.get(field)) is not int or row[field]<=0:return False
