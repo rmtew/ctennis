@@ -213,54 +213,50 @@ game_preview_step:
 .next:
         cmpi.w  #PREVIEW_RESOLVE,game_preview_status
         bne.s   .alternative
+        cmpi.b  #1,game_preview_active
+        beq.s   .resolve
         lea     game_preview_held_state,a1
         lea     game_core_state,a0
         bsr     game_history_copy_state
         move.b  #1,game_preview_active
+.resolve:
         bsr     game_preview_resolve_one
-        cmpi.w  #PREVIEW_RESOLVE,game_preview_status
-        bne.s   .spent
-        lea     game_preview_held_state,a0
-        lea     game_core_state,a1
-        bsr     game_history_copy_state
         bra.s   .spent
 .alternative:
-        moveq   #0,d7
-        cmpi.w  #PREVIEW_PRIME,game_preview_status
-        bne.s   .running
-        move.w  game_preview_primed,d7
-        bra.s   .variant_ready
-.running:
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
-        bne.s   .variant_ready
-        moveq   #1,d7
-.variant_ready:
+        bsr     game_preview_desired_variant
+        cmpi.b  #2,game_preview_active
+        bne.s   .load_variant
+        cmp.b   game_preview_variant,d7
+        beq.s   .variant_loaded
+.load_variant:
         move.b  d7,game_preview_variant
         bsr     game_preview_context_address
         move.l  a0,a1
         lea     game_core_state,a0
         bsr     game_history_copy_state
         move.b  #2,game_preview_active
+.variant_loaded:
         cmpi.w  #PREVIEW_PRIME,game_preview_status
         bne.s   .continue
         bsr     game_preview_prime_one
-        bra.s   .save_variant
+        bra.s   .spent
 .continue:
         bsr     game_preview_continue_one
-.save_variant:
-        moveq   #0,d7
-        move.b  game_preview_variant,d7
-        bsr     game_preview_context_address
-        lea     game_core_state,a1
-        bsr     game_history_copy_state
 .spent:
-        clr.b   game_preview_active
-        bsr     game_preview_restore_selected
         subq.w  #1,game_preview_budget
         beq.s   .yield
         cmpi.w  #PREVIEW_READY,game_preview_status
-        bcs     .next
+        bcc.s   .yield
+        cmpi.b  #2,game_preview_active
+        bne     .next
+        ; Actual bodies clobber D7. Derive the next owner from persisted phase.
+        bsr     game_preview_desired_variant
+        cmp.b   game_preview_variant,d7
+        beq     .next
+        bsr     game_preview_release_current
+        bra     .next
 .yield:
+        bsr     game_preview_release_current
         movem.l (sp)+,d2-d7/a2-a6
 .valid:
         moveq   #1,d0
@@ -268,6 +264,47 @@ game_preview_step:
 .invalid:
         moveq   #0,d0
         rts
+
+; Persist the departing owner only at a public yield or ownership transition.
+game_preview_release_current:
+        tst.b   game_preview_active
+        beq.s   .done
+        cmpi.b  #1,game_preview_active
+        beq.s   .resolver
+        moveq   #0,d7
+        move.b  game_preview_variant,d7
+        bsr     game_preview_context_address
+        lea     game_core_state,a1
+        bsr     game_history_copy_state
+        bra.s   .restore
+.resolver:
+        cmpi.w  #PREVIEW_RESOLVE,game_preview_status
+        bne.s   .restore ; missing context has no future working continuation
+        lea     game_preview_held_state,a0
+        lea     game_core_state,a1
+        bsr     game_history_copy_state
+.restore:
+        bsr     game_preview_restore_owner
+.done:  rts
+
+game_preview_restore_owner:
+        bsr     game_preview_restore_selected
+        clr.b   game_preview_active
+game_preview_context_released:
+        rts
+
+; No register owner survives a body call: status/primed are authoritative.
+game_preview_desired_variant:
+        moveq   #0,d7
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
+        bne.s   .running
+        move.w  game_preview_primed,d7
+        rts
+.running:
+        cmpi.w  #PREVIEW_RELEASED,game_preview_status
+        bne.s   .done
+        moveq   #1,d7
+.done:  rts
 
 ; Cancel never restores a stale selected state; workers already restore at yield.
 game_preview_cancel:
@@ -421,7 +458,8 @@ game_preview_resolved:
         bsr     game_preview_compare_cursor
         tst.l   d0
         bne.s   game_preview_missing
-.ready: bra     game_preview_prepare
+.ready: bsr     game_preview_restore_owner
+        bra     game_preview_prepare
 
 game_preview_prepare:
         ; Keep original incoming prefix; discard all variant bookkeeping.

@@ -18,7 +18,8 @@ def result(cpu):
         incoming=cursor(cpu,'game_preview_incoming'),action=cursor(cpu,'game_preview_action'))
 
 
-def job(cpu,ordinal,x,y,expected_status=5,observer=None):
+def job(cpu,ordinal,x,y,expected_status=5,observer=None,budget=4):
+    assert budget in (1,2,3,4)
     saved=protected(cpu)
     expected=bytearray(cpu.state())
     end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else attempts(cpu)[ordinal][2]
@@ -44,10 +45,10 @@ def job(cpu,ordinal,x,y,expected_status=5,observer=None):
     for _ in range(8192):
         if field(cpu,'game_preview_status')>=5:break
         before=sum(cpu.visits.get(pc,0) for pc in bodies)
-        cycles.append(call_checked(cpu,'game_preview_step',{0:generation,1:4},saved))
+        cycles.append(call_checked(cpu,'game_preview_step',{0:generation,1:budget},saved))
         assert cpu.cpu.r_reg(0)==1
         operations.append(sum(cpu.visits.get(pc,0) for pc in bodies)-before)
-        assert operations[-1]<=4
+        assert operations[-1]<=budget
     else:raise AssertionError('Cache proof worker did not terminate')
     assert field(cpu,'game_preview_status')==expected_status
     if expected_status==5:
@@ -56,7 +57,7 @@ def job(cpu,ordinal,x,y,expected_status=5,observer=None):
     return dict(generation=generation,edited_only_position_changed=expected_status==5,cache_hit=cache_hit,resolver_operations=resolver,
         request_cpu_cycles=request_cycles,total_worker_cpu_cycles=sum(cycles),
         maximum_worker_cpu_cycles=max(cycles),maximum_worker_operations=max(operations),
-        worker_calls=len(cycles),stack_bytes=cpu.stack_bytes),result(cpu)
+        worker_calls=len(cycles),worker_body_counts=operations,stack_bytes=cpu.stack_bytes),result(cpu)
 
 
 def ready_failure(cpu,target,label,address=None,width=2):

@@ -48,7 +48,7 @@ def candidates(index,launches):
     return result
 
 
-def execute(cpu,ordinal,selection,x,y,stream,seed,name):
+def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=None):
     """Observe actual accepted-launch hooks and complete dispatch boundaries."""
     if cursor(cpu,'game_history_position')!=selection:
         if hasattr(cpu,'native_entries'):
@@ -60,6 +60,7 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name):
     bodies={cpu.symbols[n+'_body']:(n,a) for n,a in zip(OPERATIONS,ARITY)}
     traces={0:[],1:[]};launches={0:[],1:[]};boundaries={0:[],1:[]}
     def observe(pc):
+        if extra_observer is not None:extra_observer(pc)
         if field(cpu,'game_preview_active',1)!=2:return
         variant=field(cpu,'game_preview_variant',1)
         if pc in bodies:
@@ -73,7 +74,7 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name):
             state=cpu.state()
             boundaries[variant].append(dict(contact=value(state,cpu.symbols,'game_contact'),
                 flight=value(state,cpu.symbols,'game_flight'),lifecycle=value(state,cpu.symbols,'game_lifecycle',2)))
-    costs,result=job(cpu,ordinal,x,y,observer=observe)
+    costs,result=job(cpu,ordinal,x,y,observer=observe,budget=budget)
     classes=[]
     for variant in (0,1):
         accepted=launches[variant]
