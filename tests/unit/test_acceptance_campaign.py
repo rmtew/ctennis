@@ -48,8 +48,16 @@ class CampaignTests(unittest.TestCase):
         report=dict(passed=True,execution='actual-68000-cpu-only',
                     evidence=dict(target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only'),
                     preview_validation=dict(passed=True,preview_storage_bytes=5546,metadata_bytes=106,
+                        ai_serve_setup_fixture=dict(passed=True,ai=True,frozen=True,legal_position_verified=True,
+                            rejection_scope='ai-serving-context',ai_guard_isolated=False,human_phase=0,
+                            operations=4,end=1,phase=128,legal_x=8,legal_y=8),
                         fixture_operations=2049,cases=[dict(row,name=name) for name in names]))
         self.assertTrue(campaign.required_extent(case,report))
+        for key,value in (('passed',False),('ai',False),('frozen',False),('legal_position_verified',False),
+                          ('operations',0),('end',2),('phase',31),('legal_x',256),('human_phase',128),
+                          ('ai_guard_isolated',True),('rejection_scope','ai-flag-alone')):
+            partial=json.loads(json.dumps(report));partial['preview_validation']['ai_serve_setup_fixture'][key]=value
+            with self.subTest(fallback=key):self.assertFalse(campaign.required_extent(case,partial))
         for key,value in (('continuous_state_path_output_equal',False),('live_history_output_preserved',False),
                           ('independent_continuation_policy_equal',False),
                           ('maximum_worker_operations',5),('worker_restorations',3),('preservation_checks',3),

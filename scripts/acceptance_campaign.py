@@ -243,6 +243,7 @@ def required_extent(case,report):
         validation=report.get('preview_validation') or {}
         evidence=report.get('evidence') or {}
         rows=validation.get('cases')
+        fallback=validation.get('ai_serve_setup_fixture') or {}
         if (report.get('execution')!='actual-68000-cpu-only'
                 or evidence.get('target_role')!='legacy-validator-reference'
                 or evidence.get('actual_execution')!='actual-68000-cpu-only'
@@ -252,6 +253,19 @@ def required_extent(case,report):
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={
                     'completed-serve','return-after-pads','return-before-dispatch'}):return False
+        if (not isinstance(fallback,dict)
+                or any(fallback.get(key) is not True for key in
+                       ('passed','ai','frozen','legal_position_verified'))
+                or type(fallback.get('operations')) is not int or fallback['operations']<=0
+                or type(fallback.get('end')) is not int or fallback['end'] not in (0,1)
+                or type(fallback.get('phase')) is not int or not 0<fallback['phase']<=255
+                or fallback['phase']&0xe0==0
+                or fallback.get('rejection_scope')!='ai-serving-context'
+                or fallback.get('ai_guard_isolated') is not False
+                or type(fallback.get('human_phase')) is not int or not 0<=fallback['human_phase']<=255
+                or fallback['human_phase']&0xe0!=0
+                or any(type(fallback.get(key)) is not int or not 0<=fallback[key]<=255
+                       for key in ('legal_x','legal_y'))):return False
         required={'stale-step','stale-cancel','stale-request','zero-budget','excess-budget',
                   'unpublished-result','changed-selection-result','ai-serve-fallback'}
         for row in rows:

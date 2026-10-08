@@ -79,16 +79,62 @@ def geometry(path):
     return [(p[:4],bool(p[6]&15),bool(p[6]&240),p[7]) for p in path]
 
 
+def ai_serve_guard(image,symbols):
+    """Reach a genuine AI serve through actual init/select and controls only."""
+    with Core(image,symbols,readonly=READONLY) as cpu:
+        cpu.call_logical('game_core_init',[])
+        attach(cpu)
+        cpu.call_logical('game_core_select',[0,0xace1,0])
+        for tick in range(2048):
+            for name,args in (('game_round_poll',[]),
+                    ('game_core_sample_pads',[0 if tick<8 else 16,0]),
+                    ('game_core_sample_result',[0]*6),('game_tick_dispatch',[])):
+                cpu.call_logical(name,args)
+            candidates=[end for end in (0,1)
+                if cpu.mem.r8(symbols['game_play_state']+54+end)
+                and cpu.mem.r8(symbols['game_play_state']+end*10)&0xe0]
+            if not candidates:continue
+            end=candidates[0]
+            player=symbols['game_play_state']+end*10
+            phase=cpu.mem.r8(player)
+            human_end=1 if field(cpu,'game_score_flags',1)&2 else 0
+            assert cpu.mem.r8(symbols['game_play_state']+54+human_end)==0
+            human_phase=cpu.mem.r8(symbols['game_play_state']+human_end*10)
+            if human_phase&0xe0:continue
+            offset=(cpu.mem.r8(player+1)>>3)&12
+            limits=symbols['game_lower_limits' if end==0 else 'game_upper_limits']+offset
+            # The actual AI serve is well formed; human serve context is absent.
+            x,y=cpu.mem.r8(limits+3),cpu.mem.r8(limits+1)
+            assert x<cpu.mem.r8(limits+2) and y<cpu.mem.r8(limits)
+            cpu.call('game_history_freeze')
+            assert field(cpu,'game_history_mode',1)==2
+            saved=protected(cpu)
+            before=block(cpu,'game_preview_storage','game_preview_storage_end')
+            call_checked(cpu,'game_preview_request',{0:field(cpu,'game_preview_generation',4),
+                1:0xffff,2:x,3:y},saved)
+            assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
+            cpu.audit_reads()
+            return dict(passed=True,operations=1+4*(tick+1),end=end,phase=phase,
+                        legal_x=x,legal_y=y,legal_position_verified=True,ai=True,frozen=True,
+                        human_end=human_end,human_phase=human_phase,
+                        rejection_scope='ai-serving-context',ai_guard_isolated=False)
+        raise AssertionError('Controlled AI fixture did not reach genuine AI serve setup within 2048 dispatches')
+
+
 def small(executable):
     image,symbols=load_image(executable)
     observations=[]
     with Core(image,symbols,readonly=READONLY) as cpu:
         stream,states,ticks,launches=fixture(cpu)
         index=attempts(cpu)
-        serve=next(x for x in launches if x['human'] and x['kind']==3)
-        contact=next(x for x in launches if x['human'] and x['kind']==1)
-        return_entry=next((i,n) for i,(n,k,e) in enumerate(index) if k==1 and e==contact['end'])
-        serve_entry=next((i,n) for i,(n,k,e) in enumerate(index) if k==3 and n==serve['origin'])
+        serve=next((x for x in launches if x['human'] and x['kind']==3),None)
+        contact=next((x for x in launches if x['human'] and x['kind']==1),None)
+        assert serve is not None, 'Small fixture has no completed human serve'
+        assert contact is not None, 'Small fixture has no completed human return'
+        return_entry=next(((i,n) for i,(n,k,e) in enumerate(index) if k==1 and e==contact['end']),None)
+        serve_entry=next(((i,n) for i,(n,k,e) in enumerate(index) if k==3 and n==serve['origin']),None)
+        assert return_entry is not None, 'Small fixture lacks retained completed return index'
+        assert serve_entry is not None, 'Small fixture lacks retained completed serve index'
         cpu.call('game_history_freeze')
         # Every write while frozen must be canonical, recorder metadata, preview
         # scratch or stack. The history store (including live backup) is read-only.
@@ -229,15 +275,9 @@ def small(executable):
                 repeat_resolver_cpu_cycles=sum(repeat_cycles))
             call_checked(cpu,'game_preview_cancel',{0:generation},saved)
             assert cpu.cpu.r_reg(0)==1
-        ai_serve=next(x for x in launches if not x['human'] and x['kind']==3)
-        seek(cpu,ai_serve['origin'])
-        saved=protected(cpu)
-        before=block(cpu,'game_preview_storage','game_preview_storage_end')
-        call_checked(cpu,'game_preview_request',{0:field(cpu,'game_preview_generation',4),
-            1:0xffff,2:ai_serve['x'],3:ai_serve['y']},saved)
-        assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
-        for observation in observations:observation['negative_controls'].append('ai-serve-fallback')
         cpu.audit_reads()
+    ai_fixture=ai_serve_guard(image,symbols)
+    for observation in observations:observation['negative_controls'].append('ai-serve-fallback')
     # Independent uninterrupted executions, each initialized ONCE from the
     # intended edited snapshot. No subsequent canonical injection is used.
     reports=[]
@@ -283,4 +323,5 @@ def small(executable):
         reports.append(report)
     return dict(passed=True,cases=reports,preview_storage_bytes=symbols['game_preview_storage_end']-symbols['game_preview_storage'],
                 metadata_bytes=symbols['game_preview_state_end']-symbols['game_preview_state'],fixture_operations=len(stream),
+                ai_serve_setup_fixture=ai_fixture,
                 scope='Small actual CPU proof only; native sinks/cadence, eviction/fallback and broad outcome coverage pending.')

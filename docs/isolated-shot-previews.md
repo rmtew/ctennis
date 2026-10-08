@@ -76,3 +76,9 @@ and cancellation; relocation and full-image native sink suppression; measured
 native typical and fresh-input/transition costs; and a measured decision on total
 resolver latency and repeated-position edits. A first-small CPU pass satisfies
 only its stated finite extent.
+
+The AI-serving negative uses a separate actual init/select/control sequence.
+`game_score_flags` bit 1 marks lower AI ownership, so the fallback's bit-1
+selection chooses the human end. In a genuine AI serve setup the human end has
+no serve phase; rejection proves unavailable human serve context. It does not
+isolate the defensive AI-ownership check with fabricated inconsistent flags.
