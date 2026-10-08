@@ -7,6 +7,7 @@ from match_core_cpu import Core
 from preview_extended_proof import candidates, continuous, execute, table, value
 from preview_proof import fixture, geometry
 from run_shared_match_core import READONLY
+from native_tools import ROOT
 
 SEEDS=(0xace1,0x0001,0x1234,0xbeef)
 REQUIRED=('net','out','interception','coincidence')
@@ -14,6 +15,67 @@ INPUT_POLICY=dict(select_mode=0,entropy_policy=0,
     cycle=['game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch'],
     release_modulus=64,release_prefix=8,direction_modulus=96,first_direction_ticks=48,
     direction_first=8,direction_second=4,opponent_packet=0,result_words=[0]*6)
+TIME_POLICY='first-regular-height8-28-first-low-height0-7-last-legal-incoming-pre-dispatch'
+POSITION_POLICY='actual-recorded-court-contact-center-plus-minus16-lateral-selected-phase-limits'
+GEOMETRY_FIELDS=('game_court_x','game_court_y','game_ball_x','game_ball_y','game_contact')
+
+
+def contact_contract():
+    """Bind fixture offsets to the actual contact instructions, not ball rules."""
+    source=(ROOT/'amiga/game/gameplay_contact.s').read_text()
+    for instruction in ('addi.w  #$081b,d5','addq.w  #8,d5','cmpi.w  #4,d0',
+                        'cmpi.w  #17,d0','cmpi.w  #29,d2','cmpi.w  #8,d2'):
+        assert instruction in source, 'Actual contact fixture contract changed: '+instruction
+    tick=(ROOT/'amiga/game/gameplay.s').read_text()
+    assert tick.index('bsr     game_player_tick')<tick.index('bsr     game_ball_tick')
+    return dict(source='amiga/game/gameplay_contact.s',source_sha256=hashlib.sha256(source.encode()).hexdigest(),
+        tick_source='amiga/game/gameplay.s',tick_source_sha256=hashlib.sha256(tick.encode()).hexdigest(),
+        x_offset=8,lower_y_offset=27,upper_y_offset=35,
+        players_before_ball=True,lateral_offsets=[-16,0,16])
+
+
+def sampling_rows(cpu,candidate,stream,states):
+    """Select bounded input times from complete, already recorded core states."""
+    end=candidate['end'];possible=[];previous=None
+    for selection,(operation,_) in enumerate(stream):
+        if operation!='game_tick_dispatch':continue
+        if previous is not None and candidate['incoming_origin']<previous<=selection<=candidate['origin']:
+            source=states[previous];selected=states[selection]
+            geometry={name:value(source,cpu.symbols,name) for name in GEOMETRY_FIELDS}
+            assert all(value(selected,cpu.symbols,name)==number for name,number in geometry.items()), 'Poll/pads/result changes recorded contact geometry'
+            player=cpu.symbols['game_play_state']-cpu.symbols['game_core_state']+end*10
+            phase=(selected[player+1]>>3)&12
+            address=cpu.symbols['game_lower_limits' if end==0 else 'game_upper_limits']+phase
+            bottom,top,right,left=bytes(cpu.mem.r_block(address,4))
+            bounds=dict(left=left,right=right,top=top,bottom=bottom,phase_offset=phase)
+            x=geometry['game_court_x']-8;y=geometry['game_court_y']-(27 if end==0 else 35)
+            height=geometry['game_court_y']-geometry['game_ball_y']
+            if (left<=x<right and top<=y<bottom and 0<=height<29
+                    and not geometry['game_contact']&0x0d
+                    and bool(geometry['game_contact']&0x40)==(end==0)
+                    and selected[player]&0xec==0 and selected[player]&0x12):
+                possible.append(dict(source_complete_boundary=previous,selection=selection,
+                    court_x=geometry['game_court_x'],court_y=geometry['game_court_y'],
+                    ball_x=geometry['game_ball_x'],ball_y=geometry['game_ball_y'],
+                    contact=geometry['game_contact'],height=height,player_phase=selected[player],
+                    player_animation=selected[player+1],center_x=x,center_y=y,bounds=bounds,
+                    source_geometry_equal_at_selection=True))
+        previous=selection+1
+    choices=(('regular',next((row for row in possible if 8<=row['height']<=28),None)),
+             ('low',next((row for row in possible if 0<=row['height']<=7),None)),
+             ('late',possible[-1] if possible else None))
+    rows=[];seen=set()
+    for band,row in choices:
+        if row is None:
+            rows.append(dict(band=band,available=False,reason='No legal recorded incoming contact center in band before original action'));continue
+        if row['selection'] in seen:
+            rows.append(dict(band=band,available=False,reason='Duplicate selected time',duplicate_selection=row['selection']));continue
+        seen.add(row['selection'])
+        xs=sorted({max(row['bounds']['left'],min(row['bounds']['right']-1,row['center_x']+delta)) for delta in (-16,0,16)})
+        rows.append(dict(row,band=band,available=True,x_positions=xs,
+            clamped_lateral_offsets=[delta for delta in (-16,0,16)
+                if not row['bounds']['left']<=row['center_x']+delta<row['bounds']['right']]))
+    return rows
 
 
 def stream_hash(stream):
@@ -88,6 +150,7 @@ def qualification(observation,symbols):
 
 def discovery(executable,progress):
     image,symbols=load_image(executable)
+    contract=contact_contract()
     observations=[];seeds=[];jobs=[];qualified=set()
     for seed in SEEDS:
         if set(REQUIRED)<=qualified:
@@ -111,7 +174,8 @@ def discovery(executable,progress):
                 identities.append(dict(ordinal=candidate['ordinal'],completed_kind=1,end=candidate['end'],
                     incoming_origin=incoming['origin'],incoming_kind=incoming['kind'],incoming_end=incoming['end'],
                     probe_origin=probe,action_boundary=action,recorded_x=candidate['x'],recorded_y=candidate['y'],
-                    full_incoming_retained=True,selected_lifecycle=value(states[action],symbols,'game_lifecycle',2)))
+                    full_incoming_retained=True,selected_lifecycle=value(states[action],symbols,'game_lifecycle',2),
+                    sampling_rows=sampling_rows(cpu,candidate,stream,states)))
             seeds.append(dict(seed=seed,recorded=True,dispatches=512,operations=len(stream),
                 oldest=0,latest=cursor(cpu),input_stream_sha256=stream_hash(stream),candidates=identities,
                 recorded_completed_returns=len(completed_returns),
@@ -127,18 +191,28 @@ def discovery(executable,progress):
             cpu.mem.set_trace_func(guard)
             cpu.call('game_history_freeze')
             for candidate,identity in zip(eligible,identities):
-                selection=candidate['origin'];seek(cpu,selection);bounds=table(cpu,candidate['end'])
-                xs=sorted({max(bounds['left'],min(bounds['right']-1,candidate['x']+delta)) for delta in (-8,0,8)})
-                ys=sorted({max(bounds['top'],min(bounds['bottom']-1,candidate['y']+delta)) for delta in (-8,0,8)})
-                assert len(xs)<=3 and len(ys)<=3
-                for x in xs:
-                    for y in ys:
+                seen_jobs=set()
+                for sample in identity['sampling_rows']:
+                    if not sample['available']:continue
+                    selection=sample['selection'];seek(cpu,selection);bounds=table(cpu,candidate['end'])
+                    assert bounds==sample['bounds'], 'Sampling legal table differs at selected actual animation'
+                    y=sample['center_y']
+                    for x in sample['x_positions']:
+                        key=(selection,x,y)
+                        if key in seen_jobs:continue
+                        seen_jobs.add(key)
                         assert len(jobs)<72, 'A2 reaches72jobs; no automatic cap expansion'
                         observation=execute(cpu,candidate['ordinal'],selection,x,y,stream,seed,f'discovery-{seed:04x}-{len(jobs)}')
+                        for variant in (0,1):
+                            first_dispatch=next((state for name,args,state in observation['traces'][variant] if name=='game_tick_dispatch'),None)
+                            assert first_dispatch is not None
+                            assert all(value(first_dispatch,symbols,name)==sample[name.removeprefix('game_')]
+                                for name in GEOMETRY_FIELDS), 'Primer changes actual selected pre-dispatch contact geometry'
                         facts=qualification(observation,symbols)
                         assert bounds['left']<=x<bounds['right'] and bounds['top']<=y<bounds['bottom']
                         row=dict(name=observation['name'],seed=seed,ordinal=candidate['ordinal'],
-                            candidate=identity,x=x,y=y,bounds=bounds,selection=selection,
+                            candidate=identity,x=x,y=y,bounds=bounds,selection=selection,sampling_row=sample,
+                            pre_dispatch_geometry_verified=True,
                             qualification=facts,costs=observation['costs'],
                             worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
                             frozen_history_write_guard=True)
@@ -161,7 +235,7 @@ def discovery(executable,progress):
         progress(dict(stage='stage-a2-chosen-continuous',case=report))
     report=dict(passed=set(REQUIRED)<=qualified,planned_seeds=list(SEEDS),input_policy=INPUT_POLICY,
         dispatch_cap=512,ordinary_operation_cap=2049,returns_per_seed_cap=2,positions_per_return_cap=9,
-        position_policy='recorded-contact-plus-minus8-clamped-to-actual-phase-limits',job_cap=72,
+        position_policy=POSITION_POLICY,time_policy=TIME_POLICY,contact_geometry_contract=contract,job_cap=72,
         worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
         frozen_history_write_guard=True,
         jobs=len(jobs),seeds=seeds,job_results=jobs,required_coverage=list(REQUIRED),
