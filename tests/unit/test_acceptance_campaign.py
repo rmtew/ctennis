@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -55,6 +56,63 @@ def preview_a1_report():
               non_tick_calls_between_launch_and_probe=128,costs=dict(costs,edited_only_position_changed=False))}
     return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=256,
                 maximum_worker_operations=4,other_stages_pending=['A2-endpoint-discovery','A3-relocation-native-history'],cases=rows)
+
+def preview_a2_report():
+    candidate=dict(ordinal=0,completed_kind=1,end=0,incoming_origin=1,incoming_kind=3,
+        incoming_end=1,probe_origin=2,action_boundary=3,recorded_x=128,recorded_y=128,
+        full_incoming_retained=True,selected_lifecycle=1)
+    costs=dict(generation=1,edited_only_position_changed=True,cache_hit=False,resolver_operations=1,
+        maximum_worker_operations=4,worker_calls=1,request_cpu_cycles=1,total_worker_cpu_cycles=1,
+        maximum_worker_cpu_cycles=1,stack_bytes=204)
+    bounds=dict(left=1,right=255,top=1,bottom=255,phase_offset=0)
+    state='00'*318;state_hash=hashlib.sha256(bytes.fromhex(state)).hexdigest();jobs=[];chosen=[]
+    for number,(coverage,classification,contact) in enumerate((('net','net',1),('out','out',128),
+            ('interception','interception',0),('coincidence','landing',2))):
+        variants=[]
+        for variant in (0,1):
+            opponent=dict(end=1,kind=1,dispatch=1) if coverage=='interception' else None
+            variants.append(dict(variant=variant,has_human_launch=True,human_launch_order=0,
+                human_launch=dict(end=0,kind=1,dispatch=0),opponent_contact_order=1 if opponent else None,
+                opponent_contact=opponent,contact=contact,flight=64,lifecycle=1,classification=classification,
+                preview_outcome={'net':2,'out':3,'interception':4,'landing':1}[classification],samples=2,
+                outgoing_samples_present=True,final_state_sha256=state_hash,
+                first_terminal_boundary_checked=True,first_terminal_dispatch=1,last_sampled_dispatch=1,
+                last_sampled_boundary=dict(contact=contact,flight=64,lifecycle=1)))
+        facts=dict(variants=variants,prefix_samples=0,geometry_coincident=coverage=='coincidence',
+            launched_outgoing_coincidence=coverage=='coincidence',coverage=[coverage],
+            classifier_priority=['interception','net','out','landing'],
+            source='actual-full-canonical-and-accepted-hooks',geometry_source='actual-sampled-drawn-geometry-visibility-ticks')
+        row=dict(name=str(number),seed=0xace1,ordinal=0,candidate=dict(candidate),selection=3,
+            x=(120,128,136,120)[number],y=(120,120,120,128)[number],bounds=dict(bounds),
+            costs=dict(costs),qualification=facts,worker_call_cap=8192,maximum_worker_operations=4,
+            total_samples_per_path=256,frozen_history_write_guard=True)
+        jobs.append(row)
+        path0='00'*15+'01';path1=path0 if coverage=='coincidence' else '01'+path0[2:]
+        chosen.append(dict(row,end=0,passed=True,continuous_state_path_output_equal=True,
+            independent_continuation_policy_equal=True,live_history_output_preserved=True,
+            edited_only_position_changed=True,prefix_samples=0,final_states=[state,state],paths=[path0,path1],
+            path_counts=[2,2],coverage_contributed=[coverage]))
+    stream=[('game_core_select',[0,0xace1,0])]
+    for tick in range(512):
+        stream.extend([('game_round_poll',[]),('game_core_sample_pads',[
+            (16 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0]),
+            ('game_core_sample_result',[0]*6),('game_tick_dispatch',[])])
+    seeds=[dict(seed=0xace1,recorded=True,dispatches=512,operations=2049,oldest=0,latest=2049,
+        input_stream_sha256=hashlib.sha256(json.dumps(stream,separators=(',',':')).encode()).hexdigest(),
+        candidates=[candidate],recorded_completed_returns=1)]
+    seeds.extend(dict(seed=seed,recorded=False,dispatches=0,operations=0,candidates=[],skipped='coverage complete')
+        for seed in (1,0x1234,0xbeef))
+    return dict(passed=True,planned_seeds=[0xace1,1,0x1234,0xbeef],input_policy=dict(select_mode=0,entropy_policy=0,
+        cycle=['game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch'],
+        release_modulus=64,release_prefix=8,direction_modulus=96,first_direction_ticks=48,
+        direction_first=8,direction_second=4,opponent_packet=0,result_words=[0]*6),
+        dispatch_cap=512,ordinary_operation_cap=2049,returns_per_seed_cap=2,positions_per_return_cap=9,
+        position_policy='recorded-contact-plus-minus8-clamped-to-actual-phase-limits',job_cap=72,
+        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,frozen_history_write_guard=True,
+        jobs=4,seeds=seeds,job_results=jobs,chosen_cases=chosen,
+        required_coverage=['net','out','interception','coincidence'],
+        actual_coverage=['coincidence','interception','net','out'],absent_classes=[])
+
 
 class CampaignTests(unittest.TestCase):
     def setUp(self):
@@ -114,6 +172,7 @@ class CampaignTests(unittest.TestCase):
                        oldest_after_eviction=64,evicted_incoming_origin=1))
         report['preview_validation']['cache_validation']=cache
         report['preview_validation']['stage_a1_validation']=preview_a1_report()
+        report['preview_validation']['stage_a2_validation']=preview_a2_report()
         self.assertTrue(campaign.required_extent(case,report))
         for area,key,value in (('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
@@ -156,6 +215,34 @@ class CampaignTests(unittest.TestCase):
         self.assertFalse(campaign.preview_a1_extent(partial))
         partial=json.loads(json.dumps(report));partial['cases']['human-serve-fallback']['timed_prelaunch']['complete_boundary_clocks']=[15,17]
         self.assertFalse(campaign.preview_a1_extent(partial))
+    def test_preview_a2_extent_rejects_unqualified_or_unbounded_discovery(self):
+        report=preview_a2_report();self.assertTrue(campaign.preview_a2_extent(report))
+        for key,value in (('passed',False),('planned_seeds',[1]),('jobs',73),('job_results',[]),
+                ('dispatch_cap',513),('worker_call_cap',8193),('frozen_history_write_guard',False),
+                ('chosen_cases',[]),('absent_classes',['net'])):
+            partial=json.loads(json.dumps(report));partial[key]=value
+            with self.subTest(key=key):self.assertFalse(campaign.preview_a2_extent(partial))
+        for path,value in ((('seeds',0,'candidates',0,'full_incoming_retained'),False),
+                (('seeds',0,'input_stream_sha256'),'a'*64),
+                (('seeds',0,'candidates',0,'incoming_origin'),2),
+                (('job_results',0,'x'),127),(('job_results',0,'costs','maximum_worker_operations'),5),
+                (('job_results',0,'qualification','variants',0,'human_launch','kind'),3),
+                (('job_results',0,'qualification','variants',0,'contact'),0),
+                (('job_results',0,'qualification','prefix_samples'),1),
+                (('job_results',0,'qualification','variants',0,'preview_outcome'),3),
+                (('job_results',0,'frozen_history_write_guard'),False),
+                (('job_results',0,'qualification','variants',0,'first_terminal_dispatch'),0),
+                (('job_results',0,'qualification','variants',0,'first_terminal_boundary_checked'),False),
+                (('job_results',2,'qualification','variants',0,'opponent_contact_order'),0),
+                (('job_results',3,'qualification','variants',0,'outgoing_samples_present'),False),
+                (('chosen_cases',0,'continuous_state_path_output_equal'),False),
+                (('chosen_cases',0,'final_states'),['00','00']),
+                (('chosen_cases',3,'paths',1),'01'+'00'*14+'01')):
+            partial=json.loads(json.dumps(report));node=partial
+            for key in path[:-1]:node=node[key]
+            node[path[-1]]=value
+            with self.subTest(path=path):self.assertFalse(campaign.preview_a2_extent(partial))
+
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
         report={'passed':True,'history':True,'seconds':24,
