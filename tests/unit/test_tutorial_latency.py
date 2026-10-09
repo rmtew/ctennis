@@ -6,7 +6,7 @@ class Tests(unittest.TestCase):
  def make(self):return StackTiming({100:dict(return_pc=104,callee='game_preview_step',opcode='61000002')},{200},1000,2000)
  def row(self,a,v,pc,access='write',cck=1):return dict(addr=a,value=v,pc=pc,access=access,size=2,position=dict(cck=cck))
  def start(self,t):
-  t.observe(self.row(1500,0,100));t.observe(self.row(1502,104,100,cck=2))
+  t.observe(dict(self.row(1500,104,100),size=4))
  def test_listing_continuation_not_call(self):
   text='00:00000000 AE8C\n00:00000002 61000002 \t 82: bsr.s game_preview_step\n00:00000006 4E75 \t 83: rts\n'
   values={102:bytes.fromhex('6100'),106:bytes.fromhex('4e75')}
@@ -27,7 +27,12 @@ class Tests(unittest.TestCase):
   t=self.make();self.start(t)
   with self.assertRaises(AssertionError):t.observe(self.row(1498,0,200,'read'))
  def test_bad_call_value(self):
-  with self.assertRaises(AssertionError):self.make().observe(self.row(1500,999,100))
+  with self.assertRaises(AssertionError):self.make().observe(dict(self.row(1500,999,100),size=4))
+ def test_irq_word_store_with_call_pc_is_not_another_call(self):
+  t=self.make();self.start(t)
+  t.observe(self.row(1498,64744,100,cck=2))
+  self.assertEqual(len(t.stack),1)
+  self.assertEqual(t.noncall_word_writes,1)
  def test_read_not_forwarded(self):
   class Callback:
    def __init__(self):self.messages=[]

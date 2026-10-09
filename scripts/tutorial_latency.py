@@ -41,7 +41,7 @@ class StackTiming:
         self.bottom, self.top = bottom, top
         self.pending = None
         self.stack, self.rows = [], []
-        self.notifications = self.reads = self.writes = 0
+        self.notifications = self.reads = self.writes = self.noncall_word_writes = 0
 
     def observe(self, row):
         a, size, value, pc = (row[k] for k in ('addr', 'size', 'value', 'pc'))
@@ -53,33 +53,20 @@ class StackTiming:
         position = dict(row['position'])
         if row['access'] == 'write':
             self.writes += 1
+            if size != 4:
+                self.noncall_word_writes += 1
+                return  # Pinned provider aggregates BSR/JSR write_long; IRQ frames use words.
             if pc not in self.calls:
                 return  # Saves/exception frames are not invented call entries.
             call = self.calls[pc]
-            expected = call['return_pc'].to_bytes(4, 'big')
-            if self.pending is None:
-                candidates = [a-i for i in range(5-size)
-                              if expected[i:i+size] == value.to_bytes(size, 'big')
-                              and (a-i) % 2 == 0]
-                assert len(candidates) == 1, 'Ambiguous/mismatched emitted call return slot'
-                self.pending = dict(pc=pc, slot=candidates[0], data=bytearray(4),
-                                    seen=set(), entry=position)
-            pending = self.pending
-            assert pending['pc'] == pc, 'Incomplete call entry interrupted by another call'
-            offset = a-pending['slot']
-            assert 0 <= offset < offset+size <= 4
-            assert not pending['seen'].intersection(range(offset, offset+size))
-            pending['data'][offset:offset+size] = value.to_bytes(size, 'big')
-            pending['seen'].update(range(offset, offset+size))
-            if len(pending['seen']) == 4:
-                assert bytes(pending['data']) == expected
-                if self.stack:
-                    assert pending['slot'] < self.stack[-1]['slot'], 'Non-LIFO call stack'
-                self.stack.append(dict(call, entry_pc=pc, slot=pending['slot'],
-                    entry= pending['entry'], entry_store_complete=position, reads={},
-                    depth=len(self.stack), children=[],
-                    caller=self.stack[-1]['callee'] if self.stack else None))
-                self.pending = None
+            assert value == call['return_pc'], 'Mismatched emitted call return value'
+            assert a % 2 == 0, 'Unaligned emitted call return slot'
+            if self.stack:
+                assert a < self.stack[-1]['slot'], 'Non-LIFO call stack'
+            self.stack.append(dict(call, entry_pc=pc, slot=a,
+                entry=position, entry_store_complete=position, reads={},
+                depth=len(self.stack), children=[],
+                caller=self.stack[-1]['callee'] if self.stack else None))
         else:
             self.reads += 1
             if pc not in self.returns:
@@ -122,7 +109,7 @@ class StackTiming:
             calls=self.rows, open_enclosing_calls=[{k:v for k,v in f.items() if k != 'reads'}
                                                   for f in self.stack],
             stack_reads=self.reads, stack_writes=self.writes,
-            stack_notifications=self.notifications,
+            stack_notifications=self.notifications,noncall_word_stack_writes=self.noncall_word_writes,
             uncertainty='First return-address store through final RTS return-address read only; '
                         'instruction pre-store/post-read CPU tails and IRQ work are not isolated. '
                         'Exclusive spans subtract completed direct children, not overlapping inclusive totals.')
