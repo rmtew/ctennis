@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
   ordinary={c.id for c in cases()}
   diagnostic={c.id for c in diagnostic_cases()}
   self.assertFalse(ordinary & diagnostic)
-  self.assertEqual(diagnostic,{'incoming-flight-cpu','incoming-flight-pal','incoming-flight-ntsc',
+  self.assertEqual(diagnostic,{'incoming-origin-cpu','incoming-origin-pal','incoming-origin-ntsc','incoming-flight-cpu','incoming-flight-pal','incoming-flight-ntsc',
                               'predictor-cpu','predictor-pal','predictor-ntsc','predictor-boundaries-cpu',
                                      'tutorial-latency-pal','tutorial-latency-ntsc',
                               'tutorial-hotspots-pal','private-state-cpu',

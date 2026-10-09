@@ -1,7 +1,8 @@
 ; One live latest incoming origin. Separate from canonical state/72 metadata.
 game_history_incoming_storage:
 game_history_incoming_state: ds.b GAME_CORE_STATE_SIZE
-game_history_incoming_cursor: ds.l 2 ; complete POST-operation boundary
+; Complete POST-operation boundary.
+game_history_incoming_cursor: ds.l 2
 game_history_incoming_schema: ds.w 1
 game_history_incoming_simulation: ds.w 1
 game_history_incoming_epoch: ds.l 1

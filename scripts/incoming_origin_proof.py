@@ -81,7 +81,8 @@ def branch(image,symbols,end,poison,budget,projected,miss=None,historical=False,
             if before==1:resolver_calls+=1
             else:work.append(observed(cpu));cycles.append(elapsed)
             if after>=5:break
-        assert after==5,(end,miss,historical,after)
+        assert after in ((5,6) if historical else (5,)),(end,miss,historical,after)
+        work.append(observed(cpu))
         if not historical:assert cursor(cpu,'game_preview_incoming')==origin-1
         # A cancelled/stale worker cannot touch cache, canonical state or scratch.
         call_checked(cpu,'game_preview_cancel',{0:gen},saved)
@@ -95,7 +96,7 @@ def branch(image,symbols,end,poison,budget,projected,miss=None,historical=False,
         return work,dict(end=end,poison=poison,budget=budget,projected=projected,
             miss=None if not miss else miss[0],historical=historical,origin=origin,
             request_cpu_cycles=request_cycles,resolver_calls=resolver_calls,worker_calls=len(work),
-            maximum_worker_cpu_cycles=max(cycles),stack_bytes=cpu.stack_bytes,
+            maximum_worker_cpu_cycles=max(cycles,default=0),final_status=after,stack_bytes=cpu.stack_bytes,
             paused_cache_canonical_history_neutral=True,resume_latest_equal=True,stale_neutral=True)
 
 
@@ -105,9 +106,18 @@ def lifetime(image,symbols):
         cpu.call_logical('game_core_select',[0,1,0])
         snapshots={cursor(cpu):cpu.state()};captures=[];retirements=0;evictions=0;tickwraps=0
         previous_valid=False;oldest=0;last_tick=field(cpu,'game_tick',1)
+        launch_humans=[];human_retirements=0;terminal_retirements=0
+        original=cpu.instruction
+        def observe(pc):
+            original(pc)
+            if pc in (symbols['game_history_contact'],symbols['game_history_serve']):
+                end=cpu.cpu.r_reg(7)&65535
+                if not cpu.mem.r8(symbols['game_play_state']+54+end):launch_humans.append(cursor(cpu))
+        cpu.cpu.set_instr_hook_callback(observe)
         for tick in range(3200):
             for name,args in (('game_round_poll',[]),('game_core_sample_pads',[(16 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0]),
                 ('game_core_sample_result',[0]*6),('game_tick_dispatch',[])):
+                prior_launches=len(launch_humans)
                 cpu.clear_events();cpu.call_logical(name,args)
                 now=cursor(cpu);snapshots[now]=cpu.state()
                 valid=bool(field(cpu,'game_history_incoming_valid',1))
@@ -118,13 +128,17 @@ def lifetime(image,symbols):
                     assert field(cpu,'game_history_incoming_schema')==2
                     assert field(cpu,'game_history_incoming_simulation')==3
                     if origin==now:captures.append(dict(cursor=now,end=field(cpu,'game_history_incoming_end'),checkpoint_aligned=now%64==0))
-                if previous_valid and not valid:retirements+=1
+                if previous_valid and not valid:
+                    retirements+=1
+                    if len(launch_humans)>prior_launches:human_retirements+=1
+                    elif field(cpu,'game_contact',1)&0x8d or field(cpu,'game_lifecycle')!=1:terminal_retirements+=1
                 previous_valid=valid
                 new_oldest=cursor(cpu,'game_history_oldest')
                 if new_oldest!=oldest:evictions+=1;oldest=new_oldest
                 current_tick=field(cpu,'game_tick',1)
                 tickwraps+=current_tick<last_tick;last_tick=current_tick
-        assert {r['end'] for r in captures}=={0,1} and retirements>0 and evictions>0 and tickwraps>0
+        cpu.cpu.set_instr_hook_callback(cpu.instruction)
+        assert {r['end'] for r in captures}=={0,1} and human_retirements>0 and terminal_retirements>0 and evictions>0 and tickwraps>0
         # Actual reset operations retire the sole live identity without changing retention.
         epoch=field(cpu,'game_history_live_epoch',4)
         cpu.call_logical('game_core_return_title',[])
@@ -132,8 +146,31 @@ def lifetime(image,symbols):
         assert field(cpu,'game_history_live_epoch',4)==epoch+1
         cpu.audit_reads()
         return dict(operations=cursor(cpu),captures=captures,retirements=retirements,
-            checkpoint_evictions=evictions,tick_wraps=tickwraps,complete_capture_every_boundary=True,title_retires=True)
+            checkpoint_evictions=evictions,tick_wraps=tickwraps,human_launch_retirements=human_retirements,
+            terminal_retirements=terminal_retirements,complete_capture_every_boundary=True,title_retires=True)
 
+
+
+def aligned_capture(image,symbols):
+    with Core(image,symbols,readonly=READONLY) as cpu:
+        cpu.call_logical('game_core_init',[]);attach(cpu)
+        cpu.call_logical('game_core_select',[0,1,0])
+        # Eleven genuine zero-result envelopes shift history alignment without
+        # injecting core/cursor state or dispatching additional gameplay ticks.
+        for _ in range(11):cpu.call_logical('game_core_sample_result',[0]*6)
+        for tick in range(512):
+            for name,args in (('game_round_poll',[]),('game_core_sample_pads',[(16 if tick%64>=8 else 0)|(8 if tick%96<48 else 4),0]),
+                ('game_core_sample_result',[0]*6),('game_tick_dispatch',[])):cpu.call_logical(name,args)
+            if field(cpu,'game_history_incoming_valid',1):break
+        else:raise AssertionError('No actual aligned incoming launch')
+        assert cursor(cpu)%64==0
+        assert block(cpu,'game_history_incoming_state','game_history_incoming_cursor')==cpu.state()
+        slot=(field(cpu,'game_history_checkpoint_next')-1)&63
+        address=symbols['game_history_checkpoints']+slot*330
+        assert int.from_bytes(cpu.mem.r_block(address,8),'big')==cursor(cpu)
+        assert bytes(cpu.mem.r_block(address+12,318))==cpu.state()
+        cpu.audit_reads()
+        return dict(passed=True,cursor=cursor(cpu),padding_result_envelopes=11,complete_checkpoint_cache_canonical_equal=True)
 
 def run(executable,raw):
     from native_evidence import atomic_json
@@ -156,13 +193,16 @@ def run(executable,raw):
             result,row=branch(image,symbols,end,0xa5,4,False,fault,captured=fixtures[end])
             assert result==reference,('Invalid identity did not cold-fallback',fault,end)
             misses.append(row)
-        _,row=branch(image,symbols,end,0xa5,4,False,historical=True,captured=fixtures[end]);misses.append(row)
-    life=lifetime(image,symbols)
+        actual,row=branch(image,symbols,end,0xa5,4,False,historical=True,captured=fixtures[end])
+        expected,cold_row=branch(image,symbols,end,0x5a,4,False,('game_history_incoming_valid',1,0),historical=True,captured=fixtures[end])
+        assert actual==expected and row['final_status']==cold_row['final_status']
+        row['historical_full_cold_result_equal']=True;misses.append(row)
+    life=lifetime(image,symbols);alignment=aligned_capture(image,symbols)
     raw.mkdir(parents=True,exist_ok=True)
     for end,(owned,initial,_,launches) in fixtures.items():
         atomic_json(raw/('captured-origin-'+str(end)+'.json'),dict(owned=[dict(address=a,bytes=b.hex()) for a,b in owned],state=initial.hex(),last_launch=launches[-1],scope='Once-captured actual recorded controls fixture, complete initial owned memory; never intermediate state injection'))
     validation=dict(passed=True,storage_bytes=symbols['game_history_incoming_storage_end']-symbols['game_history_incoming_storage'],
-        rows=rows,misses=misses,lifetime=life,scope='Actual core; two natural recorded origins captured once as complete immutable initial fixtures; every warm/cold public computational yield. Explicit cache identity corruptions are fault fixtures, not intermediate expected simulation state.')
+        rows=rows,misses=misses,lifetime=life,checkpoint_alignment=alignment,scope='Actual core; two natural recorded origins captured once as complete immutable initial fixtures; every warm/cold public computational yield. Explicit cache identity corruptions are fault fixtures, not intermediate expected simulation state.')
     atomic_json(raw/'origin-proof.json',validation)
     return validation
 
@@ -174,5 +214,7 @@ def required_extent(report):
         and {(r['warm']['end'],r['warm']['projected'],r['warm']['budget']) for r in rows}=={(e,p,b) for e in (0,1) for p in (False,True) for b in (1,2,3,4)}
         and all(r.get('full_yield_state_events_paths_cursors_equal') is True and r['warm']['resolver_calls']==0 and r['cold']['resolver_calls']>0 for r in rows)
         and life.get('complete_capture_every_boundary') is True and life.get('title_retires') is True
+        and (v.get('checkpoint_alignment') or {}).get('complete_checkpoint_cache_canonical_equal') is True
+        and life.get('human_launch_retirements',0)>0 and life.get('terminal_retirements',0)>0
         and life.get('checkpoint_evictions',0)>0 and life.get('retirements',0)>0 and life.get('tick_wraps',0)>0
         and (v.get('original_core_bytes') or {}).get('passed') is True)

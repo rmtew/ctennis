@@ -440,6 +440,11 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
                 current_request_cache_equal=True,original_resolver_calls=0,initial_request=requests[0],
                 capture_calls=[r for r in stack_result['calls'] if r['callee']=='game_history_after' and any(r['entry_store_complete']['cck']<=c['position']['cck']<=r['exit']['cck'] for c in origin_captures)])
             assert origin_result['capture_calls']
+            origin_result['initial_request_to_first_held_endpoint_cck']=endpoints[0]['first_actual_publication']['position']['cck']-requests[0]['entry']['cck']
+            origin_result['initial_request_to_first_held_endpoint_seconds']=origin_result['initial_request_to_first_held_endpoint_cck']/CLOCKS[standard]
+            placements=[p for p in callbacks.surfaces.publications if p['position']['cck']>=requests[0]['entry']['cck'] and p.get('tutorial_fields',{}).get('tutorial_placement_ready')]
+            assert placements
+            origin_result['initial_request_to_first_placement_cck']=placements[0]['position']['cck']-requests[0]['entry']['cck']
             report['incoming_origin']=origin_result;captured['incoming_origin']=origin_result
         if origin_cache:
             with gzip.open(capture,'wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
