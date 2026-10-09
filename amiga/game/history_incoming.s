@@ -70,8 +70,8 @@ game_history_incoming_after:
         move.w  #GAME_CORE_SCHEMA_VERSION,game_history_incoming_schema
         move.w  #GAME_CORE_SIMULATION_VERSION,game_history_incoming_simulation
         move.l  game_history_live_epoch,game_history_incoming_epoch
-        st      game_history_incoming_valid
 game_history_incoming_capture_complete equ *
+        st      game_history_incoming_valid
 .existing:
         tst.b   game_history_incoming_valid
         beq.s   .done

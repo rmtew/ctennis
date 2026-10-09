@@ -28,7 +28,7 @@ def main():
         transaction.finalize(output,dict(passed=True,execution='actual-68000-cpu-only',
             executable_sha256=digest(executable),validation=validation),
             [compile_manifest(executable,listing),compile_manifest(native,native.parent/'native.lst')],
-            list((output.parent/'raw').glob('*.json'))+[output.parent/'results-unvalidated.json'])
+            list((output.parent/'raw').glob('*.*'))+[output.parent/'results-unvalidated.json'])
         verdict=status(output)
         assert verdict['status']=='passed',verdict
         print(json.dumps(dict(passed=True,report=str(output),sha256=digest(output))),flush=True)

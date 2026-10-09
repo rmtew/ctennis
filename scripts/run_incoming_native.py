@@ -442,7 +442,10 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
             assert origin_result['capture_calls']
             origin_result['initial_request_to_first_held_endpoint_cck']=endpoints[0]['first_actual_publication']['position']['cck']-requests[0]['entry']['cck']
             origin_result['initial_request_to_first_held_endpoint_seconds']=origin_result['initial_request_to_first_held_endpoint_cck']/CLOCKS[standard]
-            placements=[p for p in callbacks.surfaces.publications if p['position']['cck']>=requests[0]['entry']['cck'] and p.get('tutorial_fields',{}).get('tutorial_placement_ready')]
+            placements=[p for p in callbacks.surfaces.publications if p['position']['cck']>=requests[0]['entry']['cck']
+                and p.get('tutorial_fields',{}).get('tutorial_generation')==endpoints[0]['generation']
+                and p['tutorial_fields'].get('tutorial_presentation_generation')==endpoints[0]['generation']
+                and p['tutorial_fields'].get('tutorial_placement_ready') and not p['tutorial_fields'].get('tutorial_placement_dirty')]
             assert placements
             origin_result['initial_request_to_first_placement_cck']=placements[0]['position']['cck']-requests[0]['entry']['cck']
             report['incoming_origin']=origin_result;captured['incoming_origin']=origin_result

@@ -1,5 +1,7 @@
 """Latest-origin proof using actual recorded envelopes and the original resolver."""
 import hashlib
+import gzip
+import json
 from build_match_core import load_image
 from history_proof import attach, cursor, field, seek
 from match_core_cpu import Core
@@ -175,13 +177,22 @@ def aligned_capture(image,symbols):
 def run(executable,raw):
     from native_evidence import atomic_json
     image,symbols=load_image(executable);rows=[]
-    fixtures={end:captured_fixture(image,symbols,end) for end in (0,1)}
+    fixtures={}
+    raw.mkdir(parents=True,exist_ok=True)
+    for end in (0,1):
+        print('Discover actual recorded origin',end,flush=True)
+        fixtures[end]=captured_fixture(image,symbols,end)
     for end in (0,1):
         for projected in (False,True):
             for budget in (1,2,3,4):
                 cold,cold_row=branch(image,symbols,end,0x5a,budget,projected,('game_history_incoming_valid',1,0),captured=fixtures[end])
                 warm,warm_row=branch(image,symbols,end,0xa5,budget,projected,captured=fixtures[end])
                 assert warm==cold,('Warm/cold private state, events, paths/cursors differ',end,projected,budget)
+                print('Checked warm/cold',end,projected,budget,flush=True)
+                def serial(trace):
+                    return [dict(fields=[b.hex() for b in values],events=[dict(owner=k[0],variant=k[1],events=v) for k,v in events.items()]) for values,events in trace]
+                with gzip.open(raw/('yields-e%d-p%d-b%d.json.gz'%(end,projected,budget)),'wt') as handle:
+                    json.dump(dict(warm=serial(warm),cold=serial(cold)),handle,separators=(',',':'))
                 rows.append(dict(warm=warm_row,cold=cold_row,full_yield_state_events_paths_cursors_equal=True,
                     yield_sha256=hashlib.sha256(repr(warm).encode()).hexdigest()))
     misses=[]
@@ -197,6 +208,7 @@ def run(executable,raw):
         expected,cold_row=branch(image,symbols,end,0x5a,4,False,('game_history_incoming_valid',1,0),historical=True,captured=fixtures[end])
         assert actual==expected and row['final_status']==cold_row['final_status']
         row['historical_full_cold_result_equal']=True;misses.append(row)
+    print('Check actual lifetime, eviction and aligned capture',flush=True)
     life=lifetime(image,symbols);alignment=aligned_capture(image,symbols)
     raw.mkdir(parents=True,exist_ok=True)
     for end,(owned,initial,_,launches) in fixtures.items():
