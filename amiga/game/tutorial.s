@@ -330,7 +330,7 @@ tutorial_enter:
         move.l  game_history_position,tutorial_selected_cursor
         move.l  game_history_position+4,tutorial_selected_cursor+4
         moveq   #0,d7
-        btst     #1,game_score_flags
+        tst.b    game_play_state+G_LOWER_AI
         beq     .end_ready
         moveq   #1,d7
 .end_ready:
@@ -354,8 +354,53 @@ tutorial_enter:
 .done:  rts
 
 tutorial_request:
-        move.l  game_preview_generation,d0
+        move.w  #$fffe,d1
+        moveq   #0,d7
+        move.b  tutorial_end,d7
+        mulu.w  #P_SIZE,d7
+        lea     game_play_state,a0
+        move.b  P_PHASE(a0,d7.w),d2
+        andi.b  #$e0,d2
+        bne.s   .serve_context
+        ; Current incoming before contact; latest retained return/miss after it.
+        move.b  game_contact,d2
+        andi.b  #$8d,d2
+        bne.s   .completed_context
+        moveq   #0,d2
+        btst    #6,game_contact
+        sne     d2
+        andi.w  #1,d2
+        moveq   #0,d3
+        move.b  tutorial_end,d3
+        eori.w  #1,d3
+        cmp.w   d3,d2
+        beq.s   .context
+.completed_context:
+        move.w  game_history_attempt_count,d4
+.find_completed:
+        subq.w  #1,d4
+        bmi.s   .context
+        move.w  d4,d0
+        add.w   game_history_attempt_first,d0
+        andi.w  #HISTORY_ATTEMPTS-1,d0
+        bsr     game_history_attempt_address
+        move.w  10(a0),d2
+        moveq   #0,d3
+        move.b  tutorial_end,d3
+        cmp.w   d3,d2
+        bne.s   .find_completed
+        move.w  8(a0),d2
+        cmpi.w  #1,d2
+        beq.s   .completed_found
+        cmpi.w  #2,d2
+        bne.s   .find_completed
+.completed_found:
+        move.w  d4,d1
+        bra.s   .context
+.serve_context:
         move.w  #$ffff,d1
+.context:
+        move.l  game_preview_generation,d0
         moveq   #0,d2
         moveq   #0,d3
         move.b  tutorial_x,d2
@@ -449,6 +494,12 @@ tutorial_controls:
         move.b  tutorial_end,d7
         mulu.w  #10,d7
         lea     game_play_state,a3
+        tst.w   game_preview_cache_valid
+        beq.s   .placement_source
+        cmpi.w  #3,game_preview_kind
+        beq.s   .placement_source
+        lea     game_preview_incoming_state+G_LOWER,a3
+.placement_source:
         adda.w  d7,a3
         lea     game_lower_limits,a0
         tst.b   tutorial_end

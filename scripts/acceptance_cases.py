@@ -69,6 +69,12 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('incoming-flight-cpu', ('scripts/run_incoming_proof.py',),
+             'tests/incoming-flight-cpu/report.json', category='host'),
+        Case('incoming-flight-pal', ('scripts/run_incoming_native.py',),
+             'tests/incoming-flight-native-pal/report.json'),
+        Case('incoming-flight-ntsc', ('scripts/run_incoming_native.py','--ntsc'),
+             'tests/incoming-flight-native-ntsc/report.json'),
         Case('guarded-landing-cpu', ('scripts/run_landing_proof.py',),
              'tests/guarded-landing-cpu/report.json', category='host'),
         Case('guarded-landing-pal', ('scripts/run_landing_native.py',),

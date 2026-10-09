@@ -241,7 +241,7 @@ def run(standard='PAL'):
             key(0x24, True); key(0x24, False, .08)
             key(0x24, True); key(0x24, False)
             ready(); prediction_complete(); ready(); released_picture = photo('released-serve')
-            # The fixed released continuation remains honestly bounded at256.
+            # The fixed released continuation remains honestly bounded at256 dispatcher phases plus sample0.
             # Its observed state is an attached human serve waiting for action.
             released_state = block('game_preview_released_state', 318)
             end = number('tutorial_end')
@@ -252,12 +252,12 @@ def run(standard='PAL'):
             assert number('game_preview_ordinal',2) == 0xffff
             assert int.from_bytes(block('game_preview_outcomes',4)[2:], 'big') == 6
             assert block('game_preview_launches',2)[1] == 0 and phase == 0x40 and ai == 0
-            assert int.from_bytes(block('game_preview_counts',4)[2:], 'big') == 256
+            assert int.from_bytes(block('game_preview_counts',4)[2:], 'big') == 257
             visual_checks['released-wait'] = dict(
                 raster=assert_native_text(released_picture,200,'RELEASED - WAITING TO SERVE'),
                 state=released_state.hex(), end=end, ordinal=0xffff,
                 phase=phase, ai=ai, launches=0, outcome=6,
-                sample_count=256, sample_limit=256, incomplete=True, outgoing_shot_claimed=False)
+                sample_count=257, sample_limit=257, incomplete=True, outgoing_shot_claimed=False)
             old_xy = (number('tutorial_x'), number('tutorial_y'))
             movement_start = time
             key(0x22, True, .15); key(0x22, False)

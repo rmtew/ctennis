@@ -96,8 +96,10 @@ def check_native_presentation(snapshot, paths):
         variant = fields['tutorial_active_variant']
         count = (fields['tutorial_counts']>>(16 if variant == 0 else 0))&65535
         index = count-1 if ball == 1 else fields['tutorial_animation_index']
-        assert 0 <= index < count <= 256
-        point = bytes(paths[variant*2048+index*8:variant*2048+index*8+8])
+        assert len(paths) % 16 == 0
+        capacity = len(paths)//16
+        assert 0 <= index < count <= capacity
+        point = bytes(paths[variant*capacity*8+index*8:variant*capacity*8+index*8+8])
         assert objects[48:50] == bytes((point[3],point[2]))
         assert objects[56:58] == bytes((point[1],point[0]))
         assert bool(objects[53]) == bool(point[6]&15 and point[3]<192)
@@ -290,7 +292,7 @@ class SurfaceObserver:
                                for n in ('sprite0','sprite_back','sprite_third')}
                               if verify_sprites else {})
         self.objects = bytearray(read(symbols['tutorial_scene_objects'],64)) if verify_sprites else bytearray()
-        self.path_bytes = bytearray(read(symbols['game_preview_paths'],4096)) if verify_sprites else bytearray()
+        self.path_bytes = bytearray(read(symbols['game_preview_paths'],symbols['game_preview_storage_end']-symbols['game_preview_paths'])) if verify_sprites else bytearray()
         self.sprite_checks = []
         self.scene_first_fields = {}
         assert symbols['tutorial_surfaces_end']-symbols['tutorial_surface0'] == 2*self.SIZE
@@ -314,7 +316,7 @@ class SurfaceObserver:
                     dict(addr=0xdff088,len=2,access='write')]
         if self.verify_sprites:
             watches += [dict(addr=self.symbols['tutorial_scene_objects'],len=64,access='write'),
-                        dict(addr=self.symbols['game_preview_paths'],len=4096,access='write')]
+                        dict(addr=self.symbols['game_preview_paths'],len=len(self.path_bytes),access='write')]
         return watches
 
     def sprite_base(self, copper):

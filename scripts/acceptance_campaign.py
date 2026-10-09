@@ -740,6 +740,29 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='incoming-flight-cpu':
+        validation=report.get('validation') or {}
+        return (report.get('execution')=='actual-68000-cpu-only'
+                and validation.get('passed') is True
+                and validation.get('full_private_bytes')==318
+                and len(validation.get('rows') or [])==18
+                and len(validation.get('boundaries') or [])==4
+                and all(row.get('passed') is True for row in
+                        validation['rows']+validation['boundaries']))
+    if case.id in ('incoming-flight-pal','incoming-flight-ntsc'):
+        rows=report.get('endpoints') or []
+        return (report.get('incoming_flight') is True
+                and report.get('repeated_sequence') is True
+                and report.get('full318_history72_backup_guard') is True
+                and report.get('dropped_notifications')==0
+                and len(rows)==2
+                and all(row.get('latency_cck',-1)>=0
+                        and row.get('first_actual_publication',{}).get('native_sprite_check')
+                        for row in rows)
+                and rows[0].get('incoming_state_sha256')==rows[1].get('incoming_state_sha256')
+                and rows[0].get('incoming_cursor')==rows[1].get('incoming_cursor')
+                and (report.get('target') or {}).get('video')==
+                    ('NTSC' if case.id.endswith('-ntsc') else 'PAL'))
     if case.id=='tutorial-hotspots-pal':
         from tutorial_hotspots import required_hotspots_extent
         return required_hotspots_extent(report, 'PAL')

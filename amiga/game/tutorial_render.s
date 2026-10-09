@@ -707,15 +707,26 @@ tutorial_animate:
         beq     .done
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
-        bls     .done ; retain the actual terminal sample, without wrapping
+        bhi.s   .advance
+        ; Hold the real terminal sample before repeating the complete sequence.
+        move.w  simulation_started_updates,d0
+        sub.w   tutorial_animation_callback,d0
+        cmpi.w  #30,d0
+        bcs     .done
+        move.w  simulation_started_updates,tutorial_animation_callback
+        clr.w   tutorial_animation_index
+        move.b  #2,tutorial_ball_mode
+        bra.s   .sample
+.advance:
         ; Advance the nominal cursor, rather than adopting late callback entry
         ; time. A delayed publication catches up without accumulating drift.
         addq.w  #2,tutorial_animation_callback
         move.b  #2,tutorial_ball_mode
         addq.w  #2,tutorial_animation_index
         cmp.w   tutorial_animation_index,d1
-        bcc     .sample
+        bhi     .sample
         move.w  d1,tutorial_animation_index
+        move.w  simulation_started_updates,tutorial_animation_callback
 .sample:
         move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
@@ -743,8 +754,12 @@ tutorial_animation_due:
         beq     .no
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
-        bls     .no
-        moveq   #1,d0
+        bhi.s   .yes
+        move.w  simulation_started_updates,d0
+        sub.w   tutorial_animation_callback,d0
+        cmpi.w  #30,d0
+        bcs.s   .no
+.yes:   moveq   #1,d0
         rts
 .no:    moveq   #0,d0
         rts
