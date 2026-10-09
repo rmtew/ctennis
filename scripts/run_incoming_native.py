@@ -23,7 +23,7 @@ from ordinary_cadence import chip_memory
 PROVIDER_CLOCK = 3546895
 CLOCKS = {'PAL':3546895, 'NTSC':3579545}
 CAPS = dict(physical_seconds=30, callbacks=2048, boundary_stops=8192,
-            uncompressed_transcript_bytes=512*1024*1024)
+            uncompressed_transcript_bytes=2*1024*1024*1024)
 
 
 class LatencySession(CaptureSession):
@@ -122,8 +122,14 @@ def run(standard='PAL', baseline=None):
                 advance(seconds)
             def endpoint(label, previous_generation=None, request=None):
                 request=position() if request is None else request
-                for _ in range(300):
+                for probe in range(300):
                     advance(.05)
+                    if probe%20==0:
+                        print(json.dumps(dict(label=label,probe=probe,status=number('game_preview_status'),
+                              counts=block('game_preview_counts',4).hex(),
+                              dispatches=block('game_preview_dispatches',4).hex(),
+                              flight_phases=block('game_preview_flight_phases',4).hex(),
+                              launches=block('game_preview_launches',2).hex())),flush=True)
                     generation=number('tutorial_generation',4)
                     published=[p for p in callbacks.surfaces.publications
                         if p['position']['cck']>=request['cck']
@@ -151,6 +157,7 @@ def run(standard='PAL', baseline=None):
                         assert row['latency_cck']>=0
                         row['physical_latency_seconds']=row['latency_cck']/CLOCKS[standard]
                         endpoints.append(row)
+                        print(json.dumps({k:v for k,v in row.items() if k!='first_actual_publication'}),flush=True)
                         return generation
                 raise AssertionError('No actual fresh held endpoint within declared latency cap')
             advance(.3)

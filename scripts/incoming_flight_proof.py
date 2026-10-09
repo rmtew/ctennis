@@ -129,8 +129,25 @@ def run(executable):
                     assert bytes(cpu.mem.r_block(symbols[state_symbol], 318)) == final, (x, y, variant, 'full-state')
                     assert cpu.preview_event_groups.get((2,variant),[]) == expected[variant][4], (x,y,variant,'events')
                     assert final[player_offset+3] == x and final[player_offset+2] == y, 'Trial/visible edited player diverged'
+                # READY cache replay must start both paths at sample0 too.
+                cpu.preview_event_groups.clear()
+                call_checked(cpu,'game_preview_request',
+                             {0:generation,1:selection,2:x,3:y},saved)
+                assert cpu.cpu.r_reg(0)==1 and field(cpu,'game_preview_status')==2
+                generation+=1
+                for _ in range(4096):
+                    call_checked(cpu,'game_preview_step',{0:generation,1:4},saved)
+                    if field(cpu,'game_preview_status')>=5:break
+                assert field(cpu,'game_preview_status')==5
+                for variant,(path,final,_,_,outputs) in enumerate(expected):
+                    count=cpu.mem.r16(symbols['game_preview_counts']+2*variant)
+                    assert count==len(path)
+                    assert bytes(cpu.mem.r_block(symbols['game_preview_paths']+variant*CAPACITY*8,count*8))==b''.join(path)
+                    name='game_preview_held_state' if variant==0 else 'game_preview_released_state'
+                    assert bytes(cpu.mem.r_block(symbols[name],318))==final
+                    assert cpu.preview_event_groups.get((2,variant),[])==outputs
                 cpu.audit_reads()
-                row = dict(x=x, y=y, poison=poison, selection=selection,
+                row = dict(cache_replay=True,x=x, y=y, poison=poison, selection=selection,
                            counts=[len(item[0]) for item in expected],
                            contact_phases=[item[2] for item in expected],
                            outcomes=[cpu.mem.r16(symbols['game_preview_outcomes']+2*v) for v in (0,1)],

@@ -536,6 +536,7 @@ game_preview_prepare:
         bsr     game_history_copy_state
         ; The common initial sample is the actual complete launch projection.
         lea     game_preview_edited_state,a5
+        clr.b   game_preview_variant
         bsr     game_preview_append_point
         move.b  #1,game_preview_variant
         bsr     game_preview_append_point
