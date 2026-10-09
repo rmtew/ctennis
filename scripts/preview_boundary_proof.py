@@ -81,7 +81,7 @@ def flight_cases(executable, complete_state):
     """Declared short/long/rejected geometry inputs; original ball phases only."""
     from landing_cases import CASES
     image,s=load_image(executable);start=s['game_core_state'];rows=[]
-    descriptors=CASES+[('fault-bounce-out',(0,5,0,128,100,100,64,8,0))]
+    descriptors=CASES+[('fault-bounce-out',(0,5,0,32,100,101,64,0,0))]
     names=('game_velocity_x','game_velocity_y','game_velocity_z',
            'game_base_x','game_base_y','game_base_screen_y','game_flight','game_contact','game_step')
     for label,values in descriptors:
@@ -96,6 +96,8 @@ def flight_cases(executable, complete_state):
                 if flags&0x8b:break
             c.audit_reads()
         flags=reference[-1][0][s['game_contact']-start]
+        if label=='fault-bounce-out':
+            assert not values[7] and flags&0x0a==0x0a and reference[-1][0][s['game_step']-start]==0, 'Fault fixture must detect a new original bounce/court-out'
         outcome=2 if flags&1 else 3 if flags&0x88 else 1 if flags&2 else 6
         with Core(image,s,initial=initial,readonly=READONLY) as c:
             c.mem.w_block(s['game_preview_selected_state'],bytes(initial))
@@ -118,8 +120,8 @@ def flight_cases(executable, complete_state):
             assert field(c,'game_preview_counts')==len(reference)+1,label
             c.audit_reads()
         rows.append(dict(label=label,passed=True,phases=len(reference),outcome=outcome,
-            complete_state_every_phase=True,exact_sample_every_phase=True,first_event_priority=True,
-            event_scope='preexisting stopping flags' if values[7]&3 else 'original phase detection'))
+            complete_state_every_phase=True,exact_sample_every_phase=True,first_event_priority=True,bounce_fault_detected=label=='fault-bounce-out',
+            event_scope='preexisting stopping flags' if values[7]&0x8b else 'original phase detection'))
     assert rows[0]['phases']<=4 and rows[1]['phases']>32
     assert next(r for r in rows if r['label']=='fault-bounce-out')['outcome']==3
     return dict(passed=True,cases=rows,scope='actual ball-only boundary worker; declared inputs include PR40 guard rejection descriptors, no shipping query execution claimed; preexisting contact flags test stopping priority rather than new intrinsic event timing')
@@ -143,7 +145,8 @@ def required_boundary_extent(validation):
     if flights.get('passed') is not True or not isinstance(rows,list) or len(rows)!=len(CASES)+1 or {r.get('label') for r in rows}!={n for n,_ in CASES}|{'fault-bounce-out'}:return False
     for r in rows:
         if any(r.get(k) is not True for k in ('passed','complete_state_every_phase','exact_sample_every_phase','first_event_priority')) or type(r.get('phases')) is not int or not 1<=r['phases']<=256 or r.get('outcome') not in (1,2,3,6):return False
-    if next(r for r in rows if r['label']=='fault-bounce-out')['outcome']!=3:return False
+    fault=next(r for r in rows if r['label']=='fault-bounce-out')
+    if fault['outcome']!=3 or fault.get('bounce_fault_detected') is not True:return False
     if any(ring.get(k) is not True for k in ('passed','physical_index_wrap','natural_exchange')) or ring.get('attempt_first')!=127 or type(ring.get('attempted_count')) is not int or ring['attempted_count']<2:return False
     rows=ring.get('cases')
     if not isinstance(rows,list) or {r.get('name') for r in rows}!={'natural-upper-exchanged','wrapped-upper-return','warm-upper-handoff','current-upper-handoff'} or len(rows)!=4:return False

@@ -284,7 +284,7 @@ def small(executable):
                 edited=block(cpu,'game_preview_edited_state','game_preview_held_state'),
                 traces=traces,paths=paths,contexts=contexts,prefix=prefix,outcomes=outcomes,
                 outputs=outputs,first_dispatch_controls=first_dispatch_controls,
-                incoming_origin=incoming,end=event['end'],coincident=bool(coincident),negative_controls=negatives,
+                incoming_origin=incoming,x=event['x'],y=event['y'],end=event['end'],coincident=bool(coincident),negative_controls=negatives,
                 worker_calls=len(cycles),request_cpu_cycles=request_cycles,total_worker_cpu_cycles=sum(cycles),
                 resolver_worker_calls=resolver_calls,resolver_operations=resolver_operations,
                 resolver_inclusive_cpu_cycles=resolver_cycles,
@@ -332,9 +332,10 @@ def small(executable):
         from preview_extended_proof import continuous
         result=dict(edited=observation['edited'],paths=[b''.join(p) for p in observation['paths']],
             contexts=observation['contexts'],outputs=[observation['outputs'][v] for v in (0,1)],
+            incoming_state=states[observation['incoming_origin']+1] if observation['incoming_origin'] is not None else b'',
             incoming=observation['incoming_origin'],kind=1 if observation['name'].startswith('return') else 3,
             prefix=observation['prefix'],outcomes=observation['outcomes'],action=observation['original_action_boundary'])
-        continuous(image,symbols,dict(observation,result=result,stream=stream,ordinal=0,seed=0xace1,x=0,y=0,bounds={},classes=[],launches={},boundaries={},selected=b'',costs={}))
+        continuous(image,symbols,dict(observation,result=result,stream=stream,ordinal=0,seed=0xace1,bounds={},classes=[],launches={},boundaries={},selected=states[observation['selection']],costs={}))
         report={k:v for k,v in observation.items() if k not in ('edited','traces','paths','contexts','outputs')}
         report.update(passed=True,continuous_state_path_output_equal=True,
                       live_history_output_preserved=True,independent_continuation_policy_equal=True,path_counts=[len(p) for p in observation['paths']])

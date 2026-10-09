@@ -233,7 +233,7 @@ def preview_boundary_reports():
             ('outgoing-out-on-256',257,3),('outgoing-no-event-256-then-cap',257,0),
             ('total-513-terminal-priority',513,3))])
     flights=dict(passed=True,cases=[dict(label=name,passed=True,complete_state_every_phase=True,
-        exact_sample_every_phase=True,first_event_priority=True,phases=1,outcome=3)
+        exact_sample_every_phase=True,first_event_priority=True,phases=1,outcome=3,bounce_fault_detected=name=='fault-bounce-out')
         for name in [n for n,_ in CASES]+['fault-bounce-out']])
     ring=dict(passed=True,physical_index_wrap=True,natural_exchange=True,attempt_first=127,attempted_count=3,
         cases=[dict(name=name,end=1,passed=True,continuous_state_path_output_equal=True,
