@@ -188,6 +188,21 @@ tutorial_tick:
         ; budget can use headroom that cannot admit the four-operation worker.
         bsr     tutorial_work_remaining
         moveq   #4,d5
+        ; Only a resolved current-serve continuation uses the measured reserve.
+        ; Historical resolution and priming retain their original admission.
+        cmpi.w  #3,game_preview_kind
+        bne.s   .preview_cold_admission
+        cmpi.w  #PREVIEW_HELD,game_preview_status
+        bcs.s   .preview_cold_admission
+        cmpi.w  #PREVIEW_RELEASED,game_preview_status
+        bhi.s   .preview_cold_admission
+        cmpi.l  #7000,d0
+        bcc.s   .preview_admitted
+        moveq   #2,d5
+        cmpi.l  #5000,d0
+        bcs     .done
+        bra.s   .preview_admitted
+.preview_cold_admission:
         cmpi.l  #10000,d0
         bcc     .preview_admitted
         moveq   #2,d5
