@@ -1,5 +1,9 @@
 # Prediction cost assessment
 
+The supplied-A5 migration was subsequently approved and implemented. See
+[the private-state integration result](tutorial-private-state-integration.md).
+Measurements below describe the retained pre-migration product.
+
 This is a measured proposal, not authorization for another runtime rewrite.
 PR [38](https://github.com/rmtew/ctennis/pull/38) remains a draft pending appearance
 review. The native product is `6f2828735c273258c0c0abdb577778f1e831a7ae`, executable

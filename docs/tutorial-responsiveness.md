@@ -1,5 +1,11 @@
 # Tutorial responsiveness work
 
+The latest approved private-state increment is recorded in
+[the integration result](tutorial-private-state-integration.md): fresh PAL/NTSC
+endpoint times are 0.552482/0.520228 regional guest seconds, with zero recurring
+state-copy calls in each measured fresh prediction interval. Older observations
+below retain their original product identities.
+
 Placement from the latest player position takes priority over trails. Physical
 input remains sampled every callback. Movement supersedes the old prediction and
 idle refinement; an old endpoint must never appear to describe the new position.

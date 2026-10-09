@@ -2,40 +2,40 @@
   "schema": 1,
   "state": "incomplete",
   "static": {
-    "executable_sha256": "c543a695d9493254eb152cf34a093676c3c0c0dcd4df203d0ad105a5b97e3cb8",
+    "executable_sha256": "3a9ea3037c70cedaf165acb7f2df01405b1849fd7abcc2a5cfb37c2244bf8237",
     "layout": {
-      "executable_bytes": 207332,
+      "executable_bytes": 205940,
       "hunks": [
         {
           "file_offset": 48,
           "index": 0,
           "kind": "code",
-          "bytes": 56836,
+          "bytes": 56412,
           "memory": "any"
         },
         {
-          "file_offset": 86392,
+          "file_offset": 85000,
           "index": 1,
           "kind": "data",
           "bytes": 112700,
           "memory": "chip"
         },
         {
-          "file_offset": 202872,
+          "file_offset": 201480,
           "index": 2,
           "kind": "bss",
           "bytes": 9424,
           "memory": "chip"
         },
         {
-          "file_offset": 202996,
+          "file_offset": 201604,
           "index": 3,
           "kind": "bss",
           "bytes": 86844,
           "memory": "any"
         },
         {
-          "file_offset": 207232,
+          "file_offset": 205840,
           "index": 4,
           "kind": "bss",
           "bytes": 49152,
@@ -45,24 +45,24 @@
       "file_format": {
         "header_table_bytes": 40,
         "hunk_headers_and_end_bytes": 60,
-        "relocation_bytes": 6820,
-        "relocations": 1693,
-        "symbol_bytes": 30876,
-        "symbols": 1122,
-        "symbol_name_bytes": 20311,
-        "symbol_name_padding_bytes": 1549,
-        "symbol_framing_bytes": 9016,
+        "relocation_bytes": 5820,
+        "relocations": 1443,
+        "symbol_bytes": 30908,
+        "symbols": 1123,
+        "symbol_name_bytes": 20334,
+        "symbol_name_padding_bytes": 1550,
+        "symbol_framing_bytes": 9024,
         "debug_bytes": 0
       },
-      "code_bytes": 56836,
+      "code_bytes": 56412,
       "data_bytes": 112700,
       "bss_bytes": 145420,
-      "loaded_payload_bytes": 314956
+      "loaded_payload_bytes": 314532
     },
     "attribution": {
       "schema": 1,
-      "executable_sha256": "c543a695d9493254eb152cf34a093676c3c0c0dcd4df203d0ad105a5b97e3cb8",
-      "accounted_file_bytes": 207332,
+      "executable_sha256": "3a9ea3037c70cedaf165acb7f2df01405b1849fd7abcc2a5cfb37c2244bf8237",
+      "accounted_file_bytes": 205940,
       "reconciled": true,
       "categories": [
         {
@@ -155,9 +155,9 @@
         },
         {
           "category": "cpu_instructions",
-          "bytes": 25482,
+          "bytes": 25020,
           "by_hunk": {
-            "0": 25482
+            "0": 25020
           },
           "by_source": {
             "amiga/main.s": 2054,
@@ -166,32 +166,32 @@
             "amiga/game/controls.s": 194,
             "amiga/game/paula_output.s": 210,
             "amiga/game/keyboard.s": 208,
-            "amiga/game/core_input.s": 144,
-            "amiga/game/core_controls.s": 146,
-            "amiga/game/tick.s": 116,
-            "amiga/game/menu.s": 208,
-            "amiga/game/integration.s": 464,
-            "amiga/game/gameplay.s": 52,
+            "amiga/game/core_input.s": 110,
+            "amiga/game/core_controls.s": 132,
+            "amiga/game/tick.s": 98,
+            "amiga/game/menu.s": 160,
+            "amiga/game/integration.s": 372,
+            "amiga/game/gameplay.s": 50,
             "amiga/game/gameplay_math.s": 318,
             "amiga/game/gameplay_ball.s": 644,
             "amiga/game/gameplay_players.s": 728,
             "amiga/game/gameplay_contact.s": 548,
             "amiga/game/gameplay_ai.s": 348,
-            "amiga/game/gameplay_controls.s": 202,
-            "amiga/game/scene.s": 518,
-            "amiga/game/scene_fields.s": 206,
-            "amiga/game/scene_integration.s": 66,
+            "amiga/game/gameplay_controls.s": 200,
+            "amiga/game/scene.s": 506,
+            "amiga/game/scene_fields.s": 182,
+            "amiga/game/scene_integration.s": 62,
             "amiga/game/scoring.s": 628,
-            "amiga/game/scoring_integration.s": 204,
-            "amiga/game/round.s": 374,
-            "amiga/game/result.s": 600,
-            "amiga/game/result_audio.s": 86,
-            "amiga/game/audio.s": 826,
-            "amiga/game/core.s": 196,
+            "amiga/game/scoring_integration.s": 202,
+            "amiga/game/round.s": 322,
+            "amiga/game/result.s": 486,
+            "amiga/game/result_audio.s": 82,
+            "amiga/game/audio.s": 788,
+            "amiga/game/core.s": 160,
             "amiga/game/history.s": 1584,
             "amiga/game/history_seek_job.s": 800,
-            "amiga/game/preview.s": 3114,
-            "amiga/game/core_trace.s": 558,
+            "amiga/game/preview.s": 3046,
+            "amiga/game/core_trace.s": 666,
             "amiga/game/native_core_adapter.s": 294,
             "amiga/game/interface_input.s": 802,
             "amiga/game/interface_pause.s": 46,
@@ -199,11 +199,11 @@
             "amiga/game/interface_render.s": 1118,
             "amiga/game/interface_demo.s": 60,
             "amiga/game/interface_feedback.s": 266,
-            "amiga/game/tutorial.s": 1920,
+            "amiga/game/tutorial.s": 1914,
             "amiga/game/tutorial_render.s": 2508,
             "amiga/game/tutorial_progressive.s": 812
           },
-          "instances": 6611
+          "instances": 6632
         },
         {
           "category": "font",
@@ -233,6 +233,15 @@
           "category": "hunk_header_table",
           "bytes": 40,
           "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "hunk_payload_alignment_padding",
+          "bytes": 2,
+          "by_hunk": {
+            "0": 2
+          },
           "by_source": {},
           "instances": 1
         },
@@ -278,9 +287,9 @@
         },
         {
           "category": "other_initialized_tables_and_scalars",
-          "bytes": 1666,
+          "bytes": 1702,
           "by_hunk": {
-            "0": 1666
+            "0": 1702
           },
           "by_source": {
             "amiga/main.s": 417,
@@ -294,10 +303,11 @@
             "assets/native/audio/data.i": 28,
             "amiga/game/core_state.i": 61,
             "amiga/game/history.s": 172,
+            "amiga/game/preview.s": 36,
             "amiga/game/native_core_adapter.s": 3,
             "amiga/game/tutorial_render.s": 698
           },
-          "instances": 244
+          "instances": 249
         },
         {
           "category": "pre_rendered_demo_options",
@@ -367,7 +377,7 @@
         },
         {
           "category": "relocation_offsets",
-          "bytes": 6772,
+          "bytes": 5772,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -567,21 +577,21 @@
         },
         {
           "category": "symbol_name_padding",
-          "bytes": 1549,
+          "bytes": 1550,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_names",
-          "bytes": 20311,
+          "bytes": 20334,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_record_framing",
-          "bytes": 9016,
+          "bytes": 9024,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -620,105 +630,105 @@
         {
           "path": "assets/native/scene/poses.bin",
           "hunk": 0,
-          "offset": 8248,
+          "offset": 8052,
           "bytes": 112,
           "sha256": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376"
         },
         {
           "path": "assets/native/scene/robot-poses.bin",
           "hunk": 0,
-          "offset": 8360,
+          "offset": 8164,
           "bytes": 112,
           "sha256": "044bb1c5b8b96182a5844d09fc2e8537b896f747d097a71144ce7ef12cf62363"
         },
         {
           "path": "assets/native/scene/animations.bin",
           "hunk": 0,
-          "offset": 8472,
+          "offset": 8276,
           "bytes": 36,
           "sha256": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad"
         },
         {
           "path": "assets/native/audio/score-0.bin",
           "hunk": 0,
-          "offset": 11636,
+          "offset": 11202,
           "bytes": 704,
           "sha256": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8"
         },
         {
           "path": "assets/native/audio/score-1.bin",
           "hunk": 0,
-          "offset": 12340,
+          "offset": 11906,
           "bytes": 656,
           "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007"
         },
         {
           "path": "assets/native/audio/score-4.bin",
           "hunk": 0,
-          "offset": 12996,
+          "offset": 12562,
           "bytes": 128,
           "sha256": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d"
         },
         {
           "path": "assets/native/audio/score-5.bin",
           "hunk": 0,
-          "offset": 13124,
+          "offset": 12690,
           "bytes": 16,
           "sha256": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666"
         },
         {
           "path": "assets/native/audio/periods.bin",
           "hunk": 0,
-          "offset": 13140,
+          "offset": 12706,
           "bytes": 3072,
           "sha256": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc"
         },
         {
           "path": "assets/native/audio/envelopes.bin",
           "hunk": 0,
-          "offset": 16212,
+          "offset": 15778,
           "bytes": 128,
           "sha256": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4"
         },
         {
           "path": "assets/native/audio/battle-hymn/melody.bin",
           "hunk": 0,
-          "offset": 16340,
+          "offset": 15906,
           "bytes": 544,
           "sha256": "213adac7d272354ee85df9016712e60606dfff61f63a1a3eb94c9fa5aed2db09"
         },
         {
           "path": "assets/native/audio/battle-hymn/bass.bin",
           "hunk": 0,
-          "offset": 16884,
+          "offset": 16450,
           "bytes": 528,
           "sha256": "bf672e20ff1770500ae39139767c3dc4394b96537fab6fb926076cf0e1e5a983"
         },
         {
           "path": "assets/native/audio/battle-hymn/arpeggio.bin",
           "hunk": 0,
-          "offset": 17412,
+          "offset": 16978,
           "bytes": 1040,
           "sha256": "1c32ecd5946e2084c467c76d242444c8b20e6c895d2ff67dc7d1896105936ce3"
         },
         {
           "path": "assets/native/audio/battle-hymn/periods.bin",
           "hunk": 0,
-          "offset": 18452,
+          "offset": 18018,
           "bytes": 3072,
           "sha256": "0000dc668c0629fc1b7e7324efa43530627a2606161e4a736e7b5861b1011043"
         },
         {
           "path": "build/native/version.bin",
           "hunk": 0,
-          "offset": 33230,
+          "offset": 32810,
           "bytes": 14,
-          "sha256": "5570157a9dcb55a23d99a5039d4b38bfbb68618584a0968ef4c31ab70fcdaaf3"
+          "sha256": "987bbd0bb49d70e818ab955e2fe4f356b31e7c45a8485fd5afffd0b80c0b5d9f"
         },
         {
           "path": "assets/native/scene/sprite-images.bin",
           "hunk": 0,
-          "offset": 45572,
+          "offset": 45146,
           "bytes": 11264,
           "sha256": "cf1b94f8a8f804df28cc928472e600cfe5d57579967e36344a58fd104a4606ef"
         },
@@ -741,7 +751,7 @@
           "hunk": 1,
           "offset": 44544,
           "bytes": 512,
-          "sha256": "3cca152e1075f9d89cc3ae76d294cc436eb4d22d340eeca1b7a2b6280a7842b2"
+          "sha256": "4579c592d79f9b718c43a02c1bd0205cfeeb78bc69372f8e47b56d1fbe134c74"
         },
         {
           "path": "assets/native/title/font-mac.bin",
@@ -1205,63 +1215,69 @@
         },
         {
           "hunk": 0,
-          "offset": 6241,
+          "offset": 6059,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 9617,
+          "offset": 9391,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 22139,
+          "offset": 21643,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 22351,
+          "offset": 21855,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 23833,
+          "offset": 23337,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 28669,
+          "offset": 28249,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 34267,
+          "offset": 33847,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 34359,
+          "offset": 33939,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 44721,
+          "offset": 44295,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 44725,
+          "offset": 44299,
           "bytes": 1,
           "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 56410,
+          "bytes": 2,
+          "hex": "0000"
         }
       ],
       "identical_incbin_payload_groups": [
@@ -2443,10 +2459,10 @@
       "celebration": true
     },
     "release": {
-      "executable_sha256": "7f49c5600efe13c411c87b8f8f7940b266f3838caa29216d3714bec2c36e1246",
-      "executable_bytes": 176456,
-      "removed_symbol_bytes": 30876,
-      "loaded_payload_bytes": 314956,
+      "executable_sha256": "59290d72041b9e716a8885f169ca7aa25d38e18c62d2bd118a9c0ed36765ffbc",
+      "executable_bytes": 175032,
+      "removed_symbol_bytes": 30908,
+      "loaded_payload_bytes": 314532,
       "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols."
     },
     "executable_budget_bytes": null,
@@ -2918,20 +2934,20 @@
     },
     "product_inputs": {
       "amiga/display.i": "252a46ec28ed6157cb8f205ce2620aafd2b4fda89d389e2d86b999f6e6c83a32",
-      "amiga/game/audio.s": "e0dfb83120b332e83c6169f16849b9033b6097a91f77eea694b41c54d9d3c2d8",
+      "amiga/game/audio.s": "c0f8e38856f87f43095814f39b25edc81453c6fb94346bf77f34fe84d2362e24",
       "amiga/game/audio_state.i": "2ff317f3a0e3310ed56e703d929dd31322c196e20cfc580b04a62871278a0f1a",
       "amiga/game/controls.s": "3f1a08bf0847d4bd82dc42d33acd70a8fa60b90618652e0c8e884fcec3074224",
-      "amiga/game/core.s": "079f35c623e2b28c56444ef4bd127f8800a3e6bab9b7f0a21da495afcea2df61",
-      "amiga/game/core_controls.s": "31a40517e593ede246f085793e8805664a905726d72d0bca23961fd9fb8bb0cf",
-      "amiga/game/core_input.s": "7a77a6c5ce69c4cf48585cde9fb2135072cc9b9f577c2278a888efcafb0af10f",
+      "amiga/game/core.s": "0bca3b10f2b0e78c20895198464eac717967d4e416bb8d6121fd833e6f124bc7",
+      "amiga/game/core_controls.s": "22c39af8b123924b57516a5a3d449db9a869d372d10b5b8efdaf2fa9b9508d05",
+      "amiga/game/core_input.s": "6f981cdaadf897940fa586acded8579261e5e7aa40c1236eb81329c21b335517",
       "amiga/game/core_state.i": "be03d76342f36afff74aa8f7a9cb3545e54f3345c6302609ce9b5f8892a7b18d",
-      "amiga/game/core_trace.s": "f7c5a43d2f4c2c144678fd8c715f6a4f03e920343948913f58df0c17dc9de3cd",
+      "amiga/game/core_trace.s": "b3fb8fd5e5c55f2760f063d887a6b2b2f18f5ded7e2461d4aaf64224e0df1d14",
       "amiga/game/core_trace_macros.i": "991213a21bdc179c0fbc177ce348382a51869001f9d9317feaeb229d3f25c3be",
-      "amiga/game/gameplay.s": "9de9084afa0323a92605f7c222258e31b1f8b7fe19761055d9311918cf2f326b",
+      "amiga/game/gameplay.s": "abe231ac264da0f44a95fa7ac0419bf54f66ce8c2801d266ab9666e345c74620",
       "amiga/game/gameplay_ai.s": "4070f0c4507b77fe0b53017bb0391877dd8b1220f893ce12f15096b20876c777",
       "amiga/game/gameplay_ball.s": "0e831e4764543c9b1416c3ffb44fcf9f0cd3b8c815c0061bcb35d49058f37dcd",
       "amiga/game/gameplay_contact.s": "e80c0228ee0decfa10e62e73fd43cb2a13c9dafdd7212ab9436b8017eb721248",
-      "amiga/game/gameplay_controls.s": "146c3058507893fc2973a173b10a37df972816c26f494e4a054dd0b20249ceb6",
+      "amiga/game/gameplay_controls.s": "510a612938ed45a72b2d4d97d86abb3cdf09f990551a468371913b09f2276797",
       "amiga/game/gameplay_math.s": "e3de01e5ad2d033910bef8a10a8d5230284f897373e16a54faf59cd3fa766cba",
       "amiga/game/gameplay_players.s": "8b076a2e2c18ea5dd7e8b3c6c472c6de9046032df371f7a56c3a66e284743409",
       "amiga/game/gameplay_state.i": "b689400b724cd1d39c024d82d5ea4ccd7d31448b7180a86cafafbfb140ba1d07",
@@ -2939,7 +2955,7 @@
       "amiga/game/history_seek_job.s": "bc0e6a04e5b325cc1cdb5af4ab2d80417e0c295fe5d63ff40cf902b52598e985",
       "amiga/game/history_seek_storage.i": "b89406203b8144594f864074a6e697e849e0da10c1c8cc63da36c2e5274298e9",
       "amiga/game/history_storage.i": "56e05a76e796116719bde5f6cf71ea306cd9cb888fc286bc7b262267432f93ec",
-      "amiga/game/integration.s": "fd9e24d23faf79833128d115f8180e19fa353371435808a8c930f8df98fb4a1e",
+      "amiga/game/integration.s": "ad6e1c1f3dc17335ced14f7b9b6aae9fbbdd471481daa62a8105c96e0edeb0d1",
       "amiga/game/interface.s": "683c694fce2918dc73310115f683f5785c2f8b47ba1f80279159ef24f1f2a9b2",
       "amiga/game/interface_demo.s": "574168abd9fff03a974c1fbe51d497f1b8c47398d7bfcb3b36ae3109a4030a52",
       "amiga/game/interface_feedback.s": "d8c7586588bc1281447020c46bfcdc72d52c27a9db694cab8e369be0f6dc2fc0",
@@ -2950,22 +2966,22 @@
       "amiga/game/interface_state.i": "fc9d1b9ec6874ab3d87018f78b913529bb7008f62cf354c242c081505bc0e6c1",
       "amiga/game/interface_text.s": "814d8482f635371a72d60f96a1e86c65a9469d883531fc9b75a7842bc89d656c",
       "amiga/game/keyboard.s": "ea29a4442d6e4188bff2c6e92b67a2a3c52050d4561eeed4525f6857e58bee96",
-      "amiga/game/menu.s": "e8e9c499443e9c3ea654f21c513f982d08be53a4dbe697eb64b69c739de56bd9",
+      "amiga/game/menu.s": "836e87cc35ec0d1b88f223869a62e8e0f419116e8550fc4da3ca873b5f3c0420",
       "amiga/game/native_core_adapter.s": "59006008660ad7b0883da3060dd34c77307faee692511e1a22a7d9abfea8f1e9",
       "amiga/game/paula_output.s": "15f7439f2350384395b221b11df27ad797f2c530776e0eeab476d4cd587449d0",
-      "amiga/game/preview.s": "239ca7e7dc141f42ebf130b176518da0bec213a964eb9088fb32c01975075461",
+      "amiga/game/preview.s": "60f8faa1dd3406d893e3499b81460745ac27c52e881fba42fcbcc83dd539437b",
       "amiga/game/preview_storage.i": "df81b8ff996e17452180117d6b9565e37f4b711ae1dfc587ba76a76af41ec33f",
-      "amiga/game/result.s": "3afb626e3c872f224b3d2486719e59aca670885bf0e9a9bfeee359fe1f13746e",
-      "amiga/game/result_audio.s": "f6071174cc9aeb933afcadb2351eb3220ab29faa40b04c6d00b80bb872ad99eb",
-      "amiga/game/round.s": "169b2c2d288ef5b5db57f6fbf41c94b69aa9b22620e61ccf88b9902896707b24",
-      "amiga/game/scene.s": "0c426cf53b5b1f27494921d174ac6fbb55f52b46adf2eb33ee03740085197a68",
-      "amiga/game/scene_fields.s": "94d4921d9d612038473140218c2899721e8aa66ec73130ebb55683c22354a8b2",
-      "amiga/game/scene_integration.s": "4f8e55bf94174a4ab704f1fa7e12ced98a90639a88ddb408e125e6c0adb088ef",
+      "amiga/game/result.s": "014d65e76cd642ab6e97a161c6d4c1e0761dbaed8ae92f7442d35f43f1183714",
+      "amiga/game/result_audio.s": "cbccf72a67da7faf2c51afb131c2a1aae2ea8d24e8342c53d92abeea532067dc",
+      "amiga/game/round.s": "513d6e40f46dae9de5823a0114819b82df68f067125681fc114b0096968e43c6",
+      "amiga/game/scene.s": "e456a8c57fc2a93abb90323994d34b9ae6c1b5a30801ced1a6f1a878121710ac",
+      "amiga/game/scene_fields.s": "4c2b2e4e3cf306795d5f5f2a9336c8399e1c271fc1d49cf588f9c7c2d5c51da1",
+      "amiga/game/scene_integration.s": "1667945dcaa8feaf067f54bfc3f7ec201b28b31c32f13658e0552d25bdc4b2a5",
       "amiga/game/scoring.s": "bb103db139100edd8ce5fa718a48b01c1bb894c92830c2a35e55a9e120305808",
-      "amiga/game/scoring_integration.s": "079c32a8b2198377772e7f0f629889ea2bd32656c4b0d79d5aba88f090d02fb0",
+      "amiga/game/scoring_integration.s": "58d5884fbbf53562ddc78605a4c5b36e5951a2b3c05b2842586f09e6b3b35bfb",
       "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
       "amiga/game/state.i": "b9eef0b6290a1a61548ce74ffaa0d555a6ddaad6a923d40f62c97c1ce26498ab",
-      "amiga/game/tick.s": "df335398348996c54f7dda8f1c01b367ad9834c4fe52231d005b60782e094016",
+      "amiga/game/tick.s": "7abc879f026d175b89d72a777ac0418230feeb52323142da7d313285f9c0c7f5",
       "amiga/game/tutorial.s": "d629034757b272074ae92df1b4ddfaba68771b45e6ebff7c3868f4a397762da7",
       "amiga/game/tutorial_progressive.s": "023ef00fa1779f17eed18ac35adf646f06f6462bedc76aa282336216ee073431",
       "amiga/game/tutorial_render.s": "f22a7e185e90eb9a25f1a130546ade48309a21916840f740a3fb66d056bb57bf",
@@ -3060,11 +3076,11 @@
       "build/native/ui-help-options.bin": "b7ee2276560910fcf5b496fe4ae8a598612f0ac6a9c82b93edc1c6009c094713",
       "build/native/ui-menu-options.bin": "42a1aeb53991565d14f1d978b75d87c54ea27e94ba491d92c47d3f1f63073128",
       "build/native/ui-pages.bin": "9758d3b32e421a85555868ec08fd2abf694cc228cf10f75274df1b5bb76ac948",
-      "build/native/ui-title-identities.bin": "3cca152e1075f9d89cc3ae76d294cc436eb4d22d340eeca1b7a2b6280a7842b2",
+      "build/native/ui-title-identities.bin": "4579c592d79f9b718c43a02c1bd0205cfeeb78bc69372f8e47b56d1fbe134c74",
       "build/native/ui-title-pages.bin": "84050866da7c0bc34638f1ae567470514c781cd0c439fd03e8ae9455043fda81",
-      "build/native/version.bin": "5570157a9dcb55a23d99a5039d4b38bfbb68618584a0968ef4c31ab70fcdaaf3"
+      "build/native/version.bin": "987bbd0bb49d70e818ab955e2fe4f356b31e7c45a8485fd5afffd0b80c0b5d9f"
     },
-    "build_receipt_sha256": "0956a9f3d4697174bcd9f7ce203b2671bda8b0820a0ad576e8d5f15ba799f485"
+    "build_receipt_sha256": "18e7cc7af8848a5399152aa26079abaabc6c609464a920445164676dcb8c0ead"
   },
   "runtime": {
     "cold-one": {
@@ -3116,17 +3132,17 @@
     "Missing/invalid cold milestone: input_responsive",
     "Continuous loaded-title selection evidence missing/invalid"
   ],
-  "identity": "af96b56552790bddcd73b94579dc3dfc657250e774d7d8c37287c07564aea1e1",
+  "identity": "aeeccde224cd52c34e725e019229aecee0caf0976f0a95aed4a5bc43d8ee8db5",
   "report_generator_sha256": "3b661fe59c95c4092bd14ce53507da9e4124f3ceb2733114c93fafeaf960fb0c",
   "deltas": {
     "state": "historical reviewed baseline; master has no accepted metrics report",
     "previous_identity": "ea32fefef08509b2817ddc05827848878c2fcfe606d30284cb811fac71096884",
     "static_bytes": {
-      "executable_bytes": -41148,
-      "code_bytes": 7272,
+      "executable_bytes": -42540,
+      "code_bytes": 6848,
       "data_bytes": -39840,
       "bss_bytes": 145420,
-      "loaded_payload_bytes": 112852
+      "loaded_payload_bytes": 112428
     },
     "runtime": {
       "cold-one": {
@@ -3145,5 +3161,5 @@
     "previous_report": "docs/metrics/baselines/pre-title-score-current.json",
     "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede"
   },
-  "product_identity": "dee29cdfe2793a835cdff66f3d54a7408531627ecf38830577c7626eb46bb066"
+  "product_identity": "ba62abe46746885deec5d565dc2128bd6ca7bba820ebde528339ce788ea31781"
 }

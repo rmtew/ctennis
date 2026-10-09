@@ -1,4 +1,9 @@
-# Supplied private state: bounded next-step scope
+# Supplied private state: reviewed implementation scope
+
+Status: Richard approved this migration; product `ff236692` implements it.
+See [the integration result](tutorial-private-state-integration.md) for measured
+bytes, fresh CPU/native evidence and remaining review gates. The audit and estimates
+below describe the original proposal, before implementation.
 
 Private state does **not** need to wait behind comparison/copy micro-optimizations.
 The previous ranking treated its proof burden as a reason to defer it before
@@ -136,6 +141,7 @@ tails. Follow with guard amortization or longword comparison only if measurement
 still justifies them. No removal of audio/scene/scorer semantics is required.
 
 The integration owner owns this migration only after approval; the parent
-coordinates independent review. The current approval question remains unanswered.
+coordinates independent review. Approval was subsequently given; see the integration result above.
 This scope supersedes the automatic deferment implied by the earlier hotspot
-ranking; it does not authorize implementation or merge PR38.
+ranking. Implementation was subsequently approved; merging PR38 remains pending
+review.
