@@ -297,3 +297,60 @@ No emulator rerun is needed for this arithmetic correction; the original report,
 executable, input trace and receipt are preserved. Reported latencies elsewhere
 are provider guest seconds unless a regional conversion is explicitly named.
 New timing observations must retain raw CCK and label the seconds timebase.
+
+### Completed PAL latency separation
+
+The separate read/write-stack diagnostic used the unchanged product
+`3d755826cc70536d92a9b33dca382df0b4d60a40`, executable SHA256
+`7c6a89d70efa2689c78767f56febbd9dea2b66f33e552e447ff83af2353ae849`.
+Observer source `7a27bb6` measured 235 complete callbacks, zero notification
+loss and minimum absolute headroom 3,657.137 CCK. Independent review reconstructed
+all literal calls, callbacks, endpoints and 133 frozen 318/72/318 boundaries.
+Initial held-shot and fresh-D-edit endpoints took 1.058566 and 1.080232 PAL
+seconds. The fresh physical-input window was 31,609,720→35,441,189 CCK.
+
+| Fresh edit, wholly contained measured spans | CCK |
+| --- | ---: |
+| 89 public preview calls, inclusive | 1,180,598 |
+| Actual core-body subtree union, including nested helpers | 473,079 |
+| Copy/restore subtree union | 284,600 |
+| Exclusive guard/admission category inside workers | 255,594 |
+| Exclusive copy/restore category inside workers | 281,258 |
+| Exclusive core-body own instructions inside workers | 31,988 |
+| Exclusive API own instructions inside workers | 59,077 |
+| Exclusive other helpers inside workers | 552,681 |
+
+The five exclusive categories partition public-worker spans exactly. Subtree
+unions overlap those categories and must not be added to them. The core-body
+subtree took approximately 0.133 PAL seconds; 31,988 CCK is only its own-instruction
+category, not the total simulation cost. Stack markers retain IRQ and contention;
+instruction tails outside the first call store and last RTS read are not isolated.
+
+Stable literal CIA read bytes and the saved timer globals reconstruct all 154
+`tutorial_work_remaining` returns in the fresh window. Of 149 preview-loop
+decisions, 38 admitted budget 4, 51 admitted budget 2 and 60 declined. Every
+admitted decision has an actual following worker in the same callback; every
+decline has none. Declines retained 3,118–6,990 E ticks. Their finishing tails
+were 166–563 CCK and final absolute headroom was 15,280.389–34,649.879 CCK.
+The existing 7,000-E minimum therefore leaves substantial unused time in this
+specific current-serve observation. Maximum observed fresh public-worker span
+was 18,583 CCK. These observations support investigating a class-specific
+current-serve admission reserve; they do not bound unseen operations or justify
+lowering retained-navigation admission globally. Keep the existing public cap,
+sequential operations, actual core and complete restore guards. Review a reserve
+and its worst-case worker plus finishing tail, then prove affected PAL/NTSC
+deadlines and physical-input endpoint timing on the new product before claiming
+a speedup. No scheduling or physics change is included in this diagnostic.
+
+Campaign `0144dc18e4d440a6b4a5573e1d73b5e2` remains **incomplete/passedfalse**:
+the controller hit ENOSPC in `preserve_artifacts` after the completed child
+report. Original report and attempt receipt both have SHA256
+`5085ecc066237d0349fe955497c3ce97d6785f1e3165a8379e58a5627542ea72`.
+The separate `scripts/validate_preserved_latency.py` binds those originals,
+controller failure, all consumed inputs/tools/products and retained artifacts
+without running the emulator or changing campaign state. It establishes only
+the completed measurement extent. `child.json` contains command identity, not
+an independently recorded exit status. The earlier diagnostic parser failure
+`d123f2e465f14387890f991bee0d506f` is also retained. Neither diagnostic establishes
+full acceptance. NTSC exclusive-body/admission measurement and any improved
+runtime remain pending.
