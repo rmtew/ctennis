@@ -160,9 +160,19 @@ class Observer(TraceCollector):
         assert len(body_map)==9,'Emitted core body map must have nine distinct entries'
         self.body_frames=BodyFrames(body_map,symbols['game_stack_bottom'],symbols['game_stack_top'],return_pcs)
         self.body_sink_events=[]
+        self.contexts={symbols[n]:bytearray(read(symbols[n],318)) for n in
+            ('game_preview_selected_state','game_preview_edited_state',
+             'game_preview_held_state','game_preview_released_state')}
 
     def field(self,name,size):
-        if self.start<=self.symbols[name]<self.stop:return super().field(name,size)
+        if self.start<=self.symbols[name]<self.stop:
+            if self.inside_api() and self.body_frames.stack:
+                base=self.body_frames.stack[-1]['entry_registers']['a'][5]
+                if base!=self.start:
+                    assert base in self.contexts,'Unknown supplied private state base'
+                    offset=self.symbols[name]-self.start
+                    return bytes(self.contexts[base][offset:offset+size])
+            return super().field(name,size)
         for start,shadow in ((self.symbols['game_preview_state'],self.meta),
                              (self.symbols['game_history_state'],self.history)):
             offset=self.symbols[name]-start
@@ -291,6 +301,11 @@ class Observer(TraceCollector):
             return
         if s['game_stack_bottom']<=a<a+size<=s['game_stack_top']:
             self.stack_min=min(self.stack_min,a);return
+        if self.body_frames.stack and s['game_core_code_begin']<=pc<s['game_core_code_end']:
+            base=self.body_frames.stack[-1]['entry_registers']['a'][5]
+            if not base<=a<a+size<=base+318:
+                self.problems.append('Actual core writes outside supplied native context')
+                return
         if contained('game_preview_storage',5550):return
         if contained('preview_native_mailbox',82):return
         if contained('game_history_seek_storage',734):
@@ -298,7 +313,11 @@ class Observer(TraceCollector):
                     'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel'):return
             self.problems.append('Non-seek API writes private seek context');return
         if contained('core_trace_arguments',12) or contained('core_trace_marker',2):return
-        if contained('game_core_state',318) or contained('game_history_state',72):return
+        if contained('game_core_state',318):
+            if self.number('game_preview_active',1) in (1,2):
+                self.problems.append('Private native worker writes canonical state')
+            return
+        if contained('game_history_state',72):return
         if self.pending['name']=='game_history_freeze' and overlap('game_history_buffer',80318):return
         rule=self.rules.get(pc)
         if rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']:
@@ -387,6 +406,8 @@ class Observer(TraceCollector):
         a,size,value=r['addr'],r['size'],r['value'];data=value.to_bytes(size,'big')
         if r['access']=='write':
             self._guard(r)
+            for start,shadow in self.contexts.items():
+                if start<=a<a+size<=start+318:shadow[a-start:a-start+size]=data
             if a==0xbfde00 and value==1 and self.timer_start is None:self.timer_start=r['position']['cck']
             if a==self.symbols['simulation_timer_origin']:self.timer_origin=value
             if a==self.symbols['simulation_started_updates']:

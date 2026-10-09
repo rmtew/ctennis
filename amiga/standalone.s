@@ -1,5 +1,6 @@
 ; CPU-only executable: exactly the product simulation code and immutable tables.
 ; Observation adapters preserve every register and have no physical side effects.
+PREVIEW_DEBUG equ 1
         section match_core,code
         include "amiga/game/core.s"
         include "amiga/game/history.s"

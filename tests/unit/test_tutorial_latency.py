@@ -49,7 +49,8 @@ class Tests(unittest.TestCase):
   diagnostic={c.id for c in diagnostic_cases()}
   self.assertFalse(ordinary & diagnostic)
   self.assertEqual(diagnostic,{'tutorial-latency-pal','tutorial-latency-ntsc',
-                              'tutorial-hotspots-pal','private-state-cpu'})
+                              'tutorial-hotspots-pal','private-state-cpu',
+                              'private-state-retained-pal','private-state-retained-ntsc'})
  def test_unbound_measurement_cannot_pass_extent(self):
   from tutorial_latency import required_latency_extent
   self.assertFalse(required_latency_extent({'passed':True},'PAL'))

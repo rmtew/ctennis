@@ -30,7 +30,7 @@ def category(callee):
         return 'core-body'
     if any(word in callee for word in ('copy', 'restore', 'release_current', 'save_working')):
         return 'copy-restore'
-    if any(word in callee for word in ('guard', 'unchanged', 'validate', 'admitted', 'remaining', 'read_sim_timer')):
+    if any(word in callee for word in ('guard', 'unchanged', 'validate', 'selection_valid', 'admitted', 'remaining', 'read_sim_timer')):
         return 'guard-admission'
     return 'other'
 

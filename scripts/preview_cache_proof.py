@@ -81,6 +81,70 @@ def ready_failure(cpu,target,label,address=None,width=2):
         ready_result_preserved=True,failed_seek_cpu_cycles=cycles)
 
 
+def generation_guard_controls(cpu,ordinal,x,y):
+    """Owned-entry rejection and explicit diagnostic fault injection, not gameplay."""
+    symbols=cpu.symbols;checks=[]
+    job(cpu,ordinal,x,y)
+    assert field(cpu,'game_preview_status')==5 and field(cpu,'game_preview_cache_valid')==1
+    # READY warm and canceled cold requests both pass through the common guard.
+    for cache in ('warm','cold'):
+        if cache=='cold':
+            cpu.call('game_preview_cancel',{0:field(cpu,'game_preview_generation',4)})
+            assert cpu.cpu.r_reg(0)==1
+        generation=field(cpu,'game_preview_generation',4)
+        for name,value in (('game_preview_active',1),('game_preview_active',2),
+                ('game_preview_active',3),('game_history_replaying',255),('game_history_seek_active',1)):
+            address=symbols[name];old=cpu.mem.r8(address);cpu.mem.w8(address,value)
+            saved=protected(cpu);preview=block(cpu,'game_preview_storage','game_preview_storage_end')
+            for api,args in (('game_preview_request',{0:generation,1:ordinal,2:x,3:y}),
+                    ('game_preview_step',{0:generation,1:4}),('game_preview_result',{0:generation})):
+                cpu.call(api,args)
+                assert cpu.cpu.r_reg(0)==0 and protected(cpu)==saved
+                assert block(cpu,'game_preview_storage','game_preview_storage_end')==preview
+            cpu.mem.w8(address,old);checks.append(dict(cache=cache,owner=name,value=value))
+    job(cpu,ordinal,x,y)
+    generation=field(cpu,'game_preview_generation',4)
+    cpu.call('game_preview_selection_unchanged');assert cpu.cpu.r_reg(0)==1
+    diagnostics=0
+    for first,length in (('game_core_state',318),('game_history_state',72)):
+        for offset in range(length):
+            address=symbols[first]+offset;old=cpu.mem.r8(address);cpu.mem.w8(address,old^1)
+            saved=protected(cpu)
+            cpu.call('game_preview_selection_unchanged')
+            assert cpu.cpu.r_reg(0)==0 and protected(cpu)==saved
+            assert field(cpu,'game_preview_generation',4)==generation
+            cpu.mem.w8(address,old);diagnostics+=1
+    cpu.call('game_preview_selection_unchanged');assert cpu.cpu.r_reg(0)==1
+    return dict(passed=True,owned_entry_rejections=checks,diagnostic_corrupt_bytes=diagnostics,
+        full_preserved_image=True,corruption_does_not_advance_generation=True)
+
+
+def final_token_control(executable):
+    """Separate fresh instance: exhaustion cannot mask ordinary eviction controls."""
+    image,symbols=load_image(executable)
+    with Core(image,symbols,readonly=READONLY) as cpu:
+        _,_,_,launches=fixture(cpu)
+        event=next(row for row in launches if row['human'] and row['kind']==1)
+        ordinal=next(i for i,(n,k,e) in enumerate(attempts(cpu))
+            if n==event['episode_origin'] and k==1 and e==event['end'])
+        cpu.call('game_history_freeze');seek(cpu,event['origin'])
+        # Explicit negative setup slot; do not reset a normal-lifetime fixture.
+        cpu.mem.w32(symbols['game_preview_generation'],0xfffffffd)
+        last,_=job(cpu,ordinal,event['x'],event['y'])
+        assert last['generation']==0xfffffffe
+        saved=protected(cpu)
+        call_checked(cpu,'game_preview_result',{0:0xfffffffe},saved);assert cpu.cpu.r_reg(0)==1
+        call_checked(cpu,'game_preview_cancel',{0:0xfffffffe},saved);assert cpu.cpu.r_reg(0)==1
+        assert field(cpu,'game_preview_generation',4)==0xffffffff
+        cpu.call('game_history_resume_latest');assert cpu.cpu.r_reg(0)==1
+        cpu.call('game_history_freeze');assert cpu.cpu.r_reg(0)==1
+        assert field(cpu,'game_preview_generation',4)==0xffffffff
+        cpu.audit_reads()
+        return dict(final_issued_token=last['generation'],final_token_completed_and_published=True,
+            terminal_generation=field(cpu,'game_preview_generation',4),saturated_invalidation=True,
+            scope='Separate fresh actual-core fixture; no lifetime counter reset.')
+
+
 def exercise(executable):
     image,symbols=load_image(executable)
     with Core(image,symbols,readonly=READONLY) as cpu:
@@ -138,6 +202,7 @@ def exercise(executable):
         assert not after_cancel['cache_hit'] and after_cancel['resolver_operations']>0
         different,_=job(cpu,serve_ordinal,x,event['y'],expected_status=6)
         assert not different['cache_hit'] and different['resolver_operations']>0
+        guard_validation=generation_guard_controls(cpu,ordinal,x,event['y'])
         # Resume and drive actual operations past eviction, then freeze again.
         cpu.call('game_history_resume_latest')
         for tick in range(1024):
@@ -167,7 +232,8 @@ def exercise(executable):
             call_checked(cpu,api,args,saved)
             assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
         cpu.audit_reads()
-        return dict(passed=True,cold_warm=comparison,failed_seek_controls=failures,
+        result=dict(passed=True,cold_warm=comparison,failed_seek_controls=failures,
+            generation_guard_validation=guard_validation,
             invalidation=dict(passed=True,negative_controls=['seek-back-ready','failed-seek-preserves',
                 'different-attempt','cancel','eviction','exhaustion','stale-generation'],
                 after_cancel_resolver_operations=after_cancel['resolver_operations'],
@@ -175,3 +241,5 @@ def exercise(executable):
                 oldest_after_eviction=cursor(cpu,'game_history_oldest'),evicted_incoming_origin=warm_result['incoming'],
                 generation_exhausted=field(cpu,'game_preview_generation',4)==0xffffffff),
             maximum_stack_bytes=cpu.stack_bytes)
+    result['generation_guard_validation'].update(final_token_control(executable))
+    return result

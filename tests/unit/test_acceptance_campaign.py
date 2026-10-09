@@ -276,13 +276,24 @@ class CampaignTests(unittest.TestCase):
                            'cancel','eviction','exhaustion','stale-generation'],
                        after_cancel_resolver_operations=1,different_attempt_resolver_operations=1,
                        oldest_after_eviction=64,evicted_incoming_origin=1))
+        cache['generation_guard_validation']=dict(passed=True,diagnostic_corrupt_bytes=390,
+            final_issued_token=0xfffffffe,terminal_generation=0xffffffff,
+            full_preserved_image=True,corruption_does_not_advance_generation=True,
+            final_token_completed_and_published=True,saturated_invalidation=True,
+            owned_entry_rejections=[dict(cache=cache,owner=name,value=value)
+                for cache in ('cold','warm') for name,value in
+                (('game_preview_active',1),('game_preview_active',2),('game_preview_active',3),
+                 ('game_history_replaying',255),('game_history_seek_active',1))])
         report['preview_validation']['cache_validation']=cache
         report['preview_validation']['stage_a1_validation']=preview_a1_report()
         report['preview_validation']['stage_a2_validation']=preview_a2_report()
         report['preview_validation']['stage_a3_validation']=preview_a3_report(report['preview_validation']['stage_a2_validation'])
         report['preview_validation']['batch_validation']=preview_batch_report()
         self.assertTrue(campaign.required_extent(case,report))
-        for area,key,value in (('cold_warm','state_path_output_equal',False),
+        for area,key,value in (('generation_guard_validation','diagnostic_corrupt_bytes',389),
+                               ('generation_guard_validation','final_token_completed_and_published',False),
+                               ('generation_guard_validation','final_issued_token',0xffffffff),
+                               ('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
                                ('invalidation','oldest_after_eviction',1)):
             partial=json.loads(json.dumps(report));partial['preview_validation']['cache_validation'][area][key]=value

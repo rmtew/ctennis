@@ -129,6 +129,10 @@ def dependencies(case, root=ROOT):
     """
     root=Path(root)
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
+    if case.id in ('private-state-retained-pal','private-state-retained-ntsc'):
+        paths.add(root/'scripts/preview_native_fixture.s')
+        paths.update(root/'build/tests'/name/'report.json' for name in
+            ('preview-cpu','seek-sliced-cpu','private-state-cpu'))
     if case.id in ('preview-native-pal','preview-native-ntsc'):
         paths.add(root/'scripts/preview_native_fixture.s')
         paths.add(root/'build/tests/preview-cpu/report.json')
@@ -714,6 +718,9 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id in ('private-state-retained-pal','private-state-retained-ntsc'):
+        from retained_private_extent import required_retained_extent
+        return required_retained_extent(report,'NTSC' if case.id.endswith('-ntsc') else 'PAL')
     if case.id=='private-state-cpu':
         validation=report.get('private_state_validation') or {}
         audit=report.get('shared_byte_audit') or {}
@@ -802,6 +809,18 @@ def required_extent(case,report):
                 if type(row.get(field)) is not int or row[field]<0:return False
         cache=validation.get('cache_validation') or {}
         paired=cache.get('cold_warm') or {}
+        guard=cache.get('generation_guard_validation') or {}
+        if (guard.get('passed') is not True or guard.get('diagnostic_corrupt_bytes')!=390
+                or guard.get('final_issued_token')!=0xfffffffe
+                or guard.get('terminal_generation')!=0xffffffff
+                or any(guard.get(k) is not True for k in ('full_preserved_image',
+                    'corruption_does_not_advance_generation','final_token_completed_and_published',
+                    'saturated_invalidation'))
+                or {(r.get('cache'),r.get('owner'),r.get('value')) for r in
+                    guard.get('owned_entry_rejections',[])}!={
+                    (cache,name,value) for cache in ('cold','warm') for name,value in
+                    (('game_preview_active',1),('game_preview_active',2),('game_preview_active',3),
+                     ('game_history_replaying',255),('game_history_seek_active',1))}):return False
         failures=cache.get('failed_seek_controls')
         invalidation=cache.get('invalidation') or {}
         if (cache.get('passed') is not True

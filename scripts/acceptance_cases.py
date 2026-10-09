@@ -69,6 +69,10 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('private-state-retained-pal', ('scripts/run_retained_private_native.py',),
+             'tests/private-state-retained-pal/report.json'),
+        Case('private-state-retained-ntsc', ('scripts/run_retained_private_native.py','--ntsc'),
+             'tests/private-state-retained-ntsc/report.json'),
         Case('private-state-cpu', ('scripts/run_private_state_proof.py',),
              'tests/private-state-cpu/report.json', category='host'),
         Case('tutorial-hotspots-pal', ('scripts/run_tutorial_hotspots.py',),

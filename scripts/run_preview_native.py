@@ -46,6 +46,14 @@ COMMANDS=('game_history_freeze','game_history_seek_begin','game_preview_request'
     'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel')
 
 
+def expected_body_base(name,owner,symbols):
+    if name!='game_preview_step':return symbols['game_core_state']
+    assert owner['active'] in (1,2),'Preview body has no private owner role'
+    if owner['active']==1:return symbols['game_preview_held_state']
+    assert owner['variant'] in (0,1),'Preview body has an invalid variant owner'
+    return symbols['game_preview_held_state'] if owner['variant']==0 else symbols['game_preview_released_state']
+
+
 def overlay(directory):
     original=ROOT/'amiga/main.s';text=original.read_text()
     anchor='        bsr     game_native_commands\n        jsr     tutorial_tick'
@@ -310,8 +318,16 @@ class Native:
                     return stop
                 self.internal_body_stops+=1
                 # Notification delivery is drained by the synchronous run reply.
-                state=self.block('game_core_state','game_core_state_end')
-                assert state==observer.state(),'Actual body state differs from full write reconstruction'
+                canonical=self.block('game_core_state','game_core_state_end')
+                assert canonical==observer.state(),'Canonical state differs from full write reconstruction'
+                base=(frames.stack[-1]['entry_registers']['a'][5] if frames.stack
+                    and (pc,sp)==(frames.stack[-1]['return_pc'],frames.stack[-1]['entry_sp']+4)
+                    else registers['a'][5])
+                assert base==observer.start or base in observer.contexts,'Body selects unknown supplied context'
+                assert registers['a'][5]==base,'Actual body clobbers supplied A5'
+                state=self.read(base,318)
+                shadow=observer.shadow if base==observer.start else observer.contexts[base]
+                assert state==bytes(shadow),'Actual supplied state differs from full write reconstruction'
                 position={k:stop[k] for k in ('cck','frame','vpos','hpos','seconds')}
                 if frames.stack and (pc,sp)==(frames.stack[-1]['return_pc'],frames.stack[-1]['entry_sp']+4):
                     for row in frames.exit(pc,sp,state,position):
@@ -332,6 +348,7 @@ class Native:
                     seek_active=observer.number('game_history_seek_active',1),seek_status=observer.number('game_history_seek_status'),
                     seek_generation=observer.number('game_history_seek_generation',4),
                     seek_cursor=observer.number('game_history_seek_cursor',8))
+                assert base==expected_body_base(name,owner,self.symbols),'Body A5 differs from actual owner role'
                 row=frames.entry(pc,registers,return_pc,state,position,owner,len(observer.api_rows))
                 if row['depth']==1:
                     outer_count+=1
@@ -500,7 +517,7 @@ class Native:
             outcomes=outcomes,prefix=self.number('game_preview_prefix_count'),
             incoming=self.number('game_preview_incoming',8),action=self.number('game_preview_action',8))
 
-    def completed(self,name,ordinal,selection,end,x,y):
+    def completed(self,name,ordinal,selection,end,x,y,budget=4):
         print('Native paired job',name,'ordinal',ordinal,'selection',selection,flush=True)
         selected=self.block('game_core_state','game_core_state_end')
         first=len(self.observer.rows)
@@ -513,7 +530,7 @@ class Native:
             if self.number('game_preview_status')>=5:break
             if n==0:self.joystick(True);self.key(0x12,True)
             if n==2:self.joystick(False);self.key(0x12,False)
-            worker_indices.append(len(self.observer.api_rows));costs.append(self.step(generation))
+            worker_indices.append(len(self.observer.api_rows));costs.append(self.step(generation,budget))
             if n%64==63:print('Native worker progress',name,n+1,'status',self.number('game_preview_status'),flush=True)
         else:raise AssertionError('Native paired job reached worker-call cap')
         assert self.number('game_preview_status')==5,'Native preview did not reach honest READY'

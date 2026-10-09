@@ -30,11 +30,10 @@ game_preview_request:
         bne     .invalid
         cmpi.l  #$fffffffe,d0
         bcc     .invalid
-        cmpi.b  #2,game_history_mode
-        bne     .invalid
+        bsr     game_preview_selection_valid
+        tst.l   d0
+        beq     .invalid
         cmpi.w  #GAME_PLAYING,game_lifecycle
-        bne     .invalid
-        tst.b   game_preview_active
         bne     .invalid
         cmpi.w  #255,d2
         bhi     .invalid
@@ -121,9 +120,6 @@ game_preview_request:
         bne.s   .cold
         cmp.w   game_preview_end,d7
         bne.s   .cold
-        bsr     game_preview_selection_unchanged
-        tst.l   d0
-        beq.s   .cold
         move.l  a5,d0
         beq.s   .reuse
         lea     game_preview_origin,a0
@@ -203,13 +199,13 @@ game_preview_step:
         beq     .invalid
         cmp.l   game_preview_generation,d0
         bne     .invalid
+        cmpi.l  #$ffffffff,d0
+        beq     .invalid
         cmpi.w  #1,d1
         bcs     .invalid
         cmpi.w  #4,d1
         bhi     .invalid
-        cmpi.b  #2,game_history_mode
-        bne     .invalid
-        bsr     game_preview_selection_unchanged
+        bsr     game_preview_selection_valid
         tst.l   d0
         beq     .invalid
         cmpi.w  #PREVIEW_READY,game_preview_status
@@ -324,9 +320,11 @@ game_preview_result:
         beq     .invalid
         cmp.l   game_preview_generation,d0
         bne.s   .invalid
+        cmpi.l  #$ffffffff,d0
+        beq.s   .invalid
         cmpi.w  #PREVIEW_READY,game_preview_status
         bne.s   .invalid
-        bsr     game_preview_selection_unchanged
+        bsr     game_preview_selection_valid
         tst.l   d0
         beq.s   .invalid
         lea     game_preview_paths,a0
@@ -897,6 +895,25 @@ game_preview_restore_selected:
         lea     game_preview_history_saved,a1
         bra     game_preview_copy_history
 
+; Callers already checked generation. Main-loop APIs own all validity changes;
+; IRQ/presentation never mutate selected simulation/history or generation.
+game_preview_selection_valid:
+        cmpi.b  #2,game_history_mode
+        bne.s   .invalid
+        tst.b   game_preview_active
+        bne.s   .invalid
+        tst.b   game_history_replaying
+        bne.s   .invalid
+        tst.b   game_history_seek_active
+        bne.s   .invalid
+        moveq   #1,d0
+        rts
+.invalid:
+        moveq   #0,d0
+        rts
+
+; Explicit test diagnostic catches unversioned corruption. No runtime caller.
+        ifd PREVIEW_DEBUG
 game_preview_selection_unchanged:
         lea     game_core_state,a0
         lea     game_preview_selected_state,a1
@@ -915,6 +932,8 @@ game_preview_selection_unchanged:
 .invalid:
         moveq   #0,d0
         rts
+
+        endif
 
 game_preview_context_address:
         lea     game_preview_held_state,a0
