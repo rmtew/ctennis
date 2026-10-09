@@ -81,7 +81,10 @@ Some useful flat lexical regions (local labels stay in their enclosing region):
 The state comparison `CMPM.W`, branch and `DBRA` each execute 13,674 times in
 that broader profile. Charged CCK per instruction is respectively 6, 4 and
 5–7. The two bulk-copy `MOVEM.L` instructions execute 1,596 times each at
-54 and 52 charged CCK. Bus waits are separately retained. These are emulator
+54 and 52 charged CCK. Some `top_pcs.source_mnemonic` fields contain the inline
+local label rather than the opcode mnemonic; the instruction descriptions above
+were checked against emitted opcodes and the native listing. Bus waits are
+separately retained. These are emulator
 measurements; operand-dependent physical 68000 timing has not been independently
 audited against the pinned CPU model.
 
@@ -104,7 +107,7 @@ hashes match. The immutable receipt SHA256 is
 `4e918a2cec6b558cc44b0b9f4adac0bb8f81854a431da8affb6724550af428ea`.
 
 Capture caps are 64 profile frames, 32 MiB profile files, 64 MiB uncompressed
-RPC, 30 physical seconds, 1,024 callbacks and 4,096 boundary stops. Raw RPC used
+RPC, 30 seconds of emulated PAL time, 1,024 callbacks and 4,096 boundary stops. Raw RPC used
 39,371,599 bytes. Earlier campaign `f89b605c6f184d219f568a5b4ba61642` failed its
 raw cap and remains preserved separately; it is not a game-check failure or a
 pass. The successful observer omitted unnecessary startup stack logging and
