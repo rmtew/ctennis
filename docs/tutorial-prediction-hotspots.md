@@ -147,6 +147,12 @@ shared-core refactor.
 
 ## Ranked proposals requiring review
 
+The subsequent [private-state scope review](tutorial-private-state-scope.md)
+finds a practical A5 strategy and recommends supplied private addressing as the
+next structural candidate. Its concrete scope supersedes automatic deferment
+behind the smaller changes in this initial ranking. Implementation still requires
+user approval.
+
 | Rank | New candidate | Gain evidence / complexity | Correctness requirement |
 |---|---|---|---|
 | 1 | Compare 79 longwords plus final word instead of 159 words | Directly targets the largest guard; small change, gain unmeasured | Compare all 318 bytes and all 72 metadata bytes; preserve equality result and early rejection; even alignment, no overread |
