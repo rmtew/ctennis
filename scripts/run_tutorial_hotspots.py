@@ -8,14 +8,14 @@ import subprocess
 from pathlib import Path
 
 from native_evidence import ReportRun, TARGET, atomic_json, digest, inputs_for, snapshot
-from native_hunk import loaded_hunks
+from native_hunk import loaded_hunks,hunk_layout
 from native_tools import ROOT, emulator_config
 from run_tutorial_capture import FIELDS
 from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
 from tutorial_latency import LatencyObserver, instruction_map
 from tutorial_hotspots import WorkerTiming, summarize_workers, summarize_profile
 
-PRODUCT_SHA256 = 'c543a695d9493254eb152cf34a093676c3c0c0dcd4df203d0ad105a5b97e3cb8'
+PRODUCT_SHA256 = '9bfd85797f8b3a997cff8fa1489be8bfdfca45a0396001935da019c3fc117454'
 PROVIDER_CLOCK = 3546895
 CLOCKS = {'PAL':3546895, 'NTSC':3579545}
 CAPS = dict(physical_seconds=30, callbacks=1024, boundary_stops=4096, profile_frames=64,
@@ -24,6 +24,18 @@ CAPS = dict(physical_seconds=30, callbacks=1024, boundary_stops=4096, profile_fr
 
 class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
+
+
+def verified_code_range(executable,hunks):
+    code=[row for row in hunk_layout(executable)['hunks'] if row['kind']=='code']
+    assert len(code)==1 and code[0]['index']==0,'Expected one native code hunk0'
+    loaded=[row for row in hunks if row['hunk']==0]
+    assert len(loaded)==1 and loaded[0]['matched'] is True
+    assert loaded[0]['bytes']==code[0]['bytes']
+    assert isinstance(loaded[0].get('actual_sha256'),str) and re.fullmatch(r'[0-9a-f]{64}',loaded[0]['actual_sha256'])
+    assert loaded[0]['actual_sha256']==loaded[0]['expected_sha256']
+    assert type(loaded[0]['start']) is int and 0<loaded[0]['start']<=524288-loaded[0]['bytes']
+    return dict(base=loaded[0]['start'],size=loaded[0]['bytes'])
 
 
 def run(standard='PAL', baseline=None):
@@ -44,7 +56,7 @@ def run(standard='PAL', baseline=None):
         assert listing_hashes==[digest(listing_path)], 'Retained listing is not manifest-bound'
         paths, tools = inputs_for('native-feedback','scripts/run_tutorial_hotspots.py')
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                                native_product_commit='6f2828735c273258c0c0abdb577778f1e831a7ae',
+                                native_product_commit='b1eb145c8417a54045b80f585b475f4f1f3665e3',
                                 files=snapshot(set(paths)|{executable,listing_path,manifest_path}),
                                 tools=tools, runner='scripts/run_tutorial_hotspots.py',
                                 actual_target=dict(TARGET, video=standard),
@@ -70,6 +82,7 @@ def run(standard='PAL', baseline=None):
             def number(n,width=None):
                 return int.from_bytes(block(n,FIELDS.get(n,2) if width is None else width),'big')
             loaded = loaded_hunks(executable,segments,read)
+            code_range=verified_code_range(executable,loaded)
             calls, returns = instruction_map(listing,segments,read)
             simulation_calls=[pc for pc,c in calls.items() if c['callee']=='simulation_update']
             assert len(simulation_calls)==1
@@ -174,7 +187,7 @@ def run(standard='PAL', baseline=None):
                 frames=CAPS['profile_frames'],samples=True,registers=False,
                 slots=False,memory=False,screenshots='none',
                 relocation_bases=[s['start'] for s in segments],
-                code_ranges=[dict(base=segments[0]['start'],size=56836)]))
+                code_ranges=[code_range]))
             timing.active=True
             key(0x22,True,.02);key(0x22,False,.001)
             assert (number('tutorial_x'),number('tutorial_y'))!=previous_xy
@@ -200,7 +213,7 @@ def run(standard='PAL', baseline=None):
             stack_result=summarize_workers(timing.rows, endpoints[-1]['request']['cck'],
                 endpoints[-1]['first_actual_publication']['position']['cck'],endpoints[-1]['generation'])
             final_stop=dict(stop)
-            profile_result=summarize_profile(profile_path,listing,segments)
+            profile_result=summarize_profile(profile_path,listing,segments,code_range)
             assert profile_result['started']['seconds']<=edit_start['provider_seconds']
             assert profile_result['last_committed_frame']>=endpoints[-1]['first_actual_publication']['position']['frame']+2
             assert profile_result['frames']<CAPS['profile_frames'], 'Profile self-stop truncated the job'
@@ -208,7 +221,7 @@ def run(standard='PAL', baseline=None):
                      cap_uncompressed_bytes=session.MAX_RAW_BYTES)
         capture=directory/'hotspots.json'
         atomic_json(capture,dict(boundaries=boundaries,actions=actions,endpoints=endpoints,
-            timing=callback_result,worker_timing=stack_result, profile=profile_result,profile_start=profile_start,profile_stop=profile_stop,loaded_hunks=loaded,title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
+            timing=callback_result,worker_timing=stack_result, profile=profile_result,profile_start=profile_start,profile_stop=profile_stop,loaded_hunks=loaded,code_range=code_range,title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
             call_map=calls, return_pcs=sorted(returns),literal_rpc=raw,
             admission_scope='No new CIA return-value ledger; current-product admission/wait costs use flat PC samples and complete callback spans.'))
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),

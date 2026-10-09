@@ -3,9 +3,9 @@ import math
 from native_evidence import TARGET
 
 CPU_RECEIPTS={
- 'build/tests/preview-cpu/report.json':'4b5d2109fa0271f1cf216bf0c805dbe588e50558aa7ea1d7ad25337c827c83c6',
- 'build/tests/seek-sliced-cpu/report.json':'2bcaa71fb7660a3e9284992cbfc9aff1c5c34a122fbaa8871cdfaafc91db43b6',
- 'build/tests/private-state-cpu/report.json':'0efaa78845900df865b20c923782254ca02eea7ca188d24c95682e195a0aff65'}
+ 'build/tests/preview-cpu/report.json':'82655fe568c668b97cae26d9219b5ef2104de9dbd24c7ecc3d4a867680446e5e',
+ 'build/tests/seek-sliced-cpu/report.json':'a0da6b594010e82e3ffc6f996fee17ff07c0286e5f12f1c2221e46e4dcf4f23b',
+ 'build/tests/private-state-cpu/report.json':'10f7166a21ad631c4c0153491aa16a4207de8d1e4e1058b4ccc49314a854d3cc'}
 
 
 def required_retained_extent(report,standard):

@@ -75,7 +75,7 @@ def decode_frame(stream, metadata):
         yield pc,total,instruction,wait,irq
 
 
-def summarize_profile(directory, listing, segments):
+def summarize_profile(directory, listing, segments, code_range):
     summary=json.loads((directory/'profile.json').read_text())
     assert summary['options']['samples'] and not summary['options']['registers']
     assert not summary['options']['slots'] and not summary['options']['memory']
@@ -115,14 +115,14 @@ def summarize_profile(directory, listing, segments):
     assert total_rows==summary['samples_total'] and irq_cck==summary['irq_cck'] and len(frames)==summary['frames_written']
     for pc,f in pcs.items():
         index=bisect.bisect_right(addresses,pc)-1
-        in_code=segments[0]['start']<=pc<segments[0]['start']+56836
+        in_code=code_range['base']<=pc<code_range['base']+code_range['size']
         name=labels[index][1] if index>=0 and in_code else 'outside-native-code'
         f.update(region=name,**instructions.get(pc,{}))
         g=functions.setdefault(name,dict(instructions=0,charged_cck=0,chip_wait_cck=0,total_cck=0,entry_visits=0))
         for key,pkey in [('instructions','count'),('charged_cck','charged_cck'),('chip_wait_cck','chip_wait_cck'),('total_cck','total_cck')]:g[key]+=f[pkey]
         if index>=0 and pc==labels[index][0]:g['entry_visits']+=f['count']
     return dict(scope='Flat precise instruction samples for the bounded profile capture, including trailing commit frames; lexical source regions, no invented unwind/call graph; full-frame DMA ownership only',
-        started=summary['started'],ended=summary['ended'],last_committed_frame=frames[-1]['frame'],
+        code_range=code_range,started=summary['started'],ended=summary['ended'],last_committed_frame=frames[-1]['frame'],
         frames=len(frames),ordinary_instructions=ordinary,encoded_samples=total_rows,irq_cck=irq_cck,
         charged_cck=sum(f['charged_cck'] for f in pcs.values()),chip_wait_cck=sum(f['chip_wait_cck'] for f in pcs.values()),
         cck_per_cpu_cycle=0.5,complete_frame_bus_owners=dict(owners),complete_frame_cpu_wait_by=dict(deniers),
@@ -138,12 +138,20 @@ def required_hotspots_extent(report, standard):
     if not (report.get('passed') is True and report.get('profiling') is True and report.get('target')==dict(TARGET,video=standard)
             and evidence.get('state')=='complete' and not evidence.get('changed_during_run')
             and evidence.get('actual_target')==report.get('target')
-            and evidence.get('native_product_commit')=='6f2828735c273258c0c0abdb577778f1e831a7ae'
-            and report.get('executable_sha256')=='c543a695d9493254eb152cf34a093676c3c0c0dcd4df203d0ad105a5b97e3cb8'
+            and evidence.get('native_product_commit')=='b1eb145c8417a54045b80f585b475f4f1f3665e3'
+            and report.get('executable_sha256')=='9bfd85797f8b3a997cff8fa1489be8bfdfca45a0396001935da019c3fc117454'
             and report.get('full318_history72_backup_guard') and report.get('dropped_notifications')==0):return False
     capture=report.get('capture','')
     if capture!=f'build/tests/tutorial-hotspots-{standard.lower()}/hotspots.json' or files.get(capture)!=digest(ROOT/capture):return False
     data=json.loads((ROOT/capture).read_text());profile=data['profile'];timing=data['worker_timing']
+    hunks=data.get('loaded_hunks') or [];code=[h for h in hunks if h.get('hunk')==0]
+    if (len(code)!=1 or code[0].get('matched') is not True or code[0].get('bytes')!=56388
+            or not isinstance(code[0].get('actual_sha256'),str)
+            or re.fullmatch(r'[0-9a-f]{64}',code[0]['actual_sha256']) is None
+            or code[0]['actual_sha256']!=code[0].get('expected_sha256')
+            or type(code[0].get('start')) is not int or not 0<code[0]['start']<=524288-56388
+            or data.get('code_range')!=dict(base=code[0].get('start'),size=56388)
+            or profile.get('code_range')!=data['code_range']):return False
     if not (0<profile['frames']<=64 and profile['ordinary_instructions']>0 and profile['cck_per_cpu_cycle']==0.5
             and report.get('profile_summary')==profile and report.get('timing')==data.get('timing')
             and data.get('final_stop',{}).get('pc')==data.get('probe_symbols',{}).get('simulation_update')

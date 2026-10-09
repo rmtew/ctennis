@@ -1,9 +1,11 @@
 import struct
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from tutorial_hotspots import WorkerTiming,decode_frame,summarize_workers,union
+from run_tutorial_hotspots import verified_code_range
 
 
 def encoded(pc=0x1234,total=10,instruction=7,wait=3,level=0xffffffff,vector=0xffffffff):
@@ -12,6 +14,20 @@ def encoded(pc=0x1234,total=10,instruction=7,wait=3,level=0xffffffff,vector=0xff
 
 
 class Tests(unittest.TestCase):
+    def test_profile_range_requires_the_verified_code_hunk(self):
+        h=dict(hunk=0,start=4096,bytes=100,matched=True,
+            expected_sha256='a'*64,actual_sha256='a'*64)
+        layout=dict(hunks=[dict(index=0,kind='code',bytes=100)])
+        with patch('run_tutorial_hotspots.hunk_layout',return_value=layout):
+            self.assertEqual(verified_code_range(Path('unused'),[h]),dict(base=4096,size=100))
+            for field,value in (('bytes',101),('matched',False),('actual_sha256',None),
+                    ('expected_sha256','b'*64),('start',524288)):
+                with self.subTest(field=field),self.assertRaises(AssertionError):
+                    verified_code_range(Path('unused'),[dict(h,**{field:value})])
+        with patch('run_tutorial_hotspots.hunk_layout',return_value=dict(
+                hunks=[dict(index=0,kind='data',bytes=100)])):
+            with self.assertRaises(AssertionError):verified_code_range(Path('unused'),[h])
+
     def test_exact_charged_and_bus_wait(self):
         self.assertEqual(list(decode_frame(*encoded())),[(0x1234,10,7,3,False)])
 
