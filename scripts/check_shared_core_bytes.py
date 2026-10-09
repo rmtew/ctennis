@@ -76,6 +76,7 @@ def normalized(executable, listing, begin_name='game_core_code_begin',
             opcode = struct.unpack_from('>H', data, offset)[0]
             if opcode == 0x4eb9:
                 assert offset + 2 in relocations
+                assert struct.unpack_from('>I',data,offset+2)[0] == 0xf0000000 + external_names.index(match[1])
                 continue
             assert opcode in (0x6000, 0x6100)
             displacement = struct.unpack_from('>h', data, offset + 2)[0]

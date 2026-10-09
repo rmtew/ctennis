@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import subprocess
 
 from build_match_core import build, load_image
 from build_native_game import build as build_native
@@ -20,7 +21,8 @@ def main():
         paths, tools = inputs_for('build', 'scripts/run_landing_try_proof.py')
         cpu_paths, tools['machine68k'] = cpu_tool_inputs()
         transaction.meta.update(files=snapshot(paths|cpu_paths), tools=tools,
-                                runner='scripts/run_landing_try_proof.py')
+                                runner='scripts/run_landing_try_proof.py',
+                                commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip())
         transaction.meta['environment']['PYTHONPATH'] = os.environ.get('PYTHONPATH')
         standalone, standalone_listing = build()
         build_native()
