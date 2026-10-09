@@ -485,10 +485,11 @@ game_preview_resolved:
         bra     game_preview_prepare
 
 game_preview_prepare:
-        ; Check the actual incoming phase limits before publishing an edit.
+        ; Placement belongs to the selected frozen phase. An incoming serve
+        ; may precede the receiver handoff and still have narrow serve limits.
         cmpi.w  #3,game_preview_kind
         beq.s   .valid_placement
-        lea     game_preview_incoming_state+G_LOWER,a3
+        lea     game_preview_selected_state+G_LOWER,a3
         lea     game_lower_limits,a0
         tst.w   game_preview_end
         beq.s   .placement_phase

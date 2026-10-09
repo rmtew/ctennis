@@ -25,9 +25,11 @@ bounce as out. Match tick stays a match tick; word counters bound each segment.
 513 samples allow an initial sample and up to 256 incoming plus 256 outgoing
 phases. A cap remains an explicit incomplete result.
 
-Validate placement against the incoming phase's actual movement limits and
-continue actual movement eligibility checks. Renderer/player coordinates must agree with the
-trial; phase-dependent limits require an explicit check in the proof.
+Validate placement against the selected frozen phase's actual movement limits.
+An opponent serve snapshot may precede the receiving-player handoff and have
+narrower limits. Keep that complete incoming snapshot and edit only XY; replay
+still applies original movement/contact eligibility. UI and trial use the same
+selected placement limits, with natural upper-player/end-exchange coverage.
 
 The first integration uses dense original ball ticks. PR40's guarded endpoint
 query cannot provide dense samples by itself. Integrate it only after a measured

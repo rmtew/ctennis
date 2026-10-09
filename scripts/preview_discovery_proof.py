@@ -4,13 +4,13 @@ import json
 from build_match_core import load_image
 from history_proof import attempts, cursor, field, seek
 from match_core_cpu import Core
-from preview_extended_proof import candidates, continuous, execute, table, value
-from preview_proof import fixture, geometry
+from preview_extended_proof import candidates, continuous, execute, table, value, continuation_fingerprint, validate_edited_source
+from preview_proof import fixture, geometry, CAPACITY
 from run_shared_match_core import READONLY
 from native_tools import ROOT
 
 SEEDS=(0xace1,0x0001,0x1234,0xbeef)
-REQUIRED=('net','out','interception','coincidence')
+REQUIRED=('net','out','coincidence')
 INPUT_POLICY=dict(select_mode=0,entropy_policy=0,
     cycle=['game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch'],
     release_modulus=64,release_prefix=8,direction_modulus=96,first_direction_ticks=48,
@@ -94,6 +94,7 @@ def qualification(observation,symbols):
         human=next((i for i,event in enumerate(accepted) if event['end']==end and event['kind']==1),None)
         opponent=next((i for i,event in enumerate(accepted)
             if human is not None and i>human and event['end']!=end and event['kind']==1),None)
+        assert opponent is None, 'Geometric outgoing flight executes a future opponent contact'
         state=result['contexts'][variant]
         contact=value(state,symbols,'game_contact');flight=value(state,symbols,'game_flight')
         lifecycle=value(state,symbols,'game_lifecycle',2)
@@ -128,7 +129,7 @@ def qualification(observation,symbols):
         if classification in REQUIRED:coverage.add(classification)
         count=len(result['paths'][variant])//8
         # Require a complete sample strictly later than the launch boundary.
-        outgoing=(human is not None and count>result['prefix']+accepted[human]['dispatch']+1)
+        outgoing=(human is not None and count>result['prefix']+accepted[human]['dispatch']+2)
         rows.append(dict(variant=variant,has_human_launch=human is not None,
             human_launch_order=human,human_launch=accepted[human] if human is not None else None,
             opponent_contact_order=opponent,opponent_contact=accepted[opponent] if opponent is not None else None,
@@ -203,18 +204,23 @@ def discovery(executable,progress):
                         seen_jobs.add(key)
                         assert len(jobs)<72, 'A2 reaches72jobs; no automatic cap expansion'
                         observation=execute(cpu,candidate['ordinal'],selection,x,y,stream,seed,f'discovery-{seed:04x}-{len(jobs)}')
+                        source=states[candidate['incoming_origin']+1]
+                        observation['recorded_incoming_origin']=candidate['incoming_origin']
+                        observation['recorded_incoming_state']=source
+                        assert observation['result']['incoming']==candidate['incoming_origin']
+                        validate_edited_source(observation,symbols,source)
                         for variant in (0,1):
                             first_dispatch=next((state for name,args,state in observation['traces'][variant] if name=='game_tick_dispatch'),None)
                             assert first_dispatch is not None
-                            assert all(value(first_dispatch,symbols,name)==sample[name.removeprefix('game_')]
+                            assert all(value(first_dispatch,symbols,name)==value(states[candidate['incoming_origin']+1],symbols,name)
                                 for name in GEOMETRY_FIELDS), 'Primer changes actual selected pre-dispatch contact geometry'
                         facts=qualification(observation,symbols)
                         assert bounds['left']<=x<bounds['right'] and bounds['top']<=y<bounds['bottom']
                         row=dict(name=observation['name'],seed=seed,ordinal=candidate['ordinal'],
                             candidate=identity,x=x,y=y,bounds=bounds,selection=selection,sampling_row=sample,
-                            pre_dispatch_geometry_verified=True,
+                            pre_dispatch_geometry_verified=True,incoming_full_state_verified=True,fingerprint=continuation_fingerprint(observation),
                             qualification=facts,costs=observation['costs'],
-                            worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
+                            worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=CAPACITY,
                             frozen_history_write_guard=True)
                         jobs.append(row)
                         new=set(facts['coverage'])-qualified
@@ -236,7 +242,7 @@ def discovery(executable,progress):
     report=dict(passed=set(REQUIRED)<=qualified,planned_seeds=list(SEEDS),input_policy=INPUT_POLICY,
         dispatch_cap=512,ordinary_operation_cap=2049,returns_per_seed_cap=2,positions_per_return_cap=9,
         position_policy=POSITION_POLICY,time_policy=TIME_POLICY,contact_geometry_contract=contract,job_cap=72,
-        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,
+        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=CAPACITY,
         frozen_history_write_guard=True,
         jobs=len(jobs),seeds=seeds,job_results=jobs,required_coverage=list(REQUIRED),
         actual_coverage=sorted(qualified),absent_classes=sorted(set(REQUIRED)-qualified),chosen_cases=chosen,

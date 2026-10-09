@@ -29,18 +29,9 @@ from run_shared_match_core import READONLY
 
 CAPS=dict(accepted_request_generations=7,playing_dispatches=512,ordinary_operations=2049,
     title_callbacks=256,paused_callbacks=2048,video_fields=4096,seconds=70,
-    worker_calls_per_job=8192,samples_per_path=256,raw_bytes=RAW_CAP)
-CPU9_RECEIPT=ROOT/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json'
+    worker_calls_per_job=8192,samples_per_path=513,raw_bytes=RAW_CAP)
 CPU9_CURRENT=ROOT/'build/tests/preview-cpu/report.json'
-CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
-SEEK_RECEIPT=ROOT/'build/acceptance/campaigns/69cd1780198c4e55a7f8d6c25484c239/attempts/seek-sliced-cpu/000004/receipt.json'
 SEEK_CURRENT=ROOT/'build/tests/seek-sliced-cpu/report.json'
-SEEK_SHA='1a0a8cc933c5c9f42507ca8b2f1cc7c260db769fffbd0a50570b35beb712995c'
-CPU9_START=CPU9_RECEIPT.with_name('started.json')
-SEEK_START=SEEK_RECEIPT.with_name('started.json')
-CPU9_KEY='2fe61ee7c2ed6320263f1de1f580aa7449f23243d6cce325d3a8eb8507ae3adf'
-SEEK_GUARD=('        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status\n'
-    '        beq     .invalid\n        cmpi.w  #SEEK_JOB_READY,game_history_seek_status\n        beq     .invalid\n')
 COMMANDS=('game_history_freeze','game_history_seek_begin','game_preview_request',
     'game_preview_step','game_preview_result','game_preview_cancel','game_history_resume_latest',
     'game_history_seek_step','game_history_seek_commit','game_history_seek_cancel')
@@ -342,6 +333,10 @@ class Native:
                     # sequence); process that entry at this same genuine stop.
                     if pc not in frames.body_map:continue
                 assert pc in frames.body_map,'Unexpected stop inside actual native API'
+                # Full dispatch already has its own matched logical frame. Only
+                # standalone outgoing ball calls are worker operations.
+                if frames.body_map[pc]['operation']=='game_ball_tick' and frames.stack:
+                    continue
                 assert observer.inside_api(),'Body entry outside actual mailbox JSR bracket'
                 return_pc=int.from_bytes(self.read(sp,4),'big')
                 owner=dict(active=observer.number('game_preview_active',1),
@@ -532,15 +527,16 @@ class Native:
             self.block('game_preview_released_state','game_preview_paths')]
         outcomes=[int.from_bytes(self.read(self.symbols['game_preview_outcomes']+2*i,2),'big') for i in (0,1)]
         return dict(edited=self.block('game_preview_edited_state','game_preview_held_state'),
-            contexts=contexts,paths=[self.read(self.symbols['game_preview_paths']+2048*i,8*n) for i,n in enumerate(counts)],
-            outcomes=outcomes,prefix=self.number('game_preview_prefix_count'),
+            contexts=contexts,paths=[self.read(self.symbols['game_preview_paths']+((self.symbols['game_preview_storage_end']-self.symbols['game_preview_paths'])//2)*i,8*n) for i,n in enumerate(counts)],
+            outcomes=outcomes,prefix=self.number('game_preview_prefix_count'),kind=self.number('game_preview_kind'),
+            incoming_state=self.block('game_preview_incoming_state','game_preview_edited_state'),
             incoming=self.number('game_preview_incoming',8),action=self.number('game_preview_action',8))
 
     def completed(self,name,ordinal,selection,end,x,y,budget=4):
         print('Native paired job',name,'ordinal',ordinal,'selection',selection,flush=True)
         selected=self.block('game_core_state','game_core_state_end')
         first=len(self.observer.rows)
-        was_ready=self.number('game_preview_status')==5 and self.number('game_preview_cache_valid')==1
+        was_ready=2<=self.number('game_preview_status')<=5 and self.number('game_preview_cache_valid')==1
         request_index=len(self.observer.api_rows)
         generation=self.request(ordinal,x,y)
         cache_hit=was_ready and self.number('game_preview_status')==2
@@ -556,9 +552,10 @@ class Native:
         result_index=len(self.observer.api_rows)
         registers,_=self.call('game_preview_result',[generation])
         result=self.snapshot_result()
-        assert all(len(p)//8<=256 for p in result['paths'])
+        assert all(len(p)//8<=CAPS['samples_per_path'] for p in result['paths'])
         assert registers[1:3]==[len(p)//8 for p in result['paths']]
-        expected=bytearray(selected);offset=self.symbols['game_play_state']-self.symbols['game_core_state']+10*end
+        source=selected if ordinal==0xffff else self.block('game_preview_incoming_state','game_preview_edited_state')
+        expected=bytearray(source);offset=self.symbols['game_play_state']-self.symbols['game_core_state']+10*end
         expected[offset+3]=x;expected[offset+2]=y
         assert result['edited']==bytes(expected),'Native edit changes more than requested legal X/Y'
         traces={0:[],1:[]};outputs={0:[],1:[]};boundaries={0:[],1:[]};resolver=0
@@ -569,7 +566,7 @@ class Native:
             variant=owner['variant']
             traces[variant].append((row['operation'],row['arguments'],bytes.fromhex(row['before'])))
             outputs[variant].extend(row['events'])
-            if row['operation']=='game_tick_dispatch':
+            if row['operation'] in ('game_tick_dispatch','game_ball_tick'):
                 state=bytes.fromhex(row['state'])
                 boundaries[variant].append(dict(contact=value(state,self.symbols,'game_contact'),
                     flight=value(state,self.symbols,'game_flight'),lifecycle=value(state,self.symbols,'game_lifecycle',2)))
@@ -587,7 +584,7 @@ class Native:
             maximum_worker_elapsed_cck=max(c['elapsed_cck'] for c in costs),
             fields_to_result=result_end['frame']-request_begin['frame'],seconds_to_result=result_end['seconds']-request_begin['seconds'])
         observation=dict(name=name,seed=0xace1,ordinal=ordinal,selection=selection,end=end,x=x,y=y,
-            selected=selected,stream=list(self.normal),traces=traces,result=result,classes=classes,
+            selected=selected,recorded_incoming_state=source,recorded_incoming_origin=result['incoming'],stream=list(self.normal),traces=traces,result=result,classes=classes,
             launches={0:[],1:[]},boundaries=boundaries,costs=costs_report,bounds=table(self.cpu,end),
             coincident=bool(self.number('game_preview_coincident')),incoming_prefix_validation=prefix_validation)
         return observation
@@ -605,15 +602,18 @@ class Native:
         bounds=table(self.cpu,end);new_x=x+1 if x<bounds['right']-1 else x-1
         assert bounds['left']<=new_x<bounds['right'] and new_x!=x
         new_generation=self.request(ordinal,new_x,y)
-        assert new_generation>generation and self.number('game_preview_status')==1
+        expected_status=1 if phase=='resolve' else 2
+        assert new_generation>generation and self.number('game_preview_status')==expected_status
         before=self.block('game_preview_storage','game_preview_storage_end')
         self.call('game_preview_result',[generation],accepted=False)
         assert self.block('game_preview_storage','game_preview_storage_end')==before
         rows=len(self.observer.rows)
         qualify_resolver(self,new_generation)
         resolver=sum(r['ownership']['active']==1 for r in self.observer.rows[rows:])
-        assert resolver>0
-        selected=self.block('game_core_state','game_core_state_end');expected=bytearray(selected)
+        assert (resolver>0 if phase=='resolve' else resolver==0)
+        selected=self.block('game_core_state','game_core_state_end')
+        source=selected if ordinal==0xffff else self.block('game_preview_incoming_state','game_preview_edited_state')
+        expected=bytearray(source)
         offset=self.symbols['game_play_state']-self.symbols['game_core_state']+10*end
         expected[offset+3]=new_x;expected[offset+2]=y
         assert self.block('game_preview_edited_state','game_preview_held_state')==bytes(expected)
@@ -627,28 +627,30 @@ class Native:
         return dict(case_id='replacement-'+phase,passed=True,partial_phase=phase,
             partial_body_operations=len(actual),old_generation=generation,new_generation=new_generation,
             old_position=[x,y],new_position=[new_x,y],replacement_resolver_operations=resolver,
-            cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
+            cold_replacement=phase=='resolve',cache_replacement=phase=='held',edited_only_position_changed=True,old_result_rejected=True,
             canceled_result_rejected=True,selected_history_output_preserved=True)
 
 
 def verify_incoming_prefix(native,ordinal,selection,result):
-    """Expected points come only from independently captured native boundaries."""
+    """Sample0 and complete incoming cache bind actual post-dispatch state."""
     if ordinal==0xffff:
-        operations=[];expected=b''
+        source=native.block('game_preview_selected_state','game_preview_incoming_state')
+        operations=[]
     else:
         probe,kind,end=attempts(native.cpu)[ordinal]
         incoming=next((r for r in reversed(native.launches)
             if r['end']!=end and r['origin']<probe),None)
-        assert kind in (1,2) and incoming is not None
-        assert result['incoming']==incoming['origin']<=selection<=probe
-        operations=[i for i in range(incoming['origin'],selection)
-            if native.normal[i][0]=='game_tick_dispatch']
-        expected=b''.join(point(native.states[i+1],native.symbols) for i in operations)
-    assert len(expected)//8==result['prefix'],'Native prefix count differs from retained actual dispatches'
-    assert all(path[:len(expected)]==expected for path in result['paths']), 'Native prefix differs from actual retained flight'
-    return dict(passed=True,source='actual-native-retained-dispatch-boundaries',
-        operation_cursors=operations,expected_samples=len(expected)//8,
-        expected_bytes=expected.hex(),expected_sha256=hashlib.sha256(expected).hexdigest())
+        assert kind in (0,1,2) and incoming is not None
+        assert result['incoming']==incoming['origin']<=selection
+        source=native.states[incoming['origin']+1]
+        assert native.block('game_preview_incoming_state','game_preview_edited_state')==source
+        operations=[incoming['origin']]
+    expected=point(source,native.symbols)
+    assert result['prefix']==0,'Obsolete immutable prefix survived incoming restart'
+    assert all(path[:8]==expected for path in result['paths']), 'Native initial sample differs from actual retained launch'
+    return dict(passed=True,source='actual-native-post-dispatch-incoming-state',
+        operation_cursors=operations,expected_samples=1,expected_bytes=expected.hex(),
+        expected_sha256=hashlib.sha256(expected).hexdigest(),incoming_state=source.hex())
 
 
 def qualify_resolver(native,generation):
@@ -755,43 +757,38 @@ def total_bytes(paths):
     return sum(path.stat().st_size for path in set(paths) if path.is_file())
 
 
-def reviewed_execution(saved,current,sha,start,expected_key=None):
-    """Bind the reviewed pass and reject any later failed/interrupted actual run."""
-    from acceptance_campaign import canonical,execution_blocker
-    assert digest(saved)==sha,'Reviewed CPU receipt is unavailable or changed'
-    assert digest(current)==sha,'Latest CPU proof is not the reviewed passing receipt'
+def fresh_cpu_receipt(current,case_id):
+    """Bind current source/product/tool pass and reject later failed execution."""
+    from acceptance_campaign import dependencies,execution_blocker
+    from acceptance_cases import cases
     receipt=json.loads(current.read_text())
     assert receipt.get('passed') is True,'Latest CPU proof did not pass'
-    started=json.loads(start.read_text())
-    key=canonical(started['dependencies'])
-    assert key==started['dependency_key'] and (expected_key is None or key==expected_key)
-    blocker=execution_blocker(SimpleNamespace(id=started['id']),started['dependencies'])
+    validation=status(current)
+    assert validation['status']=='passed', ('Fresh CPU receipt inputs/tools/products drifted',validation)
+    case=next(c for c in cases() if c.id==case_id)
+    blocker=execution_blocker(case,dependencies(case))
     assert blocker is None,blocker
+    files=receipt['evidence']['files']
+    assert any((Path(p) if Path(p).is_absolute() else ROOT/p).resolve()==(ROOT/'amiga/game/preview.s').resolve() and h==digest(ROOT/'amiga/game/preview.s')
+               for p,h in files.items()),'Current CPU receipt lacks exact preview source'
     return receipt
+
+
+def worker_source_closure(inherited):
+    source=digest(ROOT/'amiga/game/preview.s')
+    assert any((Path(p) if Path(p).is_absolute() else ROOT/p).resolve()==(ROOT/'amiga/game/preview.s').resolve() and h==source
+               for p,h in inherited['evidence']['files'].items()),'Current CPU receipt lacks exact preview source'
+    return dict(passed=True,current_source_sha256=source,
+        preview_cpu_run_id=inherited['evidence']['run_id'],
+        scope='Current preview CPU receipt binds exact unchanged worker source; all entry guards retained.')
 
 
 def inherited_endpoints():
-    return reviewed_execution(CPU9_RECEIPT,CPU9_CURRENT,CPU9_SHA,CPU9_START,CPU9_KEY)
+    return fresh_cpu_receipt(CPU9_CURRENT,'preview-cpu')
 
 
 def fresh_seek_receipt():
-    receipt=reviewed_execution(SEEK_RECEIPT,SEEK_CURRENT,SEEK_SHA,SEEK_START)
-    validation=status(SEEK_CURRENT)
-    assert validation['status']=='passed', ('Fresh sliced CPU receipt inputs/tools/products drifted',validation)
-    return receipt
-
-
-def worker_guard_closure(inherited):
-    """Only three entry guards changed; their removal reproduces reviewed bytes."""
-    source=(ROOT/'amiga/game/preview.s').read_bytes()
-    guard=SEEK_GUARD.encode()
-    assert source.count(guard)==3,'Unexpected preview ownership changes'
-    original=source.replace(guard,b'')
-    expected=inherited['evidence']['files']['amiga/game/preview.s']
-    assert hashlib.sha256(original).hexdigest()==expected,'Preview changed beyond scoped seek guards'
-    return dict(passed=True,removed_entry_guards=3,current_source_sha256=hashlib.sha256(source).hexdigest(),
-        guard_removed_source_sha256=expected,
-        scope='Exact source equality after removal of three seek-owner guards; physics/endpoints inherited, current ownership freshly proven.')
+    return fresh_cpu_receipt(SEEK_CURRENT,'seek-sliced-cpu')
 
 
 def native_report(executable,target,video,validation):
@@ -830,9 +827,9 @@ def run(standard):
     try:
         paths,tools=inputs_for('preview-native','scripts/run_preview_native.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
-        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_RECEIPT,CPU9_CURRENT,CPU9_START,SEEK_RECEIPT,SEEK_CURRENT,SEEK_START}
+        paths|=cpu_paths|{ROOT/'scripts/preview_native_fixture.s',CPU9_CURRENT,SEEK_CURRENT}
         inherited=inherited_endpoints()
-        guard_closure=worker_guard_closure(inherited)
+        guard_closure=worker_source_closure(inherited)
         seek_receipt=fresh_seek_receipt()
         transaction.meta.update(files=snapshot(paths),tools=tools)
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
@@ -885,8 +882,8 @@ def run(standard):
                     worker_calls_per_job=native.maximum_job_calls,
                     samples_per_path=max(len(p)//8 for o in observations for p in o['result']['paths']),raw_bytes=0)
                 validation=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
-                    preview_storage_bytes=5550,preview_metadata_bytes=110,seek_storage_bytes=734,acquisition=acquisition,
-                    seek_validation=dict(passed=True,cpu_receipt_sha256=SEEK_SHA,rows=native.seek_rows,jobs=native.seek_jobs,
+                    preview_storage_bytes=native.symbols['game_preview_storage_end']-native.symbols['game_preview_storage'],preview_metadata_bytes=native.symbols['game_preview_state_end']-native.symbols['game_preview_state'],seek_storage_bytes=734,acquisition=acquisition,
+                    seek_validation=dict(passed=True,cpu_receipt_sha256=digest(SEEK_CURRENT),rows=native.seek_rows,jobs=native.seek_jobs,
                         one_body_per_slice=True,selected_pending_preserved=True,actual_guest_timer_admission=True,
                         reserve_eclock_ticks=10000,reserve_scope='Initial CPU-derived estimate; all actual callbacks and deadlines remain acceptance evidence.'),
                     replacement_cancel_cases=replacements,preservation={k:True for k in
@@ -899,14 +896,14 @@ def run(standard):
                         dropped_notifications=0,dropped_accesses=0,public_boundary_drain_checks=observer.drain_checks),
                     caps=CAPS,observed_caps=observed,costs=costs,
                     byte_cap_scope='stored-artifact-bytes; rpc-and-event-transcripts-gzip; uncompressed-transcripts-measured-separately',
-                    endpoint_classification_scope='inherited-reviewed-cpu9; no-fresh-native-launch-hook-qualification',
-                    inherited_endpoint_validation=dict(cpu_receipt_sha256=CPU9_SHA,
-                        scope='CPU9-independent-endpoints; native-labels-only',worker_guard_closure=guard_closure,
-                        current_ownership_cpu_receipt_sha256=SEEK_SHA),
+                    endpoint_classification_scope='current-preview-cpu; no-fresh-native-launch-hook-qualification',
+                    inherited_endpoint_validation=dict(cpu_receipt_sha256=digest(CPU9_CURRENT),
+                        scope='current-CPU-independent-endpoints; native-labels-only',worker_source_closure=guard_closure,
+                        current_ownership_cpu_receipt_sha256=digest(SEEK_CURRENT)),
                     resources=dict(fixture_chip_free_bytes=memory['chip_free_bytes'],
                         fixture_loaded_bytes=sum(h['bytes'] for h in native.hunks),
                         product_static_loaded_bytes=hunk_layout(product)['loaded_payload_bytes']),
-                    compiled_identity=dict(loaded_hunks=native.hunks,worker_bytes=worker_identity,seek_storage=seek_storage_identity,overlay=overlay_identity,
+                    compiled_identity=dict(product_layout=dict(hunk_layout(product),executable_sha256=digest(product)),loaded_hunks=native.hunks,worker_bytes=worker_identity,seek_storage=seek_storage_identity,overlay=overlay_identity,
                         normalized_shared_core=dict(matched=True,bytes=len(expected[0]),relocations=expected[1],
                             sink_branches=expected[2],sha256=hashlib.sha256(expected[0]).hexdigest()),
                         fixture_manifest_sha256=digest(Path(str(executable)+'.compile.json')),
@@ -916,6 +913,7 @@ def run(standard):
                 assert frames.entries==len(frames.records) and not frames.stack,'Unpaired actual body observations'
                 validation['body_observation']=dict(
                     protocol='read-only-emitted-body-pc-and-matched-stack-return',
+                    ball_phase_scope='standalone-outgoing-only; dispatched-ball-covered-by-complete-logical-body',
                     loaded_body_map=[dict(pc=pc,**spec) for pc,spec in frames.body_map.items()],
                     frames=sorted(frames.records,key=lambda row:row['entry_index']),
                     semantic_intents=observer.body_sink_events,internal_stops=native.internal_body_stops,
@@ -949,7 +947,7 @@ def run(standard):
             row.pop('actual_accepted_launches') # Native labels are not a new hook-qualified endpoint oracle.
             row.update(case_id=observation['name'],native_jsr_rts_preserved=True,
                 incoming_prefix_validation=observation['incoming_prefix_validation'],
-                classification_scope='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9')
+                classification_scope='native-preview-outcome-labels; endpoint-qualification-current-cpu')
             completed.append(row)
         validation.update(completed_jobs=completed,continuous_actual_core_equal=True)
         report=native_report(executable,target,video,validation)

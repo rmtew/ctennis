@@ -494,12 +494,7 @@ tutorial_controls:
         move.b  tutorial_end,d7
         mulu.w  #10,d7
         lea     game_play_state,a3
-        tst.w   game_preview_cache_valid
-        beq.s   .placement_source
-        cmpi.w  #3,game_preview_kind
-        beq.s   .placement_source
-        lea     game_preview_incoming_state+G_LOWER,a3
-.placement_source:
+        ; UI edits use the selected frozen phase, including completed handoff.
         adda.w  d7,a3
         lea     game_lower_limits,a0
         tst.b   tutorial_end

@@ -7,16 +7,14 @@ import hashlib
 CAPS=dict(accepted_request_generations=7,playing_dispatches=512,
     ordinary_operations=2049,title_callbacks=256,paused_callbacks=2048,
     video_fields=4096,seconds=70,worker_calls_per_job=8192,
-    samples_per_path=256,raw_bytes=268435456)
+    samples_per_path=513,raw_bytes=268435456)
 PRESERVATION=('selected_canonical','history_metadata','frozen_store','live_backup',
     'caller_frame','input_globals','publication_irq_only','audio_cpu_configuration')
 BYTE_CAP_SCOPE='stored-artifact-bytes; rpc-and-event-transcripts-gzip; uncompressed-transcripts-measured-separately'
-CPU9_SHA='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'
-CPU9_RECEIPTS=('build/tests/preview-cpu/report.json',
-    'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json')
+CPU9_RECEIPTS=('build/tests/preview-cpu/report.json',)
 BODY_ARITIES=dict(game_core_init=0,game_core_select=3,game_core_sample_pads=2,
     game_core_sample_result=6,game_core_clear_inputs=0,game_core_return_title=0,
-    game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0)
+    game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0,game_ball_tick=0)
 
 
 def irq_resumptions_valid(frame):
@@ -42,9 +40,10 @@ def irq_resumptions_valid(frame):
 
 
 def body_observation(block,api_rows,hunks):
-    """Every actual body entry, including unmarked calls, has a matched return."""
+    """All logical bodies and standalone outgoing phases have matched returns."""
     if (not isinstance(block,dict)
             or block.get('protocol')!='read-only-emitted-body-pc-and-matched-stack-return'
+            or block.get('ball_phase_scope')!='standalone-outgoing-only; dispatched-ball-covered-by-complete-logical-body'
             or type(block.get('unpaired_frames')) is not int or block['unpaired_frames']!=0
             or type(block.get('maximum_nesting')) is not int or block['maximum_nesting']!=9
             or type(block.get('maximum_entries_per_api')) is not int or block['maximum_entries_per_api']!=8192
@@ -55,17 +54,17 @@ def body_observation(block,api_rows,hunks):
         return integer(pc,0,524287) and pc%2==0 and any(h['start']<=pc<pc+length<=h['start']+h['bytes'] for h in hunks)
     if not loaded(block['stack_bottom'],4096):return False
     mapping=block.get('loaded_body_map');frames=block.get('frames');intents=block.get('semantic_intents')
-    if (not isinstance(mapping,list) or len(mapping)!=9
+    if (not isinstance(mapping,list) or len(mapping)!=10
             or not isinstance(frames,list) or not frames or not isinstance(intents,list)):return False
     specs={}
     for spec in mapping:
         if (not isinstance(spec,dict) or spec.get('operation') not in BODY_ARITIES
                 or type(spec.get('arity')) is not int or spec['arity']!=BODY_ARITIES[spec['operation']]
-                or spec.get('label')!=spec['operation']+'_body' or not loaded(spec.get('pc'),4)
+                or spec.get('label')!=(spec['operation'] if spec['operation']=='game_ball_tick' else spec['operation']+'_body') or not loaded(spec.get('pc'),4)
                 or spec['operation'] in specs or not isinstance(spec.get('entry_bytes'),str)
                 or re.fullmatch(r'[0-9a-f]{8}',spec['entry_bytes']) is None):return False
         specs[spec['operation']]=spec
-    if len({r['pc'] for r in mapping})!=9:return False
+    if len({r['pc'] for r in mapping})!=10:return False
     counts=[0]*len(api_rows);entry_stops=set();return_stops=set();stack=[];outer=[]
     for index,frame in enumerate(frames):
         if (not isinstance(frame,dict) or type(frame.get('entry_index')) is not int or frame['entry_index']!=index
@@ -199,10 +198,7 @@ def api_row(row):
 
 
 
-SEEK_CPU_SHA='1a0a8cc933c5c9f42507ca8b2f1cc7c260db769fffbd0a50570b35beb712995c'
-SEEK_CPU_RECEIPTS=('build/tests/seek-sliced-cpu/report.json',
-    'build/acceptance/campaigns/69cd1780198c4e55a7f8d6c25484c239/attempts/seek-sliced-cpu/000004/receipt.json')
-
+SEEK_CPU_RECEIPTS=('build/tests/seek-sliced-cpu/report.json',)
 
 def complete_bytes(value,length):
     try:return isinstance(value,str) and len(bytes.fromhex(value))==length
@@ -212,8 +208,8 @@ def complete_bytes(value,length):
 def seek_validation(block,api_rows,frames,files,interval_whole):
     """Private progress, timer admission and retirement bind actual API readbacks."""
     if (not isinstance(block,dict) or block.get('passed') is not True
-            or block.get('cpu_receipt_sha256')!=SEEK_CPU_SHA
-            or any(files.get(path)!=SEEK_CPU_SHA for path in SEEK_CPU_RECEIPTS)
+            or not sha256(block.get('cpu_receipt_sha256'))
+            or any(files.get(path)!=block['cpu_receipt_sha256'] for path in SEEK_CPU_RECEIPTS)
             or any(block.get(k) is not True for k in ('one_body_per_slice',
                 'selected_pending_preserved','actual_guest_timer_admission'))
             or type(block.get('reserve_eclock_ticks')) is not int
@@ -359,12 +355,12 @@ def completed_job(row):
             or type(row.get('seed')) is not int or row['seed']!=44257
             or not integer(row.get('selection'),1,2**64-1)
             or not integer(row.get('end'),0,1)
-            or not integer(row.get('prefix_samples'),0,255)
+            or row.get('prefix_samples')!=0
             or type(row.get('coincident')) is not bool):return False
     ordinal=row.get('ordinal')
     if not integer(ordinal,0,65535) or (ordinal>127 and ordinal!=65535):return False
     if (row['case_id']=='current-human-serve')!=(ordinal==65535):return False
-    if row.get('classification_scope')!='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9':return False
+    if row.get('classification_scope')!='native-preview-outcome-labels; endpoint-qualification-current-cpu':return False
     if any(not integer(row.get(k),0,2**64-1) for k in ('incoming_origin','action_boundary')):return False
     bounds=row.get('bounds')
     if (not isinstance(bounds,dict)
@@ -374,15 +370,16 @@ def completed_job(row):
     if not isinstance(row.get('final_states'),list) or not isinstance(row.get('paths'),list):return False
     try:
         selected=bytes.fromhex(row['selected_state']);edited=bytes.fromhex(row['edited_state'])
+        source=selected if ordinal==65535 else bytes.fromhex(row['incoming_prefix_validation']['incoming_state'])
         finals=[bytes.fromhex(s) for s in row['final_states']]
         paths=[bytes.fromhex(p) for p in row['paths']]
     except (KeyError,TypeError,ValueError):return False
     player=10*row['end']
-    if (len(selected)!=318 or len(edited)!=318 or len(finals)!=2
+    if (len(selected)!=318 or len(source)!=318 or len(edited)!=318 or len(finals)!=2
             or any(len(s)!=318 for s in finals)
-            or any(a!=b for n,(a,b) in enumerate(zip(selected,edited)) if n not in (player+2,player+3))
+            or any(a!=b for n,(a,b) in enumerate(zip(source,edited)) if n not in (player+2,player+3))
             or edited[player+2]!=row['y'] or edited[player+3]!=row['x']
-            or len(paths)!=2 or any(not 8<=len(p)<=2048 or len(p)%8 for p in paths)
+            or len(paths)!=2 or any(not 8<=len(p)<=CAPS['samples_per_path']*8 or len(p)%8 for p in paths)
             or row.get('path_counts')!=[len(p)//8 for p in paths]
             or any(type(n) is not int for n in row['path_counts'])
             or any(row['prefix_samples']>len(p)//8 for p in paths)
@@ -391,19 +388,16 @@ def completed_job(row):
             or any(not isinstance(outputs,list) for outputs in row['ordered_outputs'])):return False
     prefix=row.get('incoming_prefix_validation')
     if (not isinstance(prefix,dict) or prefix.get('passed') is not True
-            or prefix.get('source')!='actual-native-retained-dispatch-boundaries'
-            or not integer(prefix.get('expected_samples'),0,255)
-            or prefix['expected_samples']!=row['prefix_samples']
+            or prefix.get('source')!='actual-native-post-dispatch-incoming-state'
+            or prefix.get('expected_samples')!=1
+            or not complete_bytes(prefix.get('incoming_state'),318)
             or not isinstance(prefix.get('operation_cursors'),list)
-            or len(prefix['operation_cursors'])!=prefix['expected_samples']
-            or any(not integer(i,row['incoming_origin'],row['selection']-1) for i in prefix['operation_cursors'])
-            or sorted(set(prefix['operation_cursors']))!=prefix['operation_cursors']):return False
+            or prefix['operation_cursors']!= ([] if ordinal==65535 else [row['incoming_origin']])):return False
     try:expected_prefix=bytes.fromhex(prefix['expected_bytes'])
     except (KeyError,TypeError,ValueError):return False
-    if (len(expected_prefix)!=8*row['prefix_samples']
-            or any(p[:len(expected_prefix)]!=expected_prefix for p in paths)
+    if (len(expected_prefix)!=8 or any(p[:8]!=expected_prefix for p in paths)
             or prefix.get('expected_sha256')!=hashlib.sha256(expected_prefix).hexdigest()
-            or ordinal==65535 and prefix['expected_samples']!=0):return False
+            or bytes.fromhex(prefix['incoming_state'])!=source):return False
     classes=row.get('classes')
     if (not isinstance(classes,list) or len(classes)!=2 or any(c not in
             ('landing','net','out','interception','no-contact','lifecycle','limit') for c in classes)):return False
@@ -439,14 +433,17 @@ def completed_job(row):
 def replacement_case(row):
     if (not isinstance(row,dict) or row.get('case_id') not in
             ('replacement-resolve','replacement-held')
-            or any(row.get(k) is not True for k in ('passed','cold_replacement',
+            or any(row.get(k) is not True for k in ('passed',
                 'edited_only_position_changed','old_result_rejected',
                 'canceled_result_rejected','selected_history_output_preserved'))
             or not integer(row.get('partial_body_operations'),1,4*8192)
             or not integer(row.get('old_generation'),1,2**32-2)
             or not integer(row.get('new_generation'),row['old_generation']+1,2**32-1)
-            or not integer(row.get('replacement_resolver_operations'),1,4096)):return False
+            or not integer(row.get('replacement_resolver_operations'),0,4096)):return False
     if row.get('partial_phase')!=row['case_id'].removeprefix('replacement-'):return False
+    cold=row['partial_phase']=='resolve'
+    if (row.get('cold_replacement') is not cold or row.get('cache_replacement') is not (not cold)
+            or (row['replacement_resolver_operations']>0)!=cold):return False
     old=row.get('old_position');new=row.get('new_position')
     return (isinstance(old,list) and isinstance(new,list) and len(old)==len(new)==2
         and all(integer(n,0,255) for n in old+new) and old[0]!=new[0] and old[1]==new[1])
@@ -472,8 +469,8 @@ def required_preview_native_extent(case_id,report):
             or not exact_mapping(evidence.get('actual_target'),target)
             or not isinstance(stage,dict) or stage.get('passed') is not True
             or any(type(stage.get(key)) is not int or stage[key]!=value for key,value in dict(canonical_bytes=318,
-                history_metadata_bytes=72,preview_storage_bytes=5550,
-                preview_metadata_bytes=110,seek_storage_bytes=734).items())):return False
+                history_metadata_bytes=72,preview_storage_bytes=9986,
+                preview_metadata_bytes=116,seek_storage_bytes=734).items())):return False
     acquisition=stage.get('acquisition')
     if (not isinstance(acquisition,dict) or type(acquisition.get('seed')) is not int
             or acquisition['seed']!=44257
@@ -624,9 +621,16 @@ def required_preview_native_extent(case_id,report):
             or not integer(resources.get('fixture_chip_free_bytes'),1,512*1024)
             or not integer(resources.get('fixture_loaded_bytes'),1,512*1024)
             or type(resources.get('product_static_loaded_bytes')) is not int
-            or resources['product_static_loaded_bytes']!=259456
             or resources['fixture_chip_free_bytes']+resources['fixture_loaded_bytes']>512*1024
             or not isinstance(identity,dict)):return False
+    product=identity.get('product_layout')
+    if (not isinstance(product,dict) or not integer(product.get('loaded_payload_bytes'),1,512*1024)
+            or resources['product_static_loaded_bytes']!=product['loaded_payload_bytes']
+            or not isinstance(product.get('hunks'),list) or not product['hunks']
+            or any(not isinstance(h,dict) or not integer(h.get('bytes'),1,512*1024) for h in product['hunks'])
+            or sum(h['bytes'] for h in product['hunks'])!=product['loaded_payload_bytes']
+            or not sha256(product.get('executable_sha256'))
+            or product['executable_sha256'] not in (evidence.get('compiled_executables') or {}).values()):return False
     core=identity.get('normalized_shared_core')
     if (not isinstance(core,dict) or core.get('matched') is not True
             or any(type(core.get(k)) is not int or core[k]!=v for k,v in
@@ -650,6 +654,8 @@ def required_preview_native_extent(case_id,report):
     if not body_observation(stage.get('body_observation'),rows,hunks):return False
     if not seek_validation(stage.get('seek_validation'),rows,stage['body_observation']['frames'],evidence.get('files') or {},video['simulation_interval_whole']):return False
     frames=stage['body_observation']['frames']
+    if not any(f['operation']=='game_ball_tick' and f['depth']==1 and f['ownership']['active']==2
+               and rows[f['api_row_index']]['name']=='game_preview_step' for f in frames):return False
     if any(f['ownership']['seek_active'] for f in frames if rows[f['api_row_index']]['name']=='game_preview_step'):return False
     seek_storage=identity.get('seek_storage')
     if (not isinstance(seek_storage,dict) or type(seek_storage.get('bytes')) is not int
@@ -698,15 +704,16 @@ def required_preview_native_extent(case_id,report):
             or not integer(rpc.get('uncompressed_bytes'),rpc['compressed_bytes'])
             or not integer(rpc.get('calls'),1) or type(rpc.get('records')) is not int
             or rpc['records']!=2*rpc['calls']
-            or not isinstance(inherited,dict) or inherited.get('scope')!='CPU9-independent-endpoints; native-labels-only'
-            or inherited.get('cpu_receipt_sha256')!=CPU9_SHA
-            or any(files.get(path)!=CPU9_SHA for path in CPU9_RECEIPTS)):return False
-    closure=inherited.get('worker_guard_closure')
-    if (inherited.get('current_ownership_cpu_receipt_sha256')!=SEEK_CPU_SHA
+            or not isinstance(inherited,dict) or inherited.get('scope')!='current-CPU-independent-endpoints; native-labels-only'
+            or not sha256(inherited.get('cpu_receipt_sha256'))
+            or any(files.get(path)!=inherited['cpu_receipt_sha256'] for path in CPU9_RECEIPTS)):return False
+    closure=inherited.get('worker_source_closure')
+    if (not sha256(inherited.get('current_ownership_cpu_receipt_sha256'))
+            or any(files.get(path)!=inherited['current_ownership_cpu_receipt_sha256'] for path in SEEK_CPU_RECEIPTS)
             or not isinstance(closure,dict) or closure.get('passed') is not True
-            or type(closure.get('removed_entry_guards')) is not int or closure['removed_entry_guards']!=3
             or closure.get('current_source_sha256')!=files.get('amiga/game/preview.s')
-            or closure.get('guard_removed_source_sha256')!='40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d'
+            or not isinstance(closure.get('preview_cpu_run_id'),str)
+            or re.fullmatch(r'[0-9a-f]{32}',closure['preview_cpu_run_id']) is None
             or not isinstance(closure.get('scope'),str) or not closure['scope']):return False
     event=stage.get('event_transcript')
     if (not isinstance(event,dict) or event.get('encoding')!='gzip-jsonl'

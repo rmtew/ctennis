@@ -20,6 +20,7 @@ class NativePreviewGuards(unittest.TestCase):
             ('game_preview_storage',0x20000),('game_history_seek_storage',0x27000),('preview_native_mailbox',0x22000),
             ('core_trace_arguments',0x23000),('core_trace_marker',0x23010),
             ('game_stack_bottom',0x24000),('game_stack_top',0x25000)]}
+        observer.storage_bytes=9986
         observer.frozen=True;observer.pending=None;observer.problems=[]
         observer.rules={};observer.irq_writes=[];observer.irq_inside=0
         observer.irq_entry_pc=0x400;observer.irq_exit_pc=0x420;observer.audio_writes=[]
@@ -105,6 +106,14 @@ class NativePreviewGuards(unittest.TestCase):
         self.assertIn('producer write value',observer.problems[-1])
         observer._guard(self.event(0x26006,4,pc=0x500,value=0))
         self.assertIn('Unattributed',observer.problems[-1])
+
+    def test_expanded_preview_extent_keeps_far_end_and_crossing_writes_guarded(self):
+        observer=self.observer();base=observer.symbols['game_preview_storage']
+        observer._guard(self.event(base+9000))
+        self.assertIn('External caller writes frozen preview context',observer.problems)
+        observer=self.observer();observer.pending={'name':'game_preview_step'}
+        observer._guard(self.event(base+9984,4))
+        self.assertTrue(observer.problems, 'A write crossing the complete scratch extent was permitted')
 
     def test_external_preview_scratch_cannot_change_between_calls(self):
         observer=self.observer()

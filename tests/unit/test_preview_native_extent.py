@@ -8,7 +8,9 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from acceptance_cases import cases
 from acceptance_campaign import dependencies,required_extent
-from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_SHA,CPU9_RECEIPTS,BODY_ARITIES,SEEK_CPU_SHA,SEEK_CPU_RECEIPTS
+from preview_native_extent import CAPS,BYTE_CAP_SCOPE,CPU9_RECEIPTS,BODY_ARITIES,SEEK_CPU_RECEIPTS
+CPU9_SHA="b5"*32
+SEEK_CPU_SHA="1a"*32
 
 
 def receipt(ntsc=False):
@@ -21,16 +23,16 @@ def receipt(ntsc=False):
             budget_cck=budget,minimum_headroom_cck=budget-value)
     def job(name,x,generation):
         edited=bytearray(318);edited[2]=20;edited[3]=x
-        prefix=0 if name=='current-human-serve' else 1
-        expected=bytes(8*prefix)
+        prefix=0
+        expected=bytes(8)
         return dict(case_id=name,passed=True,native_jsr_rts_preserved=True,
             continuous_state_path_output_equal=True,independent_continuation_policy_equal=True,
             live_history_output_preserved=True,edited_only_position_changed=True,
             seed=44257,selection=100,end=0,ordinal=65535 if name=='current-human-serve' else 1,
             prefix_samples=prefix,incoming_origin=64,action_boundary=120,coincident=False,
-            classification_scope='native-preview-outcome-labels; endpoint-qualification-inherited-reviewed-cpu9',
-            incoming_prefix_validation=dict(passed=True,source='actual-native-retained-dispatch-boundaries',
-                operation_cursors=[64] if prefix else [],expected_samples=prefix,
+            classification_scope='native-preview-outcome-labels; endpoint-qualification-current-cpu',
+            incoming_prefix_validation=dict(passed=True,source='actual-native-post-dispatch-incoming-state',
+                operation_cursors=[] if name=='current-human-serve' else [64],expected_samples=1,incoming_state='00'*318,
                 expected_bytes=expected.hex(),expected_sha256=hashlib.sha256(expected).hexdigest()),
             bounds=dict(left=1,right=100,top=1,bottom=100),x=x,y=20,
             selected_state='00'*318,edited_state=edited.hex(),final_states=['00'*318]*2,
@@ -43,8 +45,8 @@ def receipt(ntsc=False):
     jobs[1]['costs'].update(worker_body_counts=[3],maximum_worker_operations=3)
     replacements=[dict(case_id='replacement-'+phase,passed=True,partial_phase=phase,
         partial_body_operations=1,old_generation=4+i*2,new_generation=5+i*2,
-        old_position=[10,20],new_position=[11,20],replacement_resolver_operations=1,
-        cold_replacement=True,edited_only_position_changed=True,old_result_rejected=True,
+        old_position=[10,20],new_position=[11,20],replacement_resolver_operations=1 if phase=='resolve' else 0,
+        cold_replacement=phase=='resolve',cache_replacement=phase=='held',edited_only_position_changed=True,old_result_rejected=True,
         canceled_result_rejected=True,selected_history_output_preserved=True) for i,phase in enumerate(('resolve','held'))]
     names=['game_history_freeze','game_history_freeze',
         'game_preview_request','game_preview_step','game_preview_result','game_preview_result',
@@ -73,12 +75,12 @@ def receipt(ntsc=False):
         'build/amiga/interfaces/enhanced/baseline-rally.compile.json':'66'*32,
         'build/tests/preview-native/rpc.jsonl.gz':'aa'*32,
         'build/tests/preview-native/events.jsonl.gz':'ab'*32,
-        'build/tests/preview-cpu/report.json':'b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f'}
+        'build/tests/preview-cpu/report.json':CPU9_SHA}
     files.update({path:CPU9_SHA for path in CPU9_RECEIPTS})
     observed=dict(CAPS,ordinary_operations=200,playing_dispatches=40,title_callbacks=2,
         paused_callbacks=30,video_fields=50,seconds=10,worker_calls_per_job=1,samples_per_path=2,raw_bytes=1024)
     stage=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
-        preview_storage_bytes=5550,preview_metadata_bytes=110,seek_storage_bytes=734,
+        preview_storage_bytes=9986,preview_metadata_bytes=116,seek_storage_bytes=734,
         acquisition=dict(seed=44257,seed_policy='DEMO_RECORDING-selection-only',ordinary_operations=200,
             playing_dispatches=40,title_callbacks=2,completed_index_kind=2,incoming_origin=64,
             probe_origin=120,selected_cursor=100,ordinal=1,end=0),
@@ -93,8 +95,8 @@ def receipt(ntsc=False):
         caps=dict(CAPS),observed_caps=observed,
         costs=dict(api_rows=rows,worker_distribution=distribution(7,10),callback_distribution=distribution(72,20),
             fresh_input_callback_distribution=distribution(1,30),minimum_callback_headroom_cck=budget-30,stack_bytes=300),
-        resources=dict(fixture_chip_free_bytes=100000,fixture_loaded_bytes=258600,product_static_loaded_bytes=259456),
-        compiled_identity=dict(loaded_hunks=[dict(hunk=0,start=4096,bytes=258600,expected_sha256='77'*32,
+        resources=dict(fixture_chip_free_bytes=100000,fixture_loaded_bytes=258600,product_static_loaded_bytes=319520),
+        compiled_identity=dict(product_layout=dict(loaded_payload_bytes=319520,hunks=[dict(bytes=319520)],executable_sha256='66'*32),loaded_hunks=[dict(hunk=0,start=4096,bytes=258600,expected_sha256='77'*32,
             actual_sha256='77'*32,matched=True)],normalized_shared_core=dict(matched=True,bytes=17606,
             relocations=7,sink_branches=14,sha256='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5'),
             worker_bytes=dict(source_sha256='33'*32,loaded_sha256='88'*32,bytes=2048,
@@ -116,8 +118,8 @@ def receipt(ntsc=False):
     stage.update(byte_cap_scope=BYTE_CAP_SCOPE,
         rpc_transcript=dict(encoding='gzip-jsonl',path='build/tests/preview-native/rpc.jsonl.gz',
             sha256='aa'*32,compressed_bytes=100,uncompressed_bytes=200,calls=2,records=4),
-        inherited_endpoint_validation=dict(cpu_receipt_sha256='b5b57f313123c2cf457b924bcc64c6b261375a12c41ac9679d817cf1079c401f',
-            scope='CPU9-independent-endpoints; native-labels-only'))
+        inherited_endpoint_validation=dict(cpu_receipt_sha256=CPU9_SHA,
+            scope='current-CPU-independent-endpoints; native-labels-only'))
     frames=[];body_pc=12000;stack_top=24000
     for api_index,row in enumerate(rows):
         for n in range(row['bodies']):
@@ -137,8 +139,12 @@ def receipt(ntsc=False):
             selected=selected[1:]
         for variant,frame in enumerate(selected):
             frame['ownership']['variant']=variant;frame['before']=job['edited_state']
+        if api_index==11:
+            frame=selected[-1];frame.update(operation='game_ball_tick',arity=0,arguments=[],entry_pc=body_pc+36)
+            frame['entry_registers']['pc']=body_pc+36
     stage['body_observation']=dict(protocol='read-only-emitted-body-pc-and-matched-stack-return',
-        loaded_body_map=[dict(pc=body_pc+4*i,operation=name,arity=arity,label=name+'_body',entry_bytes='4e714e71')
+        ball_phase_scope='standalone-outgoing-only; dispatched-ball-covered-by-complete-logical-body',
+        loaded_body_map=[dict(pc=body_pc+4*i,operation=name,arity=arity,label=name if name=='game_ball_tick' else name+'_body',entry_bytes='4e714e71')
             for i,(name,arity) in enumerate(BODY_ARITIES.items())],frames=frames,semantic_intents=[],
         actual_body_entries=len(frames),outer_logical_calls=len(frames),internal_stops=2*len(frames),
         entry_return_observations=2*len(frames),unpaired_frames=0,maximum_nesting=9,maximum_entries_per_api=8192,
@@ -148,7 +154,7 @@ def receipt(ntsc=False):
     add_seek_shape(stage,files,ntsc)
     return dict(passed=True,execution='actual-native-paused-preview',target=target,native_video=video,
         evidence=dict(target_role='legacy-validator-reference',actual_target=target,files=files,
-            compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32}),preview_native_validation=stage)
+            compiled_executables={'build/tests/preview-native/baseline-rally':'99'*32,'product':'66'*32}),preview_native_validation=stage)
 
 
 def add_seek_shape(stage,files,ntsc):
@@ -156,8 +162,8 @@ def add_seek_shape(stage,files,ntsc):
     files.update({path:SEEK_CPU_SHA for path in SEEK_CPU_RECEIPTS})
     stage['compiled_identity']['seek_storage']=dict(loaded_start=25000,loaded_end=25734,bytes=734,fixture_executable_sha256='99'*32)
     stage['inherited_endpoint_validation'].update(current_ownership_cpu_receipt_sha256=SEEK_CPU_SHA,
-        worker_guard_closure=dict(passed=True,removed_entry_guards=3,current_source_sha256='33'*32,
-            guard_removed_source_sha256='40c07983067fb211d75e655fd7affbcec572272d98e310728f976e9568c6ee5d',scope='Synthetic exact guard closure shape'))
+        worker_source_closure=dict(passed=True,current_source_sha256='33'*32,
+            preview_cpu_run_id='12'*16,scope='Synthetic exact current source closure shape'))
     rows=stage['costs']['api_rows'];block=stage['body_observation'];frames=block['frames'];proof=[]
     selected='00'*318;metadata=bytearray(72);metadata[:4]=bytes.fromhex("00030000");metadata[4]=2;metadata[34:42]=(835).to_bytes(8,'big');metadata=metadata.hex()
     def working(cursor):
@@ -258,7 +264,7 @@ class NativePreviewExtent(unittest.TestCase):
                 (('completed_jobs',1,'costs','worker_body_counts'),[5]),
                 (('completed_jobs',2,'costs','cache_hit'),False),
                 (('completed_jobs',2,'costs','resolver_operations'),1),
-                (('completed_jobs',2,'prefix_samples'),0),
+                (('completed_jobs',2,'prefix_samples'),1),
                 (('completed_jobs',2,'costs','worker_elapsed_cck'),11),
                 (('completed_jobs',2,'costs','seconds_to_result'),1),
                 (('completed_jobs',2,'costs','worker_api_row_indices'),[9]),
@@ -323,8 +329,8 @@ class NativePreviewExtent(unittest.TestCase):
         for path in SEEK_CPU_RECEIPTS:
             r=receipt();r['evidence']['files'].pop(path)
             self.assertFalse(required_extent(self.case(),r))
-        for key,value in (('removed_entry_guards',2),('guard_removed_source_sha256','00'*32)):
-            r=receipt();r['preview_native_validation']['inherited_endpoint_validation']['worker_guard_closure'][key]=value
+        for key,value in (('current_source_sha256','00'*32),('preview_cpu_run_id','not-a-run')):
+            r=receipt();r['preview_native_validation']['inherited_endpoint_validation']['worker_source_closure'][key]=value
             self.assertFalse(required_extent(self.case(),r))
         r=receipt();r['preview_native_validation']['compiled_identity']['seek_storage']['bytes']=733
         self.assertFalse(required_extent(self.case(),r))
@@ -373,6 +379,20 @@ class NativePreviewExtent(unittest.TestCase):
             fixture.write_text('nop\nrts\n')
             after=dependencies(self.case(),root)['files'][str(fixture)]
             self.assertNotEqual(before,after)
+
+    def test_missing_outgoing_phase_and_product_layout_are_rejected(self):
+        for change in ('phase','label','layout','scope','source'):
+            r=receipt();stage=r['preview_native_validation']
+            if change=='phase':
+                for frame in stage['body_observation']['frames']:
+                    if frame['operation']=='game_ball_tick':
+                        frame.update(operation='game_core_sample_pads',arity=2,arguments=[0,0],entry_pc=12008)
+                        frame['entry_registers']['pc']=12008
+            if change=='label':stage['body_observation']['loaded_body_map'][-1]['label']='game_ball_tick_body'
+            if change=='layout':stage['compiled_identity']['product_layout']['hunks'][0]['bytes']-=4
+            if change=='scope':stage['body_observation']['ball_phase_scope']='all match bodies skipped'
+            if change=='source':stage['completed_jobs'][1]['incoming_prefix_validation']['incoming_state']='11'*318
+            with self.subTest(change=change):self.assertFalse(required_extent(self.case(),r))
 
     def test_latest_cpu_receipt_is_a_required_dependency(self):
         with tempfile.TemporaryDirectory() as directory:

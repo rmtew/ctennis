@@ -11,6 +11,8 @@ from preview_extended_proof import stage_a1
 from preview_discovery_proof import discovery
 from preview_isolation_proof import isolation
 from preview_batch_proof import batching
+from preview_boundary_proof import cap_boundaries,flight_cases
+from preview_end_ring_proof import end_ring
 from build_native_game import build as build_native
 
 
@@ -40,6 +42,10 @@ def run():
         validation['stage_a1_validation']=stage_a1(executable,progress)
         atomic_json(path.parent/('a1-results-'+transaction.meta['run_id']+'-unvalidated.json'),
             dict(preview_validation=validation,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+        fallback=validation['stage_a1_validation']['cases']['human-serve-fallback']
+        timed=fallback['timed_prelaunch']['cases'][1]['selected_state']
+        validation['cap_boundary_validation']=cap_boundaries(executable,timed,fallback['selected_state'])
+        validation['flight_boundary_validation']=flight_cases(executable,timed)
         stage_a2_rows=[]
         def discovery_progress(row):
             stage_a2_rows.append(row)
@@ -54,6 +60,7 @@ def run():
                 dict(rows=isolation_rows,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
             print(json.dumps(row),flush=True)
         _,native=build_native()
+        validation['end_ring_validation']=end_ring(executable,native)
         validation['stage_a3_validation']=isolation(executable,native,isolation_progress)
         batch_rows=[]
         def batch_progress(row):
@@ -62,7 +69,7 @@ def run():
                 dict(rows=batch_rows,receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
             print(json.dumps(row),flush=True)
         validation['batch_validation']=batching(executable,batch_progress)
-        validation['scope']='Fresh actual 68000 CPU first-small, cache, A1 API/context/lifecycle, A2 bounded endpoints and A3 relocation/emitted frozen sinks/history regression and operation-budget batching only. Current real native interrupt/paused latency/resources/performance and UI remain pending.'
+        validation['scope']='Fresh actual 68000 CPU first-small, cache, A1 API/context/lifecycle, A2 bounded endpoints and A3 relocation/emitted frozen sinks/history regression operation-budget batching, explicit cap-256/513 boundary fixtures, and natural exchanged upper-end/wrapped-index/controller selection only. Current real native interrupt/paused latency/resources/performance and UI remain pending.'
         report=dict(passed=True,execution='actual-68000-cpu-only',executable_sha256=digest(executable),
             preview_validation=validation,scope=validation['scope'])
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,

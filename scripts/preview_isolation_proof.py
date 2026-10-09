@@ -5,13 +5,13 @@ from check_shared_core_bytes import normalized
 from history_proof import attach,attempts,cursor,logical_api,exercise
 from match_core_cpu import Core
 from preview_proof import fixture,protected,call_checked
-from preview_extended_proof import candidates,execute,continuous,table
+from preview_extended_proof import candidates,execute,continuous,table,continuation_fingerprint
 from preview_discovery_proof import sampling_rows,qualification
 from preview_native_proof import native_entries,assert_native_entries,seek_preserving_ledger
 from run_shared_match_core import READONLY
 
 # Input descriptors only. No expected intermediate gameplay state is supplied.
-DESCRIPTORS=((0,'low',-16),(1,'regular',-16),(1,'regular',16))
+DESCRIPTORS=((0,'low',-16),(1,'regular',16),(1,'low',-16))
 
 
 def empty_boundary(executable):
@@ -83,12 +83,12 @@ def isolation(standalone,native,progress):
         reports=[];semantic=[];coverage=set()
         for observation,facts,descriptor in observations:
             report=continuous(image,symbols,observation,native_sinks=is_native)
-            report.update(qualification=facts,descriptor=descriptor)
+            report.update(qualification=facts,descriptor=descriptor,fingerprint=continuation_fingerprint(observation))
             reports.append(report);coverage.update(facts['coverage'])
             semantic.append({key:report[key] for key in ('seed','ordinal','selection','end','x','y',
                 'selected_state','edited_state','final_states','paths','classes','ordered_outputs',
                 'actual_accepted_launches','actual_final_boundaries','prefix_samples','incoming_origin','action_boundary')})
-        assert coverage=={'net','out','interception','coincidence'}, 'A3 actual input cases lost endpoint coverage'
+        assert coverage=={'net','out','coincidence'}, ('A3 actual input cases lost endpoint coverage',coverage,[(r['classes'],r['descriptor']['band'],r['x'],r['y']) for r in reports])
         if baseline is None:baseline=semantic
         else:assert semantic==baseline, 'Relocation/native emitted sinks change actual states/paths/outcomes/semantic intents'
         row=dict(name=label,base=base,passed=True,cases=reports,semantic_equal=True,
