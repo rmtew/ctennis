@@ -1,0 +1,25 @@
+"""Declared isolated-flight initial fixtures, independent of query outputs."""
+CASES=[
+    ('accepted-short',(0,5,0,128,100,100,64,0,0)),
+    ('accepted-long',(0,17,128,128,128,64,64,0,0)),
+    ('court-y-bound',(0,4,0,32,203,201,64,0,0)),
+    ('screen-clamp-or-wrap',(0,4,32,32,64,0,64,0,0)),
+    ('height-quotient-overflow',(0,31,255,32,184,56,64,0,0)),
+    ('displacement-overflow',(0,63,255,32,32,8,64,0,0)),
+    ('height-factor-wrap',(0,132,255,32,32,32,64,0,0)),
+    ('court-x-bound',(5,4,0,231,32,31,64,0,0)),
+    ('negative-height',(0,17,64,128,100,101,64,0,0)),
+    ('special-net-reflection',(0,17,64,128,110,100,72,0,0)),
+    ('net-already-contacted',(0,17,64,128,110,100,72,1,0)),
+    ('low-speed',(0,3,0,128,100,100,64,0,0)),
+    ('negative-zero',(0,128,255,128,100,100,64,0,0)),
+    ('nonzero-phase',(0,17,64,128,100,100,64,0,1)),
+    ('pending-launch',(0,17,64,128,100,100,192,0,0)),
+    ('inactive',(0,17,64,128,100,100,0,0,0)),
+    ('inactive-out',(0,17,64,128,100,100,32,0,0)),
+    ('wrap-bounce-before-net',(255,4,255,0,110,111,72,0,255)),
+    ('wrap-net-before-bounds',(255,4,255,0,110,110,72,0,255)),
+    ('wrap-low-speed-before-bounce',(255,3,255,0,110,111,72,0,255)),
+    ('wrap-none',(0,4,0,128,100,100,64,0,255)),
+]
+SAMPLES=8

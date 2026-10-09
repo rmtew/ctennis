@@ -69,6 +69,12 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('guarded-landing-cpu', ('scripts/run_landing_proof.py',),
+             'tests/guarded-landing-cpu/report.json', category='host'),
+        Case('guarded-landing-pal', ('scripts/run_landing_native.py',),
+             'tests/guarded-landing-native-pal/report.json'),
+        Case('guarded-landing-ntsc', ('scripts/run_landing_native.py','--ntsc'),
+             'tests/guarded-landing-native-ntsc/report.json'),
         Case('ratio32-cpu', ('scripts/run_ratio32_proof.py',),
              'tests/ratio32-cpu/report.json', category='host'),
         Case('ratio32-live-baseline-pal', ('scripts/run_ratio32_native.py','--variant=baseline'),
