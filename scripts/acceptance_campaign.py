@@ -577,7 +577,7 @@ def preview_a3_extent(stage,a2):
     candidates=seed_rows[0].get('candidates',[]) if seed_rows and isinstance(seed_rows[0],dict) else []
     if len(candidates)!=2:return False
     semantic=('seed','ordinal','selection','end','x','y','selected_state','edited_state','final_states',
-        'paths','classes','ordered_outputs','actual_accepted_launches','actual_final_boundaries',
+        'paths','classes','ordered_outputs','actual_accepted_launches','actual_final_boundaries','continuation_source_state',
         'prefix_samples','incoming_origin','action_boundary','qualification')
     required=['coincidence','net','out']
     for row in rows:
@@ -599,7 +599,7 @@ def preview_a3_extent(stage,a2):
         for number,case in enumerate(cases):
             if (not isinstance(case,dict) or any(case.get(k) is not True for k in ('passed',
                     'continuous_state_path_output_equal','independent_continuation_policy_equal',
-                    'live_history_output_preserved','edited_only_position_changed'))):return False
+                    'live_history_output_preserved','edited_only_position_changed','original_incoming_full_state_verified'))):return False
             descriptor=case.get('descriptor') or {};sample=descriptor.get('sampling_row') or {}
             index,band,lateral=stage['descriptors'][number]
             candidate=candidates[index]
@@ -618,6 +618,9 @@ def preview_a3_extent(stage,a2):
             source=next((r for r in sources if all(r.get(k)==case.get(k) for k in ('seed','ordinal','selection','x','y'))),None)
             if source is None or case.get('qualification')!=source.get('qualification'):return False
             try:
+                source_state=bytes.fromhex(case['continuation_source_state']);edited_state=bytes.fromhex(case['edited_state'])
+                player=10*case['end']
+                if len(source_state)!=318 or len(edited_state)!=318 or any(a!=b for n,(a,b) in enumerate(zip(source_state,edited_state)) if n not in (player+2,player+3)) or edited_state[player+2]!=case['y'] or edited_state[player+3]!=case['x']:return False
                 digest_bytes=lambda raw:hashlib.sha256(bytes.fromhex(raw)).hexdigest()
                 fingerprint=dict(selected=digest_bytes(case['selected_state']),edited=digest_bytes(case['edited_state']),
                     final_states=[digest_bytes(raw) for raw in case['final_states']],
@@ -662,7 +665,7 @@ def preview_batch_extent(stage):
     rows=stage.get('cases')
     if not isinstance(rows,list) or len(rows)!=4:return False
     semantic=('seed','ordinal','selection','end','x','y','bounds','classes','selected_state','edited_state',
-              'final_states','paths','ordered_outputs','path_counts','prefix_samples','incoming_origin',
+              'final_states','paths','ordered_outputs','path_counts','prefix_samples','incoming_origin','continuation_source_state',
               'action_boundary','actual_accepted_launches','actual_final_boundaries','coincident')
     baseline=None;trace=None;total=None
     for budget,row in zip((1,2,3,4),rows):
@@ -693,7 +696,7 @@ def preview_batch_extent(stage):
                 or result.get('seed')!=0xace1 or not integer(result.get('end'),0,1)
                 or not integer(result.get('selection'),1,2049)
                 or not integer(result.get('ordinal'),0,127)
-                or not integer(result.get('prefix_samples'),0,255)):return False
+                or result.get('prefix_samples')!=0):return False
         bounds=result.get('bounds')
         if (not isinstance(bounds,dict)
                 or any(not integer(bounds.get(k),0,255) for k in ('left','right','top','bottom'))
@@ -702,14 +705,15 @@ def preview_batch_extent(stage):
                 or type(result.get('coincident')) is not bool):return False
         try:
             selected=bytes.fromhex(result['selected_state']);edited=bytes.fromhex(result['edited_state'])
+            source=bytes.fromhex(result['continuation_source_state'])
             states=[bytes.fromhex(s) for s in result['final_states']]
             paths=[bytes.fromhex(s) for s in result['paths']]
         except (TypeError,ValueError):return False
-        if len(selected)!=318 or len(edited)!=318 or len(states)!=2 or any(len(s)!=318 for s in states):return False
+        if result.get('original_incoming_full_state_verified') is not True or len(source)!=318 or len(selected)!=318 or len(edited)!=318 or len(states)!=2 or any(len(s)!=318 for s in states):return False
         player=10*result['end']
-        if (any(a!=b for n,(a,b) in enumerate(zip(selected,edited)) if n not in (player+2,player+3))
+        if (any(a!=b for n,(a,b) in enumerate(zip(source,edited)) if n not in (player+2,player+3))
                 or edited[player+2]!=result['y'] or edited[player+3]!=result['x']
-                or len(paths)!=2 or any(not 8<=len(p)<=2048 or len(p)%8 for p in paths)
+                or len(paths)!=2 or any(not 8<=len(p)<=4104 or len(p)%8 for p in paths)
                 or result.get('path_counts')!=[len(p)//8 for p in paths]
                 or any(result['prefix_samples']>len(p)//8 for p in paths)
                 or paths[0][:8*result['prefix_samples']]!=paths[1][:8*result['prefix_samples']]

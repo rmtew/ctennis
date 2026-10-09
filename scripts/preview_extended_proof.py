@@ -181,7 +181,8 @@ class HumanLaunchTransition:
 def continuous(image,symbols,observation,native_sinks=False):
     """One actual edited initialization, then uninterrupted original API policy."""
     result=observation['result'];selection=observation['selection'];stream=observation['stream']
-    expected_edited=validate_edited_source(observation,symbols,original_incoming_source(image,symbols,observation))
+    source=original_incoming_source(image,symbols,observation)
+    expected_edited=validate_edited_source(observation,symbols,source)
     for variant in (0,1):
         with Core(image,symbols,initial=None if native_sinks else expected_edited,readonly=READONLY) as cpu:
             if native_sinks:
@@ -240,6 +241,7 @@ def continuous(image,symbols,observation,native_sinks=False):
         incoming_origin=result['incoming'],action_boundary=result['action'],coincident=observation['coincident'],
         costs=observation['costs'],live_history_output_preserved=True,edited_only_position_changed=True,
         selected_state=observation['selected'].hex(),edited_state=result['edited'].hex(),
+        continuation_source_state=bytes(source).hex(),original_incoming_full_state_verified=True,
         final_states=[state.hex() for state in result['contexts']],
         paths=[path.hex() for path in result['paths']],ordered_outputs=result['outputs'])
 
@@ -251,7 +253,7 @@ def continuation_fingerprint(observation):
     return dict(selected=digest(observation['selected']),edited=digest(result['edited']),
         final_states=[digest(state) for state in result['contexts']],
         paths=[digest(path) for path in result['paths']],
-        ordered_outputs=digest(json.dumps({str(v):result['outputs'][v] for v in (0,1)},
+        ordered_outputs=digest(json.dumps([result['outputs'][v] for v in (0,1)],
             sort_keys=True,separators=(',',':')).encode()))
 
 

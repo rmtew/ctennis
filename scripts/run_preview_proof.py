@@ -72,6 +72,10 @@ def run():
         validation['scope']='Fresh actual 68000 CPU first-small, cache, A1 API/context/lifecycle, A2 bounded endpoints and A3 relocation/emitted frozen sinks/history regression operation-budget batching, explicit cap-256/513 boundary fixtures, and natural exchanged upper-end/wrapped-index/controller selection only. Current real native interrupt/paused latency/resources/performance and UI remain pending.'
         report=dict(passed=True,execution='actual-68000-cpu-only',executable_sha256=digest(executable),
             preview_validation=validation,scope=validation['scope'])
+        from acceptance_campaign import required_extent
+        from acceptance_cases import cases
+        case=next(c for c in cases() if c.id=='preview-cpu')
+        assert required_extent(case,dict(report,evidence=transaction.meta)), 'CPU report lacks required current preview extent'
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
             receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
         transaction.finalize(path,report,compiled=[compile_manifest(executable,listing),

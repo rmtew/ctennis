@@ -144,12 +144,13 @@ def preview_a3_report(a2):
         for row in (job,chosen):
             row.update(candidate=candidate,ordinal=candidate['ordinal'],sampling_row=sample,
                 selection=sample['selection'],x=144 if number==1 else 112,y=sample['center_y'])
-        chosen.update(selected_state='00'*318,edited_state='00'*318,
+        edited=bytearray(318);edited[2]=chosen['y'];edited[3]=chosen['x']
+        chosen.update(selected_state='00'*318,edited_state=edited.hex(),continuation_source_state='00'*318,original_incoming_full_state_verified=True,
             incoming_origin=candidate['incoming_origin'],action_boundary=candidate['action_boundary'],
             actual_accepted_launches={str(v):[q['human_launch']]+([q['opponent_contact']] if q['opponent_contact'] else [])
                 for v,q in enumerate(chosen['qualification']['variants'])},
             actual_final_boundaries=[q['last_sampled_boundary'] for q in chosen['qualification']['variants']],
-            ordered_outputs={'0':[['fields',0,'00'*6]],'1':[['fields',0,'00'*6]]})
+            ordered_outputs=[[['fields',0,'00'*6]],[['fields',0,'00'*6]]])
     for job,chosen in zip(a2['job_results'],a2['chosen_cases']):
         digest_bytes=lambda raw:hashlib.sha256(bytes.fromhex(raw)).hexdigest()
         fp=dict(selected=digest_bytes(chosen['selected_state']),edited=digest_bytes(chosen['edited_state']),
@@ -207,8 +208,8 @@ def preview_batch_report():
             independent_continuation_policy_equal=True,live_history_output_preserved=True,
             edited_only_position_changed=True,seed=0xace1,ordinal=1,selection=800,end=0,x=80,y=100,
             bounds=dict(left=40,right=200,top=98,bottom=154),classes=['landing','no-contact'],
-            selected_state='00'*318,edited_state=edited.hex(),final_states=['00'*318]*2,
-            paths=['00'*16]*2,path_counts=[2,2],prefix_samples=1,incoming_origin=544,action_boundary=800,
+            selected_state='00'*318,edited_state=edited.hex(),continuation_source_state='00'*318,original_incoming_full_state_verified=True,final_states=['00'*318]*2,
+            paths=['00'*16]*2,path_counts=[2,2],prefix_samples=0,incoming_origin=544,action_boundary=800,
             ordered_outputs=[[],[]],actual_accepted_launches={'0':[],'1':[]},
             actual_final_boundaries=[{},{}],coincident=True,costs=costs)
         cases.append(dict(budget=budget,passed=True,continuous=continuous,actual_body_operations=8,
@@ -436,11 +437,25 @@ class CampaignTests(unittest.TestCase):
                 (('cases',2,'continuous','paths',0),'00'),
                 (('cases',1,'continuous','final_states',0),'01'*318),
                 (('cases',0,'continuous','edited_state'),'01'*318),
+                (('cases',0,'continuous','continuation_source_state'),'01'*318),
+                (('cases',0,'continuous','original_incoming_full_state_verified'),False),
                 (('cases',3,'continuous','costs','maximum_worker_operations'),5)):
             partial=json.loads(json.dumps(report));node=partial
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(campaign.preview_batch_extent(partial))
+
+    def test_preview_batch_extent_accepts_incoming_seed_and_513_samples(self):
+        report=preview_batch_report()
+        for row in report['cases']:
+            result=row['continuous']
+            # Incoming launch predates selection; clocks/RNG can differ.
+            result['selected_state']='a5'*318
+            result['paths']=['00'*(513*8)]*2;result['path_counts']=[513]*2
+        self.assertTrue(campaign.preview_batch_extent(report))
+        for row in report['cases']:
+            row['continuous']['paths']=['00'*(514*8)]*2;row['continuous']['path_counts']=[514]*2
+        self.assertFalse(campaign.preview_batch_extent(report))
 
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
