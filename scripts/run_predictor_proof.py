@@ -7,7 +7,7 @@ from build_native_game import build as build_native
 from check_shared_core_bytes import run as original_bytes
 from predictor_proof import run,byte_audit
 from match_core_cpu import cpu_tool_inputs
-from native_evidence import ReportRun,compile_manifest,digest,inputs_for,snapshot,status
+from native_evidence import ReportRun,atomic_json,compile_manifest,digest,inputs_for,snapshot,status
 from native_tools import ROOT
 
 
@@ -18,17 +18,20 @@ def main():
         paths,tools=inputs_for('build','scripts/run_predictor_proof.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(files=snapshot(paths|cpu_paths),tools=tools,
-            runner='scripts/run_predictor_proof.py',environment={'PYTHONPATH':os.environ.get('PYTHONPATH')})
+            runner='scripts/run_predictor_proof.py')
+        transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         executable,listing=build();build_native()
         native=ROOT/'build/amiga/interfaces/enhanced/baseline-rally'
         validation=run(executable,output.parent/'raw')
         validation['original_core_bytes']=original_bytes()
         validation['predictor_bytes']=byte_audit(executable,native)
+        atomic_json(output.parent/'results-unvalidated.json',validation)
         transaction.finalize(output,dict(passed=True,execution='actual-68000-cpu-only',
             executable_sha256=digest(executable),validation=validation),
             [compile_manifest(executable,listing),compile_manifest(native,native.parent/'native.lst')],
-            list((output.parent/'raw').glob('*.json')))
-        assert status(output)['status']=='passed'
+            list((output.parent/'raw').glob('*.json'))+[output.parent/'results-unvalidated.json'])
+        verdict=status(output)
+        assert verdict['status']=='passed',verdict
         print(json.dumps(dict(passed=True,report=str(output),sha256=digest(output))),flush=True)
     except BaseException as error:
         transaction.abort(error);raise
