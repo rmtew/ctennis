@@ -1,12 +1,19 @@
 import sys, unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from tutorial_latency import StackTiming, LatencyObserver
+from tutorial_latency import StackTiming, LatencyObserver, instruction_map
 class Tests(unittest.TestCase):
  def make(self):return StackTiming({100:dict(return_pc=104,callee='game_preview_step',opcode='61000002')},{200},1000,2000)
  def row(self,a,v,pc,access='write',cck=1):return dict(addr=a,value=v,pc=pc,access=access,size=2,position=dict(cck=cck))
  def start(self,t):
   t.observe(self.row(1500,0,100));t.observe(self.row(1502,104,100,cck=2))
+ def test_listing_continuation_not_call(self):
+  text='00:00000000 AE8C\n00:00000002 61000002 \t 82: bsr.s game_preview_step\n00:00000006 4E75 \t 83: rts\n'
+  values={102:bytes.fromhex('6100'),106:bytes.fromhex('4e75')}
+  calls,returns=instruction_map(text,[dict(start=100)],lambda a,n:values[a])
+  self.assertEqual(calls[102]['callee'],'game_preview_step')
+  self.assertEqual(calls[102]['return_pc'],106)
+  self.assertEqual(returns,{106})
  def test_pair(self):
   t=self.make();self.start(t)
   t.observe(self.row(1500,0,198,'read',3)) # MOVEM dummy read never counts.

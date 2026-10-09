@@ -5,7 +5,7 @@ import re
 def instruction_map(listing, segments, read):
     calls, returns = {}, set()
     for hunk, offset, encoded, mnemonic, operand in re.findall(
-            r'^(\d\d):([\da-fA-F]{8})\s+([\dA-F]+)\s+[^\n]*?:\s*(bsr|jsr|rts)\s*([^\n]*)$',
+            r'^(\d\d):([\da-fA-F]{8})[ \t]+([\dA-F]+)[ \t]+[^\n]*?:[ \t]*(bsr|jsr|rts)(?:\.[swl])?[ \t]*([^\n]*)$',
             listing, re.M | re.I):
         address = segments[int(hunk)]['start'] + int(offset, 16)
         code = bytes.fromhex(encoded)
