@@ -64,7 +64,7 @@ def run(standard='PAL', baseline=None, predictor=False):
         listing = listing_path.read_text()
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
-        frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False
+        frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
         with LatencySession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -110,13 +110,15 @@ def run(standard='PAL', baseline=None, predictor=False):
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
             if predictor:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_resume_restored']))
+            drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
+            for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
             def advance(seconds):
-                nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary
+                nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary,held_resume_samples
                 goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
@@ -149,6 +151,9 @@ def run(standard='PAL', baseline=None, predictor=False):
                         elif predictor and resume_readback is not None and not first_resumed_boundary:
                             assert states[0]==frozen[2],'Resume dispatched before complete restored boundary'
                             first_resumed_boundary=True
+                        elif predictor and first_resumed_boundary:
+                            assert not block('game_input_pressed',2)[0]&16,'Carried held F invented a live action edge'
+                            held_resume_samples+=1
                         boundaries.append(dict(position=position(), fields=fields,
                             state=states[0].hex(),history=states[1].hex(),backup=states[2].hex()))
                     if stop.get('reason')=='target' or stop['cck']>=goal:break
@@ -330,7 +335,7 @@ def run(standard='PAL', baseline=None, predictor=False):
                 key(0x4d,True,.02);key(0x4d,False,.02)
                 key(0x44,True,.02);key(0x44,False,.02)
                 advance(.12)
-                assert resume_readback and first_resumed_boundary and not number('tutorial_active')
+                assert resume_readback and first_resumed_boundary and held_resume_samples>=2 and not number('tutorial_active')
                 assert number('game_preview_generation',4)!=cancel_generation
                 assert block('game_keyboard_matrix',128)[0x22]==0
             # Stop before the next real callback body, not inside an API.
@@ -404,7 +409,9 @@ def run(standard='PAL', baseline=None, predictor=False):
             assert kernel_calls,'No emitted predictor input call executed'
             report.update(guarded_predictor=True,input_probe=input_result,resume_latest=resume_readback,
                 first_resumed_boundary_equal=first_resumed_boundary,record_store_unchanged=True,
-                emitted_kernel_calls=len(kernel_calls),cancelled_active_job=True)
+                emitted_kernel_calls=len(kernel_calls),cancelled_active_job=True,held_resume_samples=held_resume_samples,
+                observer_drain_breaks=drain_breaks,
+                drain_scope='Read-only helper entry stops drain event bursts; no guest writes, clock advancement or callback regime selection')
             captured=json.loads(capture.read_text());captured.update(input_probe=input_result,resume_latest=resume_readback,
                 first_resumed_boundary_equal=first_resumed_boundary,kernel_calls=kernel_calls,
                 records=frozen_records.hex(),history_end=history_end);atomic_json(capture,captured)
