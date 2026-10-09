@@ -2,7 +2,7 @@
 game_prepare_controls:
         bsr     game_assign_styles
         clr.b   G_SOUND_EVENT(a4)
-        move.b  game_score_flags,d0
+        move.b  game_score_flags-game_core_state(a5),d0
         move.b  d0,d1
         andi.b  #1,d0
         move.b  d0,G_UPPER_AI(a4)
@@ -11,12 +11,12 @@ game_prepare_controls:
         move.b  d0,G_LOWER_AI(a4)
         andi.b  #$40,d1
         move.b  d1,G_TRACK_AI(a4)
-        move.b  game_mode,d0
+        move.b  game_mode-game_core_state(a5),d0
         andi.b  #8,d0
         move.b  d0,G_FLIP_SERVE(a4)
-        move.b  game_directions,d0
-        move.b  game_actions,d1
-        btst    #4,game_mode
+        move.b  game_directions-game_core_state(a5),d0
+        move.b  game_actions-game_core_state(a5),d1
+        btst    #4,game_mode-game_core_state(a5)
         beq   .native_controls_ordered
         rol.b   #4,d0
         rol.b   #4,d1
@@ -38,11 +38,11 @@ game_finish_controls:
         move.b  G_UPPER_DIRECTION(a4),d0
         lsl.b   #4,d0
         or.b    G_LOWER_DIRECTION(a4),d0
-        btst    #4,game_mode
+        btst    #4,game_mode-game_core_state(a5)
         beq   .native_export_directions
         rol.b   #4,d0
 .native_export_directions:
-        move.b  d0,game_directions
+        move.b  d0,game_directions-game_core_state(a5)
         tst.b   G_SOUND_EVENT(a4)
         beq   .native_export_done
         bsr     game_audio_request_hit
@@ -60,7 +60,7 @@ game_entropy:
 game_assign_styles:
         move.b  #2,G_LOWER+P_STYLE(a4)
         move.b  #3,G_UPPER+P_STYLE(a4)
-        btst    #4,game_mode
+        btst    #4,game_mode-game_core_state(a5)
         beq.s   .styles_ready
         move.b  #3,G_LOWER+P_STYLE(a4)
         move.b  #2,G_UPPER+P_STYLE(a4)

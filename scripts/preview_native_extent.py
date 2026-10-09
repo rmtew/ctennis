@@ -607,8 +607,8 @@ def required_preview_native_extent(case_id,report):
     core=identity.get('normalized_shared_core')
     if (not isinstance(core,dict) or core.get('matched') is not True
             or any(type(core.get(k)) is not int or core[k]!=v for k,v in
-                dict(bytes=18020,relocations=257,sink_branches=14).items())
-            or core.get('sha256')!='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'):return False
+                dict(bytes=17524,relocations=7,sink_branches=14).items())
+            or core.get('sha256')!='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c'):return False
     hunks=identity.get('loaded_hunks');worker=identity.get('worker_bytes');overlay=identity.get('overlay')
     if (not isinstance(hunks,list) or not hunks or not isinstance(worker,dict)
             or not isinstance(overlay,dict)):return False

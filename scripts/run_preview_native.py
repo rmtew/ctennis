@@ -48,9 +48,9 @@ COMMANDS=('game_history_freeze','game_history_seek_begin','game_preview_request'
 
 def overlay(directory):
     original=ROOT/'amiga/main.s';text=original.read_text()
-    anchor='        bsr     game_native_commands\n        tst.b   ui_paused'
+    anchor='        bsr     game_native_commands\n        jsr     tutorial_tick'
     assert text.count(anchor)==1,'Native after-physical-sampling hook anchor changed'
-    text=text.replace(anchor,'        bsr     game_native_commands\n        jsr     preview_native_hook\n        tst.b   ui_paused')
+    text=text.replace(anchor,'        bsr     game_native_commands\n        jsr     preview_native_hook\n        jsr     tutorial_tick')
     include='        include "amiga/game/preview.s"'
     assert text.count(include)==1,'Preview worker include anchor changed'
     text=text.replace(include,'preview_native_worker_begin:\n'+include+'\npreview_native_worker_end:')

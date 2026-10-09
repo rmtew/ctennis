@@ -1,5 +1,6 @@
 ; Isolated fixed-buffer previews over the actual logical APIs. Caller freezes
-; the physical dispatcher. Every worker yield restores selected state/metadata.
+; the physical dispatcher. Bodies run in supplied private state; each worker
+; yield restores history metadata without writing the frozen canonical state.
 PREVIEW_POINTS equ 256
 PREVIEW_POINT_BYTES equ 8
 PREVIEW_RESOLVE equ 1
@@ -223,9 +224,7 @@ game_preview_step:
         bne.s   .alternative
         cmpi.b  #1,game_preview_active
         beq.s   .resolve
-        lea     game_preview_held_state,a1
-        lea     game_core_state,a0
-        bsr     game_history_copy_state
+        lea     game_preview_held_state,a5
         move.b  #1,game_preview_active
 .resolve:
         bsr     game_preview_resolve_one
@@ -239,9 +238,7 @@ game_preview_step:
 .load_variant:
         move.b  d7,game_preview_variant
         bsr     game_preview_context_address
-        move.l  a0,a1
-        lea     game_core_state,a0
-        bsr     game_history_copy_state
+        move.l  a0,a5
         move.b  #2,game_preview_active
 .variant_loaded:
         cmpi.w  #PREVIEW_PRIME,game_preview_status
@@ -273,30 +270,17 @@ game_preview_step:
         moveq   #0,d0
         rts
 
-; Persist the departing owner only at a public yield or ownership transition.
+; Private bodies persist directly in their owner; only metadata needs retirement.
 game_preview_release_current:
         tst.b   game_preview_active
         beq.s   .done
-        cmpi.b  #1,game_preview_active
-        beq.s   .resolver
-        moveq   #0,d7
-        move.b  game_preview_variant,d7
-        bsr     game_preview_context_address
-        lea     game_core_state,a1
-        bsr     game_history_copy_state
-        bra.s   .restore
-.resolver:
-        cmpi.w  #PREVIEW_RESOLVE,game_preview_status
-        bne.s   .restore ; missing context has no future working continuation
-        lea     game_preview_held_state,a0
-        lea     game_core_state,a1
-        bsr     game_history_copy_state
-.restore:
         bsr     game_preview_restore_owner
 .done:  rts
 
 game_preview_restore_owner:
-        bsr     game_preview_restore_selected
+        lea     game_history_state,a0
+        lea     game_preview_history_saved,a1
+        bsr     game_preview_copy_history
         clr.b   game_preview_active
 game_preview_context_released:
         rts
@@ -402,9 +386,9 @@ game_preview_resolve_one:
         bne     game_preview_resolved
         tst.b   game_preview_probe_seen
         beq.s   .prefix
-        cmpi.w  #GAME_PLAYING,game_lifecycle
+        cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         bne.s   .miss
-        move.b  game_contact,d0
+        move.b  game_contact-game_core_state(a5),d0
         andi.b  #$8d,d0
         beq.s   .prefix
 .miss:
@@ -528,7 +512,7 @@ game_preview_execute_record:
 .valid: move.w  d6,game_preview_operation
         subq.w  #1,d6
         lsl.w   #2,d6
-        lea     game_history_operations,a1
+        lea     game_preview_operations,a1
         move.l  (a1,d6.w),a1
         move.w  (a0)+,d0
         move.w  (a0)+,d1
@@ -550,10 +534,19 @@ game_preview_execute_record:
         moveq   #0,d0
         rts
 
+; Private retained envelopes call the same actual bodies. Public wrappers bind
+; canonical live state and therefore are deliberately absent from this table.
+game_preview_operations:
+        dc.l game_core_init_body,game_core_select_body
+        dc.l game_core_sample_pads_body,game_core_sample_result_body
+        dc.l game_core_clear_inputs_body,game_core_return_title_body
+        dc.l game_round_poll_body,game_tick_dispatch_body
+        dc.l game_core_latch_actions_body
+
 game_preview_override_pads:
         moveq   #0,d6
         move.w  game_preview_end,d6
-        lea     game_lower_owner,a0
+        lea     game_lower_owner-game_core_state(a5),a0
         move.b  (a0,d6.w),d6
         andi.w  #255,d6
         beq.s   .owner_a
@@ -572,8 +565,8 @@ game_preview_override_pads:
 game_preview_prime_one:
         moveq   #0,d0
         moveq   #0,d1
-        move.b  game_input_bits,d0
-        move.b  game_input_bits+1,d1
+        move.b  game_input_bits-game_core_state(a5),d0
+        move.b  game_input_bits+1-game_core_state(a5),d1
         bsr     game_preview_override_pads
         bsr     game_core_sample_pads_body
         addq.w  #1,game_preview_primed
@@ -637,8 +630,8 @@ game_preview_continue_one:
 .pads:  move.w  #3,game_preview_operation
         moveq   #0,d0
         moveq   #0,d1
-        move.b  game_input_bits,d0
-        move.b  game_input_bits+1,d1
+        move.b  game_input_bits-game_core_state(a5),d0
+        move.b  game_input_bits+1-game_core_state(a5),d1
         bsr     game_preview_override_pads
         bsr     game_core_sample_pads_body
         bra.s   .after
@@ -654,7 +647,7 @@ game_preview_continue_one:
         bra.s   .after
 .tick:  move.w  #8,game_preview_operation
         bsr     game_tick_dispatch_body
-.after: cmpi.w  #GAME_PLAYING,game_lifecycle
+.after: cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         beq.s   .sample
         cmpi.w  #GAME_PLAYING,game_preview_selected_state+(game_lifecycle-game_core_state)
         beq     .invalid_record
@@ -702,17 +695,17 @@ game_preview_append_point:
 
 ; Eight bytes from actual projection, never a second trajectory calculation.
 game_preview_write_point:
-        move.b  game_court_x,(a0)+
-        move.b  game_court_y,(a0)+
-        move.b  game_ball_x,(a0)+
-        move.b  game_ball_y,(a0)+
-        move.b  game_contact,(a0)+
-        move.b  game_flight,(a0)+
-        move.b  game_shadow_colour,d0
+        move.b  game_court_x-game_core_state(a5),(a0)+
+        move.b  game_court_y-game_core_state(a5),(a0)+
+        move.b  game_ball_x-game_core_state(a5),(a0)+
+        move.b  game_ball_y-game_core_state(a5),(a0)+
+        move.b  game_contact-game_core_state(a5),(a0)+
+        move.b  game_flight-game_core_state(a5),(a0)+
+        move.b  game_shadow_colour-game_core_state(a5),d0
         lsl.b   #4,d0
-        or.b    game_ball_colour,d0
+        or.b    game_ball_colour-game_core_state(a5),d0
         move.b  d0,(a0)+
-        move.b  game_tick,(a0)+
+        move.b  game_tick-game_core_state(a5),(a0)+
         rts
 
 game_preview_observe_outcome:
@@ -724,18 +717,18 @@ game_preview_observe_outcome:
         lea     game_preview_interceptions,a0
         tst.b   (a0,d7.w)
         bne.s   .interception
-        btst    #0,game_contact
+        btst    #0,game_contact-game_core_state(a5)
         bne.s   .net
-        move.b  game_contact,d0
+        move.b  game_contact-game_core_state(a5),d0
         andi.b  #$88,d0
         bne.s   .out
-        btst    #1,game_contact
+        btst    #1,game_contact-game_core_state(a5)
         bne.s   .landing
         bra.s   .limit
 .incoming:
         cmpi.w  #3,game_preview_kind
         beq.s   .limit
-        move.b  game_contact,d0
+        move.b  game_contact-game_core_state(a5),d0
         andi.b  #$8d,d0
         bne.s   .no_contact
 .limit: move.w  d7,d6
@@ -746,7 +739,7 @@ game_preview_observe_outcome:
         lea     game_preview_dispatches,a0
         cmpi.w  #PREVIEW_POINTS,(a0,d6.w)
         bcc.s   .limited
-        cmpi.w  #GAME_PLAYING,game_lifecycle
+        cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         beq.s   .done
         cmpi.w  #GAME_PLAYING,game_preview_selected_state+(game_lifecycle-game_core_state)
         beq.s   .lifecycle
@@ -831,7 +824,7 @@ game_preview_contact_begin:
         bne.s   .done
         cmp.w   game_preview_end,d7
         bne.s   .done
-        btst    #7,game_contact
+        btst    #7,game_contact-game_core_state(a5)
         bne.s   .done
         lea     game_preview_cursor,a0
         lea     game_preview_origin,a1

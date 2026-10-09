@@ -12,24 +12,24 @@ GAME_RESTART_SOUND equ 9
 GAME_RESTART_SERVE_SOUND equ 10
 
 game_begin_active:
-        clr.b   game_score_initialized
-        move.w  #GAME_PLAYING,game_lifecycle
+        clr.b   game_score_initialized-game_core_state(a5)
+        move.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         rts
 
 game_tick_dispatch_body:
-        tst.b   game_core_command
+        tst.b   game_core_command-game_core_state(a5)
         beq.s   .dispatch
         moveq   #0,d0
-        move.b  game_core_command,d0
-        clr.b   game_core_command
+        move.b  game_core_command-game_core_state(a5),d0
+        clr.b   game_core_command-game_core_state(a5)
         subq.b  #1,d0
         bra     game_core_start_choice
 .dispatch:
-        cmpi.w  #GAME_TITLE,game_lifecycle
+        cmpi.w  #GAME_TITLE,game_lifecycle-game_core_state(a5)
         beq     game_returned_title_tick
-        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle
+        cmpi.w  #GAME_SELECTION_HELD,game_lifecycle-game_core_state(a5)
         beq     game_selection_tick
-        cmpi.w  #GAME_PLAYING,game_lifecycle
+        cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         bne.s   game_service_tick
         bsr     game_active_tick
 game_service_tick:
@@ -43,12 +43,12 @@ game_service_tick:
 ; Returned title preserves the original waiting animation/scoreboard service,
 ; with mode bit2 suppressing physical gameplay input. Fresh boot stays frozen.
 game_returned_title_tick:
-        tst.b   game_restart_context
+        tst.b   game_restart_context-game_core_state(a5)
         beq     game_menu_tick
         bsr     game_active_tick
         bra     game_service_tick
 
 game_selection_tick:
-        tst.b   game_restart_context
+        tst.b   game_restart_context-game_core_state(a5)
         beq     game_menu_tick
         bra     game_service_tick

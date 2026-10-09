@@ -78,8 +78,8 @@ def run(standard='PAL'):
         shared, relocations, sinks = normalized(executable, executable.parent/'native.lst')
         assert (len(shared), relocations, sinks,
                 hashlib.sha256(shared).hexdigest()) == (
-            18020, 257, 14,
-            '9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d')
+            17524, 7, 14,
+            '951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
         config = emulator_config()
         screenshots, boundaries, actions, waits = [], [], [], []
         visual_checks = {}

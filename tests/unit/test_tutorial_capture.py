@@ -134,8 +134,8 @@ class TutorialCaptureTests(unittest.TestCase):
             animation='build/tests/tutorial-court-pal/movie.gif', animation_frames=24,
             animation_source_frames=24, animation_geometry=[256,208],
             loaded_hunks=[dict(matched=True, expected_sha256='a'*64, actual_sha256='a'*64)],
-            shared_core=dict(bytes=18020, relocations=257, sink_branches=14,
-                normalized_sha256='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'),
+            shared_core=dict(bytes=17524, relocations=7, sink_branches=14,
+                normalized_sha256='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c'),
             resume_readback=dict(state='00'*318, expected_state='00'*318, backup='00'*318,
                 history='00'*72, expected_history='00'*72),
             first_resumed_boundary_matches=True, held_resume_no_pressed_edge=True)

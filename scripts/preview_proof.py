@@ -42,6 +42,26 @@ def assert_preserved(cpu,saved):
     assert field(cpu,'game_preview_active',1)==0
 
 
+def after_seek_invalidations(cpu,saved,count):
+    """Expected explicit seek-job retirement; preserve every other image byte."""
+    preview=(cpu.symbols['game_preview_storage'],cpu.symbols['game_preview_storage_end'])
+    regions=[]
+    for first,last in cpu.regions:
+        if first<preview[0]:regions.append((first,min(last,preview[0])))
+        if last>preview[1]:regions.append((max(first,preview[1]),last))
+    pieces,events=saved
+    pieces=list(pieces)
+    address=cpu.symbols['game_history_seek_generation']
+    for index,(first,last) in enumerate(regions):
+        if first<=address and address+4<=last:
+            data=bytearray(pieces[index]);offset=address-first
+            old=int.from_bytes(data[offset:offset+4],'big')
+            data[offset:offset+4]=min(0xffffffff,old+count).to_bytes(4,'big')
+            pieces[index]=bytes(data)
+            return pieces,events
+    raise AssertionError('Seek generation outside protected image')
+
+
 def call_checked(cpu,name,args,saved):
     cycles=cpu.call(name,args)
     assert_preserved(cpu,saved)
@@ -172,12 +192,13 @@ def small(executable):
                 if pc==symbols['game_assignment_done'] and field(cpu,'game_preview_active',1)==2:
                     variant=field(cpu,'game_preview_variant',1)
                     if variant in dispatch_pending and variant not in first_dispatch_controls:
-                        owner=cpu.mem.r8(symbols['game_lower_owner']+event['end'])
-                        first_dispatch_controls[variant]=cpu.mem.r8(symbols['game_player_controls']+owner)
+                        base=cpu.cpu.r_reg(13)
+                        owner=cpu.mem.r8(base+symbols['game_lower_owner']-cpu.start+event['end'])
+                        first_dispatch_controls[variant]=cpu.mem.r8(base+symbols['game_player_controls']-cpu.start+owner)
                 if pc in bodies and field(cpu,'game_preview_active',1)==2:
                     op,arity=bodies[pc]
                     variant=field(cpu,'game_preview_variant',1)
-                    traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.state()))
+                    traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.working_state()))
                     if op=='game_tick_dispatch':dispatch_pending.add(variant)
             cpu.cpu.set_instr_hook_callback(observe)
             cpu.preview_events.clear();cpu.preview_event_groups.clear()
@@ -239,6 +260,7 @@ def small(executable):
             assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
             negatives.append('changed-selection-result')
             seek(cpu,selection)
+            saved=after_seek_invalidations(cpu,saved,2)
             assert_preserved(cpu,saved)
             if name.startswith('return'):
                 assert first_dispatch_controls[0]&0x3f==16 and first_dispatch_controls[1]&0x3f==0

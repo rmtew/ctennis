@@ -2,7 +2,7 @@
 ; All native gameplay functions use A4 for state, A3/D7 for player/end.
 ; Shared aliases let scoring/lifecycle update the same owned native fields.
 game_play_tick:
-        lea     game_play_state,a4
+        lea     game_play_state-game_core_state(a5),a4
         bsr     game_prepare_controls
         lea     G_LOWER(a4),a3
         moveq   #0,d7

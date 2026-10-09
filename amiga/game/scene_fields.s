@@ -13,8 +13,8 @@ D_SIZE rs.b 0
 game_scene_update_fields:
         movem.l d0-d7/a0-a4,-(sp)
         bsr     scene_collect_fields
-        clr.b   score_dirty
-        lea     game_display_state,a0
+        clr.b   score_dirty-game_core_state(a5)
+        lea     game_display_state-game_core_state(a5),a0
         move.b  D_FLAGS(a0),d0
         btst    #7,d0
         beq.s   .scores
@@ -23,15 +23,15 @@ game_scene_update_fields:
         cmpi.b  #255,D_TIMER(a0)
         bne.s   .scores
         andi.b  #$3f,D_FLAGS(a0)
-        clr.b   field_values+4
+        clr.b   field_values+4-game_core_state(a5)
         bra.s   .status_changed
 .show_status:
         bset    #6,D_FLAGS(a0)
         andi.b  #7,d0
-        move.b  d0,field_values+4
+        move.b  d0,field_values+4-game_core_state(a5)
 .status_changed:
         move.b  #224,D_TIMER(a0)
-        st      score_dirty
+        st      score_dirty-game_core_state(a5)
 .scores:
         btst    #5,D_FLAGS(a0)
         beq.s   .publish
@@ -47,8 +47,8 @@ game_scene_update_fields:
 game_scene_redraw_fields:
         movem.l d0-d7/a0-a4,-(sp)
         bsr     scene_collect_fields
-        clr.b   score_dirty
-        lea     game_display_state,a0
+        clr.b   score_dirty-game_core_state(a5)
+        lea     game_display_state-game_core_state(a5),a0
         bsr     game_scene_draw_scores
         bsr     scene_export_display_flags
         bsr     game_scene_present_fields
@@ -57,10 +57,10 @@ game_scene_redraw_fields:
 
 game_scene_draw_scores:
         bclr    #5,D_FLAGS(a0)
-        move.b  D_POINT_A(a0),field_values
-        move.b  D_POINT_B(a0),field_values+1
-        move.b  D_GAME_A(a0),field_values+2
-        move.b  D_GAME_B(a0),field_values+3
+        move.b  D_POINT_A(a0),field_values-game_core_state(a5)
+        move.b  D_POINT_B(a0),field_values+1-game_core_state(a5)
+        move.b  D_GAME_A(a0),field_values+2-game_core_state(a5)
+        move.b  D_GAME_B(a0),field_values+3-game_core_state(a5)
         moveq   #0,d0
         btst    #2,D_MODE(a0)
         bne.s   .mode
@@ -69,8 +69,8 @@ game_scene_draw_scores:
         beq.s   .mode
         moveq   #2,d0
 .mode:
-        move.b  d0,field_values+5
-        st      score_dirty
+        move.b  d0,field_values+5-game_core_state(a5)
+        st      score_dirty-game_core_state(a5)
         rts
 
 ; Native Copper/title requests are explicit lifecycle hooks. The old pending

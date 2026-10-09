@@ -38,13 +38,17 @@ class Core:
     poisoned state. ``readonly`` maps symbol names (or addresses) to byte lengths;
     audit_reads permits only those tables, owned state, and executed code bytes.
     """
-    def __init__(self, image, symbols, initial=None, poison=0xa5, readonly=None):
+    def __init__(self, image, symbols, initial=None, poison=0xa5, readonly=None,
+                 state_base_register=13):
         import machine68k as m
         if version('machine68k') != '0.4.1':
             raise ValueError('Use pinned machine68k 0.4.1')
         if not 0 <= poison <= 255:
             raise ValueError('Poison must be one byte')
         self.symbols = symbols
+        if state_base_register not in (13,None):
+            raise ValueError('Only supplied A5 or historical canonical observations')
+        self.state_base_register = state_base_register
         self.start, self.stop = symbols['game_core_state'], symbols['game_core_state_end']
         if not 0 <= self.start < self.stop <= RAM_SIZE:
             raise ValueError('Invalid core state bounds')
@@ -121,6 +125,8 @@ class Core:
         first = len(events)
         def read(symbol, size):
             address = self.symbols[symbol]
+            if self.state_base_register is not None and self.start <= address <= self.stop-size:
+                address = self.cpu.r_reg(13) + address-self.start
             if not (self.start <= address <= self.stop-size or any(low <= address and address+size <= high for low,high in self.mutable_regions)):
                 raise AssertionError('Adapter observes out-of-state data: ' + symbol)
             return bytes(self.mem.r_block(address, size))
@@ -186,6 +192,12 @@ class Core:
 
     def call(self, name, registers=None, max_cycles=2000000):
         """Call an actual entry; preserve accumulated events until clear_events()."""
+        # Bodies/helpers require an explicit A5 state base. Public live wrappers
+        # bind canonical state themselves; direct test calls default to it.
+        entry = self.symbols[name]
+        if (self.symbols['game_core_code_begin'] <= entry < self.symbols['game_core_code_end']
+                and 13 not in (registers or {})):
+            self.cpu.w_reg(13, self.start)
         for register, value in (registers or {}).items():
             if not 0 <= register < 15:
                 raise ValueError('Only D0-D7/A0-A6 arguments are supported')
@@ -232,6 +244,15 @@ class Core:
         # AV_NEXT is a product-owned table offset, so no address normalization.
         return bytes(self.mem.r_block(self.start, self.stop-self.start))
 
+    def working_state(self):
+        """Read the actual supplied body context, including private preview work."""
+        base = self.start if self.state_base_register is None else self.cpu.r_reg(13)
+        size = self.stop-self.start
+        if not (base == self.start or any(low <= base and base+size <= high
+                                         for low, high in self.mutable_regions)):
+            raise AssertionError('Unowned supplied core state')
+        return bytes(self.mem.r_block(base, size))
+
     def clear_events(self):
         self.events.clear()
         self.preview_events.clear()
@@ -247,6 +268,8 @@ class Core:
         for low,high in self.mutable_regions:
             allowed.update(range(low,high))
         allowed.update(range(self.symbols['game_history_operations'], self.symbols['game_history_operations']+36))
+        if 'game_preview_operations' in self.symbols:
+            allowed.update(range(self.symbols['game_preview_operations'], self.symbols['game_preview_operations']+36))
         allowed.update(range(self.symbols['game_history_clip_bounds'],self.symbols['game_history_clip_bounds_end']))
         allowed.update(range(self.symbols['game_history_argument_counts'],self.symbols['game_history_argument_counts_end']))
         for symbol, size in self.readonly.items():

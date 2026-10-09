@@ -714,6 +714,22 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id=='private-state-cpu':
+        validation=report.get('private_state_validation') or {}
+        audit=report.get('shared_byte_audit') or {}
+        return (report.get('execution')=='actual-68000-cpu-only'
+                and validation.get('passed') is True
+                and validation.get('operations')==[2056,2056]
+                and validation.get('state_bytes')==318
+                and validation.get('public_a5_checks')==4112
+                and validation.get('blocked_a5_and_ccr_checks')==9
+                and all(validation.get(n) is True for n in (
+                    'canonical_and_other_owner_untouched','canary_untouched',
+                    'public_a5_preserved','body_a5_preserved','full_state_and_ordered_events_equal'))
+                and audit.get('passed') is True and audit.get('matched_bytes')==17524
+                and audit.get('relocations_each')==7
+                and audit.get('verified_sink_branches_each')==14
+                and audit.get('normalized_sha256')=='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
     if case.id=='tutorial-hotspots-pal':
         from tutorial_hotspots import required_hotspots_extent
         return required_hotspots_extent(report, 'PAL')

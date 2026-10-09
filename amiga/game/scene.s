@@ -19,26 +19,26 @@ COLOUR_RED equ 3
 COLOUR_BLACK equ 4
 
 game_scene_reset:
-        lea     game_scene_objects,a0
+        lea     game_scene_objects-game_core_state(a5),a0
         moveq   #7,d7
 .reset:
         move.b  #194,O_Y(a0)
         clr.b   O_VISIBLE(a0)
         adda.w  #O_SIZE,a0
         dbra    d7,.reset
-        move.b  #2,game_scene_ball_layer
+        move.b  #2,game_scene_ball_layer-game_core_state(a5)
         rts
 
 game_scene_build_players:
         movem.l d0-d7/a0-a4,-(sp)
-        lea     game_play_state,a4
+        lea     game_play_state-game_core_state(a5),a4
         bsr     game_assign_styles
         lea     G_LOWER(a4),a3
-        lea     game_scene_objects+SC_LOWER,a2
+        lea     game_scene_objects+SC_LOWER-game_core_state(a5),a2
         moveq   #1,d7 ; lower court record
         bsr     game_scene_actor
         lea     G_UPPER(a4),a3
-        lea     game_scene_objects+SC_UPPER,a2
+        lea     game_scene_objects+SC_UPPER-game_core_state(a5),a2
         moveq   #0,d7 ; upper court record
         bsr     game_scene_actor
         movem.l (sp)+,d0-d7/a0-a4
@@ -58,9 +58,9 @@ game_scene_actor:
         ; Court-relative AI flags lag end exchange during round pause.
         ; The next completed scene publishes role and geometry together;
         ; no player state or clocks are changed.
-        btst    #7,game_mode
+        btst    #7,game_mode-game_core_state(a5)
         bne.s   .role_ready ; two human controllers
-        btst    #4,game_mode
+        btst    #4,game_mode-game_core_state(a5)
         beq.s   .original_ends
         tst.w   d7
         bne.s   .robot ; exchanged: lower is logical B
@@ -110,7 +110,7 @@ game_scene_visibility:
 
 game_scene_finish_tick:
         movem.l d0-d7/a0-a4,-(sp)
-        lea     game_play_state,a4
+        lea     game_play_state-game_core_state(a5),a4
         lea     G_LOWER(a4),a3
         moveq   #7,d7
         bsr     game_scene_animate
@@ -119,7 +119,7 @@ game_scene_finish_tick:
         bsr     game_scene_animate
         bsr     game_finish_controls
         bsr     game_scene_build_players
-        lea     game_play_state,a4
+        lea     game_play_state-game_core_state(a5),a4
         moveq   #2,d0
         move.b  G_UPPER+P_Y(a4),d1
         addi.b  #32,d1
@@ -132,8 +132,8 @@ game_scene_finish_tick:
         bcc.s   .layer
         moveq   #0,d0
 .layer:
-        move.b  d0,game_scene_ball_layer
-        lea     game_scene_objects+SC_BALL,a2
+        move.b  d0,game_scene_ball_layer-game_core_state(a5)
+        lea     game_scene_objects+SC_BALL-game_core_state(a5),a2
         move.b  G_BALL_Y(a4),O_Y(a2)
         move.b  G_BALL_X(a4),O_X(a2)
         moveq   #0,d0
@@ -150,9 +150,9 @@ game_scene_finish_tick:
         cmpi.b  #192,G_BALL_Y(a4)
         bcs.s   .shadow
         move.b  #194,G_COURT_Y(a4)
-        move.b  #194,game_court_y ; remaining gameplay scalar ABI, not sprite memory
+        move.b  #194,game_court_y-game_core_state(a5) ; remaining gameplay scalar ABI, not sprite memory
 .shadow:
-        lea     game_scene_objects+SC_SHADOW,a2
+        lea     game_scene_objects+SC_SHADOW-game_core_state(a5),a2
         move.b  G_COURT_Y(a4),O_Y(a2)
         move.b  G_COURT_X(a4),O_X(a2)
         clr.w   O_FRAME(a2)

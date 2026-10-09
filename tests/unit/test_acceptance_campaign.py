@@ -182,7 +182,7 @@ def preview_a3_report(a2):
     wrap=dict(proof,operations=4161,register_sr_equivalence_operations=4161,record_capacity=4096,
         buffer_bytes=80318,metadata_bytes=72,low_longword_wrap=True,tick_wraps=4,latest=(1<<32)+3649,
         retained_operations=4033,boundaries_checked=4034,seeks=8068)
-    return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=18020,relocations_each=257,
+    return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=17524,relocations_each=7,
         verified_sink_branches_each=14,normalized_sha256='a'*64),seed=0xace1,dispatch_cap=512,ordinary_operation_cap=2049,
         descriptors=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]],images=images,
         history_regressions=dict(image='standalone',base=65536,
