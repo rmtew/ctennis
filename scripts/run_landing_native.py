@@ -12,7 +12,7 @@ from build_match_core import load_image
 from check_shared_core_bytes import normalized
 from landing_cases import CASES,SAMPLES
 from match_core_cpu import Core,cpu_tool_inputs
-from native_evidence import ReportRun,atomic_json,compile_manifest,digest,inputs_for,snapshot
+from native_evidence import ReportRun,TARGET,atomic_json,compile_manifest,digest,inputs_for,snapshot,status
 from native_hunk import loaded_hunks,hunk_layout
 from native_tools import ROOT,ASSEMBLER,run as command,emulator_config,verify_build_tools
 from run_landing_proof import initial,reference,Packet,REASONS,expected_reason
@@ -92,7 +92,7 @@ def run(region):
         paths,tools=inputs_for('native-feedback','scripts/run_landing_native.py');cpu_paths,cpu_tool=cpu_tool_inputs()
         tx.meta.update(files=snapshot(set(paths)|set(cpu_paths)|{ROOT/'scripts/fixtures/guarded_landing.s',ROOT/'scripts/fixtures/landing_native.s',
             ROOT/'scripts/landing_cases.py',executable,listing_path,shipping}),tools=tools,cpu_tool=cpu_tool,
-            actual_target=dict(cpu='68000',chipset='OCS',chip_ram_bytes=524288,fast_ram_bytes=0,slow_ram_bytes=0,video=region))
+            actual_target=dict(TARGET,video=region))
         tx.meta['environment'].update(CTENNIS_LANDING_BASELINE_ROOT=str(baseline),PYTHONPATH=os.environ.get('PYTHONPATH'))
         config=emulator_config();listing=listing_path.read_text();jobs=[]
         with Session(directory) as session:
@@ -109,7 +109,7 @@ def run(region):
             timing=StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             session.observer=Observer(timing)
             result=session.inspect('events.subscribe',dict(events=['mmio'],mmio=[dict(addr=symbols['game_stack_bottom'],
-                len=symbols['game_stack_top']-symbols['game_stack_bottom'],access='read')]))
+                len=symbols['game_stack_top']-symbols['game_stack_bottom'],access=access)for access in ('read','write')]))
             assert result.get('dropped_notifications',0)==0
             before=session.inspect('break_add',dict(kind='pc',addr=symbols['landing_native_before']))
             after=session.inspect('break_add',dict(kind='pc',addr=symbols['landing_native_after']))
@@ -152,13 +152,14 @@ def run(region):
             call_map=calls,returns=sorted(returns),actual_video=actual_video,raw=raw))
         product_layout=hunk_layout(executable);baseline_layout=hunk_layout(shipping)
         report=dict(passed=True,executable_sha256=digest(executable),scope='Diagnostic callback hook runs isolated private ball jobs; it does not preserve production callback cadence or replace preview/match endpoints',
-            region=region,jobs=len(jobs),samples_per_fixture=SAMPLES,distributions=distributions,full_state_bytes=318,
+            target=dict(TARGET,video=region),region=region,jobs=len(jobs),samples_per_fixture=SAMPLES,distributions=distributions,full_state_bytes=318,
             complete_owner_guard=True,normalized_shipping_core_unchanged=True,normalized_core_bytes=len(core[0]),
             prototype_code_bytes=symbols['landing_query_end']-symbols['landing_query_begin'],declared_caps=CAPS,actual_video=actual_video,physical_clock_hz=CLOCKS[region],
             loaded_hunks=loaded,product_layout=product_layout,baseline_layout=baseline_layout,
             capture=str(capture.relative_to(ROOT)),stack_protocol=stack_result['protocol'],raw=raw)
         artifacts=[p for p in directory.iterdir()if p.is_file()and p!=output]
         tx.finalize(output,report,[manifest,cpu_manifest],artifacts)
+        assert status(output)['status']=='passed',status(output)
         print(json.dumps(dict(passed=True,region=region,report=str(output))),flush=True)
     except BaseException as error:tx.abort(error);raise
 
