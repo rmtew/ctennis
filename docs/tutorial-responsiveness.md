@@ -354,3 +354,60 @@ an independently recorded exit status. The earlier diagnostic parser failure
 `d123f2e465f14387890f991bee0d506f` is also retained. Neither diagnostic establishes
 full acceptance. NTSC exclusive-body/admission measurement and any improved
 runtime remain pending.
+
+### Resolved current-serve scheduling correction
+
+Product `6f28287` applies the measured reserve only when `game_preview_kind==3`
+and phase is `PREVIEW_HELD` or `PREVIEW_RELEASED`: budget 4 requires 7,000 E ticks,
+budget 2 requires 5,000. Resolution, priming and other kinds retain 10,000/7,000.
+Every public yield rechecks remaining time, with the same four-call cap. Physical
+sampling and placement keep priority; result preparation and post-worker
+animation retain separate 10,000-E checks, and publication retains its 5,000-E
+check. Actual sequential core operations, RNG calls and complete restoration
+are unchanged. Independent source review preceded the two affected native cases.
+
+Fresh campaign `c758f56a66a74791aa54e23f07f452c0` completed with both selected
+cases passing and `acceptance_passed=false`. Both execute native SHA256
+`c543a695d9493254eb152cf34a093676c3c0c0dcd4df203d0ad105a5b97e3cb8`.
+
+| Focused unchanged observer measurement | PAL | NTSC |
+| --- | ---: | ---: |
+| Fresh held edit→actual endpoint, provider seconds | 0.706545 | 0.699653 |
+| Previous product, same metric | 1.068426 | 1.023953 |
+| Fresh prediction latency reduction | 33.9% | 31.7% |
+| Physical movement→actual player publication | 23.703 ms | 41.587 ms |
+| Already computed held-choice→endpoint publication | 35.321 ms | 26.833 ms |
+| Complete callbacks | 763 | 744 |
+| Maximum callback work | 54,879 CCK | 54,940 CCK |
+| Minimum absolute deadline headroom | 3,626.137 CCK | 4,116.006 CCK |
+| Frozen complete canonical/history/backup boundaries | 589 | 572 |
+| Dropped observations | 0 | 0 |
+| Stack usage | 320 B | 320 B |
+| Initialized chip free / largest free block | 70,040 / 69,456 B | 79,000 / 78,416 B |
+
+Fresh prediction improves; individual movement/choice publication samples vary
+with callback/display phase and do not establish an improvement for those paths.
+The existing physical-input/publication guards pass. Times denote actual native
+publication, not exact pixel scanout. The same observer checks actual player and
+ball/shadow banks, complete freeze/resume boundaries, held control edges, menu
+construction and dense normal-speed animation. The normalized actual core remains
+18,020 B, 257 relocations, 14 sinks, SHA256
+`9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d`.
+
+PAL immutable attempt receipt SHA256:
+`398ea92423dadf32275bd009e2bbe3579d0a3055a2e44841b7834c9b9e97b717`.
+NTSC immutable attempt receipt SHA256:
+`18362c9a66c03d1f6b1ab4e6e5e116d90903b57a60d6183e8e4ab454fd9bc9e2`.
+The original pre-adjustment baselines were copied and hash-checked before these
+affected reruns. Independent completed-evidence review cleared both exact
+receipts, raw callback/publication reconstruction, input/state isolation,
+native pixel selections and unchanged actual-core bytes. These publication
+latencies are finite samples, not enforced general latency upper bounds.
+
+Development executable is 207,332 B; code 56,836 B (+52), data 112,700 B and BSS
+145,420 B unchanged; loaded payload 314,956 B. These complete callback maxima
+include fresh input and transitions in this finite case, not all possible serve
+positions or a universal worker bound. Resource collection explicitly remains
+incomplete for standard runtime profile coverage (`--require-runtime --record`
+returns 1). No unaffected native case was rerun. Full native/cold release
+acceptance and appearance review remain pending; PR38 stays unmerged.
