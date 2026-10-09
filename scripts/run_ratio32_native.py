@@ -152,6 +152,7 @@ def run(standard='PAL', variant='candidate'):
                         [311,11838,14906] if standard=='PAL' else [261,11947,13180]), 'Actual video selectors mismatch'
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval)
+            assert callback_result['completed_callbacks']<=CAPS['callbacks']
             stack_result=timing.result()
             open_calls=stack_result['open_enclosing_calls']
             assert len(open_calls)==1 and open_calls[0]['callee']=='simulation_update'
@@ -167,7 +168,7 @@ def run(standard='PAL', variant='candidate'):
             def summary(values):
                 values=sorted(values)
                 return dict(samples=len(values),minimum=min(values),median=statistics.median(values),p95=values[math.ceil(.95*len(values))-1],maximum=max(values))
-            ratio_summary=summary([r['inclusive_bus_cck'] for r in ratio_calls])
+            ratio_summary=summary([r['elapsed_bus_cck'] for r in ratio_calls])
             callback_summary=summary([r['work_cck'] for r in live_callbacks])
             raw=dict(records=session.records,uncompressed_bytes=session.raw_bytes,
                      cap_uncompressed_bytes=session.MAX_RAW_BYTES)
@@ -181,8 +182,7 @@ def run(standard='PAL', variant='candidate'):
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
             executable_sha256=PRODUCT_SHA256, variant=variant, live_ball=True, rally_start=rally_start,rally_stop=rally_stop, ratio_summary_cck=ratio_summary,live_callback_summary_cck=callback_summary,
             capture=str(capture.relative_to(ROOT)),declared_caps=CAPS,
-            timing=callback_result, full318_history72_backup_guard=True,
-            frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
+            timing=callback_result, complete_boundary_state_bytes=318,
             stack_protocol=stack_result['protocol'], dropped_notifications=callbacks.dropped,
             actual_video=actual_video,title_ready=title_ready,
             physical_clock_hz=CLOCKS[standard], provider_seconds_clock_hz=PROVIDER_CLOCK,
