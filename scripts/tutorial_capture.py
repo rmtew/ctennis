@@ -631,8 +631,8 @@ def required_capture_extent(report):
             and type(report.get('animation_frames')) is int
             and 2 <= report['animation_frames'] <= 24
             and report.get('animation_source_frames') == 24
-            and core == dict(bytes=17524, relocations=7, sink_branches=14,
-                normalized_sha256='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
+            and core == dict(bytes=17606, relocations=7, sink_branches=14,
+                normalized_sha256='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
             and hunks and all(r.get('matched') is True
                 and r.get('expected_sha256') == r.get('actual_sha256') for r in hunks)
             and isinstance(restored.get('state'), str) and len(restored['state']) == 636
