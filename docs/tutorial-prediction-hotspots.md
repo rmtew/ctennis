@@ -2,7 +2,9 @@
 
 The supplied-A5 migration was subsequently approved and implemented. See
 [the private-state integration result](tutorial-private-state-integration.md).
-Measurements below describe the retained pre-migration product.
+Measurements below describe the retained pre-migration product. The current
+measurement and next-step recommendation are in
+[the generation follow-up](tutorial-generation-results.md).
 
 This is a measured proposal, not authorization for another runtime rewrite.
 PR [38](https://github.com/rmtew/ctennis/pull/38) remains a draft pending appearance

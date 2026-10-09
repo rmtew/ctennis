@@ -1,5 +1,10 @@
 # Private-state shared-core integration
 
+The current product adds the approved generation guard after the supplied-A5
+migration. Current measurements and validation are in
+[the generation follow-up](tutorial-generation-results.md). The retained measurements
+below describe only the preceding `ff236692` product.
+
 Richard approved the supplied-A5 scope in [the design](tutorial-private-state-scope.md).
 Product `ff23669241d5c3c2bcbaf9afbcc112ad1ff19ac1` runs the actual shared core directly
 in private prediction buffers. [PR38](https://github.com/rmtew/ctennis/pull/38) stays
@@ -155,7 +160,7 @@ are retained in `build/tests/private-state-cpu/copy-parser-negative-controls.jso
 
 Resource record and check both exit 1 for **incomplete standard profile coverage**;
 focused tutorial measurements do not fill that coverage. Full release/cold-ADF
-acceptance, arbitrary retained-return native timing and user appearance review
+acceptance, production retained-return navigation/publication and user appearance review
 remain pending. No optional trails, retained-branch runtime or Exit work was added.
 Independent reviewer `/root/native_receipt_review` cleared the exact source and
 completed selected evidence: all six CPU receipts and both native receipts,
