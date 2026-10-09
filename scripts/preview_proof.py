@@ -11,6 +11,13 @@ OPERATIONS = ('game_core_init','game_core_select','game_core_sample_pads',
 ARITY = (0,3,2,6,0,0,0,0,0)
 
 
+CAPACITY = 513
+PATH_BYTES = CAPACITY * 8
+
+def continuation_start(result, selection):
+    return selection if result["kind"] == 3 else result["incoming"] + 1
+
+
 def block(cpu,first,last):
     return bytes(cpu.mem.r_block(cpu.symbols[first],cpu.symbols[last]-cpu.symbols[first]))
 
@@ -68,8 +75,8 @@ def call_checked(cpu,name,args,saved):
     return cycles
 
 
-def fixture(cpu,seed=0xace1,dispatches=512,controls=None):
-    assert 0<seed<=65535 and 0<dispatches<=512
+def fixture(cpu,seed=0xace1,dispatches=512,controls=None,stop=None):
+    assert 0<seed<=65535 and 0<dispatches<=20000
     stream=[('game_core_select',[0,seed,0])]
     for tick in range(dispatches):
         stream.extend([('game_round_poll',[]),
@@ -98,7 +105,11 @@ def fixture(cpu,seed=0xace1,dispatches=512,controls=None):
     for name,args in stream:
         cpu.clear_events();cpu.call_logical(name,args)
         states[cursor(cpu)]=cpu.state()
-        if name=='game_tick_dispatch':ticks.append(cursor(cpu))
+        if name=='game_tick_dispatch':
+            ticks.append(cursor(cpu))
+            if stop is not None and stop(cpu,launches):
+                stream=stream[:cursor(cpu)]
+                break
     cpu.cpu.set_instr_hook_callback(cpu.instruction)
     return stream,states,ticks,launches
 
@@ -195,6 +206,10 @@ def small(executable):
                         base=cpu.cpu.r_reg(13)
                         owner=cpu.mem.r8(base+symbols['game_lower_owner']-cpu.start+event['end'])
                         first_dispatch_controls[variant]=cpu.mem.r8(base+symbols['game_player_controls']-cpu.start+owner)
+                if pc==symbols['game_ball_tick'] and field(cpu,'game_preview_active',1)==2:
+                    variant=field(cpu,'game_preview_variant',1)
+                    if cpu.mem.r16(symbols['game_preview_flight_phases']+2*variant)>0:
+                        traces[variant].append(('game_ball_tick',[],cpu.working_state()))
                 if pc in bodies and field(cpu,'game_preview_active',1)==2:
                     op,arity=bodies[pc]
                     variant=field(cpu,'game_preview_variant',1)
@@ -221,13 +236,13 @@ def small(executable):
             resolver_calls=resolver_cycles=0
             for worker in range(8192):
                 budget=1 if worker%3==0 else 4
-                before=sum(cpu.visits.get(pc,0) for pc in bodies)
+                before=sum(cpu.visits.get(pc,0) for pc in (*bodies,symbols['game_preview_flight_one']))
                 resolving=field(cpu,'game_preview_status')==1
                 cycles.append(call_checked(cpu,'game_preview_step',{0:generation,1:budget},saved))
                 assert cpu.cpu.r_reg(0)==1
                 if resolving:
                     resolver_calls+=1;resolver_cycles+=cycles[-1]
-                actual=sum(cpu.visits.get(pc,0) for pc in bodies)-before
+                actual=sum(cpu.visits.get(pc,0) for pc in (*bodies,symbols['game_preview_flight_one']))-before
                 assert actual<=budget<=4,(actual,budget)
                 budgets.append(budget);operations.append(actual)
                 status=field(cpu,'game_preview_status')
@@ -237,8 +252,8 @@ def small(executable):
             paths=[];contexts=[]
             for variant in (0,1):
                 count=field(cpu,'game_preview_counts' ,2) if variant==0 else cpu.mem.r16(symbols['game_preview_counts']+2)
-                assert 0<count<=256
-                raw=bytes(cpu.mem.r_block(symbols['game_preview_paths']+variant*2048,count*8))
+                assert 0<count<=CAPACITY
+                raw=bytes(cpu.mem.r_block(symbols['game_preview_paths']+variant*PATH_BYTES,count*8))
                 paths.append([raw[i:i+8] for i in range(0,len(raw),8)])
                 address=symbols['game_preview_held_state'] if variant==0 else symbols['game_preview_released_state']
                 contexts.append(bytes(cpu.mem.r_block(address,318)))
@@ -247,9 +262,10 @@ def small(executable):
             coincident=field(cpu,'game_preview_coincident')
             assert bool(coincident)==(geometry(paths[0])==geometry(paths[1]))
             prefix=field(cpu,'game_preview_prefix_count')
-            incoming=cursor(cpu,'game_preview_incoming') if prefix else None
-            original_prefix=[point(states[t],symbols) for t in ticks if incoming is not None and incoming<t<=selection]
-            assert paths[0][:prefix]==paths[1][:prefix]==original_prefix
+            incoming=cursor(cpu,'game_preview_incoming') if name.startswith('return') else None
+            if incoming is not None:
+                assert bytes(cpu.mem.r_block(symbols['game_preview_incoming_state'],318))==states[incoming+1]
+            assert paths[0][0]==paths[1][0]==point(bytes(cpu.mem.r_block(symbols['game_preview_edited_state'],318)),symbols)
             outcomes=[cpu.mem.r16(symbols['game_preview_outcomes']+2*v) for v in (0,1)]
             outputs={v:deepcopy(cpu.preview_event_groups.get((2,v),[])) for v in (0,1)}
             # A completed generation cannot publish into a different selection.
@@ -268,7 +284,7 @@ def small(executable):
                 edited=block(cpu,'game_preview_edited_state','game_preview_held_state'),
                 traces=traces,paths=paths,contexts=contexts,prefix=prefix,outcomes=outcomes,
                 outputs=outputs,first_dispatch_controls=first_dispatch_controls,
-                incoming_origin=incoming,end=event['end'],coincident=bool(coincident),negative_controls=negatives,
+                incoming_origin=incoming,x=event['x'],y=event['y'],end=event['end'],coincident=bool(coincident),negative_controls=negatives,
                 worker_calls=len(cycles),request_cpu_cycles=request_cycles,total_worker_cpu_cycles=sum(cycles),
                 resolver_worker_calls=resolver_calls,resolver_operations=resolver_operations,
                 resolver_inclusive_cpu_cycles=resolver_cycles,
@@ -313,41 +329,13 @@ def small(executable):
     # intended edited snapshot. No subsequent canonical injection is used.
     reports=[]
     for observation in observations:
-        for variant in (0,1):
-            with Core(image,symbols,initial=observation['edited'],readonly=READONLY) as cpu:
-                generated=observation['paths'][variant][:observation['prefix']]
-                for ordinal,(name,args,before) in enumerate(observation['traces'][variant]):
-                    # Independent API policy: original trace order/arguments,
-                    # plus one deliberate edge sampler and documented tail.
-                    if ordinal==0:
-                        expected_name='game_core_sample_pads'
-                        start=symbols['game_core_state'];offset=symbols['game_input_bits']-start
-                        expected_args=list(observation['edited'][offset:offset+2])
-                    else:
-                        position=observation['selection']+ordinal-1
-                        if position<len(stream):
-                            expected_name,expected_args=stream[position]
-                            expected_args=list(expected_args)
-                        else:
-                            phase=(position-len(stream))%4
-                            expected_name=('game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch')[phase]
-                            offset=symbols['game_input_bits']-symbols['game_core_state']
-                            expected_args=list(before[offset:offset+2]) if phase==1 else [0]*6 if phase==2 else []
-                    if expected_name=='game_core_sample_pads':
-                        offset=symbols['game_lower_owner']-symbols['game_core_state']+observation['end']
-                        owner=before[offset]
-                        expected_args[owner]=(expected_args[owner]&0xffc0)|(16 if variant==0 else 0)
-                    assert (name,args)==(expected_name,expected_args), 'Preview changes original API order/non-human arguments'
-                    assert cpu.state()==before, 'Chunked preview differs from uninterrupted actual core'
-                    if name=='game_core_sample_pads':
-                        owner=cpu.mem.r8(symbols['game_lower_owner']+observation['end'])
-                        assert args[owner]&0x3f==(0x10 if variant==0 else 0)
-                    cpu.call_logical(name,args)
-                    if name=='game_tick_dispatch': generated.append(point(cpu.state(),symbols))
-                assert cpu.state()==observation['contexts'][variant]
-                assert generated==observation['paths'][variant]
-                assert cpu.events==observation['outputs'][variant], 'Ordered preview outputs differ'
-                cpu.audit_reads()
+        from preview_extended_proof import continuous
+        result=dict(edited=observation['edited'],paths=[b''.join(p) for p in observation['paths']],
+            contexts=observation['contexts'],outputs=[observation['outputs'][v] for v in (0,1)],
+            incoming_state=states[observation['incoming_origin']+1] if observation['incoming_origin'] is not None else b'',
+            incoming=observation['incoming_origin'],kind=1 if observation['name'].startswith('return') else 3,
+            prefix=observation['prefix'],outcomes=observation['outcomes'],action=observation['original_action_boundary'])
+        continuous(image,symbols,dict(observation,result=result,stream=stream,ordinal=0,seed=0xace1,bounds={},classes=[],launches={},boundaries={},selected=states[observation['selection']],costs={}))
         report={k:v for k,v in observation.items() if k not in ('edited','traces','paths','contexts','outputs')}
         report.update(passed=True,continuous_state_path_output_equal=True,
                       live_history_output_preserved=True,independent_continuation_policy_equal=True,path_counts=[len(p) for p in observation['paths']])

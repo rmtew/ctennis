@@ -19,7 +19,7 @@ from run_shared_match_core import READONLY
 REASONS={0:'accepted',1:'negative-height',2:'not-active',3:'low-speed-or-negative-zero',
     4:'special-net-reflection',5:'step-wrap',6:'displacement-overflow',7:'height-factor-wrap',
     8:'height-quotient-overflow',9:'screen-clamp-or-wrap',10:'court-x-bound',
-    11:'nonzero-phase',12:'defensive-bracket-miss',13:'court-y-bound'}
+    11:'nonzero-phase',12:'defensive-bracket-miss',13:'court-y-bound',14:'preexisting-stopping-flags'}
 EVENTS={'none':0,'launch':1,'inactive':2,'inactive-out':2,'bounce':3,'net-reflect':4,'outside':5}
 PARAMS=('velocity_x','velocity_y','velocity_z','base_x','base_y','base_screen_y','flight','contact','step')
 CAP=256
@@ -55,6 +55,7 @@ def initial(packet,args,poison=165):
 
 def expected_reason(args):
     vx,vy,z,bx,by,screen,flight,contact,phase=args
+    if contact&0x8b:return 'preexisting-stopping-flags'
     if by<screen:return 'negative-height'
     if not flight&64 or flight&128:return 'not-active'
     if phase:return 'nonzero-phase'

@@ -6,6 +6,8 @@ PREVIEW_DEBUG equ 1
         include "amiga/game/history.s"
         include "amiga/game/history_seek_job.s"
         include "amiga/game/preview.s"
+        include "amiga/game/preview_endpoint.s"
+        include "amiga/game/landing_try.s"
         include "amiga/game/core_trace.s"
 
 game_render_sprites:

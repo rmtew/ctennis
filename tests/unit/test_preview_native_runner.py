@@ -8,12 +8,27 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_guard_closure,verify_preview_retirement,fresh_seek_receipt,native_report,preserve_pre_status_receipt,native_receipt_artifacts,native_saved_bytes
+from run_preview_native import Native,measurement,json_value,qualify_resolver,verify_incoming_prefix,inherited_endpoints,overlay,verify_admission,worker_source_closure,verify_preview_retirement,fresh_seek_receipt,native_report,preserve_pre_status_receipt,native_receipt_artifacts,native_saved_bytes
 from preview_native_observation import BodyFrames
 from native_tools import ROOT,ASSEMBLER
 
 
 class NativePreviewTiming(unittest.TestCase):
+    def test_result_states_exclude_endpoint_launch_and_query_scratch(self):
+        native=object.__new__(Native)
+        native.symbols={'game_preview_counts':0,'game_preview_outcomes':4,
+            'game_preview_held_state':1000,'game_preview_released_state':1318,
+            'game_preview_paths':2590,'game_preview_storage_end':10798}
+        memory=bytearray(10798)
+        memory[1000:1318]=b'H'*318
+        memory[1318:1636]=b'R'*318
+        memory[1636:2590]=b'Q'*954
+        native.read=lambda address,length:bytes(memory[address:address+length])
+        native.number=lambda name,width=2:0
+        native.block=lambda first,last:b''
+        result=native.snapshot_result()
+        self.assertEqual(result['contexts'],[b'H'*318,b'R'*318])
+
     def body_native(self,stops,base=0x3000):
         native=object.__new__(Native)
         native.symbols={'preview_native_return':0x900,'game_core_state':0,
@@ -56,6 +71,23 @@ class NativePreviewTiming(unittest.TestCase):
         native.run_owned_api('game_preview_step',1)
         self.assertEqual(native.observer.rows[0]['after'],'01'*318)
         self.assertEqual(native.block(None,None),bytes(318))
+
+    def test_outgoing_ball_call_is_one_real_worker_operation(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x500,0x1804,9,1),(0x900,0x1900,10,1)])
+        native.observer.body_frames.body_map[0x400]=dict(operation='game_ball_tick',arity=0)
+        native.run_owned_api('game_preview_step',1)
+        self.assertEqual(native.observer.pending['bodies'],1)
+        self.assertEqual(native.observer.rows[0]['operation'],'game_ball_tick')
+        self.assertEqual(native.observer.rows[0]['arguments'],[])
+        self.assertEqual(native.observer.rows[0]['after'],'01'*318)
+
+    def test_nested_ball_call_does_not_duplicate_dispatch_budget(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x420,0x1700,2,0),
+                                 (0x500,0x1804,9,1),(0x900,0x1900,10,1)])
+        native.observer.body_frames.body_map[0x420]=dict(operation='game_ball_tick',arity=0)
+        native.run_owned_api('game_preview_step',1)
+        self.assertEqual(native.observer.pending['bodies'],1)
+        self.assertEqual(len(native.observer.body_frames.records),1)
 
     def test_known_wrong_variant_context_is_rejected(self):
         native=self.body_native([(0x400,0x1800,1,0)],0x4000)
@@ -160,18 +192,16 @@ class NativePreviewTiming(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError,'Repeated body entry|unknown supplied context'):
                 native.run_owned_api('game_preview_step',1)
 
-    def test_guard_removed_source_must_equal_reviewed_preview_source(self):
+    def test_current_source_must_equal_fresh_cpu_source(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'amiga/game';path.mkdir(parents=True)
-            from run_preview_native import SEEK_GUARD
-            original=b'first\nsecond\nthird\n'
-            source=SEEK_GUARD.encode()+b'first\n'+SEEK_GUARD.encode()+b'second\n'+SEEK_GUARD.encode()+b'third\n'
+            source=b'all current guards and runtime operations\n'
             (path/'preview.s').write_bytes(source)
-            inherited={'evidence':{'files':{'amiga/game/preview.s':hashlib.sha256(original).hexdigest()}}}
+            inherited={'evidence':{'run_id':'12'*16,'files':{'amiga/game/preview.s':hashlib.sha256(source).hexdigest()}}}
             with patch('run_preview_native.ROOT',Path(directory)):
-                self.assertTrue(worker_guard_closure(inherited)['passed'])
+                self.assertTrue(worker_source_closure(inherited)['passed'])
                 (path/'preview.s').write_bytes(source+b'extra operation\n')
-                with self.assertRaisesRegex(AssertionError,'beyond scoped seek guards'):worker_guard_closure(inherited)
+                with self.assertRaisesRegex(AssertionError,'exact preview source'):worker_source_closure(inherited)
 
     def test_overlay_dispatches_to_tool_helper_without_campaign_recursion(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as directory:
@@ -225,47 +255,28 @@ class NativePreviewTiming(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'generation retired'):
             qualify_resolver(native,9)
 
-    def test_native_prefix_is_derived_from_recorded_dispatches(self):
+    def test_native_initial_sample_binds_complete_postdispatch_launch(self):
         names=('game_court_x','game_court_y','game_ball_x','game_ball_y',
             'game_contact','game_flight','game_ball_colour','game_shadow_colour','game_tick')
         symbols={name:0x1000+n for n,name in enumerate(names)};symbols['game_core_state']=0x1000
-        state1=bytes(range(9))+bytes(309);state2=bytes(range(1,10))+bytes(309)
-        native=SimpleNamespace(cpu=None,symbols=symbols,states={2:state1,4:state2},
-            normal=[('game_round_poll',[]),('game_tick_dispatch',[]),
-                ('game_core_sample_pads',[0,0]),('game_tick_dispatch',[])],
-            launches=[dict(end=1,origin=1)])
+        state=bytes(range(9))+bytes(309)
+        native=SimpleNamespace(cpu=None,symbols=symbols,states={2:state},
+            launches=[dict(end=1,origin=1)],block=lambda a,b:state)
         from preview_proof import point
-        expected=point(state1,symbols)+point(state2,symbols)
-        result=dict(incoming=1,prefix=2,paths=[expected+bytes(8),expected+bytes(8)])
+        expected=point(state,symbols)
+        result=dict(incoming=1,prefix=0,paths=[expected+bytes(8),expected+bytes(8)])
         with patch('run_preview_native.attempts',return_value=[(4,2,0)]):
             proof=verify_incoming_prefix(native,0,4,result)
-            self.assertEqual(proof['operation_cursors'],[1,3])
-            self.assertEqual(proof['expected_bytes'],expected.hex())
-            # The two product paths agree, but neither agrees with actual history.
-            result['paths']=[bytes(24),bytes(24)]
-            with self.assertRaisesRegex(AssertionError,'actual retained flight'):
+            self.assertEqual(proof['operation_cursors'],[1])
+            self.assertEqual(proof['incoming_state'],state.hex())
+            result['paths']=[bytes(16),bytes(16)]
+            with self.assertRaisesRegex(AssertionError,'actual retained launch'):
                 verify_incoming_prefix(native,0,4,result)
 
-    def test_immutable_cpu_pass_cannot_override_latest_failure(self):
-        with tempfile.TemporaryDirectory() as directory:
-            saved=Path(directory)/'saved.json';current=Path(directory)/'current.json'
-            data=json.dumps({'passed':True,'run':'reviewed'}).encode()
-            saved.write_bytes(data);current.write_bytes(data)
-            from acceptance_campaign import canonical
-            (Path(directory)/'started.json').write_text(json.dumps(dict(id='preview-cpu',dependencies={},dependency_key=canonical({}))))
-            with patch('run_preview_native.CPU9_RECEIPT',saved), \
-                    patch('run_preview_native.CPU9_CURRENT',current), \
-                    patch('run_preview_native.CPU9_SHA',hashlib.sha256(data).hexdigest()), \
-                    patch('run_preview_native.CPU9_START',Path(directory)/'started.json'), \
-                    patch('acceptance_campaign.execution_blocker',return_value=None), \
-                    patch('run_preview_native.CPU9_KEY',None):
-                self.assertTrue(inherited_endpoints()['passed'])
-                current.write_text(json.dumps({'passed':False,'run':'newer-failed'}))
-                with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
-                    inherited_endpoints()
-                current.write_text(json.dumps({'passed':True,'run':'unreviewed-newer'}))
-                with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):
-                    inherited_endpoints()
+    def test_current_cpu_pass_cannot_override_latest_failure(self):
+        with patch('pathlib.Path.read_text',return_value=json.dumps({'passed':False})), \
+                patch('run_preview_native.status',return_value={'status':'passed'}):
+            with self.assertRaisesRegex(AssertionError,'Latest CPU proof'):inherited_endpoints()
 
     def test_preview_retirement_requires_actual_canceled_status(self):
         before=dict(generation=5,status=4,cache_valid=1)
@@ -293,23 +304,21 @@ class NativePreviewTiming(unittest.TestCase):
         with self.assertRaises(AssertionError):verify_admission(bad)
 
     def test_fresh_seek_inheritance_rejects_consumed_input_or_tool_drift(self):
-        receipt={'passed':True}
-        with patch('run_preview_native.reviewed_execution',return_value=receipt), \
+        receipt={'passed':True,'evidence':{'files':{str(ROOT/'amiga/game/preview.s'):hashlib.sha256((ROOT/'amiga/game/preview.s').read_bytes()).hexdigest()}}}
+        with patch('pathlib.Path.read_text',return_value=json.dumps(receipt)), \
                 patch('run_preview_native.status',return_value={'status':'passed'}) as verify:
-            self.assertIs(fresh_seek_receipt(),receipt)
+            self.assertEqual(fresh_seek_receipt(),receipt)
             from run_preview_native import SEEK_CURRENT
             verify.assert_called_once_with(SEEK_CURRENT)
         for reason in ('Changed consumed input','Changed tool','Changed compiled executable'):
-            with patch('run_preview_native.reviewed_execution',return_value=receipt), \
+            with patch('pathlib.Path.read_text',return_value=json.dumps({'passed':True})), \
                     patch('run_preview_native.status',return_value={'status':'failed','reason':reason}):
                 with self.assertRaisesRegex(AssertionError,'inputs/tools/products drifted'):fresh_seek_receipt()
 
     def test_endpoint_inheritance_rejects_later_interrupted_execution(self):
-        with patch('run_preview_native.digest',return_value='x'), \
-                patch('run_preview_native.CPU9_SHA','x'), \
-                patch('pathlib.Path.read_text',side_effect=[json.dumps({'passed':True}),
-                    json.dumps(dict(id='preview-cpu',dependencies={},dependency_key=hashlib.sha256(b'{}').hexdigest()))]), \
-                patch('run_preview_native.CPU9_KEY',None), \
+        with patch('pathlib.Path.read_text',return_value=json.dumps({'passed':True})), \
+                patch('run_preview_native.status',return_value={'status':'passed'}), \
+                patch('acceptance_campaign.dependencies',return_value={}), \
                 patch('acceptance_campaign.execution_blocker',return_value='Latest execution interrupted'):
             with self.assertRaisesRegex(AssertionError,'interrupted'):inherited_endpoints()
 

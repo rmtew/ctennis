@@ -3,7 +3,7 @@ from build_match_core import load_image
 from history_proof import attach, attempts, cursor, field, seek
 from match_core_cpu import Core
 from preview_cache_proof import job
-from preview_proof import fixture, protected, call_checked, block, OPERATIONS, ARITY, point, geometry
+from preview_proof import fixture, protected, call_checked, block, OPERATIONS, ARITY, point, geometry, CAPACITY, continuation_start
 from run_shared_match_core import READONLY
 from native_tools import ROOT
 
@@ -48,6 +48,14 @@ def candidates(index,launches):
     return result
 
 
+def dense_point_destination(symbols,variant,count,address):
+    """Distinguish actual dense append from the separate endpoint writer."""
+    assert variant in (0,1) and 1<=count<=CAPACITY
+    if address==symbols['game_preview_endpoints']+variant*8:return False
+    assert address==symbols['game_preview_paths']+variant*CAPACITY*8+(count-1)*8, 'Unexpected point destination or sample index'
+    return True
+
+
 def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=None):
     """Observe actual accepted-launch hooks and complete dispatch boundaries."""
     if cursor(cpu,'game_history_position')!=selection:
@@ -56,14 +64,15 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
             seek_preserving_ledger(cpu,selection)
         else:seek(cpu,selection)
     selected=cpu.state()
-    end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else attempts(cpu)[ordinal][2]
+    end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else (1 if cpu.mem.r8(cpu.symbols['game_play_state']+54) else 0) if ordinal==0xfffe else attempts(cpu)[ordinal][2]
     bodies={cpu.symbols[n+'_body']:(n,a) for n,a in zip(OPERATIONS,ARITY)}
+    bodies[cpu.symbols['game_ball_tick']]=('game_ball_tick',0)
     traces={0:[],1:[]};launches={0:[],1:[]};boundaries={0:[],1:[]}
     def observe(pc):
         if extra_observer is not None:extra_observer(pc)
         if field(cpu,'game_preview_active',1)!=2:return
         variant=field(cpu,'game_preview_variant',1)
-        if pc in bodies:
+        if pc in bodies and (pc!=cpu.symbols['game_ball_tick'] or cpu.mem.r16(cpu.symbols['game_preview_flight_phases']+2*variant)>0):
             op,arity=bodies[pc]
             traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.working_state()))
         if pc in (cpu.symbols['game_history_contact'],cpu.symbols['game_history_serve']):
@@ -71,6 +80,8 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
                 kind=1 if pc==cpu.symbols['game_history_contact'] else 3,
                 dispatch=len(boundaries[variant]),serve_clock=value(cpu.working_state(),cpu.symbols,'game_serve_clock')))
         if pc==cpu.symbols['game_preview_write_point']:
+            count=cpu.mem.r16(cpu.symbols['game_preview_counts']+2*variant)
+            if not dense_point_destination(cpu.symbols,variant,count,cpu.cpu.r_reg(8)):return
             state=cpu.working_state()
             boundaries[variant].append(dict(contact=value(state,cpu.symbols,'game_contact'),
                 flight=value(state,cpu.symbols,'game_flight'),lifecycle=value(state,cpu.symbols,'game_lifecycle',2)))
@@ -95,7 +106,7 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
         if outcome==6:
             count=len(result['paths'][variant])//8
             dispatches=cpu.mem.r16(cpu.symbols['game_preview_dispatches']+2*variant)
-            assert count==256 or dispatches==256
+            assert count==CAPACITY or dispatches==256 or cpu.mem.r16(cpu.symbols['game_preview_flight_phases']+2*variant)==256
             classification='limit'
         if outcome==7:
             # Lifecycle stops may be before execution of a recorded reset API.
@@ -114,11 +125,76 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
     return observation
 
 
+def validate_edited_source(observation, symbols, source):
+    """Reference seed is original recorded state; only requested XY may differ."""
+    result=observation['result']
+    source=bytes(source)
+    assert len(source)==318 and len(result['edited'])==318, 'Incomplete incoming reference state'
+    if result['kind']!=3:
+        assert bytes(result['incoming_state'])==source, 'Cached incoming state differs from original post-launch318'
+    expected=bytearray(source)
+    player=symbols['game_play_state']-symbols['game_core_state']+10*observation['end']
+    expected[player+3]=observation['x'];expected[player+2]=observation['y']
+    assert bytes(result['edited'])==bytes(expected), 'Edited incoming state changes bytes beyond requested XY'
+    return bytes(expected)
+
+
+def original_incoming_source(image, symbols, observation):
+    """Reconstruct the chosen launch with original recorded logical bodies."""
+    result=observation['result']
+    if result['kind']==3:return observation['selected']
+    if 'recorded_incoming_state' in observation:
+        assert observation['recorded_incoming_origin']==result['incoming'], 'Preview selects a different incoming launch'
+        return observation['recorded_incoming_state']
+    origin=result['incoming'];stream=observation['stream']
+    assert 0<=origin<len(stream) and stream[origin][0]=='game_tick_dispatch', 'Incoming origin is not a recorded dispatcher'
+    with Core(image,symbols,readonly=READONLY) as reference:
+        accepted=[];operation=-1;original=reference.instruction
+        def observe(pc):
+            original(pc)
+            if pc in (symbols['game_history_contact'],symbols['game_history_serve']) and operation==origin:
+                accepted.append(reference.cpu.r_reg(7)&0xffff)
+        reference.cpu.set_instr_hook_callback(observe)
+        reference.call_logical('game_core_init',[])
+        for operation,(name,args) in enumerate(stream[:origin+1]):
+            reference.call_logical(name,args)
+        assert accepted and accepted[-1]==1-observation['end'], 'Incoming source lacks actual opponent launch'
+        source=reference.state()
+        reference.audit_reads()
+    return source
+
+
+class HumanLaunchTransition:
+    """Observe actual preserved hooks; switch only after the dispatcher returns."""
+    def __init__(self, cpu, symbols, end):
+        self.cpu=cpu;self.symbols=symbols;self.end=end
+        self.original=cpu.instruction;self.pending=False;self.launched=False
+
+    def observe(self, pc):
+        self.original(pc)
+        if pc in (self.symbols['game_history_contact'],self.symbols['game_history_serve']):
+            if self.cpu.cpu.r_reg(7)&65535==self.end:
+                self.pending=True
+
+    def before(self, name):
+        if self.launched:
+            assert name=='game_ball_tick', 'Logical dispatcher continues after actual human launch'
+        else:
+            assert name!='game_ball_tick', 'Ball-only flight starts before actual human launch'
+
+    def after(self, name):
+        if self.pending:
+            assert name=='game_tick_dispatch', 'Actual human launch occurs outside its complete dispatcher'
+            self.launched=True;self.pending=False
+
+
 def continuous(image,symbols,observation,native_sinks=False):
     """One actual edited initialization, then uninterrupted original API policy."""
     result=observation['result'];selection=observation['selection'];stream=observation['stream']
+    source=original_incoming_source(image,symbols,observation)
+    expected_edited=validate_edited_source(observation,symbols,source)
     for variant in (0,1):
-        with Core(image,symbols,initial=None if native_sinks else result['edited'],readonly=READONLY) as cpu:
+        with Core(image,symbols,initial=None if native_sinks else expected_edited,readonly=READONLY) as cpu:
             if native_sinks:
                 from preview_native_proof import native_entries,assert_native_entries,outside_canonical
                 # Real setup with observation traps is outside the reference.
@@ -127,18 +203,23 @@ def continuous(image,symbols,observation,native_sinks=False):
                 native_entries(cpu,image)
                 cpu.call('game_history_freeze')
                 cpu.mem.w8(symbols['game_history_replaying'],1)
-                cpu.mem.w_block(cpu.start,result['edited'])
+                cpu.mem.w_block(cpu.start,expected_edited)
                 cpu.clear_events()
                 cpu.native_semantic_events.clear()
                 saved_nonstate=outside_canonical(cpu)
-            generated=[result['paths'][variant][i:i+8] for i in range(0,result['prefix']*8,8)]
+            transition=HumanLaunchTransition(cpu,symbols,observation['end'])
+            cpu.cpu.set_instr_hook_callback(transition.observe)
+            generated=[point(expected_edited,symbols)]
             for ordinal,(name,args,before) in enumerate(observation['traces'][variant]):
-                if ordinal==0:
+                transition.before(name)
+                if transition.launched:
+                    expected_name,expected_args='game_ball_tick',[]
+                elif ordinal==0:
                     expected_name='game_core_sample_pads'
                     offset=symbols['game_input_bits']-symbols['game_core_state']
                     expected_args=list(result['edited'][offset:offset+2])
                 else:
-                    position=selection+ordinal-1
+                    position=continuation_start(result,selection)+ordinal-1
                     if position<len(stream):expected_name,expected_args=stream[position];expected_args=list(expected_args)
                     else:
                         phase=(position-len(stream))%4
@@ -150,11 +231,13 @@ def continuous(image,symbols,observation,native_sinks=False):
                     expected_args[owner]=(expected_args[owner]&0xffc0)|(16 if variant==0 else 0)
                 assert (name,args)==(expected_name,expected_args), 'Preview changes known API order or opponent/result input'
                 assert cpu.state()==before, 'Chunked state differs from uninterrupted actual core'
-                cpu.call_logical(name,args)
+                if name=='game_ball_tick':cpu.call(name,{12:symbols['game_play_state'],13:cpu.start})
+                else:cpu.call_logical(name,args)
+                transition.after(name)
                 if native_sinks:
                     assert_native_entries(cpu)
                     assert outside_canonical(cpu)==saved_nonstate, 'Native continuous reference changes history/presentation/input/preview globals'
-                if name=='game_tick_dispatch' and len(generated)<256:generated.append(point(cpu.state(),symbols))
+                if name in ('game_tick_dispatch','game_ball_tick') and len(generated)<CAPACITY:generated.append(point(cpu.state(),symbols))
             assert cpu.state()==result['contexts'][variant]
             assert b''.join(generated)==result['paths'][variant]
             assert (cpu.native_semantic_events if native_sinks else cpu.events)==result['outputs'][variant]
@@ -168,8 +251,20 @@ def continuous(image,symbols,observation,native_sinks=False):
         incoming_origin=result['incoming'],action_boundary=result['action'],coincident=observation['coincident'],
         costs=observation['costs'],live_history_output_preserved=True,edited_only_position_changed=True,
         selected_state=observation['selected'].hex(),edited_state=result['edited'].hex(),
+        continuation_source_state=bytes(source).hex(),original_incoming_full_state_verified=True,
         final_states=[state.hex() for state in result['contexts']],
         paths=[path.hex() for path in result['paths']],ordered_outputs=result['outputs'])
+
+
+def continuation_fingerprint(observation):
+    import hashlib,json
+    result=observation['result']
+    digest=lambda raw:hashlib.sha256(raw).hexdigest()
+    return dict(selected=digest(observation['selected']),edited=digest(result['edited']),
+        final_states=[digest(state) for state in result['contexts']],
+        paths=[digest(path) for path in result['paths']],
+        ordered_outputs=digest(json.dumps([result['outputs'][v] for v in (0,1)],
+            sort_keys=True,separators=(',',':')).encode()))
 
 
 def human_serve_wait(cpu,cap=512,phase_wanted=0x40):
@@ -290,12 +385,12 @@ def current_fallback(executable):
         cpu.call('game_history_freeze')
         observation=execute(cpu,0xffff,selection,x,y,stream,0xace1,'current-human-serve-fallback')
         assert observation['classes'][1]=='limit'
-        assert len(observation['result']['paths'][1])//8==256
+        assert len(observation['result']['paths'][1])//8==257
         assert not any(event['end']==end for event in observation['launches'][1])
         cpu.audit_reads()
     report=continuous(image,symbols,observation)
     return dict(report,lifecycle=PLAYING,phase=phase,human=True,legal_position_verified=True,
-        released_no_launch=True,released_outgoing_path_claimed=False,total_sample_limit=256)
+        released_no_launch=True,released_outgoing_path_claimed=False,total_sample_limit=257)
 
 
 def lifecycle_stops(executable):
@@ -359,7 +454,7 @@ def partial_replacement(executable):
             before_count=field(cpu,'game_preview_counts')
             replace_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:changed_x,3:y},saved)
             assert cpu.cpu.r_reg(0)==1 and field(cpu,'game_preview_generation',4)==generation+1
-            assert field(cpu,'game_preview_status')==1 and field(cpu,'game_preview_cache_valid')==0
+            assert field(cpu,'game_preview_status')==(2 if wanted==3 else 1) and field(cpu,'game_preview_cache_valid')==(1 if wanted==3 else 0)
             assert field(cpu,'game_preview_x')==changed_x and field(cpu,'game_preview_y')==y
             preview=block(cpu,'game_preview_storage','game_preview_storage_end')
             for api,args in (('game_preview_step',{0:generation,1:4}),
@@ -367,9 +462,9 @@ def partial_replacement(executable):
                     ('game_preview_result',{0:generation+1})):
                 call_checked(cpu,api,args,saved)
                 assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==preview
-            expected=bytearray(cpu.state())
+            expected=bytearray(cpu.mem.r_block(symbols['game_preview_incoming_state'],318)) if wanted==3 else None
             player=symbols['game_play_state']-symbols['game_core_state']+candidate['end']*10
-            expected[player+3]=changed_x;expected[player+2]=y
+            if expected is not None:expected[player+3]=changed_x;expected[player+2]=y
             replacement_cycles=[];replacement_operations=[]
             for _ in range(8192):
                 before=sum(cpu.visits.get(pc,0) for pc in bodies)
@@ -380,9 +475,11 @@ def partial_replacement(executable):
                 if field(cpu,'game_preview_status')==2:break
                 assert field(cpu,'game_preview_status')==1
             else:raise AssertionError('Replacement cold resolver did not reach edited PRIME within8192calls')
+            if expected is None:
+                expected=bytearray(cpu.mem.r_block(symbols['game_preview_incoming_state'],318));expected[player+3]=changed_x;expected[player+2]=y
             assert block(cpu,'game_preview_edited_state','game_preview_held_state')==bytes(expected)
             records.append(dict(phase=wanted,retired_generation=generation,new_generation=generation+1,
-                cold_restart=True,old_and_partial_results_unavailable=True,
+                cold_restart=wanted==1,unfinished_cache_reuse=wanted==3,old_and_partial_results_unavailable=True,
                 full_live_history_output_preserved=True,partial_prefix_samples=before_count,
                 old_x=x,old_y=y,new_x=changed_x,new_y=y,edited_only_position_changed=True,
                 replacement_resolver_worker_calls=len(replacement_cycles),
@@ -508,7 +605,7 @@ def stage_a1(executable,progress):
     fallback['timed_prelaunch']=timed_prelaunch(executable)
     saved('human-serve-fallback',fallback)
     saved('limit-256',dict(passed=True,case='human-serve-fallback',variant=1,
-        samples=fallback['path_counts'][1],total_sample_limit=256,no_actual_human_launch=True,
+        samples=fallback['path_counts'][1],total_sample_limit=257,no_actual_human_launch=True,
         outgoing_path_claimed=False,incomplete=True,full_live_history_output_preserved=True,
         continuous_state_path_output_equal=True,independent_continuation_policy_equal=True))
     saved('title-dual-rejection',stale_title(executable))
@@ -520,4 +617,4 @@ def stage_a1(executable,progress):
     saved('truncated-completed-context',truncated_completed(executable))
     return dict(passed=True,scope='A1 only: API/context/lifecycle bounds; endpoint discovery, relocation, emitted native sinks and current native costs remain pending.',
         cases=cases,other_stages_pending=['A2-endpoint-discovery','A3-relocation-native-history'],
-        canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=256,maximum_worker_operations=4)
+        canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=CAPACITY,maximum_worker_operations=4)

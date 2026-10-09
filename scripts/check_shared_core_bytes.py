@@ -15,10 +15,11 @@ SINKS = ('game_render_sprites', 'game_scene_present_fields', 'game_core_title_re
          'game_history_contact_begin', 'game_history_contact', 'game_history_serve')
 
 
-def normalized(executable, listing):
+def normalized(executable, listing, begin_name='game_core_code_begin',
+               end_name='game_core_code_end', external_names=SINKS):
     image, symbols = load_image(executable)
-    begin, end = symbols['game_core_code_begin'], symbols['game_core_code_end']
-    state_end = symbols['game_core_state_end']
+    begin, end = symbols[begin_name], symbols[end_name]
+    state_end = symbols['game_core_state_end'] if begin_name=='game_core_code_begin' else end
     origin = image[0][0]
     assert origin <= begin < end <= origin + len(image[0][1])
     data = bytearray(image[0][1][begin - origin:end - origin])
@@ -61,22 +62,26 @@ def normalized(executable, listing):
         if begin <= value <= state_end:
             token = 0x10000 + value - begin
         else:
-            matches = [name for name in SINKS if symbols.get(name) == value]
+            matches = [name for name in external_names if symbols.get(name) == value]
             assert matches, ('Undeclared external reference', offset, value)
-            token = 0xf0000000 + SINKS.index(matches[0])
+            token = 0xf0000000 + external_names.index(matches[0])
         struct.pack_into('>I', data, offset, token)
     branches = 0
     for unit in _units(Path(listing).read_text()):
         offset = unit['start'] - (begin - origin)
         if unit['hunk'] != 0 or not 0 <= offset < len(data):
             continue
-        match = re.fullmatch(r'(?:bra|bsr)\s+(\w+)', unit['statement'].strip())
-        if match and match[1] in SINKS:
+        match = re.fullmatch(r'(?:bra|bsr|jsr)\s+(\w+)', unit['statement'].strip())
+        if match and match[1] in external_names:
             opcode = struct.unpack_from('>H', data, offset)[0]
+            if opcode == 0x4eb9:
+                assert offset + 2 in relocations
+                assert struct.unpack_from('>I',data,offset+2)[0] == 0xf0000000 + external_names.index(match[1])
+                continue
             assert opcode in (0x6000, 0x6100)
             displacement = struct.unpack_from('>h', data, offset + 2)[0]
             assert begin + offset + 2 + displacement == symbols[match[1]]
-            struct.pack_into('>H', data, offset + 2, SINKS.index(match[1]) + 1)
+            struct.pack_into('>H', data, offset + 2, external_names.index(match[1]) + 1)
             branches += 1
     return bytes(data), len(relocations), branches
 

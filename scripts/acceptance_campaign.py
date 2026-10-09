@@ -139,7 +139,7 @@ def dependencies(case, root=ROOT):
     if case.id in ('preview-native-pal','preview-native-ntsc'):
         paths.add(root/'scripts/preview_native_fixture.s')
         paths.add(root/'build/tests/preview-cpu/report.json')
-        paths.add(root/'build/acceptance/campaigns/00b055e774894e9c9127e470d17e7823/attempts/preview-cpu/000009/receipt.json')
+        paths.add(root/'build/tests/seek-sliced-cpu/report.json')
     manifests=[]
     optional_absence={}
     if case.category=='native':
@@ -269,7 +269,7 @@ def preview_a1_extent(stage):
         if (not isinstance(classes,list) or len(classes)!=2 or any(name not in
                 ('landing','net','out','interception','no-contact','limit','lifecycle','incomplete') for name in classes)
                 or not isinstance(counts,list) or len(counts)!=2
-                or any(not integer(n,0 if allow_empty else 1,256) for n in counts)
+                or any(not integer(n,0 if allow_empty else 1,513) for n in counts)
                 or not isinstance(boundaries,list) or len(boundaries)!=2
                 or not isinstance(launches,dict) or set(launches)!={'0','1'}):return False
         for boundary in boundaries:
@@ -286,7 +286,7 @@ def preview_a1_extent(stage):
            'replacement-resolve','replacement-held','non-dispatch-lifecycle','truncated-completed-context'}
     if (not isinstance(stage,dict) or stage.get('passed') is not True
             or [stage.get(key) for key in ('canonical_bytes','history_metadata_bytes','total_samples_per_path',
-                                          'maximum_worker_operations')]!=[318,72,256,4]
+                                          'maximum_worker_operations')]!=[318,72,513,4]
             or stage.get('other_stages_pending')!=['A2-endpoint-discovery','A3-relocation-native-history']
             or not isinstance(stage.get('cases'),dict) or set(stage['cases'])!=names):return False
     rows=stage['cases'];fallback=rows['human-serve-fallback'];miss=rows['no-contact']
@@ -294,7 +294,7 @@ def preview_a1_extent(stage):
     if (not flags(fallback, ('human','legal_position_verified','released_no_launch'))
             or fallback.get('lifecycle')!=1 or not integer(fallback.get('phase'),0,255)
             or fallback['phase']&0xe0!=0x40 or fallback.get('released_outgoing_path_claimed') is not False
-            or fallback['classes'][1]!='limit' or fallback['path_counts'][1]!=256):return False
+            or fallback['classes'][1]!='limit' or fallback['path_counts'][1]!=257):return False
     timed=fallback.get('timed_prelaunch') or {};post=fallback.get('postlaunch_rejection') or {}
     if (not flags(timed, ('passed','actual_launch_absent_before_requests','held_actual_launch_after_requests'))
             or timed.get('phase')!=32 or timed.get('complete_boundary_clocks')!=[15,16]
@@ -315,12 +315,13 @@ def preview_a1_extent(stage):
             or title['stale_phase']&0xe0==0):return False
     if (not flags(limit, ('passed','no_actual_human_launch','incomplete','full_live_history_output_preserved',
                           'continuous_state_path_output_equal','independent_continuation_policy_equal'))
-            or limit.get('samples')!=256 or limit.get('total_sample_limit')!=256
+            or limit.get('samples')!=257 or limit.get('total_sample_limit')!=257
             or limit.get('outgoing_path_claimed') is not False):return False
     for name,phase in (('replacement-resolve',1),('replacement-held',3)):
         row=rows[name]
-        if (not flags(row, ('passed','cold_restart','old_and_partial_results_unavailable',
+        if (not flags(row, ('passed','old_and_partial_results_unavailable',
                            'full_live_history_output_preserved','edited_only_position_changed'))
+                or row.get('cold_restart') is not (phase==1) or (phase==3 and row.get('unfinished_cache_reuse') is not True)
                 or row.get('phase')!=phase or not integer(row.get('retired_generation'),1,0xfffffffe)
                 or row.get('new_generation')!=row['retired_generation']+1 or not integer(row.get('partial_prefix_samples'))
                 or any(not integer(row.get(key),0,255) for key in ('old_x','old_y','new_x','new_y'))
@@ -334,7 +335,7 @@ def preview_a1_extent(stage):
             or not isinstance(lifecycle.get('cases'),list) or len(lifecycle['cases'])!=3):return False
     for row in lifecycle['cases']:
         if (not accepted(row,allow_empty=True) or row['classes']!=['lifecycle','lifecycle']
-                or row['path_counts']!=[0,0] or row['actual_final_boundaries']!=[None,None]):return False
+                or row['path_counts']!=[1,1] or row['actual_final_boundaries']!=[None,None]):return False
     truncated=rows['truncated-completed-context']
     if (not flags(truncated, ('passed','request_accepted','context_missing','result_rejected',
                              'unavailable_scratch_preserved','full_live_history_output_preserved'))
@@ -376,13 +377,13 @@ def preview_a2_extent(stage):
             if (not isinstance(row,dict) or not integer(row.get('variant'),variant,variant)
                     or type(row.get('has_human_launch')) is not bool
                     or type(row.get('outgoing_samples_present')) is not bool
-                    or not integer(row.get('samples'),1,256)
+                    or not integer(row.get('samples'),1,513)
                     or any(not integer(row.get(key),0,255) for key in ('contact','flight'))
                     or not integer(row.get('lifecycle'),0,65535)
                     or not sha(row.get('final_state_sha256'))
                     or row.get('first_terminal_boundary_checked') is not True
                     or not integer(row.get('last_sampled_dispatch'),0,row['samples']-1)
-                    or row['last_sampled_dispatch']!=row['samples']-prefix-1):return None
+                    or row['last_sampled_dispatch']!=row['samples']-prefix-2):return None
             boundary=row.get('last_sampled_boundary')
             if not isinstance(boundary,dict) or any(boundary.get(key)!=row[key] for key in ('contact','flight','lifecycle')):return None
             human=row.get('human_launch');opponent=row.get('opponent_contact')
@@ -395,7 +396,7 @@ def preview_a2_extent(stage):
                             or not integer(opponent.get('dispatch'),human['dispatch'],row['last_sampled_dispatch'])
                             or not integer(row.get('opponent_contact_order'),row['human_launch_order']+1)):return None
                 elif row.get('opponent_contact_order') is not None:return None
-                if prefix is not None and row['outgoing_samples_present'] is not (row['samples']>prefix+human['dispatch']+1):return None
+                if prefix is not None and row['outgoing_samples_present'] is not (row['samples']>human['dispatch']+2):return None
                 expected=('interception' if opponent is not None else 'net' if row['contact']&1 else
                           'out' if row['contact']&0x88 else 'landing' if row['contact']&2 else 'unqualified')
             else:
@@ -412,7 +413,7 @@ def preview_a2_extent(stage):
         if facts.get('launched_outgoing_coincidence') is not coincident:return None
         if coincident:coverage.add('coincidence')
         return coverage if facts.get('coverage')==sorted(coverage) else None
-    seeds_expected=[0xace1,0x0001,0x1234,0xbeef];required={'net','out','interception','coincidence'}
+    seeds_expected=[0xace1,0x0001,0x1234,0xbeef];required={'net','out','coincidence'}
     policy=dict(select_mode=0,entropy_policy=0,
         cycle=['game_round_poll','game_core_sample_pads','game_core_sample_result','game_tick_dispatch'],
         release_modulus=64,release_prefix=8,direction_modulus=96,first_direction_ticks=48,
@@ -421,11 +422,11 @@ def preview_a2_extent(stage):
             or stage.get('planned_seeds')!=seeds_expected or stage.get('input_policy')!=policy
             or any(stage.get(key)!=value for key,value in dict(dispatch_cap=512,ordinary_operation_cap=2049,
                 returns_per_seed_cap=2,positions_per_return_cap=9,job_cap=72,worker_call_cap=8192,
-                maximum_worker_operations=4,total_samples_per_path=256).items())
+                maximum_worker_operations=4,total_samples_per_path=513).items())
             or stage.get('frozen_history_write_guard') is not True
             or stage.get('position_policy')!='actual-recorded-court-contact-center-plus-minus16-lateral-selected-phase-limits'
             or stage.get('time_policy')!='first-regular-height8-28-first-low-height0-7-last-legal-incoming-pre-dispatch'
-            or stage.get('required_coverage')!=['net','out','interception','coincidence']
+            or stage.get('required_coverage')!=['net','out','coincidence']
             or stage.get('actual_coverage')!=sorted(required) or stage.get('absent_classes')!=[]):return False
     contract=stage.get('contact_geometry_contract')
     if (not isinstance(contract,dict) or contract.get('source')!='amiga/game/gameplay_contact.s'
@@ -510,8 +511,9 @@ def preview_a2_extent(stage):
                 or not isinstance(sample,dict) or sample not in candidate['sampling_rows'] or sample.get('available') is not True
                 or row.get('selection')!=sample['selection'] or row.get('bounds')!=sample['bounds']
                 or row.get('pre_dispatch_geometry_verified') is not True
+                or row.get('incoming_full_state_verified') is not True
                 or not isinstance(row.get('name'),str) or row['name'] in names or not costs(row.get('costs'))
-                or any(row.get(k)!=v for k,v in dict(worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256).items())
+                or any(row.get(k)!=v for k,v in dict(worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=513).items())
                 or row.get('frozen_history_write_guard') is not True
                 or not isinstance(bounds,dict) or any(not integer(bounds.get(k),0,255) for k in ('left','right','top','bottom'))
                 or not bounds['left']<bounds['right'] or not bounds['top']<bounds['bottom']
@@ -561,7 +563,7 @@ def preview_a3_extent(stage,a2):
             or stage.get('semantic_state_path_outcome_output_equal') is not True
             or stage.get('seed')!=0xace1 or stage.get('dispatch_cap')!=512
             or stage.get('ordinary_operation_cap')!=2049
-            or stage.get('descriptors')!=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]]):return False
+            or stage.get('descriptors')!=[[0,'low',-16],[1,'regular',16],[1,'low',-16]]):return False
     audit=stage.get('shared_byte_audit') or {}
     if (audit.get('passed') is not True or any(not integer(audit.get(k),1) for k in
             ('matched_bytes','relocations_each','verified_sink_branches_each'))
@@ -570,14 +572,14 @@ def preview_a3_extent(stage,a2):
     if (not isinstance(rows,list) or len(rows)!=3 or
             [(r.get('name'),r.get('base')) for r in rows if isinstance(r,dict)]!=
             [('standalone',65536),('relocated',196608),('emitted-native',65536)]):return False
-    sources=a2.get('chosen_cases',[]) if isinstance(a2,dict) else []
+    sources=a2.get('job_results',[]) if isinstance(a2,dict) else []
     seed_rows=a2.get('seeds',[]) if isinstance(a2,dict) else []
     candidates=seed_rows[0].get('candidates',[]) if seed_rows and isinstance(seed_rows[0],dict) else []
     if len(candidates)!=2:return False
     semantic=('seed','ordinal','selection','end','x','y','selected_state','edited_state','final_states',
-        'paths','classes','ordered_outputs','actual_accepted_launches','actual_final_boundaries',
+        'paths','classes','ordered_outputs','actual_accepted_launches','actual_final_boundaries','continuation_source_state',
         'prefix_samples','incoming_origin','action_boundary','qualification')
-    required=['coincidence','interception','net','out']
+    required=['coincidence','net','out']
     for row in rows:
         native=row['name']=='emitted-native'
         if (any(row.get(k) is not True for k in ('passed','semantic_equal','adapter_words_preserved',
@@ -597,7 +599,7 @@ def preview_a3_extent(stage,a2):
         for number,case in enumerate(cases):
             if (not isinstance(case,dict) or any(case.get(k) is not True for k in ('passed',
                     'continuous_state_path_output_equal','independent_continuation_policy_equal',
-                    'live_history_output_preserved','edited_only_position_changed'))):return False
+                    'live_history_output_preserved','edited_only_position_changed','original_incoming_full_state_verified'))):return False
             descriptor=case.get('descriptor') or {};sample=descriptor.get('sampling_row') or {}
             index,band,lateral=stage['descriptors'][number]
             candidate=candidates[index]
@@ -614,7 +616,18 @@ def preview_a3_extent(stage,a2):
             expected_x=max(bounds['left'],min(bounds['right']-1,sample['center_x']+lateral))
             if case.get('x')!=expected_x or case.get('y')!=sample.get('center_y') or case.get('selection')!=sample.get('selection'):return False
             source=next((r for r in sources if all(r.get(k)==case.get(k) for k in ('seed','ordinal','selection','x','y'))),None)
-            if source is None or any(k not in case or case[k]!=source.get(k) for k in semantic):return False
+            if source is None or case.get('qualification')!=source.get('qualification'):return False
+            try:
+                source_state=bytes.fromhex(case['continuation_source_state']);edited_state=bytes.fromhex(case['edited_state'])
+                player=10*case['end']
+                if len(source_state)!=318 or len(edited_state)!=318 or any(a!=b for n,(a,b) in enumerate(zip(source_state,edited_state)) if n not in (player+2,player+3)) or edited_state[player+2]!=case['y'] or edited_state[player+3]!=case['x']:return False
+                digest_bytes=lambda raw:hashlib.sha256(bytes.fromhex(raw)).hexdigest()
+                fingerprint=dict(selected=digest_bytes(case['selected_state']),edited=digest_bytes(case['edited_state']),
+                    final_states=[digest_bytes(raw) for raw in case['final_states']],
+                    paths=[digest_bytes(raw) for raw in case['paths']],
+                    ordered_outputs=hashlib.sha256(json.dumps(case['ordered_outputs'],sort_keys=True,separators=(',',':')).encode()).hexdigest())
+            except (KeyError,TypeError,ValueError):return False
+            if fingerprint!=case.get('fingerprint') or fingerprint!=source.get('fingerprint'):return False
             covered.update(case['qualification']['coverage'])
         if sorted(covered)!=required:return False
     history=stage.get('history_regressions') or {};empty=history.get('empty') or {}
@@ -644,7 +657,7 @@ def preview_batch_extent(stage):
                  'held->released','released->ready']
     if (not isinstance(stage,dict) or stage.get('passed') is not True
             or any(stage.get(k)!=v for k,v in dict(canonical_bytes=318,history_metadata_bytes=72,
-                preview_storage_bytes=5550,preview_metadata_bytes=110,budgets=[1,2,3,4]).items())
+                preview_storage_bytes=10974,preview_metadata_bytes=150,budgets=[1,2,3,4]).items())
             or any(type(n) is not int for n in stage['budgets'])
             or stage.get('required_owner_transitions')!=transitions
             or any(stage.get(k) is not True for k in ('state_path_outcome_output_equal_across_budgets',
@@ -652,7 +665,7 @@ def preview_batch_extent(stage):
     rows=stage.get('cases')
     if not isinstance(rows,list) or len(rows)!=4:return False
     semantic=('seed','ordinal','selection','end','x','y','bounds','classes','selected_state','edited_state',
-              'final_states','paths','ordered_outputs','path_counts','prefix_samples','incoming_origin',
+              'final_states','paths','ordered_outputs','path_counts','prefix_samples','incoming_origin','continuation_source_state',
               'action_boundary','actual_accepted_launches','actual_final_boundaries','coincident')
     baseline=None;trace=None;total=None
     for budget,row in zip((1,2,3,4),rows):
@@ -683,7 +696,7 @@ def preview_batch_extent(stage):
                 or result.get('seed')!=0xace1 or not integer(result.get('end'),0,1)
                 or not integer(result.get('selection'),1,2049)
                 or not integer(result.get('ordinal'),0,127)
-                or not integer(result.get('prefix_samples'),0,255)):return False
+                or result.get('prefix_samples')!=0):return False
         bounds=result.get('bounds')
         if (not isinstance(bounds,dict)
                 or any(not integer(bounds.get(k),0,255) for k in ('left','right','top','bottom'))
@@ -692,14 +705,15 @@ def preview_batch_extent(stage):
                 or type(result.get('coincident')) is not bool):return False
         try:
             selected=bytes.fromhex(result['selected_state']);edited=bytes.fromhex(result['edited_state'])
+            source=bytes.fromhex(result['continuation_source_state'])
             states=[bytes.fromhex(s) for s in result['final_states']]
             paths=[bytes.fromhex(s) for s in result['paths']]
         except (TypeError,ValueError):return False
-        if len(selected)!=318 or len(edited)!=318 or len(states)!=2 or any(len(s)!=318 for s in states):return False
+        if result.get('original_incoming_full_state_verified') is not True or len(source)!=318 or len(selected)!=318 or len(edited)!=318 or len(states)!=2 or any(len(s)!=318 for s in states):return False
         player=10*result['end']
-        if (any(a!=b for n,(a,b) in enumerate(zip(selected,edited)) if n not in (player+2,player+3))
+        if (any(a!=b for n,(a,b) in enumerate(zip(source,edited)) if n not in (player+2,player+3))
                 or edited[player+2]!=result['y'] or edited[player+3]!=result['x']
-                or len(paths)!=2 or any(not 8<=len(p)<=2048 or len(p)%8 for p in paths)
+                or len(paths)!=2 or any(not 8<=len(p)<=4104 or len(p)%8 for p in paths)
                 or result.get('path_counts')!=[len(p)//8 for p in paths]
                 or any(result['prefix_samples']>len(p)//8 for p in paths)
                 or paths[0][:8*result['prefix_samples']]!=paths[1][:8*result['prefix_samples']]
@@ -716,6 +730,45 @@ def preview_batch_extent(stage):
         if baseline is None:baseline,trace,total=actual,digest,row['actual_body_operations']
         elif actual!=baseline or digest!=trace or row['actual_body_operations']!=total:return False
     return True
+
+
+def preview_endpoint_extent(proof):
+    """Require the finite actual endpoint API extent, separate from dense completion."""
+    if not isinstance(proof,dict) or proof.get('passed') is not True:return False
+    rows=proof.get('cases')
+    positions={(111,153),(111,140),(111,128),(111,112),(111,98),(100,153),(119,153),(40,153),(180,153)}
+    if not isinstance(rows,list) or len(rows)!=9 or {(r.get('x'),r.get('y')) for r in rows}!=positions:return False
+    early=0;rejected=0;misses=0
+    for row in rows:
+        if any(row.get(k) is not True for k in ('passed','complete_launch_seeds_equal',
+            'original_dense_full318_points_events_equal','early_endpoint_unchanged_at_dense_completion',
+            'stale_and_cancelled_neutral')):return False
+        queries=row.get('queries')
+        if not isinstance(queries,list) or len(queries)>2:return False
+        if sorted(q.get('variant') for q in queries)!=row.get('attempted'):return False
+        if not queries:misses+=1
+        ready=[]
+        for q in queries:
+            if (q.get('variant') not in (0,1) or type(q.get('reason')) is not int or not 0<=q['reason']<=14
+                or type(q.get('ready')) is not bool or q['ready']!=(q['reason']==0)
+                or q.get('full318_equal_or_rejected_unchanged') is not True
+                or q.get('dense_state_counts_events_cursors_unchanged') is not True
+                or type(q.get('dense_phase')) is not int or not 4<=q['dense_phase']<256):return False
+            if q['ready']:
+                if (type(q.get('endpoint_phase')) is not int or not q['dense_phase']<q['endpoint_phase']<=255
+                    or q.get('outcome')!=q.get('expected_outcome') or q['outcome'] not in (1,3)):return False
+                ready.append(q['variant']);early+=1
+            else:rejected+=1
+        if sorted(ready)!=row.get('early_endpoints'):return False
+    prefix=proof.get('prefix_policy') or {}
+    cases=prefix.get('cases') or []
+    if (prefix.get('passed') is not True or prefix.get('natural_reachability_claimed') is not False
+        or len(cases)!=3 or {r.get('name') for r in cases}!={'accepted-short','accepted-long','special-net-reflection'}):return False
+    for r in cases:
+        if (any(r.get(k) is not True for k in ('passed','complete_state_equal','prefix_counted_once'))
+            or type(r.get('original_phases')) is not int or not 1<=r['original_phases']<=256
+            or r.get('query_attempts')!=(0 if r['original_phases']<=4 else 1)):return False
+    return early>=2 and rejected>=2 and misses>=1
 
 
 def required_extent(case,report):
@@ -740,6 +793,42 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='incoming-flight-cpu':
+        validation=report.get('validation') or {}
+        audit=validation.get('endpoint_byte_audit') or {}
+        return (report.get('execution')=='actual-68000-cpu-only'
+                and audit.get('passed') is True and audit.get('matched_bytes')==482
+                and audit.get('relocations_each')==32 and audit.get('external_branches_each')==6
+                and audit.get('normalized_sha256')=='2c2ada68494407db11a2c7cf2eca5ac981a0d975b85a9e472b5389a3ad10f6c7'
+                and validation.get('passed') is True
+                and validation.get('full_private_bytes')==318
+                and len(validation.get('rows') or [])==18
+                and len(validation.get('boundaries') or [])==4
+                and preview_endpoint_extent(validation.get('endpoint_api'))
+                and all(row.get('passed') is True for row in
+                        validation['rows']+validation['boundaries']))
+    if case.id in ('incoming-flight-pal','incoming-flight-ntsc'):
+        rows=report.get('endpoints') or []
+        return (report.get('incoming_flight') is True
+                and report.get('repeated_sequence') is True
+                and report.get('full318_history72_backup_guard') is True
+                and report.get('dropped_notifications')==0
+                and len(rows) in (2,3)
+                and report.get('actual_human_outgoing') is True
+                and any(row.get('endpoint_ready_before_dense') is True for row in rows)
+                and all(all((row.get('original_outgoing_reference') or {}).get(k) is True
+                    for k in ('full318_equal','point_equal','phase_equal','outcome_equal'))
+                    for row in rows if (row.get('human_launches') or [0])[0])
+                and any((row.get('human_launches') or [0])[0] and
+                        (row.get('outgoing_phases') or [0])[0]>0 and
+                        (row.get('outcomes') or [0])[0] in (1,2,3) for row in rows)
+                and all(row.get('latency_cck',-1)>=0
+                        and row.get('first_actual_publication',{}).get('native_sprite_check')
+                        for row in rows)
+                and rows[0].get('incoming_state_sha256')==rows[1].get('incoming_state_sha256')
+                and rows[0].get('incoming_cursor')==rows[1].get('incoming_cursor')
+                and (report.get('target') or {}).get('video')==
+                    ('NTSC' if case.id.endswith('-ntsc') else 'PAL'))
     if case.id=='tutorial-hotspots-pal':
         from tutorial_hotspots import required_hotspots_extent
         return required_hotspots_extent(report, 'PAL')
@@ -766,7 +855,7 @@ def required_extent(case,report):
                 or evidence.get('target_role')!='legacy-validator-reference'
                 or evidence.get('actual_execution')!='actual-68000-cpu-only'
                 or validation.get('passed') is not True
-                or validation.get('preview_storage_bytes')!=5550 or validation.get('metadata_bytes')!=110
+                or validation.get('preview_storage_bytes')!=10974 or validation.get('metadata_bytes')!=150
                 or type(validation.get('fixture_operations')) is not int or validation['fixture_operations']<2049
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={
@@ -797,7 +886,7 @@ def required_extent(case,report):
                     or type(row.get('preservation_checks')) is not int or row['preservation_checks']<calls
                     or row.get('worker_restorations')!=calls
                     or not isinstance(paths,list) or len(paths)!=2
-                    or any(type(count) is not int or not 1<=count<=256 for count in paths)
+                    or any(type(count) is not int or not 1<=count<=513 for count in paths)
                     or not required.issubset(set(row.get('negative_controls') or []))):return False
             if row['name'].startswith('return'):
                 controls=row.get('first_dispatch_controls')
@@ -858,7 +947,9 @@ def required_extent(case,report):
         for field in ('oldest_after_eviction','evicted_incoming_origin'):
             if type(invalidation.get(field)) is not int or invalidation[field]<0:return False
         if invalidation['oldest_after_eviction']<=invalidation['evicted_incoming_origin']:return False
-        return (preview_a1_extent(validation.get('stage_a1_validation'))
+        from preview_boundary_proof import required_boundary_extent
+        return (required_boundary_extent(validation)
+                and preview_a1_extent(validation.get('stage_a1_validation'))
                 and preview_a2_extent(validation.get('stage_a2_validation'))
                 and preview_a3_extent(validation.get('stage_a3_validation'),validation.get('stage_a2_validation'))
                 and preview_batch_extent(validation.get('batch_validation')))

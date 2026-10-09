@@ -95,16 +95,24 @@ def check_native_presentation(snapshot, paths):
         assert fields['tutorial_presentation_generation'] == fields['tutorial_generation']
         variant = fields['tutorial_active_variant']
         count = (fields['tutorial_counts']>>(16 if variant == 0 else 0))&65535
-        index = count-1 if ball == 1 else fields['tutorial_animation_index']
-        assert 0 <= index < count <= 256
-        point = bytes(paths[variant*2048+index*8:variant*2048+index*8+8])
+        assert len(paths) % 16 == 0
+        capacity = len(paths)//16
+        assert 0 < count <= capacity
+        if ball == 1:
+            endpoints = bytes.fromhex(snapshot['endpoint_points'])
+            assert len(endpoints) == 16 and fields['tutorial_marker_ready']
+            point = endpoints[variant*8:variant*8+8]
+        else:
+            index = fields['tutorial_animation_index']
+            assert 0 <= index < count
+            point = bytes(paths[variant*capacity*8+index*8:variant*capacity*8+index*8+8])
         assert objects[48:50] == bytes((point[3],point[2]))
         assert objects[56:58] == bytes((point[1],point[0]))
         assert bool(objects[53]) == bool(point[6]&15 and point[3]<192)
         assert bool(objects[61]) == bool(point[6]&240 and point[1]<192)
     return dict(matched=True, visible_sprites=len(visible),
                 native_headers_and_images=True, actual_sample=point.hex() if point else None,
-                scope='Queued/published native sprite RAM and actual completed path sample; DMA fetch coverage remains separate.')
+                scope='Queued/published native sprite RAM and actual endpoint or available dense sample; DMA fetch coverage remains separate.')
 
 
 class CaptureSession(NativeControlSession):
@@ -290,7 +298,8 @@ class SurfaceObserver:
                                for n in ('sprite0','sprite_back','sprite_third')}
                               if verify_sprites else {})
         self.objects = bytearray(read(symbols['tutorial_scene_objects'],64)) if verify_sprites else bytearray()
-        self.path_bytes = bytearray(read(symbols['game_preview_paths'],4096)) if verify_sprites else bytearray()
+        self.path_bytes = bytearray(read(symbols['game_preview_paths'],symbols['game_preview_storage_end']-symbols['game_preview_paths'])) if verify_sprites else bytearray()
+        self.endpoint_bytes = bytearray(read(symbols['game_preview_endpoints'],16)) if verify_sprites else bytearray()
         self.sprite_checks = []
         self.scene_first_fields = {}
         assert symbols['tutorial_surfaces_end']-symbols['tutorial_surface0'] == 2*self.SIZE
@@ -314,7 +323,8 @@ class SurfaceObserver:
                     dict(addr=0xdff088,len=2,access='write')]
         if self.verify_sprites:
             watches += [dict(addr=self.symbols['tutorial_scene_objects'],len=64,access='write'),
-                        dict(addr=self.symbols['game_preview_paths'],len=4096,access='write')]
+                        dict(addr=self.symbols['game_preview_paths'],len=len(self.path_bytes),access='write'),
+                        dict(addr=self.symbols['game_preview_endpoints'],len=16,access='write')]
         return watches
 
     def sprite_base(self, copper):
@@ -361,7 +371,12 @@ class SurfaceObserver:
             base = self.sprite_base(copper)
             result.update(sprite_base=base, sprite_bytes=bytes(self.sprite_images[base]).hex(),
                           sprite_sha256=hashlib.sha256(self.sprite_images[base]).hexdigest(),
-                          objects=queued['objects'] if queued else bytes(self.objects).hex())
+                          objects=queued['objects'] if queued else bytes(self.objects).hex(),
+                          endpoint_points=queued['endpoint_points'] if queued else bytes(self.endpoint_bytes).hex(),
+                          endpoint_outcomes=queued['endpoint_outcomes'] if queued else state.get('game_preview_endpoint_outcomes',0),
+                          endpoint_ready=queued['endpoint_ready'] if queued else state.get('game_preview_endpoint_ready',0),
+                          endpoint_phases=queued['endpoint_phases'] if queued else state.get('game_preview_endpoint_phases',0),
+                          endpoint_generation=queued['endpoint_generation'] if queued else state.get('game_preview_generation',0))
             if queued:
                 result['native_sprite_check'] = queued.get('native_sprite_check')
             elif state['tutorial_active']:
@@ -385,7 +400,7 @@ class SurfaceObserver:
                     assert start not in (displayed_sprites,queued_sprites), 'Write to displayed or eligible queued sprites'
                     assert start <= a and a+size <= start+len(shadow)
                     shadow[a-start:a-start+size] = data
-            for name, shadow in (('tutorial_scene_objects',self.objects),('game_preview_paths',self.path_bytes)):
+            for name, shadow in (('tutorial_scene_objects',self.objects),('game_preview_paths',self.path_bytes),('game_preview_endpoints',self.endpoint_bytes)):
                 start = self.symbols[name]
                 if max(a,start) < min(a+size,start+len(shadow)):
                     assert start <= a and a+size <= start+len(shadow)

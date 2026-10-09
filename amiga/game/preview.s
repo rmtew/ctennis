@@ -1,7 +1,8 @@
 ; Isolated fixed-buffer previews over the actual logical APIs. Caller freezes
 ; the physical dispatcher. Bodies run in supplied private state; each worker
 ; yield restores history metadata without writing the frozen canonical state.
-PREVIEW_POINTS equ 256
+PREVIEW_POINTS equ 513
+PREVIEW_SEGMENT_PHASES equ 256
 PREVIEW_POINT_BYTES equ 8
 PREVIEW_RESOLVE equ 1
 PREVIEW_PRIME equ 2
@@ -18,7 +19,8 @@ PREVIEW_NO_CONTACT equ 5
 PREVIEW_LIMIT equ 6
 PREVIEW_LIFECYCLE equ 7
 
-; D0 expected generation, D1 retained index ordinal ($ffff current serve),
+; D0 expected generation, D1 retained index ordinal ($ffff current serve,
+; $fffe current incoming episode),
 ; D2/D3 requested byte X/Y. Current history_position is the selected boundary.
 ; Invalid/stale requests make no changes. D0=1 accepted, D0=0 rejected.
 game_preview_request:
@@ -45,6 +47,8 @@ game_preview_request:
         move.w  d2,d4
         move.w  d3,d5
         move.w  d1,d2
+        cmpi.w  #$fffe,d1
+        beq.s   .current_incoming
         cmpi.w  #$ffff,d1
         beq.s   .fallback
         cmp.w   game_history_attempt_count,d1
@@ -54,7 +58,6 @@ game_preview_request:
         move.w  d1,d0
         bsr     game_history_attempt_address
         move.w  8(a0),d6
-        beq     .invalid_saved
         cmpi.w  #3,d6
         bhi     .invalid_saved
         move.w  10(a0),d7
@@ -64,6 +67,18 @@ game_preview_request:
         tst.b   (a1,d7.w)
         bne     .invalid_saved
         move.l  a0,a5
+        bra.s   .bounds
+.current_incoming:
+        moveq   #0,d7
+        tst.b   game_play_state+G_LOWER_AI
+        beq.s   .current_end
+        moveq   #1,d7
+.current_end:
+        lea     game_play_state+G_LOWER_AI,a1
+        tst.b   (a1,d7.w)
+        bne     .invalid_saved
+        moveq   #0,d6
+        suba.l  a5,a5
         bra.s   .bounds
 .fallback:
         moveq   #0,d7
@@ -90,7 +105,10 @@ game_preview_request:
         suba.l  a5,a5
 .bounds:
         bsr     game_preview_player_address
-        ; Read the same immutable phase-selected limits as game_move_player.
+        cmpi.w  #3,d6
+        bne.s   .incoming_bounds
+        ; Current serves have a known canonical phase. Incoming limits are
+        ; checked in prepare against the resolved matching launch context.
         lea     game_lower_limits,a0
         tst.w   d7
         beq.s   .phase
@@ -109,9 +127,13 @@ game_preview_request:
         bcc     .invalid_saved
         cmp.b   1(a0),d5
         bcs     .invalid_saved
-        ; Reuse only a fully published, unchanged selection and attempt.
+.incoming_bounds:
+        ; The incoming/selected cache is immutable once PRIME begins, even
+        ; while another variant is computing. Every public yield retired A5.
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
+        bcs.s   .cold
         cmpi.w  #PREVIEW_READY,game_preview_status
-        bne.s   .cold
+        bhi.s   .cold
         tst.w   game_preview_cache_valid
         beq.s   .cold
         cmp.w   game_preview_ordinal,d2
@@ -152,10 +174,13 @@ game_preview_request:
         lea     game_preview_history_saved,a0
         lea     game_history_state,a1
         bsr     game_preview_copy_history
+        tst.w   game_preview_kind
+        beq.s   .resolve_current
         move.l  a5,d0
         beq.s   .serve_now
         move.l  (a5),game_preview_origin
         move.l  4(a5),game_preview_origin+4
+.resolve_current:
         move.w  #PREVIEW_RESOLVE,game_preview_status
         ; Oldest CP restoration performs zero logical replay operations.
         move.l  game_history_oldest,d0
@@ -304,6 +329,8 @@ game_preview_cancel:
         move.w  #PREVIEW_CANCELED,game_preview_status
         clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         clr.b   game_preview_active
         moveq   #1,d0
         rts
@@ -370,6 +397,19 @@ game_preview_compare_cursor:
         rts
 
 game_preview_resolve_one:
+        ; A current receiving episode ends at the frozen pre-operation boundary.
+        tst.w   game_preview_kind
+        bne.s   .record
+        lea     game_preview_cursor,a0
+        lea     game_preview_selected,a1
+        bsr     game_preview_compare_cursor
+        tst.l   d0
+        bmi.s   .record
+        tst.b   game_preview_incoming_valid
+        beq     game_preview_missing
+        bsr     game_preview_restore_owner
+        bra     game_preview_prepare
+.record:
         lea     game_preview_cursor,a0
         lea     game_history_cursor,a1
         bsr     game_preview_compare_cursor
@@ -380,6 +420,22 @@ game_preview_resolve_one:
         bsr     game_preview_execute_record
         tst.l   d0
         beq     game_preview_missing
+        ; The hook only marked a launch. Copy after the complete body/tail.
+        tst.b   game_preview_incoming_pending
+        beq.s   .captured
+        clr.b   game_preview_incoming_pending
+        lea     game_preview_incoming_state,a0
+        move.l  a5,a1
+        bsr     game_history_copy_state
+.captured:
+        tst.w   game_preview_kind
+        bne.s   .historical_action
+        move.b  game_contact-game_core_state(a5),d0
+        andi.b  #$8d,d0
+        beq     .advance
+        clr.b   game_preview_incoming_valid
+        bra     .advance
+.historical_action:
         tst.b   game_preview_action_found
         bne     game_preview_resolved
         tst.b   game_preview_probe_seen
@@ -394,26 +450,6 @@ game_preview_resolve_one:
         bsr     game_preview_found_action
         bra     game_preview_resolved
 .prefix:
-        cmpi.w  #3,game_preview_kind
-        beq.s   .advance
-        tst.b   game_preview_incoming_valid
-        beq.s   .advance
-        cmpi.w  #8,game_preview_operation
-        bne.s   .advance
-        lea     game_preview_cursor,a0
-        lea     game_preview_selected,a1
-        bsr     game_preview_compare_cursor
-        tst.l   d0
-        bpl.s   .advance
-        cmpi.w  #PREVIEW_POINTS,game_preview_prefix_count
-        bcc     game_preview_missing
-        lea     game_preview_paths,a0
-        moveq   #0,d0
-        move.w  game_preview_prefix_count,d0
-        lsl.w   #3,d0
-        adda.w  d0,a0
-        bsr     game_preview_write_point
-        addq.w  #1,game_preview_prefix_count
 .advance:
         addq.l  #1,game_preview_cursor+4
         bcc.s   .done
@@ -423,6 +459,8 @@ game_preview_resolve_one:
 game_preview_missing:
         move.w  #PREVIEW_CONTEXT_MISSING,game_preview_status
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         rts
 
 game_preview_resolved:
@@ -430,11 +468,6 @@ game_preview_resolved:
         move.b  game_preview_action_kind,d0
         cmp.w   game_preview_kind,d0
         bne.s   game_preview_missing
-        lea     game_preview_selected,a0
-        lea     game_preview_action,a1
-        bsr     game_preview_compare_cursor
-        tst.l   d0
-        bgt.s   game_preview_missing
         cmpi.w  #3,game_preview_kind
         beq.s   .serve
         tst.b   game_preview_incoming_valid
@@ -456,7 +489,34 @@ game_preview_resolved:
         bra     game_preview_prepare
 
 game_preview_prepare:
-        ; Keep original incoming prefix; discard all variant bookkeeping.
+        ; Placement belongs to the selected frozen phase. An incoming serve
+        ; may precede the receiver handoff and still have narrow serve limits.
+        cmpi.w  #3,game_preview_kind
+        beq.s   .valid_placement
+        lea     game_preview_selected_state+G_LOWER,a3
+        lea     game_lower_limits,a0
+        tst.w   game_preview_end
+        beq.s   .placement_phase
+        adda.w  #G_UPPER,a3
+        lea     game_upper_limits,a0
+.placement_phase:
+        moveq   #0,d0
+        move.b  P_ANIMATION(a3),d0
+        lsr.w   #3,d0
+        andi.w  #12,d0
+        adda.w  d0,a0
+        move.w  game_preview_x,d0
+        cmp.b   2(a0),d0
+        bcc     game_preview_missing
+        cmp.b   3(a0),d0
+        bcs     game_preview_missing
+        move.w  game_preview_y,d0
+        cmp.b   (a0),d0
+        bcc     game_preview_missing
+        cmp.b   1(a0),d0
+        bcs     game_preview_missing
+.valid_placement:
+        ; Discard all variant bookkeeping; incoming cache remains immutable.
         lea     game_preview_counts,a0
         moveq   #(game_preview_state_end-game_preview_counts)/2-1,d0
 .clear: clr.w   (a0)+
@@ -464,7 +524,10 @@ game_preview_prepare:
         move.w  #1,game_preview_cache_valid
         lea     game_preview_edited_state,a0
         lea     game_preview_selected_state,a1
-        bsr     game_history_copy_state
+        cmpi.w  #3,game_preview_kind
+        beq.s   .source
+        lea     game_preview_incoming_state,a1
+.source:bsr     game_history_copy_state
         lea     game_preview_edited_state+G_LOWER,a0
         tst.w   game_preview_end
         beq.s   .edit
@@ -479,21 +542,28 @@ game_preview_prepare:
         lea     game_preview_released_state,a0
         lea     game_preview_edited_state,a1
         bsr     game_history_copy_state
-        move.w  game_preview_prefix_count,game_preview_counts
-        move.w  game_preview_prefix_count,game_preview_counts+2
-        lea     game_preview_paths,a0
-        lea     game_preview_paths+PREVIEW_POINTS*PREVIEW_POINT_BYTES,a1
-        move.w  game_preview_prefix_count,d0
+        ; The common initial sample is the actual complete launch projection.
+        lea     game_preview_edited_state,a5
+        clr.b   game_preview_variant
+        bsr     game_preview_append_point
+        move.b  #1,game_preview_variant
+        bsr     game_preview_append_point
+        clr.b   game_preview_variant
+        lea     game_preview_selected,a0
+        cmpi.w  #3,game_preview_kind
         beq.s   .cursors
-        subq.w  #1,d0
-.prefix:move.l  (a0)+,(a1)+
-        move.l  (a0)+,(a1)+
-        dbra    d0,.prefix
+        lea     game_preview_incoming,a0
 .cursors:
-        move.l  game_preview_selected,game_preview_stream_cursors
-        move.l  game_preview_selected+4,game_preview_stream_cursors+4
-        move.l  game_preview_selected,game_preview_stream_cursors+8
-        move.l  game_preview_selected+4,game_preview_stream_cursors+12
+        move.l  (a0),game_preview_stream_cursors
+        move.l  4(a0),game_preview_stream_cursors+4
+        cmpi.w  #3,game_preview_kind
+        beq.s   .second
+        addq.l  #1,game_preview_stream_cursors+4
+        bcc.s   .second
+        addq.l  #1,game_preview_stream_cursors
+.second:
+        move.l  game_preview_stream_cursors,game_preview_stream_cursors+8
+        move.l  game_preview_stream_cursors+4,game_preview_stream_cursors+12
         move.w  #PREVIEW_PRIME,game_preview_status
         rts
 
@@ -574,6 +644,12 @@ game_preview_prime_one:
 .done:  rts
 
 game_preview_continue_one:
+        ; After human launch, only the exact original geometric ball phase runs.
+        moveq   #0,d7
+        move.b  game_preview_variant,d7
+        lea     game_preview_launches,a0
+        tst.b   (a0,d7.w)
+        bne     game_preview_flight_one
         moveq   #0,d7
         move.b  game_preview_variant,d7
         move.w  d7,d6
@@ -657,6 +733,7 @@ game_preview_continue_one:
         add.w   d6,d6
         lea     game_preview_dispatches,a0
         addq.w  #1,(a0,d6.w)
+        bsr     game_preview_capture_launch
         bsr     game_preview_append_point
         tst.l   d0
         bne.s   .outcome
@@ -667,6 +744,24 @@ game_preview_continue_one:
 .done:  rts
 .invalid_record:
         move.w  #PREVIEW_LIFECYCLE,d0
+        bra     game_preview_finish_variant
+
+game_preview_flight_one:
+        move.w  d7,d6
+        add.w   d6,d6
+        lea     game_preview_flight_phases,a0
+        cmpi.w  #PREVIEW_SEGMENT_PHASES,(a0,d6.w)
+        bcc.s   .limited
+        addq.w  #1,(a0,d6.w)
+        lea     game_play_state-game_core_state(a5),a4
+        bsr     game_ball_tick
+        bsr     game_preview_append_point
+        tst.l   d0
+        beq.s   .limited
+        bsr     game_preview_observe_outcome
+        rts
+.limited:
+        moveq   #PREVIEW_LIMIT,d0
         bra     game_preview_finish_variant
 
 game_preview_append_point:
@@ -712,9 +807,6 @@ game_preview_observe_outcome:
         lea     game_preview_launches,a0
         tst.b   (a0,d7.w)
         beq.s   .incoming
-        lea     game_preview_interceptions,a0
-        tst.b   (a0,d7.w)
-        bne.s   .interception
         btst    #0,game_contact-game_core_state(a5)
         bne.s   .net
         move.b  game_contact-game_core_state(a5),d0
@@ -734,9 +826,13 @@ game_preview_observe_outcome:
         lea     game_preview_counts,a0
         cmpi.w  #PREVIEW_POINTS,(a0,d6.w)
         bcc.s   .limited
+        lea     game_preview_launches,a0
+        tst.b   (a0,d7.w)
+        bne.s   .lifecycle_check
         lea     game_preview_dispatches,a0
-        cmpi.w  #PREVIEW_POINTS,(a0,d6.w)
+        cmpi.w  #PREVIEW_SEGMENT_PHASES,(a0,d6.w)
         bcc.s   .limited
+.lifecycle_check:
         cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         beq.s   .done
         cmpi.w  #GAME_PLAYING,game_preview_selected_state+(game_lifecycle-game_core_state)
@@ -768,6 +864,7 @@ game_preview_finish_variant:
         add.w   d6,d6
         lea     game_preview_outcomes,a0
         move.w  d0,(a0,d6.w)
+        bsr     game_preview_endpoint_terminal
         tst.w   d7
         bne.s   .ready
         move.w  #PREVIEW_RELEASED,game_preview_status
@@ -843,9 +940,15 @@ game_preview_launch:
         move.l  game_preview_cursor,game_preview_incoming
         move.l  game_preview_cursor+4,game_preview_incoming+4
         st      game_preview_incoming_valid
+        st      game_preview_incoming_pending
         clr.w   game_preview_prefix_count
         rts
-.human: cmpi.w  #3,d6
+.human: tst.w   game_preview_kind
+        bne.s   .human_action
+        clr.b   game_preview_incoming_valid
+        rts
+.human_action:
+        cmpi.w  #3,d6
         beq.s   .serve
         tst.b   game_preview_probe_seen
         beq.s   .done
@@ -949,6 +1052,8 @@ game_preview_invalidate:
         beq.s   .done
         clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         move.w  #PREVIEW_CANCELED,game_preview_status
         cmpi.l  #$ffffffff,game_preview_generation
         beq.s   .done

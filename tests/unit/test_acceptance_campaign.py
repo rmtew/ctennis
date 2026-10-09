@@ -24,7 +24,7 @@ def preview_a1_report():
                     classes=['landing','landing'],path_counts=[1,1],actual_accepted_launches={'0':[],'1':[]},
                     actual_final_boundaries=[dict(contact=0,flight=0,lifecycle=1)]*2)
     fallback=accepted();fallback.update(human=True,legal_position_verified=True,released_no_launch=True,
-        lifecycle=1,phase=64,released_outgoing_path_claimed=False,classes=['landing','limit'],path_counts=[1,256],
+        lifecycle=1,phase=64,released_outgoing_path_claimed=False,classes=['landing','limit'],path_counts=[1,257],
         timed_prelaunch=dict(passed=True,phase=32,complete_boundary_clocks=[15,16],launch_entry_clock=16,
             actual_launch_absent_before_requests=True,held_actual_launch_after_requests=True,
             cases=[accepted(),accepted()]),
@@ -33,18 +33,18 @@ def preview_a1_report():
             full_live_history_output_preview_preserved=True,launch_entry_clock=16,first_postlaunch_boundary_clock=17))
     miss=accepted();miss.update(classes=['no-contact','no-contact'],no_contact_outgoing_path_claimed=False)
     def replacement(phase):
-        return dict(passed=True,phase=phase,retired_generation=1,new_generation=2,cold_restart=True,
+        return dict(passed=True,phase=phase,retired_generation=1,new_generation=2,cold_restart=phase==1,unfinished_cache_reuse=phase==3,
             old_x=128,old_y=128,new_x=129,new_y=128,edited_only_position_changed=True,
             replacement_resolver_worker_calls=1,replacement_resolver_cpu_cycles=1,
             old_and_partial_results_unavailable=True,full_live_history_output_preserved=True,partial_prefix_samples=0,
             request_cpu_cycles=1,replacement_cpu_cycles=1,maximum_worker_cpu_cycles=1,worker_calls=1,maximum_stack_bytes=204)
     lifecycle=[]
     for _ in range(3):
-        row=accepted();row.update(classes=['lifecycle','lifecycle'],path_counts=[0,0],actual_final_boundaries=[None,None]);lifecycle.append(row)
+        row=accepted();row.update(classes=['lifecycle','lifecycle'],path_counts=[1,1],actual_final_boundaries=[None,None]);lifecycle.append(row)
     rows={'human-serve-fallback':fallback,'no-contact':miss,
           'title-dual-rejection':dict(passed=True,lifecycle=2,stale_phase=64,fallback_rejected=True,
               historical_rejected=True,full_live_history_output_preview_preserved=True),
-          'limit-256':dict(passed=True,samples=256,total_sample_limit=256,no_actual_human_launch=True,
+          'limit-256':dict(passed=True,samples=257,total_sample_limit=257,no_actual_human_launch=True,
               outgoing_path_claimed=False,incomplete=True,full_live_history_output_preserved=True,
               continuous_state_path_output_equal=True,independent_continuation_policy_equal=True),
           'replacement-resolve':replacement(1),'replacement-held':replacement(3),
@@ -54,7 +54,7 @@ def preview_a1_report():
               unavailable_scratch_preserved=True,full_live_history_output_preserved=True,cache_valid=False,
               completed_kind=2,incoming_origin=1,oldest=64,probe_origin=65,dispatches=1,operations=129,
               non_tick_calls_between_launch_and_probe=128,costs=dict(costs,edited_only_position_changed=False))}
-    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=256,
+    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,total_samples_per_path=513,
                 maximum_worker_operations=4,other_stages_pending=['A2-endpoint-discovery','A3-relocation-native-history'],cases=rows)
 
 def preview_a2_report():
@@ -75,14 +75,14 @@ def preview_a2_report():
     candidate['sampling_rows']=sampling
     state='00'*318;state_hash=hashlib.sha256(bytes.fromhex(state)).hexdigest();jobs=[];chosen=[]
     for number,(coverage,classification,contact) in enumerate((('net','net',1),('out','out',128),
-            ('interception','interception',0),('coincidence','landing',2))):
+            ('coincidence','landing',2))):
         variants=[]
         for variant in (0,1):
             opponent=dict(end=1,kind=1,dispatch=1) if coverage=='interception' else None
             variants.append(dict(variant=variant,has_human_launch=True,human_launch_order=0,
                 human_launch=dict(end=0,kind=1,dispatch=0),opponent_contact_order=1 if opponent else None,
                 opponent_contact=opponent,contact=contact,flight=64,lifecycle=1,classification=classification,
-                preview_outcome={'net':2,'out':3,'interception':4,'landing':1}[classification],samples=2,
+                preview_outcome={'net':2,'out':3,'interception':4,'landing':1}[classification],samples=3,
                 outgoing_samples_present=True,final_state_sha256=state_hash,
                 first_terminal_boundary_checked=True,first_terminal_dispatch=1,last_sampled_dispatch=1,
                 last_sampled_boundary=dict(contact=contact,flight=64,lifecycle=1)))
@@ -92,16 +92,16 @@ def preview_a2_report():
             source='actual-full-canonical-and-accepted-hooks',geometry_source='actual-sampled-drawn-geometry-visibility-ticks')
         sample=sampling[1 if coverage=='coincidence' else 0]
         row=dict(name=str(number),seed=0xace1,ordinal=0,candidate=dict(candidate),selection=sample['selection'],
-            sampling_row=sample,pre_dispatch_geometry_verified=True,
+            sampling_row=sample,pre_dispatch_geometry_verified=True,incoming_full_state_verified=True,
             x=(112,128,144,112)[number],y=128,bounds=dict(bounds),
             costs=dict(costs),qualification=facts,worker_call_cap=8192,maximum_worker_operations=4,
-            total_samples_per_path=256,frozen_history_write_guard=True)
+            total_samples_per_path=513,frozen_history_write_guard=True)
         jobs.append(row)
-        path0='00'*15+'01';path1=path0 if coverage=='coincidence' else '01'+path0[2:]
+        path0='00'*23+'01';path1=path0 if coverage=='coincidence' else '01'+path0[2:]
         chosen.append(dict(row,end=0,passed=True,continuous_state_path_output_equal=True,
             independent_continuation_policy_equal=True,live_history_output_preserved=True,
             edited_only_position_changed=True,prefix_samples=0,final_states=[state,state],paths=[path0,path1],
-            path_counts=[2,2],classes=[classification,classification],coverage_contributed=[coverage]))
+            path_counts=[3,3],classes=[classification,classification],coverage_contributed=[coverage]))
     stream=[('game_core_select',[0,0xace1,0])]
     for tick in range(512):
         stream.extend([('game_round_poll',[]),('game_core_sample_pads',[
@@ -123,10 +123,10 @@ def preview_a2_report():
             source_sha256=digest(campaign.ROOT/'amiga/game/gameplay_contact.s'),tick_source='amiga/game/gameplay.s',
             tick_source_sha256=digest(campaign.ROOT/'amiga/game/gameplay.s'),x_offset=8,lower_y_offset=27,
             upper_y_offset=35,players_before_ball=True,lateral_offsets=[-16,0,16]),job_cap=72,
-        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=256,frozen_history_write_guard=True,
-        jobs=4,seeds=seeds,job_results=jobs,chosen_cases=chosen,
-        required_coverage=['net','out','interception','coincidence'],
-        actual_coverage=['coincidence','interception','net','out'],absent_classes=[])
+        worker_call_cap=8192,maximum_worker_operations=4,total_samples_per_path=513,frozen_history_write_guard=True,
+        jobs=3,seeds=seeds,job_results=jobs,chosen_cases=chosen,
+        required_coverage=['net','out','coincidence'],
+        actual_coverage=['coincidence','net','out'],absent_classes=[])
 
 
 def preview_a3_report(a2):
@@ -140,25 +140,29 @@ def preview_a3_report(a2):
     a2['job_results']=a2['job_results'][:3];a2['chosen_cases']=a2['chosen_cases'][:3];a2['jobs']=3
     for number,(job,chosen) in enumerate(zip(a2['job_results'],a2['chosen_cases'])):
         candidate=first if number==0 else second
-        sample=candidate['sampling_rows'][1 if number==0 else 0]
+        sample=candidate['sampling_rows'][1 if number in (0,2) else 0]
         for row in (job,chosen):
             row.update(candidate=candidate,ordinal=candidate['ordinal'],sampling_row=sample,
-                selection=sample['selection'],x=(112,144,112)[number],y=sample['center_y'])
-        if number==0:
-            facts=job['qualification'];facts.update(geometry_coincident=True,launched_outgoing_coincidence=True,
-                coverage=['coincidence','net'])
-            chosen['paths'][1]=chosen['paths'][0];chosen['coverage_contributed']=['coincidence','net']
-        chosen.update(selected_state='00'*318,edited_state='00'*318,
+                selection=sample['selection'],x=144 if number==1 else 112,y=sample['center_y'])
+        edited=bytearray(318);edited[2]=chosen['y'];edited[3]=chosen['x']
+        chosen.update(selected_state='00'*318,edited_state=edited.hex(),continuation_source_state='00'*318,original_incoming_full_state_verified=True,
             incoming_origin=candidate['incoming_origin'],action_boundary=candidate['action_boundary'],
             actual_accepted_launches={str(v):[q['human_launch']]+([q['opponent_contact']] if q['opponent_contact'] else [])
                 for v,q in enumerate(chosen['qualification']['variants'])},
             actual_final_boundaries=[q['last_sampled_boundary'] for q in chosen['qualification']['variants']],
-            ordered_outputs={'0':[['fields',0,'00'*6]],'1':[['fields',0,'00'*6]]})
+            ordered_outputs=[[['fields',0,'00'*6]],[['fields',0,'00'*6]]])
+    for job,chosen in zip(a2['job_results'],a2['chosen_cases']):
+        digest_bytes=lambda raw:hashlib.sha256(bytes.fromhex(raw)).hexdigest()
+        fp=dict(selected=digest_bytes(chosen['selected_state']),edited=digest_bytes(chosen['edited_state']),
+            final_states=[digest_bytes(raw) for raw in chosen['final_states']],
+            paths=[digest_bytes(raw) for raw in chosen['paths']],
+            ordered_outputs=hashlib.sha256(json.dumps(chosen['ordered_outputs'],sort_keys=True,separators=(',',':')).encode()).hexdigest())
+        job['fingerprint']=chosen['fingerprint']=fp
     cases=[]
-    for number,source_number in enumerate((0,2,1)):
+    for number,source_number in enumerate((0,1,2)):
         row=json.loads(json.dumps(a2['chosen_cases'][source_number]));candidate=first if number==0 else second
-        row['descriptor']=dict(candidate_index=0 if number==0 else 1,band='low' if number==0 else 'regular',
-            lateral_offset=-16 if number<2 else 16,ordinal=row['ordinal'],incoming_origin=row['incoming_origin'],
+        row['descriptor']=dict(candidate_index=0 if number==0 else 1,band='low' if number in (0,2) else 'regular',
+            lateral_offset=16 if number==1 else -16,ordinal=row['ordinal'],incoming_origin=row['incoming_origin'],
             probe_origin=candidate['probe_origin'],original_action=row['action_boundary'],selection=row['selection'],
             x=row['x'],y=row['y'],sampling_row=row['sampling_row'])
         cases.append(row)
@@ -168,7 +172,7 @@ def preview_a3_report(a2):
     for name,base in (('standalone',65536),('relocated',196608),('emitted-native',65536)):
         native=name=='emitted-native'
         images.append(dict(name=name,base=base,passed=True,cases=cases,semantic_equal=True,
-            actual_coverage=['coincidence','interception','net','out'],
+            actual_coverage=['coincidence','net','out'],
             restored_adapter_words={name:'40e7' for name in names} if native else {},
             adapters_restored_before_freeze=native,adapter_words_preserved=True,full_bus_nonstate_guard=True,
             frozen_history_write_guard=True,history_seek_cases_checked=3,history_seek_full_state_store_equal=True,
@@ -184,7 +188,7 @@ def preview_a3_report(a2):
         retained_operations=4033,boundaries_checked=4034,seeks=8068)
     return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=17606,relocations_each=7,
         verified_sink_branches_each=14,normalized_sha256='a'*64),seed=0xace1,dispatch_cap=512,ordinary_operation_cap=2049,
-        descriptors=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]],images=images,
+        descriptors=[[0,'low',-16],[1,'regular',16],[1,'low',-16]],images=images,
         history_regressions=dict(image='standalone',base=65536,
             empty=dict(passed=True,operations=0,boundaries_checked=1,selected_history_output_preserved=True),
             logical_api=proof,ring_wrap=wrap,failed_seek_all72_rollback_covered_by='cache_validation'),
@@ -204,8 +208,8 @@ def preview_batch_report():
             independent_continuation_policy_equal=True,live_history_output_preserved=True,
             edited_only_position_changed=True,seed=0xace1,ordinal=1,selection=800,end=0,x=80,y=100,
             bounds=dict(left=40,right=200,top=98,bottom=154),classes=['landing','no-contact'],
-            selected_state='00'*318,edited_state=edited.hex(),final_states=['00'*318]*2,
-            paths=['00'*16]*2,path_counts=[2,2],prefix_samples=1,incoming_origin=544,action_boundary=800,
+            selected_state='00'*318,edited_state=edited.hex(),continuation_source_state='00'*318,original_incoming_full_state_verified=True,final_states=['00'*318]*2,
+            paths=['00'*16]*2,path_counts=[2,2],prefix_samples=0,incoming_origin=544,action_boundary=800,
             ordered_outputs=[[],[]],actual_accepted_launches={'0':[],'1':[]},
             actual_final_boundaries=[{},{}],coincident=True,costs=costs)
         cases.append(dict(budget=budget,passed=True,continuous=continuous,actual_body_operations=8,
@@ -214,10 +218,32 @@ def preview_batch_report():
             owner_transitions=transitions,owner_transition_preservation=True,
             selected_history_output_preserved=True,semantic_trace_sha256='12'*32,
             semantic_trace_equal_across_budgets=True))
-    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,preview_storage_bytes=5550,
-        preview_metadata_bytes=110,budgets=[1,2,3,4],cases=cases,
+    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,preview_storage_bytes=10974,
+        preview_metadata_bytes=150,budgets=[1,2,3,4],cases=cases,
         state_path_outcome_output_equal_across_budgets=True,independent_continuation_policy_equal=True,
         required_owner_transitions=transitions)
+
+
+def preview_boundary_reports():
+    # Synthetic report-shape fixtures only; these do not establish CPU evidence.
+    from landing_cases import CASES
+    caps=dict(passed=True,natural_reachability_claimed=False,cases=[
+        dict(label=name,passed=True,full318_equal=True,ordered_events_equal=True,sample_equal=True,
+             final_count=count,terminal_outcome=outcome)
+        for name,count,outcome in (('incoming-launch-on-256',257,0),('incoming-no-launch-on-256',257,6),
+            ('outgoing-out-on-256',257,3),('outgoing-no-event-256-then-cap',257,0),
+            ('total-513-terminal-priority',513,3))])
+    flights=dict(passed=True,cases=[dict(label=name,passed=True,complete_state_every_phase=True,
+        exact_sample_every_phase=True,first_event_priority=True,phases=1,outcome=3,bounce_fault_detected=name=='fault-bounce-out')
+        for name in [n for n,_ in CASES]+['fault-bounce-out']])
+    ring=dict(passed=True,physical_index_wrap=True,natural_exchange=True,attempt_first=127,attempted_count=3,
+        cases=[dict(name=name,end=1,passed=True,continuous_state_path_output_equal=True,
+            independent_continuation_policy_equal=True,live_history_output_preserved=True)
+            for name in ('natural-upper-exchanged','wrapped-upper-return','warm-upper-handoff','current-upper-handoff')],
+        controller=dict(passed=True,end=1,ordinal=2),current_controller=dict(passed=True,end=1,ordinal=0xfffe),
+        invalid_positions=[dict(ordinal=ordinal,cold=cold,passed=True,result_rejected=True)
+            for ordinal in (2,0xfffe) for cold in (False,True)])
+    return dict(cap_boundary_validation=caps,flight_boundary_validation=flights,end_ring_validation=ring)
 
 
 class CampaignTests(unittest.TestCase):
@@ -254,7 +280,7 @@ class CampaignTests(unittest.TestCase):
                  repeat_resolver_worker_calls=1,repeat_resolver_cpu_cycles=1)
         report=dict(passed=True,execution='actual-68000-cpu-only',
                     evidence=dict(target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only'),
-                    preview_validation=dict(passed=True,preview_storage_bytes=5550,metadata_bytes=110,
+                    preview_validation=dict(passed=True,preview_storage_bytes=10974,metadata_bytes=150,
                         ai_serve_setup_fixture=dict(passed=True,ai=True,frozen=True,legal_position_verified=True,
                             rejection_scope='ai-serving-context',ai_guard_isolated=False,human_phase=0,
                             operations=4,end=1,phase=128,legal_x=8,legal_y=8),
@@ -289,7 +315,14 @@ class CampaignTests(unittest.TestCase):
         report['preview_validation']['stage_a2_validation']=preview_a2_report()
         report['preview_validation']['stage_a3_validation']=preview_a3_report(report['preview_validation']['stage_a2_validation'])
         report['preview_validation']['batch_validation']=preview_batch_report()
+        report['preview_validation'].update(preview_boundary_reports())
         self.assertTrue(campaign.required_extent(case,report))
+        for area,key,value in (('cap_boundary_validation','cases',[]),
+                ('cap_boundary_validation','natural_reachability_claimed',True),
+                ('flight_boundary_validation','cases',[]),('end_ring_validation','invalid_positions',[]),
+                ('end_ring_validation','physical_index_wrap',False)):
+            partial=json.loads(json.dumps(report));partial['preview_validation'][area][key]=value
+            self.assertFalse(campaign.required_extent(case,partial),(area,key))
         for area,key,value in (('generation_guard_validation','diagnostic_corrupt_bytes',389),
                                ('generation_guard_validation','final_token_completed_and_published',False),
                                ('generation_guard_validation','final_issued_token',0xffffffff),
@@ -348,6 +381,7 @@ class CampaignTests(unittest.TestCase):
                 (('seeds',0,'candidates',0,'sampling_rows',0,'source_geometry_equal_at_selection'),False),
                 (('seeds',0,'candidates',0,'sampling_rows',0,'height'),7),
                 (('job_results',0,'pre_dispatch_geometry_verified'),False),
+                (('job_results',0,'incoming_full_state_verified'),False),
                 (('job_results',0,'selection'),12),
                 (('seeds',0,'candidates',0,'incoming_origin'),2),
                 (('job_results',0,'x'),127),(('job_results',0,'costs','maximum_worker_operations'),5),
@@ -359,10 +393,10 @@ class CampaignTests(unittest.TestCase):
                 (('job_results',0,'qualification','variants',0,'first_terminal_dispatch'),0),
                 (('job_results',0,'qualification','variants',0,'first_terminal_boundary_checked'),False),
                 (('job_results',2,'qualification','variants',0,'opponent_contact_order'),0),
-                (('job_results',3,'qualification','variants',0,'outgoing_samples_present'),False),
+                (('job_results',2,'qualification','variants',0,'outgoing_samples_present'),False),
                 (('chosen_cases',0,'continuous_state_path_output_equal'),False),
                 (('chosen_cases',0,'final_states'),['00','00']),
-                (('chosen_cases',3,'paths',1),'01'+'00'*14+'01')):
+                (('chosen_cases',2,'paths',1),'01'+'00'*14+'01')):
             partial=json.loads(json.dumps(report));node=partial
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
@@ -403,11 +437,25 @@ class CampaignTests(unittest.TestCase):
                 (('cases',2,'continuous','paths',0),'00'),
                 (('cases',1,'continuous','final_states',0),'01'*318),
                 (('cases',0,'continuous','edited_state'),'01'*318),
+                (('cases',0,'continuous','continuation_source_state'),'01'*318),
+                (('cases',0,'continuous','original_incoming_full_state_verified'),False),
                 (('cases',3,'continuous','costs','maximum_worker_operations'),5)):
             partial=json.loads(json.dumps(report));node=partial
             for key in path[:-1]:node=node[key]
             node[path[-1]]=value
             with self.subTest(path=path):self.assertFalse(campaign.preview_batch_extent(partial))
+
+    def test_preview_batch_extent_accepts_incoming_seed_and_513_samples(self):
+        report=preview_batch_report()
+        for row in report['cases']:
+            result=row['continuous']
+            # Incoming launch predates selection; clocks/RNG can differ.
+            result['selected_state']='a5'*318
+            result['paths']=['00'*(513*8)]*2;result['path_counts']=[513]*2
+        self.assertTrue(campaign.preview_batch_extent(report))
+        for row in report['cases']:
+            row['continuous']['paths']=['00'*(514*8)]*2;row['continuous']['path_counts']=[514]*2
+        self.assertFalse(campaign.preview_batch_extent(report))
 
     def test_history_extent_requires_native_recorder_and_every_boundary(self):
         case=next(c for c in cases() if c.id=='history-pal')
