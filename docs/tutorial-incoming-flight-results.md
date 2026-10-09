@@ -92,7 +92,8 @@ product; its historical copies remain under `incoming-flight-baselines/5fab776`.
 
 Before merge/release:
 
-- [ ] Independent final source and receipt review; parent coordinates reviewers.
+- [x] Independent final source and receipt review approved the bounded draft;
+  parent coordinates reviewers. See [review extent](tutorial-incoming-flight-review.md).
 - [ ] Extend exact-cap-256, wrapped attempt ring/controller selection, upper human
   and exchanged-end proofs, plus short/rejected/fault and transition workloads.
 - [ ] Migrate older mandatory preview fixtures from their 256-sample/full-core

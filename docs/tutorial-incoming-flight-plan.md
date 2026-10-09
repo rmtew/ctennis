@@ -47,7 +47,7 @@ repeated prefix. Measured results and remaining coverage are in [the delivery re
   rejected and long flights, transition and held input cases.
 - [x] Record code/state bytes, stack, callback headroom and chip RAM; regenerate
   both resource reports, keeping missing standard coverage explicit.
-- [ ] Independent source/evidence review, followed by source-only draft PR.
+- [x] Independent source/evidence review, followed by source-only draft PR.
 
 Integrator owns implementation and evidence; the parent coordinates independent
 review. No merge or release approval is implied by focused acceptance. Public
