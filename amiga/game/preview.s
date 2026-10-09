@@ -197,10 +197,29 @@ game_preview_request_body:
         tst.w   game_preview_kind
         beq.s   .resolve_current
         move.l  a5,d0
-        beq.s   .serve_now
+        beq     .serve_now
         move.l  (a5),game_preview_origin
         move.l  4(a5),game_preview_origin+4
 .resolve_current:
+        tst.w   game_preview_kind
+        bne.s   .cold_resolve
+        bsr     game_history_incoming_match
+        tst.l   d0
+        beq.s   .cold_resolve
+        lea     game_preview_incoming_state,a0
+        lea     game_history_incoming_state,a1
+        bsr     game_history_copy_state
+        move.l  game_history_incoming_cursor,game_preview_incoming
+        move.l  game_history_incoming_cursor+4,game_preview_incoming+4
+        ; Preview's existing stream ABI names the PRE-operation launch cursor.
+        subq.l  #1,game_preview_incoming+4
+        bcc.s   .cached_current
+        subq.l  #1,game_preview_incoming
+.cached_current:
+        st      game_preview_incoming_valid
+        bsr     game_preview_prepare
+        bra     .restore
+.cold_resolve:
         move.w  #PREVIEW_RESOLVE,game_preview_status
         ; Oldest CP restoration performs zero logical replay operations.
         move.l  game_history_oldest,d0
