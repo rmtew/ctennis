@@ -9,9 +9,49 @@ CPU_RECEIPTS={
  'build/tests/private-state-cpu/report.json':'10f7166a21ad631c4c0153491aa16a4207de8d1e4e1058b4ccc49314a854d3cc'}
 
 
+def irq_coverage_valid(v):
+    try:
+        ledger=v['irq_coverage_validation'];frames=v['body_frames'];apis=v['api_rows']
+        proofs=ledger['final_proofs'];writes=v['irq_writes'];rules=v['irq_rules']
+        if (ledger.get('passed') is not True or type(ledger.get('needed')) is not bool
+                or ledger.get('budget')!=3 or ledger.get('maximum_worker_calls')!=512
+                or ledger.get('initial_roles') not in ([1],[2],[],[1,2])
+                or ledger['needed']!=(ledger['initial_roles']!=[1,2])
+                or [p['role'] for p in proofs]!=[1,2]):return False
+        mapping={f['entry_index']:f for f in frames}
+        for proof in proofs:
+            frame=mapping[proof['entry_index']];a,b=proof['acknowledgements']
+            if (frame['ownership']['active']!=proof['role'] or proof['api_row_index']!=frame['api_row_index'] or a not in writes or b not in writes
+                    or a['pc']>=b['pc']
+                    or not frame['start']['cck']<=a['position']['cck']<b['position']['cck']<=frame['end']['cck']):return False
+            for ack in (a,b):
+                rule=rules[str(ack['pc'])]
+                if (rule['destination'].lower()!='$dff09c' or rule['source']!='#$0010'
+                        or ack['address']!=0xdff09c or ack['size']!=2 or ack['value']!=16):return False
+        steps=ledger['worker_api_row_indices'];counts=ledger['worker_body_counts']
+        if not isinstance(steps,list) or not isinstance(counts,list) or len(steps)!=len(counts):return False
+        if not ledger['needed']:return not steps and not counts
+        first=ledger['invalidating_cancel_api_row_index'];request=ledger['request_api_row_index'];last=ledger['cancel_api_row_index']
+        if (ledger.get('cancelled_incomplete_job') is not True or not 1<=len(steps)<=512
+                or not 0<ledger['generation']<0xffffffff
+                or ledger.get('generation_before_cancel')!=ledger['generation']
+                or type(ledger.get('status_before_cancel')) is not int or not 1<=ledger['status_before_cancel']<5
+                or any(p['api_row_index'] not in steps for p in proofs if p['role'] not in ledger['initial_roles'])
+                or not isinstance(ledger.get('request_arguments'),list) or len(ledger['request_arguments'])!=4
+                or ledger['request_arguments'][0]!=ledger['generation']-1
+                or not first<request<steps[0]<=steps[-1]<last
+                or not all(a<b for a,b in zip(steps,steps[1:]))
+                or apis[first]['name']!='game_preview_cancel' or apis[request]['name']!='game_preview_request'
+                or apis[last]['name']!='game_preview_cancel'):return False
+        return all(apis[i]['name']=='game_preview_step' and type(n) is int and 0<=n<=3
+            and apis[i]['bodies']==n and sum(f['api_row_index']==i for f in frames)==n for i,n in zip(steps,counts))
+    except (KeyError,TypeError,ValueError,IndexError):return False
+
+
 def required_retained_extent(report,standard):
     v=report.get('retained_private_validation') or {};costs=v.get('costs') or {}
     jobs=v.get('completed_jobs') or [];frames=v.get('body_frames') or []
+    if not irq_coverage_valid(v):return False
     expected_video=dict(zip(('presentation_last_line','simulation_interval_whole','simulation_interval_fraction'),
         (311,11838,14906) if standard=='PAL' else (261,11947,13180)))
     if not (report.get('passed') is True and report.get('execution')=='actual-native-paused-retained'

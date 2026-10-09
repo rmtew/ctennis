@@ -34,6 +34,56 @@ def seek_once(native,target):
     assert native.number('game_history_position',8)==target
 
 
+def private_irq_proofs(observer):
+    """Only completed literal acknowledgement pairs inside an owned body count."""
+    acks=[r for r in observer.irq_writes if r['pc'] in (observer.irq_entry_pc,observer.irq_exit_pc)]
+    pairs=[(a,b) for a,b in zip(acks,acks[1:])
+        if a['pc']==observer.irq_entry_pc and b['pc']==observer.irq_exit_pc
+        and a['position']['cck']<b['position']['cck']]
+    proofs=[]
+    for role in (1,2):
+        for frame in observer.body_frames.records:
+            if frame['ownership']['active']!=role:continue
+            pair=next(((a,b) for a,b in pairs if frame['start']['cck']<=a['position']['cck']
+                <b['position']['cck']<=frame['end']['cck']),None)
+            if pair:
+                proofs.append(dict(role=role,entry_index=frame['entry_index'],
+                    api_row_index=frame['api_row_index'],acknowledgements=list(pair)))
+                break
+    return proofs
+
+
+def cover_private_irqs(native,ordinal,x,y):
+    """Fixed-budget normal API work; never force an IRQ or choose a clock phase."""
+    initial=private_irq_proofs(native.observer)
+    ledger=dict(needed=len(initial)!=2,budget=3,maximum_worker_calls=512,
+        initial_roles=[r['role'] for r in initial],worker_api_row_indices=[],worker_body_counts=[])
+    if ledger['needed']:
+        ledger['invalidating_cancel_api_row_index']=len(native.observer.api_rows)
+        native.call('game_preview_cancel',[native.number('game_preview_generation',4)])
+        ledger['request_api_row_index']=len(native.observer.api_rows)
+        generation=native.request(ordinal,x,y);ledger['generation']=generation
+        ledger['request_arguments']=[generation-1,ordinal,x,y]
+        assert native.number('game_preview_status')==1,'IRQ coverage request must resolve a cold retained job'
+        for _ in range(512):
+            assert native.number('game_preview_status')<5,'Coverage job finished without required in-body IRQ'
+            ledger['worker_api_row_indices'].append(len(native.observer.api_rows))
+            cost=native.step(generation,3);ledger['worker_body_counts'].append(cost['bodies'])
+            if len(private_irq_proofs(native.observer))==2:break
+        else:raise AssertionError('Fixed-budget IRQ coverage cap exhausted')
+        ledger['status_before_cancel']=native.number('game_preview_status')
+        ledger['generation_before_cancel']=native.number('game_preview_generation',4)
+        assert 1<=ledger['status_before_cancel']<5,'Coverage job completed before diagnostic cancellation'
+        assert ledger['generation_before_cancel']==generation,'Coverage generation changed before cancellation'
+        ledger['cancel_api_row_index']=len(native.observer.api_rows)
+        native.call('game_preview_cancel',[generation])
+        ledger['cancelled_incomplete_job']=True
+    ledger['final_proofs']=private_irq_proofs(native.observer)
+    assert [r['role'] for r in ledger['final_proofs']]==[1,2]
+    ledger['passed']=True
+    return ledger
+
+
 def schedule(native,directory):
     native.key(0x01,True);native.key(0x01,False);native.fire(True)
     for _ in range(CAPS['playing_dispatches']):
@@ -49,13 +99,15 @@ def schedule(native,directory):
     observations.append(native.completed('retained-cached-budget2',candidate['ordinal'],candidate['probe'],end,edited_x,y,2))
     assert observations[1]['costs']['cache_hit'] and observations[1]['costs']['resolver_operations']==0
     atomic_json(directory/'observations-unvalidated.json',json_value(observations))
+    coverage=cover_private_irqs(native,candidate['ordinal'],edited_x,y)
+    atomic_json(directory/'irq-coverage-unvalidated.json',json_value(coverage))
     native.call('game_preview_cancel',[native.number('game_preview_generation',4)])
     native.resume()
     native.session.inspect('break_remove',{'id':native.breakpoint});native.breakpoint=native.arm('main_loop')
     native.stop=native.session.inspect('run_until',{'seconds':native.stop['seconds']+.2})
     assert native.stop['pc']==native.symbols['main_loop']
     native.observer.finish();assert native.observer.current_callback is None
-    return candidate,observations
+    return candidate,observations,coverage
 
 
 def run(standard):
@@ -82,7 +134,7 @@ def run(standard):
         with Core(image,symbols,readonly=READONLY) as cpu:
             with ObservedSession(directory) as session:
                 native=Native(session,executable,listing,standard,cpu)
-                candidate,observations=schedule(native,directory)
+                candidate,observations,coverage=schedule(native,directory)
                 video={n:native.number(n,size) for n,size in [('presentation_last_line',2),('simulation_interval_whole',4),('simulation_interval_fraction',2)]}
                 assert list(video.values())==([311,11838,14906] if standard=='PAL' else [261,11947,13180])
                 costs=measurement(native,video);assert costs['minimum_callback_headroom_cck']>=0
@@ -90,14 +142,12 @@ def run(standard):
                 assert frames.entries==len(frames.records) and not frames.stack
                 assert observer.irq_inside>0 and any(r['irq'] for r in observer.api_rows if r['name']=='game_preview_step')
                 assert not observer.drops and not observer.problems
-                irq_owner_roles=sorted({frame['ownership']['active'] for frame in frames.records
-                    if frame['ownership']['active'] in (1,2) and any(
-                        row['pc']==observer.irq_entry_pc and frame['start']['cck']<=row['position']['cck']<=frame['end']['cck']
-                        for row in observer.irq_writes)})
+                irq_owner_roles=[r['role'] for r in private_irq_proofs(observer)]
                 assert irq_owner_roles==[1,2],'Both resolver and variant bodies need actual interrupt coverage'
                 validation=dict(passed=True,candidate=candidate,video=video,costs=costs,
                     memory=memory_summary(chip_memory(native.read)),cpu_receipts=CPU_RECEIPTS,
                     body_frames=frames.records,body_sink_events=observer.body_sink_events,
+                    irq_coverage_validation=coverage,api_rows=observer.api_rows,
                     irq_rules=observer.rules,irq_writes=observer.irq_writes,irq_inside=observer.irq_inside,
                     irq_owner_roles=irq_owner_roles,actual_body_entries=frames.entries,
                     callback_rows=observer.callback_rows,physical_edges=observer.physical_edges,
@@ -122,7 +172,8 @@ def run(standard):
     except BaseException as error:
         if native is not None:
             atomic_json(directory/'failure-progress.json',json_value(dict(error=str(error),api_rows=native.observer.api_rows,
-                callback_rows=native.observer.callback_rows,problems=native.observer.problems,body_frames=native.observer.body_frames.records)))
+                callback_rows=native.observer.callback_rows,problems=native.observer.problems,
+                irq_writes=native.observer.irq_writes,body_frames=native.observer.body_frames.records)))
             native.observer.close()
         transaction.abort(error);raise
 
