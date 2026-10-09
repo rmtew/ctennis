@@ -69,6 +69,8 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('tutorial-hotspots-pal', ('scripts/run_tutorial_hotspots.py',),
+             'tests/tutorial-hotspots-pal/report.json'),
         Case('tutorial-latency-pal', ('scripts/run_tutorial_latency.py',),
              'tests/tutorial-latency-pal/report.json'),
         Case('tutorial-latency-ntsc', ('scripts/run_tutorial_latency.py','--ntsc'),

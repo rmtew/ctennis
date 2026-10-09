@@ -714,6 +714,9 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id=='tutorial-hotspots-pal':
+        from tutorial_hotspots import required_hotspots_extent
+        return required_hotspots_extent(report, 'PAL')
     if case.id in ('tutorial-latency-pal','tutorial-latency-ntsc'):
         from tutorial_latency import required_latency_extent
         return required_latency_extent(report, 'NTSC' if case.id.endswith('-ntsc') else 'PAL')
