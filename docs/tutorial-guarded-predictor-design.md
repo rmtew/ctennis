@@ -91,3 +91,61 @@ match/replay code remain unchanged. Resource and stack changes will be measured.
 - Shared emitted predictor bytes match native/standalone; original normalized core stays unchanged. No host rules model or oracle intermediate state injection.
 - Selective resumable PAL/NTSC physical-input checks measure actual contact, endpoint publication, sprite/bank bytes, input/ACK/service gaps, complete callback headroom, code/data/BSS/RAM and stack. Finite observations are not WCET or full acceptance.
 - Independent source and evidence review precede draft delivery. Integrator owns implementation/evidence; parent coordinates reviewers. No merge or release approval; existing appearance/resource/cold/full-release holds remain.
+
+## Cold origin recommendation: overlooked alternative
+
+The top-to-bottom review missed live capture of the latest incoming origin.
+It reviewed retaining the existing resolved cache and reducing subsequent
+contact work, but did not compare this small cold-start improvement adequately.
+No runtime caching extension is included in this PR; it needs separate review.
+
+The128 current12-byte shot/attempt slots are human episode/serve indexes:
+64-bit pre-operation cursor, kind and physical end. They are not per-shot
+snapshots and do not index every AI launch. Complete sparse checkpoints are
+330 bytes (318 state plus cursor/schema/simulation versions),64 slots at
+64-operation spacing. Ordinary seek selects the nearest preceding checkpoint
+and replays at most63 operations. Cold incoming discovery instead scans from
+the oldest checkpoint to find the preceding opponent launch. A checkpoint near
+human contact can already be after that launch. Once resolved, repeated edits
+reuse the complete318-byte incoming cache and avoid this discovery scan.
+
+| Proposed storage | Minimum extra bytes | Added live capture work |
+|---|---:|---|
+| Latest opponent post-launch boundary cursor |8| Store the post-operation cursor; cold request reconstructs that complete boundary from a checkpoint at/before it, at most63 operations |
+| Latest complete opponent-launch origin |330| Copy318 bytes after the launching dispatch returns; store cursor and versions |
+| Post-launch boundary cursor associated with each existing128 episode slots |1,024 plus latest staging| Store and associate post-operation cursor; bounded reconstruction for historical selections |
+| Complete origin associated with each existing128 episode slots |42,240 plus latest staging| Store40,704 state bytes and1,536 cursor/version bytes; copy/associate complete origins |
+
+These are storage arithmetic, excluding validity, match/end/generation identity
+and association bookkeeping. Complete per-slot origins require staging until
+the subsequent human episode is indexed, potentially another330 bytes. Each
+318-byte copy reads318 and writes318 bytes; cycles and callback headroom remain
+unmeasured. Current history storage is80,318 bytes and preview storage10,980.
+Observed PAL chip free memory62,616 bytes does not authorize a42KB allocation.
+
+Recommend the latest post-launch boundary cursor as the smallest next proof. Capture only
+during live recording, with replay and preview ownership inactive; shared hooks
+invoked by seek/preview must not overwrite the live origin identity. Mark the
+launch inside the existing hook, publish the post-operation boundary only after
+the full dispatcher/service tail and history cursor advancement complete, and
+identify its receiving end/match/history epoch.
+Use the existing bounded seek worker to reconstruct post-launch state; the
+launch hook's partial state is not a complete snapshot. A latest complete
+origin is the next option if measured residual seek latency justifies its
+copy cost. Neither option changes repeated edit/contact work.
+
+Retire launch identities on history eviction, title/init/select, match/end
+changes and version mismatch. The post-launch boundary and all needed logical
+records must remain retained; a standalone state copy does not restore expired
+input/entropy history or silently extend shot retention. Freeze source and
+cache identity before trials, keep live/latest/selected/private owners separate,
+and reject stale requests. Historical browsing needs per-episode associations
+or the existing cold fallback. Sparse seek contracts remain unchanged. A
+complete unedited origin may seed exact branch reconstruction; projected
+launch/endpoint states still cannot become playable checkpoints.
+
+The proposed cursor names the boundary after the launch operation, unlike the
+existing event index's pre-operation cursor. Choose the nearest checkpoint at
+or before this post-operation target to preserve the63-operation bound; using
+a checkpoint before a pre-operation launch cursor can require64 operations
+when that launch crosses a checkpoint alignment.
