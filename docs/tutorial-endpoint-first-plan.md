@@ -8,23 +8,52 @@ or permit a future opponent response. No significant runtime rewrite has begun.
 
 ## Current measured cost boundary
 
-Independent source/receipt review of PR41's fresh-D intervals gives:
+The completed focused correctness campaign `9070c56648064349926818a8e21a16f0`
+measured product source `350eabb`. Its retained fresh-D matched intervals are:
 
-| Nested measurement | PAL CCK | NTSC CCK |
+| Measurement | PAL CCK | NTSC CCK |
 |---|---:|---:|
-| Request to actual human contact hook | 2,014,960 | 1,675,264 |
-| Contact hook to first endpoint publication | 631,282 | 611,302 |
-| 69 original ball calls, including launch and 68 outgoing phases | 52,000 | 51,890 |
+| Request to actual human contact hook | 1,910,303 | 1,674,866 |
+| Contact hook to actual COPJMP endpoint publication | 595,197 | 613,125 |
+| Whole request to publication | 2,505,500 | 2,287,991 |
+| Public worker interval union, nested | 666,662 | 662,978 |
+| Original logical-entry/ball subtree union within workers, nested | 411,941 | 415,889 |
+| Original post-contact ball subtree, nested | 51,506 | 51,939 |
 
-The first two intervals partition the measured 0.746/0.639-second request to
-publication. Ball calls are nested within those intervals; do not add them to
-wall time. On PAL, 126 public steps consume 668,036 CCK; 52 active ticks consume
-300,944, 123 appends 21,650, 129 owner restores 42,771 and 127 progress-returned
-calls 70,328. These are nested observations, not mutually exclusive totals.
-Contact resolution dominates the delay (~0.568/0.468 s); outgoing arithmetic
-costs ~15 ms while its admitted slices/publication occupy ~0.178/0.171 s.
-These are one combined incoming/edit sequence, not directly comparable to
-earlier serve-only timing. Native entropy runs are not paired RNG experiments.
+Total elapsed is 706.4/639.2 ms; request-to-contact is 538.6/467.9 ms.
+Workers account for 26.61%/28.98% of elapsed; original logical-entry subtrees
+account for 16.44%/18.18%. The latter includes recorded indirect entry wrappers,
+not just arithmetic. Worker residual is 10.17%/10.80%. Post-contact ball work
+is only 14.5 ms, or 8.65%/8.47% of the post-contact interval. The contact hook
+precedes the remaining original dispatcher tail: this interval is not purely
+outgoing work. Nested costs must not be added to elapsed time.
+
+Simulation-update callback spans occupy 48.27%/50.25% of elapsed. Outside those
+spans, 1,296,034/1,138,301 CCK remains unassigned polling, IRQ, bus, idle or
+admission time; the trace does not establish that it is scheduler waste.
+Last completed worker to COPJMP is 76,130/91,699 CCK (21.5/25.6 ms), likewise
+not wholly attributable to rendering. Competing released-flight work is minimal
+before the first held marker (zero released outgoing phases). This is one live
+entropy run per region, not a paired experiment or a universal timing bound.
+
+Source policy in `tutorial_tick` admits at most **four** public slices per
+callback (`D6=3` plus `DBRA`), each with four operations or fallback two.
+Every yield rechecks remaining time. All nonserve continuation statuses, including historical/current incoming
+PRIME/RESOLVE, require 10,000 E-ticks for four or 7,000 for two; resolved current-serve
+HELD/RELEASED requires 7,000 or 5,000. READY/footer/general work reserves 10,000;
+pure presentation and render phases 1/4/5 reserve 5,000. Placement/menu drawing
+exits without worker continuation, and a newly qualified endpoint makes placement
+dirty and leaves publication for a separately admitted pass. Animation/footer can
+consume headroom before admission. These are artificial policy ceilings, not
+measured safe replacement budgets. Observed 120/107 worker steps across 42/38
+callbacks do not prove the four-slice ceiling binds.
+
+The bounded-helper proof below first establishes cost and correctness without
+changing these policies. Before changing admission or readiness, distinguish
+actual incoming work, guard/copy overhead, reserve refusals, placement exits,
+variant readiness and publication with contextual matched traces. Arithmetic
+alone cannot remove the measured incoming delay; no unrelated scheduler rewrite
+or 110,000-CCK synchronous fallback is authorized by this cost split.
 
 ## Source-grounded plan
 
@@ -83,3 +112,29 @@ Appearance, affected mandatory preview proofs, standard metrics, cold stripped
 ADF and full release holds remain. No uploads, merges, scheduling changes or
 optional trail/sprite experiments are included. This concrete plan precedes a
 larger runtime rewrite; correctness migration proceeds independently.
+
+## Bounded-helper preflight (not callback acceptance)
+
+The linked helper has no shipping caller yet. A finite CPU preflight exercised
+42 complete seeds (20 actual post-dispatch launches, including edited and
+exchanged-end cases, and 22 declared initial ball domains), in standalone,
+relocated standalone and emitted native code. Declared cases used all 32 incoming
+CCRs; natural cases used 0 and 31. Accepted full318/point/phase/outcome matched
+uninterrupted original ball instructions; rejection preserved full318, source
+and canonical state, and executed zero original ball fallback calls. Eight
+excluded edited cases require an actual no-contact terminal flag, rather than
+merely reaching a cap or exhausting the recording.
+
+Actual shared helper is 884 code bytes, zero static state bytes, with two verified
+external PC-relative calls; normalized SHA256 is
+`8e0925f3122ad2a8ca8ce9bca7f5d2a47379720a041e72d3387080a641e3fbc0`.
+The original 17,606-byte normalized core is unchanged. Maximum observed copy318
+plus helper cost is 11,918 CPU cycles; maximum observed stack use is 118 bytes.
+These CPU measurements exclude native chip-bus waits and IRQs and do not justify
+a callback reserve. Guards 5 (phase-wrap) and 12 (defensive bracket miss) were not
+observed; no intermediate state was injected to manufacture their reachability.
+The diagnostic wrapper's 21 declared cases also matched, but nesting adds another
+48-byte frame and 44-byte register save: its old stack/cost figures are historical
+and require fresh reporting. Native timing and endpoint/readiness integration
+remain pending. `scripts/run_landing_try_proof.py` provides manifest-bound evidence;
+unreceipted preflight alone does not certify a committed product.
