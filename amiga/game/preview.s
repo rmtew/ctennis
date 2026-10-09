@@ -329,6 +329,8 @@ game_preview_cancel:
         move.w  #PREVIEW_CANCELED,game_preview_status
         clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         clr.b   game_preview_active
         moveq   #1,d0
         rts
@@ -457,6 +459,8 @@ game_preview_resolve_one:
 game_preview_missing:
         move.w  #PREVIEW_CONTEXT_MISSING,game_preview_status
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         rts
 
 game_preview_resolved:
@@ -729,6 +733,7 @@ game_preview_continue_one:
         add.w   d6,d6
         lea     game_preview_dispatches,a0
         addq.w  #1,(a0,d6.w)
+        bsr     game_preview_capture_launch
         bsr     game_preview_append_point
         tst.l   d0
         bne.s   .outcome
@@ -859,6 +864,7 @@ game_preview_finish_variant:
         add.w   d6,d6
         lea     game_preview_outcomes,a0
         move.w  d0,(a0,d6.w)
+        bsr     game_preview_endpoint_terminal
         tst.w   d7
         bne.s   .ready
         move.w  #PREVIEW_RELEASED,game_preview_status
@@ -1046,6 +1052,8 @@ game_preview_invalidate:
         beq.s   .done
         clr.w   game_preview_cache_valid
         clr.l   game_preview_counts
+        clr.l   game_preview_launch_saved
+        clr.w   game_preview_endpoint_ready
         move.w  #PREVIEW_CANCELED,game_preview_status
         cmpi.l  #$ffffffff,game_preview_generation
         beq.s   .done

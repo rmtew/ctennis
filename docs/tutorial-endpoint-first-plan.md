@@ -2,9 +2,9 @@
 
 The approved priorities are player placement first, normal ball sprite motion,
 and optional incremental path filling. Dense samples are not a reason to delay
-an independently exact endpoint. This proposal changes readiness/publication;
+an independently exact endpoint. This integration changes readiness/publication;
 it does not change real incoming contact, create contact at the recorded tick,
-or permit a future opponent response. No significant runtime rewrite has begun.
+or permit a future opponent response. Bounded endpoint readiness is in focused validation; existing scheduling reserves remain.
 
 ## Current measured cost boundary
 
@@ -138,3 +138,58 @@ The diagnostic wrapper's 21 declared cases also matched, but nesting adds anothe
 and require fresh reporting. Native timing and endpoint/readiness integration
 remain pending. `scripts/run_landing_try_proof.py` provides manifest-bound evidence;
 unreceipted preflight alone does not certify a committed product.
+
+## Native diagnostic costs and minimal admission proposal
+
+At source `afd8eda93aff77c9ec99dcfc1dafe401196803b5`, isolated PAL/NTSC
+helper-plus-copy probes passed 84 jobs each (42 initial seeds, two samples each).
+PAL receipt `0c443ce48ed143ac9b5ae21fd8182303` and NTSC receipt
+`a5dfc8c88e11480ea28dd07ef0d548a0` retain original raw evidence; no drops were
+reported. Maximum copied-helper span was 6,062/6,141 CCK, both accepted-short.
+PAL natural long cost at most 4,865 CCK against 52,698 for its original scan;
+edited held long at most 4,968 against 52,003. Accepted-short query cost 6,062
+against only 3,094 for its scan. The fixture deliberately does not preserve
+production cadence, and two samples do not establish a worst-case bound.
+
+The minimal integration therefore retains the actual complete launch per
+alternative and permits the ordinary dense worker to run its first four original
+ball phases. A flight that stops in that prefix never pays query overhead.
+For a still-running flight, a separate generation-checked public attempt copies
+that immutable phase-zero launch into shared private scratch and invokes only
+the bounded helper. The dense continuation is neither rewound nor advanced by
+this attempt, so its four phases remain counted once within the original 256
+cap. Rejected attempts leave the dense worker sequential. Accepted endpoint
+readiness/point/phase/outcome does not imply dense completion or increase count.
+
+Admit one such attempt alone with the existing general 10,000-E-tick reserve,
+then yield; publish on the existing separately admitted presentation pass.
+This is a hypothesis to validate on complete fresh-input callbacks, including
+launch-copy and publication transitions, not a reduction of existing reserves
+or an unrelated scheduler rewrite. Two immutable318 launches plus one318 scratch
+and generation-cleared metadata are proposed; measure emitted storage/code after
+integration. Normal playback waits for actual available samples, and terminal
+dwell/repeat requires the real dense stopping outcome.
+
+## Implemented readiness protocol (validation in progress)
+
+`game_preview_endpoint_pending` checks generation, variant, frozen selection,
+seek inactivity, valid immutable launch, unfinished outcome, no prior attempt,
+and four through255 actual outgoing phases. `game_preview_endpoint_try` repeats
+those guards, makes one bounded copy/query, and publishes separate eight-byte
+point, outgoing phase and outcome. Accepted query with an inconsistent terminal
+phase is discarded with distinct reason15; proof requires that branch to be
+unreachable under intact seed/dense state. Neither API changes dense318, counts,
+status, stream cursors, original events or phase accounting. Cancellation/history
+mutation clears seed-valid, attempted and endpoint-ready flags. Shared terminal
+scratch can be reused; later APIs must reconstruct from the immutable launch if
+they need full terminal318 after another query.
+
+The actual standalone/native endpoint module matches482 normalized code bytes
+(32 relocations, six verified external branches), SHA256
+`2c2ada68494407db11a2c7cf2eca5ac981a0d975b85a9e472b5389a3ad10f6c7`.
+Measured preview storage is10,974bytes, metadata150:988bytes added, consisting of
+954private state bytes and34metadata bytes. Complete core remains318 and history
+metadata72; no checkpoint/input format change is introduced. Renderer marker mode
+reads the separate endpoint; dense sprite mode reads only available samples.
+Dwell/repeat requires actual dense stopping outcome. Full API/callback/native RAM
+acceptance is pending; prior helper-only costs do not certify this integration.

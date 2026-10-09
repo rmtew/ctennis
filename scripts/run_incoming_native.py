@@ -8,11 +8,15 @@ import hashlib
 import json
 import math
 import re
+import os
 import subprocess
 from pathlib import Path
 
 from native_evidence import ReportRun, TARGET, atomic_json, digest, inputs_for, snapshot
 from native_hunk import loaded_hunks
+from build_match_core import load_image
+from landing_try_proof import reference as original_ball_reference
+from match_core_cpu import cpu_tool_inputs
 from native_tools import ROOT, emulator_config
 from run_tutorial_capture import FIELDS
 from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
@@ -47,13 +51,15 @@ def run(standard='PAL', baseline=None):
         listing_hashes=[sha for name,sha in manifest['files'].items() if name.endswith('/native.lst')]
         assert listing_hashes==[digest(listing_path)], 'Retained listing is not manifest-bound'
         paths, tools = inputs_for('native-feedback','scripts/run_incoming_native.py')
+        cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 native_product_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                                files=snapshot(set(paths)|{executable,listing_path,manifest_path}),
+                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}),
                                 tools=tools, runner='scripts/run_incoming_native.py',
                                 actual_target=dict(TARGET, video=standard),
                                 target_role='legacy-validator-reference',
                                 target_scope='evidence.target is a PAL compatibility reference; report.target and actual_target bind executed region')
+        transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         listing = listing_path.read_text()
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
@@ -139,7 +145,7 @@ def run(standard='PAL', baseline=None):
                         and not p['tutorial_fields'].get('tutorial_placement_dirty')
                         and p['tutorial_fields'].get('tutorial_active_variant')==0
                         and p['tutorial_fields'].get('tutorial_ball_mode') in (1,2)
-                        and p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16]
+                        and ((p.get('endpoint_outcomes',0)>>16) or (p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))]
                     if published and (previous_generation is None or generation!=previous_generation):
                         scene=published[0] # actual COPJMP, not a later animation/wait match
                         assert scene.get('native_sprite_check'), 'Endpoint sprite bank lacks actual check'
@@ -149,10 +155,18 @@ def run(standard='PAL', baseline=None):
                             incoming_cursor=block('game_preview_incoming',8).hex(),
                             incoming_state_sha256=hashlib.sha256(block('game_preview_incoming_state',318)).hexdigest(),
                             counts=[int.from_bytes(block('game_preview_counts',4)[i:i+2],'big') for i in (0,2)],
-                            outcomes=[int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
+                            outcomes=[int.from_bytes(block('game_preview_endpoint_outcomes',4)[i:i+2],'big') or int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
+                            dense_outcomes=[int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
+                            endpoint_ready_before_dense=bool(scene['tutorial_fields']['tutorial_ball_mode']==1 and scene.get('endpoint_outcomes',0)>>16 and scene.get('endpoint_ready',0)>>8 and scene.get('endpoint_generation')==generation and not (scene['tutorial_fields'].get('tutorial_available_outcomes',0)>>16)),
                             incoming_dispatches=[int.from_bytes(block('game_preview_dispatches',4)[i:i+2],'big') for i in (0,2)],
                             outgoing_phases=[int.from_bytes(block('game_preview_flight_phases',4)[i:i+2],'big') for i in (0,2)],
-                            human_launches=list(block('game_preview_launches',2)))
+                            human_launches=list(block('game_preview_launches',2)),
+                            held_launch_state=block('game_preview_launch_states',318).hex(),
+                            held_endpoint_phase=number('game_preview_endpoint_phases',2),
+                            held_endpoint_point=block('game_preview_endpoints',8).hex(),
+                            held_query_attempted=number('game_preview_endpoint_attempted',1),
+                            held_query_reason=number('game_preview_endpoint_reasons',2),
+                            held_terminal_state=(block('game_preview_endpoint_scratch',318) if number('game_preview_endpoint_attempted',1) and not number('game_preview_endpoint_reasons',2) else block('game_preview_held_state',318)).hex())
                         # Negative latency means a stale already-published endpoint.
                         assert row['latency_cck']>=0
                         row['physical_latency_seconds']=row['latency_cck']/CLOCKS[standard]
@@ -227,6 +241,7 @@ def run(standard='PAL', baseline=None):
                 endpoints[-1]['first_actual_publication']['position']['cck']-edit_start['cck'])
             endpoints[-1]['physical_input_latency_seconds']=(
                 endpoints[-1]['input_to_publication_cck']/CLOCKS[standard])
+            assert any(e['endpoint_ready_before_dense'] for e in endpoints), 'No independent early endpoint publication'
             assert len({e['incoming_state_sha256'] for e in endpoints})==1
             assert len({e['incoming_cursor'] for e in endpoints})==1
             before_loop=len(callbacks.surfaces.publications)
@@ -238,9 +253,15 @@ def run(standard='PAL', baseline=None):
                     and p['tutorial_fields'].get('tutorial_active_variant')==0
                     and p['tutorial_fields'].get('tutorial_ball_mode')==2]
                 pairs=list(zip(eligible,eligible[1:]))
+                for a,b in pairs:
+                    if b['tutorial_fields']['tutorial_animation_index']<a['tutorial_fields']['tutorial_animation_index']:
+                        assert a['tutorial_fields']['tutorial_available_outcomes']>>16, 'Partial available path repeated before dense completion'
+                        assert a['native_sprite_check']['actual_sample']==endpoints[-1]['held_endpoint_point']
                 terminal=number('tutorial_counts',4)>>16
                 repetitions=[(a,b) for a,b in pairs
-                    if a['tutorial_fields'].get('tutorial_animation_index')==terminal-1
+                    if a['tutorial_fields'].get('tutorial_available_outcomes',0)>>16
+                    and a.get('native_sprite_check',{}).get('actual_sample')==endpoints[-1]['held_endpoint_point']
+                    and a['tutorial_fields'].get('tutorial_animation_index')==terminal-1
                     and b['tutorial_fields'].get('tutorial_animation_index')==0
                     and ((b['tutorial_fields']['tutorial_animation_callback']-
                           a['tutorial_fields']['tutorial_animation_callback'])&65535)>=30]
@@ -286,6 +307,25 @@ def run(standard='PAL', baseline=None):
             incoming_live=incoming_live, loop_frames=loop_frames, repeat_witness=repeat_witness, outgoing_witness=outgoing_witness, native_memory=memory,
             timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
                         'admission declines require emitted control-flow interpretation, not inferred host decisions.'))
+        cpu_image,cpu_symbols=load_image(executable)
+        for row in endpoints:
+            if not row['human_launches'][0]:
+                row['original_outgoing_reference']='No launch: no outgoing endpoint claimed'
+                continue
+            final,sample,phases,outcome,_=original_ball_reference(cpu_image,cpu_symbols,bytes.fromhex(row['held_launch_state']))
+            scene=row['first_actual_publication']
+            if scene['tutorial_fields']['tutorial_ball_mode']==1:
+                assert scene['native_sprite_check']['actual_sample']==sample.hex()
+                assert bytes.fromhex(scene['endpoint_points'])[:8]==sample
+                assert scene['endpoint_phases']>>16==phases and scene['endpoint_outcomes']>>16==outcome
+                assert scene['endpoint_ready']>>8 and scene['endpoint_generation']==row['generation']
+            assert row['held_endpoint_point']==sample.hex()
+            assert row['held_endpoint_phase']==phases and row['outcomes'][0]==outcome
+            assert row['held_terminal_state']==final.hex()
+            row['original_outgoing_reference']=dict(full318_equal=True,point_equal=True,phase_equal=True,
+                outcome_equal=True,phases=phases,outcome=outcome,endpoint=sample.hex(),
+                expected_full_state=final.hex(),seed_sha256=hashlib.sha256(bytes.fromhex(row['held_launch_state'])).hexdigest())
+        captured=json.loads(capture.read_text());captured['endpoints']=endpoints;atomic_json(capture,captured)
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
             executable_sha256=product_sha256, incoming_flight=True, endpoints=endpoints, native_memory=memory,
             repeated_sequence=True, loop_publications=len(loop_frames), repeat_witness=repeat_witness,

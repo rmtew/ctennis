@@ -171,6 +171,24 @@ tutorial_tick:
         beq     .done
         bsr     tutorial_animate
 .preview_work:
+        ; One bounded endpoint attempt is a separate admitted owner. If its
+        ; reserve is unavailable, ordinary dense work can still make progress.
+        move.l  tutorial_generation,d0
+        moveq   #0,d1
+        move.b  tutorial_active_variant,d1
+        jsr     game_preview_endpoint_pending
+        tst.l   d0
+        beq.s   .dense_work
+        bsr     tutorial_work_admitted
+        tst.l   d0
+        beq.s   .dense_work
+        move.l  tutorial_generation,d0
+        moveq   #0,d1
+        move.b  tutorial_active_variant,d1
+        jsr     game_preview_endpoint_try
+        bsr     tutorial_progress_returned
+        bra     .done
+.dense_work:
         tst.b   tutorial_work_pending
         beq     .draw_only
         cmpi.w  #PREVIEW_READY,game_preview_status

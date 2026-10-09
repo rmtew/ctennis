@@ -20,7 +20,7 @@ class NativePreviewGuards(unittest.TestCase):
             ('game_preview_storage',0x20000),('game_history_seek_storage',0x27000),('preview_native_mailbox',0x22000),
             ('core_trace_arguments',0x23000),('core_trace_marker',0x23010),
             ('game_stack_bottom',0x24000),('game_stack_top',0x25000)]}
-        observer.storage_bytes=9986
+        observer.storage_bytes=10974
         observer.frozen=True;observer.pending=None;observer.problems=[]
         observer.rules={};observer.irq_writes=[];observer.irq_inside=0
         observer.irq_entry_pc=0x400;observer.irq_exit_pc=0x420;observer.audio_writes=[]

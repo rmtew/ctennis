@@ -657,7 +657,7 @@ def preview_batch_extent(stage):
                  'held->released','released->ready']
     if (not isinstance(stage,dict) or stage.get('passed') is not True
             or any(stage.get(k)!=v for k,v in dict(canonical_bytes=318,history_metadata_bytes=72,
-                preview_storage_bytes=9986,preview_metadata_bytes=116,budgets=[1,2,3,4]).items())
+                preview_storage_bytes=10974,preview_metadata_bytes=150,budgets=[1,2,3,4]).items())
             or any(type(n) is not int for n in stage['budgets'])
             or stage.get('required_owner_transitions')!=transitions
             or any(stage.get(k) is not True for k in ('state_path_outcome_output_equal_across_budgets',
@@ -732,6 +732,45 @@ def preview_batch_extent(stage):
     return True
 
 
+def preview_endpoint_extent(proof):
+    """Require the finite actual endpoint API extent, separate from dense completion."""
+    if not isinstance(proof,dict) or proof.get('passed') is not True:return False
+    rows=proof.get('cases')
+    positions={(111,153),(111,140),(111,128),(111,112),(111,98),(100,153),(119,153),(40,153),(180,153)}
+    if not isinstance(rows,list) or len(rows)!=9 or {(r.get('x'),r.get('y')) for r in rows}!=positions:return False
+    early=0;rejected=0;misses=0
+    for row in rows:
+        if any(row.get(k) is not True for k in ('passed','complete_launch_seeds_equal',
+            'original_dense_full318_points_events_equal','early_endpoint_unchanged_at_dense_completion',
+            'stale_and_cancelled_neutral')):return False
+        queries=row.get('queries')
+        if not isinstance(queries,list) or len(queries)>2:return False
+        if sorted(q.get('variant') for q in queries)!=row.get('attempted'):return False
+        if not queries:misses+=1
+        ready=[]
+        for q in queries:
+            if (q.get('variant') not in (0,1) or type(q.get('reason')) is not int or not 0<=q['reason']<=14
+                or type(q.get('ready')) is not bool or q['ready']!=(q['reason']==0)
+                or q.get('full318_equal_or_rejected_unchanged') is not True
+                or q.get('dense_state_counts_events_cursors_unchanged') is not True
+                or type(q.get('dense_phase')) is not int or not 4<=q['dense_phase']<256):return False
+            if q['ready']:
+                if (type(q.get('endpoint_phase')) is not int or not q['dense_phase']<q['endpoint_phase']<=255
+                    or q.get('outcome')!=q.get('expected_outcome') or q['outcome'] not in (1,3)):return False
+                ready.append(q['variant']);early+=1
+            else:rejected+=1
+        if sorted(ready)!=row.get('early_endpoints'):return False
+    prefix=proof.get('prefix_policy') or {}
+    cases=prefix.get('cases') or []
+    if (prefix.get('passed') is not True or prefix.get('natural_reachability_claimed') is not False
+        or len(cases)!=3 or {r.get('name') for r in cases}!={'accepted-short','accepted-long','special-net-reflection'}):return False
+    for r in cases:
+        if (any(r.get(k) is not True for k in ('passed','complete_state_equal','prefix_counted_once'))
+            or type(r.get('original_phases')) is not int or not 1<=r['original_phases']<=256
+            or r.get('query_attempts')!=(0 if r['original_phases']<=4 else 1)):return False
+    return early>=2 and rejected>=2 and misses>=1
+
+
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
@@ -756,11 +795,16 @@ def required_extent(case,report):
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
     if case.id=='incoming-flight-cpu':
         validation=report.get('validation') or {}
+        audit=validation.get('endpoint_byte_audit') or {}
         return (report.get('execution')=='actual-68000-cpu-only'
+                and audit.get('passed') is True and audit.get('matched_bytes')==482
+                and audit.get('relocations_each')==32 and audit.get('external_branches_each')==6
+                and audit.get('normalized_sha256')=='2c2ada68494407db11a2c7cf2eca5ac981a0d975b85a9e472b5389a3ad10f6c7'
                 and validation.get('passed') is True
                 and validation.get('full_private_bytes')==318
                 and len(validation.get('rows') or [])==18
                 and len(validation.get('boundaries') or [])==4
+                and preview_endpoint_extent(validation.get('endpoint_api'))
                 and all(row.get('passed') is True for row in
                         validation['rows']+validation['boundaries']))
     if case.id in ('incoming-flight-pal','incoming-flight-ntsc'):
@@ -771,6 +815,10 @@ def required_extent(case,report):
                 and report.get('dropped_notifications')==0
                 and len(rows) in (2,3)
                 and report.get('actual_human_outgoing') is True
+                and any(row.get('endpoint_ready_before_dense') is True for row in rows)
+                and all(all((row.get('original_outgoing_reference') or {}).get(k) is True
+                    for k in ('full318_equal','point_equal','phase_equal','outcome_equal'))
+                    for row in rows if (row.get('human_launches') or [0])[0])
                 and any((row.get('human_launches') or [0])[0] and
                         (row.get('outgoing_phases') or [0])[0]>0 and
                         (row.get('outcomes') or [0])[0] in (1,2,3) for row in rows)
@@ -807,7 +855,7 @@ def required_extent(case,report):
                 or evidence.get('target_role')!='legacy-validator-reference'
                 or evidence.get('actual_execution')!='actual-68000-cpu-only'
                 or validation.get('passed') is not True
-                or validation.get('preview_storage_bytes')!=9986 or validation.get('metadata_bytes')!=116
+                or validation.get('preview_storage_bytes')!=10974 or validation.get('metadata_bytes')!=150
                 or type(validation.get('fixture_operations')) is not int or validation['fixture_operations']<2049
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={

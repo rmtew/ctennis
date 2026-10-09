@@ -48,6 +48,10 @@ FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_animation_generation=4, tutorial_visible_surface=4,
               tutorial_menu_selection=1, game_preview_status=2)
 FIELDS['tutorial_animation_callback'] = 2
+FIELDS['game_preview_endpoint_outcomes'] = 4
+FIELDS['game_preview_endpoint_ready'] = 2
+FIELDS['game_preview_endpoint_phases'] = 4
+FIELDS['game_preview_generation'] = 4
 
 
 def run(standard='PAL'):

@@ -22,10 +22,10 @@ class TutorialCaptureTests(unittest.TestCase):
         sprites[:72] = bytes((56,85,72,0))+image[:64]+bytes(4)
         paths = bytearray(4096)
         paths[8:16] = bytes((0,0,10,11,0,0,1,0))
-        snapshot = dict(objects=objects.hex(),sprite_bytes=sprites.hex(),
+        snapshot = dict(objects=objects.hex(),sprite_bytes=sprites.hex(),endpoint_points=(paths[8:16]+bytes(8)).hex(),
             tutorial_fields=dict(tutorial_scene_layer=2,tutorial_ball_mode=1,tutorial_menu=0,
                 tutorial_presentation_generation=7,tutorial_generation=7,
-                tutorial_active_variant=0,tutorial_counts=2<<16,tutorial_animation_index=0))
+                tutorial_active_variant=0,tutorial_marker_ready=1,tutorial_counts=2<<16,tutorial_animation_index=0))
         self.assertTrue(check_native_presentation(snapshot,paths)['matched'])
         broken = copy.deepcopy(snapshot)
         broken['sprite_bytes'] = '37'+broken['sprite_bytes'][2:]
@@ -35,6 +35,12 @@ class TutorialCaptureTests(unittest.TestCase):
         broken['tutorial_fields']['tutorial_generation'] = 8
         with self.assertRaises(AssertionError):
             check_native_presentation(broken,paths)
+        snapshot['endpoint_points'] = snapshot['endpoint_points'][:4]+'0c'+snapshot['endpoint_points'][6:]
+        with self.assertRaises(AssertionError):
+            check_native_presentation(snapshot,paths)
+        snapshot['tutorial_fields']['tutorial_ball_mode'] = 2
+        snapshot['tutorial_fields']['tutorial_animation_index'] = 1
+        self.assertTrue(check_native_presentation(snapshot,paths)['matched'])
         paths[10] = 12
         with self.assertRaises(AssertionError):
             check_native_presentation(snapshot,paths)

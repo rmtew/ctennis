@@ -218,8 +218,8 @@ def preview_batch_report():
             owner_transitions=transitions,owner_transition_preservation=True,
             selected_history_output_preserved=True,semantic_trace_sha256='12'*32,
             semantic_trace_equal_across_budgets=True))
-    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,preview_storage_bytes=9986,
-        preview_metadata_bytes=116,budgets=[1,2,3,4],cases=cases,
+    return dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,preview_storage_bytes=10974,
+        preview_metadata_bytes=150,budgets=[1,2,3,4],cases=cases,
         state_path_outcome_output_equal_across_budgets=True,independent_continuation_policy_equal=True,
         required_owner_transitions=transitions)
 
@@ -280,7 +280,7 @@ class CampaignTests(unittest.TestCase):
                  repeat_resolver_worker_calls=1,repeat_resolver_cpu_cycles=1)
         report=dict(passed=True,execution='actual-68000-cpu-only',
                     evidence=dict(target_role='legacy-validator-reference',actual_execution='actual-68000-cpu-only'),
-                    preview_validation=dict(passed=True,preview_storage_bytes=9986,metadata_bytes=116,
+                    preview_validation=dict(passed=True,preview_storage_bytes=10974,metadata_bytes=150,
                         ai_serve_setup_fixture=dict(passed=True,ai=True,frozen=True,legal_position_verified=True,
                             rejection_scope='ai-serving-context',ai_guard_isolated=False,human_phase=0,
                             operations=4,end=1,phase=128,legal_x=8,legal_y=8),

@@ -2,7 +2,10 @@
 import json
 import os
 from build_match_core import build
+from build_native_game import build as build_native
+from preview_endpoint_bytes import audit as endpoint_bytes
 from incoming_flight_proof import run
+from preview_endpoint_proof import run as endpoint_api, prefix_policy
 from match_core_cpu import cpu_tool_inputs
 from native_evidence import ReportRun, compile_manifest, digest, inputs_for, snapshot, status
 from native_tools import ROOT
@@ -18,7 +21,12 @@ def main():
                                 runner='scripts/run_incoming_proof.py')
         transaction.meta['environment']['PYTHONPATH']=os.environ.get('PYTHONPATH')
         executable, listing = build()
+        build_native()
+        byte_audit=endpoint_bytes(executable,ROOT/'build/amiga/interfaces/enhanced/baseline-rally')
         result = run(executable)
+        result['endpoint_byte_audit']=byte_audit
+        result['endpoint_api']=endpoint_api(executable)
+        result['endpoint_api']['prefix_policy']=prefix_policy(executable)
         report = dict(passed=True, execution='actual-68000-cpu-only',
                       executable_sha256=digest(executable), validation=result)
         transaction.finalize(output,report,compiled=[compile_manifest(executable,listing)])
