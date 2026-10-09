@@ -8,6 +8,24 @@ or permit a future opponent response. Bounded endpoint readiness is in focused v
 
 ## Current measured cost boundary
 
+The first integrated physical PAL probe at `1ce8ba1` failed the required early
+marker check: the aligned and fresh edits finished68 outgoing phases with no
+query attempt. The retained literal RPC records252 eligibility calls and zero
+query calls. Reconstructing actual CIA reads after eligibility gives70 samples
+with at most9,987 E-ticks remaining, below the unchanged10,000 admission reserve.
+This is a failed finite probe, not acceptance or a universal timing bound.
+Its literal RPC, failed receipt and emulator log are preserved privately under
+`build/tests/incoming-flight-failures/endpoint-reserve-pal-1ce8ba1/` with hashes.
+
+The correction admits the entire query API, including its internal eligibility
+guard, before calling it. It removes the duplicate pre-admission guard without
+changing any reserve. A declined reserve or ineligible API returns to ordinary
+dense work, which resamples remaining time. A completed accepted or rejected
+attempt updates presentation metadata and returns immediately. Generation and
+variant are reloaded after admission; no footer/animation ordering changes.
+Independent source review approved this ownership/order correction. Fresh
+production PAL/NTSC callback and early-publication evidence is still required.
+
 The completed focused correctness campaign `9070c56648064349926818a8e21a16f0`
 measured product source `350eabb`. Its retained fresh-D matched intervals are:
 
