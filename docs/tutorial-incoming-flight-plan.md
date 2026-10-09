@@ -8,6 +8,12 @@ response is omitted. PR38's appearance/release hold remains in force.
 
 ## Source decisions
 
+The subsequent [guarded-predictor design](tutorial-guarded-predictor-design.md)
+retains this full incoming cache and adds an observational request entry for
+the tutorial. Its admitted incoming route uses the actual shared input,
+gameplay, scene and clock routines; the exact request entry still uses the full
+dispatcher. Reduced preview launch state is not a playable branch checkpoint.
+
 Cache the complete 318-byte state only after the recorded incoming-launch
 dispatcher returns, including scene, audio and service tails. The launch hook
 marks the operation; it cannot supply a complete checkpoint. Retain its actual

@@ -657,7 +657,7 @@ def preview_batch_extent(stage):
                  'held->released','released->ready']
     if (not isinstance(stage,dict) or stage.get('passed') is not True
             or any(stage.get(k)!=v for k,v in dict(canonical_bytes=318,history_metadata_bytes=72,
-                preview_storage_bytes=10974,preview_metadata_bytes=150,budgets=[1,2,3,4]).items())
+                preview_storage_bytes=10980,preview_metadata_bytes=156,budgets=[1,2,3,4]).items())
             or any(type(n) is not int for n in stage['budgets'])
             or stage.get('required_owner_transitions')!=transitions
             or any(stage.get(k) is not True for k in ('state_path_outcome_output_equal_across_budgets',
@@ -793,6 +793,14 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='predictor-cpu':
+        from predictor_extent import cpu_extent
+        return cpu_extent(report)
+    if case.id in ('predictor-pal','predictor-ntsc'):
+        from predictor_extent import native_extent
+        standard='NTSC' if case.id.endswith('-ntsc') else 'PAL'
+        original=type(case)(id='incoming-flight-'+standard.lower(),args=case.args,report=case.report)
+        return required_extent(original,report) and native_extent(report,standard)
     if case.id=='incoming-flight-cpu':
         validation=report.get('validation') or {}
         audit=validation.get('endpoint_byte_audit') or {}
@@ -855,7 +863,7 @@ def required_extent(case,report):
                 or evidence.get('target_role')!='legacy-validator-reference'
                 or evidence.get('actual_execution')!='actual-68000-cpu-only'
                 or validation.get('passed') is not True
-                or validation.get('preview_storage_bytes')!=10974 or validation.get('metadata_bytes')!=150
+                or validation.get('preview_storage_bytes')!=10980 or validation.get('metadata_bytes')!=156
                 or type(validation.get('fixture_operations')) is not int or validation['fixture_operations']<2049
                 or not isinstance(rows,list) or len(rows)!=3
                 or {r.get('name') for r in rows if isinstance(r,dict)}!={

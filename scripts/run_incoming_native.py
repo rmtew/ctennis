@@ -21,6 +21,7 @@ from native_tools import ROOT, emulator_config
 from run_tutorial_capture import FIELDS
 from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
 from tutorial_latency import LatencyObserver, StackTiming, instruction_map
+from predictor_native_proof import InputTrace, original_reference, contact_timing
 
 from native_metrics import memory_summary
 from ordinary_cadence import chip_memory
@@ -34,9 +35,9 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL', baseline=None):
+def run(standard='PAL', baseline=None, predictor=False):
     assert standard in CLOCKS
-    directory = ROOT/'build/tests'/('incoming-flight-native-'+standard.lower())
+    directory = ROOT/'build/tests'/(('predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -63,7 +64,7 @@ def run(standard='PAL', baseline=None):
         listing = listing_path.read_text()
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
-        frozen = None
+        frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False
         with LatencySession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -86,28 +87,50 @@ def run(standard='PAL', baseline=None):
             probe_symbols=dict(title_copper=symbols['title_copper'],simulation_update_call_pc=simulation_calls[0],simulation_update=symbols['simulation_update'])
             callbacks = CallbackObserver(0,symbols)
             fields = dict(FIELDS,last_timer_count=4,simulation_phase=4,simulation_interval=4,game_title_display=1)
+            if predictor:fields.update(game_preview_projection_requested=2,game_preview_predictor_routes=2,
+                game_preview_predictor_reason=2,game_preview_dispatches=4,game_preview_launches=2,
+                game_preview_stream_cursors=16,game_preview_synthetic_phases=4,keyboard_ack=1,keyboard_ack_timer=2,
+                tutorial_packet=1,game_input_bits=2)
             callbacks.surfaces = SurfaceObserver(symbols,read,
                 last_line=311 if standard=='PAL' else 261, verify_sprites=True)
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             session.observer = LatencyObserver(callbacks,timing)
+            input_trace=InputTrace(symbols)
+            if predictor:
+                previous_observe=session.observer.observe
+                def observe(message):
+                    input_trace.observe(message);previous_observe(message)
+                session.observer.observe=observe
             watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
                 dict(addr=symbols['game_stack_bottom'],
                      len=symbols['game_stack_top']-symbols['game_stack_bottom'],access=access) for access in ('read','write')]+[
                 dict(addr=a,len=1,access='read') for a in (0xbfd400,0xbfd500,0xbfd600,0xbfd700)]
+            if predictor:watches+=input_trace.watches()
             subscribed = session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches))
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
+            if predictor:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_resume_restored']))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
             def advance(seconds):
-                nonlocal stop,frozen
+                nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary
                 goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
                     stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
+                    if predictor and stop.get('pc')==symbols['tutorial_resume_restored']:
+                        assert frozen is not None and resume_readback is None
+                        restored=block('game_core_state',318);history=block('game_history_state',72)
+                        expected_history=bytearray(frozen[1]);base=symbols['game_history_state']
+                        expected_history[symbols['game_history_mode']-base]=1
+                        p=symbols['game_history_position']-base;c=symbols['game_history_cursor']-base
+                        expected_history[p:p+8]=frozen[1][c:c+8]
+                        assert restored==frozen[2] and history==expected_history
+                        resume_readback=dict(passed=True,state=restored.hex(),expected=frozen[2].hex(),
+                            history=history.hex(),expected_history=expected_history.hex(),position=position())
                     if stop.get('pc')==symbols['simulation_update']:
                         assert callbacks.pending is None
                         assert callbacks.completed <= CAPS['callbacks']
@@ -116,14 +139,22 @@ def run(standard='PAL', baseline=None):
                             ('tutorial_interrupted_state',318)))
                         fields={n:number(n) for n in FIELDS}
                         if fields['tutorial_active']:
-                            if frozen is None:frozen=states
+                            if frozen is None:
+                                frozen=states
+                                if predictor:
+                                    records_bytes=symbols['game_history_checkpoints']-symbols['game_history_buffer']
+                                    frozen_records=block('game_history_buffer',records_bytes)
+                                    history_end=number('game_history_cursor',8)
                             assert states==frozen, 'Frozen selected318/history72/livebackup changed'
+                        elif predictor and resume_readback is not None and not first_resumed_boundary:
+                            assert states[0]==frozen[2],'Resume dispatched before complete restored boundary'
+                            first_resumed_boundary=True
                         boundaries.append(dict(position=position(), fields=fields,
                             state=states[0].hex(),history=states[1].hex(),backup=states[2].hex()))
                     if stop.get('reason')=='target' or stop['cck']>=goal:break
                 else:raise AssertionError('Latency complete-boundary stop cap')
             def key(code,held,seconds=.06):
-                actions.append(dict(rawkey=code,held=held,position=position()))
+                actions.append(dict(rawkey=code,held=held,position=position(),tutorial_active=bool(number('tutorial_active'))))
                 session.inspect('input_key',dict(rawkey=code,action='press' if held else 'release'))
                 advance(seconds)
             def endpoint(label, previous_generation=None, request=None):
@@ -167,6 +198,14 @@ def run(standard='PAL', baseline=None):
                             held_query_attempted=number('game_preview_endpoint_attempted',1),
                             held_query_reason=number('game_preview_endpoint_reasons',2),
                             held_terminal_state=(block('game_preview_endpoint_scratch',318) if number('game_preview_endpoint_attempted',1) and not number('game_preview_endpoint_reasons',2) else block('game_preview_held_state',318)).hex())
+                        if predictor:
+                            row.update(incoming_state=block('game_preview_incoming_state',318).hex(),
+                                held_path=block('game_preview_paths',number('game_preview_counts',2)*8).hex(),
+                                history_oldest=number('game_history_oldest',8),
+                                x=number('game_preview_x'),y=number('game_preview_y'),end=number('game_preview_end'),
+                                routes=list(block('game_preview_predictor_routes',2)),
+                                guard_reason=number('game_preview_predictor_reason'))
+                            assert row['routes']==[1,1] and row['guard_reason']==0
                         # Negative latency means a stale already-published endpoint.
                         assert row['latency_cck']>=0
                         row['physical_latency_seconds']=row['latency_cck']/CLOCKS[standard]
@@ -278,6 +317,22 @@ def run(standard='PAL', baseline=None):
             assert outgoing, 'No actual visible outgoing ball sample publication'
             outgoing_witness=outgoing[0]
             assert repeat_witness[1]['position']['cck']-repeat_witness[0]['position']['cck']>=29*number('simulation_interval_whole',4)*5
+            input_result=None
+            if predictor:
+                assert block('game_history_buffer',len(frozen_records))==frozen_records,'Paused native record store changed'
+                # Release/repress movement, then resume while the fresh predictor
+                # is still computing. Real menu actions invalidate that job.
+                key(0x22,True,.02);key(0x22,False,.02)
+                cancel_generation=number('tutorial_generation',4)
+                assert number('game_preview_status') in (1,2,3,4),'Cancel challenge did not reach an active job'
+                key(0x24,True,.02);key(0x24,False,.02)
+                assert number('tutorial_menu')
+                key(0x4d,True,.02);key(0x4d,False,.02)
+                key(0x44,True,.02);key(0x44,False,.02)
+                advance(.12)
+                assert resume_readback and first_resumed_boundary and not number('tutorial_active')
+                assert number('game_preview_generation',4)!=cancel_generation
+                assert block('game_keyboard_matrix',128)[0x22]==0
             # Stop before the next real callback body, not inside an API.
             stop=session.inspect('run_until',dict(seconds=(stop['cck']+CLOCKS[standard]*.02)/PROVIDER_CLOCK))
             assert stop.get('pc')==symbols['simulation_update'] and callbacks.pending is None
@@ -288,6 +343,7 @@ def run(standard='PAL', baseline=None):
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval)
             stack_result=timing.result()
+            if predictor:input_result=input_trace.result(actions,stack_result['calls'])
             open_calls=stack_result['open_enclosing_calls']
             assert len(open_calls)==1 and open_calls[0]['callee']=='simulation_update'
             assert open_calls[0]['depth']==0 and open_calls[0]['caller'] is None
@@ -309,6 +365,9 @@ def run(standard='PAL', baseline=None):
                         'admission declines require emitted control-flow interpretation, not inferred host decisions.'))
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
+            if predictor:row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,
+                frozen_records,len(frozen_records)//14,history_end)
+            if predictor:row['contact_timing']=contact_timing(row,stack_result['calls'],input_trace.launch_rows)
             if not row['human_launches'][0]:
                 row['original_outgoing_reference']='No launch: no outgoing endpoint claimed'
                 continue
@@ -325,6 +384,7 @@ def run(standard='PAL', baseline=None):
             row['original_outgoing_reference']=dict(full318_equal=True,point_equal=True,phase_equal=True,
                 outcome_equal=True,phases=phases,outcome=outcome,endpoint=sample.hex(),
                 expected_full_state=final.hex(),seed_sha256=hashlib.sha256(bytes.fromhex(row['held_launch_state'])).hexdigest())
+            if predictor:row['original_outgoing_reference']['scope']='Complete equality relative to captured reduced preview launch seed; not a full edited-match checkpoint'
         captured=json.loads(capture.read_text());captured['endpoints']=endpoints;atomic_json(capture,captured)
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
             executable_sha256=product_sha256, incoming_flight=True, endpoints=endpoints, native_memory=memory,
@@ -338,6 +398,16 @@ def run(standard='PAL', baseline=None):
             physical_clock_hz=CLOCKS[standard], provider_seconds_clock_hz=PROVIDER_CLOCK,
             scope='Current native physical incoming trial, changed placement, actual normal-sprite samples and repeat; '
                   'complete frozen318/history72/livebackup and finite timing. Full release/cold ADF acceptance remains pending.')
+        if predictor:
+            kernel_calls=[r for r in stack_result['calls'] if r['callee']=='input_update'
+                and symbols['game_preview_predictor_code_begin']<=r['entry_pc']<symbols['game_preview_predictor_code_end']]
+            assert kernel_calls,'No emitted predictor input call executed'
+            report.update(guarded_predictor=True,input_probe=input_result,resume_latest=resume_readback,
+                first_resumed_boundary_equal=first_resumed_boundary,record_store_unchanged=True,
+                emitted_kernel_calls=len(kernel_calls),cancelled_active_job=True)
+            captured=json.loads(capture.read_text());captured.update(input_probe=input_result,resume_latest=resume_readback,
+                first_resumed_boundary_equal=first_resumed_boundary,kernel_calls=kernel_calls,
+                records=frozen_records.hex(),history_end=history_end);atomic_json(capture,captured)
         atomic_json(directory/'results-unvalidated.json',report)
         artifacts=[p for p in directory.iterdir() if p.is_file() and p!=output]
         transaction.finalize(output,report,[manifest],artifacts)
@@ -350,5 +420,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--ntsc',action='store_true')
     parser.add_argument('--baseline',type=Path)
+    parser.add_argument('--predictor',action='store_true')
     args=parser.parse_args()
-    run('NTSC' if args.ntsc else 'PAL',args.baseline)
+    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor)

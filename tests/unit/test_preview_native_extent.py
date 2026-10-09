@@ -80,7 +80,7 @@ def receipt(ntsc=False):
     observed=dict(CAPS,ordinary_operations=200,playing_dispatches=40,title_callbacks=2,
         paused_callbacks=30,video_fields=50,seconds=10,worker_calls_per_job=1,samples_per_path=2,raw_bytes=1024)
     stage=dict(passed=True,canonical_bytes=318,history_metadata_bytes=72,
-        preview_storage_bytes=10974,preview_metadata_bytes=150,seek_storage_bytes=734,
+        preview_storage_bytes=10980,preview_metadata_bytes=156,seek_storage_bytes=734,
         acquisition=dict(seed=44257,seed_policy='DEMO_RECORDING-selection-only',ordinary_operations=200,
             playing_dispatches=40,title_callbacks=2,completed_index_kind=2,incoming_origin=64,
             probe_origin=120,selected_cursor=100,ordinal=1,end=0),
