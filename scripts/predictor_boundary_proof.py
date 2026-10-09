@@ -288,9 +288,17 @@ def required_extent(report):
         and all(r.get('passed') is True and r.get('reason') == 7 and r.get('stage') == 2
             and r.get('predictor_ticks') == 0 and r.get('full_state_events_equal') is True
             and r.get('visible_announcement_tested') is False for r in faults)
-        and len(guards) == 26 and all(r.get('passed') is True and r.get('admission_read_only') is True
+        and len(guards) == 26 and {r.get('name') for r in guards} == {
+            'exact-policy','serve-kind','invalid-kind','missing-incoming','lifecycle','uninitialized',
+            'idle-stage','invalid-stage','pending-command','restart','suppressed-input','round-mode',
+            'result-mode','two-human-mode','invalid-end','scorer-ai','score-flags','end-mode',
+            'human-ai','opponent-human','owner','upper-owner','wrong-side','terminal','launch-pending','no-flight'}
+        and all(r.get('passed') is True and r.get('admission_read_only') is True
+            and r.get('registers_preserved') is True
             and (r.get('scope') != 'full-fallback' or r.get('full_state_events_equal') is True) for r in guards)
+        and (v.get('original_core_bytes') or {}).get('passed') is True
         and (v.get('original_core_bytes') or {}).get('normalized_sha256') ==
             '99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5'
+        and (v.get('predictor_bytes') or {}).get('passed') is True
         and (v.get('predictor_bytes') or {}).get('sha256') ==
             '684cf9ca6f5db1d7b2863e59fade1fbb58175ba551e956017011daaa4d7831ef')
