@@ -81,7 +81,8 @@ def run(standard='PAL', baseline=None):
             timing = WorkerTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             timing.state=callbacks.state
             session.observer = LatencyObserver(callbacks,timing)
-            watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()
+            all_watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()
+            watches = [w for w in all_watches if w['addr']!=symbols['game_stack_bottom']]
             subscribed = session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches))
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
@@ -163,8 +164,10 @@ def run(standard='PAL', baseline=None):
             generation=endpoint('initial-held',request=held_start)
             previous_xy=(number('tutorial_x'),number('tutorial_y'))
             edit_start=position()
-            subscribed=session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches+[
-                dict(addr=symbols['game_stack_bottom'],len=symbols['game_stack_top']-symbols['game_stack_bottom'],access='read')]))
+            subscribed=session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=all_watches+[
+                # tutorial_tick preserves 15 registers (60 B) before the worker.
+                # Exclude shallower busy-loop returns; every root slot is checked.
+                dict(addr=symbols['game_stack_bottom'],len=timing.read_top-symbols['game_stack_bottom'],access='read')]))
             assert subscribed.get('dropped_notifications',0)==0
             profile_path=directory/'profile'
             profile_start=session.inspect('profile.start',dict(path=str(profile_path),
@@ -214,6 +217,7 @@ def run(standard='PAL', baseline=None):
             timing=callback_result, full318_history72_backup_guard=True,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
             stack_protocol=stack_result['protocol'],profiling=True,profile_summary=profile_result, dropped_notifications=callbacks.dropped,
+            stack_scope='Stack accesses observed only during fresh-edit profiling; startup stack usage unmeasured',
             actual_video=actual_video,title_ready=title_ready,
             physical_clock_hz=CLOCKS[standard], provider_seconds_clock_hz=PROVIDER_CLOCK,
             scope='Unchanged native executable; bounded fresh-edit instruction/DMA/worker profiling. '

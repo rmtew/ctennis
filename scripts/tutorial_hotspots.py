@@ -12,6 +12,7 @@ class WorkerTiming(StackTiming):
         super().__init__(*args)
         self.active = False
         self.state = None
+        self.read_top = self.top-64
         self.roots = {pc for pc, call in self.calls.items() if call['callee']=='game_preview_step'}
         assert len(self.roots)==1
 
@@ -23,6 +24,7 @@ class WorkerTiming(StackTiming):
         super().observe(row)
         if row['access']=='write' and row['size']==4 and row['pc'] in self.roots:
             assert self.state is not None
+            assert row['addr']+4<=self.read_top, 'Worker return slot outside scoped read band'
             self.stack[-1]['generation']=self.state['tutorial_generation']
             self.stack[-1]['preview_status']=self.state['game_preview_status']
         assert len(self.rows)<=20000, 'Bounded worker call-row cap'

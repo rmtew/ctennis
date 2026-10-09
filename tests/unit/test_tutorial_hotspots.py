@@ -32,6 +32,7 @@ class Tests(unittest.TestCase):
     def test_worker_scope_ignores_unobserved_enclosing_returns(self):
         calls={20:dict(return_pc=24,callee='game_preview_step'),30:dict(return_pc=34,callee='game_tick_dispatch_body')}
         timing=WorkerTiming(calls,{40,45},1000,1100)
+        timing.read_top=1100
         timing.state=dict(tutorial_generation=2,game_preview_status=3)
         def row(access,pc,slot,value,cck):
             return dict(access=access,pc=pc,addr=slot,value=value,size=4,position=dict(cck=cck))
@@ -49,6 +50,12 @@ class Tests(unittest.TestCase):
 
     def test_union_does_not_double_count_nested_spans(self):
         self.assertEqual(union([(10,20),(12,15),(20,25),(30,35)]),20)
+
+    def test_uncovered_worker_return_slot_rejects(self):
+        timing=WorkerTiming({20:dict(return_pc=24,callee='game_preview_step')},{40},1000,1100)
+        timing.state=dict(tutorial_generation=2,game_preview_status=3);timing.active=True
+        with self.assertRaisesRegex(AssertionError,'outside scoped read band'):
+            timing.observe(dict(access='write',pc=20,addr=1096,value=24,size=4,position=dict(cck=10)))
 
 
 if __name__=='__main__':unittest.main()
