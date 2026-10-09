@@ -192,3 +192,51 @@ trail completion is never a usability/READY prerequisite. Record placement,
 animation and trail times separately. A sub-second latest-placement target is a
 candidate goal, not a demonstrated result; first-result measurements determine
 the actual achievable target before further architecture changes.
+
+## Remaining landing latency: read-only investigation
+
+The final captures were inspected without rerunning the emulator. For the fresh
+held edit (generation 10, variant 0), take callback entries from its accepted
+request timestamp through its actual endpoint publication timestamp. PAL covers
+64 entries, with entry progress moving 0→254 logical operations; NTSC covers 61,
+0→256. These are entry observations, not exact total worker-cost accounting.
+The respective maximum complete callback work is 36,912/37,181 CCK and minimum
+absolute headroom 21,677.107/21,889.183 CCK within this interval. Most entries
+advance four operations. This is a finite fresh-serve interval, not the global
+maximum callback workload reported above.
+
+Source inspection explains the work shape: synthetic continuation executes
+round poll, logical pad sample, result sample and actual dispatch as four ordered
+operations per simulated tick. `game_preview_step` accepts budgets 1..4 and
+restores selected state/history at every public yield. The controller permits
+up to four public calls, but a fresh remaining-time check requires 10,000 E-clock
+ticks for budget 4 or7,000 for budget 2. The observed unused complete-callback
+headroom is therefore not evidence that the four-call cap is the bottleneck.
+Copy/guard/restore and native IRQ/tail costs remain part of admission safety.
+The held endpoint is published as soon as its actual outcome qualifies; it does
+not wait for the released 256-point waiting horizon or a bitmap trail.
+
+Next narrow proof, before any scheduling change:
+
+1. Reconstruct actual worker entry/return spans from the preserved literal RPC
+   and matching caller writes. Separate public-call overhead, operation classes,
+   caption/publication work and declined admissions; retain actual timestamps.
+2. Compare hot current-serve execution with retained context resolution and
+   fresh input/transition maxima. Existing budget 2 CPU proof is useful evidence,
+   but cannot certify native contention or every retained-return path.
+3. Propose a class-specific admission change only after bounding the complete
+   finishing tail. Keep public budgets 1..4, full 318/72 restoration and the exact
+   sequential core. Do not skip logical sampling/poll operations, extrapolate an
+   endpoint or change RNG call order to achieve a latency target.
+4. Review exact source, then run only affected fresh PAL/NTSC cases with full
+   callback accounting and fresh-generation endpoint timing. Preserve these
+   completed baseline captures and report the new product separately.
+
+A reduced reserve or larger internal batch remains a hypothesis, not an approved
+implementation or measured speedup. Navigation/catalog jobs need separate
+admission accounting and must not share an unbounded callback with previews.
+See [the retained navigation/branch queue](tutorial-retained-branch.md).
+
+Independent read-only review reproduced the interval counts/progress/headroom
+figures and checked the source operation order. No additional emulator execution
+or baseline rerun was performed for this investigation.

@@ -19,3 +19,5 @@
   primary objects and allow gaps. Neither optional milestone gates the roadmap.
 
 Exit-game work was cancelled; reboot remains the intended behavior.
+
+- [ ] Review and integrate the [retained navigation/branch preparation](docs/tutorial-retained-branch.md); keep PR38 unmerged pending appearance and remaining acceptance.
