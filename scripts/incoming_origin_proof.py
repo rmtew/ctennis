@@ -23,9 +23,31 @@ def observed(cpu):
     return tuple(bytes(cpu.mem.r_block(cpu.symbols[n],w)) for n,w in names),dict(cpu.preview_event_groups)
 
 
-def branch(image,symbols,end,poison,budget,projected,miss=None,historical=False):
-    with Core(image,symbols,poison=poison,readonly=READONLY) as cpu:
-        stream,states,_,launches=latest_fixture(cpu,end)
+def captured_fixture(image,symbols,end):
+    # Capture real recorded owned memory once. Trials initialize from this
+    # immutable fixture; no candidate receives an intermediate expected state.
+    with Core(image,symbols,readonly=READONLY) as cpu:
+        _,states,_,launches=latest_fixture(cpu,end)
+        spans=[(cpu.start,cpu.stop),*cpu.mutable_regions]
+        owned=[(low,bytes(cpu.mem.r_block(low,high-low))) for low,high in spans]
+        cpu.audit_reads()
+        return owned,cpu.state(),{cursor(cpu):states[cursor(cpu)]},launches
+
+
+def branch(image,symbols,end,poison,budget,projected,miss=None,historical=False,captured=None):
+    initial=None
+    if captured:
+        owned,initial,states,launches=captured
+        initialized=[]
+        for address,data in image:
+            data=bytearray(data)
+            for low,values in owned:
+                if address<=low and low+len(values)<=address+len(data):
+                    data[low-address:low-address+len(values)]=values
+            initialized.append((address,bytes(data)))
+        image=initialized
+    with Core(image,symbols,initial=initial,poison=poison,readonly=READONLY) as cpu:
+        if not captured:_,states,_,launches=latest_fixture(cpu,end)
         origin=cursor(cpu,'game_history_incoming_cursor')
         assert origin==cursor(cpu)
         assert block(cpu,'game_history_incoming_state','game_history_incoming_cursor')==states[origin]
@@ -116,28 +138,31 @@ def lifetime(image,symbols):
 def run(executable,raw):
     from native_evidence import atomic_json
     image,symbols=load_image(executable);rows=[]
+    fixtures={end:captured_fixture(image,symbols,end) for end in (0,1)}
     for end in (0,1):
         for projected in (False,True):
             for budget in (1,2,3,4):
-                cold,cold_row=branch(image,symbols,end,0x5a,budget,projected,('game_history_incoming_valid',1,0))
-                warm,warm_row=branch(image,symbols,end,0xa5,budget,projected)
+                cold,cold_row=branch(image,symbols,end,0x5a,budget,projected,('game_history_incoming_valid',1,0),captured=fixtures[end])
+                warm,warm_row=branch(image,symbols,end,0xa5,budget,projected,captured=fixtures[end])
                 assert warm==cold,('Warm/cold private state, events, paths/cursors differ',end,projected,budget)
                 rows.append(dict(warm=warm_row,cold=cold_row,full_yield_state_events_paths_cursors_equal=True,
                     yield_sha256=hashlib.sha256(repr(warm).encode()).hexdigest()))
     misses=[]
     for end in (0,1):
-        reference,_=branch(image,symbols,end,0x5a,4,False,('game_history_incoming_valid',1,0))
+        reference,_=branch(image,symbols,end,0x5a,4,False,('game_history_incoming_valid',1,0),captured=fixtures[end])
         for fault in (('game_history_incoming_end',2,1-end),('game_history_incoming_schema',2,0),
             ('game_history_incoming_simulation',2,0),('game_history_incoming_epoch',4,0),
             ('game_history_incoming_cursor',8,0),('game_history_incoming_cursor',8,0xffffffffffffffff)):
-            result,row=branch(image,symbols,end,0xa5,4,False,fault)
+            result,row=branch(image,symbols,end,0xa5,4,False,fault,captured=fixtures[end])
             assert result==reference,('Invalid identity did not cold-fallback',fault,end)
             misses.append(row)
-        _,row=branch(image,symbols,end,0xa5,4,False,historical=True);misses.append(row)
+        _,row=branch(image,symbols,end,0xa5,4,False,historical=True,captured=fixtures[end]);misses.append(row)
     life=lifetime(image,symbols)
     raw.mkdir(parents=True,exist_ok=True)
+    for end,(owned,initial,_,launches) in fixtures.items():
+        atomic_json(raw/('captured-origin-'+str(end)+'.json'),dict(owned=[dict(address=a,bytes=b.hex()) for a,b in owned],state=initial.hex(),last_launch=launches[-1],scope='Once-captured actual recorded controls fixture, complete initial owned memory; never intermediate state injection'))
     validation=dict(passed=True,storage_bytes=symbols['game_history_incoming_storage_end']-symbols['game_history_incoming_storage'],
-        rows=rows,misses=misses,lifetime=life,scope='Actual core; every warm/cold public computational yield. Explicit cache identity corruptions are fault fixtures, not intermediate expected simulation state.')
+        rows=rows,misses=misses,lifetime=life,scope='Actual core; two natural recorded origins captured once as complete immutable initial fixtures; every warm/cold public computational yield. Explicit cache identity corruptions are fault fixtures, not intermediate expected simulation state.')
     atomic_json(raw/'origin-proof.json',validation)
     return validation
 

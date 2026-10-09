@@ -106,6 +106,11 @@ game_history_incoming_match:
         move.l  game_history_live_epoch,d0
         cmp.l   game_history_incoming_epoch,d0
         bne.s   .invalid
+        ; No launch has completed at match cursor zero. Reject before converting
+        ; the post-operation identity into the preview's pre-operation cursor.
+        move.l  game_history_incoming_cursor,d0
+        or.l    game_history_incoming_cursor+4,d0
+        beq.s   .invalid
         lea     game_preview_selected,a0
         lea     game_history_cursor,a1
         bsr     game_preview_compare_cursor
