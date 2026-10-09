@@ -120,7 +120,7 @@ class SeekSlicedExtent(unittest.TestCase):
             seek_sliced_validation=dict(passed=True,schema=1,canonical_bytes=318,
                 history_metadata_bytes=72,seek_storage_bytes=734,proofs=proofs,
                 input_stream=dict(path=INPUT_PATH,sha256=INPUT_SHA,operations=835,target_probe=569),
-                normalized_shared_core=dict(matched=True,bytes=17524,relocations=7,
+                normalized_shared_core=dict(matched=True,bytes=17606,relocations=7,
                     sink_branches=14,sha256=CORE_SHA)))
         with patch('seek_sliced_extent.SLICE_SHA',sha):
             self.assertTrue(required_seek_sliced_extent(report))
