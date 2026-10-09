@@ -523,8 +523,8 @@ class Native:
 
     def snapshot_result(self):
         counts=[self.number('game_preview_counts',2),int.from_bytes(self.read(self.symbols['game_preview_counts']+2,2),'big')]
-        contexts=[self.block('game_preview_held_state','game_preview_released_state'),
-            self.block('game_preview_released_state','game_preview_paths')]
+        contexts=[self.read(self.symbols[name],318) for name in
+            ('game_preview_held_state','game_preview_released_state')]
         outcomes=[int.from_bytes(self.read(self.symbols['game_preview_outcomes']+2*i,2),'big') for i in (0,1)]
         return dict(edited=self.block('game_preview_edited_state','game_preview_held_state'),
             contexts=contexts,paths=[self.read(self.symbols['game_preview_paths']+((self.symbols['game_preview_storage_end']-self.symbols['game_preview_paths'])//2)*i,8*n) for i,n in enumerate(counts)],

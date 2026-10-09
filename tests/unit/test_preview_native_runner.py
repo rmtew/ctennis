@@ -14,6 +14,21 @@ from native_tools import ROOT,ASSEMBLER
 
 
 class NativePreviewTiming(unittest.TestCase):
+    def test_result_states_exclude_endpoint_launch_and_query_scratch(self):
+        native=object.__new__(Native)
+        native.symbols={'game_preview_counts':0,'game_preview_outcomes':4,
+            'game_preview_held_state':1000,'game_preview_released_state':1318,
+            'game_preview_paths':2590,'game_preview_storage_end':10798}
+        memory=bytearray(10798)
+        memory[1000:1318]=b'H'*318
+        memory[1318:1636]=b'R'*318
+        memory[1636:2590]=b'Q'*954
+        native.read=lambda address,length:bytes(memory[address:address+length])
+        native.number=lambda name,width=2:0
+        native.block=lambda first,last:b''
+        result=native.snapshot_result()
+        self.assertEqual(result['contexts'],[b'H'*318,b'R'*318])
+
     def body_native(self,stops,base=0x3000):
         native=object.__new__(Native)
         native.symbols={'preview_native_return':0x900,'game_core_state':0,
