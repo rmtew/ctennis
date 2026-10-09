@@ -793,6 +793,9 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='predictor-boundaries-cpu':
+        from predictor_boundary_proof import required_extent as boundary_extent
+        return boundary_extent(report)
     if case.id=='predictor-cpu':
         from predictor_extent import cpu_extent
         return cpu_extent(report)
