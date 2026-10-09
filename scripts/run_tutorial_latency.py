@@ -1,0 +1,191 @@
+"""Short unchanged-product landing latency probe. No build or screenshots."""
+import argparse
+import hashlib
+import json
+import math
+import re
+from pathlib import Path
+
+from native_evidence import ReportRun, TARGET, atomic_json, digest, inputs_for, snapshot
+from native_hunk import loaded_hunks
+from native_tools import ROOT, emulator_config
+from run_tutorial_capture import FIELDS
+from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
+from tutorial_latency import LatencyObserver, StackTiming, instruction_map
+
+PRODUCT_SHA256 = '7c6a89d70efa2689c78767f56febbd9dea2b66f33e552e447ff83af2353ae849'
+PROVIDER_CLOCK = 3546895
+CLOCKS = {'PAL':3546895, 'NTSC':3579545}
+CAPS = dict(physical_seconds=30, callbacks=2048, boundary_stops=8192,
+            uncompressed_transcript_bytes=512*1024*1024)
+
+
+class LatencySession(CaptureSession):
+    MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
+
+
+def run(standard='PAL', baseline=None):
+    assert standard in CLOCKS
+    directory = ROOT/'build/tests'/('tutorial-latency-'+standard.lower())
+    directory.mkdir(parents=True, exist_ok=True)
+    output = directory/'report.json'
+    transaction = ReportRun([output], 'native-feedback', 'maintained-native',
+                            'Unchanged native product; physical fresh-edit landing latency only')
+    try:
+        baseline = Path(baseline) if baseline else ROOT/'build/tests/tutorial-court-pal'
+        executable, listing_path, manifest_path = [baseline/n for n in (
+            'baseline-rally','native.lst','baseline-rally.compile.json')]
+        assert digest(executable) == PRODUCT_SHA256, 'Latency probe requires reviewed unchanged product'
+        manifest = json.loads(manifest_path.read_text())
+        assert manifest['executable_sha256'] == PRODUCT_SHA256
+        paths, tools = inputs_for('native-feedback','scripts/run_tutorial_latency.py')
+        transaction.meta.update(files=snapshot(set(paths)|{executable,listing_path,manifest_path}),
+                                tools=tools, runner='scripts/run_tutorial_latency.py',
+                                actual_target=dict(TARGET, video=standard))
+        listing = listing_path.read_text()
+        config = emulator_config()
+        boundaries, actions, endpoints = [], [], []
+        frozen = None
+        with LatencySession(directory) as session:
+            session.inspect('session_launch', dict(binary=config['tools']['copperline'],
+                run=str(executable), args=['--chipset','OCS','--video',standard,
+                    '--cpu','68000','--chip','512K','--slow','0','--fast','0',
+                    '--noaudio',config['inputs']['amiga_rom']]))
+            stop = session.inspect('run_until',dict(seconds=30))
+            assert stop['reason'] == 'loadseg'
+            segments = session.inspect('segments.list')['current']
+            symbols = {n:segments[int(h)]['start']+int(o,16) for n,h,o in re.findall(
+                r'^([A-Za-z_]\w*)\s+(\d\d):([\da-fA-F]{8})\s*$',listing,re.M)}
+            def read(a,n):
+                return bytes.fromhex(session.inspect('mem_read',dict(addr=a,len=n))['data'])
+            def block(n,width):return read(symbols[n],width)
+            def number(n,width=None):
+                return int.from_bytes(block(n,FIELDS.get(n,2) if width is None else width),'big')
+            loaded = loaded_hunks(executable,segments,read)
+            calls, returns = instruction_map(listing,segments,read)
+            callbacks = CallbackObserver(0,symbols)
+            fields = dict(FIELDS,last_timer_count=4,simulation_phase=4,simulation_interval=4)
+            callbacks.surfaces = SurfaceObserver(symbols,read,
+                last_line=311 if standard=='PAL' else 261, verify_sprites=True)
+            timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
+            session.observer = LatencyObserver(callbacks,timing)
+            watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
+                dict(addr=symbols['game_stack_bottom'],
+                     len=symbols['game_stack_top']-symbols['game_stack_bottom'],access='read')]+[
+                dict(addr=a,len=1,access='read') for a in (0xbfd400,0xbfd500,0xbfd600,0xbfd700)]
+            subscribed = session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches))
+            assert subscribed.get('dropped_notifications',0)==0
+            session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
+            origin = stop['cck']
+            def position():
+                return dict(cck=stop['cck'], frame=stop['frame'],
+                    provider_seconds=stop['seconds'],
+                    physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
+            def advance(seconds):
+                nonlocal stop,frozen
+                goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
+                assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
+                for _ in range(CAPS['boundary_stops']):
+                    stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
+                    if stop.get('pc')==symbols['simulation_update']:
+                        assert callbacks.pending is None
+                        assert callbacks.completed <= CAPS['callbacks']
+                        states=tuple(block(n,w) for n,w in (
+                            ('game_core_state',318),('game_history_state',72),
+                            ('tutorial_interrupted_state',318)))
+                        fields={n:number(n) for n in FIELDS}
+                        if fields['tutorial_active']:
+                            if frozen is None:frozen=states
+                            assert states==frozen, 'Frozen selected318/history72/livebackup changed'
+                        boundaries.append(dict(position=position(), fields=fields,
+                            state=states[0].hex(),history=states[1].hex(),backup=states[2].hex()))
+                    if stop.get('reason')=='target' or stop['cck']>=goal:break
+                else:raise AssertionError('Latency complete-boundary stop cap')
+            def key(code,held,seconds=.06):
+                actions.append(dict(rawkey=code,held=held,position=position()))
+                session.inspect('input_key',dict(rawkey=code,action='press' if held else 'release'))
+                advance(seconds)
+            def endpoint(label, previous_generation=None, request=None):
+                request=position() if request is None else request
+                for _ in range(300):
+                    advance(.05)
+                    generation=number('tutorial_generation',4)
+                    published=[p for p in callbacks.surfaces.publications
+                        if p['position']['cck']>=request['cck']
+                        and p['tutorial_fields'].get('tutorial_generation')==generation
+                        and p['tutorial_fields'].get('tutorial_marker_generation')==generation
+                        and p['tutorial_fields'].get('tutorial_marker_ready')
+                        and p['tutorial_fields'].get('tutorial_placement_ready')
+                        and not p['tutorial_fields'].get('tutorial_placement_dirty')
+                        and p['tutorial_fields'].get('tutorial_active_variant')==0
+                        and p['tutorial_fields'].get('tutorial_ball_mode')==1]
+                    if published and (previous_generation is None or generation!=previous_generation):
+                        scene=published[0] # actual COPJMP, not a later animation/wait match
+                        assert scene.get('native_sprite_check'), 'Endpoint sprite bank lacks actual check'
+                        row=dict(label=label, request=request, observed=position(),
+                            first_actual_publication=dict(scene),generation=generation,
+                            latency_cck=scene['position']['cck']-request['cck'])
+                        # Negative latency means a stale already-published endpoint.
+                        assert row['latency_cck']>=0
+                        row['physical_latency_seconds']=row['latency_cck']/CLOCKS[standard]
+                        endpoints.append(row)
+                        return generation
+                raise AssertionError('No actual fresh held endpoint within declared latency cap')
+            advance(.3)
+            key(0x01,True);key(0x01,False)
+            key(0x24,True);key(0x24,False)
+            key(0x24,True);key(0x24,False)
+            assert number('tutorial_active')
+            held_start=position()
+            key(0x23,True) # F held; actual held alternative, not a supplied expected path.
+            generation=endpoint('initial-held',request=held_start)
+            previous_xy=(number('tutorial_x'),number('tutorial_y'))
+            edit_start=position()
+            key(0x22,True,.02);key(0x22,False,.001)
+            assert (number('tutorial_x'),number('tutorial_y'))!=previous_xy
+            endpoint('fresh-D-edit',generation,request=edit_start)
+            endpoints[-1]['physical_input_request']=edit_start
+            endpoints[-1]['input_to_publication_cck']=(
+                endpoints[-1]['first_actual_publication']['position']['cck']-edit_start['cck'])
+            endpoints[-1]['physical_input_latency_seconds']=(
+                endpoints[-1]['input_to_publication_cck']/CLOCKS[standard])
+            # Stop before the next real callback body, not inside an API.
+            stop=session.inspect('run_until',dict(seconds=(stop['cck']+CLOCKS[standard]*.02)/PROVIDER_CLOCK))
+            assert stop.get('pc')==symbols['simulation_update'] and callbacks.pending is None
+            interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
+            callback_result=callbacks.result(interval)
+            stack_result=timing.result()
+            assert any(r['category']=='public-preview' for r in stack_result['calls'])
+            assert any(r['category']=='core-body' for r in stack_result['calls'])
+            raw=dict(records=session.records,uncompressed_bytes=session.raw_bytes,
+                     cap_uncompressed_bytes=session.MAX_RAW_BYTES)
+        capture=directory/'latency.json'
+        atomic_json(capture,dict(boundaries=boundaries,actions=actions,endpoints=endpoints,
+            timing=callback_result,stack_timing=stack_result, loaded_hunks=loaded,
+            call_map=calls, return_pcs=sorted(returns),literal_rpc=raw,
+            timer_reads=session.observer.timer_reads,
+            timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
+                        'admission declines require emitted control-flow interpretation, not inferred host decisions.'))
+        report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
+            executable_sha256=PRODUCT_SHA256, landing_latency=True, endpoints=endpoints,
+            capture=str(capture.relative_to(ROOT)),declared_caps=CAPS,
+            timing=callback_result, full318_history72_backup_guard=True,
+            frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
+            stack_protocol=stack_result['protocol'], dropped_notifications=callbacks.dropped,
+            physical_clock_hz=CLOCKS[standard], provider_seconds_clock_hz=PROVIDER_CLOCK,
+            scope='Unchanged native executable; short physical held/fresh-edit endpoint latency. '
+                  'No screenshots, new trajectories, gameplay oracle or full tutorial acceptance.')
+        atomic_json(directory/'results-unvalidated.json',report)
+        artifacts=[p for p in directory.iterdir() if p.is_file() and p!=output]
+        transaction.finalize(output,report,[manifest],artifacts)
+    except BaseException as error:
+        transaction.abort(error)
+        raise
+
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--ntsc',action='store_true')
+    parser.add_argument('--baseline',type=Path)
+    args=parser.parse_args()
+    run('NTSC' if args.ntsc else 'PAL',args.baseline)
