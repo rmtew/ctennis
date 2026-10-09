@@ -396,6 +396,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
             from deadline_extent import validate_capture,negative_controls
             captured['publications']=callbacks.surfaces.publications
             captured['deadline_operations']=deadline_operations
+            with gzip.open(directory/'deadline-calibration-unvalidated.json.gz','wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
             captured['deadline']=validate_capture(captured)
             captured['deadline_negative_controls']=negative_controls(captured)
         cpu_image,cpu_symbols=load_image(executable)

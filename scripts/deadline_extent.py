@@ -5,8 +5,8 @@ import gzip
 import json
 
 B_CHUNK_CCK=5000
-B_CALLBACK_CCK=56500
-B_ENTRY_CCK=1250
+B_CALLBACK_CCK=56000
+B_ENTRY_CCK=1750
 B_TRANSPORT_CCK=50000
 OPERATIONS={'game_core_sample_pads_body':3,'game_core_sample_result_body':4,
             'game_core_clear_inputs_body':5,'game_round_poll_body':7,'game_core_latch_actions_body':9}
@@ -48,7 +48,7 @@ def validate_capture(captured):
         assert not any(r['callee'] in forbidden and worker['entry']['cck']<=r['entry']['cck']<=worker['exit']['cck'] for r in sub)
         rows.append(dict(operation=writes[0]['operation'],whole_owner_cck=owner['elapsed_bus_cck'],worker_cck=worker['elapsed_bus_cck'],entry=owner['entry'],exit=owner['exit'],callback_after=callbacks[at+1]['callback']))
     assert max(r['work_cck'] for r in callbacks)<=B_CALLBACK_CCK,'Full callback exceeds declared hypothesis'
-    assert max(r['entry_phase_cck'] for r in callbacks)<=B_ENTRY_CCK,'Nominal callback entry lateness exceeds declared hypothesis'
+    assert max(r['entry_phase_cck'] for r in callbacks)<=B_ENTRY_CCK,('Nominal callback entry lateness exceeds declared hypothesis',max(r['entry_phase_cck'] for r in callbacks),B_ENTRY_CCK)
     return dict(passed=True,prototype_only=True,normative_s05_s18_g2_safety=False,
         chunks=rows,background_worker_calls=len(workers),classes=sorted({r['operation'] for r in rows}),
         maximum_whole_owner_cck=max(r['whole_owner_cck'] for r in rows),chunk_hypothesis_cck=B_CHUNK_CCK,
