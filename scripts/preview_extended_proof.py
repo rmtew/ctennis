@@ -48,6 +48,14 @@ def candidates(index,launches):
     return result
 
 
+def dense_point_destination(symbols,variant,count,address):
+    """Distinguish actual dense append from the separate endpoint writer."""
+    assert variant in (0,1) and 1<=count<=CAPACITY
+    if address==symbols['game_preview_endpoints']+variant*8:return False
+    assert address==symbols['game_preview_paths']+variant*CAPACITY*8+(count-1)*8, 'Unexpected point destination or sample index'
+    return True
+
+
 def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=None):
     """Observe actual accepted-launch hooks and complete dispatch boundaries."""
     if cursor(cpu,'game_history_position')!=selection:
@@ -72,6 +80,8 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
                 kind=1 if pc==cpu.symbols['game_history_contact'] else 3,
                 dispatch=len(boundaries[variant]),serve_clock=value(cpu.working_state(),cpu.symbols,'game_serve_clock')))
         if pc==cpu.symbols['game_preview_write_point']:
+            count=cpu.mem.r16(cpu.symbols['game_preview_counts']+2*variant)
+            if not dense_point_destination(cpu.symbols,variant,count,cpu.cpu.r_reg(8)):return
             state=cpu.working_state()
             boundaries[variant].append(dict(contact=value(state,cpu.symbols,'game_contact'),
                 flight=value(state,cpu.symbols,'game_flight'),lifecycle=value(state,cpu.symbols,'game_lifecycle',2)))
