@@ -1,5 +1,7 @@
 # Endpoint-first integration decision and first proof
 
+Scheduling authority: [the scheduling specification](tutorial-deadline-scheduling-design.md) supersedes future scheduling/admission recommendations here. Measurements and implementation facts below remain historical evidence for their named products.
+
 The approved priorities are player placement first, normal ball sprite motion,
 and optional incremental path filling. Dense samples are not a reason to delay
 an independently exact endpoint. This integration changes readiness/publication;

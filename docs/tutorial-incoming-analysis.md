@@ -1,5 +1,7 @@
 # Incoming reconstruction cost and next proof
 
+Scheduling authority: [the scheduling specification](tutorial-deadline-scheduling-design.md) supersedes future scheduling/admission recommendations here. Measurements and implementation facts below remain historical evidence for their named products.
+
 Analysis only of reviewed PR41 head `1e25a197fdf329f17d0d302a2c240e0d058bac91`. No runtime edits, reserve changes, new native captures or release approval. The recommendation is to prove and calibrate the existing four-operation incoming worker before adding a trajectory cache or direct-contact path.
 
 ## Evidence and accounting
