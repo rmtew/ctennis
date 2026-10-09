@@ -1,6 +1,6 @@
 # Incoming/contact/outgoing independent review
 
-Reviewer: `ratio32_review`, coordinated by the parent. Integrator owns delivery.
+Initial historical review: `ratio32_review`, coordinated by the parent. Integrator owns delivery.
 Reviewed product `9d2ea596cb3e944bc8df15638fcb314bb5473bde` and documentation
 head `737b2816bb7a1060892a0d2182f8ddcec6901f18` for
 [draft PR41](https://github.com/rmtew/ctennis/pull/41). Conclusion: approved as a
@@ -29,3 +29,17 @@ independent byte audit. It does not establish full release acceptance. Exact
 cap, wrapped controller selection, upper/exchanged-end coverage, older
 mandatory fixture migration, standard resource coverage, cold release loading,
 appearance and full release gates remain open as listed in the delivery report.
+
+
+## Correctness migration review scope
+
+For source through `350eabb3824f5385eaefac3b0498c5e112b245f1`, the reviewer
+identified and rechecked the selected-phase handoff fix, independently detected
+human-launch transition, recorded incoming318 source, matching controller
+state/history boundaries, four warm/cold invalid-position cases, real fault
+bounce, and corrected report fingerprints/path bounds. Review was read-only;
+no reviewer CPU/native rerun or new full receipt audit is claimed. The integrator
+ran the seven-case campaign recorded in the delivery report. Reviewer-authored
+native/oracle test migrations still require separate independent final review,
+coordinated by the parent, before merge. Endpoint-first helper/publication work
+and existing release holds remain open.

@@ -8,7 +8,65 @@ samples without the next opponent response. Terminal samples dwell for 30
 nominal callbacks before the sequence repeats. PR38's appearance and release
 hold remains; this is focused evidence, not release approval.
 
-## Identity and completed checks
+## Current correctness migration
+
+Validated source head: `350eabb3824f5385eaefac3b0498c5e112b245f1`.
+Shipping development SHA256:
+`00fe54ed2b97093bbc5aac12e674933249cf484241a9dfe647a125d334672c1a`.
+Standalone SHA256:
+`c39fd878e78c14f90b8ed52b5eb6596ed544d68128852f605ddea44b6391828a`.
+
+Campaign `9070c56648064349926818a8e21a16f0` completed seven selected cases:
+`preview-cpu`, `seek-sliced-cpu`, `preview-native-pal`, `preview-native-ntsc`,
+`incoming-flight-cpu`, `incoming-flight-pal`, and `incoming-flight-ntsc`.
+All pass; `acceptance_passed=false`. CPU preview was reused only after its
+compatible completed attempt; the remaining six completed fresh. The campaign
+retains earlier small-fixture, report-format and missing-input failures. The
+sliced-seek input prefix and its five historical evidence files were linked from
+retained private storage only after verifying all pinned SHA256 values; they
+were not changed or treated as a fresh native capture.
+
+Placement now uses the selected frozen phase's limits in both UI and worker.
+A natural upper-player/end-exchange fixture exposed an incoming serve snapshot
+before receiver handoff, whose narrower limits rejected legitimate selected XY.
+Replay still starts from complete original incoming318 and changes only XY.
+
+Mandatory CPU proofs now independently reconstruct incoming318 and detect real
+human launch before allowing ball-only advancement. They cover five explicitly
+initialized cap-256/513 metadata boundaries, 22 original ball stopping cases,
+a natural exchanged upper player, declared physical attempt-ring relocation
+across 127->0, actual emitted controller selection, and retained/current invalid
+positions in warm/cold contexts. The relocation does not claim natural retention
+of 128 attempts. Preexisting contact flags establish stopping priority; the
+separate fault case detects a new original bounce/court-out. Relocation/native
+sink comparisons and 8,072 seeks pass, as do four operation budgets. A2/A3 bind
+full states, samples and ordered events across the same inputs. Host suite:
+246 tests pass.
+
+| Current physical probe | PAL | NTSC |
+|---|---:|---:|
+| Cold publication | 2.090 s | 1.828 s |
+| 95-pixel held edit through publication | 3.205 s | 3.144 s |
+| Fresh D edit through publication | 0.706 s | 0.639 s |
+| Completed callbacks | 671 | 651 |
+| Largest complete callback | 54,588 CCK | 54,539 CCK |
+| Minimum absolute headroom | 3,859.137 CCK | 4,119.006 CCK |
+| Observed stack | 324 B | 268 B |
+| Chip free / largest block | 65,504 / 64,920 B | 74,464 / 73,880 B |
+
+No notifications dropped; shipping probes again witness actual outgoing sprites
+and terminal dwell/repeat. These live-entropy runs are not paired experiments or
+universal timing bounds. Current static totals are 206,736 B executable,
+56,940 B code, 112,700 B data, 149,856 B BSS and 319,496 B loaded payload.
+Both resource reports were regenerated; `--require-runtime --record` and
+`--check` still exit 1 because standard profiles/cold loading remain incomplete.
+
+The bounded endpoint-first proof and publication protocol are next; see
+[the measured cost plan](tutorial-endpoint-first-plan.md). No query is integrated
+into shipping. Parent coordinates independent final review of the new migration;
+appearance, broader native workloads, metrics/cold ADF and release holds remain.
+
+## Historical initial integration checks
 
 Product commit: `9d2ea596cb3e944bc8df15638fcb314bb5473bde`.
 Development executable SHA256:
@@ -94,9 +152,10 @@ Before merge/release:
 
 - [x] Independent final source and receipt review approved the bounded draft;
   parent coordinates reviewers. See [review extent](tutorial-incoming-flight-review.md).
-- [ ] Extend exact-cap-256, wrapped attempt ring/controller selection, upper human
-  and exchanged-end proofs, plus short/rejected/fault and transition workloads.
-- [ ] Migrate older mandatory preview fixtures from their 256-sample/full-core
+- [x] Extend exact-cap-256, wrapped attempt ring/controller selection and natural
+  upper/exchanged-end CPU proofs; declare synthetic short/rejected/fault scope.
+- [ ] Complete the broader short/rejected/transition native workload matrix.
+- [x] Migrate older mandatory preview fixtures from their 256-sample/full-core
   outgoing assumptions and run the affected standard native gates.
 - [ ] Complete standard resource coverage, cold stripped-ADF loading, appearance
   approval and the full finite release gate. Do not merge ahead of these holds.
