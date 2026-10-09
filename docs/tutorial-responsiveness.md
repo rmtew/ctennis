@@ -43,27 +43,88 @@ cannot establish the endpoint sooner: that still needs sequential simulation.
 
 ## Delivery and validation
 
-- [x] Batch path segments under one aggregate pixel quota and one bounded header
-  quota, including invisible and stationary samples.
-- [ ] Measure each work class including callback tail, presentation IRQ and timer
-  margin before changing its admission reserve. Keep original deadlines.
-- [ ] Give latest-position simulation priority; cancel idle refinement on edits.
-- [ ] Separate placement-ready, animation-ready and fully refined-trail times.
-- [ ] Publish a truthful actual prefix where useful; do not extrapolate an endpoint.
-- [ ] Refine completed trajectories by midpoint subdivision on free private
-  backgrounds, erasing previous coarse chords on each pass. Preserve contact,
-  flight and visibility changes as mandatory boundaries.
-- [ ] Keep ball/shadow on native sprites indexed through dense time samples.
-- [ ] Verify complete canonical/history/backup preservation, input edges, actual
-  publication ownership, PAL/NTSC deadlines and fresh-input/transition cases.
-- [ ] Report fresh first-result latency and derive a concrete interaction target
-  from the measured workload; do not claim a target has passed before evidence.
+- [x] Give latest-position simulation/publication priority and retire superseded results.
+- [x] Separate placement, waiting and animation readiness; trails remain disabled.
+- [x] Keep dense actual ball/shadow samples on the native sprite renderer at game time.
+- [x] Repeat bounded menu construction units with fresh admission after each unit.
+- [x] Check complete state, history/backup, input edges, publication ownership,
+  fresh held edits, Resume latest and complete PAL/NTSC callback deadlines.
+- [x] Measure finite fresh-result latency and record resource costs and limits.
+- [ ] Complete user appearance review and the full native acceptance gate before merge.
+- [ ] Resolve retained-shot navigation/branch integration after this baseline review.
 
-Root owns integration, scheduling changes, the sole native controller and result
-reporting. The presentation author supplies isolated source changes; an
-independent reviewer clears exact source before execution and checks original
-completed evidence afterward. Existing screenshots and PR38's earlier selective
-PAL pass describe the starting prototype, not this unfinished repair.
+Optional trajectory refinement is deferred. Moving sprite echoes and static sprite
+trail fragments are independent opt-in design milestones in
+[the roadmap](tutorial-mode-design.md); each requires Richard's explicit future
+go-ahead before implementation. They do not gate placement or baseline usability.
+Root owns integration and the sole native controller. Independent review clears
+exact source before execution and original completed evidence afterward.
+
+## Current responsiveness baseline
+
+Product `3d755826cc70536d92a9b33dca382df0b4d60a40` preserves the court,
+scoreboards, palette, sprites, shared physics and three-choice menu. Latest player
+poses publish without copying the court; old ball/shadow samples are hidden until
+the current generation provides an actual result. A nominal callback cursor fixes
+playback drift. Menu copy/text units repeat while fresh remaining time admits
+work, using a 5,000 E-clock finishing reserve; optional ghost/path work retains
+10,000. Caption raster remains separately admitted. These reserves have finite
+complete-callback evidence, not universal worst-case certification.
+
+| Focused evidence | PAL | NTSC |
+| --- | ---: | ---: |
+| Physical movement to changed player publication | 26.931 ms | 30.096 ms |
+| Fresh held position edit to actual endpoint publication | 1.068426 s | 1.023953 s |
+| Held choice to already computed endpoint publication | 19.156 ms | 17.787 ms |
+| Complete callbacks checked | 906 | 874 |
+| Minimum absolute callback headroom | 3,657.137 CCK | 4,117.006 CCK |
+| Maximum complete callback work | 54,849 CCK | 54,946 CCK |
+| Missed presentation deadlines / dropped notifications | 0 / 0 | 0 / 0 |
+| Initialized free chip / largest free block | 70,096 / 69,512 B | 79,056 / 78,472 B |
+| Observed stack extent | 320 B | 320 B |
+
+Both menu views became ready at the next 0.2-second observation, versus the
+previous PAL 8.8/7.0-second delays. This is a polling bound, not a precise menu
+scanout latency. Placement latencies above use physical controls and actual native
+scene publication strobes, not exact pixel scanout timestamps. Full native sprite
+RAM/header/sample checks establish published content; stable PNGs establish
+background appearance. The fresh held metric binds generation and variant to the
+held edit interval, preventing a later choice of an existing result from satisfying it.
+Dense playback advanced 60/30 nominal ticks, with PAL aggregate drift
+0.315/0.150 ms and NTSC 10.849/5.425 ms, within the target-derived field-plus-tick
+bounds. Endpoint samples hold without wrapping.
+
+A practical baseline is movement publication around 30 ms and a fresh current
+serve endpoint around 1.1 seconds for this finite workload. A sub-second fresh
+result remains an unproved goal. Retained returns and other workloads need their
+own measurements; these values are emulator guest time, not physical A500 proof.
+
+Fresh campaigns: PAL `8217599dd1bc4c6ba478f75d147435f1`, NTSC
+`f6aad388f6a34958ba31f47564cb915f`. Both consume executable SHA256
+`7c6a89d70efa2689c78767f56febbd9dea2b66f33e552e447ff83af2353ae849`.
+Original reports/media remain under `build/tests/tutorial-court-{pal,ntsc}/`;
+campaign manifests remain under `build/acceptance/campaigns/<id>/`. Each capture
+checks full 318-byte canonical, 72-byte history and 318-byte live backup boundaries,
+actual queued/published banks, native sprites, frozen live state and resume edges.
+The shared core is unchanged (18,020 normalized bytes, 257 relocations, 14 sink
+branches, SHA256 `9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d`).
+Independent exact-source and completed-evidence review passed for both finite
+extents, with no measured-scope blockers. PAL receipt SHA256
+`d0b4f64be3f59e87f12e3a21c385ddbb17ae1dac3663a575f34bf44476002ac6`;
+NTSC receipt SHA256
+`4982c7290abfb9cca42b5327bd3498a78ee5bbc36b88cead082521955a7f88d7`.
+The composed menu workloads cover 46/47 callbacks, peak 43,633/43,574 CCK
+and minimum headroom 14,866.456/15,519.454 CCK (PAL/NTSC). These include
+input, IRQ and tail; they are not isolated unit bounds.
+
+Current development executable: 207,268 bytes; loaded code 56,784, data 112,700,
+BSS 145,420, total loaded payload 314,904 bytes. Presentation fields add 38 declared
+bytes and 40 layout bytes versus `8e66edc`. The tracked resource report was
+regenerated with `native_metrics.py --require-runtime --record`; its expected
+exit 1 records incomplete standard runtime-profile coverage. Focused tutorial
+measurements above do not fill that coverage or establish full acceptance.
+`native_metrics.py --check` also exits 1 because accepted metrics are incomplete;
+no green standard resource-report check is claimed.
 
 ## First repair
 
@@ -73,7 +134,7 @@ Product `44d9c86` batches at most eight segment/header attempts under one shared
 minimum absolute headroom 3,594.137 CCK. Cold complete-view latency fell to
 13.400 seconds; warm variant changes took 2.200–3.000 seconds. These remain
 complete-view measurements, not separate placement readiness or full acceptance.
-Independent evidence review is pending.
+Independent completed-evidence review passed for that finite extent.
 
 A read-only reconstruction of the original `21542bc7` literal RPC matched each
 worker JSR stack write to the caller's progress write. Across 640 calls, observed
