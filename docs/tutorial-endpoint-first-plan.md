@@ -12,7 +12,7 @@ The first integrated physical PAL probe at `1ce8ba1` failed the required early
 marker check: the aligned and fresh edits finished68 outgoing phases with no
 query attempt. The retained literal RPC records252 eligibility calls and zero
 query calls. Reconstructing actual CIA reads after eligibility gives70 samples
-with at most9,987 E-ticks remaining, below the unchanged10,000 admission reserve.
+with at most 9,987 E-ticks remaining, below the unchanged 10,000 admission reserve.
 This is a failed finite probe, not acceptance or a universal timing bound.
 Its literal RPC, failed receipt and emulator log are preserved privately under
 `build/tests/incoming-flight-failures/endpoint-reserve-pal-1ce8ba1/` with hashes.
@@ -23,8 +23,13 @@ changing any reserve. A declined reserve or ineligible API returns to ordinary
 dense work, which resamples remaining time. A completed accepted or rejected
 attempt updates presentation metadata and returns immediately. Generation and
 variant are reloaded after admission; no footer/animation ordering changes.
-Independent source review approved this ownership/order correction. Fresh
-production PAL/NTSC callback and early-publication evidence is still required.
+Independent source review approved this ownership/order correction. Campaign
+`da9d751502054394adaf4ac0064f125e` now passes all seven selected cases freshly
+at `a936eba`, including production PAL/NTSC early-publication and complete
+callback checks. Both native receipts pass independent bounded review. Fresh
+request-to-contact elapsed remains622/625 ms and contact-to-marker 75/58 ms;
+these live-entropy runs are not paired with the older baseline below. See
+[current measurements and limits](tutorial-incoming-flight-results.md).
 
 The completed focused correctness campaign `9070c56648064349926818a8e21a16f0`
 measured product source `350eabb`. Its retained fresh-D matched intervals are:
@@ -205,9 +210,11 @@ they need full terminal318 after another query.
 The actual standalone/native endpoint module matches482 normalized code bytes
 (32 relocations, six verified external branches), SHA256
 `2c2ada68494407db11a2c7cf2eca5ac981a0d975b85a9e472b5389a3ad10f6c7`.
-Measured preview storage is10,974bytes, metadata150:988bytes added, consisting of
+Measured preview storage is 10,974bytes, metadata150:988bytes added, consisting of
 954private state bytes and34metadata bytes. Complete core remains318 and history
 metadata72; no checkpoint/input format change is introduced. Renderer marker mode
 reads the separate endpoint; dense sprite mode reads only available samples.
-Dwell/repeat requires actual dense stopping outcome. Full API/callback/native RAM
-acceptance is pending; prior helper-only costs do not certify this integration.
+Dwell/repeat requires actual dense stopping outcome. Focused API/callback/native
+RAM checks pass in the campaign above; prior helper-only costs are historical.
+Broader workloads, complete resource coverage, cold stripped ADF, appearance and
+full release acceptance remain open.

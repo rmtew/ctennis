@@ -8,7 +8,86 @@ samples without the next opponent response. Terminal samples dwell for 30
 nominal callbacks before the sequence repeats. PR38's appearance and release
 hold remains; this is focused evidence, not release approval.
 
-## Current correctness migration
+## Current endpoint integration
+
+Validated product source: `a936ebac16c977cfc6c39a4426de1cbfdf62170e`.
+Development executable SHA256:
+`4821dfcb1df4b8febfa82a80d23cc787241f45bbd3efc2f513b4dc9d2925a518`.
+Standalone SHA256:
+`ecd1086947ee316e713770b3548f8b19528cf2cec627713657a6bea12348eb5a`.
+
+Campaign `da9d751502054394adaf4ac0064f125e` completed all seven selected
+cases freshly: preview CPU, sliced-seek CPU, PAL/NTSC native preview, endpoint
+CPU and PAL/NTSC incoming presentation. All pass; `acceptance_passed=false`
+because the full release catalog was not run. All 251 host tests pass.
+
+Each alternative retains its complete actual post-dispatch launch318. The first
+four outgoing phases remain sequential, so short flights avoid query overhead.
+A still-running flight can attempt the bounded shared helper once, from that
+immutable seed in separate scratch. Accepted point/phase/outcome publishes
+independently; rejected attempts continue sequentially without a synchronous
+fallback. Dense playback waits for actual samples, and only the real stopping
+outcome allows terminal dwell/repeat. Generation, cancellation and history
+mutations retire endpoint validity.
+
+The CPU gate compares full318, points and ordered events across nine edited
+placements, both alternatives, relocated/native images and poisoned working
+state. It checks stale/canceled neutrality, immutable actual launch seeds,
+unchanged dense state/cursors through the query, final sequential equality and
+three declared short/long/net prefix cases. Preview reconstruction also checks
+all 8,072 seek positions. The original 17,606-byte normalized core is unchanged;
+the actual shared helper 884 bytes and endpoint API 482 bytes match native and
+standalone. Preview storage is 10,974 bytes, an increase 988 (954 private state,
+34 metadata); checkpoint318 and history metadata72 are unchanged.
+
+Both native runs witness actual generation-owned COPJMP markers while dense
+outcome remains zero. Each launched endpoint is compared independently with
+the original ball instructions from its own captured immutable launch318:
+complete terminal318, point, phase and outcome agree. Normal sprites, completed
+terminal sample, 30-callback dwell and repeat pass. Frozen active boundaries
+retain one distinct canonical318/history72/backup tuple per run, and all five
+loaded hunks match the compiled product. No notifications dropped.
+
+| Current physical probe | PAL | NTSC |
+|---|---:|---:|
+| Cold miss publication | 2.140 s | 2.112 s |
+| Held alignment edit through publication | 3.406 s | 3.211 s |
+| Fresh D edit through early publication | 0.697 s | 0.683 s |
+| Request to actual human contact hook | 0.622 s | 0.625 s |
+| Contact hook to actual COPJMP marker | 0.075 s | 0.058 s |
+| Accepted fresh-query API span | 5,744 CCK | 5,747 CCK |
+| Completed callbacks | 688 | 674 |
+| Largest complete callback | 54,970 CCK | 54,489 CCK |
+| Minimum absolute headroom | 3,542.137 CCK | 4,559.006 CCK |
+| Observed stack | 324 B | 320 B |
+| Chip free / largest block | 62,944 / 62,360 B | 71,904 / 71,320 B |
+
+These are finite live-entropy runs, not paired performance experiments or
+universal bounds. The contact hook precedes the completed dispatcher tail;
+post-hook elapsed includes readiness, admission and publication. Ineligible
+query calls and fresh-input transitions remain in complete callback accounting.
+Incoming reconstruction still dominates fresh-edit elapsed time.
+
+The campaign retains three observer failures (endpoint writer counted as a
+dense boundary, missing exact endpoint-retirement write allowances, oversized
+released-state capture) and a real admission-order failure. The latter recorded
+zero query attempts: eligibility checking before the 10,000 E-tick reserve left
+at most 9,987 ticks. The corrected order admits the API including its internal
+guard under the same reserve. Rejections return to dense work, which resamples
+time. No footer/animation reorder or reserve reduction is included. Its failed
+literal RPC/report/log are hash-preserved privately; see
+[the cost and protocol plan](tutorial-endpoint-first-plan.md).
+
+Static totals: 209,252 B development executable, 58,508 B code, 112,700 B data,
+150,844 B BSS and 322,052 B loaded payload. The resource writer regenerated both
+tracked reports and exited 1: all eight standard profiles and cold loading
+remain unmeasured for this product. Focused tests do not fill those gates.
+Independent review covers the new source and both fresh native receipts;
+see [review extent](tutorial-incoming-flight-review.md). Appearance, broader
+native workloads, full standard resources, cold stripped ADF and release
+approval remain open. No merge has been requested or performed.
+
+## Historical correctness migration
 
 Validated source head: `350eabb3824f5385eaefac3b0498c5e112b245f1`.
 Shipping development SHA256:
@@ -61,7 +140,7 @@ universal timing bounds. Current static totals are 206,736 B executable,
 Both resource reports were regenerated; `--require-runtime --record` and
 `--check` still exit 1 because standard profiles/cold loading remain incomplete.
 
-The bounded endpoint-first proof and publication protocol are next; see
+At this historical head, the bounded endpoint-first proof and publication protocol were next; see
 [the measured cost plan](tutorial-endpoint-first-plan.md). No query is integrated
 into shipping. Parent coordinates independent final review of the new migration;
 appearance, broader native workloads, metrics/cold ADF and release holds remain.
@@ -125,7 +204,7 @@ initial placement misses. The preceding `5fab776` measurements were 2.060 s
 PAL and 1.836 s NTSC for fresh edits; these are historical independent native
 runs with live entropy, not paired per-tick randomness or a universal speedup.
 
-Static current totals: executable 206,772 B, code 56,964 B, data 112,700 B,
+Static historical totals: executable 206,772 B, code 56,964 B, data 112,700 B,
 BSS 149,856 B, loaded payload 319,520 B. Relative to PR40: executable +760 B,
 code +492 B, data unchanged, BSS +4,436 B and loaded payload +4,928 B. Paths
 expand to two 513-sample buffers; incoming state adds 318 B. Match tick remains
@@ -160,9 +239,9 @@ Before merge/release:
 - [ ] Complete standard resource coverage, cold stripped-ADF loading, appearance
   approval and the full finite release gate. Do not merge ahead of these holds.
 
-The integrator owns implementation, evidence and follow-up integration. This
-slice keeps dense original ticks; PR40's guarded endpoint query is not integrated
-into shipping because it does not eliminate dense sample cost by itself. A cold
+The integrator owns implementation, evidence and follow-up integration. The
+current slice keeps dense original ticks and integrates a separate bounded
+endpoint attempt without PR40's synchronous fallback. A cold
 incoming cursor hint remains an optional separately proved optimization; initial
 entry latency above remains open. No trail/sprite experiments or scheduling
 changes are included. No merge has been requested or performed.
