@@ -269,8 +269,15 @@ def run(standard='PAL'):
             # Recompute after an actual position edit with F still held, so
             # endpoint latency excludes a later alternative-selection action.
             held_edit_start = time
-            key(0x22, True, .035); key(0x22, False)
+            held_xy = (number('tutorial_x'), number('tutorial_y'))
+            held_generation = number('tutorial_generation')
+            # The preceding rightward hold can already reach the court limit.
+            # Move left to require a fresh accepted edit rather than measuring
+            # a cached endpoint under an ineffective boundary-held direction.
+            key(0x20, True, .035); key(0x20, False)
             held_edit_end = time
+            assert (number('tutorial_x'), number('tutorial_y')) != held_xy
+            assert number('tutorial_generation') != held_generation
             ready(); photo('held-edited-serve')
             frames = []
             for index in range(24):
