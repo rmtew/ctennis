@@ -75,9 +75,12 @@ def run():
         from acceptance_campaign import required_extent
         from acceptance_cases import cases
         case=next(c for c in cases() if c.id=='preview-cpu')
-        assert required_extent(case,dict(report,evidence=transaction.meta)), 'CPU report lacks required current preview extent'
         atomic_json(path.parent/('proof-results-'+transaction.meta['run_id']+'-unvalidated.json'),dict(report,
             receipt_validated=False,receipt_run_id=transaction.meta['run_id']))
+        # Extents validate the serialized report protocol (integer variant keys
+        # become JSON strings, tuples become arrays), exactly as the campaign.
+        serialized=json.loads(json.dumps(dict(report,evidence=transaction.meta)))
+        assert required_extent(case,serialized), 'CPU report lacks required current preview extent'
         transaction.finalize(path,report,compiled=[compile_manifest(executable,listing),
             compile_manifest(native,native.parent/'native.lst')])
         assert status(path)['status']=='passed',status(path)
