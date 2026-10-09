@@ -13,6 +13,7 @@ import os
 import subprocess
 from pathlib import Path
 
+from deadline_policy import POLICY,record as deadline_policy_record
 from native_evidence import ReportRun, TARGET, atomic_json, digest, inputs_for, snapshot
 from native_hunk import loaded_hunks
 from build_match_core import load_image
@@ -36,10 +37,11 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
+def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, deadline=False):
     assert standard in CLOCKS
+    origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
-    directory = ROOT/'build/tests'/(('incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
+    directory = ROOT/'build/tests'/(('deadline-native-' if deadline else 'incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -57,7 +59,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 native_product_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}),
+                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({POLICY} if deadline else set())),
                                 tools=tools, runner='scripts/run_incoming_native.py',
                                 actual_target=dict(TARGET, video=standard),
                                 target_role='legacy-validator-reference',
@@ -67,7 +69,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[]
+        frozen_origin=None;origin_captures=[];deadline_operations=[]
         with LatencySession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -94,6 +96,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
                 game_preview_predictor_reason=2,game_preview_dispatches=4,game_preview_launches=2,
                 game_preview_stream_cursors=16,game_preview_synthetic_phases=4,keyboard_ack=1,keyboard_ack_timer=2,
                 tutorial_packet=1,game_input_bits=2)
+            if deadline:fields['game_preview_operation']=2
             callbacks.surfaces = SurfaceObserver(symbols,read,
                 last_line=311 if standard=='PAL' else 261, verify_sprites=True)
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
@@ -103,6 +106,9 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
                 previous_observe=session.observer.observe
                 def observe(message):
                     input_trace.observe(message);previous_observe(message)
+                    row=message.get('params',{})
+                    if deadline and row.get('access')=='write' and row.get('addr')==symbols['game_preview_operation']:
+                        deadline_operations.append(dict(position=row['position'],operation=int(row['value'])))
                 session.observer.observe=observe
             watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
                 dict(addr=symbols['game_stack_bottom'],
@@ -386,6 +392,12 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
             incoming_live=incoming_live, loop_frames=loop_frames, repeat_witness=repeat_witness, outgoing_witness=outgoing_witness, native_memory=memory,
             timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
                         'admission declines require emitted control-flow interpretation, not inferred host decisions.')
+        if deadline:
+            from deadline_extent import validate_capture,negative_controls
+            captured['publications']=callbacks.surfaces.publications
+            captured['deadline_operations']=deadline_operations
+            captured['deadline']=validate_capture(captured)
+            captured['deadline_negative_controls']=negative_controls(captured)
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
             if predictor:row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,
@@ -449,6 +461,9 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
             assert placements
             origin_result['initial_request_to_first_placement_cck']=placements[0]['position']['cck']-requests[0]['entry']['cck']
             report['incoming_origin']=origin_result;captured['incoming_origin']=origin_result
+        if deadline:
+            report['deadline']=captured['deadline']
+            report['cost_policy']=deadline_policy_record(executable)
         if origin_cache:
             with gzip.open(capture,'wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
         else:atomic_json(capture,captured)
@@ -466,5 +481,6 @@ if __name__=='__main__':
     parser.add_argument('--baseline',type=Path)
     parser.add_argument('--predictor',action='store_true')
     parser.add_argument('--origin-cache',action='store_true')
+    parser.add_argument('--deadline',action='store_true')
     args=parser.parse_args()
-    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache)
+    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache,args.deadline)

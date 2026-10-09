@@ -122,12 +122,13 @@ copy_third_copper:
         move.w  #$c010,$dff09a
         andi.w  #$f8ff,sr
 main_loop:
+        bsr     account_sim_timer
         bsr     game_poll_keyboard
         bsr     poll_presentation
         bsr     account_sim_timer
         move.l  simulation_phase,d0
         cmp.l   simulation_interval,d0
-        bcs.s   main_loop
+        bcs.s   main_background
         sub.l   simulation_interval,d0
         move.l  d0,simulation_phase
         move.l  simulation_interval_whole,simulation_interval
@@ -137,6 +138,9 @@ main_loop:
         addq.l  #1,simulation_interval
 simulation_interval_ready:
         bsr     simulation_update
+        bra     main_loop
+main_background:
+        bsr     tutorial_background
         bra     main_loop
 
 ; Stable high/low/high read of the cascaded down-counter. Retry if either

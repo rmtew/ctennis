@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "status": "experimental-hypotheses-only",
+  "normative_s05_s18_g2_safety": false,
+  "units": "CCK unless specified",
+  "hypotheses": {
+    "accepted_owner": 5000,
+    "root_service": 2500,
+    "residual_margin": 2500,
+    "callback": 56500,
+    "entry_lateness": 1250,
+    "callback_completion_uncertainty": 1250,
+    "keyboard_poll_gap_finite_detector": 50000,
+    "beam_line_floor": 226,
+    "ready_line": 253
+  },
+  "unresolved": [
+    "Full CPU entry/return and IRQ entry/RTE interference",
+    "Chip DMA and coherent timer/beam retry bounds",
+    "Independent admission arithmetic reconstruction",
+    "Transport buffering, maximum ACK delay and approved input latency",
+    "All-workload producer/publication and resource/release coverage"
+  ]
+}
