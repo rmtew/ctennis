@@ -10,7 +10,7 @@ from pathlib import Path
 from build_match_core import build, load_image
 from history_proof import attempts, cursor, field, seek
 from match_core_cpu import Core
-from preview_proof import call_checked, fixture, point, protected
+from preview_proof import block, call_checked, fixture, point, protected
 from run_shared_match_core import READONLY
 
 CAPACITY = 513
@@ -146,14 +146,56 @@ def run(executable):
                     name='game_preview_held_state' if variant==0 else 'game_preview_released_state'
                     assert bytes(cpu.mem.r_block(symbols[name],318))==final
                     assert cpu.preview_event_groups.get((2,variant),[])==outputs
+                restarts=[]
+                if x==111 and y==153:
+                    for stage in ('prime0','prime1','held-incoming','held-outgoing','released'):
+                        call_checked(cpu,'game_preview_request',
+                                     {0:generation,1:selection,2:x,3:y},saved)
+                        generation+=1
+                        for _ in range(4096):
+                            status=field(cpu,'game_preview_status')
+                            if (stage=='prime0' and status==2 or
+                                stage=='prime1' and status==2 and field(cpu,'game_preview_primed')==1 or
+                                stage=='held-incoming' and status==3 and field(cpu,'game_preview_dispatches')>0 and not field(cpu,'game_preview_launches',1) or
+                                stage=='held-outgoing' and status==3 and field(cpu,'game_preview_flight_phases')>0 and not field(cpu,'game_preview_outcomes') or
+                                stage=='released' and status==4 and cpu.mem.r16(symbols['game_preview_dispatches']+2)>0):break
+                            call_checked(cpu,'game_preview_step',{0:generation,1:1},saved)
+                        else:raise AssertionError(('Missing cache restart stage',stage))
+                        old=generation
+                        call_checked(cpu,'game_preview_request',
+                                     {0:generation,1:selection,2:x,3:y},saved)
+                        generation+=1
+                        assert field(cpu,'game_preview_status')==2,stage
+                        for entry,args in (('game_preview_step',{0:old,1:4}),('game_preview_result',{0:old})):
+                            before=block(cpu,'game_preview_storage','game_preview_storage_end')
+                            call_checked(cpu,entry,args,saved)
+                            assert cpu.cpu.r_reg(0)==0 and block(cpu,'game_preview_storage','game_preview_storage_end')==before
+                        cpu.preview_event_groups.clear()
+                        for _ in range(4096):
+                            call_checked(cpu,'game_preview_step',{0:generation,1:4},saved)
+                            if field(cpu,'game_preview_status')>=5:break
+                        assert field(cpu,'game_preview_status')==5
+                        for v,(path,final,_,_,outputs) in enumerate(expected):
+                            count=cpu.mem.r16(symbols['game_preview_counts']+2*v)
+                            assert count==len(path)
+                            assert bytes(cpu.mem.r_block(symbols['game_preview_paths']+v*CAPACITY*8,count*8))==b''.join(path),stage
+                            name='game_preview_held_state' if v==0 else 'game_preview_released_state'
+                            assert bytes(cpu.mem.r_block(symbols[name],318))==final,stage
+                            assert cpu.preview_event_groups.get((2,v),[])==outputs,stage
+                        restarts.append(stage)
                 cpu.audit_reads()
-                row = dict(cache_replay=True,x=x, y=y, poison=poison, selection=selection,
+                row = dict(midwork_cache_restarts=restarts,cache_replay=True,x=x, y=y, poison=poison, selection=selection,
                            counts=[len(item[0]) for item in expected],
                            contact_phases=[item[2] for item in expected],
                            outcomes=[cpu.mem.r16(symbols['game_preview_outcomes']+2*v) for v in (0,1)],
                            maximum_step_cpu_cycles=max(cycles), passed=True)
                 results.append(row)
                 print(json.dumps(row), flush=True)
+                if x==111 and y==153:
+                    call_checked(cpu,'game_preview_request',
+                                 {0:generation,1:0,2:111,3:153},saved)
+                    assert cpu.cpu.r_reg(0)==1 and field(cpu,'game_preview_status')==1, 'Different ordinal/kind/origin reused cache'
+                    row['mismatched_context_cold']=True
     phases = {row['contact_phases'][0] for row in results}
     assert None in phases and len(phases - {None}) >= 2, 'Missing changed timing or visible miss coverage'
     boundaries = []

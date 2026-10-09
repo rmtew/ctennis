@@ -128,9 +128,12 @@ game_preview_request:
         cmp.b   1(a0),d5
         bcs     .invalid_saved
 .incoming_bounds:
-        ; Reuse only a fully published, unchanged selection and attempt.
+        ; The incoming/selected cache is immutable once PRIME begins, even
+        ; while another variant is computing. Every public yield retired A5.
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
+        bcs.s   .cold
         cmpi.w  #PREVIEW_READY,game_preview_status
-        bne.s   .cold
+        bhi.s   .cold
         tst.w   game_preview_cache_valid
         beq.s   .cold
         cmp.w   game_preview_ordinal,d2
