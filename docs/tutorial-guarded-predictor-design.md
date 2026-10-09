@@ -1,5 +1,7 @@
 # Guarded incoming preview dispatch
 
+Measured selective validation is in [the results](tutorial-guarded-predictor-results.md).
+
 The selected increment reduces preview CPU work while preserving the existing
 origin cache, full318 allocations, logical envelope slots, scheduler reserves,
 path storage, endpoint API and normal sprite publication. It replaces only an
