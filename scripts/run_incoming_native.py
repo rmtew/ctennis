@@ -128,8 +128,7 @@ def run(standard='PAL', baseline=None):
                     published=[p for p in callbacks.surfaces.publications
                         if p['position']['cck']>=request['cck']
                         and p['tutorial_fields'].get('tutorial_generation')==generation
-                        and p['tutorial_fields'].get('tutorial_marker_generation')==generation
-                        and p['tutorial_fields'].get('tutorial_marker_ready')
+                        and p['tutorial_fields'].get('tutorial_presentation_generation')==generation
                         and p['tutorial_fields'].get('tutorial_placement_ready')
                         and not p['tutorial_fields'].get('tutorial_placement_dirty')
                         and p['tutorial_fields'].get('tutorial_active_variant')==0
@@ -146,7 +145,8 @@ def run(standard='PAL', baseline=None):
                             counts=[int.from_bytes(block('game_preview_counts',4)[i:i+2],'big') for i in (0,2)],
                             outcomes=[int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
                             incoming_dispatches=[int.from_bytes(block('game_preview_dispatches',4)[i:i+2],'big') for i in (0,2)],
-                            outgoing_phases=[int.from_bytes(block('game_preview_flight_phases',4)[i:i+2],'big') for i in (0,2)])
+                            outgoing_phases=[int.from_bytes(block('game_preview_flight_phases',4)[i:i+2],'big') for i in (0,2)],
+                            human_launches=list(block('game_preview_launches',2)))
                         # Negative latency means a stale already-published endpoint.
                         assert row['latency_cck']>=0
                         row['physical_latency_seconds']=row['latency_cck']/CLOCKS[standard]
@@ -184,28 +184,72 @@ def run(standard='PAL', baseline=None):
             held_start=position()
             key(0x23,True) # F held; actual held alternative, not a supplied expected path.
             generation=endpoint('initial-held',request=held_start)
+            if not endpoints[-1]['human_launches'][0]:
+                # Choose a placement from actual displayed incoming samples;
+                # physical controls perform the edit, and actual contact must
+                # accept it. This is input selection, never expected injection.
+                count=number('game_preview_counts',2)
+                path=block('game_preview_paths',count*8)
+                target_y=number('tutorial_y')+27
+                samples=[path[i:i+8] for i in range(0,len(path),8)]
+                sample=min(samples,key=lambda p:abs(p[1]-target_y))
+                target_x=max(40,min(199,sample[0]-8))
+                alignment_start=position()
+                direction=0x20 if target_x<number('tutorial_x') else 0x22
+                session.inspect('input_key',dict(rawkey=direction,action='press'))
+                for _ in range(200):
+                    advance(.02)
+                    x=number('tutorial_x')
+                    if (x<=target_x if direction==0x20 else x>=target_x):break
+                else:raise AssertionError('Finite physical placement did not reach observed incoming shadow')
+                session.inspect('input_key',dict(rawkey=direction,action='release'))
+                advance(.02)
+                generation=endpoint('aligned-held',request=alignment_start)
+            assert endpoints[-1]['human_launches'][0]
+            assert endpoints[-1]['outgoing_phases'][0]>0
+            assert endpoints[-1]['outcomes'][0] in (1,2,3)
             previous_xy=(number('tutorial_x'),number('tutorial_y'))
             edit_start=position()
             key(0x22,True,.02);key(0x22,False,.001)
             assert (number('tutorial_x'),number('tutorial_y'))!=previous_xy
             endpoint('fresh-D-edit',generation,request=edit_start)
+            assert endpoints[-1]['human_launches'][0] and endpoints[-1]['outgoing_phases'][0]>0
+            assert endpoints[-1]['outcomes'][0] in (1,2,3)
             endpoints[-1]['physical_input_request']=edit_start
             endpoints[-1]['input_to_publication_cck']=(
                 endpoints[-1]['first_actual_publication']['position']['cck']-edit_start['cck'])
             endpoints[-1]['physical_input_latency_seconds']=(
                 endpoints[-1]['input_to_publication_cck']/CLOCKS[standard])
-            assert endpoints[0]['incoming_state_sha256']==endpoints[1]['incoming_state_sha256']
-            assert endpoints[0]['incoming_cursor']==endpoints[1]['incoming_cursor']
+            assert len({e['incoming_state_sha256'] for e in endpoints})==1
+            assert len({e['incoming_cursor'] for e in endpoints})==1
             before_loop=len(callbacks.surfaces.publications)
             for _ in range(100):
                 advance(.05)
                 frames=callbacks.surfaces.publications[before_loop:]
-                indices=[p.get('tutorial_fields',{}).get('tutorial_animation_index') for p in frames
-                         if p.get('tutorial_fields',{}).get('tutorial_generation')==number('tutorial_generation',4)]
-                if any(a is not None and b is not None and a>b for a,b in zip(indices,indices[1:])):
-                    break
+                eligible=[p for p in frames if
+                    p.get('tutorial_fields',{}).get('tutorial_generation')==number('tutorial_generation',4)
+                    and p['tutorial_fields'].get('tutorial_active_variant')==0
+                    and p['tutorial_fields'].get('tutorial_ball_mode')==2]
+                pairs=list(zip(eligible,eligible[1:]))
+                terminal=number('tutorial_counts',4)>>16
+                repetitions=[(a,b) for a,b in pairs
+                    if a['tutorial_fields'].get('tutorial_animation_index')==terminal-1
+                    and b['tutorial_fields'].get('tutorial_animation_index')==0
+                    and ((b['tutorial_fields']['tutorial_animation_callback']-
+                          a['tutorial_fields']['tutorial_animation_callback'])&65535)>=30]
+                if repetitions:break
             else:raise AssertionError('Normal ball sequence did not repeat after terminal dwell')
-            loop_frames=frames
+            loop_frames=eligible
+            repeat_witness=list(repetitions[0])
+            outgoing=[p for p in eligible
+                if endpoints[-1]['incoming_dispatches'][0]<p['tutorial_fields']['tutorial_animation_index']<terminal-1
+                and p.get('native_sprite_check',{}).get('matched')
+                and p['native_sprite_check'].get('actual_sample')
+                and bytes.fromhex(p['native_sprite_check']['actual_sample'])[6]&15
+                and bytes.fromhex(p['native_sprite_check']['actual_sample'])[3]<192]
+            assert outgoing, 'No actual visible outgoing ball sample publication'
+            outgoing_witness=outgoing[0]
+            assert repeat_witness[1]['position']['cck']-repeat_witness[0]['position']['cck']>=29*number('simulation_interval_whole',4)*5
             # Stop before the next real callback body, not inside an API.
             stop=session.inspect('run_until',dict(seconds=(stop['cck']+CLOCKS[standard]*.02)/PROVIDER_CLOCK))
             assert stop.get('pc')==symbols['simulation_update'] and callbacks.pending is None
@@ -232,12 +276,13 @@ def run(standard='PAL', baseline=None):
             timing=callback_result,stack_timing=stack_result, loaded_hunks=loaded,title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
             call_map=calls, return_pcs=sorted(returns),literal_rpc=raw,
             timer_reads=session.observer.timer_reads,
-            incoming_live=incoming_live, loop_frames=loop_frames, native_memory=memory,
+            incoming_live=incoming_live, loop_frames=loop_frames, repeat_witness=repeat_witness, outgoing_witness=outgoing_witness, native_memory=memory,
             timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
                         'admission declines require emitted control-flow interpretation, not inferred host decisions.'))
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
             executable_sha256=product_sha256, incoming_flight=True, endpoints=endpoints, native_memory=memory,
-            repeated_sequence=True, loop_publications=len(loop_frames),
+            repeated_sequence=True, loop_publications=len(loop_frames), repeat_witness=repeat_witness,
+            actual_human_outgoing=True, outgoing_witness=outgoing_witness,
             capture=str(capture.relative_to(ROOT)),declared_caps=CAPS,
             timing=callback_result, full318_history72_backup_guard=True,
             frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),

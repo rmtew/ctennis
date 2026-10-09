@@ -755,7 +755,11 @@ def required_extent(case,report):
                 and report.get('repeated_sequence') is True
                 and report.get('full318_history72_backup_guard') is True
                 and report.get('dropped_notifications')==0
-                and len(rows)==2
+                and len(rows) in (2,3)
+                and report.get('actual_human_outgoing') is True
+                and any((row.get('human_launches') or [0])[0] and
+                        (row.get('outgoing_phases') or [0])[0]>0 and
+                        (row.get('outcomes') or [0])[0] in (1,2,3) for row in rows)
                 and all(row.get('latency_cck',-1)>=0
                         and row.get('first_actual_publication',{}).get('native_sprite_check')
                         for row in rows)
