@@ -10,6 +10,12 @@ branch commit.
 
 ## API and isolation contract
 
+The guarded-predictor increment adds a separate observational entry,
+`game_preview_request_projected`, described in
+[its design](tutorial-guarded-predictor-design.md). The exact entry and the
+complete-state comparisons below retain their contract. An admitted projected
+launch buffer is a preview seed; it cannot serve as a playable checkpoint.
+
 `game_preview_request` accepts the current generation, a retained completed
 attempt ordinal (or `ffff` for explicit current human serve setup), and legal
 byte X/Y. The selected boundary is `game_history_position`. A completed serve
