@@ -19,6 +19,28 @@ BODY_ARITIES=dict(game_core_init=0,game_core_select=3,game_core_sample_pads=2,
     game_round_poll=0,game_tick_dispatch=0,game_core_latch_actions=0)
 
 
+def irq_resumptions_valid(frame):
+    """Retained resumes prove unchanged entry state and complete ordered IRQs."""
+    try:
+        resumes=frame.get('irq_resumptions',[])
+        if not isinstance(resumes,list) or len(resumes)>64:return False
+        previous=frame['start']['cck']
+        for row in resumes:
+            cck=row['position']['cck'];acks=row['acknowledgements']
+            pcs=[w['pc'] for w in acks];times=[w['position']['cck'] for w in acks]
+            if (not previous<cck<=frame['end']['cck'] or not pcs
+                    or pcs!=[row['irq_entry_pc'],row['irq_exit_pc']]*(len(pcs)//2)
+                    or row['irq_entry_pc']==row['irq_exit_pc']
+                    or not all(previous<=n<=cck for n in times)
+                    or not all(a<b for a,b in zip(times,times[1:]))
+                    or any(row['registers'][k]!=frame['entry_registers'][k] for k in ('a','d','pc','sr'))
+                    or row['return_pc']!=frame['return_pc'] or row['state']!=frame['before']
+                    or len(bytes.fromhex(row['state']))!=318 or row['ownership']!=frame['ownership']):return False
+            previous=cck
+        return True
+    except (KeyError,TypeError,ValueError):return False
+
+
 def body_observation(block,api_rows,hunks):
     """Every actual body entry, including unmarked calls, has a matched return."""
     if (not isinstance(block,dict)
@@ -49,6 +71,7 @@ def body_observation(block,api_rows,hunks):
         if (not isinstance(frame,dict) or type(frame.get('entry_index')) is not int or frame['entry_index']!=index
                 or not integer(frame.get('api_row_index'),0,len(api_rows)-1)
                 or frame.get('operation') not in specs):return False
+        if not irq_resumptions_valid(frame):return False
         spec=specs[frame['operation']];api_index=frame['api_row_index'];api=api_rows[api_index]
         if (type(frame.get('arity')) is not int or frame['arity']!=spec['arity']
                 or frame.get('entry_pc')!=spec['pc'] or type(frame.get('entry_pc')) is not int

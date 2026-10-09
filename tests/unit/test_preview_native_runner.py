@@ -22,6 +22,7 @@ class NativePreviewTiming(unittest.TestCase):
         frames=BodyFrames({0x400:dict(operation='game_core_sample_pads',arity=2)},0x1000,0x2000,{0x500})
         native.observer=SimpleNamespace(body_frames=frames,active=None,drops=0,problems=[],
             api_rows=[],rows=[],pending={'bodies':0},inside_api=lambda:True,
+            irq_writes=[],irq_entry_pc=0x600,irq_exit_pc=0x602,
             number=lambda n,w=2:2 if n=='game_preview_active' else 0,
             state=lambda:native.current_state)
         native.current_state=bytes(318)
@@ -97,6 +98,67 @@ class NativePreviewTiming(unittest.TestCase):
         self.assertEqual(native.observer.pending['bodies'],2)
         self.assertEqual([r['depth'] for r in frames.records],[2,1])
         self.assertEqual(len(native.observer.rows),1)
+
+    def test_genuine_tail_frames_share_one_return_breakpoint(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x420,0x1800,2,0),
+            (0x500,0x1804,3,1),(0x900,0x1900,4,1)],0)
+        native.observer.body_frames.body_map[0x420]=dict(operation='game_round_poll',arity=0)
+        native.run_owned_api('game_history_seek_step',1)
+        self.assertEqual([r['depth'] for r in native.observer.body_frames.records],[2,1])
+        additions=[a for m,a in native.session.calls if m=='break_add' and 'cond' in a]
+        self.assertEqual(len(additions),1)
+        removed=[a['id'] for m,a in native.session.calls if m=='break_remove']
+        self.assertEqual(len(removed),len(set(removed)))
+
+    def test_irq_resume_keeps_one_body_and_original_elapsed_time(self):
+        native=self.body_native([(0x400,0x1800,1,0),(0x400,0x1800,4,0),
+            (0x500,0x1804,9,1),(0x900,0x1900,10,1)])
+        original=native.session.inspect
+        def inspect(method,args=None):
+            result=original(method,args)
+            if method=='run_until' and result['cck']==4:
+                native.observer.irq_writes.extend([dict(pc=pc,position=dict(cck=n))
+                    for pc,n in ((0x600,2),(0x602,3))])
+            return result
+        native.session.inspect=inspect
+        native.run_owned_api('game_preview_step',1)
+        frame=native.observer.rows[0]
+        from preview_native_extent import irq_resumptions_valid
+        self.assertTrue(irq_resumptions_valid(frame))
+        from copy import deepcopy
+        bad=deepcopy(frame);bad['irq_resumptions'][0]['state']='ff'*318
+        self.assertFalse(irq_resumptions_valid(bad))
+        bad=deepcopy(frame);bad['irq_resumptions'][0]['acknowledgements'][1]['position']['cck']=1
+        self.assertFalse(irq_resumptions_valid(bad))
+        self.assertEqual(frame['elapsed_cck'],8)
+        self.assertEqual(len(frame['irq_resumptions']),1)
+        self.assertEqual(native.observer.pending['bodies'],1)
+        self.assertEqual(native.internal_body_stops,2)
+        self.assertEqual(len([a for m,a in native.session.calls if m=='break_add' and 'cond' in a]),1)
+
+    def test_repeated_entry_fails_closed_without_irq_or_after_mutation(self):
+        for change in ('no-irq','partial-irq','out-of-order','state','owner','registers','sr','a5','return','intent'):
+            native=self.body_native([(0x400,0x1800,1,0),(0x400,0x1800,4,1 if change=='state' else 0)])
+            original=native.session.inspect
+            def inspect(method,args=None):
+                result=original(method,args)
+                if method=='run_until' and result['cck']==4:
+                    if change!='no-irq':
+                        native.observer.irq_writes.extend([dict(pc=pc,position=dict(cck=n))
+                            for pc,n in ((0x600,2),) if change=='partial-irq'] or
+                            [dict(pc=pc,position=dict(cck=n)) for pc,n in ((0x600,2),(0x602,3))])
+                    if change=='out-of-order':native.observer.irq_writes[-1]['position']['cck']=1
+                    if change=='owner':native.observer.number=lambda n,w=2:2 if n=='game_preview_active' else 1 if n=='game_preview_status' else 0
+                    if change=='return':native.read=lambda a,b:native.current_state if b==318 else (0x502).to_bytes(4,'big')
+                    if change=='intent':native.observer.body_frames.stack[-1]['events'].append({'unexpected':True})
+                if method=='regs.get' and native.session.current[2]==4:
+                    if change=='registers':result['d'][0]+=1
+                    if change=='sr':result['sr']+=1
+                    if change=='a5':result['a'][5]=0x4000
+                return result
+            native.session.inspect=inspect
+            with self.assertRaisesRegex(AssertionError,'Repeated body entry|unknown supplied context'):
+                native.run_owned_api('game_preview_step',1)
 
     def test_guard_removed_source_must_equal_reviewed_preview_source(self):
         with tempfile.TemporaryDirectory() as directory:

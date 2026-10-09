@@ -1,6 +1,7 @@
 """Bounded retained-private native evidence, separate from later UI integration."""
 import math
 from native_evidence import TARGET
+from preview_native_extent import irq_resumptions_valid
 
 CPU_RECEIPTS={
  'build/tests/preview-cpu/report.json':'82655fe568c668b97cae26d9219b5ef2104de9dbd24c7ecc3d4a867680446e5e',
@@ -42,6 +43,7 @@ def required_retained_extent(report,standard):
     spans.sort()
     if any(a[1]>b[0] for a,b in zip(spans,spans[1:])):return False
     for frame in frames:
+        if not irq_resumptions_valid(frame):return False
         try:
             if (frame['exit_pc']!=frame['return_pc'] or frame['exit_sp']!=frame['entry_sp']+4
                     or frame['entry_registers']['pc']!=frame['entry_pc']

@@ -302,9 +302,9 @@ class Native:
         assert not frames.stack and observer.active is None,'Unfinished trace at owned API entry'
         entry_ids=[self.session.inspect('break_add',{'kind':'pc','addr':pc})['id']
             for pc in frames.body_map]
-        return_ids={};deadline=self.stop['seconds']+1;previous=None;entry_count=0;outer_count=0
+        return_ids={};return_breaks={};resumes=0;deadline=self.stop['seconds']+1;previous=None;entry_count=0;outer_count=0
         try:
-            for _ in range(16385): # <=8192 actual entries, paired exits, one public return.
+            for _ in range(16449): # <=8192 entries, paired exits, <=64 IRQ resumes, public return.
                 stop=self.session.inspect('run_until',{'seconds':deadline})
                 registers=self.session.inspect('regs.get')
                 pc,sp=registers['pc'],registers['a'][7]
@@ -316,7 +316,6 @@ class Native:
                 if pc==self.symbols['preview_native_return']:
                     assert not frames.stack,'Public return precedes actual body return'
                     return stop
-                self.internal_body_stops+=1
                 # Notification delivery is drained by the synchronous run reply.
                 canonical=self.block('game_core_state','game_core_state_end')
                 assert canonical==observer.state(),'Canonical state differs from full write reconstruction'
@@ -330,8 +329,13 @@ class Native:
                 assert state==bytes(shadow),'Actual supplied state differs from full write reconstruction'
                 position={k:stop[k] for k in ('cck','frame','vpos','hpos','seconds')}
                 if frames.stack and (pc,sp)==(frames.stack[-1]['return_pc'],frames.stack[-1]['entry_sp']+4):
+                    self.internal_body_stops+=1
                     for row in frames.exit(pc,sp,state,position):
-                        self.session.inspect('break_remove',{'id':return_ids.pop(row['entry_index'])})
+                        key=return_ids.pop(row['entry_index'])
+                        owned=return_breaks[key];owned['users']-=1
+                        if not owned['users']:
+                            self.session.inspect('break_remove',{'id':owned['id']})
+                            del return_breaks[key]
                         if row['depth']==1:
                             row['index']=len(observer.rows);observer.rows.append(row)
                     # A return may land at another real body entry (tail/caller
@@ -339,9 +343,6 @@ class Native:
                     if pc not in frames.body_map:continue
                 assert pc in frames.body_map,'Unexpected stop inside actual native API'
                 assert observer.inside_api(),'Body entry outside actual mailbox JSR bracket'
-                entry_count+=1
-                assert entry_count<=8192,'Native API body-entry observation bound exceeded'
-                if name=='game_preview_step':assert entry_count<=budget,'Actual preview body entries exceed requested operation budget'
                 return_pc=int.from_bytes(self.read(sp,4),'big')
                 owner=dict(active=observer.number('game_preview_active',1),
                     status=observer.number('game_preview_status'),variant=observer.number('game_preview_variant',1),
@@ -349,17 +350,35 @@ class Native:
                     seek_generation=observer.number('game_history_seek_generation',4),
                     seek_cursor=observer.number('game_history_seek_cursor',8))
                 assert base==expected_body_base(name,owner,self.symbols),'Body A5 differs from actual owner role'
+                if frames.stack and (pc,sp)==(frames.stack[-1]['entry_pc'],frames.stack[-1]['entry_sp']):
+                    top=frames.stack[-1]
+                    acknowledgements=[w for w in observer.irq_writes[top['_irq_write_cursor']:]
+                        if w['pc'] in (observer.irq_entry_pc,observer.irq_exit_pc)]
+                    frames.resume_entry(registers,return_pc,state,position,owner,acknowledgements,
+                        observer.irq_entry_pc,observer.irq_exit_pc)
+                    top['_irq_write_cursor']=len(observer.irq_writes)
+                    resumes+=1
+                    assert resumes<=64,'Native API IRQ-resume observation bound exceeded'
+                    continue
+                self.internal_body_stops+=1
+                entry_count+=1
+                assert entry_count<=8192,'Native API body-entry observation bound exceeded'
+                if name=='game_preview_step':assert entry_count<=budget,'Actual preview body entries exceed requested operation budget'
                 row=frames.entry(pc,registers,return_pc,state,position,owner,len(observer.api_rows))
                 if row['depth']==1:
                     outer_count+=1
                     if name=='game_history_seek_step':assert outer_count<=1,'Actual seek logical bodies exceed one-body admission'
                 observer.pending['bodies']+=1
-                return_ids[row['entry_index']]=self.session.inspect('break_add',{'kind':'pc','addr':return_pc,
-                    'cond':{'lhs':'sp','op':'eq','rhs':sp+4}})['id']
+                row['_irq_write_cursor']=len(observer.irq_writes)
+                key=(return_pc,sp+4)
+                if key not in return_breaks:
+                    return_breaks[key]=dict(id=self.session.inspect('break_add',{'kind':'pc','addr':return_pc,
+                        'cond':{'lhs':'sp','op':'eq','rhs':sp+4}})['id'],users=0)
+                return_breaks[key]['users']+=1;return_ids[row['entry_index']]=key
                 self.check_caps()
             raise AssertionError('Native body entry/return stop bound exhausted')
         finally:
-            for identifier in [*entry_ids,*return_ids.values()]:
+            for identifier in [*entry_ids,*(r['id'] for r in return_breaks.values())]:
                 self.session.inspect('break_remove',{'id':identifier})
 
     def call(self,name,args=(),accepted=True):

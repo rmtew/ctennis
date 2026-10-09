@@ -48,6 +48,24 @@ class BodyFrames:
         self.entries+=1;self.stack.append(frame);self.internal_stops+=1
         return frame
 
+    def resume_entry(self,registers,return_pc,state,position,owner,acknowledgements,irq_entry_pc,irq_exit_pc):
+        """An IRQ may return to a trapped entry before its first instruction."""
+        frame=self.stack[-1]
+        previous=frame.get('irq_resumptions',[])
+        start=previous[-1]['position'] if previous else frame['start']
+        assert (all(registers[k]==frame['entry_registers'][k] for k in ('a','d','pc','sr'))
+            and return_pc==frame['return_pc'] and len(state)==318
+            and state.hex()==frame['before'] and owner==frame['ownership']
+            and not frame['events']), 'Repeated body entry changed before IRQ resume'
+        pcs=[w['pc'] for w in acknowledgements]
+        assert (pcs and pcs==[irq_entry_pc,irq_exit_pc]*(len(pcs)//2)
+            and all(start['cck']<=w['position']['cck']<=position['cck'] for w in acknowledgements)
+            and all(a['position']['cck']<b['position']['cck'] for a,b in zip(acknowledgements,acknowledgements[1:]))
+            and position['cck']>start['cck']), 'Repeated body entry lacks completed IRQ acknowledgement pair'
+        frame.setdefault('irq_resumptions',[]).append(dict(position=dict(position),
+            registers=registers,return_pc=return_pc,state=state.hex(),ownership=dict(owner),
+            acknowledgements=acknowledgements,irq_entry_pc=irq_entry_pc,irq_exit_pc=irq_exit_pc))
+
     def sink(self,event):
         assert self.stack,'Semantic intent outside an observed actual body'
         for frame in self.stack:frame['events'].append(event)
@@ -63,6 +81,7 @@ class BodyFrames:
         # may complete several frames. Never resume to invent a second return.
         while self.stack and (self.stack[-1]['return_pc'],self.stack[-1]['entry_sp']+4)==(pc,sp):
             frame=self.stack.pop()
+            frame.pop('_irq_write_cursor',None)
             frame.update(state=state.hex(),after=state.hex(),exit_pc=pc,exit_sp=sp,end=dict(position),
                 elapsed_cck=position['cck']-frame['start']['cck'])
             self.records.append(frame);completed.append(frame)
