@@ -90,9 +90,11 @@ scene publication strobes, not exact pixel scanout timestamps. Full native sprit
 RAM/header/sample checks establish published content; stable PNGs establish
 background appearance. The fresh held metric binds generation and variant to the
 held edit interval, preventing a later choice of an existing result from satisfying it.
-Dense playback advanced 60/30 nominal ticks, with PAL aggregate drift
-0.315/0.150 ms and NTSC 10.849/5.425 ms, within the target-derived field-plus-tick
-bounds. Endpoint samples hold without wrapping.
+Dense playback advanced 60/30 nominal ticks. PAL aggregate drift is
+0.315/0.150 ms. The original NTSC report mixed provider seconds with regional
+nominal seconds; raw-CCK normalization below corrects this to 1.617/0.809 ms
+in regional units, still within the field-plus-tick bounds. Endpoint samples
+hold without wrapping. Original receipts remain unchanged.
 
 A practical baseline is movement publication around 30 ms and a fresh current
 serve endpoint around 1.1 seconds for this finite workload. A sub-second fresh
@@ -240,3 +242,58 @@ See [the retained navigation/branch queue](tutorial-retained-branch.md).
 Independent read-only review reproduced the interval counts/progress/headroom
 figures and checked the source operation order. No additional emulator execution
 or baseline rerun was performed for this investigation.
+
+### Public worker span reconstruction
+
+Independent read-only reconstruction binds generation 10/variant 0 in the
+fresh-held-edit interval to the first actual marker publication, using literal
+CCK timestamps rather than converting reported seconds. Call starts are the
+native `game_preview_step` BSR/JSR stack stores; ends are the matching caller
+progress stores. Every counted call belongs wholly to one selected complete
+callback; duplicate, crossing and unmatched calls reject the analysis.
+
+| Exact preserved-product observation | PAL | NTSC |
+| --- | ---: | ---: |
+| Request→marker raw CCK bounds | 56,164,191→59,953,786 | 55,540,575→59,172,428 |
+| Public worker calls | 105 | 69 |
+| Enclosing worker span total | 1,282,367 CCK | 1,063,222 CCK |
+| Median / maximum enclosing worker span | 12,772 / 18,867 CCK | 16,379 / 21,194 CCK |
+| Whole callbacks contained in that raw interval | 64 | 60 |
+| Selected complete-callback work | 1,964,306 CCK | 1,679,620 CCK |
+| Selected callback complement outside worker spans | 681,939 CCK | 616,398 CCK |
+| Sum of observed absolute headroom | 1,791,903 CCK | 1,873,124 CCK |
+
+These worker spans include call return, caller bookkeeping, IRQ and contention;
+they are not exclusive simulation-body costs. The callback complement applies
+only to those complete contained callbacks, not all work in the request interval.
+In particular, the initial request callback is only partially in the interval,
+and a publication can occur before its containing callback finishes. The earlier
+61-entry NTSC interval included that final callback; the table uses 60 fully
+contained callbacks instead. Headroom sums are observations, not budgets that
+can simply be transferred to additional work. The four-public-call cap is not
+established as the bottleneck. Source thresholds and repeated restore costs
+are plausible constraints requiring measured separation.
+
+Nothing here establishes a one-second unavoidable target-hardware lower bound.
+A focused separate read/write-stack observation is being prepared to pair actual
+call/RTS accesses and split simulation bodies, selection guards and copy/restore
+spans. It must measure declined admissions/finishing tails without altering the
+actual physics or live state and without overwriting these baseline captures.
+Only a separately reviewed admission change and fresh affected-case proof can
+establish a speedup. No smaller reserve or larger public API budget is approved
+by these measurements alone.
+
+### Corrected NTSC timebase interpretation
+
+The provider's saved `position.seconds` uses a fixed 3,546,895 CCK/s timebase even
+in NTSC mode, while the observer's original nominal/tolerance calculation used
+3,579,545 CCK/s. The old 10.849/5.425-ms NTSC values therefore include a clock-unit
+conversion difference and must not be called pure playback drift. Reconstructing
+the same 60/30-tick epochs entirely in raw CCK gives elapsed 3,589,948/1,794,975 and
+nominal 3,584,160.333/1,792,080.167 CCK. Drift is 5,787.667/2,894.833 CCK: regional
+NTSC conversion 1.617/0.809 ms, or provider conversion 1.632/0.816 ms. Both remain
+within the same-unit field-plus-tick allowance, and producer ticks remain 60/30.
+No emulator rerun is needed for this arithmetic correction; the original report,
+executable, input trace and receipt are preserved. Reported latencies elsewhere
+are provider guest seconds unless a regional conversion is explicitly named.
+New timing observations must retain raw CCK and label the seconds timebase.

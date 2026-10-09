@@ -87,7 +87,8 @@ Proposed begin arguments are expected job generation, expected published preview
 generation and variant0/1. It validates frozen ownership, PLAYING/human context,
 unchanged selected318/all72, READY preview identity and legal edited coordinates.
 It copies the preview's edited initial318 into owned scratch, then uses the real
-pad edge sampler once to prime the selected action, preserving opponent input
+pad edge sampler twice, matching the existing preview priming, to establish
+the selected action, preserving opponent input
 and clearing human directions exactly as the reviewed preview policy does. It
 restores selected318/all72/store/live backup before returning READY. Failure
 changes no public or previously valid transaction state.
@@ -119,20 +120,50 @@ commit cannot publish. Cancel preserves selection and all history. Successful
 commit retires preview/cache and paused jobs; Resume latest retains its existing
 exact interrupted-state behavior until an explicit branch commits.
 
-The primed action must reach its intended first dispatch before ordinary logical
-sampling can erase its pressed edge. Commit and that dispatch are separately
-admitted callback work. Physical/UI sampling continues, but logical sampling
-stays blocked until the first branch dispatch; no seek/preview batch is added to
-that callback. The first dispatch is recorded at the new branch cursor.
+The twice-sampled canonical inputs must reach their intended first dispatch
+without further canonical work. This preserves the same held/pressed/released
+bytes as the displayed preview; it does not invent a retained pressed edge.
+Guard round poll, result sampling, pad sampling and native commands as well as
+dispatch while this transaction is pending, because the native callback currently
+polls before tutorial work. Commit and that dispatch are separately
+admitted callback work. Physical/UI sampling continues into private state, but canonical work stays
+blocked until the first declared branch dispatch; no seek/preview batch is added
+to that callback. The first dispatch is recorded at the new branch cursor.
 
-Physical action reconciliation needs explicit coverage: consume menu action
-transitions while preserving the selected logical action. The proposed policy
-holds that action until physical controls match it, then hands back ordinary
-sampling without a fabricated press. Released choice with a held confirmation
-stays released until physical release; held choice with a menu-time release stays
-held until controls synchronize. This policy and its user hint require source
-review before implementation. It is not a promise to hold actions indefinitely
-without explaining control ownership.
+Physical action reconciliation uses a neutral-release barrier. Preserve the
+selected player's chosen B1 only through the declared first dispatch. After that,
+use the real sampler at every ordinary input boundary with only human B1
+replaced by the chosen action until aggregate unfiltered physical B1 is neutral.
+At that neutral boundary remove the override and sample zero normally. A held
+choice with physical action already released produces one ordinary release
+following its first dispatch. A held choice with physical action still held
+remains held until actual release. A released choice with held confirmation
+stays released until confirmation release, then hands over without an action
+edge. Later real presses/releases work normally. Never restore prepared edge
+bytes repeatedly, and preserve the sampler's existing latch semantics.
+
+The barrier observes actual mapped keyboard and joystick aliases before entry
+mask filtering; a masked held F must not appear neutral. Normal human directions
+and opponent sampling resume after the first dispatch. Retire carried menu
+navigation directions, B2/modifier and Enter aliases until their own neutral
+boundary so they cannot leak into gameplay or a fresh tutorial gesture. Show a
+persistent release-action synchronization hint while the barrier owns B1, using
+the existing hint mechanism; exact wording/appearance remains for user review.
+Before commit, cancellation/supersession preserve the original future and
+interrupted Resume latest backup. After commit, the original future is invalid:
+cancellation/supersession and Resume latest cannot restore that prebranch
+backup. Pause may retain FIRST_DISPATCH_PENDING privately; reject or defer
+other jobs until that first dispatch completes. The next tutorial entry captures
+a new live backup from the committed branch. The first chosen action is guaranteed; subsequent continuation
+follows this policy and physical inputs. Equality with the displayed trajectory
+requires a declared matching logical continuation, not arbitrary physical input.
+
+Independent preparation review recommends this policy over waiting for physical
+re-press to match a virtual hold. Source and native proof are still required
+before implementation. Cover already-neutral versus later-neutral action,
+mixed aliases, input-source changes, press/release between callbacks, carried
+menu directions and exact held/pressed/released/latch bytes. No visual tuning or
+runtime branch code is implemented by this proposal.
 
 ## First focused actual-core proof
 
@@ -175,7 +206,8 @@ semantics require independent source/design review before runtime code changes.
 - [x] Carry forward the completed author proposal into the integration repository.
 - [x] Independently review the proposed segment validity, completion cursors and eviction policy,
   including record-slot overwrite pruning independent of checkpoint capacity.
-- [ ] Agree control reconciliation semantics before implementing branch commit.
+- [x] Independently review the proposed two-sample prime and neutral-release barrier.
+- [ ] Prove exact control reconciliation and first-dispatch ordering before native integration.
 - [ ] Implement private metadata and transaction APIs in an isolated increment;
   keep the current court presentation unchanged.
 - [ ] Run the first actual-core 835→569→836 proof described above, including
@@ -199,5 +231,6 @@ implementation or approval to merge PR38.
 
 Independent docs-only review cleared this proposal for continued preparation on
 2026-10-09 after the ring-overwrite and valid-slot corrections. Control
-reconciliation remains an unresolved policy decision before branch runtime code;
+reconciliation now has a reviewed recommendation; exact source/native proof
+remains required before branch runtime code;
 this review does not approve implementation, visual choices or merge.
