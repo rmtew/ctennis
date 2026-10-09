@@ -64,3 +64,13 @@ def cases():
         Case('tutorial-court-ntsc', ('scripts/run_tutorial_capture.py','--ntsc'),
              'tests/tutorial-court-ntsc/report.json'),
     ]
+
+
+def diagnostic_cases():
+    """Explicitly selected probes; never expand the mandatory release catalog."""
+    return [
+        Case('tutorial-latency-pal', ('scripts/run_tutorial_latency.py',),
+             'tests/tutorial-latency-pal/report.json'),
+        Case('tutorial-latency-ntsc', ('scripts/run_tutorial_latency.py','--ntsc'),
+             'tests/tutorial-latency-ntsc/report.json'),
+    ]

@@ -20,7 +20,7 @@ import uuid
 
 from native_evidence import atomic_json, digest, now, python_inputs, snapshot, status, changed
 from native_tools import ROOT
-from acceptance_cases import cases
+from acceptance_cases import cases, diagnostic_cases
 from progress import acceptance
 
 def read(path):
@@ -714,6 +714,9 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id in ('tutorial-latency-pal','tutorial-latency-ntsc'):
+        from tutorial_latency import required_latency_extent
+        return required_latency_extent(report, 'NTSC' if case.id.endswith('-ntsc') else 'PAL')
     if case.id in ('tutorial-court-pal','tutorial-court-ntsc'):
         from tutorial_capture import required_capture_extent
         standard = 'NTSC' if case.id.endswith('-ntsc') else 'PAL'
@@ -1185,7 +1188,7 @@ def monitor(directory, child=None):
                 if ((child is not None and child.returncode!=0) or not report
                         or report.get('state')!='complete' or not report.get('passed')):
                     print(json.dumps({'campaign':directory.name,'state':'failed-or-interrupted','report':report}),flush=True);return 1
-                catalog=cases()
+                catalog=cases()+diagnostic_cases()
                 from campaign_core_evidence import core_cases
                 catalog+=core_cases()
                 selected=[c for c in catalog if c.id in report.get('case_ids',[])]
@@ -1214,12 +1217,14 @@ def main():
     except ModuleNotFoundError as error:
         if error.name!='campaign_core_evidence':raise
     if args.case:
+        case_list += diagnostic_cases()
         unknown=set(args.case)-{c.id for c in case_list}
         if unknown:parser.error('Unknown stable case IDs: '+str(sorted(unknown)))
         case_list=[c for c in case_list if c.id in args.case]
     directory=ROOT/'build/acceptance/campaigns'/(args.campaign or uuid.uuid4().hex)
     if args.resume and not args.case:
         saved=read(directory/'campaign.json')
+        if saved:case_list += diagnostic_cases()
         if saved:case_list=[c for c in case_list if c.id in saved['case_ids']]
     if args.worker:return worker(directory,case_list,lock_fd=args.lock_fd)
     owner=read(directory/'owner.json')
