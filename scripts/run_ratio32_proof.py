@@ -33,10 +33,13 @@ def arithmetic(old_path, new_path):
     image, symbols = load_image(new_path)
     original = []
     original_displacements = []
+    original_products = []
     untouched = {r: (0x965aa569 ^ r*0x1010101) & 0xffffffff for r in range(5, 15)}
     # machine68k supports one active machine; retain results, not two CPUs.
     with Core(old_image, old_symbols, readonly=READONLY) as cpu:
         original_code = code(cpu, 'game_ratio', 'game_launch_root')
+        assert original_code[:24].hex() == '0280000000ff0281000000ff0282000000ffc0c176007807'
+        old_symbols['proof_original_product'] = old_symbols['game_ratio']+24
         cpu.cpu.set_instr_hook_callback(None)
         cpu.mem.set_trace_mode(False)
         for a in range(256):
@@ -44,6 +47,10 @@ def arithmetic(old_path, new_path):
                 cpu.cpu.w_sr(0x2700 | ((a+b)&31))
                 cycles = cpu.call('game_ratio', {0: 0x965aa500|a, 1: 0xa5695a00|b, 2: 0xffff0020, **untouched})
                 original.append((cpu.cpu.r_reg(0), cpu.cpu.r_sr()&31, cycles))
+        for p in range(65536):
+            cpu.cpu.w_sr(0x2700|(p&31))
+            cpu.call('proof_original_product',{0:p,2:32,3:0,4:7,**untouched})
+            original_products.append((cpu.cpu.r_reg(0),cpu.cpu.r_sr()&31))
         for v in range(256):
             for n in range(256):
                 cpu.cpu.w_sr(0x2700 | ((v+n)&31))
@@ -84,7 +91,7 @@ def arithmetic(old_path, new_path):
             cpu.cpu.w_sr(0x271f)
             cpu.call('proof_ratio32_product',{0:p,1:0,2:32,**untouched})
             assert cpu.cpu.r_reg(0)==seeded32(p),p
-            assert cpu.cpu.r_sr()&31==(4 if seeded32(p)==0 else 0)
+            assert (cpu.cpu.r_reg(0),cpu.cpu.r_sr()&31)==original_products[p],p
         for v in range(256):
             for n in range(256):
                 expected,d1,ccr,before=original_displacements[v*256+n]
@@ -97,7 +104,7 @@ def arithmetic(old_path, new_path):
     summary={name:dict(cases=len(rows),before_min=min(x[0] for x in rows),before_max=max(x[0] for x in rows),
         after_min=min(x[1] for x in rows),after_max=max(x[1] for x in rows),
         minimum_saved=min(x-y for x,y in rows),maximum_saved=max(x-y for x,y in rows)) for name,rows in costs.items()}
-    return dict(full_factor_pairs=65536,word_products=65536,displacement_pairs=65536,
+    return dict(full_factor_pairs=65536,word_products=65536,word_products_paired_original_emitted=True,displacement_pairs=65536,
         incoming_ccr_representatives=160,variable_divider_byte_identical=True,
         all_applicable_pairs_faster_in_cpu_runner=True,costs=summary,instruction_samples=instructions,
         declared_clobber='D1 low word unspecified; D1 high word zero, D2/D3/D4 and all preserved registers/CCR match',
