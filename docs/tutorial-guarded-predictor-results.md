@@ -10,8 +10,9 @@ See [the design and alternatives](tutorial-guarded-predictor-design.md).
 The reduced launch buffer is a preview seed; Play from here remains NOTREADY.
 Resume restores the exact interrupted live state and reconciles physical input.
 A playable alternative requires reconstruction to a complete original-core
-boundary. This work reconstructs from the retained incoming origin, not match
-start, and excludes the next opponent response from outgoing ball previews.
+boundary. The branch trial starts at the resolved immutable incoming origin;
+the cold resolver still replays from the oldest retained checkpoint, potentially
+match start. Outgoing ball previews exclude the next opponent response.
 
 ## Identity and selected gate
 
@@ -41,8 +42,10 @@ wide contacts, low-height net contacts and misses. Two additional irregular
 envelope streams exercise clear/latch/pads/poll boundaries. Independently
 executed original and reduced helpers agree on every required causal boundary,
 input attempt/launch ledger, RNG call count, cursor, phase, termination and
-8-byte path sample. The omitted108 private bytes have no observed reads;
-canonical/history memory and live sinks remain isolated. Incidental full final
+8-byte path sample. Reduced execution showed no observed initial dependence on
+the108 poisoned incidental bytes; admission inspects the intact full origin,
+and this audit does not prohibit reads after a field is written.
+Canonical/history memory and live sinks remain isolated. Incidental full final
 states differ as allowed by the observational contract.
 
 16 public API cases exercise four contexts at budgets1..4, full incoming cache,
@@ -75,7 +78,7 @@ active prediction restores exact state/history without a new held-F edge.
 | Complete callbacks | 676 | 655 |
 | Maximum callback CCK | 54,983 | 55,107 |
 | Minimum simulation headroom CCK | 3,517.137 | 3,949.006 |
-| Fresh-edit request to accepted contact seconds | 0.504373 | 0.460565 |
+| Fresh-edit request to accepted contact seconds | 0.504373 | 0.460566 |
 | Contact to dispatch return seconds | 0.001092 | 0.001075 |
 | Dispatch return to COPJMP seconds | 0.128526 | 0.057666 |
 | Fresh-edit request to COPJMP seconds | 0.633991 | 0.519307 |
