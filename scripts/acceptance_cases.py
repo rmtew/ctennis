@@ -69,6 +69,8 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('ratio32-cpu', ('scripts/run_ratio32_proof.py',),
+             'tests/ratio32-cpu/report.json', category='host'),
         Case('private-state-retained-pal', ('scripts/run_retained_private_native.py',),
              'tests/private-state-retained-pal/report.json'),
         Case('private-state-retained-ntsc', ('scripts/run_retained_private_native.py','--ntsc'),
