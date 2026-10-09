@@ -26,29 +26,34 @@ bounce as out. Match tick stays a match tick; word counters bound each segment.
 phases. A cap remains an explicit incomplete result.
 
 Validate placement against the incoming phase's actual movement limits and
-continue actual clamping. Renderer/player coordinates must agree with the
+continue actual movement eligibility checks. Renderer/player coordinates must agree with the
 trial; phase-dependent limits require an explicit check in the proof.
 
 The first integration uses dense original ball ticks. PR40's guarded endpoint
 query cannot provide dense samples by itself. Integrate it only after a measured
 endpoint/publication benefit includes dispatch, guards, rejected paths and
 dense-fill costs. Short/rejected flights require an exact cheap scan with no
-repeated prefix. No timing or RAM budgets are claimed before measurement.
+repeated prefix. Measured results and remaining coverage are in [the delivery report](tutorial-incoming-flight-results.md).
 
 ## Delivery checklist
 
-- [ ] Cache post-dispatch incoming state and support current receiving context.
-- [ ] Restart variants at incoming+1 and prove earlier/later contact and miss.
-- [ ] Switch accepted outgoing flight to original ball-only ticks.
-- [ ] Publish normal sprite sequence with terminal dwell and repeat.
-- [ ] Actual CPU differential: complete private state, samples, contact timing,
+- [x] Cache post-dispatch incoming state and support current receiving context.
+- [x] Restart variants at incoming+1 and prove earlier/later contact and miss.
+- [x] Switch accepted outgoing flight to original ball-only ticks.
+- [x] Publish normal sprite sequence with terminal dwell and repeat.
+- [x] Actual CPU differential: complete private state, samples, contact timing,
   events and canonical/history isolation; alternate initial scratch state.
 - [ ] Measure complete fresh edit/publication latency in PAL and NTSC; short,
   rejected and long flights, transition and held input cases.
-- [ ] Record code/state bytes, stack, callback headroom and chip RAM; regenerate
+- [x] Record code/state bytes, stack, callback headroom and chip RAM; regenerate
   both resource reports, keeping missing standard coverage explicit.
 - [ ] Independent source/evidence review, followed by source-only draft PR.
 
 Integrator owns implementation and evidence; the parent coordinates independent
 review. No merge or release approval is implied by focused acceptance. Public
 raw captures, binaries and private inputs remain excluded.
+
+Focused PAL/NTSC fresh-edit and held-input measurements are complete; the broader
+short/rejected/transition matrix remains open. Independent review and draft status
+are recorded in the delivery report. No guarded-query shipping integration or
+cold-cache cursor hint is included in this slice.
