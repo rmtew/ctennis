@@ -176,3 +176,38 @@ Physical controls,1ms guest observation steps, assertions and scheduling are
 unchanged. This reduces host read traffic and strengthens immutability evidence;
 it is not a runtime performance experiment. Campaign
 `f6d95a6f0f9d4d8ca000326a34afb391` validates the affected PAL/NTSC extent.
+
+## Corrected incoming prototype results
+
+Campaign `f6d95a6f0f9d4d8ca000326a34afb391` closed with a selected-subset pass,
+not full acceptance. Both regions executed the identical development product
+SHA256 `0c9824cc42004496d51c19f8ca503b0100eaa604373a1b998252367fcec0588b`
+(runtime `fa2dd98`). PAL attempt `088d1c98a10b4e2eaae7d5de176faee5` observed
+367 publications and1,100 completed callbacks. Independent review qualified
+280 tutorial publications with zero live generation/variant mismatches and
+matching native sprite headers/images. Both menu selections pass independently
+authored pixel checks. Exact interrupted318 bytes and expected72 history bytes
+match at the real resume boundary;17 subsequent sampled callbacks suppress the
+newly held physical F action and edge. Raw events show zero paused record-buffer
+writes and matching complete initial/resume records. Fifteen actual resumed
+publications across all three banks observed in this window match all15 fixed
+court/HUD restoration operands. This is finite observed pointer restoration,
+not future-bank, fetched-DMA timing or full raster/audio parity.
+
+NTSC attempt `f404a231c74848ad8fab9a31d2a44992` passes the same native assertions,
+including both menu selections and exact original resume. Its independent review
+is recorded alongside PAL under `build/tests/tutorial-playable-review/`.
+PAL observed57,456 chip bytes free (largest block56,872); NTSC66,416 free
+(largest65,832). Both observed320 stack bytes and zero expansion pools. These
+are initialized finite incoming-prototype observations, not universal resource
+maxima. Current runtime code is62,352 bytes,72 above PR50, with unchanged152,492
+BSS bytes. The larger general resource profiles and exact final stripped
+cold boots are campaign `9076a7fbd55b4fe5b0f14e7f207954de`.
+
+The scope remains a lower-receiver incoming prototype. Full upper-receiver
+physical coverage, every held/released input reconciliation combination,
+terminal/dense/fetched-DMA extent and full native acceptance are not established.
+Appearance requires Richard's review. No new latency experiment or causal
+performance improvement is claimed. The initial-serve liveness blocker remains
+open; this subset pass does not certify ordinary tutorial serve prediction or
+end-to-end tutorial playability.
