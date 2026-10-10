@@ -94,13 +94,14 @@ An earlier fixed 0.3 s screenshot established logical menu state only.
 
 The initial-serve failure is a real liveness blocker, not supported end-to-end
 playability. Independent review bound 2,377 consecutive callbacks after guest
-9 s in the preserved PAL failure. Callback spans were 4,915–5,473 CCK; the largest
-observed nominal interval was 11,839 E = 59,195 CCK. Even with zero entry lateness
+9 s in the preserved PAL failure. Callback spans were 4,915–5,473 CCK; the maximum
+configured nominal interval was 11,839 E = 59,195 CCK. Even with zero entry lateness
 and no additional planning/beam cost, the optimistic remaining gap is at most
 54,280 CCK = 10,856 E. The declared full dispatch plus service/margin needs
 55,000 CCK = 11,000 E. Fresh clocks and beam checks can only reduce that gap.
-This finite result explains the four preparation operations followed by no
-full dispatch; it is neither WCET evidence nor permission to lower a reservation.
+This finite result is consistent with four counted operations: one prime plus
+three preparation operations before a declined full dispatch is source-backed
+inference, because the private phase and route were not watched; it is neither WCET evidence nor permission to lower a reservation.
 The reproduced calculation and exact trace/image hashes are in ignored
 `build/tests/tutorial-playable-review/`.
 
