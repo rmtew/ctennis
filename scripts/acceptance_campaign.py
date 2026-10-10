@@ -793,6 +793,9 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id in ('physics-contact-pal','physics-contact-ntsc'):
+        from run_physics_contact_native import required_extent as contact_extent
+        return contact_extent(report,'NTSC' if case.id.endswith('-ntsc') else 'PAL')
     if case.id=='physics-cpu':
         from physics_cpu_proof import required_extent as physics_extent
         return physics_extent(report)
