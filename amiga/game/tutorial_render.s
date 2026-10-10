@@ -16,9 +16,11 @@ tutorial_redraw:
         clr.l   tutorial_render_offset
         clr.w   tutorial_text_row
 .footer:
-        bra     tutorial_footer
+        clr.w   tutorial_footer_ready
+        st      tutorial_footer_dirty
+        rts
 
-tutorial_footer:
+tutorial_footer_select:
         tst.b   tutorial_menu
         beq     .context
         lea     tutorial_branch_text,a0
@@ -108,27 +110,112 @@ tutorial_footer:
         bne     .count_ready
         lea     tutorial_empty_text,a0
 .count_ready:
+        rts
+
+; Preserve the synchronous ABI through the same cooperative renderer body.
+tutorial_footer:
+        movem.l d0-d7/a0-a6,-(sp)
+.again: bsr     tutorial_footer_step
+        tst.l   d0
+        beq.s   .again
+        movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+; Cancel private work and completed-caption cache together. No live bitmap write.
+tutorial_footer_invalidate:
+        clr.w   tutorial_footer_ready
+        clr.w   tutorial_footer_stage
+        clr.l   tutorial_footer_first
+        clr.l   tutorial_footer_second
+        rts
+
+; D0=1 complete, 0 pending; preserve all other registers. One clear/layout or
+; at most two actual glyphs per call. Partial bytes never imply footer_ready.
+; Re-select on every call: both generation and caption identity own the stage.
+tutorial_footer_step:
+        movem.l d1-d7/a0-a6,-(sp)
+        bsr     tutorial_footer_select
+        move.l  tutorial_generation,d0
+        tst.w   tutorial_footer_stage
+        beq     .idle
+        cmp.l   tutorial_footer_stage_generation,d0
+        bne     .start
+        cmp.l   tutorial_footer_stage_first,d6
+        bne     .start
+        cmpa.l  tutorial_footer_stage_second,a0
+        bne     .start
+        bra     .glyphs
+.idle:
+        cmp.l   tutorial_footer_stage_generation,d0
+        bne     .start
         cmp.l   tutorial_footer_first,d6
-        bne     .paint
+        bne     .start
         cmpa.l  tutorial_footer_second,a0
-        beq     .done
-.paint:
-        move.l  d6,tutorial_footer_first
-        move.l  a0,tutorial_footer_second
-        move.l  a0,d7
-        lea     ui_overlay_plane,a1
+        beq     .complete
+.start:
+        ; Invalidate completed cache before touching its private payload.
+        clr.w   tutorial_footer_ready
+        clr.l   tutorial_footer_first
+        clr.l   tutorial_footer_second
+        move.l  d0,tutorial_footer_stage_generation
+        move.l  d6,tutorial_footer_stage_first
+        move.l  a0,tutorial_footer_stage_second
+        lea     tutorial_footer_scratch,a1
         moveq   #0,d0
         move.w  #512/4-1,d1
 .clear: move.l  d0,(a1)+
         dbra    d1,.clear
+        move.w  #1,tutorial_footer_stage
         move.l  d6,a0
-        lea     ui_overlay_plane,a2
+        lea     tutorial_footer_scratch,a2
+        bsr     ui_footer_layout
+        tst.l   d0
+        beq     .second
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra     .pending
+.glyphs:
+        move.l  tutorial_footer_cursor,a0
+        move.l  tutorial_footer_destination,a2
         moveq   #0,d4
-        bsr     ui_footer_selected
-        move.l  d7,a0
-        lea     ui_overlay_plane+256,a2
-        bsr     ui_footer_text
-.done:
+        moveq   #0,d3
+        cmpi.w  #1,tutorial_footer_stage
+        bne.s   .plain
+        moveq   #-1,d3
+.plain: moveq   #1,d5
+.character:
+        bsr     ui_text_character
+        tst.l   d0
+        beq.s   .line_done
+        dbra    d5,.character
+        tst.b   (a0)
+        beq.s   .line_done
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra.s   .pending
+.line_done:
+        cmpi.w  #1,tutorial_footer_stage
+        bne.s   .finished
+.second:
+        move.w  #2,tutorial_footer_stage
+        move.l  tutorial_footer_stage_second,a0
+        lea     tutorial_footer_scratch+256,a2
+        bsr     ui_footer_layout
+        tst.l   d0
+        beq.s   .finished
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra.s   .pending
+.finished:
+        move.l  tutorial_footer_stage_first,tutorial_footer_first
+        move.l  tutorial_footer_stage_second,tutorial_footer_second
+        clr.w   tutorial_footer_stage
+.complete:
+        moveq   #1,d0
+        bra.s   .done
+.pending:
+        moveq   #0,d0
+.done:  movem.l (sp)+,d1-d7/a0-a6
         rts
 
 ; A bounded released preview can settle in the actual human serve-wait phase.
@@ -139,8 +226,10 @@ tutorial_released_wait:
         beq     .done
         cmpi.w  #$ffff,game_preview_ordinal
         bne     .done
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
         bcs     .done
+        btst    #1,game_preview_primed_mask+1
+        beq     .done
         cmpi.w  #PREVIEW_READY,game_preview_status
         bhi     .done
         tst.w   game_preview_dispatches+2
@@ -157,46 +246,20 @@ tutorial_released_wait:
 .done:  rts
 
 tutorial_render:
-.next_unit:
-        bsr     tutorial_render_admitted
-        tst.l   d0
-        beq     .done
+        ; One complete unit per root grant; no recursive admission or loop.
         move.w  tutorial_render_phase,d0
         beq     tutorial_animate
         cmpi.w  #1,d0
-        beq     .copy
+        beq     tutorial_copy_court
         cmpi.w  #2,d0
-        beq     .ghost
+        beq     tutorial_draw_ghost
         cmpi.w  #3,d0
-        beq     .paths
+        beq     tutorial_draw_paths
         cmpi.w  #4,d0
-        beq     .text
+        beq     tutorial_draw_text
         cmpi.w  #5,d0
         beq     tutorial_publish
-.done:  rts
-.copy:  bsr     tutorial_copy_court
-        bra     .next_unit
-.ghost: bsr     tutorial_draw_ghost
-        bra     .next_unit
-.paths: bsr     tutorial_draw_paths
-        bra     .next_unit
-.text:  bsr     tutorial_draw_text
-        bra     .next_unit
-
-; Measured bounded copy/text/publication units share the 5000-E hypothesis.
-; Ghost/path units retain their original reserve. Every iteration reads fresh
-; remaining time; publication ends construction and never loops into animation.
-tutorial_render_admitted:
-        move.w  tutorial_render_phase,d0
-        cmpi.w  #1,d0
-        beq     .simple
-        cmpi.w  #4,d0
-        beq     .simple
-        cmpi.w  #5,d0
-        beq     .simple
-        bra     tutorial_work_admitted
-.simple:
-        bra     tutorial_presentation_admitted
+        rts
 
 ; Read the actual displayed/queued first bitplane from their copper banks.
 tutorial_copper_plane:

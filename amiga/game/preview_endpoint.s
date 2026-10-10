@@ -36,11 +36,18 @@ game_preview_endpoint_pending:
         beq     .no
         cmpi.w  #SEEK_JOB_READY,game_history_seek_status
         beq     .no
-        cmpi.w  #PREVIEW_HELD,game_preview_status
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
         bcs     .no
         cmpi.w  #PREVIEW_RELEASED,game_preview_status
         bhi     .no
         move.w  d1,d7
+        btst    d7,game_preview_primed_mask+1
+        beq     .no
+        move.w  d7,d4
+        mulu.w  #48,d4
+        lea     game_preview_query_workspaces,a0
+        cmpi.w  #2,36(a0,d4.w)
+        bhi     .no
         bsr     game_preview_selection_valid
         tst.l   d0
         beq     .no
@@ -90,10 +97,66 @@ game_preview_endpoint_try:
         add.w   d6,d6
         lea     game_preview_endpoint_scratch,a5
         bsr     landing_try_fast
+        bsr     game_preview_endpoint_store
+.returned:
+        movem.l (sp)+,d1-d7/a0-a6
+        moveq   #1,d0
+.done:  rts
+
+; D0 generation/D1 variant. Execute one complete private query stage.
+; D0=1 progress (pending or terminal),0 rejected/stale/no eligible work.
+; Partial candidates never update attempted, reason, ready or compatibility scratch.
+game_preview_endpoint_step:
+        bsr     game_preview_endpoint_pending
+        tst.l   d0
+        beq     .done
+        movem.l d1-d7/a0-a6,-(sp)
+        move.w  d1,d7
+        move.w  d7,d0
+        mulu.w  #GAME_CORE_STATE_SIZE,d0
+        lea     game_preview_query_states,a5
+        adda.l  d0,a5
+        move.w  d7,d0
+        mulu.w  #48,d0
+        lea     game_preview_query_workspaces,a3
+        adda.w  d0,a3
+        tst.w   36(a3)
+        bne.s   .resume
+        move.w  d7,d0
+        mulu.w  #GAME_CORE_STATE_SIZE,d0
+        lea     game_preview_launch_states,a1
+        adda.l  d0,a1
+        move.l  a5,a0
+        bsr     game_history_copy_state
+        bsr     landing_try_prepare
+        bra.s   .returned_stage
+.resume:
+        bsr     landing_try_step
+.returned_stage:
+        cmpi.w  #4,d0
+        beq.s   .pending
+        ; copy_state preserves D1/D2 but clobbers D7; reload the caller variant.
+        lea     game_preview_endpoint_scratch,a0
+        move.l  a5,a1
+        bsr     game_history_copy_state
+        move.l  (sp),d7
+        bsr     game_preview_endpoint_store
+.pending:
+        movem.l (sp)+,d1-d7/a0-a6
+        moveq   #1,d0
+.done:  rts
+
+; Publish only a terminal original helper result. A5=complete private state,
+; D1=terminal phase/D2=reason/D7=variant. Shared by both query entry points.
+game_preview_endpoint_store:
+        lea     game_preview_endpoint_attempted,a0
+        st      (a0,d7.w)
+        move.w  d7,d6
+        add.w   d6,d6
         lea     game_preview_endpoint_reasons,a0
         move.w  d2,(a0,d6.w)
         tst.w   d2
-        bne.s   .returned
+        bne.s   .done
         ; Terminal must be beyond the unchanged dense continuation.
         lea     game_preview_flight_phases,a0
         cmp.w   (a0,d6.w),d1
@@ -101,7 +164,7 @@ game_preview_endpoint_try:
         ; Defensive seed/worker inconsistency is a distinct discarded query.
         lea     game_preview_endpoint_reasons,a0
         move.w  #15,(a0,d6.w)
-        bra.s   .returned
+        bra.s   .done
 .consistent:
         lea     game_preview_endpoint_phases,a0
         move.w  d1,(a0,d6.w)
@@ -120,9 +183,6 @@ game_preview_endpoint_try:
         bsr     game_preview_write_point
         lea     game_preview_endpoint_ready,a0
         st      (a0,d7.w)
-.returned:
-        movem.l (sp)+,d1-d7/a0-a6
-        moveq   #1,d0
 .done:  rts
 
 ; Sequential worker stopped: publish its actual point, including rejected domains.

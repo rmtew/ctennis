@@ -25,6 +25,7 @@ from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
 from tutorial_latency import LatencyObserver, StackTiming, instruction_map
 from predictor_native_proof import InputTrace, original_reference, contact_timing
 
+from native_run_slices import drain_target,goal_reached,SLICE_MILLISECONDS
 from native_metrics import memory_summary
 from ordinary_cadence import chip_memory
 PROVIDER_CLOCK = 3546895
@@ -37,13 +38,32 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL'):
+class CoherentLatencySession(LatencySession):
+    # Storage bounds, not emulator-time or scheduling guarantees.
+    # Prior failed three-trial capture used 383,805,001 raw bytes. The larger
+    # storage cap supports the unchanged nine-trial extent; it is no timing bound.
+    MAX_RAW_BYTES = 1024*1024*1024
+    MAX_COMPRESSED_BYTES = 80*1024*1024
+
+    def record(self,value):
+        super().record(value)
+        if self.records % 512 == 0:
+            self.raw.flush()
+            if (self.directory/'literal-rpc.jsonl.gz').stat().st_size > self.MAX_COMPRESSED_BYTES:
+                self.raw_overflow=True
+                raise AssertionError('Coherent observer compressed raw-byte cap exceeded')
+
+
+def run(standard='PAL', coherent=False):
     baseline=None;predictor=origin_cache=deadline=physics=True;physics_control=False
     assert standard in CLOCKS
     deadline = deadline or physics
     origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
-    directory = ROOT/'build/tests'/('physics-contact-native-'+standard.lower())
+    directory = ROOT/'build/tests'/(('coherent-contact-native-' if coherent else 'physics-contact-native-')+standard.lower())
+    if coherent:
+        from coherent_capture_archive import archive_previous
+        archive_previous(directory)
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -61,7 +81,7 @@ def run(standard='PAL'):
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 native_product_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({POLICY} if deadline else set())),
+                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({ROOT/'docs/tutorial-coherent-cost-policy.json' if coherent else POLICY} if deadline else set())),
                                 tools=tools, runner='scripts/run_physics_contact_native.py',
                                 actual_target=dict(TARGET, video=standard),
                                 target_role='legacy-validator-reference',
@@ -71,8 +91,20 @@ def run(standard='PAL'):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[]
-        with LatencySession(directory) as session:
+        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];endpoint_profiles=[];pending_endpoint=None;overlay_writes=[];admission_writes=[];footer_commit_samples=[];footer_stage_profiles=[];pending_footer=None;footer_commit_completions=[];final_caption=None
+        callbacks=None
+        def retain_progress(phase,error=None):
+            from coherent_failure_progress import write_progress
+            payload=dict(passed=False,execution='unvalidated-coherent-native-progress',phase=phase,error=str(error) if error else None,
+                executable_sha256=product_sha256,standard=standard,endpoints=endpoints,actions=actions,
+                endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,branch_boundaries=branch_boundaries,
+                dispatch_samples=dispatch_samples,footer_commit_samples=footer_commit_samples,footer_stage_profiles=footer_stage_profiles,footer_commit_completions=footer_commit_completions,final_caption=final_caption,
+                scheduler_job_writes=job_writes,admission_writes=admission_writes,
+                observer_scope='Diagnostic partial progress only; no acceptance or complete timing result')
+            if callbacks is not None and callbacks.surfaces is not None:
+                payload.update(publications=callbacks.surfaces.publications,surface_queues=callbacks.surfaces.queue_records)
+            write_progress(directory/'unvalidated-progress.json.gz',payload)
+        with (CoherentLatencySession if coherent else LatencySession)(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
                     '--cpu','68000','--chip','512K','--slow','0','--fast','0',
@@ -87,8 +119,15 @@ def run(standard='PAL'):
             def block(n,width):return read(symbols[n],width)
             def number(n,width=None):
                 return int.from_bytes(block(n,FIELDS.get(n,2) if width is None else width),'big')
+            initial_admission_state={name:number(name,4) for name in ('simulation_phase','simulation_interval')} if coherent else {}
             loaded = loaded_hunks(executable,segments,read)
             calls, returns = instruction_map(listing,segments,read)
+            step_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_step_variant'} if coherent else set()
+            footer_commit_returns={c['return_pc'] for c in calls.values() if c['callee']=='tutorial_footer_commit'} if coherent else set()
+            footer_returns={c['return_pc'] for c in calls.values() if c['callee']=='tutorial_footer_step'} if coherent else set()
+            endpoint_apis={'game_preview_endpoint_try','game_preview_endpoint_step'}
+            endpoint_returns={c['return_pc']:c['callee'] for c in calls.values() if c['callee'] in endpoint_apis} if coherent else {}
+            endpoint_entries={symbols[name]:name for name in endpoint_apis if name in symbols} if coherent else {}
             simulation_calls=[pc for pc,c in calls.items() if c['callee']=='simulation_update']
             assert len(simulation_calls)==1
             probe_symbols=dict(title_copper=symbols['title_copper'],simulation_update_call_pc=simulation_calls[0],simulation_update=symbols['simulation_update'])
@@ -99,11 +138,17 @@ def run(standard='PAL'):
                 game_preview_stream_cursors=16,game_preview_synthetic_phases=4,keyboard_ack=1,keyboard_ack_timer=2,
                 tutorial_packet=1,game_input_bits=2)
             if deadline:fields['game_preview_operation']=2
-            callbacks.surfaces = SurfaceObserver(symbols,read,
+            if coherent:fields.update(tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_budget=2,tutorial_job_cost=4,tutorial_jobs_completed=4)
+            if coherent:
+                from coherent_publication import CoherentSurfaceObserver,qualified_endpoint,early_endpoint
+            callbacks.surfaces = (CoherentSurfaceObserver if coherent else SurfaceObserver)(symbols,read,
                 last_line=311 if standard=='PAL' else 261, verify_sprites=True)
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             session.observer = LatencyObserver(callbacks,timing)
             input_trace=InputTrace(symbols)
+            if coherent:
+                from coherent_write_observer import CoherentWriteObserver
+                coherent_writes=CoherentWriteObserver(symbols)
             if predictor:
                 previous_observe=session.observer.observe
                 def observe(message):
@@ -111,12 +156,19 @@ def run(standard='PAL'):
                     row=message.get('params',{})
                     if deadline and row.get('access')=='write' and row.get('addr')==symbols['game_preview_operation']:
                         deadline_operations.append(dict(position=row['position'],operation=int(row['value'])))
+                    if coherent and row.get('access')=='write':
+                        if symbols['ui_overlay_plane']<=row.get('addr',0)<symbols['ui_overlay_plane']+512:
+                            overlay_writes.append(dict(row,tutorial_active=bool(callbacks.state.get('tutorial_active'))))
+                        completed=coherent_writes.observe(row)
+                        if completed:
+                            (admission_writes if completed['field'] in ('simulation_phase','simulation_interval') else job_writes).append(completed)
                 session.observer.observe=observe
             watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
                 dict(addr=symbols['game_stack_bottom'],
                      len=symbols['game_stack_top']-symbols['game_stack_bottom'],access=access) for access in ('read','write')]+[
                 dict(addr=a,len=1,access='read') for a in (0xbfd400,0xbfd500,0xbfd600,0xbfd700)]
             if predictor:watches+=input_trace.watches()
+            if coherent:watches.append(dict(addr=symbols['ui_overlay_plane'],len=512,access='write'))
             subscribed = session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches))
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
@@ -125,20 +177,89 @@ def run(standard='PAL'):
             drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             session.inspect('break_add',dict(kind='pc',addr=symbols['game_preview_dispatch']))
+            if coherent:
+                for name in ('tutorial_footer_commit','tutorial_footer_step'):session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
+            for pc in step_returns|set(endpoint_returns)|set(endpoint_entries)|footer_returns|footer_commit_returns:session.inspect('break_add',dict(kind='pc',addr=pc))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
+            captured_private_positions=set()
+            def endpoint_snapshot(variant):
+                result=dict(attempted=block('game_preview_endpoint_attempted',2)[variant],ready=block('game_preview_endpoint_ready',2)[variant],
+                    reason=int.from_bytes(block('game_preview_endpoint_reasons',4)[variant*2:variant*2+2],'big'),
+                    endpoint_point=read(symbols['game_preview_endpoints']+variant*8,8).hex(),
+                    endpoint_outcome=int.from_bytes(block('game_preview_endpoint_outcomes',4)[variant*2:variant*2+2],'big'),
+                    endpoint_phases=int.from_bytes(block('game_preview_endpoint_phases',4)[variant*2:variant*2+2],'big'),
+                    compatibility_state=block('game_preview_endpoint_scratch',318).hex())
+                if 'game_preview_query_states' in symbols:
+                    state=read(symbols['game_preview_query_states']+variant*318,318)
+                    workspace=read(symbols['game_preview_query_workspaces']+variant*48,48)
+                    result.update(query_state=state.hex(),workspace=workspace.hex(),stage=int.from_bytes(workspace[36:38],'big'),cursor=int.from_bytes(workspace[38:40],'big'))
+                return result
+            def footer_snapshot():
+                return dict(generation=number('tutorial_generation',4),footer_generation=number('tutorial_footer_generation',4),dirty=number('tutorial_footer_dirty',1),stage=number('tutorial_footer_stage',2),
+                    stage_generation=number('tutorial_footer_stage_generation',4),ready=number('tutorial_footer_ready',2),
+                    first=number('tutorial_footer_first',4),second=number('tutorial_footer_second',4),
+                    stage_first=number('tutorial_footer_stage_first',4),stage_second=number('tutorial_footer_stage_second',4),
+                    cursor=number('tutorial_footer_cursor',4),destination=number('tutorial_footer_destination',4),
+                    scratch=block('tutorial_footer_scratch',512).hex(),overlay=block('ui_overlay_plane',512).hex())
+            def capture_private_stop():
+                nonlocal pending_endpoint,pending_footer
+                marker=(stop['cck'],stop.get('pc'))
+                if marker in captured_private_positions:return
+                captured_private_positions.add(marker)
+                if coherent and stop.get('pc')==symbols['tutorial_footer_step']:
+                    assert pending_footer is None,'Nested footer stage observation'
+                    pending_footer=dict(entry=position(),before=footer_snapshot())
+                if stop.get('pc') in footer_returns:
+                    assert pending_footer is not None,'Footer return without entry'
+                    footer_stage_profiles.append(dict(pending_footer,exit=position(),after=footer_snapshot(),completed=session.inspect('regs.get')['d'][0]))
+                    pending_footer=None
+                if stop.get('pc') in footer_commit_returns:
+                    assert footer_commit_samples,'Footer commit return lacks entry sample'
+                    footer_commit_completions.append(dict(entry=footer_commit_samples[-1]['position'],position=position(),state=footer_snapshot()))
+                if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
+
+
+                    footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
+                        footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
+                if stop.get('pc') in endpoint_entries:
+                    assert pending_endpoint is None,'Nested cooperative endpoint observation'
+                    entry_registers=session.inspect('regs.get')
+                    variant=entry_registers['d'][1]
+                    assert variant in (0,1) and variant==number('tutorial_job_variant',2),'Endpoint API variant differs from admitted job'
+                    pending_endpoint=dict(entry_registers=entry_registers,api=endpoint_entries[stop['pc']],entry=position(),generation=number('game_preview_generation',4),
+                        variant=variant,before=endpoint_snapshot(variant))
+                if stop.get('pc') in endpoint_returns:
+                    assert pending_endpoint is not None and pending_endpoint['api']==endpoint_returns[stop['pc']],'Endpoint return without matching entry'
+                    after=endpoint_snapshot(pending_endpoint['variant'])
+                    result=session.inspect('regs.get')['d'][0]
+                    completed=bool(result) and bool(after['attempted']) and (pending_endpoint['api']=='game_preview_endpoint_try' or after.get('stage') in (3,4))
+                    profile=dict(pending_endpoint,exit=position(),after=after,completed=completed,result=result)
+                    endpoint_profiles.append(profile);pending_endpoint=None
+                    endpoint_query_samples.append(dict(position=position(),generation=profile['generation'],variant=profile['variant'],
+                        api=profile['api'],attempted=after['attempted'],ready=after['ready'],completed=completed,reason=after['reason'],
+                        state=after['compatibility_state']))
+                if stop.get('pc') in step_returns:
+                    branch_boundaries.append(dict(position=position(),generation=number('game_preview_generation',4),
+                        held_state=block('game_preview_held_state',318).hex(),released_state=block('game_preview_released_state',318).hex(),
+                        cursors=block('game_preview_stream_cursors',16).hex(),synthetic_phases=block('game_preview_synthetic_phases',4).hex(),
+                        counts=block('game_preview_counts',4).hex(),outcomes=block('game_preview_outcomes',4).hex(),
+                        history=block('game_history_state',72).hex(),active=number('game_preview_active',1)))
+                    assert not branch_boundaries[-1]['active'],'Public worker return retains private ownership'
+                if stop.get('pc')==symbols['game_preview_dispatch']:
+                    regs=session.inspect('regs.get')
+                    dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
             def advance(seconds):
                 nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary,held_resume_samples,frozen_origin
                 goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
-                    stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
-                    if stop.get('pc')==symbols['game_preview_dispatch']:
-                        regs=session.inspect('regs.get')
-                        dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
+                    target=drain_target(stop['cck'],goal,CLOCKS[standard]) if coherent else goal
+                    stop=session.inspect('run_until',dict(seconds=target/PROVIDER_CLOCK))
+                    capture_private_stop()
                     if origin_cache and stop.get('pc')==symbols['game_history_incoming_capture_complete']:
                         cached=block('game_history_incoming_state',318)
                         assert cached==block('game_core_state',318)
@@ -179,7 +300,7 @@ def run(standard='PAL'):
                             held_resume_samples+=1
                         boundaries.append(dict(position=position(), fields=fields,
                             state=states[0].hex(),history=states[1].hex(),backup=states[2].hex()))
-                    if stop.get('reason')=='target' or stop['cck']>=goal:break
+                    if goal_reached(stop,target,goal):break
                 else:raise AssertionError('Latency complete-boundary stop cap')
             def key(code,held,seconds=.06):
                 actions.append(dict(rawkey=code,held=held,position=position(),tutorial_active=bool(number('tutorial_active'))))
@@ -196,7 +317,7 @@ def run(standard='PAL'):
                               flight_phases=block('game_preview_flight_phases',4).hex(),
                               launches=block('game_preview_launches',2).hex())),flush=True)
                     generation=number('tutorial_generation',4)
-                    published=[p for p in callbacks.surfaces.publications
+                    published=([p for p in callbacks.surfaces.publications if qualified_endpoint(p,generation,request['cck'])] if coherent else [p for p in callbacks.surfaces.publications
                         if p['position']['cck']>=request['cck']
                         and p['tutorial_fields'].get('tutorial_generation')==generation
                         and p['tutorial_fields'].get('tutorial_presentation_generation')==generation
@@ -204,7 +325,7 @@ def run(standard='PAL'):
                         and not p['tutorial_fields'].get('tutorial_placement_dirty')
                         and p['tutorial_fields'].get('tutorial_active_variant')==0
                         and p['tutorial_fields'].get('tutorial_ball_mode') in (1,2)
-                        and ((p.get('endpoint_outcomes',0)>>16) or (p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))]
+                        and ((p.get('endpoint_outcomes',0)>>16) or (p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))])
                     if published and (previous_generation is None or generation!=previous_generation):
                         scene=published[0] # actual COPJMP, not a later animation/wait match
                         assert scene.get('native_sprite_check'), 'Endpoint sprite bank lacks actual check'
@@ -216,7 +337,7 @@ def run(standard='PAL'):
                             counts=[int.from_bytes(block('game_preview_counts',4)[i:i+2],'big') for i in (0,2)],
                             outcomes=[int.from_bytes(block('game_preview_endpoint_outcomes',4)[i:i+2],'big') or int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
                             dense_outcomes=[int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
-                            endpoint_ready_before_dense=bool(scene['tutorial_fields']['tutorial_ball_mode']==1 and scene.get('endpoint_outcomes',0)>>16 and scene.get('endpoint_ready',0)>>8 and scene.get('endpoint_generation')==generation and not (scene['tutorial_fields'].get('tutorial_available_outcomes',0)>>16)),
+                            endpoint_ready_before_dense=(early_endpoint(scene,generation,request['cck']) if coherent else bool(scene['tutorial_fields']['tutorial_ball_mode']==1 and scene.get('endpoint_outcomes',0)>>16 and scene.get('endpoint_ready',0)>>8 and scene.get('endpoint_generation')==generation and not (scene['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))),
                             incoming_dispatches=[int.from_bytes(block('game_preview_dispatches',4)[i:i+2],'big') for i in (0,2)],
                             outgoing_phases=[int.from_bytes(block('game_preview_flight_phases',4)[i:i+2],'big') for i in (0,2)],
                             human_launches=list(block('game_preview_launches',2)),
@@ -226,6 +347,10 @@ def run(standard='PAL'):
                             held_query_attempted=number('game_preview_endpoint_attempted',1),
                             held_query_reason=number('game_preview_endpoint_reasons',2),
                             held_terminal_state=(block('game_preview_endpoint_scratch',318) if number('game_preview_endpoint_attempted',1) and not number('game_preview_endpoint_reasons',2) else block('game_preview_held_state',318)).hex())
+                        if coherent and row['held_query_attempted'] and not row['held_query_reason']:
+                            query=next((r for r in reversed(endpoint_query_samples) if r['generation']==generation and r['variant']==0 and r['completed'] and r['attempted'] and r['ready'] and r['reason']==0),None)
+                            assert query,'Accepted held query lacks its own completed scratch sample'
+                            row['held_terminal_state']=query['state']
                         if predictor:
                             row.update(incoming_state=block('game_preview_incoming_state',318).hex(),
                                 held_path=block('game_preview_paths',number('game_preview_counts',2)*8).hex(),
@@ -315,6 +440,7 @@ def run(standard='PAL'):
                 endpoints[-1]['first_actual_publication']['position']['cck']-edit_start['cck'])
             endpoints[-1]['physical_input_latency_seconds']=(
                 endpoints[-1]['input_to_publication_cck']/CLOCKS[standard])
+            if coherent:retain_progress('before-early-endpoint-gate')
             assert any(e['endpoint_ready_before_dense'] for e in endpoints), 'No independent early endpoint publication'
             assert len({e['incoming_state_sha256'] for e in endpoints})==1
             assert len({e['incoming_cursor'] for e in endpoints})==1
@@ -324,29 +450,60 @@ def run(standard='PAL'):
             for trial,delay in enumerate(delays):
                 roots=[r for r in timing.rows if r['callee']=='game_launch_root']
                 owners=[r for r in timing.rows if r['callee']=='tutorial_background']
-                if any(o['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=o['exit']['cck'] for o in owners for r in roots):break
+                if not coherent and any(o['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=o['exit']['cck'] for o in owners for r in roots):break
                 advance(delay)
                 previous=number('tutorial_generation',4)
                 # Change actual contact height by physical W; subsequent trials
                 # vary contact dispatch tick as well as input reception phase.
                 key(0x11,True,.04);key(0x11,False,.02)
                 endpoint('contact-phase-'+str(trial),previous,request=actions[-2]['position'])
+            if coherent:
+                # Separate stable-caption observation after all nine measured
+                # endpoint publications. No action or endpoint latency changes.
+                assert len(endpoints)==9,'Final caption requires all nine trials'
+                settle_start=position();settle_generation=number('tutorial_generation',4)
+                settle_goal=stop['cck']+math.ceil(2*CLOCKS[standard])
+                assert (settle_goal-origin)/CLOCKS[standard]<=CAPS['physical_seconds'],'Footer settle would exceed unchanged capture cap'
+                for _ in range(101):
+                    assert number('tutorial_generation',4)==settle_generation,'Final caption generation changed without physical input'
+                    state=footer_snapshot()
+                    candidates=[r for r in footer_commit_completions if r['state']['generation']==settle_generation and r['position']['cck']>=endpoints[-1]['request']['cck']]
+                    if candidates and state['dirty']==state['ready']==state['stage']==0 and state['footer_generation']==settle_generation and state['overlay']==state['scratch']:
+                        completion=candidates[-1]
+                        if completion['state']==state:
+                            final_caption=dict(start=settle_start,observed=position(),generation=settle_generation,
+                                limit_seconds=2,elapsed_cck=stop['cck']-settle_start['cck'],
+                                physical_clock_hz=CLOCKS[standard],completion=completion,final_state=state,
+                                final_input_request=endpoints[-1]['request'],caption_commit_latency_cck=completion['position']['cck']-endpoints[-1]['request']['cck'],
+                                scope='Stable final caption completion after nine endpoint measurements; no responsiveness or deadline bound')
+                            break
+                    if stop['cck']>=settle_goal:raise AssertionError('Final same-generation live512 footer did not complete within two physical seconds')
+                    advance(min(.02,(settle_goal-stop['cck'])/CLOCKS[standard]))
+                else:raise AssertionError('Final footer settle probe cap')
+                retain_progress('final-caption-completed')
             advance(.03)
             # End on an actual upcoming callback boundary; never cut an owner.
             simulation_return=calls[simulation_calls[0]]['return_pc']
             session.inspect('break_add',dict(kind='pc',addr=simulation_return))
-            final_goal=(stop['cck']+CLOCKS[standard])/PROVIDER_CLOCK
+            final_goal=stop['cck']+CLOCKS[standard]
             for _ in range(8192):
-                stop=session.inspect('run_until',dict(seconds=final_goal))
+                target=drain_target(stop['cck'],final_goal,CLOCKS[standard]) if coherent else final_goal
+                stop=session.inspect('run_until',dict(seconds=target/PROVIDER_CLOCK))
+                if coherent:capture_private_stop()
                 if stop.get('pc')==simulation_return:break
+                assert not goal_reached(stop,target,final_goal),'Final callback drain reached its physical cap without callback RTS'
             else:raise AssertionError('No complete final callback boundary')
             actual_video=[number('presentation_last_line',2),number('simulation_interval_whole',4),number('simulation_interval_fraction',2)]
             assert actual_video==([311,11838,14906] if standard=='PAL' else [261,11947,13180])
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval);stack_result=timing.result()
             assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
+            if coherent:
+                coherent_writes.require_complete()
+                assert pending_endpoint is None,'Capture ended inside endpoint query stage'
+                assert pending_footer is None,'Capture ended inside footer stage'
             input_result=input_trace.result(actions,stack_result['calls'])
-            assert input_result['maximum_keyboard_poll_gap_cck']<=50000
+            if not coherent:assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
             records_count=(symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
             records=frozen_records;final_stop=dict(stop)
@@ -358,10 +515,21 @@ def run(standard='PAL'):
             input_probe=input_result,launch_rows=input_trace.launch_rows,
             retained_records=records.hex(),history_end=history_end,
             literal_rpc=dict(records=session.records,uncompressed_bytes=session.raw_bytes),
-            dispatch_samples=dispatch_samples,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
-        from deadline_extent import validate_capture,negative_controls
+            footer_commit_samples=footer_commit_samples,footer_stage_profiles=footer_stage_profiles,footer_commit_completions=footer_commit_completions,final_caption=final_caption,initial_admission_state=initial_admission_state,admission_writes=admission_writes,overlay_writes=overlay_writes,overlay_base=symbols['ui_overlay_plane'],
+            coherent_policy=(dict(policy=json.loads((ROOT/'docs/tutorial-coherent-cost-policy.json').read_text()),policy_sha256=digest(ROOT/'docs/tutorial-coherent-cost-policy.json'),scheduler_source_sha256=digest(ROOT/'amiga/game/tutorial_deadline.s'),executable_sha256=product_sha256) if coherent else None),
+            endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,scheduler_job_writes=job_writes,dispatch_samples=dispatch_samples,branch_boundaries=branch_boundaries,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
+        if coherent:
+            from coherent_native_extent import validate_capture,negative_controls
+        else:
+            from deadline_extent import validate_capture,negative_controls
         from deadline_service_reduction import reduce_capture
-        try:captured['deadline']=validate_capture(captured)
+        try:
+            captured['deadline']=validate_capture(captured)
+            if coherent:
+                assert captured['deadline']['footer_stages'] and any(r['completed'] for r in captured['deadline']['footer_stages']),'Native campaign starved cooperative footer completion'
+                assert any(r['bytes_written']==512 for r in captured['deadline']['footer_commits']),'Native campaign lacks complete live512 footer commit'
+                from coherent_footer_stages import validate_final_caption
+                captured['final_caption_validation']=validate_final_caption(captured,captured['deadline']['footer_commits'])
         except BaseException:
             with gzip.open(directory/'calibration-unvalidated.json.gz','wt') as h:json.dump(captured,h,separators=(',',':'))
             raise
@@ -369,32 +537,49 @@ def run(standard='PAL'):
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
             row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,records,records_count,history_end)
+            if coherent and row['human_launches'][0]:
+                final,sample,phases,outcome,_=original_ball_reference(cpu_image,cpu_symbols,bytes.fromhex(row['held_launch_state']))
+                assert row['held_terminal_state']==final.hex() and row['held_endpoint_point']==sample.hex()
+                assert row['held_endpoint_phase']==phases and row['outcomes'][0]==outcome
+                row['original_outgoing_reference']=dict(passed=True,expected_full_state=final.hex(),actual_full_state=row['held_terminal_state'],
+                    expected_point=sample.hex(),actual_point=row['held_endpoint_point'],phases=phases,outcome=outcome)
         chunks=captured['deadline']['chunks'];calls=stack_result['calls']
         roots=[r for r in calls if r['callee']=='game_launch_root']
         witnesses=[]
         for chunk in chunks:
-            if chunk['operation']!=8:continue
+            if not coherent and chunk['operation']!=8:continue
             nested=[r for r in roots if chunk['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=chunk['exit']['cck']]
             launches=[r for r in input_trace.launch_rows if chunk['entry']['cck']<=r['position']['cck']<=chunk['exit']['cck']]
             if nested and launches:witnesses.append(dict(owner=chunk,roots=nested,launches=launches))
+        if coherent:
+            from coherent_native_extent import validate_witnesses
+            validate_witnesses(captured,witnesses)
         captured['contact_owner_witnesses']=witnesses
         capture=directory/'latency.json.gz'
         with gzip.open(capture,'wt') as h:json.dump(captured,h,separators=(',',':'))
         services=reduce_capture(captured);assert services['passed']
         artifact=directory/'service.json.gz'
-        with gzip.open(artifact,'wt') as h:json.dump(services,h,separators=(',',':'))
-        summary=dict(passed=bool(witnesses),execution='physical-input-contact-phase-probe',
+        with gzip.open(artifact,'wt') as h:json.dump(({k:v for k,v in services.items() if k!='spans'} if coherent else services),h,separators=(',',':'))
+        summary=dict(passed=bool(witnesses),execution=('coherent-physical-input-contact-phase-probe' if coherent else 'physical-input-contact-phase-probe'),
             target=dict(TARGET,video=standard),executable_sha256=product_sha256,
             capture=str(capture.relative_to(ROOT)),contact_owner_witnesses=witnesses,
-            trial_count=len(endpoints),deadline=captured['deadline'],
+            final_caption=captured.get('final_caption'),final_caption_validation=captured.get('final_caption_validation'),trial_count=len(endpoints),deadline=captured['deadline'],coherent_policy=captured['coherent_policy'],
             input_probe={k:v for k,v in input_result.items() if k not in ('rows','transitions','acknowledgements')},
             frozen_complete_state_history_records_equal=True,reference_rows=[r['original_incoming_reference'] for r in endpoints],
             services={k:v for k,v in services.items() if k!='spans'},
-            no_simulation_state_injection=True,normative_deadline_safety=False)
+            no_simulation_state_injection=True,normative_deadline_safety=False,
+            storage_cap_basis=(dict(prior_failed_run_id='36ac93c177fc4a989768bdff2ceca5bd',
+                prior_first_three_trials_uncompressed_bytes=383805001,prior_compressed_bytes=29383726,
+                estimate_scope='Observed prior failed capture; future rates/space are estimates. No runtime/timing allowance changed.') if coherent else None),
+            observer_limits=(dict(CAPS,uncompressed_transcript_bytes=CoherentLatencySession.MAX_RAW_BYTES,compressed_transcript_bytes=CoherentLatencySession.MAX_COMPRESSED_BYTES,drain_slice_milliseconds=SLICE_MILLISECONDS) if coherent else CAPS))
         transaction.finalize(output,summary,[manifest],[capture,artifact,directory/'literal-rpc.jsonl.gz',directory/'emulator.log'])
         print(json.dumps(dict(report=str(output),passed=bool(witnesses),witnesses=len(witnesses))),flush=True)
         assert witnesses,'Bounded physical phase trials did not admit an accepted-contact/root owner; raw failure retained'
     except BaseException as error:
+        if coherent and 'retain_progress' in locals():
+            try:retain_progress('failed',error)
+            except BaseException as progress_error:transaction.meta['progress_retention_error']=str(progress_error)
+            transaction.meta['files'].update(snapshot(p for p in (directory/'unvalidated-progress.json.gz',directory/'literal-rpc.jsonl.gz',directory/'emulator.log') if p.is_file()))
         # A missing witness remains a complete negative experiment with raw
         # evidence; earlier observer failures retain the incomplete receipt.
         if not output.exists() or not json.loads(output.read_text()).get('evidence',{}).get('state')=='complete':transaction.abort(error)
@@ -426,5 +611,5 @@ def required_extent(report,standard):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true')
-    run('NTSC' if parser.parse_args().ntsc else 'PAL')
+    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');parser.add_argument('--coherent',action='store_true')
+    args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL',coherent=args.coherent)
