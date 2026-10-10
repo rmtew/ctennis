@@ -91,9 +91,12 @@ def run(standard):
                 class Observe:
                     def __init__(self):self.events=[];self.ack=[]
                     def observe(self,message):
-                        row=message.get('params',{});self.events.append({k:row[k] for k in ('position','addr','size','value','pc','access') if k in row})
+                        row=message.get('params',{});event={k:row[k] for k in ('position','addr','size','value','pc','access') if k in row}
+                        if 'retired_instructions' in event.get('position',{}):event['position']=dict(event['position'],retired_instructions=event['position']['retired_instructions']-instruction_origin)
+                        self.events.append(event)
                         if row.get('addr')==symbols['keyboard_ack']:self.ack.append(row)
                         detector.observe(message)
+                instruction_origin=session.inspect('status')['retired_instructions']
                 observer=Observe();session.observer=observer
                 watches=callbacks.watches(dict(FIELDS,keyboard_ack=1,keyboard_ack_timer=2),lambda a,n:read(session,a,n))+callbacks.surfaces.watches()+[dict(addr=symbols['game_stack_bottom'],len=symbols['game_stack_top']-symbols['game_stack_bottom'],access='read')]
                 callbacks.started=number('simulation_started_updates');callbacks.completed=number('simulation_updates')
@@ -106,6 +109,7 @@ def run(standard):
                     if current>=end or (stop.get('reason')=='target' and target==end):break
                 else:raise AssertionError('Measured fixed-window cap')
                 measured_stop=dict(stop)
+                if 'retired_instructions' in measured_stop:measured_stop['retired_instructions']-=instruction_origin
                 session.inspect('break.add',dict(kind='pc',addr=symbols['main_loop']))
                 tail=session.inspect('run_until',dict(seconds=(end+int(.03*CLOCKS[standard]))/PROVIDER_CLOCK))
                 assert session.inspect('regs.get')['pc']==symbols['main_loop'] and not timing.stack and callbacks.pending is None,'Tail failed to close complete owners/callback'
@@ -117,9 +121,12 @@ def run(standard):
                 assert scenes,'No qualified actual endpoint in fixed window'
                 frozen={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('game_core_state','game_core_state_end'),('game_history_state','game_history_state_end'),('game_history_buffer','game_history_buffer_end'))}
                 assert list(frozen.values())==[anchor['regions'][n] for n in ('canonical','history','records')]
-                item=dict(label=label,final_regs=session.inspect('regs.get'),final_owner_snapshot={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('tutorial_state','tutorial_state_end'),('game_preview_storage','game_preview_storage_end'),('game_history_seek_storage','game_history_seek_storage_end'))},final_ui=read(session,symbols['ui_state'],300).hex(),events_sha256=hashlib.sha256(json.dumps(observer.events,sort_keys=True).encode()).hexdigest(),input_ack=observer.ack,measured_stop=measured_stop,fixed_end_cck=end,tail_end_cck=tail['cck'],stack_rows=timing.rows,latency_cck=scenes[0]['position']['cck']-press,latency_ms=(scenes[0]['position']['cck']-press)*1000/CLOCKS[standard],generation=gen,callbacks=callbacks.rows,publications=callbacks.surfaces.publications,frozen=frozen,endpoint_points=scenes[0].get('endpoint_points'),endpoint_outcomes=scenes[0].get('endpoint_outcomes'),memory_patch_ranges=ranges,restored_memory_sha256=hashlib.sha256(before).hexdigest())
+                item=dict(label=label,final_regs=session.inspect('regs.get'),final_owner_snapshot={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('tutorial_state','tutorial_state_end'),('game_preview_storage','game_preview_storage_end'),('game_history_seek_storage','game_history_seek_storage_end'))},presentation_requests=callbacks.presentation_requests,final_ui=read(session,symbols['ui_state'],symbols['ui_help_choice']+2-symbols['ui_state']).hex(),events_sha256=hashlib.sha256(json.dumps(observer.events,sort_keys=True).encode()).hexdigest(),input_ack=observer.ack,measured_stop=measured_stop,fixed_end_cck=end,tail_end_cck=tail['cck'],stack_rows=timing.rows,latency_cck=scenes[0]['position']['cck']-press,latency_ms=(scenes[0]['position']['cck']-press)*1000/CLOCKS[standard],generation=gen,callbacks=callbacks.rows,publications=callbacks.surfaces.publications,frozen=frozen,endpoint_points=scenes[0].get('endpoint_points'),endpoint_outcomes=scenes[0].get('endpoint_outcomes'),memory_patch_ranges=ranges,restored_memory_sha256=hashlib.sha256(before).hexdigest())
                 results.append(item);atomic_json(attempt/(label+'.json'),item)
                 if label=='baseline-2':assert {k:v for k,v in results[0].items() if k!='label'}=={k:v for k,v in item.items() if k!='label'},'Baseline replay differs; treatment forbidden'
+            requests=lambda p:[(r['generation']-anchor_generation,r['x'],r['y'],r['variant']) for r in p['presentation_requests']]
+            assert requests(results[0])==requests(results[2]) and requests(results[0]),'Physical request sequence differs'
+            report['accepted_requests']=requests(results[0])
             assert results[0]['endpoint_points']==results[2]['endpoint_points'] and results[0]['endpoint_outcomes']==results[2]['endpoint_outcomes'],'Causal endpoint differs'
             report.update(passed=True,standard=standard,target=dict(transaction.meta['target'],video=standard),anchor=anchor,passes=results,baseline_replay_equal=True,loaded_hunks=loaded)
         transaction.finalize(report_path,report,compiled=[json.loads((product/'baseline-rally.compile.json').read_text())],artifacts=list(attempt.iterdir())+[reference/'baseline-rally',reference/'native.lst',reference/'audit.json'])
