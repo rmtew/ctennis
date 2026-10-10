@@ -92,6 +92,13 @@ tutorial_residual_turn: ds.w 1
 tutorial_jobs_completed: ds.l 1
 tutorial_footer_ready: ds.w 1
 tutorial_footer_generation: ds.l 1
+; Private cooperative caption ownership; completed cache remains separate.
+tutorial_footer_stage: ds.w 1
+tutorial_footer_stage_generation: ds.l 1
+tutorial_footer_stage_first: ds.l 1
+tutorial_footer_stage_second: ds.l 1
+tutorial_footer_cursor: ds.l 1
+tutorial_footer_destination: ds.l 1
 tutorial_footer_scratch: ds.b 512
 tutorial_state_end:
 tutorial_interrupted_state equ game_history_live_backup

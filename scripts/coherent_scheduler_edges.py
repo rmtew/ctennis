@@ -231,11 +231,11 @@ def run(executable,raw):
         scope='Declared public variant/geometry API capacity and lifecycle edge fixtures against actual original 68000 helpers. No ordinary-play reachability, native timing, IRQ or release claim.')
 
 
-def root_decline(native,raw):
+def root_decline_fixture(native,raw,variant,route):
     """Actual native scheduler rejects before clock/MMIO; no timer emulation."""
     image,s=load_image(native);case=discover(image,s,0xace1)[0]
     rows=[]
-    for variant in (0,1):
+    for variant in (variant,):
         with Core(image,s,poison=0xa5 if variant==0 else 0x96,
                 readonly=dict(READONLY,ui_paused=1,simulation_interval=4,simulation_phase=4,blank_seen=1)) as cpu:
             generation=setup(cpu,case)
@@ -255,25 +255,55 @@ def root_decline(native,raw):
             cpu.mem.w_block(s['game_preview_endpoint_attempted'],bytes(2))
             cpu.mem.w_block(s['game_preview_endpoint_ready'],bytes(2))
             cpu.mem.w_block(s['game_preview_outcomes'],bytes(4))
+            # Each route is declared once before the tested root calls. Both
+            # branches are flights so a 4000E gap cannot grant a dense job.
+            cpu.mem.w_block(s['game_preview_launches'],b'\xff\xff')
+            cpu.mem.w16(s['tutorial_animation_index'],2)
+            if route=='terminal':cpu.mem.w16(s['game_preview_outcomes']+variant*2,1)
+            if route.startswith('ready-'):
+                cpu.mem.w8(s['game_preview_endpoint_ready']+variant,255)
+                count={'ready-waterline':10,'ready-below':9,'ready-underflow':1}[route]
+                cpu.mem.w16(s['game_preview_counts']+variant*2,count)
+            if route=='generation':cpu.mem.w32(s['tutorial_generation'],generation-1)
+            if route=='presentation':cpu.mem.w32(s['tutorial_presentation_generation'],generation-1)
+            if route=='invalid-variant':cpu.mem.w8(s['tutorial_active_variant'],255)
+            if route in ('seek-pending','seek-ready'):
+                cpu.mem.w16(s['game_history_seek_status'],1 if route=='seek-pending' else 2)
             cpu.call('game_preview_endpoint_pending',{0:generation,1:variant})
-            assert cpu.cpu.r_reg(0)==1,'Declared query seed is not eligible'
+            assert bool(cpu.cpu.r_reg(0))==(route in ('eligible','generation','presentation','invalid-variant'))
             saved_events=list(cpu.events);saved_preview_events=list(cpu.preview_events)
             forbidden=('game_preview_dispatch','game_ball_tick','game_preview_step_variant',
                 'game_preview_endpoint_try','game_preview_endpoint_step','account_sim_timer','read_presentation_line')
             hits=[]
+            queries=[];classes=[]
             def observe(pc):
                 cpu.instruction(pc)
                 if pc in {s[name] for name in forbidden}:hits.append(pc)
+                if pc==s['game_preview_endpoint_pending']:queries.append(cpu.cpu.r_reg(1))
+                if pc==s['tutorial_background_class']:classes.append(field(cpu,'tutorial_job_variant'))
             cpu.cpu.set_instr_hook_callback(observe)
             frozen=bytes(cpu.mem.r_block(s['game_history_buffer'],s['game_history_buffer_end']-s['game_history_buffer']))
             saved_state=cpu.state();saved_history=bytes(cpu.mem.r_block(s['game_history_state'],72))
             before_preview=bytes(cpu.mem.r_block(s['game_preview_storage'],s['game_preview_storage_end']-s['game_preview_storage']))
+            cpu.audit_reads();cpu.reads.clear()
             cycles=[]
             for _ in range(3):
                 cycles.append(cpu.call('tutorial_background'))
                 assert not hits,'Declined query advanced work or reached MMIO service'
                 assert bytes(cpu.mem.r_block(s['game_preview_storage'],len(before_preview)))==before_preview
-                assert field(cpu,'tutorial_job_kind')==2 and field(cpu,'tutorial_jobs_completed',4)==0
+                assert field(cpu,'tutorial_jobs_completed',4)==0
+                if route=='eligible':assert field(cpu,'tutorial_job_kind')==2
+            expected_queries=3 if route in ('eligible','generation') else 0
+            assert queries==[variant]*expected_queries,(route,'endpoint eligibility route',queries)
+            expected_class=(1-variant if route in ('terminal','ready-waterline') else variant)
+            expected_classes=3 if route in ('terminal','ready-waterline','ready-below','ready-underflow','generation') else 0
+            assert classes==[expected_class]*expected_classes,(route,'selected/other dense route',classes)
+            if route=='invalid-variant':
+                invalid_reads=set()
+                for name,stride,width in (('game_preview_outcomes',2,2),
+                        ('game_preview_endpoint_ready',1,1),('game_preview_counts',2,2)):
+                    invalid_reads.update(range(s[name]+255*stride,s[name]+255*stride+width))
+                assert not cpu.reads&invalid_reads,'Invalid variant indexed preview fields'
             cpu.call('game_preview_cancel',{0:generation})
             before_preview=bytes(cpu.mem.r_block(s['game_preview_storage'],len(before_preview)))
             cycles.append(cpu.call('tutorial_background'))
@@ -282,12 +312,25 @@ def root_decline(native,raw):
             assert bytes(cpu.mem.r_block(s['game_history_buffer'],len(frozen)))==frozen
             assert cpu.events==saved_events and cpu.preview_events==saved_preview_events, 'Scheduler changed preexisting output ledger'
             cpu.audit_reads()
-            rows.append(dict(variant=variant,passed=True,declines=3,cancel_return=True,
+            rows.append(dict(variant=variant,route=route,passed=True,declines=3,cancel_return=True,
                 gap_e=4000,query_total_reserve_e=5000,no_selected_advance=True,
                 no_clock_beam_or_hardware_reads=True,cycles=cycles,stack=cpu.stack_bytes,
+                endpoint_pending_variants=queries,planned_dense_variants=classes,
                 before_preview=before_preview.hex()))
     result=dict(passed=True,rows=rows,
         scope='Actual native tutorial_background early endpoint-decline branch with once-declared scheduler metadata. No admitted query, timer behavior, physical input or elapsed-time bound claimed.')
+    raw_json(raw/('native-root-decline-'+str(variant)+'-'+route+'.json'),result)
+    return result
+
+
+def root_decline(native,raw):
+    rows=[]
+    for variant in (0,1):
+        for route in ('eligible','terminal','ready-waterline','ready-below','ready-underflow',
+                      'generation','presentation','seek-pending','seek-ready','invalid-variant'):
+            rows.extend(root_decline_fixture(native,raw,variant,route)['rows'])
+    result=dict(passed=True,rows=rows,
+        scope='Once-declared native root routing with denied endpoint/dense grants; no admitted timing, timer/MMIO behavior or natural reachability claim.')
     raw_json(raw/'native-root-decline.json',result)
     return result
 

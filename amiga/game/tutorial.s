@@ -165,8 +165,7 @@ tutorial_enter:
         beq     .done
         st      tutorial_active
         st      ui_paused
-        clr.l   tutorial_footer_first
-        clr.l   tutorial_footer_second
+        bsr     tutorial_footer_invalidate
         clr.b   tutorial_menu
         clr.b   tutorial_modifier_used
         clr.b   tutorial_tap_pending
@@ -401,6 +400,7 @@ tutorial_resume_latest:
         beq     tutorial_resume_done
 tutorial_resume_restored:
         ; Exact interrupted canonical boundary, before physical reconciliation.
+        bsr     tutorial_footer_invalidate
         clr.b   tutorial_active
         clr.b   tutorial_pending
         clr.b   tutorial_menu

@@ -20,7 +20,7 @@ tutorial_redraw:
         st      tutorial_footer_dirty
         rts
 
-tutorial_footer:
+tutorial_footer_select:
         tst.b   tutorial_menu
         beq     .context
         lea     tutorial_branch_text,a0
@@ -110,27 +110,112 @@ tutorial_footer:
         bne     .count_ready
         lea     tutorial_empty_text,a0
 .count_ready:
+        rts
+
+; Preserve the synchronous ABI through the same cooperative renderer body.
+tutorial_footer:
+        movem.l d0-d7/a0-a6,-(sp)
+.again: bsr     tutorial_footer_step
+        tst.l   d0
+        beq.s   .again
+        movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+; Cancel private work and completed-caption cache together. No live bitmap write.
+tutorial_footer_invalidate:
+        clr.w   tutorial_footer_ready
+        clr.w   tutorial_footer_stage
+        clr.l   tutorial_footer_first
+        clr.l   tutorial_footer_second
+        rts
+
+; D0=1 complete, 0 pending; preserve all other registers. One clear/layout or
+; at most two actual glyphs per call. Partial bytes never imply footer_ready.
+; Re-select on every call: both generation and caption identity own the stage.
+tutorial_footer_step:
+        movem.l d1-d7/a0-a6,-(sp)
+        bsr     tutorial_footer_select
+        move.l  tutorial_generation,d0
+        tst.w   tutorial_footer_stage
+        beq     .idle
+        cmp.l   tutorial_footer_stage_generation,d0
+        bne     .start
+        cmp.l   tutorial_footer_stage_first,d6
+        bne     .start
+        cmpa.l  tutorial_footer_stage_second,a0
+        bne     .start
+        bra     .glyphs
+.idle:
+        cmp.l   tutorial_footer_stage_generation,d0
+        bne     .start
         cmp.l   tutorial_footer_first,d6
-        bne     .paint
+        bne     .start
         cmpa.l  tutorial_footer_second,a0
-        beq     .done
-.paint:
-        move.l  d6,tutorial_footer_first
-        move.l  a0,tutorial_footer_second
-        move.l  a0,d7
+        beq     .complete
+.start:
+        ; Invalidate completed cache before touching its private payload.
+        clr.w   tutorial_footer_ready
+        clr.l   tutorial_footer_first
+        clr.l   tutorial_footer_second
+        move.l  d0,tutorial_footer_stage_generation
+        move.l  d6,tutorial_footer_stage_first
+        move.l  a0,tutorial_footer_stage_second
         lea     tutorial_footer_scratch,a1
         moveq   #0,d0
         move.w  #512/4-1,d1
 .clear: move.l  d0,(a1)+
         dbra    d1,.clear
+        move.w  #1,tutorial_footer_stage
         move.l  d6,a0
         lea     tutorial_footer_scratch,a2
+        bsr     ui_footer_layout
+        tst.l   d0
+        beq     .second
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra     .pending
+.glyphs:
+        move.l  tutorial_footer_cursor,a0
+        move.l  tutorial_footer_destination,a2
         moveq   #0,d4
-        bsr     ui_footer_selected
-        move.l  d7,a0
+        moveq   #0,d3
+        cmpi.w  #1,tutorial_footer_stage
+        bne.s   .plain
+        moveq   #-1,d3
+.plain: moveq   #1,d5
+.character:
+        bsr     ui_text_character
+        tst.l   d0
+        beq.s   .line_done
+        dbra    d5,.character
+        tst.b   (a0)
+        beq.s   .line_done
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra.s   .pending
+.line_done:
+        cmpi.w  #1,tutorial_footer_stage
+        bne.s   .finished
+.second:
+        move.w  #2,tutorial_footer_stage
+        move.l  tutorial_footer_stage_second,a0
         lea     tutorial_footer_scratch+256,a2
-        bsr     ui_footer_text
-.done:
+        bsr     ui_footer_layout
+        tst.l   d0
+        beq.s   .finished
+        move.l  a0,tutorial_footer_cursor
+        move.l  a2,tutorial_footer_destination
+        bra.s   .pending
+.finished:
+        move.l  tutorial_footer_stage_first,tutorial_footer_first
+        move.l  tutorial_footer_stage_second,tutorial_footer_second
+        clr.w   tutorial_footer_stage
+.complete:
+        moveq   #1,d0
+        bra.s   .done
+.pending:
+        moveq   #0,d0
+.done:  movem.l (sp)+,d1-d7/a0-a6
         rts
 
 ; A bounded released preview can settle in the actual human serve-wait phase.

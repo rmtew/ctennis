@@ -15,7 +15,7 @@ def capture():
     import json
     policy=json.loads((Path(__file__).resolve().parents[2]/'docs/tutorial-coherent-cost-policy.json').read_text())
     return dict(input_probe=dict(maximum_keyboard_poll_gap_cck=1000),coherent_policy=dict(policy=policy),initial_admission_state=dict(simulation_interval=12000,simulation_phase=0),admission_writes=[],
-        endpoint_profiles=[],overlay_writes=[],footer_commit_samples=[],overlay_base=1000,stack_timing=dict(open_enclosing_calls=[],calls=[
+        endpoint_profiles=[],footer_stage_profiles=[],overlay_writes=[],footer_commit_samples=[],overlay_base=1000,stack_timing=dict(open_enclosing_calls=[],calls=[
         span('tutorial_background',20,80),
         span('game_preview_step_variant',30,70,'tutorial_background',1)]),
         timing=dict(callbacks=[dict(entry=dict(cck=0),completion=dict(cck=10),work_cck=10,entry_phase_cck=0,callback=1),

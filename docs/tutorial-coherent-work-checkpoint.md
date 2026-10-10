@@ -34,3 +34,13 @@ Current native0999288675e9d201f3dda8add25732b326995d0ae59692fa58c68bb53b564dfa;
 standalone6eb0bf7229828d277e16ca43e9a0567a93b13901c45c659683496053604df50d.
 An ENOSPC controller start was resolved by exact-hash deduplication of duplicate
 CAS input copies; preserve unique evidence and monitor remaining disk space.
+
+Latest attempt6 completed all nine PAL endpoint trials, then failed the finite
+complete-owner cost gate: seven budget1 preview owners exceeded 5000 CCK
+(maximum5217). No footer stage/commit ran. Capture archived at
+`build/tests/coherent-contact-native-pal-attempts/81a2f2a8599e4559b5c9666a89318b9f`.
+No emulator/controller/CPU process is active. Current fixes: selected terminal/
+ready eligibility shortcut (root); cooperative actual-font footer (observer
+author). Keep all numerical gates unchanged until new explicit stage hypothesis
+and measurements. Preserve native099928 oracle in
+`build/tests/coherent-frozen-footer-099928/`. NTSC still has not run.

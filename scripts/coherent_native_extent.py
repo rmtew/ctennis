@@ -13,7 +13,7 @@ from native_tools import ROOT
 JOBS={'game_preview_step_variant':'prefix','game_preview_complete':'geometry',
       'game_preview_endpoint_try':'endpoint','game_preview_endpoint_step':'endpoint-stage','complete_scene':'producer',
       'tutorial_animate':'animation','tutorial_render':'render',
-      'tutorial_progress_slice':'producer-prefix','tutorial_footer':'footer',
+      'tutorial_progress_slice':'producer-prefix','tutorial_footer':'footer','tutorial_footer_step':'footer-stage',
       'game_preview_result':'result','tutorial_footer_commit':'footer-commit',
       'tutorial_copy_court':'render','ui_footer_draw':'render'}
 OPTIONAL={'game_preview_step_variant','game_preview_complete','game_preview_endpoint_try','game_preview_endpoint_step'}
@@ -63,13 +63,17 @@ def validate_capture(c):
         assert telemetry_job['tutorial_job_kind'] in range(1,8) and telemetry_job['tutorial_job_cost'] is not None
         exact_costs={2:{job_policy[name] for name in ('endpoint_stage','endpoint_query') if name in job_policy},3:{job_policy['geometry_eight_points']},
                      4:{job_policy['placement_animation_producer'],job_policy['menu_render_single_unit']},
-                     5:{job_policy['footer_stage_private']},6:{job_policy['result_metadata']},7:{job_policy['footer_commit_512']}}
+                     5:{job_policy[name] for name in ('footer_stage_private','footer_stage_two_glyphs') if name in job_policy},6:{job_policy['result_metadata']},7:{job_policy['footer_commit_512']}}
         if telemetry_job['tutorial_job_kind']!=1:
             assert telemetry_job['tutorial_job_cost'] in exact_costs[telemetry_job['tutorial_job_kind']],'Job allowance differs from bound policy'
         if any(job['kind']=='endpoint-stage' for job in jobs):
             assert telemetry_job['tutorial_job_cost']==job_policy['endpoint_stage'],'Cooperative endpoint stage allowance differs from policy'
         elif any(job['kind']=='endpoint' for job in jobs):
             assert telemetry_job['tutorial_job_cost']==job_policy['endpoint_query'],'Legacy endpoint query allowance differs from policy'
+        if any(job['kind']=='footer-stage' for job in jobs):
+            assert telemetry_job['tutorial_job_cost']==job_policy['footer_stage_two_glyphs'],'Cooperative footer stage allowance differs from policy'
+        elif any(job['kind']=='footer' for job in jobs):
+            assert telemetry_job['tutorial_job_cost']==job_policy['footer_stage_private'],'Legacy synchronous footer allowance differs from policy'
         assert o['elapsed_bus_cck']<=telemetry_job['tutorial_job_cost']*5,'Complete owner exceeds observed job cost hypothesis'
         admission=dict(c['initial_admission_state'])
         job_start=min(calls[r['call_index']]['entry']['cck'] for r in jobs)
@@ -94,6 +98,8 @@ def validate_capture(c):
             assert any(enclosed(o,r) for _,o in owners),'Optional preview work outside sole background owner'
     assert max(r['work_cck'] for r in callbacks)<=hypotheses['callback'],'Callback exceeds legacy finite hypothesis'
     assert max(r['entry_phase_cck'] for r in callbacks)<=hypotheses['entry_lateness'],'Callback entry exceeds legacy finite hypothesis'
+    from coherent_footer_stages import validate_stages
+    footer_stages=validate_stages(c,owners)
     footer=validate_footer(c,owners)
     endpoint_stages=validate_endpoint_profiles(c,owners)
     boundaries=c['branch_boundaries'];assert boundaries
@@ -101,7 +107,7 @@ def validate_capture(c):
         assert r['active']==0 and len(bytes.fromhex(r['held_state']))==len(bytes.fromhex(r['released_state']))==318
         assert len(bytes.fromhex(r['cursors']))==16 and len(bytes.fromhex(r['history']))==72
     return dict(passed=True,prototype_only=True,normative_deadline_safety=False,chunks=chunks,
-                footer_commits=footer,endpoint_stages=endpoint_stages,callback_hypothesis_cck=hypotheses['callback'],entry_hypothesis_cck=hypotheses['entry_lateness'],cost_cck_per_e=5,service_margin_reserve_e=reserve_e,
+                footer_commits=footer,footer_stages=footer_stages,endpoint_stages=endpoint_stages,callback_hypothesis_cck=hypotheses['callback'],entry_hypothesis_cck=hypotheses['entry_lateness'],cost_cck_per_e=5,service_margin_reserve_e=reserve_e,
                 background_worker_calls=classes['prefix']['count'],observed_job_classes=classes,observed_owner_by_class_budget=job_budgets,
                 maximum_whole_owner_cck=max(r['whole_owner_cck'] for r in chunks),
                 declined_owner_calls=len(owners)-len(accepted),
@@ -132,6 +138,7 @@ def required_extent(report,standard):
     if validate_capture(c)!=report['deadline']:return False
     if c['coherent_policy']!=report['coherent_policy']:return False
     if report['evidence']['files'].get('docs/tutorial-coherent-cost-policy.json')!=c['coherent_policy']['policy_sha256']:return False
+    if not report['deadline']['footer_stages'] or not any(r['completed'] for r in report['deadline']['footer_stages']):return False
     if not any(r['bytes_written']==512 for r in report['deadline']['footer_commits']):return False
     if c['deadline_negative_controls']!=['retained-private-ownership-record-rejected']:return False
     rows=c['endpoints']

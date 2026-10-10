@@ -91,14 +91,14 @@ def run(standard='PAL', coherent=False):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];endpoint_profiles=[];pending_endpoint=None;overlay_writes=[];admission_writes=[];footer_commit_samples=[]
+        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];endpoint_profiles=[];pending_endpoint=None;overlay_writes=[];admission_writes=[];footer_commit_samples=[];footer_stage_profiles=[];pending_footer=None
         callbacks=None
         def retain_progress(phase,error=None):
             from coherent_failure_progress import write_progress
             payload=dict(passed=False,execution='unvalidated-coherent-native-progress',phase=phase,error=str(error) if error else None,
                 executable_sha256=product_sha256,standard=standard,endpoints=endpoints,actions=actions,
                 endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,branch_boundaries=branch_boundaries,
-                dispatch_samples=dispatch_samples,footer_commit_samples=footer_commit_samples,
+                dispatch_samples=dispatch_samples,footer_commit_samples=footer_commit_samples,footer_stage_profiles=footer_stage_profiles,
                 scheduler_job_writes=job_writes,admission_writes=admission_writes,
                 observer_scope='Diagnostic partial progress only; no acceptance or complete timing result')
             if callbacks is not None and callbacks.surfaces is not None:
@@ -123,6 +123,7 @@ def run(standard='PAL', coherent=False):
             loaded = loaded_hunks(executable,segments,read)
             calls, returns = instruction_map(listing,segments,read)
             step_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_step_variant'} if coherent else set()
+            footer_returns={c['return_pc'] for c in calls.values() if c['callee']=='tutorial_footer_step'} if coherent else set()
             endpoint_apis={'game_preview_endpoint_try','game_preview_endpoint_step'}
             endpoint_returns={c['return_pc']:c['callee'] for c in calls.values() if c['callee'] in endpoint_apis} if coherent else {}
             endpoint_entries={symbols[name]:name for name in endpoint_apis if name in symbols} if coherent else {}
@@ -175,8 +176,9 @@ def run(standard='PAL', coherent=False):
             drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             session.inspect('break_add',dict(kind='pc',addr=symbols['game_preview_dispatch']))
-            if coherent:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_footer_commit']))
-            for pc in step_returns|set(endpoint_returns)|set(endpoint_entries):session.inspect('break_add',dict(kind='pc',addr=pc))
+            if coherent:
+                for name in ('tutorial_footer_commit','tutorial_footer_step'):session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
+            for pc in step_returns|set(endpoint_returns)|set(endpoint_entries)|footer_returns:session.inspect('break_add',dict(kind='pc',addr=pc))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
@@ -195,12 +197,27 @@ def run(standard='PAL', coherent=False):
                     workspace=read(symbols['game_preview_query_workspaces']+variant*48,48)
                     result.update(query_state=state.hex(),workspace=workspace.hex(),stage=int.from_bytes(workspace[36:38],'big'),cursor=int.from_bytes(workspace[38:40],'big'))
                 return result
+            def footer_snapshot():
+                return dict(generation=number('tutorial_generation',4),stage=number('tutorial_footer_stage',2),
+                    stage_generation=number('tutorial_footer_stage_generation',4),ready=number('tutorial_footer_ready',2),
+                    first=number('tutorial_footer_first',4),second=number('tutorial_footer_second',4),
+                    stage_first=number('tutorial_footer_stage_first',4),stage_second=number('tutorial_footer_stage_second',4),
+                    cursor=number('tutorial_footer_cursor',4),destination=number('tutorial_footer_destination',4),
+                    scratch=block('tutorial_footer_scratch',512).hex(),overlay=block('ui_overlay_plane',512).hex())
             def capture_private_stop():
-                nonlocal pending_endpoint
+                nonlocal pending_endpoint,pending_footer
                 marker=(stop['cck'],stop.get('pc'))
                 if marker in captured_private_positions:return
                 captured_private_positions.add(marker)
+                if coherent and stop.get('pc')==symbols['tutorial_footer_step']:
+                    assert pending_footer is None,'Nested footer stage observation'
+                    pending_footer=dict(entry=position(),before=footer_snapshot())
+                if stop.get('pc') in footer_returns:
+                    assert pending_footer is not None,'Footer return without entry'
+                    footer_stage_profiles.append(dict(pending_footer,exit=position(),after=footer_snapshot(),completed=session.inspect('regs.get')['d'][0]))
+                    pending_footer=None
                 if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
+
                     footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
                         footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
                 if stop.get('pc') in endpoint_entries:
@@ -455,6 +472,7 @@ def run(standard='PAL', coherent=False):
             if coherent:
                 coherent_writes.require_complete()
                 assert pending_endpoint is None,'Capture ended inside endpoint query stage'
+                assert pending_footer is None,'Capture ended inside footer stage'
             input_result=input_trace.result(actions,stack_result['calls'])
             if not coherent:assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
@@ -468,7 +486,7 @@ def run(standard='PAL', coherent=False):
             input_probe=input_result,launch_rows=input_trace.launch_rows,
             retained_records=records.hex(),history_end=history_end,
             literal_rpc=dict(records=session.records,uncompressed_bytes=session.raw_bytes),
-            footer_commit_samples=footer_commit_samples,initial_admission_state=initial_admission_state,admission_writes=admission_writes,overlay_writes=overlay_writes,overlay_base=symbols['ui_overlay_plane'],
+            footer_commit_samples=footer_commit_samples,footer_stage_profiles=footer_stage_profiles,initial_admission_state=initial_admission_state,admission_writes=admission_writes,overlay_writes=overlay_writes,overlay_base=symbols['ui_overlay_plane'],
             coherent_policy=(dict(policy=json.loads((ROOT/'docs/tutorial-coherent-cost-policy.json').read_text()),policy_sha256=digest(ROOT/'docs/tutorial-coherent-cost-policy.json'),scheduler_source_sha256=digest(ROOT/'amiga/game/tutorial_deadline.s'),executable_sha256=product_sha256) if coherent else None),
             endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,scheduler_job_writes=job_writes,dispatch_samples=dispatch_samples,branch_boundaries=branch_boundaries,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
         if coherent:
@@ -476,7 +494,11 @@ def run(standard='PAL', coherent=False):
         else:
             from deadline_extent import validate_capture,negative_controls
         from deadline_service_reduction import reduce_capture
-        try:captured['deadline']=validate_capture(captured)
+        try:
+            captured['deadline']=validate_capture(captured)
+            if coherent:
+                assert captured['deadline']['footer_stages'] and any(r['completed'] for r in captured['deadline']['footer_stages']),'Native campaign starved cooperative footer completion'
+                assert any(r['bytes_written']==512 for r in captured['deadline']['footer_commits']),'Native campaign lacks complete live512 footer commit'
         except BaseException:
             with gzip.open(directory/'calibration-unvalidated.json.gz','wt') as h:json.dump(captured,h,separators=(',',':'))
             raise

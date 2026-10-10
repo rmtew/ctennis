@@ -43,6 +43,8 @@ tutorial_background:
         movem.l d0-d7/a0-a6,-(sp)
         clr.w   tutorial_job_kind
         clr.w   tutorial_job_budget
+        cmpi.b  #1,tutorial_active_variant
+        bhi     .done
         move.l  simulation_interval,d0
         sub.l   simulation_phase,d0
         bcs     .done
@@ -70,22 +72,24 @@ tutorial_background:
         moveq   #0,d2
         move.b  tutorial_active_variant,d2
         move.w  d2,tutorial_job_variant
-        move.l  tutorial_generation,d0
-        move.l  d2,d1
-        jsr     game_preview_endpoint_pending
-        tst.l   d0
-        bne     .endpoint
-        ; Selected endpoint prerequisites outrank dense/residual work. Once
-        ; ready, maintain a finite actual-sample waterline, not unlimited work.
+        ; Terminal/ready branches cannot have a pending endpoint. Test those
+        ; cheap immutable fields before entering the full eligibility wrapper.
         move.w  tutorial_job_variant,d2
         add.w   d2,d2
         lea     game_preview_outcomes,a0
         tst.w   (a0,d2.w)
         bne.s   .residual
+        moveq   #0,d1
         move.w  tutorial_job_variant,d1
         lea     game_preview_endpoint_ready,a0
         tst.b   (a0,d1.w)
-        beq     .preview
+        bne.s   .waterline
+        move.l  tutorial_generation,d0
+        jsr     game_preview_endpoint_pending
+        tst.l   d0
+        bne     .endpoint
+        bra     .preview
+.waterline:
         lea     game_preview_counts,a0
         move.w  (a0,d2.w),d0
         sub.w   tutorial_animation_index,d0
@@ -139,7 +143,7 @@ tutorial_background:
         bra     .admit
 .footer:
         move.w  #TUTORIAL_JOB_FOOTER,tutorial_job_kind
-        move.l  #TUTORIAL_BG_FULL_E-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        move.l  #TUTORIAL_BG_CHUNK_E,tutorial_job_cost
         bra     .admit
 .endpoint:
         move.w  #TUTORIAL_JOB_ENDPOINT,tutorial_job_kind
@@ -222,10 +226,15 @@ tutorial_background:
         bsr     tutorial_progress_slice
         bra     .completed
 .run_footer:
-        bsr     tutorial_footer
+        bsr     tutorial_footer_step
+        tst.l   d0
+        beq.s   .footer_pending
         move.l  tutorial_generation,tutorial_footer_generation
         move.w  #1,tutorial_footer_ready
         clr.b   tutorial_footer_dirty
+        clr.w   tutorial_residual_turn
+        bra     .completed
+.footer_pending:
         clr.w   tutorial_residual_turn
         bra     .completed
 .run_footer_commit:
