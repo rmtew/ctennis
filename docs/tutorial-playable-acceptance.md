@@ -15,7 +15,9 @@ retained-shot/time navigation and committed edited branching. Those features are
 absent in this product: B2 modifier directions consume the gesture but do not
 navigate; Play from here is disabled. The implementation scope decision is
 reported separately while existing behavior is checked. No pass will imply those
-features exist.
+features exist. Scope was clarified by Richard's parent thread: deliver and
+validate the current prototype as a test candidate; do not implement navigation
+or edited branching in this task.
 
 Read-only full-catalog preflight `6d7bc19183f7474dacb79b2d7424352c` identifies
 missing local canonical receipts for court/preview/history/startup/resource
@@ -55,3 +57,17 @@ decision and review; none is inferred from choosing current latency behavior.
 
 All campaigns use the durable controller and one shared workspace owner. Raw
 reports, executables, ADFs and ROM remain outside Git. No Library uploads.
+
+## First fresh result
+
+Campaign `c9ea1fbf3094455ab09f4fd9d8970c8e` stops at PAL court failure:
+no current complete initial released-serve scene within the declared40s wait.
+This is a failed playability check, not missing evidence. NTSC was not executed
+by that failed campaign. Normal callbacks continue while preview progress remains
+at4 operations and both branch counts remain at initial sample1. Serve fallback
+uses the existing full10000E dispatch hypothesis; the exact refusal cause still
+needs authoritative root/slack observations. No admission threshold is lowered.
+The entire failed directory is frozen under
+`build/tests/tutorial-court-pal-attempts/7a785f11dbdb45fda71cd746165dfa6d/`,
+including raw RPC, executable/listing, readiness failure and archive hashes.
+This failed latest case prevents inheritance of an older court pass.
