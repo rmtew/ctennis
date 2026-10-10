@@ -283,7 +283,11 @@ game_preview_step_coherent:
         bsr     game_preview_step_valid
         tst.l   d0
         beq.s   game_preview_step_return
+        move.w  #1,game_preview_explicit
+        tst.w   tutorial_batch_remaining
+        beq.s   .ordinary
         move.w  #2,game_preview_explicit
+.ordinary:
         move.w  d2,game_preview_requested_variant
         bra     game_preview_step_owned
         endc

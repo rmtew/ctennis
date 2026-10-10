@@ -212,6 +212,16 @@ tutorial_background:
         move.w  tutorial_job_variant,d7
         btst    d7,game_preview_primed_mask+1
         beq.s   .no_topup
+        lea     game_preview_launches,a0
+        tst.b   (a0,d7.w)
+        bne.s   .no_topup
+        move.w  d7,d0
+        add.w   d0,d0
+        lea     game_preview_synthetic_phases,a0
+        move.w  (a0,d0.w),d0
+        add.w   tutorial_job_budget,d0
+        cmpi.w  #3,d0
+        bne.s   .no_topup ; only a preparation prefix ending before dispatch
         move.w  d7,d0
         lsl.w   #3,d0
         lea     game_preview_stream_cursors,a0
