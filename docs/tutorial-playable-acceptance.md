@@ -260,3 +260,91 @@ Appearance requires Richard's review. No new latency experiment or causal
 performance improvement is claimed. The initial-serve liveness blocker remains
 open; this subset pass does not certify ordinary tutorial serve prediction or
 end-to-end tutorial playability.
+
+## Final exact-product build and resource evidence
+
+Campaign `9076a7fbd55b4fe5b0f14e7f207954de` passed raw inputs, four stripped
+cold boots, the fixed full demo, cold one-player and two-player checks, then
+failed setup at "fresh action advances flight after UI". The setup probe sent
+raw key 0x24 (G/button 2), while `keyboard.s` binds 0x23 (F/button 1) to action.
+Its failed receipt, screenshots, original probe, product/listing and controller
+records are preserved at `build/tests/native-setup-attempts/9076-setup-000001/`.
+That legacy probe did not persist a literal raw stream or its partial in-memory
+measurement arrays on failure; those unavailable observations are not claimed.
+Commit `8691292` changes only the two physical action keys to F. Assertions,
+runtime and input schedules otherwise remain unchanged. Independent review
+cleared this correction. The failed campaign remains failed.
+
+Affected retry `5983437e379b4f7ea6a679bd1f0d0101` passed setup and final
+package-after. Neither campaign is full acceptance. Runtime remains `fa2dd98`:
+
+| Fresh finite check | Extent/result |
+|---|---|
+| Raw controls | 11 keyboard/joystick/alias/release cases |
+| Stripped cold startup | PAL and NTSC, each with zero expansion and 512 KB slow RAM; actual loaded bytes and startup publication match |
+| Fixed demo | Full independent 10,958-tick trajectory; 13,503 completed measured callbacks |
+| Cold one-player | 13,821 completed measured callbacks; match completion and restart |
+| Two-player | 23,795 completed measured callbacks; match completion and restart |
+| Corrected setup | 2,135 completed measured callbacks; navigation/help/pause/restart and representative independent raster checks; fault controls rejected |
+| Package-after | Two clean builds reproduce the exact stripped executable and ADF |
+
+All measured named resource profiles have zero observed deadline misses;
+one/two/setup also qualify their declared broader callback checks. Demo's
+unprofiled transitions remain unmeasured for deadline coverage. All four
+resource reports observe zero missed-publication counters. The runtime resource
+report is complete for all eight required profiles, separately from acceptance.
+Cold one-player observed 434,384 chip bytes peak after the first initialized
+Exec pool and 433,096 peak after timer start. Two-player observed 466,832 peak,
+57,456 free and largest free block 56,872; other pools are zero. Pre-pool boot
+usage and pre-timer direct-executable peaks remain unverified.
+Cold one-player's observed reset-to-LoadSeg completion interval is 22,391.803 ms;
+entry-to-assets/controls is 24.656 ms and assets-to-complete-title is 59.299 ms.
+These are emulated intervals within the recorded cold-loading workflow, not host
+launch times or independently separated disk/relocation costs.
+
+Tracked metrics were generated with:
+
+```sh
+CTENNIS_ACCEPTANCE_COMPOSITE=/workspace/ctennis/build/tests/tutorial-playable-review/resource-composite-plan.json RUST_LOG=info python3 scripts/native_metrics.py --require-runtime --record
+```
+
+The three unaffected resource receipts are immutable and reuse the existing
+strict composite verifier's source equivalence: the changed setup `run()`
+function is inactive in cold-one, two-player and demo invocations. Their product,
+active observer, tools and artifacts remain strict. The active setup required
+the fresh retry. The plan and independent verification are retained in
+`build/tests/tutorial-playable-review/resource-composite-plan.json` and
+`resource-composite-independent-review.json`. The plan's `base_commit` is the
+existing verifier policy tag; its separate `actual_task_base` is PR50. This is
+explicit qualified reuse, not relabeling a failed receipt or rerunning unaffected
+matches. `docs/metrics/current.json` and `.md` record the full scope and limits.
+
+## Incoming-only delivery
+
+The task cloud directory is `build/delivery/tutorial-test-fa2dd98/`. It contains
+the ADF, stripped executable, development executable/listing, compile manifests,
+controls, limitations and copied receipt bindings in `build-identity.json`.
+
+| Artifact | SHA256 |
+|---|---|
+| `baseline-rally.adf` | `5496cbff589ef5d0f0e474be452dca241a6dbedfbaceaafbd60892955a7c5b60` |
+| `baseline-rally-release` | `e13386782ace8fe69508698a3e0b3ef9052a309f216ca30b7d59a9bb3a2e2219` |
+| `baseline-rally-development` | `0c9824cc42004496d51c19f8ca503b0100eaa604373a1b998252367fcec0588b` |
+| `native.lst` | `9cf2efc79a86a80e76dca5300666cd9c31dae52dc60f74c45e0d18e87ac32bac` |
+
+Only HUNK_SYMBOL records are stripped. These exact release/ADF hashes match
+the four actual cold boots and final reproducibility receipt. Runtime source is
+`fa2dd9878de77afe275aeb24c764f6c1b4292982`. No Library upload, merge or release
+promotion occurred. Initial-serve liveness and the complete playable check
+remain blocked as described above; navigation/edited branching, universal
+bounds, broader physical coverage, Richard's appearance/playability review and
+full native/release acceptance remain open. Complete resource coverage closes
+the specific missing measurement coverage, not those product/release holds.
+
+Prior matched PR50 latency accounting remains in
+`docs/tutorial-next-operation-results.md`: PAL physical-input-to-qualified-COPJMP
+511.533891 to 491.500312 ms; NTSC 484.964430 to 484.965547 ms. Its exclusive
+accounting includes known-ready-to-publication (14.200590 ms PAL and 12.089805 ms
+NTSC for that candidate), overlap exclusions and unclassified time. These
+are retained matched PR50 results, not a newly measured latency result for the
+PR51 rendering/retirement corrections.
