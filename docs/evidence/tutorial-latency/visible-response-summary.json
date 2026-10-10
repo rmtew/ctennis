@@ -763,5 +763,17 @@
   "timing_basis": "Actual CCK/PAL3546895/NTSC3579545, native COPJMP and most-recent-completed-field replay photos. Photo observation is an upper bound, not exact scanout-edge timing. Middle movement interval permits coalescing of earlier sampled poses. Outside-callback time is not presumed recoverable.",
   "library_uploads": false,
   "public_binary_uploads": false,
-  "merge_authorized": false
+  "merge_authorized": false,
+  "publication": {
+    "draft_pr": "https://github.com/rmtew/ctennis/pull/53",
+    "candidate_source_commit": "d50700faadcd7764b300df6261fa69daa6d39d71",
+    "candidate_path": "build/delivery/tutorial-test-b8b04f8",
+    "archive_path": "build/delivery/tutorial-test-b8b04f8.tar.gz",
+    "archive_bytes": 254381237,
+    "archive_sha256": "6a4150b7e6407423d78ea2cb2f545cdd1cdae2725aa8216a46796d5a490a07fc",
+    "candidate_independent_review": "build/tests/tutorial-playable-review/ux-delivery-independent-review.json",
+    "candidate_independent_review_sha256": "2aa95c0fafde811499c001a0a806e705d03c8ed27c624b0f7c35b71c0241b957",
+    "archive_independent_review": "build/tests/tutorial-playable-review/ux-archive-independent-review.json",
+    "archive_independent_review_sha256": "1625d1ff4161c22e9ef08c9f45ccb229970ed48dc665319e60af904123454217"
+  }
 }

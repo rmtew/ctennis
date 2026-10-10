@@ -245,3 +245,37 @@ transport traces, failed attempts, reviews and private delivery artifacts remain
 outside Git. Controls: WASD/pad move; hold F/button 1 for prediction; G/button 2
 opens the menu; choose Close to return, or Resume Original to restore the actual
 interrupted game. PAL presents 50 fields/s and NTSC approximately 60.
+
+## Private candidate custody and draft publication
+
+Draft stacked [PR #53](https://github.com/rmtew/ctennis/pull/53) targets PR #52's
+`tutorial-serve-continuation` branch. The private candidate snapshot is bound to
+source commit `d50700faadcd7764b300df6261fa69daa6d39d71`; its runtime remains
+`b8b04f834d399de813809c9e4f09a554f799419a`. Later documentation publication
+references do not alter that product or its source snapshot.
+
+The read-only candidate is `build/delivery/tutorial-test-b8b04f8/`, with the
+bootable `tutorial.adf`, development executable, symbol-only stripped release,
+listing and 4,105 source/tool/artifact bindings stored as 1,271 SHA256 objects.
+The licensed ROM has a hash reference only and is not copied. Independent
+candidate audit: `build/tests/tutorial-playable-review/ux-delivery-independent-review.json`,
+SHA256 `2aa95c0fafde811499c001a0a806e705d03c8ed27c624b0f7c35b71c0241b957`.
+
+The private archive `build/delivery/tutorial-test-b8b04f8.tar.gz` is 254,381,237 B,
+SHA256 `6a4150b7e6407423d78ea2cb2f545cdd1cdae2725aa8216a46796d5a490a07fc`.
+Exact ADF SHA256: `db0b02b9e26cbad4288dc55bf9698cdcb311017e88cbcb95d702728d9bec6095`;
+development: `6d454ad829dfe239826f6690838ed0a395c29fce3b135600f53e14afd99185a1`;
+release: `a1ef7cdc37b33ac1f2e4672d761da5b1b7f91535e882b897e9fd9ef150b4e708`.
+The delivered `4baa6da` ADF, development, release and listing hashes were
+rechecked unchanged. No binaries or raw evidence were pushed to Git or Library.
+To enter, choose Tutorial in the title menu, or start an ordinary match and use
+G/button 2. WinUAE and human playability review remain pending; use this as a
+private finite-scope candidate, not a cleared full release.
+
+Final independent streamed archive audit:
+`build/tests/tutorial-playable-review/ux-archive-independent-review.json`, SHA256
+`1625d1ff4161c22e9ef08c9f45ccb229970ed48dc665319e60af904123454217`.
+Every one of the 1,278 regular archive files and both directories matches the
+read-only candidate and manifest, with no unexpected, duplicate or link entries.
+The complete licensed ROM payload is absent from every streamed file, including
+chunk boundaries. Candidate and archive remain unchanged after audit.
