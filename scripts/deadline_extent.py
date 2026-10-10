@@ -6,7 +6,7 @@ import json
 
 B_CHUNK_CCK=5000
 B_PHYSICS_CCK=20000
-B_CALLBACK_CCK=56000
+B_CALLBACK_CCK=55750
 B_ENTRY_CCK=2000
 B_TRANSPORT_CCK=50000
 OPERATIONS={'game_core_sample_pads_body':3,'game_core_sample_result_body':4,
