@@ -161,7 +161,11 @@ def run(standard='PAL', coherent=False):
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
+            captured_private_positions=set()
             def capture_private_stop():
+                marker=(stop['cck'],stop.get('pc'))
+                if marker in captured_private_positions:return
+                captured_private_positions.add(marker)
                 if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
                     footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
                         footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
