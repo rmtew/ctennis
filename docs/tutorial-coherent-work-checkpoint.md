@@ -1,75 +1,19 @@
 # Current work checkpoint
 
-Active task: finish the approved coherent tutorial scheduler on
-`feature/tutorial-coherent-scheduler`; publish a new draft PR, without merging.
-PR45 is completed earlier work and is not the active delivery.
+Active authorized task: complete coherent tutorial scheduler validation and publish a NEW reviewed draft PR, with no merge or uploads. Historical PR45 is already completed; do not substitute its status for this task.
 
-Unified scheduling and independent branches are implemented. Cooperative endpoint
-stages and reviewed formal CPU proofs pass:42 frozen-old helper cases,56 grouping
-cases, edge/refusal fixtures, and three-role sliced seek. Next: freeze the observer
-publication correction and run actual native PAL/NTSC contact, early publication,
-input and timing; independent review, resource reports and new draft publication.
-Keep numerical costs experimental.
+Worktree `/workspace/ctennis-coherent-scheduler`; branch `feature/tutorial-coherent-scheduler`; source correction `51795dd`, current tool-only HEAD `85036e1`. Native SHA256 `38996735c8b6319a6da2f11431bf216c913db98f24c8dda74d6e13c643f82c2a`; standalone `6eb0bf7229828d277e16ca43e9a0567a93b13901c45c659683496053604df50d`. Shared normalized core17606B and endpoint1034B unchanged.
 
-Resume campaign `7c2cac9edbe64d9a8aeb30e51496380f` only after checking process
-ownership. PAL attempt4 is retained in
-`build/tests/coherent-contact-native-pal-attempts/8ee50f05dff643fbb87311c86548b4d5`.
-Attempts1–3 raw captures were overwritten: disclose this loss; their remaining
-campaign metadata does not make those failures reproducible. Archive-before-retry
-now protects subsequent captures. Never overwrite the frozen b08b helper oracle.
+Campaign `7c2cac9edbe64d9a8aeb30e51496380f`. Latest native PAL attempt7 `36cb1322b82545058d675ad53b73cfb2` FAILED after nine physical trials: one cheap owner5074CCK >5000, no IRQ; footer82stages but no complete caption/commit. Full capture preserved under `build/tests/coherent-contact-native-pal-attempts/36cb1322b82545058d675ad53b73cfb2`; raw7c7f0546…13f4b8/reportc8c358ba…219aa1. NTSC not run. Attempts4–7 retain full evidence; attempts1–3 raw overwritten and only metadata/logs survive. Disclose loss.
 
-No uploads, merge, golden regeneration or full-release/appearance claims.
-Implementation authorization is the user's existing “do it”, reiterated by the
-parent delegation. Consult this checkpoint after context recovery.
+Failed owner cause: usableplanner1570E, result1000E leaves570E below every next operation, but old planner looked up next dispatch. Generic minimumslackstop now skips this lookup; no cost gate changed. Native harness adds <=2second stable caption settle after nine unchanged endpoint trials, inside same25second overall cap. Require actual512byte commit/readback; no first-scanout claim.
 
-Latest native attempt5 failed a queued-placement-dirty detector before the extra
-contact trials. Entire capture is archived under run36ac93c177fc4a989768bdff2ceca5bd
-(raw c1ef09433fc8e3c4468336701fc662e56e6a10356707f78df2ce8d4377b55b6b).
-Independent literal reconstruction confirms actual mode1 COPJMP with live clean
-placement. Observer-only correction must separate COPJMP bookkeeping flags from
-immutable queued bank pose/provenance; preserve all existing marker/dense/generation
-gates. No new native pass yet. No native processes active at this checkpoint.
+Actual320 paired CPU planner proof PASSED receipt a682cfd03733d8794ac0b60551622cbb4629d41b0b7a9801ecbf106a84872847; independent review verified542bindings/all320rawpairs. Eight specific lookup savings2428→1156cycles; maximum fixture3742vsold3580, no universal speedup. Two earlier proof-tool failures preserved (undeclared clock reads, cross-image relocated pointers). Exact two pointer roles verified; all local owner bytes/events unchanged.
 
-Current native0999288675e9d201f3dda8add25732b326995d0ae59692fa58c68bb53b564dfa;
-standalone6eb0bf7229828d277e16ca43e9a0567a93b13901c45c659683496053604df50d.
-An ENOSPC controller start was resolved by exact-hash deduplication of duplicate
-CAS input copies; preserve unique evidence and monitor remaining disk space.
+Current footer110fixture proof refreshed4372d1d6d14028f703bf7826a8ae4c1924eaa3c47a0a906d398921e2f78357f2; CPU maximum5842cycles/64Bstack, synchronous128vsold68. Current root20route/geometry/API proof PASSED df77a57644583631f34b172c1e8fca8c9d2bd603f58fe01e248a92732d8c909d. CPU sessions5115/82988/21703 finished. PAL attempt8 ACTIVE: controller103364/start19167234, observer103367, emulator103374. No other CPU/emulator. Disk monitor execsession1802. Check ownership before resuming; do not duplicate.
 
-Latest attempt6 completed all nine PAL endpoint trials, then failed the finite
-complete-owner cost gate: seven budget1 preview owners exceeded 5000 CCK
-(maximum5217). No footer stage/commit ran. Capture archived at
-`build/tests/coherent-contact-native-pal-attempts/81a2f2a8599e4559b5c9666a89318b9f`.
-No emulator/controller/CPU process is active. Current fixes: selected terminal/
-ready eligibility shortcut (root); cooperative actual-font footer (observer
-author). Keep all numerical gates unchanged until new explicit stage hypothesis
-and measurements. Preserve native099928 oracle in
-`build/tests/coherent-frozen-footer-099928/`. NTSC still has not run.
+Next: monitor SAME PAL/NTSC campaign attempt8. Footer4372 proof directbindings167verified; genericstatus schema mismatch current_sha256 vs executable_sha256 is not drift. Rootproofmatches currentnative. Monitor disk (~300MiB workspace/~108MiB tmp); `/tmp/coherent-dedup-completed-case.py` only hash-verifies/deduplicates immutable completedcase/CAS artifacts. All attempts must archive before retry. No concurrent build/observer.
 
-Correction frozen64f5679, nativef96f0b3f…; footer formal proofd125f49f passes110
-fixtures, expanded edge13857bbf passes20 root routes. Both normalized shared
-byte audits unchanged. PAL attempt7 now running under campaign controller102081,
-existing campaign7c2cac9edbe64d9a8aeb30e51496380f. Inspect owner/process identity
-before resuming. Disk monitor session57203 deduplicates only hash-identical
-completed-case/CAS artifacts while controller lives. No other CPU/emulator jobs.
-Do not modify frozen source/observer/costpolicy during active native capture.
+Independent timing reviewer checking possible residual starvation after otherbranch zero budget: partialfooter resets turn0; otherbudget0 can return without footer fallback. Do not change source speculatively; current stable settle will expose missing completion. Keep selectedendpoint refusal priority and all numerical gates.
 
-Attempt7 finished all nine physical trials but failed cost gate again. Full failed
-capture archived at36cb1322b82545058d675ad53b73cfb2 (raw7c7f0546…13f4b8,
-reportc8c358ba…219aa1). Independent single-loader reduction found only ONE
-budget1 preview root5074CCK>5000 (2825planning/1538worker/711post), noIRQ.
-Footer82stages/maxowner4301/API2963 but none completed and zero commits.
-Reviewer is identifying exact eligibility rejection and footer stage generations
-before next edits. No controller/emulator/CPU running; NTSC notrun.
-Disk monitor57203 terminated normally. Verified immutable CAS and exact original archived-input hardlink
-dedup removed214119089 duplicate bytes (214126592 measured filesystem bytes); allpaths/bytesretained, manifest at
-/workspace/ctennis-coherent-immutable-CAS-dedup.json. About304MiB nowfree.
-
-Exact attempt7 cause identified: after admittedcheap1000E, usableplanner1570E
-leaves570E<minimum-next1000E, but it spent456CCK classifying nextopcode8. Root
-added generic minimumslackstop before nextpeek, no costchanges. CPU author
-is adding actualold/new classifierproof against frozenf96 oracle at
-build/tests/coherent-frozen-classifier-f96/. Footer82stages had no identity
-restarts: each window ended midheader. Observerauthor adds <=2sec stableview
-settle after ninthphysicaledit, same25sec capturecap, requiring actual512 live
-commit witness; nineoriginal endpointlatencies unchanged. Both edits pending
-freeze/newproof/native; no campaigns/processes currently running.
+Then independent actual native timing/contact/publication/input/footer review, metrics --require-runtime --record (both current files, incomplete holds remain), reconcile docs and NEW draft PR stacked on feature/tutorial-physics-background. Existing PR46 remains untouched. No full WCET/transport/resource/appearance/coldrelease claim.
