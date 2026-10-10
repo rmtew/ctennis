@@ -71,3 +71,63 @@ The entire failed directory is frozen under
 `build/tests/tutorial-court-pal-attempts/7a785f11dbdb45fda71cd746165dfa6d/`,
 including raw RPC, executable/listing, readiness failure and archive hashes.
 This failed latest case prevents inheritance of an older court pass.
+
+## Queued scene retirement and initial-serve liveness
+
+The physical incoming PAL attempt `8dea48c205a2402d94dd9995097e8b08` failed
+its final generation audit. Literal bus replay and independent review found 24
+old-generation COPJMP publications during continuous position changes. All 24
+were mode-0 placement/waiting scenes, with matching immutable banks and sprites;
+none establishes publication of an obsolete outgoing prediction. Independent
+review also found one old held/released variant publication (index 79). The
+original failed report, raw bus trace and product remain unchanged.
+
+Runtime `3e3afd4` retires the complete waiting bank, using the existing
+interrupt-masked `discard_ready_scene`, before publishing either a newly accepted
+placement generation or a changed variant. It preserves front/back ownership,
+canonical state, history, controls and scheduler reservations. No resume
+retirement change is inferred: this retained trace did not witness an active
+queued scene publishing after resume. The new observer also checks live variant
+identity and waits for actual complete menu surface publication, then revalidates
+its displayed epoch/selection and checks independently authored menu pixels.
+An earlier fixed 0.3 s screenshot established logical menu state only.
+
+The initial-serve failure is a real liveness blocker, not supported end-to-end
+playability. Independent review bound 2,377 consecutive callbacks after guest
+9 s in the preserved PAL failure. Callback spans were 4,915–5,473 CCK; the largest
+observed nominal interval was 11,839 E = 59,195 CCK. Even with zero entry lateness
+and no additional planning/beam cost, the optimistic remaining gap is at most
+54,280 CCK = 10,856 E. The declared full dispatch plus service/margin needs
+55,000 CCK = 11,000 E. Fresh clocks and beam checks can only reduce that gap.
+This finite result explains the four preparation operations followed by no
+full dispatch; it is neither WCET evidence nor permission to lower a reservation.
+The reproduced calculation and exact trace/image hashes are in ignored
+`build/tests/tutorial-playable-review/`.
+
+The directly witnessed reachable state is lower human initial serve in a
+one-player game, entered by physical controls. Title Tutorial and retained human
+pre-launch serves use the same kind-3 exact route; their analogous capacity is
+not independently measured here. Incoming predictor eligibility explicitly
+rejects kind >= 3 and requires initialized active score, incoming flight/contact,
+ownership and one-human/one-AI guards. Its existing bounded operation omits
+incidental score/display/audio work only within that incoming horizon. Widening
+that guard for initial serve would be a new unproved projection. The existing
+ball-only continuation applies after actual human launch and cannot perform the
+blocked pre-launch dispatch. Ordinary live serving is a different mandatory
+route; this finding concerns tutorial serve prediction, not a live-play failure.
+
+The smallest exact design change under investigation is a preview-only
+cooperative continuation of the original full dispatcher at actual subroutine
+boundaries. It must keep scene-field update, input update, score, gameplay,
+scene finish, pre-tail observation, clocks, audio, sound and scene service in
+original order. Each branch needs generation/variant-bound stage ownership and
+an entry-selected dispatch lane. Stream cursor, dispatch/sample counts, launch
+and outcome publication must advance only after the entire logical envelope
+completes. Cancel, seek, replacement and mixed legacy calls must retire or
+complete the stage without fallback from a partial context; full private 318-byte
+state, all 72 history metadata bytes and ordered events remain protected at each
+yield. Existing synchronous APIs must retain their exact behavior. Each stage
+needs its own complete native ownership/service cost evidence and matched
+original-reference equivalence before admission. No already-validated operation
+currently supplies that contract. Merely assigning the smaller incoming cost
+class or dropping score/scene/tail calls would weaken the required behavior.
