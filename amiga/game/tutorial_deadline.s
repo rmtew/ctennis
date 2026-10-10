@@ -377,6 +377,12 @@ tutorial_background_class:
         beq     .done
         cmpi.w  #4,tutorial_job_budget
         beq     .done
+        ; Every next operation costs at least one chunk. Stop before peeking
+        ; or classifying an operation which cannot possibly join this prefix.
+        move.l  tutorial_job_cost,d1
+        addi.l  #TUTORIAL_BG_CHUNK_E,d1
+        cmp.l   d5,d1
+        bhi     .done
         addq.w  #1,d6
         tst.w   d4
         bne.s   .next_phase

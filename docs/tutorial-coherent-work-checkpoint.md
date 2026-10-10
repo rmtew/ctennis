@@ -44,3 +44,32 @@ ready eligibility shortcut (root); cooperative actual-font footer (observer
 author). Keep all numerical gates unchanged until new explicit stage hypothesis
 and measurements. Preserve native099928 oracle in
 `build/tests/coherent-frozen-footer-099928/`. NTSC still has not run.
+
+Correction frozen64f5679, nativef96f0b3f…; footer formal proofd125f49f passes110
+fixtures, expanded edge13857bbf passes20 root routes. Both normalized shared
+byte audits unchanged. PAL attempt7 now running under campaign controller102081,
+existing campaign7c2cac9edbe64d9a8aeb30e51496380f. Inspect owner/process identity
+before resuming. Disk monitor session57203 deduplicates only hash-identical
+completed-case/CAS artifacts while controller lives. No other CPU/emulator jobs.
+Do not modify frozen source/observer/costpolicy during active native capture.
+
+Attempt7 finished all nine physical trials but failed cost gate again. Full failed
+capture archived at36cb1322b82545058d675ad53b73cfb2 (raw7c7f0546…13f4b8,
+reportc8c358ba…219aa1). Independent single-loader reduction found only ONE
+budget1 preview root5074CCK>5000 (2825planning/1538worker/711post), noIRQ.
+Footer82stages/maxowner4301/API2963 but none completed and zero commits.
+Reviewer is identifying exact eligibility rejection and footer stage generations
+before next edits. No controller/emulator/CPU running; NTSC notrun.
+Disk monitor57203 terminated normally. Verified immutable CAS and exact original archived-input hardlink
+dedup removed214119089 duplicate bytes (214126592 measured filesystem bytes); allpaths/bytesretained, manifest at
+/workspace/ctennis-coherent-immutable-CAS-dedup.json. About304MiB nowfree.
+
+Exact attempt7 cause identified: after admittedcheap1000E, usableplanner1570E
+leaves570E<minimum-next1000E, but it spent456CCK classifying nextopcode8. Root
+added generic minimumslackstop before nextpeek, no costchanges. CPU author
+is adding actualold/new classifierproof against frozenf96 oracle at
+build/tests/coherent-frozen-classifier-f96/. Footer82stages had no identity
+restarts: each window ended midheader. Observerauthor adds <=2sec stableview
+settle after ninthphysicaledit, same25sec capturecap, requiring actual512 live
+commit witness; nineoriginal endpointlatencies unchanged. Both edits pending
+freeze/newproof/native; no campaigns/processes currently running.

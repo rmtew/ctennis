@@ -140,6 +140,8 @@ def required_extent(report,standard):
     if report['evidence']['files'].get('docs/tutorial-coherent-cost-policy.json')!=c['coherent_policy']['policy_sha256']:return False
     if not report['deadline']['footer_stages'] or not any(r['completed'] for r in report['deadline']['footer_stages']):return False
     if not any(r['bytes_written']==512 for r in report['deadline']['footer_commits']):return False
+    from coherent_footer_stages import validate_final_caption
+    if c['final_caption']!=report['final_caption'] or validate_final_caption(c,report['deadline']['footer_commits'])!=c['final_caption_validation'] or c['final_caption_validation']!=report['final_caption_validation']:return False
     if c['deadline_negative_controls']!=['retained-private-ownership-record-rejected']:return False
     rows=c['endpoints']
     from coherent_publication import qualified_endpoint,early_endpoint
