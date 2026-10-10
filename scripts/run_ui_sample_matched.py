@@ -76,7 +76,7 @@ def run(standard):
                 except AssertionError:pass
             assert anchor is not None,'No settled main_loop anchor'
             session.inspect('break.clear');session.inspect('state.save',dict(path=str(attempt/'anchor.state')))
-            region=anchor['cck'];press=region+int(.02*CLOCKS[standard]);release=press+int(.02*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
+            region=anchor['cck'];press=region+int(.02*CLOCKS[standard]);release=press+int(.012*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
             # Relocated patch audit repeats at real LoadSeg addresses.
             ranges=[(symbols['ui_sample'],symbols['ui_latch_live_controls'])]
             differences=[a+j for (a,c),(b,r) in zip(images,original) for j,(x,y) in enumerate(zip(c,r)) if x!=y and not ranges[0][0]<=a+j<ranges[0][1]]
@@ -143,7 +143,7 @@ def run(standard):
                 results.append(item);atomic_json(attempt/(label+'.json'),item)
                 if label=='baseline-2':assert {k:v for k,v in results[0].items() if k!='label'}=={k:v for k,v in item.items() if k!='label'},'Baseline replay differs; treatment forbidden'
             requests=lambda p:[(r['generation']-anchor_generation,r['x'],r['y'],r['variant']) for r in p['presentation_requests']]
-            assert requests(results[0])==requests(results[2]) and requests(results[0]),'Physical request sequence differs'
+            assert requests(results[0])==requests(results[2]) and len(requests(results[0]))==1,'Physical single-request sequence differs'
             report['accepted_requests']=requests(results[0])
             assert results[0]['endpoint_points']==results[2]['endpoint_points'] and results[0]['endpoint_outcomes']==results[2]['endpoint_outcomes'],'Causal endpoint differs'
             report.update(passed=True,standard=standard,target=dict(transaction.meta['target'],video=standard),anchor=anchor,passes=results,baseline_replay_equal=True,loaded_hunks=loaded)
