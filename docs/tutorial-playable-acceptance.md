@@ -133,6 +133,55 @@ original-reference equivalence before admission. No already-validated operation
 currently supplies that contract. Merely assigning the smaller incoming cost
 class or dropping score/scene/tail calls would weaken the required behavior.
 
+### Initial-serve investigation closure
+
+The investigation is complete; the liveness fix and the requested complete
+playable check are **blocked**, not completed. The incoming-only candidate is
+a separately qualified subset. Independent source review is retained in
+`build/tests/tutorial-playable-review/initial-serve-source-closure.json`.
+
+| Existing operation assessed | Why it cannot unblock this pre-launch serve |
+|---|---|
+| `game_preview_predictor_tick` | Eligibility rejects kind >= 3 before checking initialized active score, incoming contact/flight and one-human/one-AI ownership. Its reduced input/play/scene-finish/clock envelope omits work justified only within that guarded incoming horizon. Widening the guard would change the proof obligation. |
+| `game_preview_flight_one` | The exact ball-only continuation is selected only after `game_preview_launches[variant]` is set. It cannot create the preceding human launch. |
+| `game_preview_endpoint_step`, `landing_try_prepare/step` | Pending eligibility requires a complete saved launch seed and at least four outgoing phases. Query stages predict an outgoing endpoint; they do not execute the pre-launch gameplay dispatch. |
+| Prime, pad/result/poll envelope chunks | These execute surrounding logical preparation, but none substitutes for recorded/synthetic operation 8. Four counted operations followed by no progress are consistent with preparation followed by the full admission barrier; the exact private phase was not watched. |
+
+Equivalent splits are possible in principle at the original call boundaries,
+but are not already qualified operations. The exact next implementation is a
+root-only staged operation-8 API for an explicitly eligible kind-3,
+`GAME_PLAYING`, command-zero private branch. Preserve the entry-selected lane
+even if scoring changes lifecycle within the operation. Execute these bodies
+once, in order: `game_scene_update_fields`, `input_update`, `game_score_tick`,
+`game_play_tick`, `game_scene_finish_tick`, `game_observe_pre_tail`,
+`game_advance_clocks`, `game_audio_tick`, `game_apply_sound`,
+`game_scene_service`. Other dispatcher lanes retain synchronous behavior until
+independently covered. A useful partition cannot be selected from the current
+trace: individual stage allowances are absent, and `game_play_tick` itself
+contains player/contact/ball/movement work that could require a further proven
+split. No measured whole-callback span proves those stage bounds.
+
+Each yield must persist the branch stage, generation, variant, pending envelope,
+full 318-byte private context, stage-local 72-byte history metadata and required
+register/CCR continuation (gameplay uses A3/A4/D7 between internal calls).
+Advance synthetic phase, retained cursor, dispatch/sample counters, launch seed
+and outcome only after the whole envelope completes. Retire partial ownership
+on cancel, seek or replacement. Held/released selection changes must save each
+branch's independent continuation and permit timely fair reconsideration;
+mixed synchronous calls must either complete it
+under their original contract or reject it explicitly. Preserve public
+synchronous APIs, fair branch selection and all existing input, producer, fresh
+clock, beam and live admission gates.
+
+Before enabling admission, prove complete stage ownership/service costs and
+matched original-reference intermediate/final state and ordered outputs, then
+check both initial-serve alternatives and cancellation/resume in PAL and NTSC.
+This is a new continuation contract plus native cost/equivalence qualification,
+not a safe reservation or guard adjustment in this increment. Current evidence
+establishes neither a fitting partition nor equivalence across such yields.
+The full reservation is unchanged. Finished checks below remain evidence for
+runtime `fa2dd98` even if that next implementation changes the product.
+
 ## Current campaign custody
 
 CPU campaign `c68e40a9562f42ca9ffbff893c1ed173` completed all 56 actual-68000
@@ -151,8 +200,8 @@ could be qualified. Attempt `ee16e9a07a794f829d5d5d3b1fd078be` is retained with
 its raw events and exact corrected product. No pass is inferred from that failure.
 Observer correction `8ada001` checks both objects separately and retains partial
 observations on future early failures. Independent source review cleared it.
-Campaign `f054a439df2b4e238e6fbfa9b242d30c` is the affected-check retry; its
-completion determines the final finite physical claims.
+Campaign `f054a439df2b4e238e6fbfa9b242d30c` retried the affected checks and
+failed the menu raster assertion described below. It establishes no physical pass.
 
 A second corrected-product attempt, `26b2809aacbb4556bcbe7cb580d953cd`
 (campaign `f054a439df2b4e238e6fbfa9b242d30c`), reached the actual menu surface
