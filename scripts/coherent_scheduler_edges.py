@@ -246,7 +246,7 @@ def root_decline(native,raw):
             for name,value,width in (('tutorial_active',1,1),('ui_paused',1,1),
                 ('tutorial_work_pending',1,1),('tutorial_generation',generation,4),
                 ('tutorial_presentation_generation',generation,4),('tutorial_active_variant',variant,1),
-                ('simulation_interval',10000,4),('simulation_phase',2000,4),('blank_seen',0,1),
+                ('simulation_interval',10000,4),('simulation_phase',6000,4),('blank_seen',0,1),
                 ('game_preview_status',3,2),('game_preview_primed_mask',3,2)):
                 cpu.mem.w_block(s[name],value.to_bytes(width,'big'))
             for name,width,value in (('game_preview_launch_saved',1,255),
@@ -259,7 +259,7 @@ def root_decline(native,raw):
             assert cpu.cpu.r_reg(0)==1,'Declared query seed is not eligible'
             saved_events=list(cpu.events);saved_preview_events=list(cpu.preview_events)
             forbidden=('game_preview_dispatch','game_ball_tick','game_preview_step_variant',
-                'game_preview_endpoint_try','account_sim_timer','read_presentation_line')
+                'game_preview_endpoint_try','game_preview_endpoint_step','account_sim_timer','read_presentation_line')
             hits=[]
             def observe(pc):
                 cpu.instruction(pc)
@@ -283,7 +283,7 @@ def root_decline(native,raw):
             assert cpu.events==saved_events and cpu.preview_events==saved_preview_events, 'Scheduler changed preexisting output ledger'
             cpu.audit_reads()
             rows.append(dict(variant=variant,passed=True,declines=3,cancel_return=True,
-                gap_e=8000,query_total_reserve_e=10000,no_selected_advance=True,
+                gap_e=4000,query_total_reserve_e=5000,no_selected_advance=True,
                 no_clock_beam_or_hardware_reads=True,cycles=cycles,stack=cpu.stack_bytes,
                 before_preview=before_preview.hex()))
     result=dict(passed=True,rows=rows,
