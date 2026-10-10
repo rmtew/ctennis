@@ -62,6 +62,13 @@ class CoherentExtentTests(unittest.TestCase):
         c,owners=self.footer_capture()
         self.assertEqual(validate_footer(c,owners)[0]['bytes_written'],512)
 
+    def test_footer_split_word_bus_writes_match_staged_bytes(self):
+        c,owners=self.footer_capture()
+        c['overlay_writes']=[dict(row,addr=row['addr']+offset,size=2,value=0) for row in c['overlay_writes'] for offset in (2,0)]
+        result=validate_footer(c,owners)[0]
+        self.assertEqual(result['bytes_written'],512)
+        self.assertEqual(result['observed_bus_width_counts'],{'2':256})
+
     def test_footer_dma_write_fails(self):
         c,owners=self.footer_capture();c['overlay_writes'][31]['position']['vpos']=236
         with self.assertRaisesRegex(AssertionError,'DMA fetch'):validate_footer(c,owners)

@@ -174,16 +174,17 @@ def validate_footer(c,owners):
         assert any(enclosed(owner,commit) for _,owner in owners)
         samples=[r for r in c['footer_commit_samples'] if commit['entry']['cck']<=r['position']['cck']<=commit['exit']['cck']]
         assert len(samples)==1,'Footer commit lacks unique staged byte sample'
-        sample=samples[0];payload={}
+        sample=samples[0];payload={};bus_writes=0;bus_widths={}
         for row in writes:
             if not commit['entry']['cck']<=row['position']['cck']<=commit['exit']['cck']:continue
-            assert row['size']==4,'Footer transaction changed long-copy contract'
-            offset=row['addr']-c['overlay_base'];assert 0<=offset<=508 and offset%4==0
-            for i,b in enumerate(row['value'].to_bytes(4,'big')):
+            bus_writes+=1;bus_widths[str(row['size'])]=bus_widths.get(str(row['size']),0)+1
+            assert row['size'] in (2,4),'Footer transaction has unsupported bus write width'
+            offset=row['addr']-c['overlay_base'];assert 0<=offset<=512-row['size'] and offset%2==0
+            for i,b in enumerate(row['value'].to_bytes(row['size'],'big')):
                 assert offset+i not in payload,'Footer byte written repeatedly'
                 payload[offset+i]=b
         if sample['generation']==sample['footer_generation']:
             assert len(payload)==512 and bytes(payload[i] for i in range(512)).hex()==sample['staged'],'Footer commit differs from staged512 bytes'
         else:assert not payload,'Stale footer generation wrote live overlay'
-        results.append(dict(entry=commit['entry'],exit=commit['exit'],bytes_written=len(payload),generation=sample['generation'],footer_generation=sample['footer_generation']))
+        results.append(dict(entry=commit['entry'],exit=commit['exit'],bytes_written=len(payload),observed_bus_writes=bus_writes,observed_bus_width_counts=bus_widths,generation=sample['generation'],footer_generation=sample['footer_generation']))
     return results

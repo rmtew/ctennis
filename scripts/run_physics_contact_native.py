@@ -122,6 +122,9 @@ def run(standard='PAL', coherent=False):
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             session.observer = LatencyObserver(callbacks,timing)
             input_trace=InputTrace(symbols)
+            if coherent:
+                from coherent_write_observer import CoherentWriteObserver
+                coherent_writes=CoherentWriteObserver(symbols)
             if predictor:
                 previous_observe=session.observer.observe
                 def observe(message):
@@ -132,12 +135,9 @@ def run(standard='PAL', coherent=False):
                     if coherent and row.get('access')=='write':
                         if symbols['ui_overlay_plane']<=row.get('addr',0)<symbols['ui_overlay_plane']+512:
                             overlay_writes.append(dict(row,tutorial_active=bool(callbacks.state.get('tutorial_active'))))
-                        for name in ('simulation_phase','simulation_interval'):
-                            if row.get('addr')==symbols[name]:
-                                assert row['size']==4,'Admission timer state requires a complete long write'
-                                admission_writes.append(dict(position=row['position'],field=name,value=int(row['value'])))
-                        for name in ('tutorial_job_kind','tutorial_job_variant','tutorial_job_budget','tutorial_job_cost','tutorial_jobs_completed'):
-                            if row.get('addr')==symbols[name]:job_writes.append(dict(position=row['position'],field=name,value=int(row['value'])))
+                        completed=coherent_writes.observe(row)
+                        if completed:
+                            (admission_writes if completed['field'] in ('simulation_phase','simulation_interval') else job_writes).append(completed)
                 session.observer.observe=observe
             watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
                 dict(addr=symbols['game_stack_bottom'],
@@ -394,6 +394,7 @@ def run(standard='PAL', coherent=False):
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval);stack_result=timing.result()
             assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
+            if coherent:coherent_writes.require_complete()
             input_result=input_trace.result(actions,stack_result['calls'])
             if not coherent:assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
