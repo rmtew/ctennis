@@ -74,6 +74,7 @@ def run(standard, delivered, match):
                         tutorial_footer_dirty=1,tutorial_waiting_ready=1,tutorial_status=2,game_lifecycle=2,
                         game_score_initialized=1,game_lower_phase=1,game_upper_phase=1,
                         game_preview_status=2,game_preview_kind=2,game_preview_primed_mask=2,
+                        game_preview_active=1,
                         game_preview_counts=4,game_preview_dispatch_stages=4,game_preview_synthetic_phases=4)
             callbacks=None;timing=None;frame_events=[];owners=[];control_writes=[];restores=[];frozen=None
             if not delivered:
@@ -141,7 +142,8 @@ def run(standard, delivered, match):
                 row['history']=raw(symbols['game_history_state'],72).hex()
                 if frozen is not None and row['state']['tutorial_active']:
                     assert row['core']==frozen['core'].hex(),'Tutorial changed frozen canonical core'
-                    assert row['history']==frozen['history'].hex(),'Tutorial changed frozen history'
+                    if not row['state']['game_preview_active']:
+                        assert row['history']==frozen['history'].hex(),'Tutorial changed public frozen history'
                 if callbacks is not None:
                     scenes=[p for p in callbacks.surfaces.publications if p['position']['frame']<=position['frame']-2]
                     if scenes:row['displayed_scene']=scenes[-1]
@@ -172,8 +174,23 @@ def run(standard, delivered, match):
             check('initial-banner',lambda:assert_native_text(stable[-1]['path'],4,'TUTORIAL',True))
             if not delivered:
                 check('initial-controls',lambda:assert_native_text(stable[-1]['path'],192,'WASD MOVE  HOLD F  G MENU',True))
-                frozen=dict(core=bytes.fromhex(stable[-1]['core']),history=bytes.fromhex(stable[-1]['history']),interrupted=raw(symbols['tutorial_interrupted_state'],318),records=raw(symbols['game_history_buffer'],symbols['game_history_buffer_end']-symbols['game_history_buffer']))
-                check('frozen-ball',lambda:bool(any(p.get('native_sprite_check',{}).get('matched') and p['tutorial_fields'].get('tutorial_ball_mode')==0 and bytes.fromhex(p['objects'])[53] and bytes.fromhex(p['objects'])[61] for p in callbacks.surfaces.publications)) or (_ for _ in ()).throw(AssertionError('No actual visible frozen ball/shadow publication')))
+                metadata=raw(symbols['game_preview_history_saved'],72) if stable[-1]['state']['game_preview_active'] else bytes.fromhex(stable[-1]['history'])
+                frozen=dict(core=bytes.fromhex(stable[-1]['core']),history=metadata,interrupted=raw(symbols['tutorial_interrupted_state'],318),records=raw(symbols['game_history_buffer'],symbols['game_history_buffer_end']-symbols['game_history_buffer']))
+                def frozen_ball():
+                    scenes=[p for p in callbacks.surfaces.publications if (p.get('native_sprite_check') or {}).get('matched') and p['tutorial_fields'].get('tutorial_ball_mode')==0 and bytes.fromhex(p['objects'])[53] and bytes.fromhex(p['objects'])[61]]
+                    assert scenes,'No actual visible frozen ball/shadow publication'
+                    from PIL import Image
+                    matched=[]
+                    for photo in stable:
+                        scene=photo.get('displayed_scene',{})
+                        if scene not in scenes:continue
+                        objects=bytes.fromhex(scene['objects']);x,y=objects[49]+31,objects[48]+1
+                        with Image.open(photo['path']) as image:
+                            white=sum(image.convert('RGB').getpixel((px,py))==(255,255,255) for py in range(y,min(y+16,192)) for px in range(x,min(x+16,256)))
+                        if white:matched.append(dict(photo=photo['name'],ball_pixels=white,objects=objects[48:64].hex()))
+                    assert matched,'Frozen native ball has no visible white image pixels'
+                    return matched
+                check('frozen-ball',frozen_ball)
                 resume_break=session.inspect('break.add',dict(kind='pc',addr=symbols['tutorial_resume_restored']))
             original_actor=blue_actor(stable[-1]['path'])
             movement=key(0x22,True);moving=frames('move-right',20);key(0x22,False);frames('move-release',3)
@@ -191,9 +208,19 @@ def run(standard, delivered, match):
             if not delivered:
                 check('held-controls',lambda:assert_native_text(held[-1]['path'],192,'WASD MOVE  HOLD F  G MENU',True))
                 def landing():
-                    scenes=[r['displayed_scene'] for r in held if r.get('displayed_scene',{}).get('landing',{}).get('valid')]
-                    assert scenes,'No current native landing cross observed'
-                    return dict(fields=len(scenes),first=scenes[0]['position'],last=scenes[-1]['position'])
+                    from PIL import Image
+                    seen=[]
+                    for photo in held:
+                        scene=photo.get('displayed_scene',{});cue=scene.get('landing',{})
+                        if not cue.get('valid'):continue
+                        coords=[(cue['x']+dx,cue['y']+dy) for dx,dy in ((-2,0),(-1,0),(0,0),(1,0),(2,0),(0,-2),(0,-1),(0,1),(0,2))]
+                        coords=[(x,y) for x,y in coords if 0<=x<256 and 0<=y<192 and not (96<=x<160 and 4<=y<12)]
+                        with Image.open(photo['path']) as image:
+                            white=sum(image.convert('RGB').getpixel(p)==(255,255,255) for p in coords)
+                        if white:seen.append(dict(photo=photo['name'],ground=[cue['x'],cue['y']],visible_cross_pixels=white,index=scene['tutorial_fields']['tutorial_animation_index']))
+                    assert seen,'No current native landing cross pixels observed'
+                    assert len({r['index'] for r in seen})>=2,'Landing cue was not persistent across actual playback samples'
+                    return seen
                 check('landing-cue',landing)
             key(0x23,False);frames('released-preview',10)
             key(0x24,True);frames('menu-press',2);open_action=key(0x24,False)
