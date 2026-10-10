@@ -18,12 +18,13 @@ def module_hashes():
             for p in sorted(p for p in (ROOT / "amiga/game").iterdir() if p.suffix in (".s", ".i"))}
 
 
-def _build(flavor="enhanced"):
+def _build(flavor="enhanced", physics_control=False):
     if flavor != "enhanced":
         raise ValueError("Only the maintained enhanced interface is supported")
-    display = ROOT / "build/amiga/interfaces" / flavor
+    display = ROOT / "build/amiga/interfaces" / ("physics-control" if physics_control else flavor)
     verify_build_tools()
     defines=["-DENHANCED_INTERFACE=1"] if flavor == "enhanced" else []
+    if physics_control: defines.append("-DTUTORIAL_BG_PHYSICS_ENABLE=0")
     from native_assets import prepare
     prepare()
     if flavor == "enhanced":
@@ -45,7 +46,7 @@ def _build(flavor="enhanced"):
          str(executable), "amiga/main.s"])
     compile_manifest(executable, display / "native.lst")
     report = {"subject": "maintained-native", "interface_flavor": flavor, "entry_point": "game_tick_dispatch",
-              "startup": "native title",
+              "startup": "native title", "physics_control": physics_control,
               "native_modules": module_hashes(),
               "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
               "executable": str(executable)}
@@ -53,11 +54,11 @@ def _build(flavor="enhanced"):
     return None, executable
 
 
-def build(flavor="enhanced"):
-    display = ROOT / "build/amiga/interfaces" / flavor
+def build(flavor="enhanced", physics_control=False):
+    display = ROOT / "build/amiga/interfaces" / ("physics-control" if physics_control else flavor)
     result = tracked_call([display / 'build-report.json'], 'build', 'maintained-native',
                         'ordinary title',
-                        'scripts/build_native_game.py', None, lambda: _build(flavor),
+                        'scripts/build_native_game.py', None, lambda: _build(flavor, physics_control),
                         lambda path, report: [Path(report['executable'])])
     from native_metrics import static_metrics
     from native_evidence import atomic_json

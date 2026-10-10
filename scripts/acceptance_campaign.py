@@ -793,6 +793,19 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id in ('physics-contact-pal','physics-contact-ntsc'):
+        from run_physics_contact_native import required_extent as contact_extent
+        return contact_extent(report,'NTSC' if case.id.endswith('-ntsc') else 'PAL')
+    if case.id=='physics-cpu':
+        from physics_cpu_proof import required_extent as physics_extent
+        return physics_extent(report)
+    if case.id in ('physics-pal','physics-ntsc','physics-control-pal','physics-control-ntsc'):
+        from deadline_extent import native_extent
+        standard='NTSC' if case.id.endswith('-ntsc') else 'PAL'
+        original=type(case)(id='incoming-flight-'+standard.lower(),args=case.args,report=case.report)
+        prefix='physics-control-native-' if 'control' in case.id else 'physics-native-'
+        return (required_extent(original,report) and native_extent(report,standard,prefix)
+            and ((8 not in report['deadline']['classes']) if 'control' in case.id else (8 in report['deadline']['classes'])))
     if case.id=='deadline-class-cpu':
         from deadline_cpu_proof import required_extent as class_extent
         return class_extent(report)

@@ -29,7 +29,7 @@ from native_metrics import memory_summary
 from ordinary_cadence import chip_memory
 PROVIDER_CLOCK = 3546895
 CLOCKS = {'PAL':3546895, 'NTSC':3579545}
-CAPS = dict(physical_seconds=30, callbacks=2048, boundary_stops=8192,
+CAPS = dict(physical_seconds=25, callbacks=2048, boundary_stops=8192,
             uncompressed_transcript_bytes=2*1024*1024*1024)
 
 
@@ -37,12 +37,13 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, deadline=False, physics=False, physics_control=False):
+def run(standard='PAL'):
+    baseline=None;predictor=origin_cache=deadline=physics=True;physics_control=False
     assert standard in CLOCKS
     deadline = deadline or physics
     origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
-    directory = ROOT/'build/tests'/(('physics-control-native-' if physics and physics_control else 'physics-native-' if physics else 'deadline-native-' if deadline else 'incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
+    directory = ROOT/'build/tests'/('physics-contact-native-'+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -56,12 +57,12 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
         assert manifest['executable_sha256'] == product_sha256
         listing_hashes=[sha for name,sha in manifest['files'].items() if name.endswith('/native.lst')]
         assert listing_hashes==[digest(listing_path)], 'Retained listing is not manifest-bound'
-        paths, tools = inputs_for('native-feedback','scripts/run_incoming_native.py')
+        paths, tools = inputs_for('native-feedback','scripts/run_physics_contact_native.py')
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 native_product_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({POLICY} if deadline else set())),
-                                tools=tools, runner='scripts/run_incoming_native.py',
+                                tools=tools, runner='scripts/run_physics_contact_native.py',
                                 actual_target=dict(TARGET, video=standard),
                                 target_role='legacy-validator-reference',
                                 target_scope='evidence.target is a PAL compatibility reference; report.target and actual_target bind executed region')
@@ -70,7 +71,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[];deadline_operations=[]
+        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[]
         with LatencySession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -123,6 +124,7 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
             if origin_cache:session.inspect('break_add',dict(kind='pc',addr=symbols['game_history_incoming_capture_complete']))
             drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
+            session.inspect('break_add',dict(kind='pc',addr=symbols['game_preview_dispatch']))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
@@ -134,6 +136,9 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
                     stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
+                    if stop.get('pc')==symbols['game_preview_dispatch']:
+                        regs=session.inspect('regs.get')
+                        dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
                     if origin_cache and stop.get('pc')==symbols['game_history_incoming_capture_complete']:
                         cached=block('game_history_incoming_state',318)
                         assert cached==block('game_core_state',318)
@@ -313,180 +318,113 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
             assert any(e['endpoint_ready_before_dense'] for e in endpoints), 'No independent early endpoint publication'
             assert len({e['incoming_state_sha256'] for e in endpoints})==1
             assert len({e['incoming_cursor'] for e in endpoints})==1
-            before_loop=len(callbacks.surfaces.publications)
-            for _ in range(100):
-                advance(.05)
-                frames=callbacks.surfaces.publications[before_loop:]
-                eligible=[p for p in frames if
-                    p.get('tutorial_fields',{}).get('tutorial_generation')==number('tutorial_generation',4)
-                    and p['tutorial_fields'].get('tutorial_active_variant')==0
-                    and p['tutorial_fields'].get('tutorial_ball_mode')==2]
-                pairs=list(zip(eligible,eligible[1:]))
-                for a,b in pairs:
-                    if b['tutorial_fields']['tutorial_animation_index']<a['tutorial_fields']['tutorial_animation_index']:
-                        assert a['tutorial_fields']['tutorial_available_outcomes']>>16, 'Partial available path repeated before dense completion'
-                        assert a['native_sprite_check']['actual_sample']==endpoints[-1]['held_endpoint_point']
-                terminal=number('tutorial_counts',4)>>16
-                repetitions=[(a,b) for a,b in pairs
-                    if a['tutorial_fields'].get('tutorial_available_outcomes',0)>>16
-                    and a.get('native_sprite_check',{}).get('actual_sample')==endpoints[-1]['held_endpoint_point']
-                    and a['tutorial_fields'].get('tutorial_animation_index')==terminal-1
-                    and b['tutorial_fields'].get('tutorial_animation_index')==0
-                    and ((b['tutorial_fields']['tutorial_animation_callback']-
-                          a['tutorial_fields']['tutorial_animation_callback'])&65535)>=30]
-                if repetitions:break
-            else:raise AssertionError('Normal ball sequence did not repeat after terminal dwell')
-            loop_frames=eligible
-            repeat_witness=list(repetitions[0])
-            outgoing=[p for p in eligible
-                if endpoints[-1]['incoming_dispatches'][0]<p['tutorial_fields']['tutorial_animation_index']<terminal-1
-                and p.get('native_sprite_check',{}).get('matched')
-                and p['native_sprite_check'].get('actual_sample')
-                and bytes.fromhex(p['native_sprite_check']['actual_sample'])[6]&15
-                and bytes.fromhex(p['native_sprite_check']['actual_sample'])[3]<192]
-            assert outgoing, 'No actual visible outgoing ball sample publication'
-            outgoing_witness=outgoing[0]
-            assert repeat_witness[1]['position']['cck']-repeat_witness[0]['position']['cck']>=29*number('simulation_interval_whole',4)*5
-            input_result=None
-            if predictor:
-                assert block('game_history_buffer',len(frozen_records))==frozen_records,'Paused native record store changed'
-                # Release/repress movement, then resume while the fresh predictor
-                # is still computing. Real menu actions invalidate that job.
-                key(0x22,True,.02);key(0x22,False,.02)
-                cancel_generation=number('tutorial_generation',4)
-                assert number('game_preview_status') in (1,2,3,4),'Cancel challenge did not reach an active job'
-                key(0x24,True,.02);key(0x24,False,.02)
-                assert number('tutorial_menu')
-                key(0x4d,True,.02);key(0x4d,False,.02)
-                key(0x44,True,.02);key(0x44,False,.02)
-                advance(.12)
-                assert resume_readback and first_resumed_boundary and held_resume_samples>=2 and not number('tutorial_active')
-                assert number('game_preview_generation',4)!=cancel_generation
-                assert block('game_keyboard_matrix',128)[0x22]==0
-            # Stop before the next real callback body, not inside an API.
-            stop=session.inspect('run_until',dict(seconds=(stop['cck']+CLOCKS[standard]*.02)/PROVIDER_CLOCK))
-            assert stop.get('pc')==symbols['simulation_update'] and callbacks.pending is None
-            actual_video=[number('presentation_last_line',2),number('simulation_interval_whole',4),
-                          number('simulation_interval_fraction',2)]
-            assert actual_video == (
-                        [311,11838,14906] if standard=='PAL' else [261,11947,13180]), 'Actual video selectors mismatch'
+            # Fixed bounded physical placement/input phases. No callback,
+            # timer, simulation or preview state is written by the observer.
+            delays=(.003,.009,.015,.021,.027,.033)
+            for trial,delay in enumerate(delays):
+                roots=[r for r in timing.rows if r['callee']=='game_launch_root']
+                owners=[r for r in timing.rows if r['callee']=='tutorial_background']
+                if any(o['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=o['exit']['cck'] for o in owners for r in roots):break
+                advance(delay)
+                previous=number('tutorial_generation',4)
+                # Change actual contact height by physical W; subsequent trials
+                # vary contact dispatch tick as well as input reception phase.
+                key(0x11,True,.04);key(0x11,False,.02)
+                endpoint('contact-phase-'+str(trial),previous,request=actions[-2]['position'])
+            advance(.03)
+            # End on an actual upcoming callback boundary; never cut an owner.
+            simulation_return=calls[simulation_calls[0]]['return_pc']
+            session.inspect('break_add',dict(kind='pc',addr=simulation_return))
+            final_goal=(stop['cck']+CLOCKS[standard])/PROVIDER_CLOCK
+            for _ in range(8192):
+                stop=session.inspect('run_until',dict(seconds=final_goal))
+                if stop.get('pc')==simulation_return:break
+            else:raise AssertionError('No complete final callback boundary')
+            actual_video=[number('presentation_last_line',2),number('simulation_interval_whole',4),number('simulation_interval_fraction',2)]
+            assert actual_video==([311,11838,14906] if standard=='PAL' else [261,11947,13180])
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
-            callback_result=callbacks.result(interval)
-            stack_result=timing.result()
-            if predictor:input_result=input_trace.result(actions,stack_result['calls'])
-            open_calls=stack_result['open_enclosing_calls']
-            assert len(open_calls)==1 and open_calls[0]['callee']=='simulation_update'
-            assert open_calls[0]['depth']==0 and open_calls[0]['caller'] is None
-            assert open_calls[0]['entry_pc']==simulation_calls[0], 'Incomplete API/IRQ call at final boundary'
-            assert open_calls[0]['entry_store_complete']['cck']<=stop['cck']
-            final_stop=dict(stop)
-            memory=memory_summary(chip_memory(read))
-            assert any(r['category']=='public-preview' for r in stack_result['calls'])
-            assert any(r['category']=='core-body' for r in stack_result['calls'])
-            raw=dict(records=session.records,uncompressed_bytes=session.raw_bytes,
-                     cap_uncompressed_bytes=session.MAX_RAW_BYTES)
-        capture=directory/('latency.json.gz' if origin_cache else 'latency.json')
+            callback_result=callbacks.result(interval);stack_result=timing.result()
+            assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
+            input_result=input_trace.result(actions,stack_result['calls'])
+            assert input_result['maximum_keyboard_poll_gap_cck']<=50000
+            assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
+            records_count=(symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
+            records=frozen_records;final_stop=dict(stop)
         captured=dict(boundaries=boundaries,actions=actions,endpoints=endpoints,
-            timing=callback_result,stack_timing=stack_result, loaded_hunks=loaded,title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
-            call_map=calls, return_pcs=sorted(returns),literal_rpc=raw,
-            timer_reads=session.observer.timer_reads,
-            incoming_live=incoming_live, loop_frames=loop_frames, repeat_witness=repeat_witness, outgoing_witness=outgoing_witness, native_memory=memory,
-            timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
-                        'admission declines require emitted control-flow interpretation, not inferred host decisions.')
-        if deadline:
-            from deadline_extent import validate_capture,negative_controls
-            captured['publications']=callbacks.surfaces.publications
-            captured['deadline_operations']=deadline_operations
-            try: captured['deadline']=validate_capture(captured)
-            except BaseException:
-                with gzip.open(directory/'deadline-calibration-unvalidated.json.gz','wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
-                raise
-            captured['deadline_negative_controls']=negative_controls(captured)
+            timing=callback_result,stack_timing=stack_result,loaded_hunks=loaded,
+            title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
+            call_map=calls,return_pcs=sorted(returns),timer_reads=session.observer.timer_reads,
+            deadline_operations=deadline_operations,publications=callbacks.surfaces.publications,
+            input_probe=input_result,launch_rows=input_trace.launch_rows,
+            retained_records=records.hex(),history_end=history_end,
+            literal_rpc=dict(records=session.records,uncompressed_bytes=session.raw_bytes),
+            dispatch_samples=dispatch_samples,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
+        from deadline_extent import validate_capture,negative_controls
+        from deadline_service_reduction import reduce_capture
+        try:captured['deadline']=validate_capture(captured)
+        except BaseException:
+            with gzip.open(directory/'calibration-unvalidated.json.gz','wt') as h:json.dump(captured,h,separators=(',',':'))
+            raise
+        captured['deadline_negative_controls']=negative_controls(captured)
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
-            if predictor:row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,
-                frozen_records,len(frozen_records)//14,history_end)
-            if predictor:row['contact_timing']=contact_timing(row,stack_result['calls'],input_trace.launch_rows)
-            if not row['human_launches'][0]:
-                row['original_outgoing_reference']='No launch: no outgoing endpoint claimed'
-                continue
-            final,sample,phases,outcome,_=original_ball_reference(cpu_image,cpu_symbols,bytes.fromhex(row['held_launch_state']))
-            scene=row['first_actual_publication']
-            if scene['tutorial_fields']['tutorial_ball_mode']==1:
-                assert scene['native_sprite_check']['actual_sample']==sample.hex()
-                assert bytes.fromhex(scene['endpoint_points'])[:8]==sample
-                assert scene['endpoint_phases']>>16==phases and scene['endpoint_outcomes']>>16==outcome
-                assert scene['endpoint_ready']>>8 and scene['endpoint_generation']==row['generation']
-            assert row['held_endpoint_point']==sample.hex()
-            assert row['held_endpoint_phase']==phases and row['outcomes'][0]==outcome
-            assert row['held_terminal_state']==final.hex()
-            row['original_outgoing_reference']=dict(full318_equal=True,point_equal=True,phase_equal=True,
-                outcome_equal=True,phases=phases,outcome=outcome,endpoint=sample.hex(),
-                expected_full_state=final.hex(),seed_sha256=hashlib.sha256(bytes.fromhex(row['held_launch_state'])).hexdigest())
-            if predictor:row['original_outgoing_reference']['scope']='Complete equality relative to captured reduced preview launch seed; not a full edited-match checkpoint'
-        captured['endpoints']=endpoints
-        report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
-            executable_sha256=product_sha256, incoming_flight=True, endpoints=endpoints, native_memory=memory,
-            repeated_sequence=True, loop_publications=len(loop_frames), repeat_witness=repeat_witness,
-            actual_human_outgoing=True, outgoing_witness=outgoing_witness,
-            capture=str(capture.relative_to(ROOT)),declared_caps=CAPS,
-            timing=callback_result, full318_history72_backup_guard=True,
-            frozen_boundaries=sum(bool(r['fields']['tutorial_active']) for r in boundaries),
-            stack_protocol=stack_result['protocol'], dropped_notifications=callbacks.dropped,
-            actual_video=actual_video,title_ready=title_ready,
-            physical_clock_hz=CLOCKS[standard], provider_seconds_clock_hz=PROVIDER_CLOCK,
-            scope='Current native physical incoming trial, changed placement, actual normal-sprite samples and repeat; '
-                  'complete frozen318/history72/livebackup and finite timing. Full release/cold ADF acceptance remains pending.')
-        if predictor:
-            kernel_calls=[r for r in stack_result['calls'] if r['callee']=='input_update'
-                and symbols['game_preview_predictor_code_begin']<=r['entry_pc']<symbols['game_preview_predictor_code_end']]
-            assert kernel_calls,'No emitted predictor input call executed'
-            report.update(guarded_predictor=True,input_probe=input_result,resume_latest=resume_readback,
-                first_resumed_boundary_equal=first_resumed_boundary,record_store_unchanged=True,
-                emitted_kernel_calls=len(kernel_calls),cancelled_active_job=True,held_resume_samples=held_resume_samples,
-                observer_drain_breaks=drain_breaks,
-                drain_scope='Read-only helper entry stops drain event bursts; no guest writes, clock advancement or callback regime selection')
-            captured.update(input_probe=input_result,resume_latest=resume_readback,
-                first_resumed_boundary_equal=first_resumed_boundary,kernel_calls=kernel_calls,
-                records=frozen_records.hex(),history_end=history_end)
-        if origin_cache:
-            requests=[r for r in stack_result['calls'] if r['callee']=='game_preview_request_projected']
-            assert requests and not any(r['callee']=='game_preview_resolve_one' for r in stack_result['calls'])
-            origin_result=dict(passed=True,storage_bytes=344,captures=origin_captures,paused_immutable=True,
-                current_request_cache_equal=True,original_resolver_calls=0,initial_request=requests[0],
-                capture_calls=[r for r in stack_result['calls'] if r['callee']=='game_history_after' and any(r['entry_store_complete']['cck']<=c['position']['cck']<=r['exit']['cck'] for c in origin_captures)])
-            assert origin_result['capture_calls']
-            origin_result['initial_request_to_first_held_endpoint_cck']=endpoints[0]['first_actual_publication']['position']['cck']-requests[0]['entry']['cck']
-            origin_result['initial_request_to_first_held_endpoint_seconds']=origin_result['initial_request_to_first_held_endpoint_cck']/CLOCKS[standard]
-            placements=[p for p in callbacks.surfaces.publications if p['position']['cck']>=requests[0]['entry']['cck']
-                and p.get('tutorial_fields',{}).get('tutorial_generation')==endpoints[0]['generation']
-                and p['tutorial_fields'].get('tutorial_presentation_generation')==endpoints[0]['generation']
-                and p['tutorial_fields'].get('tutorial_placement_ready') and not p['tutorial_fields'].get('tutorial_placement_dirty')]
-            assert placements
-            origin_result['initial_request_to_first_placement_cck']=placements[0]['position']['cck']-requests[0]['entry']['cck']
-            report['incoming_origin']=origin_result;captured['incoming_origin']=origin_result
-        if deadline:
-            report['deadline']=captured['deadline']
-            report['cost_policy']=deadline_policy_record(executable)
-        if origin_cache:
-            with gzip.open(capture,'wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
-        else:atomic_json(capture,captured)
-        atomic_json(directory/'results-unvalidated.json',report)
-        artifacts=[p for p in directory.iterdir() if p.is_file() and p!=output]
-        transaction.finalize(output,report,[manifest],artifacts)
+            row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,records,records_count,history_end)
+        chunks=captured['deadline']['chunks'];calls=stack_result['calls']
+        roots=[r for r in calls if r['callee']=='game_launch_root']
+        witnesses=[]
+        for chunk in chunks:
+            if chunk['operation']!=8:continue
+            nested=[r for r in roots if chunk['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=chunk['exit']['cck']]
+            launches=[r for r in input_trace.launch_rows if chunk['entry']['cck']<=r['position']['cck']<=chunk['exit']['cck']]
+            if nested and launches:witnesses.append(dict(owner=chunk,roots=nested,launches=launches))
+        captured['contact_owner_witnesses']=witnesses
+        capture=directory/'latency.json.gz'
+        with gzip.open(capture,'wt') as h:json.dump(captured,h,separators=(',',':'))
+        services=reduce_capture(captured);assert services['passed']
+        artifact=directory/'service.json.gz'
+        with gzip.open(artifact,'wt') as h:json.dump(services,h,separators=(',',':'))
+        summary=dict(passed=bool(witnesses),execution='physical-input-contact-phase-probe',
+            target=dict(TARGET,video=standard),executable_sha256=product_sha256,
+            capture=str(capture.relative_to(ROOT)),contact_owner_witnesses=witnesses,
+            trial_count=len(endpoints),deadline=captured['deadline'],
+            input_probe={k:v for k,v in input_result.items() if k not in ('rows','transitions','acknowledgements')},
+            frozen_complete_state_history_records_equal=True,reference_rows=[r['original_incoming_reference'] for r in endpoints],
+            services={k:v for k,v in services.items() if k!='spans'},
+            no_simulation_state_injection=True,normative_deadline_safety=False)
+        transaction.finalize(output,summary,[manifest],[capture,artifact,directory/'literal-rpc.jsonl.gz',directory/'emulator.log'])
+        print(json.dumps(dict(report=str(output),passed=bool(witnesses),witnesses=len(witnesses))),flush=True)
+        assert witnesses,'Bounded physical phase trials did not admit an accepted-contact/root owner; raw failure retained'
     except BaseException as error:
-        transaction.abort(error)
+        # A missing witness remains a complete negative experiment with raw
+        # evidence; earlier observer failures retain the incomplete receipt.
+        if not output.exists() or not json.loads(output.read_text()).get('evidence',{}).get('state')=='complete':transaction.abort(error)
         raise
 
 
+
+
+def required_extent(report,standard):
+    """Recompute enclosure and complete owner detector from retained accesses."""
+    if not (report.get('passed') is True and report.get('target')==dict(TARGET,video=standard)
+            and report.get('execution')=='physical-input-contact-phase-probe'
+            and report.get('no_simulation_state_injection') is True
+            and report.get('frozen_complete_state_history_records_equal') is True):return False
+    path=ROOT/report['capture']
+    if report.get('evidence',{}).get('files',{}).get(report['capture'])!=digest(path):return False
+    with gzip.open(path,'rt') as h:c=json.load(h)
+    from deadline_extent import validate_capture
+    if validate_capture(c)!=report['deadline']:return False
+    rows=c['endpoints']
+    if not 3<=len(rows)<=9 or not all(r.get('original_incoming_reference',{}).get('passed') is True for r in rows):return False
+    calls=c['stack_timing']['calls'];w=[]
+    for chunk in c['deadline']['chunks']:
+        if chunk['operation']!=8:continue
+        roots=[r for r in calls if r['callee']=='game_launch_root' and chunk['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=chunk['exit']['cck']]
+        launches=[r for r in c['launch_rows'] if chunk['entry']['cck']<=r['position']['cck']<=chunk['exit']['cck']]
+        if roots and launches:w.append(dict(owner=chunk,roots=roots,launches=launches))
+    return bool(w) and w==report['contact_owner_witnesses']==c['contact_owner_witnesses']
+
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--ntsc',action='store_true')
-    parser.add_argument('--baseline',type=Path)
-    parser.add_argument('--predictor',action='store_true')
-    parser.add_argument('--origin-cache',action='store_true')
-    parser.add_argument('--deadline',action='store_true')
-    parser.add_argument('--physics',action='store_true')
-    parser.add_argument('--physics-control',action='store_true')
-    args=parser.parse_args()
-    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache,args.deadline,args.physics,args.physics_control)
+    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true')
+    run('NTSC' if parser.parse_args().ntsc else 'PAL')
