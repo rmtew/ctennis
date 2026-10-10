@@ -169,6 +169,7 @@ def main():
             commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
             execution_scope='CPU only; no hardware beam/DMA execution')
         result=proof(a.original,a.current)
+        result['executable_sha256']=result['current_sha256']
         raw=a.output.parent/'actual-font-comparison.json';atomic_json(raw,result.pop('rows'))
         result['capture']=str(raw.absolute());result['capture_sha256']=digest(raw)
         transaction.finalize(a.output,result,compiled=manifests,artifacts=[raw])
