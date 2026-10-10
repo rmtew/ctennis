@@ -205,13 +205,13 @@ tutorial_background:
         cmpi.w  #TUTORIAL_JOB_PREVIEW,d0
         beq.s   .run_preview
         cmpi.w  #TUTORIAL_JOB_ENDPOINT,d0
-        beq.s   .run_endpoint
+        beq     .run_endpoint
         cmpi.w  #TUTORIAL_JOB_GEOMETRY,d0
-        beq.s   .run_geometry
+        beq     .run_geometry
         cmpi.w  #TUTORIAL_JOB_PRODUCER,d0
-        beq.s   .run_producer
+        beq     .run_producer
         cmpi.w  #TUTORIAL_JOB_FOOTER,d0
-        beq.s   .run_footer
+        beq     .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
         bra     .run_result
@@ -372,11 +372,11 @@ tutorial_background_class:
         cmpi.w  #7,d0
         beq.s   .poll
         cmpi.w  #3,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #4,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #5,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #9,d0
         bne.s   .rejection
         bra.s   .fit
@@ -395,7 +395,7 @@ tutorial_background_class:
         tst.b   game_entropy_policy-game_core_state(a3)
         bne.s   .full
         btst    #5,game_score_state+S_MODE-game_core_state(a3)
-        beq.s   .fit
+        beq     .fit
 .full:  move.l  #TUTORIAL_BG_FULL_E,d1
         bra.s   .fit
 .dispatch:
