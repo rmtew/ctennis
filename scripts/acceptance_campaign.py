@@ -793,6 +793,14 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='deadline-class-cpu':
+        from deadline_cpu_proof import required_extent as class_extent
+        return class_extent(report)
+    if case.id in ('deadline-pal','deadline-ntsc'):
+        from deadline_extent import native_extent
+        standard='NTSC' if case.id.endswith('-ntsc') else 'PAL'
+        original=type(case)(id='incoming-flight-'+standard.lower(),args=case.args,report=case.report)
+        return required_extent(original,report) and native_extent(report,standard)
     if case.id=='incoming-origin-cpu':
         from incoming_origin_proof import required_extent as origin_extent
         return origin_extent(report)

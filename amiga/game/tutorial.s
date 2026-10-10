@@ -620,3 +620,5 @@ tutorial_reconcile_inputs:
         bne     .done
         move.b  game_keyboard_matrix+$44,ui_keyboard_entry_keys+$44
 .done:  rts
+
+        include "amiga/game/tutorial_deadline.s"
