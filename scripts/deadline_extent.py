@@ -55,7 +55,8 @@ def validate_capture(captured):
     assert max(r['entry_phase_cck'] for r in callbacks)<=B_ENTRY_CCK,('Nominal callback entry lateness exceeds declared hypothesis',max(r['entry_phase_cck'] for r in callbacks),B_ENTRY_CCK)
     return dict(passed=True,prototype_only=True,normative_s05_s18_g2_safety=False,
         chunks=rows,background_worker_calls=len(workers),classes=sorted({r['operation'] for r in rows}),
-        maximum_whole_owner_cck=max(r['whole_owner_cck'] for r in rows),chunk_hypothesis_cck=B_CHUNK_CCK,
+        maximum_whole_owner_cck=max(r['whole_owner_cck'] for r in rows),cheap_chunk_hypothesis_cck=B_CHUNK_CCK,physics_chunk_hypothesis_cck=B_PHYSICS_CCK,
+        maximum_by_class_cck={str(op):max(r['whole_owner_cck'] for r in rows if r['operation']==op) for op in sorted({r['operation'] for r in rows})},
         root_service_sequences=len(services),maximum_root_service_cck=max(services),root_service_hypothesis_cck=2500,
         root_service_hypothesis_observed=max(services)<=2500,admission_arithmetic_independently_reconstructed=False,
         declined_owner_calls=sum(r['entry']['cck'] not in accepted for r in owners),

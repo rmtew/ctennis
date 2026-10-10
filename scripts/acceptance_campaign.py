@@ -801,7 +801,8 @@ def required_extent(case,report):
         standard='NTSC' if case.id.endswith('-ntsc') else 'PAL'
         original=type(case)(id='incoming-flight-'+standard.lower(),args=case.args,report=case.report)
         prefix='physics-control-native-' if 'control' in case.id else 'physics-native-'
-        return required_extent(original,report) and native_extent(report,standard,prefix)
+        return (required_extent(original,report) and native_extent(report,standard,prefix)
+            and ((8 not in report['deadline']['classes']) if 'control' in case.id else (8 in report['deadline']['classes'])))
     if case.id=='deadline-class-cpu':
         from deadline_cpu_proof import required_extent as class_extent
         return class_extent(report)
