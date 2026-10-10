@@ -21,6 +21,30 @@ BUDGETS=(999,1000,1001,1570,1999,2000,2001,2999,3000,3001,3999,4000,4001,9999,10
 RETAINED=((4,8),(3,4,8),(7,3,4,8),(3,4,5,9),(4,2,8),(8,))
 
 
+def normalized_history_pointers(owner,data,s):
+    """Relocate exactly two declared history pointers; retain every other byte."""
+    base=s[owner]
+    history_base=s['game_preview_history_saved'] if owner=='game_preview_storage' else s['game_history_state']
+    output=bytearray(data);roles={}
+    for name in ('game_history_store','game_history_selected'):
+        offset=history_base-base+s[name]-s['game_history_state']
+        assert 0<=offset<=len(data)-4
+        pointer=int.from_bytes(data[offset:offset+4],'big')
+        if name=='game_history_store':
+            assert pointer==s['game_history_buffer'],'Declared store does not own the native history buffer'
+            normalized=0;role=dict(role='history-buffer-base',byte_offset=offset)
+        elif pointer==0:
+            normalized=0;role=dict(role='null-checkpoint',byte_offset=offset)
+        else:
+            checkpoint_offset=pointer-s['game_history_checkpoints']
+            assert 0<=checkpoint_offset<s['game_history_attempts']-s['game_history_checkpoints']
+            assert checkpoint_offset%(12+318)==0,'Selected pointer is not a complete checkpoint start'
+            normalized=checkpoint_offset+1
+            role=dict(role='checkpoint',offset=checkpoint_offset,byte_offset=offset)
+        output[offset:offset+4]=normalized.to_bytes(4,'big');roles[name]=role
+    return output.hex(),roles
+
+
 def seed(executable):
     image,s=load_image(executable);case=discover(image,s,0xace1)[0]
     with Core(image,s,readonly=READONLY) as c:
@@ -87,8 +111,12 @@ def trial(seed_data,variant,domain,prefix,usable,poison):
         budget=field(c,'tutorial_job_budget');cost=field(c,'tutorial_job_cost',4)
         peeked=[index for index,address in enumerate(slots) if address in c.reads or address+1 in c.reads]
         full={name:value.hex() for name,value in after.items() if name!='game_history_buffer'}
+        normalized={};pointer_roles={}
+        for name in ('game_preview_storage','game_history_state'):
+            normalized[name],pointer_roles[name]=normalized_history_pointers(name,after[name],s)
         return dict(budget=budget,cost=cost,cycles=cycles,stack=c.stack_bytes,
             dispatch_allowance_calls=len(calls),peeked_slots=peeked,full_owners=full,
+            normalized_pointer_owners=normalized,verified_pointer_roles=pointer_roles,
             history_buffer_sha256=hashlib.sha256(after['game_history_buffer']).hexdigest(),
             input_sha256=hashlib.sha256(b''.join(before.values())).hexdigest(),
             ordered_events=[c.events,c.preview_events,c.seek_events],writes_owned=True,unchanged=True)
@@ -108,7 +136,8 @@ def run(new,old,raw):
                     variant=variant,domain=domain,prefix=prefix,usable_e=usable,comparison_validated=False))
                 assert (candidate['budget'],candidate['cost'])==(reference['budget'],reference['cost']),(identity,'plan differs')
                 assert candidate['full_owners']['game_core_state']==reference['full_owners']['game_core_state']
-                assert candidate['full_owners']['game_preview_storage']==reference['full_owners']['game_preview_storage'],'Full preview differs'
+                assert candidate['verified_pointer_roles']==reference['verified_pointer_roles'],'Declared pointer roles differ'
+                assert candidate['normalized_pointer_owners']==reference['normalized_pointer_owners'],'Full preview/history differs after exact pointer relocation'
                 assert candidate['history_buffer_sha256']==reference['history_buffer_sha256'],'Complete retained history differs'
                 assert candidate['ordered_events']==reference['ordered_events']
                 assert candidate['dispatch_allowance_calls']<=reference['dispatch_allowance_calls']
