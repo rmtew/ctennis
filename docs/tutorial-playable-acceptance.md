@@ -153,3 +153,26 @@ Observer correction `8ada001` checks both objects separately and retains partial
 observations on future early failures. Independent source review cleared it.
 Campaign `f054a439df2b4e238e6fbfa9b242d30c` is the affected-check retry; its
 completion determines the final finite physical claims.
+
+A second corrected-product attempt, `26b2809aacbb4556bcbe7cb580d953cd`
+(campaign `f054a439df2b4e238e6fbfa9b242d30c`), reached the actual menu surface
+but failed the independent raster contract: a blue actor pixel at (103,156)
+obscured the black background of CLOSE MENU. This is a concrete rendering defect,
+not a reason to weaken the glyph check. Its full partial observations, raw trace,
+product and screenshot remain failed and immutable. Menu-only correction
+`fa2dd98` examines both three-part private actor groups. A native part spans
+viewport Y+1..Y+16, so unsigned object Y116..160 intersects menu rows132..161.
+An intersecting visible part hides the entire private group; canonical scene,
+poses, coordinates, frames, nonoverlapping actors and nonmenu rendering are
+unchanged. Ball/shadow already hide during menu. Independent review cleared this
+narrow correction and its register/ownership effects.
+
+Observer `af9836b` replaces repeated whole-history snapshots with a literal
+write watch across the entire frozen record buffer. Any overlapping write while
+frozen tutorial ownership is active fails, including write-then-restore. Full
+initial and exact-resume record comparisons remain, as do every paused boundary's
+318-byte canonical,72-byte metadata and318-byte interrupted-state checks.
+Physical controls,1ms guest observation steps, assertions and scheduling are
+unchanged. This reduces host read traffic and strengthens immutability evidence;
+it is not a runtime performance experiment. Campaign
+`f6d95a6f0f9d4d8ca000326a34afb391` validates the affected PAL/NTSC extent.
