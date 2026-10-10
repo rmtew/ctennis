@@ -16,7 +16,9 @@ tutorial_redraw:
         clr.l   tutorial_render_offset
         clr.w   tutorial_text_row
 .footer:
-        bra     tutorial_footer
+        clr.w   tutorial_footer_ready
+        st      tutorial_footer_dirty
+        rts
 
 tutorial_footer:
         tst.b   tutorial_menu
@@ -116,17 +118,17 @@ tutorial_footer:
         move.l  d6,tutorial_footer_first
         move.l  a0,tutorial_footer_second
         move.l  a0,d7
-        lea     ui_overlay_plane,a1
+        lea     tutorial_footer_scratch,a1
         moveq   #0,d0
         move.w  #512/4-1,d1
 .clear: move.l  d0,(a1)+
         dbra    d1,.clear
         move.l  d6,a0
-        lea     ui_overlay_plane,a2
+        lea     tutorial_footer_scratch,a2
         moveq   #0,d4
         bsr     ui_footer_selected
         move.l  d7,a0
-        lea     ui_overlay_plane+256,a2
+        lea     tutorial_footer_scratch+256,a2
         bsr     ui_footer_text
 .done:
         rts
@@ -139,8 +141,10 @@ tutorial_released_wait:
         beq     .done
         cmpi.w  #$ffff,game_preview_ordinal
         bne     .done
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
         bcs     .done
+        btst    #1,game_preview_primed_mask+1
+        beq     .done
         cmpi.w  #PREVIEW_READY,game_preview_status
         bhi     .done
         tst.w   game_preview_dispatches+2
@@ -157,46 +161,20 @@ tutorial_released_wait:
 .done:  rts
 
 tutorial_render:
-.next_unit:
-        bsr     tutorial_render_admitted
-        tst.l   d0
-        beq     .done
+        ; One complete unit per root grant; no recursive admission or loop.
         move.w  tutorial_render_phase,d0
         beq     tutorial_animate
         cmpi.w  #1,d0
-        beq     .copy
+        beq     tutorial_copy_court
         cmpi.w  #2,d0
-        beq     .ghost
+        beq     tutorial_draw_ghost
         cmpi.w  #3,d0
-        beq     .paths
+        beq     tutorial_draw_paths
         cmpi.w  #4,d0
-        beq     .text
+        beq     tutorial_draw_text
         cmpi.w  #5,d0
         beq     tutorial_publish
-.done:  rts
-.copy:  bsr     tutorial_copy_court
-        bra     .next_unit
-.ghost: bsr     tutorial_draw_ghost
-        bra     .next_unit
-.paths: bsr     tutorial_draw_paths
-        bra     .next_unit
-.text:  bsr     tutorial_draw_text
-        bra     .next_unit
-
-; Measured bounded copy/text/publication units share the 5000-E hypothesis.
-; Ghost/path units retain their original reserve. Every iteration reads fresh
-; remaining time; publication ends construction and never loops into animation.
-tutorial_render_admitted:
-        move.w  tutorial_render_phase,d0
-        cmpi.w  #1,d0
-        beq     .simple
-        cmpi.w  #4,d0
-        beq     .simple
-        cmpi.w  #5,d0
-        beq     .simple
-        bra     tutorial_work_admitted
-.simple:
-        bra     tutorial_presentation_admitted
+        rts
 
 ; Read the actual displayed/queued first bitplane from their copper banks.
 tutorial_copper_plane:

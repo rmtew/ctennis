@@ -4,6 +4,7 @@
 ; Call after accepting a new request, before any renderer can inspect old paths.
 ; Publication itself is deferred to an admitted presentation slice.
 tutorial_progress_reset:
+        clr.w   tutorial_footer_ready
         addq.w  #1,tutorial_render_generation
         move.l  tutorial_generation,tutorial_presentation_generation
         clr.l   tutorial_marker_generation
@@ -213,6 +214,7 @@ tutorial_progress_fast_publish:
         move.w  tutorial_render_generation,tutorial_published_generation
         clr.b   tutorial_placement_dirty
         bsr     tutorial_progress_status
+        clr.w   tutorial_footer_ready
         st      tutorial_footer_dirty
 .done:  rts
 

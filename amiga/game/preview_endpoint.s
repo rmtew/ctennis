@@ -36,11 +36,13 @@ game_preview_endpoint_pending:
         beq     .no
         cmpi.w  #SEEK_JOB_READY,game_history_seek_status
         beq     .no
-        cmpi.w  #PREVIEW_HELD,game_preview_status
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
         bcs     .no
         cmpi.w  #PREVIEW_RELEASED,game_preview_status
         bhi     .no
         move.w  d1,d7
+        btst    d7,game_preview_primed_mask+1
+        beq     .no
         bsr     game_preview_selection_valid
         tst.l   d0
         beq     .no

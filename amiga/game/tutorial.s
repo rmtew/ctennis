@@ -148,182 +148,9 @@ tutorial_tick:
         bsr     tutorial_controls
         tst.b   tutorial_active
         beq     .done
-        ; Latest player/marker publication wins; trails never gate physics.
-        tst.b   tutorial_placement_dirty
-        bne     .draw_only
-        tst.b   tutorial_menu
-        bne     .draw_only
-        ; Coalesce changed captions before worker slices; unchanged text has
-        ; no pixel work. Due animation has priority over the other alternative.
-        tst.b   tutorial_footer_dirty
-        beq     .animation
-        bsr     tutorial_work_admitted
-        tst.l   d0
-        beq     .done
-        bsr     tutorial_footer
-        clr.b   tutorial_footer_dirty
-.animation:
-        bsr     tutorial_animation_due
-        tst.l   d0
-        beq     .preview_work
-        bsr     tutorial_presentation_admitted
-        tst.l   d0
-        beq     .done
-        bsr     tutorial_animate
-.preview_work:
-        ; One bounded endpoint attempt is a separate admitted owner. If its
-        ; reserve is unavailable, ordinary dense work can still make progress.
-        ; Admission includes the API's eligibility guard. Checking that guard
-        ; twice before admission needlessly consumed this owner's reserve.
-        bsr     tutorial_work_admitted
-        tst.l   d0
-        beq.s   .dense_work
-        move.l  tutorial_generation,d0
-        moveq   #0,d1
-        move.b  tutorial_active_variant,d1
-        jsr     game_preview_endpoint_try
-        tst.l   d0
-        beq.s   .dense_work
-        bsr     tutorial_progress_returned
-        bra     .done
-.dense_work:
-        tst.b   tutorial_work_pending
-        beq     .draw_only
-        cmpi.w  #PREVIEW_READY,game_preview_status
-        bne     .preview_pending
-        ; Result/footer preparation has its own admission, rather than hiding
-        ; that extra tail behind the smaller worker reserve.
-        bsr     tutorial_work_admitted
-        tst.l   d0
-        beq     .done
-        bra     .preview_ready
-.preview_pending:
-        moveq   #3,d6
-.preview_slice:
-        ; Re-sample remaining time at every public yield. A smaller logical
-        ; budget can use headroom that cannot admit the four-operation worker.
-        bsr     tutorial_work_remaining
-        moveq   #4,d5
-        ; Only a resolved current-serve continuation uses the measured reserve.
-        ; Historical resolution and priming retain their original admission.
-        cmpi.w  #3,game_preview_kind
-        bne.s   .preview_cold_admission
-        cmpi.w  #PREVIEW_HELD,game_preview_status
-        bcs.s   .preview_cold_admission
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
-        bhi.s   .preview_cold_admission
-        cmpi.l  #7000,d0
-        bcc.s   .preview_admitted
-        moveq   #2,d5
-        cmpi.l  #5000,d0
-        bcs     .done
-        bra.s   .preview_admitted
-.preview_cold_admission:
-        cmpi.l  #10000,d0
-        bcc     .preview_admitted
-        moveq   #2,d5
-        cmpi.l  #7000,d0
-        bcs     .done
-.preview_admitted:
-        move.l  tutorial_generation,d0
-        move.l  d5,d1
-        jsr     game_preview_step
-        tst.l   d0
-        beq     .unavailable
-        move.l  d5,d1
-        sub.w   game_preview_budget,d1
-        add.w   d1,tutorial_progress_operations
-        bsr     tutorial_progress_returned ; metadata only; preserves D5/D6
-        tst.b   tutorial_placement_dirty
-        bne     .done ; new endpoint gets a separately admitted publication
-        cmpi.w  #PREVIEW_READY,game_preview_status
-        beq     .worker_tail
-        dbra    d6,.preview_slice
-        bra     .worker_tail
-.worker_tail:
-        ; Animation is independent of the other alternative. Never hide its
-        ; publication tail behind a worker's smaller reserve.
-        tst.b   tutorial_animation_ready
-        beq     .done
-        bsr     tutorial_work_admitted
-        tst.l   d0
-        beq     .done
-        bsr     tutorial_animate
-        bra     .done
-.preview_ready:
-        move.l  tutorial_generation,d0
-        jsr     game_preview_result
-        tst.l   d0
-        beq     .unavailable
-        move.l  a0,tutorial_paths
-        move.l  a1,tutorial_paths+4
-        move.w  d1,tutorial_counts
-        move.w  d2,tutorial_counts+2
-        move.w  d3,tutorial_outcomes
-        move.w  d4,tutorial_outcomes+2
-        move.w  d5,tutorial_coincident
-        bsr     tutorial_progress_returned
-        clr.b   tutorial_work_pending
-        bsr     tutorial_progress_status
-        st      tutorial_footer_dirty
-        bra     .done
-.draw_only:
-        tst.b   tutorial_menu
-        bne     .menu_admission
-        bsr     tutorial_presentation_admitted
-        bra     .draw_admitted
-.menu_admission:
-        bsr     tutorial_render_admitted
-.draw_admitted:
-        tst.l   d0
-        beq     .done
-        bsr     tutorial_progress_slice
-        bra     .done
-.unavailable:
-        clr.b   tutorial_work_pending
-        move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
-        clr.b   tutorial_pending
-        bsr     tutorial_progress_reset
+        ; Optional prediction and production belong to the root deadline owner.
 .done:
         movem.l (sp)+,d0-d7/a0-a6
-        rts
-
-; Guest elapsed timer gates one work owner. Estimate until native measurement.
-tutorial_work_admitted:
-        bsr     tutorial_work_remaining
-        cmpi.l  #10000,d0
-        bcs     .decline
-        moveq   #1,d0
-        rts
-.decline:
-        moveq   #0,d0
-        rts
-
-; Pure sprite/plane publication; footer raster has a separate admission.
-; 5000 ticks is a focused timing hypothesis, not a universal native bound.
-tutorial_presentation_admitted:
-        bsr     tutorial_work_remaining
-        cmpi.l  #5000,d0
-        bcs     .decline
-        moveq   #1,d0
-        rts
-.decline:
-        moveq   #0,d0
-        rts
-
-; Remaining E-clock ticks under the original callback epoch and deadline.
-tutorial_work_remaining:
-        jsr     read_sim_timer
-        move.l  last_timer_count,d1
-        sub.l   d0,d1
-        move.l  simulation_interval,d0
-        sub.l   simulation_phase,d0
-        bcs     .decline
-        sub.l   d1,d0
-        bcs     .decline
-        rts
-.decline:
-        moveq   #0,d0
         rts
 
 tutorial_enter:
@@ -432,14 +259,18 @@ tutorial_request:
         clr.w   tutorial_progress_operations
         clr.l   tutorial_counts
         bsr     tutorial_progress_reset
-        bra     tutorial_footer
+        clr.w   tutorial_footer_ready
+        st      tutorial_footer_dirty
+        rts
 .missing:
         clr.b   tutorial_work_pending
         move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
         clr.b   tutorial_pending
         clr.l   tutorial_counts
         bsr     tutorial_progress_reset
-        bra     tutorial_footer
+        clr.w   tutorial_footer_ready
+        st      tutorial_footer_dirty
+        rts
 
 ; Native key/direction intent only. Legal positions are read from actual tables.
 tutorial_controls:

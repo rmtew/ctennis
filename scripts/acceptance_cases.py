@@ -69,6 +69,8 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('coherent-contact-pal', ('scripts/run_physics_contact_native.py','--coherent'), 'tests/coherent-contact-native-pal/report.json'),
+        Case('coherent-contact-ntsc', ('scripts/run_physics_contact_native.py','--coherent','--ntsc'), 'tests/coherent-contact-native-ntsc/report.json'),
         Case('physics-contact-pal', ('scripts/run_physics_contact_native.py',), 'tests/physics-contact-native-pal/report.json'),
         Case('physics-contact-ntsc', ('scripts/run_physics_contact_native.py','--ntsc'), 'tests/physics-contact-native-ntsc/report.json'),
         Case('physics-cpu', ('scripts/run_physics_proof.py',), 'tests/physics-cpu/report.json', category='host'),

@@ -37,13 +37,27 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL'):
+class CoherentLatencySession(LatencySession):
+    # Storage bounds, not emulator-time or scheduling guarantees.
+    MAX_RAW_BYTES = 512*1024*1024
+    MAX_COMPRESSED_BYTES = 80*1024*1024
+
+    def record(self,value):
+        super().record(value)
+        if self.records % 512 == 0:
+            self.raw.flush()
+            if (self.directory/'literal-rpc.jsonl.gz').stat().st_size > self.MAX_COMPRESSED_BYTES:
+                self.raw_overflow=True
+                raise AssertionError('Coherent observer compressed raw-byte cap exceeded')
+
+
+def run(standard='PAL', coherent=False):
     baseline=None;predictor=origin_cache=deadline=physics=True;physics_control=False
     assert standard in CLOCKS
     deadline = deadline or physics
     origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
-    directory = ROOT/'build/tests'/('physics-contact-native-'+standard.lower())
+    directory = ROOT/'build/tests'/(('coherent-contact-native-' if coherent else 'physics-contact-native-')+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -61,7 +75,7 @@ def run(standard='PAL'):
         cpu_paths,tools['machine68k']=cpu_tool_inputs()
         transaction.meta.update(commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                                 native_product_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({POLICY} if deadline else set())),
+                                files=snapshot(set(paths)|set(cpu_paths)|{executable,listing_path,manifest_path}|({ROOT/'docs/tutorial-coherent-cost-policy.json' if coherent else POLICY} if deadline else set())),
                                 tools=tools, runner='scripts/run_physics_contact_native.py',
                                 actual_target=dict(TARGET, video=standard),
                                 target_role='legacy-validator-reference',
@@ -71,8 +85,8 @@ def run(standard='PAL'):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[]
-        with LatencySession(directory) as session:
+        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];overlay_writes=[];admission_writes=[];footer_commit_samples=[]
+        with (CoherentLatencySession if coherent else LatencySession)(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
                     '--cpu','68000','--chip','512K','--slow','0','--fast','0',
@@ -87,8 +101,11 @@ def run(standard='PAL'):
             def block(n,width):return read(symbols[n],width)
             def number(n,width=None):
                 return int.from_bytes(block(n,FIELDS.get(n,2) if width is None else width),'big')
+            initial_admission_state={name:number(name,4) for name in ('simulation_phase','simulation_interval')} if coherent else {}
             loaded = loaded_hunks(executable,segments,read)
             calls, returns = instruction_map(listing,segments,read)
+            step_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_step_variant'} if coherent else set()
+            endpoint_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_endpoint_try'} if coherent else set()
             simulation_calls=[pc for pc,c in calls.items() if c['callee']=='simulation_update']
             assert len(simulation_calls)==1
             probe_symbols=dict(title_copper=symbols['title_copper'],simulation_update_call_pc=simulation_calls[0],simulation_update=symbols['simulation_update'])
@@ -99,6 +116,7 @@ def run(standard='PAL'):
                 game_preview_stream_cursors=16,game_preview_synthetic_phases=4,keyboard_ack=1,keyboard_ack_timer=2,
                 tutorial_packet=1,game_input_bits=2)
             if deadline:fields['game_preview_operation']=2
+            if coherent:fields.update(tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_budget=2,tutorial_job_cost=4,tutorial_jobs_completed=4)
             callbacks.surfaces = SurfaceObserver(symbols,read,
                 last_line=311 if standard=='PAL' else 261, verify_sprites=True)
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
@@ -111,12 +129,22 @@ def run(standard='PAL'):
                     row=message.get('params',{})
                     if deadline and row.get('access')=='write' and row.get('addr')==symbols['game_preview_operation']:
                         deadline_operations.append(dict(position=row['position'],operation=int(row['value'])))
+                    if coherent and row.get('access')=='write':
+                        if symbols['ui_overlay_plane']<=row.get('addr',0)<symbols['ui_overlay_plane']+512:
+                            overlay_writes.append(dict(row,tutorial_active=bool(callbacks.state.get('tutorial_active'))))
+                        for name in ('simulation_phase','simulation_interval'):
+                            if row.get('addr')==symbols[name]:
+                                assert row['size']==4,'Admission timer state requires a complete long write'
+                                admission_writes.append(dict(position=row['position'],field=name,value=int(row['value'])))
+                        for name in ('tutorial_job_kind','tutorial_job_variant','tutorial_job_budget','tutorial_job_cost','tutorial_jobs_completed'):
+                            if row.get('addr')==symbols[name]:job_writes.append(dict(position=row['position'],field=name,value=int(row['value'])))
                 session.observer.observe=observe
             watches = callbacks.watches(fields,read)+callbacks.surfaces.watches()+[
                 dict(addr=symbols['game_stack_bottom'],
                      len=symbols['game_stack_top']-symbols['game_stack_bottom'],access=access) for access in ('read','write')]+[
                 dict(addr=a,len=1,access='read') for a in (0xbfd400,0xbfd500,0xbfd600,0xbfd700)]
             if predictor:watches+=input_trace.watches()
+            if coherent:watches.append(dict(addr=symbols['ui_overlay_plane'],len=512,access='write'))
             subscribed = session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches))
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
@@ -125,6 +153,8 @@ def run(standard='PAL'):
             drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             session.inspect('break_add',dict(kind='pc',addr=symbols['game_preview_dispatch']))
+            if coherent:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_footer_commit']))
+            for pc in step_returns|endpoint_returns:session.inspect('break_add',dict(kind='pc',addr=pc))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
@@ -136,6 +166,21 @@ def run(standard='PAL'):
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
                     stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
+                    if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
+                        footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
+                            footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
+                    if stop.get('pc') in endpoint_returns:
+                        variant=number('tutorial_job_variant',2)
+                        endpoint_query_samples.append(dict(position=position(),generation=number('game_preview_generation',4),variant=variant,
+                            reason=number('game_preview_endpoint_reasons',4)>>(16 if variant==0 else 0)&65535,
+                            state=block('game_preview_endpoint_scratch',318).hex()))
+                    if stop.get('pc') in step_returns:
+                        branch_boundaries.append(dict(position=position(),generation=number('game_preview_generation',4),
+                            held_state=block('game_preview_held_state',318).hex(),released_state=block('game_preview_released_state',318).hex(),
+                            cursors=block('game_preview_stream_cursors',16).hex(),synthetic_phases=block('game_preview_synthetic_phases',4).hex(),
+                            counts=block('game_preview_counts',4).hex(),outcomes=block('game_preview_outcomes',4).hex(),
+                            history=block('game_history_state',72).hex(),active=number('game_preview_active',1)))
+                        assert not branch_boundaries[-1]['active'],'Public worker return retains private ownership'
                     if stop.get('pc')==symbols['game_preview_dispatch']:
                         regs=session.inspect('regs.get')
                         dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
@@ -226,6 +271,10 @@ def run(standard='PAL'):
                             held_query_attempted=number('game_preview_endpoint_attempted',1),
                             held_query_reason=number('game_preview_endpoint_reasons',2),
                             held_terminal_state=(block('game_preview_endpoint_scratch',318) if number('game_preview_endpoint_attempted',1) and not number('game_preview_endpoint_reasons',2) else block('game_preview_held_state',318)).hex())
+                        if coherent and row['held_query_attempted'] and not row['held_query_reason']:
+                            query=next((r for r in reversed(endpoint_query_samples) if r['generation']==generation and r['variant']==0 and r['reason']==0),None)
+                            assert query,'Accepted held query lacks its own completed scratch sample'
+                            row['held_terminal_state']=query['state']
                         if predictor:
                             row.update(incoming_state=block('game_preview_incoming_state',318).hex(),
                                 held_path=block('game_preview_paths',number('game_preview_counts',2)*8).hex(),
@@ -324,7 +373,7 @@ def run(standard='PAL'):
             for trial,delay in enumerate(delays):
                 roots=[r for r in timing.rows if r['callee']=='game_launch_root']
                 owners=[r for r in timing.rows if r['callee']=='tutorial_background']
-                if any(o['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=o['exit']['cck'] for o in owners for r in roots):break
+                if not coherent and any(o['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=o['exit']['cck'] for o in owners for r in roots):break
                 advance(delay)
                 previous=number('tutorial_generation',4)
                 # Change actual contact height by physical W; subsequent trials
@@ -346,7 +395,7 @@ def run(standard='PAL'):
             callback_result=callbacks.result(interval);stack_result=timing.result()
             assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
             input_result=input_trace.result(actions,stack_result['calls'])
-            assert input_result['maximum_keyboard_poll_gap_cck']<=50000
+            if not coherent:assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
             records_count=(symbols['game_history_checkpoints']-symbols['game_history_buffer'])//14
             records=frozen_records;final_stop=dict(stop)
@@ -358,8 +407,13 @@ def run(standard='PAL'):
             input_probe=input_result,launch_rows=input_trace.launch_rows,
             retained_records=records.hex(),history_end=history_end,
             literal_rpc=dict(records=session.records,uncompressed_bytes=session.raw_bytes),
-            dispatch_samples=dispatch_samples,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
-        from deadline_extent import validate_capture,negative_controls
+            footer_commit_samples=footer_commit_samples,initial_admission_state=initial_admission_state,admission_writes=admission_writes,overlay_writes=overlay_writes,overlay_base=symbols['ui_overlay_plane'],
+            coherent_policy=(dict(policy=json.loads((ROOT/'docs/tutorial-coherent-cost-policy.json').read_text()),policy_sha256=digest(ROOT/'docs/tutorial-coherent-cost-policy.json'),scheduler_source_sha256=digest(ROOT/'amiga/game/tutorial_deadline.s'),executable_sha256=product_sha256) if coherent else None),
+            endpoint_query_samples=endpoint_query_samples,scheduler_job_writes=job_writes,dispatch_samples=dispatch_samples,branch_boundaries=branch_boundaries,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
+        if coherent:
+            from coherent_native_extent import validate_capture,negative_controls
+        else:
+            from deadline_extent import validate_capture,negative_controls
         from deadline_service_reduction import reduce_capture
         try:captured['deadline']=validate_capture(captured)
         except BaseException:
@@ -369,28 +423,38 @@ def run(standard='PAL'):
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
             row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,records,records_count,history_end)
+            if coherent and row['human_launches'][0]:
+                final,sample,phases,outcome,_=original_ball_reference(cpu_image,cpu_symbols,bytes.fromhex(row['held_launch_state']))
+                assert row['held_terminal_state']==final.hex() and row['held_endpoint_point']==sample.hex()
+                assert row['held_endpoint_phase']==phases and row['outcomes'][0]==outcome
+                row['original_outgoing_reference']=dict(passed=True,expected_full_state=final.hex(),actual_full_state=row['held_terminal_state'],
+                    expected_point=sample.hex(),actual_point=row['held_endpoint_point'],phases=phases,outcome=outcome)
         chunks=captured['deadline']['chunks'];calls=stack_result['calls']
         roots=[r for r in calls if r['callee']=='game_launch_root']
         witnesses=[]
         for chunk in chunks:
-            if chunk['operation']!=8:continue
+            if not coherent and chunk['operation']!=8:continue
             nested=[r for r in roots if chunk['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=chunk['exit']['cck']]
             launches=[r for r in input_trace.launch_rows if chunk['entry']['cck']<=r['position']['cck']<=chunk['exit']['cck']]
             if nested and launches:witnesses.append(dict(owner=chunk,roots=nested,launches=launches))
+        if coherent:
+            from coherent_native_extent import validate_witnesses
+            validate_witnesses(captured,witnesses)
         captured['contact_owner_witnesses']=witnesses
         capture=directory/'latency.json.gz'
         with gzip.open(capture,'wt') as h:json.dump(captured,h,separators=(',',':'))
         services=reduce_capture(captured);assert services['passed']
         artifact=directory/'service.json.gz'
-        with gzip.open(artifact,'wt') as h:json.dump(services,h,separators=(',',':'))
-        summary=dict(passed=bool(witnesses),execution='physical-input-contact-phase-probe',
+        with gzip.open(artifact,'wt') as h:json.dump(({k:v for k,v in services.items() if k!='spans'} if coherent else services),h,separators=(',',':'))
+        summary=dict(passed=bool(witnesses),execution=('coherent-physical-input-contact-phase-probe' if coherent else 'physical-input-contact-phase-probe'),
             target=dict(TARGET,video=standard),executable_sha256=product_sha256,
             capture=str(capture.relative_to(ROOT)),contact_owner_witnesses=witnesses,
-            trial_count=len(endpoints),deadline=captured['deadline'],
+            trial_count=len(endpoints),deadline=captured['deadline'],coherent_policy=captured['coherent_policy'],
             input_probe={k:v for k,v in input_result.items() if k not in ('rows','transitions','acknowledgements')},
             frozen_complete_state_history_records_equal=True,reference_rows=[r['original_incoming_reference'] for r in endpoints],
             services={k:v for k,v in services.items() if k!='spans'},
-            no_simulation_state_injection=True,normative_deadline_safety=False)
+            no_simulation_state_injection=True,normative_deadline_safety=False,
+            observer_limits=(dict(CAPS,uncompressed_transcript_bytes=CoherentLatencySession.MAX_RAW_BYTES,compressed_transcript_bytes=CoherentLatencySession.MAX_COMPRESSED_BYTES) if coherent else CAPS))
         transaction.finalize(output,summary,[manifest],[capture,artifact,directory/'literal-rpc.jsonl.gz',directory/'emulator.log'])
         print(json.dumps(dict(report=str(output),passed=bool(witnesses),witnesses=len(witnesses))),flush=True)
         assert witnesses,'Bounded physical phase trials did not admit an accepted-contact/root owner; raw failure retained'
@@ -426,5 +490,5 @@ def required_extent(report,standard):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true')
-    run('NTSC' if parser.parse_args().ntsc else 'PAL')
+    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');parser.add_argument('--coherent',action='store_true')
+    args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL',coherent=args.coherent)

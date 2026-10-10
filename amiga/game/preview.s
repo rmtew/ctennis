@@ -257,6 +257,29 @@ game_preview_request_body:
 ; D0 generation, D1 logical-operation budget1..4. No dispatch/tick hidden in
 ; copying, guards or context selection. D0=1 valid call, D0=0 stale/invalid.
 game_preview_step:
+        bsr     game_preview_step_valid
+        tst.l   d0
+        beq.s   game_preview_step_return
+        clr.w   game_preview_explicit
+        bra.s   game_preview_step_owned
+
+; D0 generation, D1 budget1..4, D2 variant0..1. No implicit branch switch
+; or geometry scan. Every logical body/check/cursor boundary remains intact.
+game_preview_step_variant:
+        cmpi.l  #1,d2
+        bhi.s   game_preview_step_reject
+        bsr     game_preview_step_valid
+        tst.l   d0
+        beq.s   game_preview_step_return
+        move.w  #1,game_preview_explicit
+        move.w  d2,game_preview_requested_variant
+        bra.s   game_preview_step_owned
+game_preview_step_reject:
+        moveq   #0,d0
+game_preview_step_return:
+        rts
+
+game_preview_step_valid:
         cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
         beq     .invalid
         cmpi.w  #SEEK_JOB_READY,game_history_seek_status
@@ -274,9 +297,30 @@ game_preview_step:
         beq     .invalid
         cmpi.w  #PREVIEW_READY,game_preview_status
         bhi     .invalid
-        beq     .valid
+        beq.s   .accepted
         tst.w   game_preview_status
-        beq     .invalid
+        beq.s   .invalid
+.accepted:
+        moveq   #1,d0
+        rts
+.invalid:
+        moveq   #0,d0
+        rts
+game_preview_step_owned:
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        beq     .valid
+        tst.w   game_preview_explicit
+        bne.s   .pending
+        tst.w   game_preview_outcomes
+        beq.s   .pending
+        tst.w   game_preview_outcomes+2
+        beq.s   .pending
+        movem.l d2-d7/a2-a6,-(sp)
+        bsr     game_preview_compare_geometry
+        move.w  #PREVIEW_READY,game_preview_status
+        movem.l (sp)+,d2-d7/a2-a6
+        bra     .valid
+.pending:
         move.w  d1,game_preview_budget
         movem.l d2-d7/a2-a6,-(sp)
 .next:
@@ -288,7 +332,7 @@ game_preview_step:
         move.b  #1,game_preview_active
 .resolve:
         bsr     game_preview_resolve_one
-        bra.s   .spent
+        bra     .spent
 .alternative:
         bsr     game_preview_desired_variant
         cmpi.b  #2,game_preview_active
@@ -301,11 +345,31 @@ game_preview_step:
         move.l  a0,a5
         move.b  #2,game_preview_active
 .variant_loaded:
+        tst.w   game_preview_explicit
+        beq.s   .legacy_prime
+        move.w  game_preview_requested_variant,d7
+        btst    d7,game_preview_primed_mask+1
+        bne.s   .branch_running
+        bsr     game_preview_prime_one
+        bra     .spent
+.branch_running:
+        add.w   d7,d7
+        lea     game_preview_outcomes,a0
+        tst.w   (a0,d7.w)
+        bne     .yield
+        bra.s   .continue
+.legacy_prime:
         cmpi.w  #PREVIEW_PRIME,game_preview_status
         bne.s   .continue
         bsr     game_preview_prime_one
-        bra.s   .spent
+        bra     .spent
 .continue:
+        moveq   #0,d7
+        move.b  game_preview_variant,d7
+        lea     game_preview_launches,a0
+        moveq   #0,d0
+        move.b  (a0,d7.w),d0
+        move.w  d0,game_preview_launch_before
         bsr     game_preview_continue_one
 .spent:
         subq.w  #1,game_preview_budget
@@ -314,6 +378,20 @@ game_preview_step:
         bcc.s   .yield
         cmpi.b  #2,game_preview_active
         bne     .next
+        tst.w   game_preview_explicit
+        beq.s   .legacy_next
+        move.w  game_preview_requested_variant,d7
+        move.w  d7,d0
+        add.w   d0,d0
+        lea     game_preview_outcomes,a0
+        tst.w   (a0,d0.w)
+        bne     .yield
+        tst.w   game_preview_launch_before
+        bne.s   .legacy_next
+        lea     game_preview_launches,a0
+        tst.b   (a0,d7.w)
+        bne     .yield
+.legacy_next:
         ; Actual bodies clobber D7. Derive the next owner from persisted phase.
         bsr     game_preview_desired_variant
         cmp.b   game_preview_variant,d7
@@ -324,9 +402,11 @@ game_preview_step:
         bsr     game_preview_release_current
         movem.l (sp)+,d2-d7/a2-a6
 .valid:
+        clr.w   game_preview_explicit
         moveq   #1,d0
         rts
 .invalid:
+        clr.w   game_preview_explicit
         moveq   #0,d0
         rts
 
@@ -348,13 +428,20 @@ game_preview_context_released:
 ; No register owner survives a body call: status/primed are authoritative.
 game_preview_desired_variant:
         moveq   #0,d7
+        tst.w   game_preview_explicit
+        beq.s   .legacy
+        move.w  game_preview_requested_variant,d7
+        rts
+.legacy:
         cmpi.w  #PREVIEW_PRIME,game_preview_status
         bne.s   .running
-        move.w  game_preview_primed,d7
+        btst    #0,game_preview_primed_mask+1
+        beq.s   .done
+        moveq   #1,d7
         rts
 .running:
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
-        bne.s   .done
+        tst.w   game_preview_outcomes
+        beq.s   .done
         moveq   #1,d7
 .done:  rts
 
@@ -680,10 +767,12 @@ game_preview_prime_one:
         move.b  game_input_bits+1-game_core_state(a5),d1
         bsr     game_preview_override_pads
         bsr     game_core_sample_pads_body
-        addq.w  #1,game_preview_primed
-        cmpi.w  #2,game_preview_primed
+        moveq   #0,d7
+        move.b  game_preview_variant,d7
+        bset    d7,game_preview_primed_mask+1
         bne.s   .done
-        move.w  #PREVIEW_HELD,game_preview_status
+        addq.w  #1,game_preview_primed
+        bsr     game_preview_summary
 .done:  rts
 
 game_preview_continue_one:
@@ -908,12 +997,97 @@ game_preview_finish_variant:
         lea     game_preview_outcomes,a0
         move.w  d0,(a0,d6.w)
         bsr     game_preview_endpoint_terminal
-        tst.w   d7
-        bne.s   .ready
-        move.w  #PREVIEW_RELEASED,game_preview_status
-        rts
-.ready: bsr     game_preview_compare_geometry
+        bsr     game_preview_summary
+        tst.w   game_preview_explicit
+        bne.s   .done
+        tst.w   game_preview_outcomes
+        beq.s   .done
+        tst.w   game_preview_outcomes+2
+        beq.s   .done
+        bsr     game_preview_compare_geometry
         move.w  #PREVIEW_READY,game_preview_status
+.done:  rts
+
+; Aggregate compatibility status is separate from explicit branch ownership.
+game_preview_summary:
+        move.w  #PREVIEW_PRIME,game_preview_status
+        cmpi.w  #3,game_preview_primed_mask
+        bne.s   .done
+        move.w  #PREVIEW_HELD,game_preview_status
+        tst.w   game_preview_outcomes
+        beq.s   .done
+        move.w  #PREVIEW_RELEASED,game_preview_status
+.done:  rts
+
+; D0 generation. At most eight original geometry-point comparisons per job.
+; Branch outcomes/endpoints remain available while aggregate completion waits.
+game_preview_complete:
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #PREVIEW_PRIME,game_preview_status
+        bcs     .invalid
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        bhi     .invalid
+        cmp.l   game_preview_generation,d0
+        bne     .invalid
+        cmpi.l  #$ffffffff,d0
+        beq     .invalid
+        bsr     game_preview_selection_valid
+        tst.l   d0
+        beq     .invalid
+        cmpi.w  #PREVIEW_READY,game_preview_status
+        beq     .valid
+        tst.w   game_preview_outcomes
+        beq     .valid
+        tst.w   game_preview_outcomes+2
+        beq     .valid
+        movem.l d2-d7/a2-a6,-(sp)
+        move.w  game_preview_counts,d7
+        cmp.w   game_preview_counts+2,d7
+        bne.s   .different
+        move.w  game_preview_geometry_cursor,d6
+        cmp.w   d7,d6
+        bcc.s   .same
+        lsl.w   #3,d6
+        lea     game_preview_paths,a0
+        adda.w  d6,a0
+        lea     game_preview_paths+PREVIEW_POINTS*PREVIEW_POINT_BYTES,a1
+        adda.w  d6,a1
+        moveq   #7,d5
+.point: cmpm.l  (a0)+,(a1)+
+        bne.s   .different
+        moveq   #0,d0
+        move.b  2(a0),d0
+        bsr     game_preview_visibility
+        move.w  d0,d2
+        moveq   #0,d0
+        move.b  2(a1),d0
+        bsr     game_preview_visibility
+        cmp.w   d2,d0
+        bne.s   .different
+        move.b  3(a0),d0
+        cmp.b   3(a1),d0
+        bne.s   .different
+        addq.w  #1,game_preview_geometry_cursor
+        cmp.w   game_preview_geometry_cursor,d7
+        beq.s   .same
+        addq.w  #4,a0
+        addq.w  #4,a1
+        dbra    d5,.point
+        bra.s   .returned
+.same:  move.w  #1,game_preview_coincident
+        bra.s   .ready
+.different:
+        clr.w   game_preview_coincident
+.ready: move.w  #PREVIEW_READY,game_preview_status
+.returned:
+        movem.l (sp)+,d2-d7/a2-a6
+.valid: moveq   #1,d0
+        rts
+.invalid:
+        moveq   #0,d0
         rts
 
 game_preview_compare_geometry:

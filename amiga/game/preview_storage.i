@@ -30,6 +30,10 @@ game_preview_prefix_count: ds.w 1
 ; Route0 keeps original full state; route1 owns observational private state.
 game_preview_predictor_routes: ds.b 2
 game_preview_predictor_reason: ds.w 1
+; Scheduler call ownership is not serialized into match/history records.
+game_preview_explicit: ds.w 1
+game_preview_requested_variant: ds.w 1
+game_preview_launch_before: ds.w 1
 game_preview_counts: ds.w 2
 game_preview_outcomes: ds.w 2
 game_preview_launches: ds.b 2
@@ -39,6 +43,8 @@ game_preview_synthetic_phases: ds.w 2
 game_preview_dispatches: ds.w 2
 game_preview_flight_phases: ds.w 2
 game_preview_primed: ds.w 1
+game_preview_primed_mask: ds.w 1
+game_preview_geometry_cursor: ds.w 1
 game_preview_coincident: ds.w 1
 ; Separate generation-owned endpoints; dense status/count/outcomes remain exact.
 game_preview_launch_saved: ds.b 2
