@@ -165,7 +165,11 @@ def run(standard, delivered, match):
                     key(0x24,False);frames('enter-release-'+str(tap),2)
             else:
                 key(0x44,True);frames('enter',4);key(0x44,False)
-            stable=frames('tutorial-initial',60)
+            # Equal initial observation duration across actual display standards:
+            # PAL60 fields and NTSC72 fields are approximately1.2 seconds.
+            # Sixty NTSC fields ended before the original score/serve boundary.
+            initial_fields=60 if standard=='PAL' or delivered else 72
+            stable=frames('tutorial-initial',initial_fields)
             assert any(r['state']['tutorial_active'] for r in stable),'Physical entry never activated tutorial'
             # Keep collecting after visual failures so slow controls remain measurable.
             def check(name,call):
