@@ -236,6 +236,12 @@ tutorial_released_wait:
         beq     .done
         tst.b   game_preview_launches+1
         bne     .done
+        ; A partial dispatch cannot expose its gameplay-stage phase to UI.
+        tst.w   game_preview_dispatch_stages+2
+        beq.s   .complete_phase
+        lea     game_preview_dispatch_origin_phases+1,a1
+        bra.s   .phase
+.complete_phase:
         lea     game_preview_released_state+(game_lower_phase-game_core_state),a1
         tst.b   tutorial_end
         beq     .phase

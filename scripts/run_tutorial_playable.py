@@ -21,11 +21,11 @@ from native_metrics import memory_summary
 
 CLOCK={'PAL':3546895,'NTSC':3579545};PROVIDER=3546895
 
-def run(standard):
-    directory=ROOT/'build/tests'/('tutorial-playable-'+standard.lower())
+def run(standard,serve=False):
+    directory=ROOT/'build/tests'/(('tutorial-serve-' if serve else 'tutorial-playable-')+standard.lower())
     directory.mkdir(exist_ok=True);attempt=directory/uuid4().hex;attempt.mkdir()
     output=directory/'report.json';tx=ReportRun([output],'native-feedback','maintained-native','Physical current prototype incoming, controls and exact original resume')
-    report={'passed':False,'attempt':str(attempt),'standard':standard}
+    report={'passed':False,'attempt':str(attempt),'standard':standard,'origin':'initial-serve' if serve else 'incoming'}
     try:
         paths,tools=inputs_for('native-feedback','scripts/run_tutorial_playable.py')
         tx.meta.update(files=snapshot(paths),tools=tools,actual_target=dict(tx.meta['target'],video=standard),commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),environment={'RUST_LOG':os.environ.get('RUST_LOG'),'PYTHONPATH':os.environ.get('PYTHONPATH')})
@@ -47,7 +47,8 @@ def run(standard):
             callbacks.surfaces=CoherentSurfaceObserver(s,raw,last_line=311 if standard=='PAL' else 261,verify_sprites=True)
             calls,returns=instruction_map(listing,segments,raw);timing=StackTiming(calls,returns,s['game_stack_bottom'],s['game_stack_top'])
             stack_low=s['game_stack_top'];ack=[];field_rows=[]
-            extra=dict(tutorial_job_cost=4,tutorial_job_budget=2,tutorial_job_kind=2,tutorial_job_variant=2,
+            extra=dict(tutorial_job_cost=4,tutorial_job_budget=2,tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_stage=2,
+                game_preview_dispatch_stages=4,game_preview_dispatch_generations=8,game_preview_dispatch_launches=2,
                 game_preview_primed_mask=2,game_preview_synthetic_phases=4,game_preview_flight_phases=4,
                 simulation_interval=4,simulation_phase=4,keyboard_ack=1,keyboard_ack_timer=2)
             watched=dict(FIELDS,**extra);by_address={s[n]:n for n in watched}
@@ -114,7 +115,7 @@ def run(standard):
                 viewport=attempt/(name+'-viewport.png');native=attempt/(name+'.png')
                 session.inspect('capture_screenshot',dict(path=str(viewport)));native_view(viewport,native)
                 photos.append(dict(name=name,path=str(native),sha256=digest(native)));return native
-            def scene_checkpoint(name,after,variant,endpoint=False):
+            def scene_checkpoint(name,after,variant,endpoint=False,waiting=False):
                 generation=num('tutorial_generation',4)
                 for _ in range(200):
                     scenes=[p for p in callbacks.surfaces.publications if p['position']['cck']>=after
@@ -122,6 +123,8 @@ def run(standard):
                         and p.get('tutorial_fields',{}).get('tutorial_generation')==generation
                         and p.get('publication_live_fields',{}).get('tutorial_generation')==generation
                         and p.get('native_sprite_check',{}).get('matched')]
+                    if waiting:
+                        scenes=[p for p in scenes if p['tutorial_fields'].get('tutorial_waiting_ready')]
                     if endpoint:
                         scenes=[p for p in scenes if p['tutorial_fields'].get('tutorial_ball_mode') in (1,2)
                             and (p.get('endpoint_ready',0)>>8 if variant==0 else p.get('endpoint_ready',0)&255)
@@ -154,14 +157,24 @@ def run(standard):
                 raise AssertionError('No completed visible menu '+name)
             advance(.7);photo('title')
             key(1,True);key(1,False,1.4);assert num('game_lifecycle',2)==1
-            key(0x23,True,.04);key(0x23,False,.02)
-            for _ in range(200):
-                if num('game_contact',1)&0x40 and num('game_flight',1)&0x40 and not num('game_contact',1)&0x8d:break
-                advance(.02)
-            else:raise AssertionError('No actual physical incoming flight')
+            if not serve:
+                key(0x23,True,.04);key(0x23,False,.02)
+                for _ in range(200):
+                    if num('game_contact',1)&0x40 and num('game_flight',1)&0x40 and not num('game_contact',1)&0x8d:break
+                    advance(.02)
+                else:raise AssertionError('No actual physical incoming flight')
             key(0x24,True,.02);key(0x24,False,.02);key(0x24,True,.02);key(0x24,False,.02)
-            assert num('tutorial_active',1);key(0x23,True);advance(2)
-            if not num('game_preview_launches',1):
+            assert num('tutorial_active',1)
+            if serve:
+                advance(1);assert num('game_preview_kind',2)==3
+                scene_checkpoint('initial-released-wait',beginning,1,waiting=True)
+            key(0x23,True);advance(2)
+            if serve:
+                for _ in range(200):
+                    if num('game_preview_launches',1) and num('game_preview_endpoint_ready',1):break
+                    advance(.05)
+                else:raise AssertionError('No finite initial-serve held endpoint')
+            elif not num('game_preview_launches',1):
                 count=num('game_preview_counts');path=raw(s['game_preview_paths'],count*8);assert count
                 sample=min((path[i:i+8] for i in range(0,len(path),8)),key=lambda p:abs(p[1]-(num('tutorial_y',1)+27)))
                 target=max(40,min(199,sample[0]-8));direction=0x20 if target<num('tutorial_x',1) else 0x22
@@ -183,7 +196,7 @@ def run(standard):
             assert num('tutorial_generation',4)>start_generation,'Continuous physical edits did not invalidate prediction'
             scene_checkpoint('after-edits',edit_start,0,True)
             photo('after-edits');release_start=current;key(0x23,False);advance(1)
-            assert num('tutorial_active_variant',1)==1;scene_checkpoint('released-alternative',release_start,1);photo('released-alternative')
+            assert num('tutorial_active_variant',1)==1;scene_checkpoint('released-alternative',release_start,1,waiting=serve);photo('released-alternative')
             held_start=current;key(0x23,True);advance(1);assert num('tutorial_active_variant',1)==0
             scene_checkpoint('held-reselected',held_start,0,True)
             # Modifier consumes direction and release; navigation is absent.
@@ -228,7 +241,7 @@ def run(standard):
                 reconciled_samples=logical_samples,ack=ack,memory=memory,stack_used_bytes=s['game_stack_top']-stack_low,
                 publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows,
                 frozen_sha256={n:hashlib.sha256(v).hexdigest() for n,v in frozen.items()},
-                scope='Finite physical lower-receiver incoming prototype, edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.')
+                scope=('Finite physical lower initial-serve prototype' if serve else 'Finite physical lower-receiver incoming prototype')+', edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.')
         tx.finalize(output,report,compiled=[json.loads((attempt/'baseline-rally.compile.json').read_text())],artifacts=list(attempt.iterdir()))
         shutil.copy2(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
     except BaseException as error:
@@ -240,4 +253,4 @@ def run(standard):
         atomic_json(attempt/'failure.json',dict(error=str(error),traceback=traceback.format_exc(),partial=report));tx.abort(error);raise
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL')
+    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');parser.add_argument('--serve',action='store_true');args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL',args.serve)

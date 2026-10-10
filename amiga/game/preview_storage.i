@@ -56,7 +56,18 @@ game_preview_endpoint_outcomes: ds.w 2
 game_preview_endpoints: ds.b 2*PREVIEW_POINT_BYTES
 ; Per-variant cooperative query stages, reset with each request.
 game_preview_query_workspaces: ds.b 2*48
+; Root-only synthetic serve dispatch. Each branch retains its own continuation.
+game_preview_dispatch_stages: ds.w 2
+game_preview_dispatch_generations: ds.l 2
+game_preview_dispatch_finished: ds.w 1
+game_preview_dispatch_commit: ds.w 1
+game_preview_dispatch_launches: ds.b 2
+game_preview_dispatch_interceptions: ds.b 2
+game_preview_dispatch_origin_phases: ds.b 2
 game_preview_state_end:
+; D0-D7/A0-A6 and CCR, padded to an independent 64-byte owner.
+game_preview_dispatch_registers: ds.b 2*64
+game_preview_dispatch_history: ds.b 2*(game_history_state_end-game_history_state)
 game_preview_history_saved: ds.b game_history_state_end-game_history_state
 game_preview_selected_state: ds.b GAME_CORE_STATE_SIZE
 game_preview_incoming_state: ds.b GAME_CORE_STATE_SIZE
