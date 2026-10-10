@@ -1,5 +1,5 @@
 {
-  "schema": 3,
+  "schema": 4,
   "status": "experimental-hypotheses-only",
   "normative_s05_s18_g2_safety": false,
   "units": "CCK unless specified",
@@ -8,8 +8,8 @@
     "root_service": 2500,
     "residual_margin": 2500,
     "callback": 56000,
-    "entry_lateness": 1750,
-    "callback_completion_uncertainty": 1250,
+    "entry_lateness": 2000,
+    "callback_completion_uncertainty": 1000,
     "keyboard_poll_gap_finite_detector": 50000,
     "beam_line_floor": 226,
     "ready_line": 253,
@@ -22,5 +22,5 @@
     "Transport buffering, maximum ACK delay and approved input latency",
     "All-workload producer/publication and resource/release coverage"
   ],
-  "calibration_basis": "PAL first failed trial:594 callbacks,55512CCK maxcallback,1506.619CCK maxentry. Version1 entry1250 hypothesis falsified. Version2 reallocates unchanged59000CCK combined gate; finite observations, no WCET. Incoming op8 characterized separately: one derive/root; generic terminal geometry scan excluded. Whole owner20000CCK and total reserve25000CCK remain unproved."
+  "calibration_basis": "PAL first failed trial:594 callbacks,55512CCK maxcallback,1506.619CCK maxentry. Version1 entry1250 hypothesis falsified. Version2 reallocates unchanged59000CCK combined gate; finite observations, no WCET. Incoming op8 characterized separately: one derive/root; generic terminal geometry scan excluded. Whole owner20000CCK and total reserve25000CCK remain unproved. First physics-control PAL trial falsified prior1750CCK entry hypothesis at1750.394257. Schema4 reassigns250CCK from unproved completion uncertainty to entry; total59000CCK unchanged. Failure retained; no safety assertion."
 }

@@ -32,9 +32,9 @@ They are deferred to keep this extension small and its partition reviewable.
 Cheap work retains5000CCK whole-owner allowance; incoming physics uses20000CCK.
 Both add2500CCK root service and2500CCK residual reserve. Physics therefore needs
 25000CCK fresh timer and complete beam-line slack, excluding the current line.
-The callback gate remains59000CCK (56000 callback,1750 entry lateness,1250
+The callback gate remains59000CCK (56000 callback,2000 entry lateness,1000
 completion uncertainty). These are experimental allowances, not measured WCET or
-approved input latency. Policy schema3 records their exact source/product binding.
+approved input latency. Policy schema4 records their exact source/product binding.
 
 A read-only word enables physics admission. Control and candidate are assembled
 from the same source and differ only in that loaded word; their symbols and all

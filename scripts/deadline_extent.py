@@ -7,7 +7,7 @@ import json
 B_CHUNK_CCK=5000
 B_PHYSICS_CCK=20000
 B_CALLBACK_CCK=56000
-B_ENTRY_CCK=1750
+B_ENTRY_CCK=2000
 B_TRANSPORT_CCK=50000
 OPERATIONS={'game_core_sample_pads_body':3,'game_core_sample_result_body':4,
             'game_core_clear_inputs_body':5,'game_round_poll_body':7,'game_core_latch_actions_body':9}
