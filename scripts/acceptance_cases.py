@@ -69,6 +69,9 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('tutorial-coherent-cpu', ('scripts/run_playable_coherent_cpu.py',), 'tests/coherent-scheduler-cpu/report.json', category='host'),
+        Case('tutorial-playable-pal', ('scripts/run_tutorial_playable.py',), 'tests/tutorial-playable-pal/report.json'),
+        Case('tutorial-playable-ntsc', ('scripts/run_tutorial_playable.py','--ntsc'), 'tests/tutorial-playable-ntsc/report.json'),
         Case('next-operation-matched-pal', ('scripts/run_next_operation_matched.py',), 'tests/next-operation-matched-pal/report.json'),
         Case('next-operation-matched-ntsc', ('scripts/run_next_operation_matched.py','--ntsc'), 'tests/next-operation-matched-ntsc/report.json'),
         Case('topup-matched-pal', ('scripts/run_topup_matched.py',), 'tests/topup-matched-pal/report.json'),
