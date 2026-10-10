@@ -166,6 +166,7 @@ def run(candidate,control,raw):
 
 def required_extent(report):
     v=report.get('validation') or {};pairs=v.get('pairs') or [];guards=v.get('guard_partitions') or []
+    expected_domains={(e,'rng-'+str(seed)) for e in (0,1) for seed in (0,1,2,7,15,31,63,64,127,128,191,224,250,253,254,255)} | {(0,n) for n in ('scene-clamp-tick-wrap','incoming-outside','incoming-net','incoming-court-out-bounce','outgoing-out-after-contact','near-contact','forward-placement','wide-contact')}
     required={'allowed','disabled','released-count-8','released-count-9','released-count-10','other-path-overcap','path-cap','dispatch-cap','upper-timed-serve','serve-clock15','serve-clock16','serve-clock17','score-stage','role-game_lower_owner','role-game_upper_owner','role-game_score_flags','role-game_contact'}
     return (report.get('execution')=='actual-68000-cpu-only' and v.get('passed') is True
         and v.get('same_layout_switch_only') is True and len(pairs)==4
@@ -173,8 +174,9 @@ def required_extent(report):
         and all(required <= {r['name'] for r in guards if r['end']==e} for e in (0,1))
         and all(r['read_only'] and r['operation']==(8 if r['name'] in {'allowed','serve-clock17','released-count-8','released-count-10'} else 0) for r in guards)
         and all(r.get('full_state_events_paths_cursors_equal') and r.get('classifier_read_only') and r.get('out_of_state_write_audit') and r.get('observations',0)>0 and '8' in r.get('classes',{}) for r in pairs)
-        and all(w['visits']['game_preview_dispatch']==1 and w['visits']['game_derive_launch']<=1 and w['visits']['game_launch_root']<=1 and not any(w['visits'][n] for n in ('game_preview_visibility','game_preview_endpoint_try','game_tick_dispatch_body')) for r in pairs for w in r['work'] if w['operation']==8)
+        and all(w['visits']['game_preview_dispatch']==1 and w['visits']['game_derive_launch']<=1 and w['visits']['game_launch_root']<=1 and not any(w['visits'][n] for n in ('game_preview_visibility','game_preview_endpoint_try','game_tick_dispatch_body')) for r in pairs+v.get('declared_domains',[]) for w in r['work'] if w['operation']==8)
         and all(any(w['operation']==8 and w['visits']['game_derive_launch'] for w in r['work']) for r in pairs if r['kind']=='contact')
         and len(v.get('declared_domains') or [])==40
+        and {(r['end'],r['name']) for r in v['declared_domains']}==expected_domains
         and all(r.get('full_state_events_paths_cursors_equal') and r.get('classifier_read_only') and r.get('out_of_state_write_audit') for r in v['declared_domains'])
         and (v.get('original_core_bytes') or {}).get('passed') is True)

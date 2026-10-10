@@ -23,7 +23,7 @@ def summarize(native,capture):
         # Alignment issues a series of generations; the last request owns the
         # endpoint. First-entry statistic is reported separately by the runner.
         start=relevant[-1]['entry']['cck'] if relevant else requests[0]['entry']['cck']
-        APIs=[r for r in calls if r['callee'] in ('game_preview_step','game_preview_query_endpoint')]
+        APIs=[r for r in calls if r['callee'] in ('game_preview_step','game_preview_endpoint_try')]
         useful=union_span(APIs,start,marker)
         rows.append(dict(label=endpoint['label'],x=endpoint['x'],y=endpoint['y'],end=endpoint['end'],generation=endpoint['generation'],
             public_request_to_marker_cck=marker-start,gesture_to_marker_cck=marker-gesture,
@@ -31,12 +31,18 @@ def summarize(native,capture):
             contact_timing=endpoint['contact_timing'],incoming_sha256=endpoint['incoming_state_sha256'],
             launch_sha256=digest_bytes(endpoint['held_launch_state']),terminal_sha256=digest_bytes(endpoint['held_terminal_state'])))
     service=reduce_capture(capture)
-    return dict(endpoints=rows,classes=native['deadline']['classes'],maximum_by_class_cck=native['deadline']['maximum_by_class_cck'],
+    chunks=capture['deadline']['chunks']
+    roots=[r for r in calls if r['callee']=='game_launch_root']
+    physics=[c for c in chunks if c['operation']==8]
+    background_contacts=sum(any(c['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=c['exit']['cck'] for r in roots) for c in physics)
+    contact_dispatches=[r for r in calls if r['callee']=='game_preview_dispatch' and any(r['entry']['cck']<=q['entry']['cck']<=q['exit']['cck']<=r['exit']['cck'] for q in roots)]
+    return dict(background_physics_owners=len(physics),background_contact_owners=background_contacts,
+        maximum_contact_dispatch_cck=max((r['elapsed_bus_cck'] for r in contact_dispatches),default=None),(endpoints=rows,classes=native['deadline']['classes'],maximum_by_class_cck=native['deadline']['maximum_by_class_cck'],
         accepted=native['deadline']['background_worker_calls'],declined=native['deadline']['declined_owner_calls'],
         maximum_declined_cck=native['deadline']['maximum_declined_owner_cck'],
         maximum_callback_cck=native['deadline']['maximum_callback_cck'],maximum_entry_lateness_cck=native['deadline']['maximum_entry_lateness_cck'],
         minimum_absolute_callback_headroom_cck=min(r['absolute_headroom_cck'] for r in capture['timing']['callbacks']),
-        callback_count=len(capture['timing']['callbacks']),stack=capture['stack_timing'].get('peak_stack_bytes'),
+        callback_count=len(capture['timing']['callbacks']),stack=native['timing']['stack_bytes'],
         service={k:v for k,v in service.items() if k!='spans'},
         input={k:v for k,v in native['input_probe'].items() if k not in ('rows','transitions','acknowledgements')},memory=native['native_memory'])
 
@@ -68,6 +74,7 @@ def main():
             a,b=captures['control'],captures['candidate']
             paired=dict(cached_origin_equal=a['incoming_live']['origin_cache']==b['incoming_live']['origin_cache'],
                 retained_records_equal=a['records']==b['records'],history_end_equal=a['history_end']==b['history_end'])
+            assert len(a['endpoints'])==len(b['endpoints'])==3,'Endpoint comparison would omit a trial'
             pairs=[]
             for x,y in zip(a['endpoints'],b['endpoints']):
                 pairs.append(dict(label=x['label'],same_label=x['label']==y['label'],same_placement=(x['x'],x['y'],x['end'])==(y['x'],y['y'],y['end']),
