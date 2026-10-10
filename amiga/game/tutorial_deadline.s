@@ -159,7 +159,10 @@ tutorial_background:
         tst.l   d0
         bne.s   .run_job
         cmpi.w  #TUTORIAL_JOB_ENDPOINT,tutorial_job_kind
-        beq.s   .smaller_prefix
+        ; Preserve the selected query's eligible seed/phase when it does not
+        ; fit this gap. Advancing its dense flight here can reach terminal
+        ; before any query runs, defeating selected-endpoint priority.
+        beq     .done
         cmpi.w  #TUTORIAL_JOB_FOOTER,tutorial_job_kind
         bne     .done
         tst.b   tutorial_work_pending

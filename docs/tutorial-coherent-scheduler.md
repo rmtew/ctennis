@@ -62,7 +62,7 @@ The integrator owns source integration and evidence reconciliation. Colocated ar
 
 - [x] State the complete coherent end-state and revise S02–S10/S18/S21–S23 authority and verification scope. This check marks drafting only; independent review remains pending.
 - [x] Implement the explicit variant worker, independent progress/persisted preparation and separate eight-point geometry completion alongside the legacy API. Source drafted; equivalence/ownership evidence remains pending.
-- [ ] Complete the first proof: selected released-first and held-first executions with preparation-only yield, full intermediate boundary comparison and canonical/history isolation.
+- [x] Complete the first proof: selected released-first and held-first executions with preparation-only yield, intermediate grouping comparison and canonical/history isolation. The reviewed56-case CPU receipt and independent-reference qualifications are recorded in [verification results](tutorial-coherent-scheduler-results.md); this is not native scheduling acceptance.
 - [x] Implement one root optional-job admission owner, classed prefixes and obligation-specific beam checks; remove competing optional callback work. Source drafted; input/repeat, clock and deadline correctness still require review.
 - [ ] Audit every class/transition tail and clock/read/IRQ/release path against actual input, latch and publication obligations.
 - [x] Implement selected endpoint priority, eight-sample waterline, residual alternation and explicit one-unit producer/menu/footer jobs. Footer has private staging and a named live commit. Source drafted; capacity, fairness, completion/publication and unchanged output evidence remain pending.
