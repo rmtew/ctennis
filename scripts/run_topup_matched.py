@@ -78,9 +78,7 @@ def run(standard):
             session.inspect('break.clear');session.inspect('state.save',dict(path=str(attempt/'anchor.state')))
             region=anchor['cck'];press=region+int((.02 if standard=='PAL' else .028)*CLOCKS[standard]);release=press+int(.012*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
             # Relocated patch audit repeats at real LoadSeg addresses.
-            ranges=[(symbols['ui_sample'],symbols['ui_latch_live_controls'])]
-            differences=[a+j for (a,c),(b,r) in zip(images,original) for j,(x,y) in enumerate(zip(c,r)) if x!=y and not ranges[0][0]<=a+j<ranges[0][1]]
-            assert len(differences)==1 and symbols['ui_resume']<=differences[0]<symbols['ui_return_title'];ranges.append((differences[0]&~1,(differences[0]&~1)+2))
+            ranges=[(symbols[begin],symbols[end]) for begin,end in (('game_preview_step','game_preview_release_current'),('tutorial_background','tutorial_background_class'))]
             anchor_generation=number('tutorial_generation',4)
             assert [(a,len(b)) for a,b in images]==[(a,len(b)) for a,b in original]
             for (a,c),(b,r) in zip(images,original):
