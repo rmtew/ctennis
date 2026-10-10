@@ -38,9 +38,12 @@ def seed(executable):
 
 def trial(seed_data,variant,domain,prefix,usable,poison):
     image,s,initial,owned,generation=seed_data
-    with Core(image,s,initial=initial,poison=poison,readonly=READONLY) as c:
+    with Core(image,s,initial=initial,poison=poison,
+            readonly=dict(READONLY,simulation_phase=4,simulation_interval=4,
+                tutorial_generation=4,tutorial_job_variant=2)) as c:
         for address,data in owned:c.mem.w_block(address,data)
-        c.mutable_regions.append((s['tutorial_state'],s['tutorial_state_end']))
+        for name,width in (('tutorial_job_budget',2),('tutorial_job_cost',4)):
+            c.mutable_regions.append((s[name],s[name]+width))
         c.mem.w_block(s['tutorial_state'],bytes(s['tutorial_state_end']-s['tutorial_state']))
         for name,width,value in (('tutorial_generation',4,generation),('tutorial_job_variant',2,variant),
                 ('simulation_interval',4,usable+1000),('simulation_phase',4,0),
