@@ -101,10 +101,25 @@ tutorial_footer_stage_second: ds.l 1
 tutorial_footer_cursor: ds.l 1
 tutorial_footer_destination: ds.l 1
 tutorial_footer_scratch: ds.b 512
+tutorial_caption_generation: ds.l 1
+tutorial_caption_first: ds.l 1
+tutorial_caption_second: ds.l 1
+tutorial_canvas_menus: ds.b 2
+; Per free canvas: X/Y words, validity, padding and nine saved palette values.
+; Saved underlying bits preserve banner/menu pixels during marker retirement.
+tutorial_canvas_markers: ds.b 2*20
+tutorial_preparing: ds.b 1
+        ds.b 1
 tutorial_state_end:
 tutorial_interrupted_state equ game_history_live_backup
         section tutorial_display,bss,chip
 tutorial_surface0: ds.b 4*6144
 tutorial_surface1: ds.b 4*6144
 tutorial_surfaces_end:
+; Footer storage follows the same two private-canvas ownership identities.
+tutorial_footer0: ds.b 512
+tutorial_footer1: ds.b 512
+; Startup-authored immutable menu ROIs and mandatory control lines.
+tutorial_menu_cache: ds.b 3*30*32*4
+tutorial_controls_cache: ds.b 5*256
         section code,code

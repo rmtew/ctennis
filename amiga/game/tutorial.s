@@ -8,6 +8,7 @@ TUTORIAL_WAITING equ 6
 
 ; Gesture thresholds are video-standard dependent and ready before sampling.
 tutorial_init:
+        bsr     tutorial_prepare_canvases
         move.l  simulation_interval_whole,d0
         mulu.w  #15,d0
         move.l  d0,tutorial_double_ticks
@@ -64,6 +65,7 @@ tutorial_sample:
         tst.b   ui_previous_keys+$44
         bne     .enter_done
         move.b  #16,tutorial_enter_pressed
+        move.b  #1,tutorial_input_source
 .enter_done:
         btst     #7,game_mode
         bne     .done
@@ -135,6 +137,22 @@ tutorial_tick:
         beq     .entry
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne     .done
+        ; Title selection becomes PLAYING before its first active dispatcher.
+        ; Enter only at the actual initialized human serve-wait boundary, with
+        ; a native visible ball. This is state eligibility, never a time delay.
+        tst.b   game_score_initialized
+        beq     .done
+        lea     game_play_state,a0
+        tst.b   G_LOWER_AI(a0)
+        beq.s   .title_lower
+        adda.w  #P_SIZE,a0
+.title_lower:
+        cmpi.b  #$40,P_PHASE(a0)
+        bne     .done
+        tst.b   game_scene_objects+SC_BALL+O_VISIBLE
+        beq     .done
+        tst.b   game_scene_objects+SC_SHADOW+O_VISIBLE
+        beq     .done
         st      tutorial_enter_pending
         clr.b   tutorial_title_pending
 .entry:

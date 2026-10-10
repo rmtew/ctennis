@@ -309,6 +309,8 @@ ui_text_character:
         beq.s   .done
         lsl.w   #3,d0
         lea     ui_font,a1
+        tst.b   tutorial_preparing
+        bne.s   .font_ready
         cmpi.w  #GAME_TITLE,game_lifecycle
         bne.s   .font_ready
         lea     ui_menu_font,a1

@@ -147,11 +147,11 @@ tutorial_background:
         tst.b   tutorial_footer_dirty
         bne     .footer
         bra     .done
-.menu:  tst.w   tutorial_render_phase
+.menu:  tst.b   tutorial_placement_dirty
+        bne.s   .producer
+        tst.w   tutorial_render_phase
         beq     .residual_footer
-        move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
-        move.l  #TUTORIAL_BG_FULL_E-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
-        bra     .admit
+        bra.s   .producer
 .producer:
         move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
         move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
@@ -637,11 +637,21 @@ tutorial_footer_commit:
         move.l  tutorial_footer_generation,d0
         cmp.l   tutorial_generation,d0
         bne.s   .discard
-        lea     tutorial_footer_scratch,a0
-        lea     ui_overlay_plane,a1
-        move.w  #512/4-1,d0
-.copy:  move.l  (a0)+,(a1)+
-        dbra    d0,.copy
+        ; Raster bytes remain private. The next complete scene copies them only
+        ; into its free canvas's footer and atomically binds that pointer.
+        cmp.l   tutorial_caption_generation,d0
+        bne.s   .changed
+        move.l  tutorial_footer_first,d1
+        cmp.l   tutorial_caption_first,d1
+        bne.s   .changed
+        move.l  tutorial_footer_second,d1
+        cmp.l   tutorial_caption_second,d1
+        beq.s   .discard
+.changed:
+        move.l  d0,tutorial_caption_generation
+        move.l  tutorial_footer_first,tutorial_caption_first
+        move.l  tutorial_footer_second,tutorial_caption_second
+        st      tutorial_placement_dirty
 .discard:
         clr.w   tutorial_footer_ready
         rts
