@@ -135,6 +135,12 @@ def required_extent(report,standard):
     if not any(r['bytes_written']==512 for r in report['deadline']['footer_commits']):return False
     if c['deadline_negative_controls']!=['retained-private-ownership-record-rejected']:return False
     rows=c['endpoints']
+    from coherent_publication import qualified_endpoint,early_endpoint
+    for row in rows:
+        scene=row['first_actual_publication']
+        if not qualified_endpoint(scene,row['generation'],row['request']['cck']):return False
+        if row['endpoint_ready_before_dense']!=early_endpoint(scene,row['generation'],row['request']['cck']):return False
+    if not any(row['endpoint_ready_before_dense'] for row in rows):return False
     if len(rows)!=9 or sum(bool(r['human_launches'][0]) for r in rows)!=8:return False
     if not all(r.get('original_incoming_reference',{}).get('passed') is True for r in rows):return False
     if not all(r.get('original_outgoing_reference',{}).get('passed') is True for r in rows if r['human_launches'][0]):return False

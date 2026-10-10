@@ -40,7 +40,9 @@ class LatencySession(CaptureSession):
 
 class CoherentLatencySession(LatencySession):
     # Storage bounds, not emulator-time or scheduling guarantees.
-    MAX_RAW_BYTES = 512*1024*1024
+    # Prior failed three-trial capture used 383,805,001 raw bytes. The larger
+    # storage cap supports the unchanged nine-trial extent; it is no timing bound.
+    MAX_RAW_BYTES = 1024*1024*1024
     MAX_COMPRESSED_BYTES = 80*1024*1024
 
     def record(self,value):
@@ -90,6 +92,18 @@ def run(standard='PAL', coherent=False):
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
         frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];endpoint_profiles=[];pending_endpoint=None;overlay_writes=[];admission_writes=[];footer_commit_samples=[]
+        callbacks=None
+        def retain_progress(phase,error=None):
+            from coherent_failure_progress import write_progress
+            payload=dict(passed=False,execution='unvalidated-coherent-native-progress',phase=phase,error=str(error) if error else None,
+                executable_sha256=product_sha256,standard=standard,endpoints=endpoints,actions=actions,
+                endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,branch_boundaries=branch_boundaries,
+                dispatch_samples=dispatch_samples,footer_commit_samples=footer_commit_samples,
+                scheduler_job_writes=job_writes,admission_writes=admission_writes,
+                observer_scope='Diagnostic partial progress only; no acceptance or complete timing result')
+            if callbacks is not None and callbacks.surfaces is not None:
+                payload.update(publications=callbacks.surfaces.publications,surface_queues=callbacks.surfaces.queue_records)
+            write_progress(directory/'unvalidated-progress.json.gz',payload)
         with (CoherentLatencySession if coherent else LatencySession)(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -123,7 +137,9 @@ def run(standard='PAL', coherent=False):
                 tutorial_packet=1,game_input_bits=2)
             if deadline:fields['game_preview_operation']=2
             if coherent:fields.update(tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_budget=2,tutorial_job_cost=4,tutorial_jobs_completed=4)
-            callbacks.surfaces = SurfaceObserver(symbols,read,
+            if coherent:
+                from coherent_publication import CoherentSurfaceObserver,qualified_endpoint,early_endpoint
+            callbacks.surfaces = (CoherentSurfaceObserver if coherent else SurfaceObserver)(symbols,read,
                 last_line=311 if standard=='PAL' else 261, verify_sprites=True)
             timing = StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
             session.observer = LatencyObserver(callbacks,timing)
@@ -279,7 +295,7 @@ def run(standard='PAL', coherent=False):
                               flight_phases=block('game_preview_flight_phases',4).hex(),
                               launches=block('game_preview_launches',2).hex())),flush=True)
                     generation=number('tutorial_generation',4)
-                    published=[p for p in callbacks.surfaces.publications
+                    published=([p for p in callbacks.surfaces.publications if qualified_endpoint(p,generation,request['cck'])] if coherent else [p for p in callbacks.surfaces.publications
                         if p['position']['cck']>=request['cck']
                         and p['tutorial_fields'].get('tutorial_generation')==generation
                         and p['tutorial_fields'].get('tutorial_presentation_generation')==generation
@@ -287,7 +303,7 @@ def run(standard='PAL', coherent=False):
                         and not p['tutorial_fields'].get('tutorial_placement_dirty')
                         and p['tutorial_fields'].get('tutorial_active_variant')==0
                         and p['tutorial_fields'].get('tutorial_ball_mode') in (1,2)
-                        and ((p.get('endpoint_outcomes',0)>>16) or (p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))]
+                        and ((p.get('endpoint_outcomes',0)>>16) or (p['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))])
                     if published and (previous_generation is None or generation!=previous_generation):
                         scene=published[0] # actual COPJMP, not a later animation/wait match
                         assert scene.get('native_sprite_check'), 'Endpoint sprite bank lacks actual check'
@@ -299,7 +315,7 @@ def run(standard='PAL', coherent=False):
                             counts=[int.from_bytes(block('game_preview_counts',4)[i:i+2],'big') for i in (0,2)],
                             outcomes=[int.from_bytes(block('game_preview_endpoint_outcomes',4)[i:i+2],'big') or int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
                             dense_outcomes=[int.from_bytes(block('game_preview_outcomes',4)[i:i+2],'big') for i in (0,2)],
-                            endpoint_ready_before_dense=bool(scene['tutorial_fields']['tutorial_ball_mode']==1 and scene.get('endpoint_outcomes',0)>>16 and scene.get('endpoint_ready',0)>>8 and scene.get('endpoint_generation')==generation and not (scene['tutorial_fields'].get('tutorial_available_outcomes',0)>>16)),
+                            endpoint_ready_before_dense=(early_endpoint(scene,generation,request['cck']) if coherent else bool(scene['tutorial_fields']['tutorial_ball_mode']==1 and scene.get('endpoint_outcomes',0)>>16 and scene.get('endpoint_ready',0)>>8 and scene.get('endpoint_generation')==generation and not (scene['tutorial_fields'].get('tutorial_available_outcomes',0)>>16))),
                             incoming_dispatches=[int.from_bytes(block('game_preview_dispatches',4)[i:i+2],'big') for i in (0,2)],
                             outgoing_phases=[int.from_bytes(block('game_preview_flight_phases',4)[i:i+2],'big') for i in (0,2)],
                             human_launches=list(block('game_preview_launches',2)),
@@ -402,6 +418,7 @@ def run(standard='PAL', coherent=False):
                 endpoints[-1]['first_actual_publication']['position']['cck']-edit_start['cck'])
             endpoints[-1]['physical_input_latency_seconds']=(
                 endpoints[-1]['input_to_publication_cck']/CLOCKS[standard])
+            if coherent:retain_progress('before-early-endpoint-gate')
             assert any(e['endpoint_ready_before_dense'] for e in endpoints), 'No independent early endpoint publication'
             assert len({e['incoming_state_sha256'] for e in endpoints})==1
             assert len({e['incoming_cursor'] for e in endpoints})==1
@@ -498,11 +515,18 @@ def run(standard='PAL', coherent=False):
             frozen_complete_state_history_records_equal=True,reference_rows=[r['original_incoming_reference'] for r in endpoints],
             services={k:v for k,v in services.items() if k!='spans'},
             no_simulation_state_injection=True,normative_deadline_safety=False,
+            storage_cap_basis=(dict(prior_failed_run_id='36ac93c177fc4a989768bdff2ceca5bd',
+                prior_first_three_trials_uncompressed_bytes=383805001,prior_compressed_bytes=29383726,
+                estimate_scope='Observed prior failed capture; future rates/space are estimates. No runtime/timing allowance changed.') if coherent else None),
             observer_limits=(dict(CAPS,uncompressed_transcript_bytes=CoherentLatencySession.MAX_RAW_BYTES,compressed_transcript_bytes=CoherentLatencySession.MAX_COMPRESSED_BYTES,drain_slice_milliseconds=SLICE_MILLISECONDS) if coherent else CAPS))
         transaction.finalize(output,summary,[manifest],[capture,artifact,directory/'literal-rpc.jsonl.gz',directory/'emulator.log'])
         print(json.dumps(dict(report=str(output),passed=bool(witnesses),witnesses=len(witnesses))),flush=True)
         assert witnesses,'Bounded physical phase trials did not admit an accepted-contact/root owner; raw failure retained'
     except BaseException as error:
+        if coherent and 'retain_progress' in locals():
+            try:retain_progress('failed',error)
+            except BaseException as progress_error:transaction.meta['progress_retention_error']=str(progress_error)
+            transaction.meta['files'].update(snapshot(p for p in (directory/'unvalidated-progress.json.gz',directory/'literal-rpc.jsonl.gz',directory/'emulator.log') if p.is_file()))
         # A missing witness remains a complete negative experiment with raw
         # evidence; earlier observer failures retain the incomplete receipt.
         if not output.exists() or not json.loads(output.read_text()).get('evidence',{}).get('state')=='complete':transaction.abort(error)

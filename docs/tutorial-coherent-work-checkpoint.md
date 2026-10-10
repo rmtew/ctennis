@@ -5,10 +5,11 @@ Active task: finish the approved coherent tutorial scheduler on
 PR45 is completed earlier work and is not the active delivery.
 
 Unified scheduling and independent branches are implemented. Cooperative endpoint
-stages are drafted, with an informal equivalence pass against the frozen pre-refactor
-actual helper. Next: freeze source, formal stage equivalence/isolation, actual native
-PAL/NTSC contact and early publication/input/timing, independent review, resource
-reports and draft publication. Keep numerical costs experimental.
+stages and reviewed formal CPU proofs pass:42 frozen-old helper cases,56 grouping
+cases, edge/refusal fixtures, and three-role sliced seek. Next: freeze the observer
+publication correction and run actual native PAL/NTSC contact, early publication,
+input and timing; independent review, resource reports and new draft publication.
+Keep numerical costs experimental.
 
 Resume campaign `7c2cac9edbe64d9a8aeb30e51496380f` only after checking process
 ownership. PAL attempt4 is retained in
@@ -20,3 +21,16 @@ now protects subsequent captures. Never overwrite the frozen b08b helper oracle.
 No uploads, merge, golden regeneration or full-release/appearance claims.
 Implementation authorization is the user's existing “do it”, reiterated by the
 parent delegation. Consult this checkpoint after context recovery.
+
+Latest native attempt5 failed a queued-placement-dirty detector before the extra
+contact trials. Entire capture is archived under run36ac93c177fc4a989768bdff2ceca5bd
+(raw c1ef09433fc8e3c4468336701fc662e56e6a10356707f78df2ce8d4377b55b6b).
+Independent literal reconstruction confirms actual mode1 COPJMP with live clean
+placement. Observer-only correction must separate COPJMP bookkeeping flags from
+immutable queued bank pose/provenance; preserve all existing marker/dense/generation
+gates. No new native pass yet. No native processes active at this checkpoint.
+
+Current native0999288675e9d201f3dda8add25732b326995d0ae59692fa58c68bb53b564dfa;
+standalone6eb0bf7229828d277e16ca43e9a0567a93b13901c45c659683496053604df50d.
+An ENOSPC controller start was resolved by exact-hash deduplication of duplicate
+CAS input copies; preserve unique evidence and monitor remaining disk space.
