@@ -137,8 +137,9 @@ def run(standard):
                         and p.get('native_sprite_check',{}).get('matched')]
                     if scenes:
                         advance(.05) # Two complete fields after actual COPJMP, for raster capture.
-                        displayed=callbacks.surfaces.current_presentation(callbacks.state)
-                        assert displayed and displayed['surface']==scenes[-1]['surface']
+                        stable=callbacks.surfaces.current_presentation(callbacks.state)
+                        displayed=callbacks.surfaces.displayed
+                        assert stable and displayed and displayed['surface']==scenes[-1]['surface']
                         bank=displayed['tutorial_fields']
                         assert bank['tutorial_menu'] and bank['tutorial_menu_selection']==selection
                         assert bank['tutorial_render_generation']==render and bank['tutorial_generation']==generation
@@ -226,6 +227,11 @@ def run(standard):
         tx.finalize(output,report,compiled=[json.loads((attempt/'baseline-rally.compile.json').read_text())],artifacts=list(attempt.iterdir()))
         shutil.copy2(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
     except BaseException as error:
+        # Keep already observed controls/publications even if an early visual gate fails.
+        for name in ('actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):
+            if name in locals():report[name]=locals()[name]
+        if 'callbacks' in locals():report.update(callbacks=callbacks.rows,publications=callbacks.surfaces.publications)
+        if 'timing' in locals():report['stack_rows']=timing.rows
         atomic_json(attempt/'failure.json',dict(error=str(error),traceback=traceback.format_exc(),partial=report));tx.abort(error);raise
 
 if __name__=='__main__':
