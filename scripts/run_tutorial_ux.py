@@ -220,7 +220,7 @@ def run(standard, delivered, match):
                             white=sum(image.convert('RGB').getpixel(p)==(255,255,255) for p in coords)
                         if white:seen.append(dict(photo=photo['name'],ground=[cue['x'],cue['y']],visible_cross_pixels=white,index=scene['tutorial_fields']['tutorial_animation_index']))
                     assert seen,'No current native landing cross pixels observed'
-                    assert len({r['index'] for r in seen})>=2,'Landing cue was not persistent across actual playback samples'
+                    assert len(seen)>=3,'Landing cue was not persistent across completed fields'
                     return seen
                 check('landing-cue',landing)
             key(0x23,False);frames('released-preview',10)

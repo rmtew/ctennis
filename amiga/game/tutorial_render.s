@@ -70,6 +70,8 @@ tutorial_prepare_canvases:
         dbra    d6,.hint
         clr.w   tutorial_render_phase
         move.w  #$ffff,tutorial_canvas_menus
+        move.w  #$ffff,tutorial_canvas_controls
+        move.w  #$ffff,tutorial_canvas_captions
         clr.b   tutorial_preparing
         movem.l (sp)+,d0-d7/a0-a6
         rts
@@ -358,6 +360,46 @@ tutorial_choose_surface:
         moveq   #0,d0
         rts
 
+; A placement can borrow an immutable already completed pending canvas. Only
+; its new sprite bank is built: no court, cue or footer byte is changed. This
+; avoids making mandatory actor input wait for a free canvas during prediction.
+; Eligibility is re-read on every root attempt; no refused-time cache exists.
+tutorial_pending_canvas_eligible:
+        moveq   #0,d0
+        tst.b   tutorial_menu
+        bne     .done
+        tst.b   tutorial_ball_mode
+        bne     .done
+        tst.b   tutorial_marker_ready
+        bne     .done
+        cmpi.w  #TUTORIAL_COMPUTING,tutorial_status
+        bne     .done
+        move.l  tutorial_visible_surface,a1
+        moveq   #0,d1
+        cmpa.l  #tutorial_surface0,a1
+        beq.s   .identity
+        cmpa.l  #tutorial_surface1,a1
+        bne     .done
+        moveq   #1,d1
+.identity:
+        lea     tutorial_canvas_menus,a0
+        cmpi.b  #$ff,(a0,d1.w)
+        bne     .done
+        lea     tutorial_canvas_controls,a0
+        move.b  tutorial_input_source,d2
+        cmp.b   (a0,d1.w),d2
+        bne     .done
+        lea     tutorial_canvas_captions,a0
+        tst.b   (a0,d1.w)
+        bne     .done
+        move.w  d1,d2
+        mulu.w  #20,d2
+        lea     tutorial_canvas_markers,a0
+        tst.b   4(a0,d2.w)
+        bne     .done
+        moveq   #1,d0
+.done:  rts
+
 ; Change only the menu's30 rows on a free canvas. Closed scenes restore the
 ; original ROI; opening/highlighting uses the startup-authored selection cache.
 ; Each of four960-byte planes is copied in bounded48-byte register bursts.
@@ -559,6 +601,11 @@ tutorial_prepare_private_footer:
         dbra    d7,.copy_first
         move.l  a1,a6
         bsr     tutorial_footer_select
+        moveq   #1,d4
+        cmpa.l  #tutorial_computing_detail_text,a0
+        bne.s   .caption_identity
+        moveq   #0,d4
+.caption_identity:
         move.l  tutorial_generation,d0
         cmp.l   tutorial_caption_generation,d0
         bne.s   .pending
@@ -570,8 +617,10 @@ tutorial_prepare_private_footer:
         bra.s   .second
 .pending:
         lea     tutorial_controls_cache+768,a0
+        moveq   #0,d4
         tst.b   tutorial_menu
         beq.s   .second
+        moveq   #1,d4
         lea     tutorial_controls_cache+1024,a0
 .second:
         move.l  a6,a1
@@ -579,6 +628,15 @@ tutorial_prepare_private_footer:
 .copy_second:
         move.l  (a0)+,(a1)+
         dbra    d7,.copy_second
+        moveq   #0,d0
+        cmpi.l  #tutorial_surface0,tutorial_render_surface
+        beq.s   .record_identity
+        moveq   #1,d0
+.record_identity:
+        lea     tutorial_canvas_captions,a0
+        move.b  d4,(a0,d0.w)
+        lea     tutorial_canvas_controls,a0
+        move.b  tutorial_input_source,(a0,d0.w)
         movem.l (sp)+,d0-d7/a0-a6
         rts
 

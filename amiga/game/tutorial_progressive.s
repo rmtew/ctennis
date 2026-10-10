@@ -227,6 +227,13 @@ tutorial_progress_fast_publish:
         clr.l   tutorial_animation_generation
         clr.l   tutorial_counts
 .publish:
+        bsr     tutorial_pending_canvas_eligible
+        tst.l   d0
+        beq.s   .private_canvas
+        move.l  a1,tutorial_render_surface
+        move.w  tutorial_render_generation,tutorial_build_generation
+        bra.s   .complete_objects
+.private_canvas:
         bsr     tutorial_choose_surface
         tst.l   d0
         beq     .done
@@ -234,6 +241,7 @@ tutorial_progress_fast_publish:
         bsr     tutorial_prepare_menu_roi
         bsr     tutorial_draw_landing
         bsr     tutorial_prepare_private_footer
+.complete_objects:
         move.l  tutorial_render_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects

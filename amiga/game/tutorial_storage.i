@@ -103,6 +103,8 @@ tutorial_caption_generation: ds.l 1
 tutorial_caption_first: ds.l 1
 tutorial_caption_second: ds.l 1
 tutorial_canvas_menus: ds.b 2
+tutorial_canvas_controls: ds.b 2
+tutorial_canvas_captions: ds.b 2
 ; Per free canvas: X/Y words, validity, padding and nine saved palette values.
 ; Saved underlying bits preserve banner/menu pixels during marker retirement.
 tutorial_canvas_markers: ds.b 2*20
