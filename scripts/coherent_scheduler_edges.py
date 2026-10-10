@@ -4,6 +4,7 @@ Counters and geometry jobs are deliberately initialized at API limits once,
 before the first tested call. They do not claim natural match reachability.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -293,6 +294,7 @@ def root_decline_fixture(native,raw,variant,route):
                 assert bytes(cpu.mem.r_block(s['game_preview_storage'],len(before_preview)))==before_preview
                 assert field(cpu,'tutorial_jobs_completed',4)==0
                 if route=='eligible':assert field(cpu,'tutorial_job_kind')==2
+                assert field(cpu,'tutorial_residual_turn')==(1 if route in ('terminal','ready-waterline') else 0)
             expected_queries=3 if route in ('eligible','generation') else 0
             assert queries==[variant]*expected_queries,(route,'endpoint eligibility route',queries)
             expected_class=(1-variant if route in ('terminal','ready-waterline') else variant)
@@ -335,6 +337,97 @@ def root_decline(native,raw):
     return result
 
 
+def residual_fairness(native,raw):
+    """Actual root returns normally; only admission is replaced with refusal.
+
+    The refusal hook is an explicit routing fixture, not actual timer/beam
+    admission or a timing bound. Existing refused-footer prefix fallback runs.
+    """
+    image,s=load_image(native);case=discover(image,s,0xace1)[0];rows=[]
+    for variant in (0,1):
+        for route in ('terminal','waterline'):
+            with Core(image,s,readonly=dict(READONLY,ui_paused=1,simulation_interval=4,
+                    simulation_phase=4,blank_seen=1)) as cpu:
+                generation=setup(cpu,case)
+                cpu.mutable_regions.append((s['tutorial_state'],s['tutorial_state_end']))
+                cpu.mem.w_block(s['tutorial_state'],bytes(s['tutorial_state_end']-s['tutorial_state']))
+                for name,width,value in (('tutorial_active',1,1),('ui_paused',1,1),
+                        ('tutorial_work_pending',1,1),('tutorial_generation',4,generation),
+                        ('tutorial_presentation_generation',4,generation),('tutorial_active_variant',1,variant),
+                        ('tutorial_footer_dirty',1,255),('tutorial_animation_index',2,2),
+                        ('simulation_interval',4,6000),('simulation_phase',4,0),('blank_seen',1,0),
+                        ('game_preview_status',2,3),('game_preview_primed_mask',2,3)):
+                    cpu.mem.w_block(s[name],value.to_bytes(width,'big'))
+                cpu.mem.w_block(s['game_preview_launches'],bytes(2))
+                cpu.mem.w_block(s['game_preview_outcomes'],bytes(4))
+                cpu.mem.w_block(s['game_preview_endpoint_ready'],bytes(2))
+                if route=='terminal':cpu.mem.w16(s['game_preview_outcomes']+variant*2,1)
+                else:
+                    cpu.mem.w8(s['game_preview_endpoint_ready']+variant,255)
+                    cpu.mem.w16(s['game_preview_counts']+variant*2,10)
+                other=1-variant
+                cpu.mem.w8(s['game_preview_predictor_routes']+other,0)
+                tail=int.from_bytes(cpu.mem.r_block(s['game_history_cursor'],8),'big')
+                assert tail>0
+                cpu.mem.w_block(s['game_preview_stream_cursors']+other*8,(tail-1).to_bytes(8,'big'))
+                record=cpu.mem.r32(s['game_history_store'])+((tail-1)&4095)*14
+                cpu.mem.w_block(record,b'\x00\x08'+bytes(12))
+                owners=[(cpu.start,cpu.stop)]+[region for region in cpu.mutable_regions
+                    if region!=(s['tutorial_state'],s['tutorial_state_end'])]
+                before=[bytes(cpu.mem.r_block(a,b-a)) for a,b in owners]
+                overlay=bytes(cpu.mem.r_block(s['ui_overlay_plane'],512))
+                events=(list(cpu.events),list(cpu.preview_events),list(cpu.seek_events))
+                planner={name:width for name,width in (('tutorial_job_kind',2),('tutorial_job_budget',2),
+                    ('tutorial_job_cost',4),('tutorial_job_variant',2),('tutorial_residual_turn',2))}
+                allowed={a for name,width in planner.items() for a in range(s[name],s[name]+width)}
+                tutorial_before=bytes(cpu.mem.r_block(s['tutorial_state'],s['tutorial_state_end']-s['tutorial_state']))
+                raw_json(raw/('native-residual-seed-'+str(variant)+'-'+route+'.json'),dict(
+                    variant=variant,route=route,owners=[dict(start=a,end=b,full=data.hex())
+                        for (a,b),data in zip(owners,before)],tutorial=tutorial_before.hex(),
+                    live_overlay=overlay.hex(),ordered_events=events,declared_once=True))
+                forbidden=('game_preview_step_variant','game_preview_complete','game_preview_endpoint_step',
+                    'game_preview_result','game_preview_dispatch','game_ball_tick','tutorial_footer_step',
+                    'tutorial_footer_commit','tutorial_progress_slice','tutorial_progress_returned',
+                    'account_sim_timer','read_presentation_line')
+                trace=[];hits=[]
+                def observe(pc):
+                    cpu.instruction(pc)
+                    if pc in {s[name] for name in forbidden}:hits.append(pc)
+                    if pc==s['tutorial_background_class']:
+                        trace.append(['class',field(cpu,'tutorial_job_variant')])
+                    if pc==s['tutorial_job_admitted']:
+                        trace.append(['refuse-admission',field(cpu,'tutorial_job_kind'),field(cpu,'tutorial_job_variant')])
+                        # Emulate only this helper's ABI return. The real root
+                        # executes its refusal/fallback path and balanced exit.
+                        sp=cpu.cpu.r_sp();return_pc=cpu.mem.r32(sp)
+                        cpu.cpu.w_reg(0,0);cpu.cpu.w_sp(sp+4);cpu.cpu.w_pc(return_pc)
+                cpu.cpu.set_instr_hook_callback(observe);calls=[]
+                for owner in range(3):
+                    trace.clear();cpu.writes.clear()
+                    cycles=cpu.call('tutorial_background')
+                    expected=[['class',other]] if owner==0 else [['refuse-admission',5,variant],['class',other]]
+                    assert trace==expected,(variant,route,owner,trace)
+                    assert not hits and cpu.writes<=allowed,'Refused owner executed work or changed undeclared globals'
+                    assert field(cpu,'tutorial_residual_turn')==1
+                    assert field(cpu,'tutorial_footer_dirty',1)==255 and field(cpu,'tutorial_jobs_completed',4)==0
+                    assert field(cpu,'tutorial_job_budget')==0 and field(cpu,'tutorial_job_cost',4)==0
+                    assert [bytes(cpu.mem.r_block(a,b-a)) for a,b in owners]==before
+                    assert bytes(cpu.mem.r_block(s['ui_overlay_plane'],512))==overlay
+                    assert (cpu.events,cpu.preview_events,cpu.seek_events)==events
+                    actual=bytes(cpu.mem.r_block(s['tutorial_state'],len(tutorial_before)))
+                    assert all(a in allowed or actual[a-s['tutorial_state']]==tutorial_before[a-s['tutorial_state']]
+                        for a in range(s['tutorial_state'],s['tutorial_state_end']))
+                    calls.append(dict(owner=owner,cycles_with_refusal_hook=cycles,trace=list(trace),
+                        future_footer_turn=1,full_state_events_cursors_overlay_unchanged=True))
+                cpu.audit_reads()
+                row=dict(variant=variant,route=route,passed=True,usable_e=5000,other_full_cost_e=10000,
+                    normal_root_returns=True,calls=calls,stack=cpu.stack_bytes,
+                    raw_core=before[0].hex(),overlay_sha256=hashlib.sha256(overlay).hexdigest())
+                raw_json(raw/('native-residual-fairness-'+str(variant)+'-'+route+'.json'),row);rows.append(row)
+    return dict(passed=True,rows=rows,
+        scope='Declared actual root fairness routing; scoped admission-refusal ABI hook, existing smaller-prefix fallback executed, no native admission/timer/beam/timing or actual footer glyph execution claim.')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable',type=Path,default=ROOT/'build/standalone/match-core')
@@ -353,6 +446,7 @@ def main():
         raw=output.parent/('raw-'+transaction.meta['run_id']);raw.mkdir(parents=True,exist_ok=True)
         validation=run(executable,raw)
         validation['native_root_decline']=root_decline(native,raw)
+        validation['native_residual_fairness']=residual_fairness(native,raw)
         unvalidated=raw/'results-unvalidated.json';atomic_json(unvalidated,validation)
         transaction.finalize(output,dict(passed=True,execution='actual-68000-cpu-only',
             executable_sha256=digest(executable),native_executable_sha256=digest(native),

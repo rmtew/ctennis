@@ -115,6 +115,9 @@ tutorial_background:
         tst.b   tutorial_footer_dirty
         bne     .footer
 .other_branch:
+        ; Rotate on the residual attempt even when this branch cannot fit.
+        ; A declined full operation must not starve the smaller footer job.
+        move.w  #1,tutorial_residual_turn
         moveq   #1,d0
         eor.w   d0,tutorial_job_variant
         move.w  tutorial_job_variant,d2
