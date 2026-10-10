@@ -25,6 +25,7 @@ from tutorial_capture import CaptureSession, CallbackObserver, SurfaceObserver
 from tutorial_latency import LatencyObserver, StackTiming, instruction_map
 from predictor_native_proof import InputTrace, original_reference, contact_timing
 
+from native_run_slices import drain_target,goal_reached,SLICE_MILLISECONDS
 from native_metrics import memory_summary
 from ordinary_cadence import chip_memory
 PROVIDER_CLOCK = 3546895
@@ -160,30 +161,33 @@ def run(standard='PAL', coherent=False):
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
+            def capture_private_stop():
+                if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
+                    footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
+                        footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
+                if stop.get('pc') in endpoint_returns:
+                    variant=number('tutorial_job_variant',2)
+                    endpoint_query_samples.append(dict(position=position(),generation=number('game_preview_generation',4),variant=variant,
+                        reason=number('game_preview_endpoint_reasons',4)>>(16 if variant==0 else 0)&65535,
+                        state=block('game_preview_endpoint_scratch',318).hex()))
+                if stop.get('pc') in step_returns:
+                    branch_boundaries.append(dict(position=position(),generation=number('game_preview_generation',4),
+                        held_state=block('game_preview_held_state',318).hex(),released_state=block('game_preview_released_state',318).hex(),
+                        cursors=block('game_preview_stream_cursors',16).hex(),synthetic_phases=block('game_preview_synthetic_phases',4).hex(),
+                        counts=block('game_preview_counts',4).hex(),outcomes=block('game_preview_outcomes',4).hex(),
+                        history=block('game_history_state',72).hex(),active=number('game_preview_active',1)))
+                    assert not branch_boundaries[-1]['active'],'Public worker return retains private ownership'
+                if stop.get('pc')==symbols['game_preview_dispatch']:
+                    regs=session.inspect('regs.get')
+                    dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
             def advance(seconds):
                 nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary,held_resume_samples,frozen_origin
                 goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
-                    stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
-                    if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
-                        footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
-                            footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
-                    if stop.get('pc') in endpoint_returns:
-                        variant=number('tutorial_job_variant',2)
-                        endpoint_query_samples.append(dict(position=position(),generation=number('game_preview_generation',4),variant=variant,
-                            reason=number('game_preview_endpoint_reasons',4)>>(16 if variant==0 else 0)&65535,
-                            state=block('game_preview_endpoint_scratch',318).hex()))
-                    if stop.get('pc') in step_returns:
-                        branch_boundaries.append(dict(position=position(),generation=number('game_preview_generation',4),
-                            held_state=block('game_preview_held_state',318).hex(),released_state=block('game_preview_released_state',318).hex(),
-                            cursors=block('game_preview_stream_cursors',16).hex(),synthetic_phases=block('game_preview_synthetic_phases',4).hex(),
-                            counts=block('game_preview_counts',4).hex(),outcomes=block('game_preview_outcomes',4).hex(),
-                            history=block('game_history_state',72).hex(),active=number('game_preview_active',1)))
-                        assert not branch_boundaries[-1]['active'],'Public worker return retains private ownership'
-                    if stop.get('pc')==symbols['game_preview_dispatch']:
-                        regs=session.inspect('regs.get')
-                        dispatch_samples.append(dict(position=position(),registers=regs,private_state=read(regs['a'][5],318).hex(),counts=block('game_preview_counts',4).hex(),dispatches=block('game_preview_dispatches',4).hex(),generation=number('game_preview_generation',4)))
+                    target=drain_target(stop['cck'],goal,CLOCKS[standard]) if coherent else goal
+                    stop=session.inspect('run_until',dict(seconds=target/PROVIDER_CLOCK))
+                    capture_private_stop()
                     if origin_cache and stop.get('pc')==symbols['game_history_incoming_capture_complete']:
                         cached=block('game_history_incoming_state',318)
                         assert cached==block('game_core_state',318)
@@ -224,7 +228,7 @@ def run(standard='PAL', coherent=False):
                             held_resume_samples+=1
                         boundaries.append(dict(position=position(), fields=fields,
                             state=states[0].hex(),history=states[1].hex(),backup=states[2].hex()))
-                    if stop.get('reason')=='target' or stop['cck']>=goal:break
+                    if goal_reached(stop,target,goal):break
                 else:raise AssertionError('Latency complete-boundary stop cap')
             def key(code,held,seconds=.06):
                 actions.append(dict(rawkey=code,held=held,position=position(),tutorial_active=bool(number('tutorial_active'))))
@@ -384,10 +388,13 @@ def run(standard='PAL', coherent=False):
             # End on an actual upcoming callback boundary; never cut an owner.
             simulation_return=calls[simulation_calls[0]]['return_pc']
             session.inspect('break_add',dict(kind='pc',addr=simulation_return))
-            final_goal=(stop['cck']+CLOCKS[standard])/PROVIDER_CLOCK
+            final_goal=stop['cck']+CLOCKS[standard]
             for _ in range(8192):
-                stop=session.inspect('run_until',dict(seconds=final_goal))
+                target=drain_target(stop['cck'],final_goal,CLOCKS[standard]) if coherent else final_goal
+                stop=session.inspect('run_until',dict(seconds=target/PROVIDER_CLOCK))
+                if coherent:capture_private_stop()
                 if stop.get('pc')==simulation_return:break
+                assert not goal_reached(stop,target,final_goal),'Final callback drain reached its physical cap without callback RTS'
             else:raise AssertionError('No complete final callback boundary')
             actual_video=[number('presentation_last_line',2),number('simulation_interval_whole',4),number('simulation_interval_fraction',2)]
             assert actual_video==([311,11838,14906] if standard=='PAL' else [261,11947,13180])
@@ -455,7 +462,7 @@ def run(standard='PAL', coherent=False):
             frozen_complete_state_history_records_equal=True,reference_rows=[r['original_incoming_reference'] for r in endpoints],
             services={k:v for k,v in services.items() if k!='spans'},
             no_simulation_state_injection=True,normative_deadline_safety=False,
-            observer_limits=(dict(CAPS,uncompressed_transcript_bytes=CoherentLatencySession.MAX_RAW_BYTES,compressed_transcript_bytes=CoherentLatencySession.MAX_COMPRESSED_BYTES) if coherent else CAPS))
+            observer_limits=(dict(CAPS,uncompressed_transcript_bytes=CoherentLatencySession.MAX_RAW_BYTES,compressed_transcript_bytes=CoherentLatencySession.MAX_COMPRESSED_BYTES,drain_slice_milliseconds=SLICE_MILLISECONDS) if coherent else CAPS))
         transaction.finalize(output,summary,[manifest],[capture,artifact,directory/'literal-rpc.jsonl.gz',directory/'emulator.log'])
         print(json.dumps(dict(report=str(output),passed=bool(witnesses),witnesses=len(witnesses))),flush=True)
         assert witnesses,'Bounded physical phase trials did not admit an accepted-contact/root owner; raw failure retained'
