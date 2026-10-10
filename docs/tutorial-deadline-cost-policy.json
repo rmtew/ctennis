@@ -1,5 +1,5 @@
 {
-  "schema": 2,
+  "schema": 3,
   "status": "experimental-hypotheses-only",
   "normative_s05_s18_g2_safety": false,
   "units": "CCK unless specified",
@@ -12,7 +12,8 @@
     "callback_completion_uncertainty": 1250,
     "keyboard_poll_gap_finite_detector": 50000,
     "beam_line_floor": 226,
-    "ready_line": 253
+    "ready_line": 253,
+    "accepted_incoming_physics_owner": 20000
   },
   "unresolved": [
     "Full CPU entry/return and IRQ entry/RTE interference",
@@ -21,5 +22,5 @@
     "Transport buffering, maximum ACK delay and approved input latency",
     "All-workload producer/publication and resource/release coverage"
   ],
-  "calibration_basis": "PAL first failed trial:594 callbacks,55512CCK maxcallback,1506.619CCK maxentry. Version1 entry1250 hypothesis falsified. Version2 reallocates unchanged59000CCK combined gate; finite observations, no WCET."
+  "calibration_basis": "PAL first failed trial:594 callbacks,55512CCK maxcallback,1506.619CCK maxentry. Version1 entry1250 hypothesis falsified. Version2 reallocates unchanged59000CCK combined gate; finite observations, no WCET. Incoming op8 characterized separately: one derive/root; generic terminal geometry scan excluded. Whole owner20000CCK and total reserve25000CCK remain unproved."
 }

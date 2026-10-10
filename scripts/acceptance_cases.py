@@ -69,6 +69,11 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('physics-cpu', ('scripts/run_physics_proof.py',), 'tests/physics-cpu/report.json', category='host'),
+        Case('physics-control-pal', ('scripts/run_incoming_native.py','--physics','--physics-control'), 'tests/physics-control-native-pal/report.json'),
+        Case('physics-pal', ('scripts/run_incoming_native.py','--physics'), 'tests/physics-native-pal/report.json'),
+        Case('physics-control-ntsc', ('scripts/run_incoming_native.py','--physics','--physics-control','--ntsc'), 'tests/physics-control-native-ntsc/report.json'),
+        Case('physics-ntsc', ('scripts/run_incoming_native.py','--physics','--ntsc'), 'tests/physics-native-ntsc/report.json'),
         Case('deadline-class-cpu', ('scripts/run_deadline_class_proof.py',), 'tests/deadline-class-cpu/report.json', category='host'),
         Case('deadline-pal', ('scripts/run_incoming_native.py','--deadline'), 'tests/deadline-native-pal/report.json'),
         Case('deadline-ntsc', ('scripts/run_incoming_native.py','--deadline','--ntsc'), 'tests/deadline-native-ntsc/report.json'),
