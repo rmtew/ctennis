@@ -21,6 +21,8 @@ def run(standard):
     try:
         product=ROOT/'build/amiga/interfaces/enhanced';exe=product/'baseline-rally';listing=(product/'native.lst').read_text()
         reference=ROOT/'build/tests/ui-scan-padded-reference-final';audit=json.loads((reference/'audit.json').read_text())
+        report['executable_sha256']=digest(exe)
+        transaction.meta.update(actual_target=dict(transaction.meta['target'],video=standard),commit=__import__('subprocess').check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),environment={'RUST_LOG':__import__('os').environ.get('RUST_LOG'),'PYTHONPATH':__import__('os').environ.get('PYTHONPATH')})
         assert digest(exe)==audit['candidate_sha256']
         with CaptureSession(attempt) as session:
             config=emulator_config();session.inspect('session_launch',dict(binary=config['tools']['copperline'],run=str(exe),args=['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',config['inputs']['amiga_rom']]))
@@ -52,6 +54,20 @@ def run(standard):
             key(0x23,True)
             # Setup may wait for all owners; measured window never ends adaptively.
             advance(2)
+            if not number('game_preview_launches',1):
+                count=number('game_preview_counts');path=read(session,symbols['game_preview_paths'],count*8)
+                assert count,'No actual incoming samples for physical alignment'
+                sample=min((path[i:i+8] for i in range(0,len(path),8)),key=lambda p:abs(p[1]-(number('tutorial_y')+27)))
+                target_x=max(40,min(199,sample[0]-8));direction=0x20 if target_x<number('tutorial_x') else 0x22
+                session.inspect('input.key',dict(rawkey=direction,action='press'))
+                for _ in range(400):
+                    x=number('tutorial_x')
+                    if (direction==0x20 and x<=target_x) or (direction==0x22 and x>=target_x):break
+                    advance(.01)
+                else:raise AssertionError('Physical alignment cap')
+                session.inspect('input.key',dict(rawkey=direction,action='release'));advance(2)
+            assert number('game_preview_launches',1),'Aligned anchor has no actual held contact launch'
+            assert number('game_preview_endpoint_ready',1),'Aligned anchor has no completed held endpoint'
             session.inspect('break.add',dict(kind='pc',addr=symbols['main_loop']))
             anchor=None
             for _ in range(20000):
@@ -119,6 +135,8 @@ def run(standard):
                 assert observer.ack and any(row['value'] for row in observer.ack),'No measured physical keyboard ACK'
                 scenes=[p for p in callbacks.surfaces.publications if qualified_endpoint(p,gen,press) and p['position']['cck']<=end]
                 assert scenes,'No qualified actual endpoint in fixed window'
+                assert scenes[0].get('endpoint_outcomes',0)>>16 and scenes[0].get('endpoint_points')!='00000000000000000000000000000000','Measured result is fallback rather than held endpoint'
+                assert number('game_preview_launches',1),'Measured edit has no actual held contact'
                 frozen={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('game_core_state','game_core_state_end'),('game_history_state','game_history_state_end'),('game_history_buffer','game_history_buffer_end'))}
                 assert list(frozen.values())==[anchor['regions'][n] for n in ('canonical','history','records')]
                 item=dict(label=label,final_regs=session.inspect('regs.get'),final_owner_snapshot={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('tutorial_state','tutorial_state_end'),('game_preview_storage','game_preview_storage_end'),('game_history_seek_storage','game_history_seek_storage_end'))},presentation_requests=callbacks.presentation_requests,final_ui=read(session,symbols['ui_state'],symbols['ui_help_choice']+2-symbols['ui_state']).hex(),events_sha256=hashlib.sha256(json.dumps(observer.events,sort_keys=True).encode()).hexdigest(),input_ack=observer.ack,measured_stop=measured_stop,fixed_end_cck=end,tail_end_cck=tail['cck'],stack_rows=timing.rows,latency_cck=scenes[0]['position']['cck']-press,latency_ms=(scenes[0]['position']['cck']-press)*1000/CLOCKS[standard],generation=gen,callbacks=callbacks.rows,publications=callbacks.surfaces.publications,frozen=frozen,endpoint_points=scenes[0].get('endpoint_points'),endpoint_outcomes=scenes[0].get('endpoint_outcomes'),memory_patch_ranges=ranges,restored_memory_sha256=hashlib.sha256(before).hexdigest())
