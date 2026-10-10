@@ -66,7 +66,7 @@ def contact(c,exe):
             assert row['held_endpoint_point']==sample.hex()
             assert row['held_endpoint_phase']==phases and row['outcomes'][0]==outcome
             assert row['held_terminal_state']==final.hex()
-            outgoing=dict(full318_equal=True,point_phase_outcome_equal=True,phases=phases,outcome=outcome)
+            outgoing=dict(full318_equal=True,point_phase_outcome_equal=True,phases=phases,outcome=outcome,expected_full_state=final.hex(),actual_full_state=row['held_terminal_state'],expected_point=sample.hex(),actual_point=row['held_endpoint_point'])
         results.append(dict(label=row['label'],x=row['x'],y=row['y'],incoming=incoming,outgoing=outgoing))
     deadline=validate_capture(c);assert deadline==c['deadline'];services=reduce_capture(c);assert services['passed']
     calls=c['stack_timing']['calls'];w=[]
@@ -92,7 +92,24 @@ def contact(c,exe):
         assert (fields['lower_phase']|fields['upper_phase'])&0xc0==0
         w.append(dict(owner=chunk,root=root,accepted_hook=hooks[0],dispatch=dispatch,launch_marker=launches[0],dispatch_sample=sample,guard_fields=fields,
             irq_scope='Wall elapsed encloses nested IRQ work; pre-BSR store and post-RTS read/IRQ entry-RTE tails remain unresolved.',held_only=True))
-    return dict(endpoint_rows=results,contact_owner_witnesses=w,contact_coverage=bool(w),
+    diagnostics=[]
+    callbacks=c['timing']['callbacks']
+    for marker in c['launch_rows']:
+        at=marker['position']['cck']
+        cbindex=next((i for i,r in enumerate(callbacks) if r['entry']['cck']<=at<=r['completion']['cck']),None)
+        if cbindex is None:continue
+        assert cbindex>0
+        before,cb=callbacks[cbindex-1],callbacks[cbindex]
+        owners=[r for r in calls if r['callee']=='tutorial_background' and before['completion']['cck']<=r['entry']['cck']<=r['exit']['cck']<=cb['entry']['cck']]
+        diagnostics.append(dict(launch_cck=at,nominal_callback=cb['callback'],preceding_callback_work_cck=before['work_cck'],
+            preceding_absolute_headroom_cck=before['absolute_headroom_cck'],observed_gap_to_contact_callback_cck=cb['entry']['cck']-before['completion']['cck'],
+            whole_owner_plus_service_reserve_cck=25000,preceding_owner_count=len(owners),
+            preceding_callback_completion_vpos=before['completion']['vpos'],contact_callback_entry_vpos=cb['entry']['vpos'],
+            owners=[dict(entry=o['entry'],exit=o['exit'],elapsed_bus_cck=o['elapsed_bus_cck'],
+                operation=next((r['operation'] for r in deadline['chunks'] if r['entry']['cck']==o['entry']['cck']),None),
+                completed_child_calls=[r['callee'] for r in enclosed(calls,o) if r['callee'] in ('tutorial_background_class','read_presentation_line','account_sim_timer','game_preview_step')]) for o in owners],
+            last_owners=[{k:r[k] for k in ('entry','exit','elapsed_bus_cck')} for r in owners[-4:]]))
+    return dict(endpoint_rows=results,contact_owner_witnesses=w,contact_coverage=bool(w),nominal_contact_diagnostics=diagnostics,
         maximum_contact_owner_cck=max((r['owner']['whole_owner_cck'] for r in w),default=None),deadline=deadline,
         services={k:v for k,v in services.items() if k!='spans'},normative_deadline_safety=False)
 
@@ -102,6 +119,9 @@ def main():
     directory=ROOT/'build/tests'/('physics-contact-validation-'+args.contact_region if args.contact_region else 'physics-regression-analysis')
     directory.mkdir(parents=True,exist_ok=True);output=directory/'report.json'
     paths,tools=inputs_for('build','scripts/physics_followup_analysis.py');consumed=set()
+    if args.contact_region:
+        from match_core_cpu import cpu_tool_inputs
+        cpu_paths,tools['machine68k']=cpu_tool_inputs();paths|=set(cpu_paths)
     if args.contact_region:
         source=ROOT/('build/tests/physics-contact-native-'+args.contact_region);consumed|={source/'report.json',source/'latency.json.gz'}
         exe=ROOT/'build/amiga/interfaces/enhanced/baseline-rally';manifest=Path(str(exe)+'.compile.json');consumed|={exe,manifest}

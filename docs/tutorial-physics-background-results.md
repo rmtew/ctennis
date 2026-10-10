@@ -188,3 +188,171 @@ The host command passes 256 tests. Metrics recording exits 1 and writes both
 product: all eight required runtime profiles are unmeasured and cold release
 coverage remains incomplete. No full native gate, appearance campaign, cold
 release or physical-hardware trial was run for this increment.
+
+
+## Follow-up: alignment and repeated refusals
+
+A new offline reduction of the same four captures preserves their original
+receipts and binds the exact inputs in
+`build/tests/physics-regression-analysis/report.json` (SHA256
+`88f74ddfed781217d40f52ad7ec951ed1a01a4a7f5227d3c7c1262afd27ce097`).
+Each alignment issues 95 actual placement requests. The 94 gaps between requests
+span one or two nominal callbacks:
+
+| Alignment observation | PAL control | PAL candidate | NTSC control | NTSC candidate |
+|---|---:|---:|---:|---:|
+| One-callback gaps |36|35|33|27|
+| Two-callback gaps |58|59|61|67|
+| Gesture to final request, CCK |9,042,128|9,101,220|9,302,995|9,662,004|
+| Final request to COPJMP, CCK |1,960,695|2,114,797|1,815,794|1,815,833|
+| Preview API interval union, CCK |480,517|518,866|488,728|488,353|
+| Remaining interval, CCK |1,480,178|1,595,931|1,327,066|1,327,480|
+
+NTSC has six additional skipped held repeats: about 100 ms before the final
+request, while final prediction/publication differs by only 39 CCK. PAL has one
+additional skip (about 16.7 ms), then 154,102 CCK (about 43.4 ms) of added final
+prediction/publication time. Of the latter, 38,349 CCK lies inside preview APIs
+and 115,753 outside them; the outside interval does not isolate rendering.
+
+The actual movement controller compares elapsed time since its previous sampled
+`last_timer_count` against a whole interval, then resets its repeat timestamp to
+the actual sample. Callback jitter can suppress a held repeat even when the
+logical callback count advanced. Extra skips are observed; background work
+causing those particular timer comparisons remains a hypothesis. Changing the
+repeat controller is outside this focused validation.
+
+| Complete declined-call partition | PAL control | PAL candidate | NTSC control | NTSC candidate |
+|---|---:|---:|---:|---:|
+| Early reserve refusals |7,585|7,539|7,460|7,497|
+| Classifier refusals |16,103|15,212|14,355|13,415|
+| Refusals after beam read |500|784|447|550|
+| Refusals after fresh accounting |1|269|0|588|
+| All declined spans combined, CCK |4,380,092|4,477,052|4,316,393|4,150,021|
+
+These classifications use actual completed child calls, not inferred D0 results
+or complete admission arithmetic. Different capture lengths prevent interpreting
+whole-run sums as isolated scheduling overhead. The candidate performs hundreds
+of costly classification/beam/account sequences that still decline. An optional
+small optimization is to reject physics against already-accounted slack before
+the beam read, while retaining fresh accounting before every acceptance. That
+has not been implemented or validated here.
+
+The measured fresh-edit benefit is insufficient to justify merging the added
+partition yet. Retain the draft as an experiment pending contact witnesses and
+repeat-cadence evidence; do not trade the mixed result for a larger unverified
+owner allowance.
+
+
+## Follow-up: bounded contact phasing remains a negative result
+
+The unchanged candidate was tested through ordinary serve/incoming controls,
+tutorial pause, held F, physical alignment and D edit, then six physical W edits
+with declared waits of 3, 9, 15, 21, 27 and 33 ms. No callback, clock or intermediate
+simulation state was forced. Read-only dispatch breakpoints retain complete 318
+states/registers and counters. Actual receiving Y values were 150,147,146,144,142,140
+in PAL and 150,148,147,145,143,141 in NTSC, in addition to initial/contact Y152.
+These waits vary physical reception and contact height; they do not prescribe a
+logical sample or prove exhaustive phase coverage.
+
+Both regions retain nine endpoint trials: one initial miss and eight accepted
+held returns, including landing and net returns. The separate pinned-CPU reduction
+rechecks all nine incoming paths/causal launches against the actual original core
+and all eight outgoing endpoints, phases, outcomes and complete 318 terminal
+states per region. Expected/actual terminal bytes are retained in the reduction.
+Canonical/history/backup/cache bytes and retained records remain frozen. This
+focused probe does not repeat resume/playback, which remain earlier evidence.
+
+**Neither region admitted an accepted-contact/root owner.** All 16 accepted held
+contacts ran inside nominal callbacks. There are zero root spans in any background
+owner, including indirect dispatch candidates. Contact snapshots fit the existing
+role/side/phase/Y/count guards; no structural exclusion is indicated at dispatch.
+Those snapshots do not prove every earlier classifier result.
+
+The incoming-only observer's first PAL attempt failed its final-boundary detector:
+background work after the last completed callback lacked a following completed
+callback in the captured list. Its raw/logs are preserved at
+`/tmp/ctennis-physics-failures/contact-pal-0bc704-000001` (a stable symlink to private
+workspace storage), raw literal-RPC SHA256
+`d53c26366f2d5dd93f0cf37b376d280516f1ea9526cec6358bc86568bc025cef`.
+The observer was corrected to stop after the next actual
+callback RTS; no product rebuild or timing policy change was made.
+PAL campaign `0bc70473336c422e8d19d77d0bf73796`, attempt `000002`, and NTSC campaign
+`66a3fda1ed6748e0ade550dfb3213fa9`, attempt `000001`, both complete with exit 1 and
+`passed=false`, because the requested coverage remains absent. They supersede no
+unrelated case's pass. A complete negative experiment is not a contact timing pass.
+
+Physical receipt SHA256 identities:
+
+- PAL: `9286566a0b36cf25694822fad2e527148b1caa756e0255bd962c2929b218fb6f`.
+- NTSC: `37aa3072e503757d51d2077621c9836a57d1d5ad9f16db9c4cb4e0df1f39a58c`.
+
+Preceding completed-callback to contact-callback gaps span 32,112–32,926 CCK.
+A gap larger than the 25,000 CCK reserve does not itself create an admission
+opportunity: prerequisite pads/result owners and service often consume roughly
+8,000 CCK before operation8 becomes ready, leaving less than that reserve. Other
+gaps lose the early window to beam refusals on prerequisite operations. For PAL
+callback609, pads/result and service precede the first fresh-account refusal at
++8,328 CCK, leaving 24,260 CCK to actual callback entry. For NTSC callback625,
+the first subsequent beam refusal starts at +8,599 CCK, leaving 23,844 CCK, with
+beam line167 above the physics admission ceiling141. PAL callback384 instead
+accepts pads then refuses after beam reads beginning at line215, before result
+sampling can run. The reduction retains the full completed-call ordering.
+These observations explain this finite probe's bottleneck; they do not establish
+that background contact is impossible or independently reconstruct every branch.
+
+Observed operation8 maxima remain 8,112/8,140 CCK for motion-only owners. The
+20,000 CCK contact-owner hypothesis remains unverified. Complete observed owner
+and callback return spans close, and service reductions retain intervening IRQ
+elapsed time. CPU pre-store/post-return and full IRQ entry/RTE tails remain
+unresolved; no wrapper-WCET or normative deadline clearance is added.
+
+### Delivery recommendation
+
+Do not merge the contact-inclusive increment on the present evidence. Leaving
+operation8 disabled is the simplest delivery choice while reviewing the earlier
+cheap-operation prototype separately. This follow-up preserves the enabled
+experimental product and draft for evidence continuity; it changes no runtime
+code or cost policy and grants no default/merge approval.
+
+If a smaller experiment is pursued, retain existing guards and conservatively
+refuse an incoming dispatch whenever receiving courtY is within three pixels of
+`P_Y+27` (lower human) or `P_Y+35` (upper human), irrespective of X, height or action.
+Shared code checks contact before ball/player movement; the opposite end cannot
+accept the incoming side without the human return. This overrejects contact
+candidates without copying exact shot rules. The new predicate still needs an
+actual-core no-root/differential proof and controlled native input comparison.
+Simply adding this exclusion while keeping the same large reserve does not fix
+the observed readiness/beam bottleneck. Any smaller motion-only allowance needs
+separate versioned calibration and review; these captures do not verify it.
+
+Both reviewers agree that the mixed benefit does not yet justify retaining this
+added partition in a merged delivery. Stop at this reviewed negative result; do
+not enlarge reserves, shrink uncertainty or rewrite scheduling to obtain a witness.
+The integrator owns any later implementation; the parent coordinates review of
+that narrower scope and its hypotheses.
+
+Focused commands (same pinned Python and `RUST_LOG=info`):
+
+```sh
+python scripts/native_acceptance.py --plan --case physics-contact-pal --case physics-contact-ntsc
+python scripts/native_acceptance.py --start --case physics-contact-pal
+python scripts/native_acceptance.py --resume --campaign 0bc70473336c422e8d19d77d0bf73796 --start
+python scripts/native_acceptance.py --start --campaign 66a3fda1ed6748e0ade550dfb3213fa9 --case physics-contact-ntsc
+python scripts/physics_followup_analysis.py --contact-region pal
+python scripts/physics_followup_analysis.py --contact-region ntsc
+python scripts/physics_followup_analysis.py
+```
+
+Offline `passed=true` means its reference/measurement reduction completed;
+`contact_coverage=false` explicitly prevents inferring a contact timing pass.
+
+
+Final offline validation receipt SHA256 identities:
+
+- PAL: `b8064df0857deba5ecb310c3fd826cb1431337c28d41312fff8c7825c74b5fb0`.
+- NTSC: `a67ff2f21bfa28c3ed683b12c08a95575fa6da4607bdb26714c17fadec032fbb`.
+
+All 256 host tests pass after the focused case additions. Resource recording again
+exits 1 and preserves incomplete coverage in both tracked reports. The candidate,
+control and standalone executable hashes are unchanged from the identities above.
+No additional broad native, appearance, cold-release or hardware campaign was run.
