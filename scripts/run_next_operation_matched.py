@@ -76,7 +76,9 @@ def run(standard):
                 except AssertionError:pass
             assert anchor is not None,'No settled main_loop anchor'
             session.inspect('break.clear');session.inspect('state.save',dict(path=str(attempt/'anchor.state')))
-            region=anchor['cck'];press=region+int((.02 if standard=='PAL' else .028)*CLOCKS[standard]);release=press+int(.012*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
+            # Fixed input schedule chosen before any measured pass. The retained
+            # PAL failed setup sampled at17.79/34.61ms, missing the20..32ms edge.
+            region=anchor['cck'];press=region+int(.028*CLOCKS[standard]);release=press+int(.012*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
             # Relocated patch audit repeats at real LoadSeg addresses.
             ranges=[(symbols[begin],symbols[end]) for begin,end in (('tutorial_background','tutorial_background_class'),)]
             anchor_generation=number('tutorial_generation',4)
