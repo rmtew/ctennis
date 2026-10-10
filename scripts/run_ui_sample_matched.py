@@ -60,11 +60,15 @@ def run(standard):
                 except AssertionError:pass
             assert anchor is not None,'No settled main_loop anchor'
             session.inspect('break.clear');session.inspect('state.save',dict(path=str(attempt/'anchor.state')))
-            region=anchor['cck'];press=region+int(.02*CLOCKS[standard]);release=press+int(.001*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
+            region=anchor['cck'];press=region+int(.02*CLOCKS[standard]);release=press+int(.02*CLOCKS[standard]);end=region+int(1.2*CLOCKS[standard])
             # Relocated patch audit repeats at real LoadSeg addresses.
             ranges=[(symbols['ui_sample'],symbols['ui_latch_live_controls'])]
             differences=[a+j for (a,c),(b,r) in zip(images,original) for j,(x,y) in enumerate(zip(c,r)) if x!=y and not ranges[0][0]<=a+j<ranges[0][1]]
             assert len(differences)==1 and symbols['ui_resume']<=differences[0]<symbols['ui_return_title'];ranges.append((differences[0]&~1,(differences[0]&~1)+2))
+            anchor_generation=number('tutorial_generation',4)
+            assert [(a,len(b)) for a,b in images]==[(a,len(b)) for a,b in original]
+            for (a,c),(b,r) in zip(images,original):
+                assert all(x==y or any(lo<=a+i<hi for lo,hi in ranges) for i,(x,y) in enumerate(zip(c,r)))
             results=[]
             for label,treatment in (('baseline-1',False),('baseline-2',False),('candidate',True)):
                 session.observer=None;session.inspect('events.unsubscribe');session.inspect('break.clear');session.inspect('state.load',dict(path=str(attempt/'anchor.state')))
@@ -74,14 +78,26 @@ def run(standard):
                     for lo,hi in ranges:
                         a,data=next((a,b) for a,b in original if a<=lo and hi<=a+len(b));session.inspect('mem.write',dict(addr=lo,data=data[lo-a:hi-a].hex(),encoding='hex'))
                 after=read(session,0,524288)
+                for lo,hi in ranges:
+                    a,data=next((a,b) for a,b in (images if treatment else original) if a<=lo and hi<=a+len(b))
+                    assert after[lo:hi]==data[lo-a:hi-a]
                 assert session.inspect('regs.get')==regs
                 assert all(x==y or any(lo<=i<hi for lo,hi in ranges) for i,(x,y) in enumerate(zip(before,after)))
                 callbacks=CallbackObserver(0,symbols);callbacks.surfaces=CoherentSurfaceObserver(symbols,lambda a,n:read(session,a,n),last_line=311 if standard=='PAL' else 261,verify_sprites=True)
                 pass_listing=listing if treatment else (reference/'native.lst').read_text()
                 calls,returns=instruction_map(pass_listing,segments,lambda a,n:read(session,a,n))
                 timing=StackTiming(calls,returns,symbols['game_stack_bottom'],symbols['game_stack_top'])
-                session.observer=LatencyObserver(callbacks,timing)
+                detector=LatencyObserver(callbacks,timing)
+                class Observe:
+                    def __init__(self):self.events=[];self.ack=[]
+                    def observe(self,message):
+                        row=message.get('params',{});self.events.append({k:row[k] for k in ('position','addr','size','value','pc','access') if k in row})
+                        if row.get('addr')==symbols['keyboard_ack']:self.ack.append(row)
+                        detector.observe(message)
+                observer=Observe();session.observer=observer
                 watches=callbacks.watches(dict(FIELDS,keyboard_ack=1,keyboard_ack_timer=2),lambda a,n:read(session,a,n))+callbacks.surfaces.watches()+[dict(addr=symbols['game_stack_bottom'],len=symbols['game_stack_top']-symbols['game_stack_bottom'],access='read')]
+                callbacks.started=number('simulation_started_updates');callbacks.completed=number('simulation_updates')
+                assert callbacks.started==callbacks.completed
                 subscription=session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=watches));assert subscription.get('dropped_notifications',0)==0
                 for cck,action in ((press,'press'),(release,'release')):session.inspect('input.key',dict(rawkey=0x22,action=action,at_seconds=cck/PROVIDER_CLOCK))
                 current=region
@@ -89,15 +105,19 @@ def run(standard):
                     target=min(end,current+max(1,CLOCKS[standard]//1000));stop=session.inspect('run_until',dict(seconds=target/PROVIDER_CLOCK));current=stop['cck']
                     if current>=end or (stop.get('reason')=='target' and target==end):break
                 else:raise AssertionError('Measured fixed-window cap')
+                measured_stop=dict(stop)
                 session.inspect('break.add',dict(kind='pc',addr=symbols['main_loop']))
                 tail=session.inspect('run_until',dict(seconds=(end+int(.03*CLOCKS[standard]))/PROVIDER_CLOCK))
                 assert session.inspect('regs.get')['pc']==symbols['main_loop'] and not timing.stack and callbacks.pending is None,'Tail failed to close complete owners/callback'
-                gen=number('tutorial_generation',4)
+                assert tail['cck']<=end+int(.03*CLOCKS[standard])
+                gen=number('tutorial_generation',4);assert gen!=anchor_generation,'Fresh D did not produce a new generation'
+                assert number('keyboard_ack',1)==0 and read(session,symbols['game_keyboard_matrix']+0x22,1)==b'\0','Release/ACK not retired'
+                assert observer.ack and any(row['value'] for row in observer.ack),'No measured physical keyboard ACK'
                 scenes=[p for p in callbacks.surfaces.publications if qualified_endpoint(p,gen,press) and p['position']['cck']<=end]
                 assert scenes,'No qualified actual endpoint in fixed window'
                 frozen={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('game_core_state','game_core_state_end'),('game_history_state','game_history_state_end'),('game_history_buffer','game_history_buffer_end'))}
                 assert list(frozen.values())==[anchor['regions'][n] for n in ('canonical','history','records')]
-                item=dict(label=label,fixed_end_cck=end,tail_end_cck=tail['cck'],stack_rows=timing.rows,latency_cck=scenes[0]['position']['cck']-press,latency_ms=(scenes[0]['position']['cck']-press)*1000/CLOCKS[standard],generation=gen,callbacks=callbacks.rows,publications=callbacks.surfaces.publications,frozen=frozen,endpoint_points=scenes[0].get('endpoint_points'),endpoint_outcomes=scenes[0].get('endpoint_outcomes'),memory_patch_ranges=ranges,restored_memory_sha256=hashlib.sha256(before).hexdigest())
+                item=dict(label=label,final_regs=session.inspect('regs.get'),final_owner_snapshot={n:read(session,symbols[n],symbols[e]-symbols[n]).hex() for n,e in (('tutorial_state','tutorial_state_end'),('game_preview_storage','game_preview_storage_end'),('game_history_seek_storage','game_history_seek_storage_end'))},final_ui=read(session,symbols['ui_state'],300).hex(),events_sha256=hashlib.sha256(json.dumps(observer.events,sort_keys=True).encode()).hexdigest(),input_ack=observer.ack,measured_stop=measured_stop,fixed_end_cck=end,tail_end_cck=tail['cck'],stack_rows=timing.rows,latency_cck=scenes[0]['position']['cck']-press,latency_ms=(scenes[0]['position']['cck']-press)*1000/CLOCKS[standard],generation=gen,callbacks=callbacks.rows,publications=callbacks.surfaces.publications,frozen=frozen,endpoint_points=scenes[0].get('endpoint_points'),endpoint_outcomes=scenes[0].get('endpoint_outcomes'),memory_patch_ranges=ranges,restored_memory_sha256=hashlib.sha256(before).hexdigest())
                 results.append(item);atomic_json(attempt/(label+'.json'),item)
                 if label=='baseline-2':assert {k:v for k,v in results[0].items() if k!='label'}=={k:v for k,v in item.items() if k!='label'},'Baseline replay differs; treatment forbidden'
             assert results[0]['endpoint_points']==results[2]['endpoint_points'] and results[0]['endpoint_outcomes']==results[2]['endpoint_outcomes'],'Causal endpoint differs'
