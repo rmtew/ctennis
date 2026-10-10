@@ -48,7 +48,11 @@ class Tests(unittest.TestCase):
   ordinary={c.id for c in cases()}
   diagnostic={c.id for c in diagnostic_cases()}
   self.assertFalse(ordinary & diagnostic)
-  self.assertEqual(diagnostic,{'coherent-contact-pal','coherent-contact-ntsc','physics-contact-pal','physics-contact-ntsc','physics-cpu','physics-pal','physics-ntsc','physics-control-pal','physics-control-ntsc','deadline-class-cpu','deadline-pal','deadline-ntsc','incoming-origin-cpu','incoming-origin-pal','incoming-origin-ntsc','incoming-flight-cpu','incoming-flight-pal','incoming-flight-ntsc',
+  self.assertEqual(diagnostic,{'tutorial-coherent-cpu','tutorial-playable-pal','tutorial-playable-ntsc',
+                              'tutorial-serve-pal','tutorial-serve-ntsc',
+                              'next-operation-matched-pal','next-operation-matched-ntsc',
+                              'topup-matched-pal','topup-matched-ntsc','ui-scan-matched-pal','ui-scan-matched-ntsc',
+                              'coherent-contact-pal','coherent-contact-ntsc','physics-contact-pal','physics-contact-ntsc','physics-cpu','physics-pal','physics-ntsc','physics-control-pal','physics-control-ntsc','deadline-class-cpu','deadline-pal','deadline-ntsc','incoming-origin-cpu','incoming-origin-pal','incoming-origin-ntsc','incoming-flight-cpu','incoming-flight-pal','incoming-flight-ntsc',
                               'predictor-cpu','predictor-pal','predictor-ntsc','predictor-boundaries-cpu',
                                      'tutorial-latency-pal','tutorial-latency-ntsc',
                               'tutorial-hotspots-pal','private-state-cpu',

@@ -73,11 +73,18 @@ def run(standard,serve=False):
             session.inspect('break.add',dict(kind='pc',addr=s['tutorial_resume_restored']))
             if serve:session.inspect('break.add',dict(kind='pc',addr=s['tutorial_redraw']))
             beginning=stop['cck'];current=beginning;resume_pending=False;reconciled=0
-            def advance(seconds,stop_partial=False):
+            def advance(seconds,stop_partial=False,stop_declined=False):
                 nonlocal current,interrupted,frozen,metadata,resume_pending,first_resume,reconciled
                 goal=current+round(seconds*hz);assert goal-beginning<90*hz
                 for _ in range(200000):
                     result=session.inspect('run_until',dict(seconds=min(goal,current+hz//1000)/PROVIDER));current=result['cck']
+                    if stop_declined and result.get('pc')==s['main_background']:
+                        stages=raw(s['game_preview_dispatch_stages'],4);owners=raw(s['game_preview_dispatch_generations'],8)
+                        generation=num('tutorial_generation',4);remaining=num('simulation_interval',4)-num('simulation_phase',4)
+                        variants=[v for v in (0,1) if int.from_bytes(stages[2*v:2*v+2],'big') and int.from_bytes(owners[4*v:4*v+4],'big')==generation]
+                        if variants and generation==num('game_preview_generation',4) and 2000<=remaining<5000:
+                            sample=dict(position=result,generation=generation,preview_generation=generation,stages=stages.hex(),owners=owners.hex(),remaining_e=remaining,trigger_variants=variants,trigger='pending-stage-with-insufficient-stage-reserve')
+                            stage_snapshots.append(sample);return sample
                     if serve and result.get('pc')==s['tutorial_redraw'] and num('tutorial_menu',1):
                         menu_stage_samples.append(dict(position=result,generation=num('tutorial_generation',4),stages=raw(s['game_preview_dispatch_stages'],4).hex(),owners=raw(s['game_preview_dispatch_generations'],8).hex()))
                     if result.get('pc')==s['tutorial_resume_restored']:
@@ -117,11 +124,19 @@ def run(standard,serve=False):
                             reconciled+=1
                     if current>=goal or result.get('reason')=='target' and current>=goal-1:return
                 raise AssertionError('Finite complete-boundary cap')
-            def partial_checkpoint(early=False):
+            def partial_checkpoint():
                 for _ in range(200):
                     sample=advance(.01,stop_partial=True)
-                    if sample and (not early or 1<=int(sample['stages'][:4],16)<=2):return sample
+                    if sample:return sample
                 raise AssertionError('No genuine partial serve stage at callback boundary')
+            def menu_partial_checkpoint():
+                catch=session.inspect('break.add',dict(kind='pc',addr=s['main_background']))
+                try:
+                    for _ in range(200):
+                        sample=advance(.01,stop_declined=True)
+                        if sample:return sample
+                    raise AssertionError('No pending serve with an actual insufficient stage gap')
+                finally:session.inspect('break.remove',dict(id=catch['id']))
             def key(code,held,seconds=.06):
                 actions.append(dict(rawkey=code,held=held,cck=current))
                 session.inspect('input.key',dict(rawkey=code,action='press' if held else 'release'));advance(seconds)
@@ -228,7 +243,7 @@ def run(standard,serve=False):
             if serve:
                 key(0x22,True,.02);key(0x22,False,.01)
                 key(0x24,True)
-                pending_resume=partial_checkpoint(early=True)
+                pending_resume=menu_partial_checkpoint()
                 menu_start=current;key(0x24,False)
             else:
                 menu_start=current;key(0x24,True);key(0x24,False)
