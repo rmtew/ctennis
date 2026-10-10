@@ -12,7 +12,7 @@ from build_native_game import build
 from native_tools import ROOT,emulator_config
 from native_evidence import ReportRun,atomic_json,digest,inputs_for,snapshot
 from native_hunk import loaded_hunks
-from tutorial_capture import CaptureSession,CallbackObserver,native_view,animation
+from tutorial_capture import CaptureSession,CallbackObserver,native_view,animation,assert_tutorial_menu
 from coherent_publication import CoherentSurfaceObserver
 from run_tutorial_capture import FIELDS
 from tutorial_latency import instruction_map,StackTiming
@@ -125,6 +125,27 @@ def run(standard):
                         checkpoints.append(dict(name=name,generation=generation,variant=variant,scene=scenes[-1],requires_endpoint=endpoint));return
                     advance(.01)
                 raise AssertionError('No current-generation published '+name)
+            def menu_checkpoint(name,selection,after):
+                generation=num('tutorial_generation',4);render=num('tutorial_render_generation',2)
+                for _ in range(1000):
+                    scenes=[p for p in callbacks.surfaces.publications if p['position']['cck']>=after
+                        and p.get('tutorial_fields',{}).get('tutorial_menu')
+                        and p['tutorial_fields'].get('tutorial_menu_selection')==selection
+                        and p['tutorial_fields'].get('tutorial_render_generation')==render
+                        and p['tutorial_fields'].get('tutorial_generation')==generation
+                        and p.get('surface') in (s['tutorial_surface0'],s['tutorial_surface1'])
+                        and p.get('native_sprite_check',{}).get('matched')]
+                    if scenes:
+                        advance(.05) # Two complete fields after actual COPJMP, for raster capture.
+                        displayed=callbacks.surfaces.current_presentation(callbacks.state)
+                        assert displayed and displayed['surface']==scenes[-1]['surface']
+                        bank=displayed['tutorial_fields']
+                        assert bank['tutorial_menu'] and bank['tutorial_menu_selection']==selection
+                        assert bank['tutorial_render_generation']==render and bank['tutorial_generation']==generation
+                        raster=assert_tutorial_menu(photo(name),selection)
+                        checkpoints.append(dict(name=name,generation=generation,render_generation=render,selection=selection,scene=scenes[-1],capture_scene=displayed,capture_cck=current,raster=raster));return
+                    advance(.01)
+                raise AssertionError('No completed visible menu '+name)
             advance(.7);photo('title')
             key(1,True);key(1,False,1.4);assert num('game_lifecycle',2)==1
             key(0x23,True,.04);key(0x23,False,.02)
@@ -163,9 +184,10 @@ def run(standard):
             selected_cursor=raw(s['tutorial_selected_cursor'],8)
             key(0x24,True);key(0x22,True);key(0x22,False);key(0x24,False)
             assert not num('tutorial_menu',1) and raw(s['tutorial_selected_cursor'],8)==selected_cursor
-            key(0x24,True);key(0x24,False);assert num('tutorial_menu',1)
-            advance(.3);photo('options')
-            key(0x4d,True);key(0x4d,False);assert num('tutorial_menu_selection',1)==1
+            menu_start=current;key(0x24,True);key(0x24,False);assert num('tutorial_menu',1)
+            menu_checkpoint('options',0,menu_start)
+            menu_start=current;key(0x4d,True);key(0x4d,False);assert num('tutorial_menu_selection',1)==1
+            menu_checkpoint('options-resume',1,menu_start)
             preview_before_resume=num('game_preview_generation',4)
             key(0x44,True);key(0x44,False);advance(.2)
             assert not num('tutorial_active',1) and len(restores)==1 and first_resume and reconciled>=2
@@ -190,6 +212,7 @@ def run(standard):
             for p in tutorial_scenes:
                 bank=p['tutorial_fields'];live=p.get('publication_live_fields',{})
                 assert bank['tutorial_generation']==bank['tutorial_presentation_generation']==live['tutorial_generation'],'Stale published tutorial generation'
+                assert bank['tutorial_active_variant']==live['tutorial_active_variant'],'Stale published tutorial alternative'
                 assert p['native_sprite_check']['matched'],'Actual native sprite mismatch'
                 if bank.get('tutorial_marker_ready'):assert bank['tutorial_marker_generation']==bank['tutorial_generation']
                 if bank.get('tutorial_animation_ready'):assert bank['tutorial_animation_generation']==bank['tutorial_generation']
