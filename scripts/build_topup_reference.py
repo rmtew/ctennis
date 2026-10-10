@@ -5,6 +5,7 @@ from build_match_core import load_image
 root=pathlib.Path(__file__).resolve().parent.parent
 candidate=root/'build/amiga/interfaces/enhanced/baseline-rally'
 ci,cs=load_image(candidate)
+assert 'game_preview_step_coherent' in cs, 'Build archived experiment332ce3d first; final runtime deliberately has no top-up'
 out=root/'build/tests/topup-padded-pr48'
 out.mkdir(exist_ok=False)
 shutil.copytree(root/'amiga',out/'amiga')
