@@ -8,6 +8,7 @@ import argparse,hashlib,json,os,shutil,subprocess,traceback
 from pathlib import Path
 from uuid import uuid4
 from build_match_core import load_image
+from build_native_game import build
 from native_tools import ROOT,emulator_config
 from native_evidence import ReportRun,atomic_json,digest,inputs_for,snapshot
 from native_hunk import loaded_hunks
@@ -28,6 +29,7 @@ def run(standard):
     try:
         paths,tools=inputs_for('native-feedback','scripts/run_tutorial_playable.py')
         tx.meta.update(files=snapshot(paths),tools=tools,actual_target=dict(tx.meta['target'],video=standard),commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),environment={'RUST_LOG':os.environ.get('RUST_LOG'),'PYTHONPATH':os.environ.get('PYTHONPATH')})
+        build()
         product=ROOT/'build/amiga/interfaces/enhanced'
         for n in ('baseline-rally','baseline-rally.compile.json','native.lst'):shutil.copy2(product/n,attempt/n)
         exe=attempt/'baseline-rally';report['executable_sha256']=digest(exe)
@@ -181,6 +183,10 @@ def run(standard):
             publications=callbacks.surfaces.publications
             tutorial_scenes=[p for p in publications if p.get('tutorial_fields',{}).get('tutorial_active')]
             assert tutorial_scenes,'No actual completed tutorial publication'
+            # Export observed evidence before audits, including a failed audit.
+            report.update(actions=actions,photos=photos,checkpoints=checkpoints,restores=restores,first_resumed_boundary=first_resume,
+                reconciled_samples=logical_samples,ack=ack,memory=memory,stack_used_bytes=s['game_stack_top']-stack_low,
+                publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows)
             for p in tutorial_scenes:
                 bank=p['tutorial_fields'];live=p.get('publication_live_fields',{})
                 assert bank['tutorial_generation']==bank['tutorial_presentation_generation']==live['tutorial_generation'],'Stale published tutorial generation'
