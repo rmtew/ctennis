@@ -400,6 +400,15 @@ def residual_fairness(native,raw):
                         # Emulate only this helper's ABI return. The real root
                         # executes its refusal/fallback path and balanced exit.
                         sp=cpu.cpu.r_sp();return_pc=cpu.mem.r32(sp)
+                        assert s['tutorial_background']<=return_pc<s['tutorial_background_class']
+                        assert cpu.mem.r16(return_pc-4)==0x6100,'Admission call is not emitted BSR.w'
+                        displacement=cpu.mem.r16(return_pc-2)
+                        if displacement&0x8000:displacement-=0x10000
+                        assert return_pc-2+displacement==s['tutorial_job_admitted'],'Admission return belongs to another callee'
+                        assert cpu.mem.r16(return_pc)==0x4a80,'Admission resume is not emitted TST.L D0'
+                        # machine68k executes this redirected instruction in
+                        # the same hook iteration; account its verified fetch.
+                        cpu.instruction(return_pc)
                         cpu.cpu.w_reg(0,0);cpu.cpu.w_sp(sp+4);cpu.cpu.w_pc(return_pc)
                 cpu.cpu.set_instr_hook_callback(observe);calls=[]
                 for owner in range(3):
