@@ -12,8 +12,6 @@ tutorial_init:
         move.l  simulation_interval_whole,d0
         mulu.w  #15,d0
         move.l  d0,tutorial_double_ticks
-        move.l  simulation_interval_whole,d0
-        move.l  d0,tutorial_repeat_ticks
         rts
 
 ; D0/D1 physical A/B packets. B2 belongs to the one-player UI before sampling.
@@ -354,11 +352,9 @@ tutorial_controls:
         move.b  tutorial_packet,d6
         andi.b  #15,d6
         beq     .done
-        move.l  tutorial_repeat_time,d0
-        sub.l   last_timer_count,d0
-        cmp.l   tutorial_repeat_ticks,d0
-        bcs     .done
-        move.l  last_timer_count,tutorial_repeat_time
+        ; This controller runs once per actual nominal callback. A second
+        ; wall-clock repeat gate can skip alternate callbacks under timer
+        ; quantization/entry jitter. Native sampling already supplies cadence.
         moveq   #0,d7
         move.b  tutorial_end,d7
         mulu.w  #10,d7

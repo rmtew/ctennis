@@ -1,6 +1,7 @@
 ; Two private court surfaces. Displayed/queued surfaces are never writable.
-; XY offsets are the existing sprite origins minus the native display origins.
-TUTORIAL_X_ORIGIN equ $a0-$81
+; Completed native pixels place sprite O_X at court X, and O_Y at court Y+1.
+; The authored sprite/Copper origins alone do not define the cropped pixel X.
+TUTORIAL_X_ORIGIN equ 0
 TUTORIAL_Y_ORIGIN equ $2d-$2c
 
 ; Prepare immutable court/banner and menu/control rasters before the timer is

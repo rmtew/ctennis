@@ -184,7 +184,7 @@ def run(standard, delivered, match):
                     for photo in stable:
                         scene=photo.get('displayed_scene',{})
                         if scene not in scenes:continue
-                        objects=bytes.fromhex(scene['objects']);x,y=objects[49]+31,objects[48]+1
+                        objects=bytes.fromhex(scene['objects']);x,y=objects[49],objects[48]+1
                         with Image.open(photo['path']) as image:
                             white=sum(image.convert('RGB').getpixel((px,py))==(255,255,255) for py in range(y,min(y+16,192)) for px in range(x,min(x+16,256)))
                         if white:matched.append(dict(photo=photo['name'],ball_pixels=white,objects=objects[48:64].hex()))
@@ -200,8 +200,9 @@ def run(standard, delivered, match):
                 key(0x20,True);left=frames('move-left',30);key(0x20,False);frames('left-release',3)
                 def continuous():
                     boxes=[blue_actor(r['path']) for r in left];changes=[i for i in range(1,len(boxes)) if boxes[i]!=boxes[i-1]]
-                    assert len(changes)>=20,dict(changed_fields=len(changes),total_fields=len(boxes))
+                    assert len(changes)>=27,dict(changed_fields=len(changes),total_fields=len(boxes))
                     assert max(b-a for a,b in zip(changes,changes[1:]))<=2,changes
+                    assert changes[0]<=2 and len(boxes)-1-changes[-1]<=2,changes
                     return dict(changed_fields=len(changes),total_fields=len(boxes),maximum_change_gap_fields=max(b-a for a,b in zip(changes,changes[1:])))
                 check('continuous-movement',continuous)
             key(0x23,True);held=frames('held-preview',70 if delivered else 140)

@@ -37,7 +37,7 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
                         assert fields['tutorial_marker_ready'] and not fields['tutorial_menu'] and not fields['tutorial_waiting_ready'],'Unqualified landing cue'
                         assert fields['tutorial_marker_generation']==fields['tutorial_generation']==row['endpoint_generation'],'Stale landing cue'
                         variant=fields['tutorial_active_variant'];point=bytes.fromhex(row['endpoint_points'])[variant*8:variant*8+8]
-                        assert (landing['x'],landing['y'])==(point[0]+31,point[1]+1),'Landing cue differs from actual endpoint ground'
+                        assert (landing['x'],landing['y'])==(point[0],point[1]+1),'Landing cue differs from actual endpoint ground'
                         canvas=self.images[row['surface']]
                         for dx,dy in ((-2,0),(-1,0),(0,0),(1,0),(2,0),(0,-2),(0,-1),(0,1),(0,2)):
                             x,y=landing['x']+dx,landing['y']+dy

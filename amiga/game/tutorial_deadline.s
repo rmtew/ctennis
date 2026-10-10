@@ -155,6 +155,27 @@ tutorial_background:
 .producer:
         move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
         move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        ; The measured pose-only owner needs no menu ROI or landing retirement.
+        ; Both canvas identities must agree, since either can become free.
+        ; Any uncertain/new ROI or cross retains the larger reservation.
+        tst.b   tutorial_marker_ready
+        bne.s   .producer_admit
+        tst.b   tutorial_canvas_markers+4
+        bne.s   .producer_admit
+        tst.b   tutorial_canvas_markers+24
+        bne.s   .producer_admit
+        moveq   #-1,d0
+        tst.b   tutorial_menu
+        beq.s   .producer_identity
+        moveq   #0,d0
+        move.b  tutorial_menu_selection,d0
+.producer_identity:
+        cmp.b   tutorial_canvas_menus,d0
+        bne.s   .producer_admit
+        cmp.b   tutorial_canvas_menus+1,d0
+        bne.s   .producer_admit
+        move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+.producer_admit:
         bra     .admit
 .footer_commit:
         move.w  #TUTORIAL_JOB_FOOTER_COMMIT,tutorial_job_kind
