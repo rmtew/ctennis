@@ -1,0 +1,707 @@
+{
+  "schema": 1,
+  "scope": "Finite lower-human initial-serve continuation and affected incoming prototype qualification. No complete playable/release acceptance.",
+  "runtime_commit": "4baa6daf5e14e2f167c42ef6b9432d9678ce29ea",
+  "development_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+  "runtime_source_hashes": {
+    "amiga/game/preview.s": "e3b3f22576de9c79efe1f3c585ccb27601fddbb1395d8f57c45e7e0c5abd0262",
+    "amiga/game/preview_serve_stages.s": "745862d12947c5b8d238f6c5acfe30ef33e5e8b90165584d134257eb65d0dc8e",
+    "amiga/game/preview_storage.i": "64c9d2229642b04e85f5b2252a1cbc99ed2cbafc5ff054af2f7e8254a0bff9c8",
+    "amiga/game/tutorial_deadline.s": "cdda1c921f126cb0b77896f15cd767c1c32b0148051d831fe1571e6d301c0576",
+    "amiga/game/tutorial_storage.i": "aa584192e98cf464cbca89934bc8693779b037077babf3f53267c895fcf7ea15",
+    "amiga/game/tutorial_render.s": "a1a56553a5c947b9e830316c41c2444e74db445d8e8eaab3fd07b5add73ac8f1"
+  },
+  "release_accepted": false,
+  "physical_campaign": {
+    "path": "build/acceptance/campaigns/18cf77b570bf491fa012b169ae9ca405/report.json",
+    "sha256": "3e4771108ac24ac82d4e2aadf3dd5ca70cae001dadd3beff80d453d8053d7b19"
+  },
+  "physical_cases": [
+    {
+      "case": "serve-pal",
+      "standard": "PAL",
+      "product_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+      "publications": 156,
+      "tutorial_publications": 120,
+      "callbacks": 807,
+      "minimum_absolute_headroom_cck": 6498,
+      "negative_headroom_count": 0,
+      "exact318_72_resume": true,
+      "stale_generation_variant": 0,
+      "native_sprites_qualified": true,
+      "held_F_suppression_samples": 17,
+      "ack_pairs": 29,
+      "both_menu_pixel_checks": true,
+      "resumed_publications": 15,
+      "observed_stack_bytes": 304,
+      "receipt": {
+        "path": "build/tests/tutorial-serve-pal/290b993141804e0d81e1398cb076b23d/report.json",
+        "sha256": "c254441dcced43169792b2cb657097167aa2b344165ab4a6b40de3c4470e3034"
+      },
+      "memory": {
+        "chip_used_bytes": 468240,
+        "chip_free_bytes": 56048,
+        "largest_chip_free_block_bytes": 55464,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "resumed_bank_counts": {
+        "243072": 5,
+        "280052": 6,
+        "278972": 4
+      },
+      "stage_owner": {
+        "stage_grants": 1751,
+        "all_ten_bodies": true,
+        "max_complete_owner_upper_cck": 11535,
+        "max_complete_owner_upper_ms": 3.252140252248798,
+        "scope": "Enclosing accounting bracket includes complete owner call/return plus extra loop/timer/IRQ; nested bus/body spans overlap it."
+      }
+    },
+    {
+      "case": "serve-ntsc",
+      "standard": "NTSC",
+      "product_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+      "publications": 166,
+      "tutorial_publications": 123,
+      "callbacks": 1130,
+      "minimum_absolute_headroom_cck": 6871,
+      "negative_headroom_count": 0,
+      "exact318_72_resume": true,
+      "stale_generation_variant": 0,
+      "native_sprites_qualified": true,
+      "held_F_suppression_samples": 17,
+      "ack_pairs": 29,
+      "both_menu_pixel_checks": true,
+      "resumed_publications": 18,
+      "observed_stack_bytes": 308,
+      "receipt": {
+        "path": "build/tests/tutorial-serve-ntsc/bb88dadf84ba4f68be2f688f6ac266ea/report.json",
+        "sha256": "b0d7d636616871212190df5debfa6e8fcc0bd97e9e2d6fa646076e73deb9b725"
+      },
+      "memory": {
+        "chip_used_bytes": 459280,
+        "chip_free_bytes": 65008,
+        "largest_chip_free_block_bytes": 64424,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "resumed_bank_counts": {
+        "234112": 6,
+        "270012": 6,
+        "271092": 6
+      },
+      "stage_owner": {
+        "stage_grants": 1894,
+        "all_ten_bodies": true,
+        "max_complete_owner_upper_cck": 11665,
+        "max_complete_owner_upper_ms": 3.2587940646087703,
+        "scope": "Enclosing accounting bracket includes complete owner call/return plus extra loop/timer/IRQ; nested bus/body spans overlap it."
+      }
+    },
+    {
+      "case": "incoming-pal",
+      "standard": "PAL",
+      "product_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+      "publications": 366,
+      "tutorial_publications": 272,
+      "callbacks": 1136,
+      "minimum_absolute_headroom_cck": 6498,
+      "negative_headroom_count": 0,
+      "exact318_72_resume": true,
+      "stale_generation_variant": 0,
+      "native_sprites_qualified": true,
+      "held_F_suppression_samples": 17,
+      "ack_pairs": 27,
+      "both_menu_pixel_checks": true,
+      "resumed_publications": 15,
+      "observed_stack_bytes": 278,
+      "receipt": {
+        "path": "build/tests/tutorial-playable-pal/3b511f4529294083b4f8a72a81abfaf6/report.json",
+        "sha256": "788476cc05dcd15318d0a51468024f7af1ae2ad91febae697cdbab88e121e4bb"
+      },
+      "memory": {
+        "chip_used_bytes": 468240,
+        "chip_free_bytes": 56048,
+        "largest_chip_free_block_bytes": 55464,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "resumed_bank_counts": {
+        "278972": 5,
+        "243072": 6,
+        "280052": 4
+      }
+    },
+    {
+      "case": "incoming-ntsc",
+      "standard": "NTSC",
+      "product_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+      "publications": 399,
+      "tutorial_publications": 286,
+      "callbacks": 1130,
+      "minimum_absolute_headroom_cck": 6871,
+      "negative_headroom_count": 0,
+      "exact318_72_resume": true,
+      "stale_generation_variant": 0,
+      "native_sprites_qualified": true,
+      "held_F_suppression_samples": 17,
+      "ack_pairs": 27,
+      "both_menu_pixel_checks": true,
+      "resumed_publications": 18,
+      "observed_stack_bytes": 316,
+      "receipt": {
+        "path": "build/tests/tutorial-playable-ntsc/a921c50554d240a493ea0577185dc23f/report.json",
+        "sha256": "eaede07879b8dbce1c9af2b77481ed64b053511db4b39c4f0c0ce03e3f82c2d8"
+      },
+      "memory": {
+        "chip_used_bytes": 459280,
+        "chip_free_bytes": 65008,
+        "largest_chip_free_block_bytes": 64424,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "resumed_bank_counts": {
+        "271092": 6,
+        "270012": 6,
+        "234112": 6
+      }
+    }
+  ],
+  "independent_physical_review": {
+    "path": "build/tests/tutorial-playable-review/staged-serve-four-case-review.json",
+    "sha256": "1c73fd8025816f28fc211ce0d2bd9751a26ab2b7dab139119c4440f0b14f3ce1"
+  },
+  "original_reference_cpu": {
+    "fresh_guarded": {
+      "path": "build/tests/serve-stages-cpu/171f8d3ee0154b71b05333e5cde3aee1/report.json",
+      "sha256": "80b704f5d0aea9f24525e811f6aaee95056360640ccaf485ccab22c76f7840fa"
+    },
+    "cases": 58,
+    "original_sha256": "6eb0bf7229828d277e16ca43e9a0567a93b13901c45c659683496053604df50d",
+    "candidate_sha256": "38c48b8953c495fd86f5ddd4a475ddb27d5a3f881c9397c8f50ed8814e60c390",
+    "current_candidate_inputs_checked": 55,
+    "preserved_custody_gap": {
+      "path": "build/tests/serve-stages-cpu/70833bf985324292be71bae46bd70c0a/report.json",
+      "sha256": "079e1562ec0f7efe69bb7dc7ccc1c8307565f5a8582705ecfd26d842dd49df61"
+    },
+    "gap": "Actual candidate execution checks are preserved; copied compilation manifest describes original. Fresh receipt supersedes source qualification only.",
+    "negative_control": {
+      "path": "build/tests/tutorial-playable-review/compile-identity-negative-control-929b8873692445fbb860d0f6562c9c4b.json",
+      "sha256": "552414ca04114c37f51be87df8be938a24b86643f2a6f0e9adca771960a526a4"
+    }
+  },
+  "coherent_cpu": {
+    "cases": 56,
+    "campaign": {
+      "path": "build/acceptance/campaigns/153e2fead6c148a5bb0dbf233f555f5d/report.json",
+      "sha256": "2760afcc6fa6c215652c189e3881f53bd511b123c345f280dc048b90f90dadb7"
+    },
+    "report": {
+      "path": "build/tests/coherent-scheduler-cpu/report.json",
+      "sha256": "be75669404d6bb4a92a13957c06203f4a37115526e8f59426e3f9d48dcfaa6af"
+    }
+  },
+  "classifier": {
+    "actual_api_fixtures": 20,
+    "report": {
+      "path": "build/tests/serve-stage-classifier/97c35a36c3a6448da57ab4175a2b22ba/report.json",
+      "sha256": "de1269a131d29eb4c2b4e86e5103814a63929ef2cc19579b5085f2d471d6c1a4"
+    }
+  },
+  "independent_cpu_review": {
+    "path": "build/tests/tutorial-playable-review/guarded-cpu-independent-review.json",
+    "sha256": "bcbbcecca643dd9ae14cc9246ca6f2a07c8b73966421c85d1b6369b345bad08c"
+  },
+  "resource_qualification": {
+    "status": "passed_selected_cases",
+    "campaign_id": "3441111edd3349c4a30ca28788a60959",
+    "fresh_case_ids": [
+      "inputs",
+      "startup",
+      "demo",
+      "ordinary-one-cold",
+      "ordinary-two",
+      "setup",
+      "package-after"
+    ],
+    "preflight": {
+      "path": "build/tests/tutorial-playable-review/resource-preflight-4574d3fc26df47c3bbdb12b6a6999c74.json",
+      "sha256": "3cb45b9ac76bc11353b266c633fdcf2dd9cb84bde36674ace7ccfaa5bd3c6335"
+    },
+    "storage_interruption": {
+      "path": "build/tests/tutorial-playable-review/resource-disk-recovery.json",
+      "sha256": "80caa2bee43b0c44394a93deea9550d24d04e882425f125eb29b60bddfa9ecb3",
+      "scope": "Five fresh completed cases retained; ENOSPC before setup started; same campaign resumes between tests and validates reuse of its own original fresh attempts. No native rerun or receipt byte change."
+    },
+    "resumed_completed_case_ids": [
+      "inputs",
+      "startup",
+      "demo",
+      "ordinary-one-cold",
+      "ordinary-two"
+    ],
+    "acceptance_passed": false,
+    "campaign": {
+      "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/report.json",
+      "sha256": "da57c105e243f634d5a6813a06498b7c62e86a1e8c0c998af4c45a4be1631c5c"
+    },
+    "execution_scope": "All seven cases executed freshly on this product. After ENOSPC between cases, resume validated the first five original completed000001 attempts as000002 reuse; setup/package executed freshly000001. No prior-product resource reuse or native rerun.",
+    "fresh_origin_receipts": {
+      "inputs": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/inputs/000001/receipt.json",
+        "sha256": "977a8e313a233370d074efe561ef36ca9e56f452d60b061cff3408b4fd19df5c"
+      },
+      "startup": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/startup/000001/receipt.json",
+        "sha256": "2bd14c9c2e7b9cf1b1429de8a2ced64f869d15e5cd214eacf436727892e2b69b"
+      },
+      "demo": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/demo/000001/receipt.json",
+        "sha256": "99a23a9305788e29b80ec64b68a146188c1841e76c6d3e13a4de065c0d32be75"
+      },
+      "ordinary-one-cold": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/ordinary-one-cold/000001/receipt.json",
+        "sha256": "33ca6504201368108179ab9c5789e89e5d91eb5607fa83c6ce7eae7409c40b1d"
+      },
+      "ordinary-two": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/ordinary-two/000001/receipt.json",
+        "sha256": "3858f2417177f7daf3959305fa647fd1d4bdd0aca87a7e4fcdcea064846b77f3"
+      },
+      "setup": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/setup/000001/receipt.json",
+        "sha256": "a80bc862f1d5e40bba0743418b796a32811ca55362c2f763eb1697015ae761d9"
+      },
+      "package-after": {
+        "path": "build/acceptance/campaigns/3441111edd3349c4a30ca28788a60959/attempts/package-after/000001/receipt.json",
+        "sha256": "60b17dfea23aaf514533ac5a946b80ad23ac0383449e440ab6230e356ad0e2a2"
+      }
+    },
+    "metrics": {
+      "state": "complete",
+      "report": {
+        "path": "docs/metrics/current.json",
+        "sha256": "f886bd63d577665f2825b052fdae94dc4fc6e6c6fb3fa4af848fa873c9e817e5"
+      },
+      "markdown": {
+        "path": "docs/metrics/current.md",
+        "sha256": "10cb55311e4f2bb617b4fac1355d7fe497c62a58546ce6ae086aade3dfbdd788"
+      },
+      "product_sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad",
+      "coverage": {
+        "title": "measured",
+        "help": "measured",
+        "one-player-rally": "measured",
+        "two-player-rally": "measured",
+        "demo": "measured",
+        "pause": "measured",
+        "match-end": "measured",
+        "celebration": "measured"
+      },
+      "static_layout": {
+        "executable_bytes": 219312,
+        "hunks": [
+          {
+            "file_offset": 48,
+            "index": 0,
+            "kind": "code",
+            "bytes": 63464,
+            "memory": "any"
+          },
+          {
+            "file_offset": 96212,
+            "index": 1,
+            "kind": "data",
+            "bytes": 112700,
+            "memory": "chip"
+          },
+          {
+            "file_offset": 212692,
+            "index": 2,
+            "kind": "bss",
+            "bytes": 9424,
+            "memory": "chip"
+          },
+          {
+            "file_offset": 212816,
+            "index": 3,
+            "kind": "bss",
+            "bytes": 94212,
+            "memory": "any"
+          },
+          {
+            "file_offset": 219212,
+            "index": 4,
+            "kind": "bss",
+            "bytes": 49152,
+            "memory": "chip"
+          }
+        ],
+        "file_format": {
+          "header_table_bytes": 40,
+          "hunk_headers_and_end_bytes": 60,
+          "relocation_bytes": 7552,
+          "relocations": 1876,
+          "symbol_bytes": 35496,
+          "symbols": 1254,
+          "symbol_name_bytes": 23690,
+          "symbol_name_padding_bytes": 1734,
+          "symbol_framing_bytes": 10072,
+          "debug_bytes": 0
+        },
+        "code_bytes": 63464,
+        "data_bytes": 112700,
+        "bss_bytes": 152788,
+        "loaded_payload_bytes": 328952
+      },
+      "release": {
+        "executable_sha256": "d805f11126da488442fea7043b9e8170c2358523979c37769c70715c3a094ae6",
+        "executable_bytes": 183816,
+        "removed_symbol_bytes": 35496,
+        "loaded_payload_bytes": 328952,
+        "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols."
+      },
+      "runtime": {
+        "cold-one": {
+          "receipt": "build/tests/ct10-adf-one-cadence-enhanced-report.json",
+          "receipt_sha256": "33ca6504201368108179ab9c5789e89e5d91eb5607fa83c6ce7eae7409c40b1d",
+          "classification": {
+            "status": "passed",
+            "freshness": "reused",
+            "started_utc": "2026-10-10T20:21:56.323126+00:00",
+            "startup": "cold ADF",
+            "subject": "maintained-native",
+            "kind": "ordinary-cadence",
+            "matched": null,
+            "executed": null,
+            "reference": null,
+            "first_difference": null
+          },
+          "profile_extent": {
+            "title": {
+              "callbacks": 8,
+              "minimum_deadline_headroom_cck": 2538.465576171875
+            },
+            "help": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "one-player-rally": {
+              "callbacks": 4873,
+              "minimum_deadline_headroom_cck": 28657.150024414062
+            },
+            "two-player-rally": {
+              "callbacks": 1,
+              "minimum_deadline_headroom_cck": 37923.14733886719
+            },
+            "demo": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "pause": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "match-end": {
+              "callbacks": 48,
+              "minimum_deadline_headroom_cck": 39797.01123046875
+            },
+            "celebration": {
+              "callbacks": 888,
+              "minimum_deadline_headroom_cck": 34948.955963134766
+            }
+          },
+          "deadlines": {
+            "missed_native_callbacks": 0,
+            "missed_publications_counter": 0,
+            "publication_failures": 0
+          },
+          "peak_chip_bytes": 434504,
+          "cold_boot_peak": 436048
+        },
+        "two": {
+          "receipt": "build/tests/ct09-ordinary-two-cadence-enhanced-report.json",
+          "receipt_sha256": "3858f2417177f7daf3959305fa647fd1d4bdd0aca87a7e4fcdcea064846b77f3",
+          "classification": {
+            "status": "passed",
+            "freshness": "reused",
+            "started_utc": "2026-10-10T20:26:38.752723+00:00",
+            "startup": "ordinary title",
+            "subject": "maintained-native",
+            "kind": "ordinary-cadence",
+            "matched": null,
+            "executed": null,
+            "reference": null,
+            "first_difference": null
+          },
+          "profile_extent": {
+            "title": {
+              "callbacks": 4,
+              "minimum_deadline_headroom_cck": 2467.160186767578
+            },
+            "help": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "one-player-rally": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "two-player-rally": {
+              "callbacks": 9263,
+              "minimum_deadline_headroom_cck": 29431.80224609375
+            },
+            "demo": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "pause": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "match-end": {
+              "callbacks": 48,
+              "minimum_deadline_headroom_cck": 42299.70584106445
+            },
+            "celebration": {
+              "callbacks": 888,
+              "minimum_deadline_headroom_cck": 36466.65057373047
+            }
+          },
+          "deadlines": {
+            "missed_native_callbacks": 0,
+            "missed_publications_counter": 0,
+            "publication_failures": 0
+          },
+          "peak_chip_bytes": 468240,
+          "cold_boot_peak": null
+        },
+        "setup": {
+          "receipt": "build/tests/native-setup/report.json",
+          "receipt_sha256": "a80bc862f1d5e40bba0743418b796a32811ca55362c2f763eb1697015ae761d9",
+          "classification": {
+            "status": "passed",
+            "freshness": "reused",
+            "started_utc": "2026-10-10T20:36:46.403723+00:00",
+            "startup": "ordinary title",
+            "subject": "maintained-native",
+            "kind": "native-setup",
+            "matched": null,
+            "executed": null,
+            "reference": null,
+            "first_difference": null
+          },
+          "profile_extent": {
+            "title": {
+              "callbacks": 1237,
+              "minimum_deadline_headroom_cck": 5599.232482910156
+            },
+            "help": {
+              "callbacks": 575,
+              "minimum_deadline_headroom_cck": 6820.318878173828
+            },
+            "one-player-rally": {
+              "callbacks": 32,
+              "minimum_deadline_headroom_cck": 36519.49255371094
+            },
+            "two-player-rally": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "demo": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "pause": {
+              "callbacks": 88,
+              "minimum_deadline_headroom_cck": 37480.495208740234
+            },
+            "match-end": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "celebration": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            }
+          },
+          "deadlines": {
+            "missed_publications_counter": 0,
+            "missed_named_profile_deadlines": 0,
+            "missed_native_callbacks": 0,
+            "scope": "Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured."
+          },
+          "peak_chip_bytes": null,
+          "cold_boot_peak": null
+        },
+        "demo": {
+          "receipt": "build/tests/demo-full-repeat/report.json",
+          "receipt_sha256": "99a23a9305788e29b80ec64b68a146188c1841e76c6d3e13a4de065c0d32be75",
+          "classification": {
+            "status": "passed",
+            "freshness": "reused",
+            "started_utc": "2026-10-10T20:14:08.145994+00:00",
+            "startup": "ordinary title",
+            "subject": "maintained-native",
+            "kind": "native-demo",
+            "matched": null,
+            "executed": null,
+            "reference": null,
+            "first_difference": null
+          },
+          "profile_extent": {
+            "title": {
+              "callbacks": 1800,
+              "minimum_deadline_headroom_cck": 6499.137237548828
+            },
+            "help": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "one-player-rally": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "two-player-rally": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "demo": {
+              "callbacks": 11703,
+              "minimum_deadline_headroom_cck": 27816.13916015625
+            },
+            "pause": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "match-end": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            },
+            "celebration": {
+              "callbacks": 0,
+              "minimum_deadline_headroom_cck": null
+            }
+          },
+          "deadlines": {
+            "missed_publications_counter": 0,
+            "missed_named_profile_deadlines": 0,
+            "missed_native_callbacks": null,
+            "scope": "Setup raw checker covers all callbacks; demo deadline counts cover named measured profiles only, unprofiled transitions remain unmeasured."
+          },
+          "peak_chip_bytes": null,
+          "cold_boot_peak": null
+        }
+      },
+      "scope": "PAL ordinary collectors and separate four PAL/NTSC tutorial captures. Profile distributions omit unprofiled transitions; ordinary all-callback audits include them. Demo tail publication evidence is outside its metric distribution. Memory is whole initialized pools; pre-Exec bootstrap unmeasured; all observations finite."
+    },
+    "exact_adf_sha256": "5f117929c19360e9ed5ed3441c596f6626930ee780bf900bfe1c1636154e65c6",
+    "cold_reset_to_display_and_input_ms": 22572.77308744691,
+    "independent_review": {
+      "path": "build/tests/tutorial-playable-review/current-resource-independent-review.json",
+      "sha256": "a9e5351cdcb630c580ce134312f3169a47fb890fb9d873e8738b40b4e8d0701f"
+    }
+  },
+  "incoming_latency": {
+    "new_matched_measurement": false,
+    "existing_nonoverlapping_account": "docs/tutorial-next-operation-results.md",
+    "scope": "Earlier matched product/state/input schedule findings remain bound to their original products; no incoming speedup is claimed here."
+  },
+  "measured_facts": [
+    "All ten body owners observed in both native serve cases; all enclosing accounting brackets fit20000CCK.",
+    "Genuine pending continuation persists at actual menu acceptance and retires on exact original resume.",
+    "Finite callbacks use literal-prefix CIA origin and actual integer intervals; zero negative reconstructed headroom."
+  ],
+  "inference": [
+    "The observed complete-owner upper brackets support the4000E stage hypothesis in the sampled route; they do not establish WCET."
+  ],
+  "unclassified": [
+    "Intrinsic owner/tail versus surrounding accounting/IRQ work inside upper brackets.",
+    "CPU execution versus chip-bus/other waits; outside-callback time is not assumed idle or recoverable.",
+    "Counter-store versus whole-instruction callback tails and E-clock start/sampling uncertainty."
+  ],
+  "refusal_reconsideration": "No refusal cache or arbitrary delay. Each root opportunity reclassifies current phase/interval and obtains fresh clock/beam admission; generation/selection/history/seek changes affect eligibility; pending work retains original lane and generation/variant until completion or retirement.",
+  "preserved_native_failures": [
+    {
+      "campaign": "5e085ce23e5f453a913d48a3abb517b0",
+      "reason": "Expanded short branches failed assembly."
+    },
+    {
+      "campaign": "0a5e624bde7b49a79ada358c4cffd641",
+      "reason": "Observer compared pre-press stages with post-release menu; corrected acceptance boundary."
+    },
+    {
+      "campaign": "91feffec0f704ca7baa3234c1218218e",
+      "reason": "Partial stage completed before physical release sampled; requested pending extent not witnessed."
+    },
+    {
+      "campaign": "a19cd036327b48209e3187a13b522f73",
+      "reason": "Requested early pending stage unavailable after deterministic G hold."
+    }
+  ],
+  "ownership_launch_blocks": {
+    "path": "build/tests/tutorial-playable-review/cpu-launch-ownership-blocks.json",
+    "sha256": "b8a24979e3d492dbfd2d1bbef2c9166a3a04523f054b97c90f60ba29003abd53"
+  },
+  "holds": [
+    "Retained-shot/time navigation and edited branching absent; Resume latest restores original.",
+    "Title/upper/retained physical routes and all input combinations unqualified.",
+    "Universal deadline/input/transport/ACK/fairness/dwell bounds unproved.",
+    "Richard appearance/playability review and full native/release acceptance remain open.",
+    "No merge, release promotion or Library upload."
+  ],
+  "delivery": {
+    "status": "independently_audited_frozen_test_candidate",
+    "directory": "build/delivery/tutorial-test-4baa6da",
+    "identity": {
+      "path": "build/delivery/tutorial-test-4baa6da/build-identity.json",
+      "sha256": "d6b7d1bb8dffff845ef8c7e351ee63c07abd2105ded238e838eb336eb3353de3"
+    },
+    "files": {
+      "baseline-rally-development": {
+        "bytes": 219312,
+        "sha256": "49de1fc1b4f9c1ad65d932e2453e7eb47b4b2cb216ab05dbb0c3d699fe37b6ad"
+      },
+      "native.lst": {
+        "bytes": 1454334,
+        "sha256": "a1e9e52512d2b6d0b151dde6f819c4287f42a380f856d5ff95961407b813a5e6"
+      },
+      "baseline-rally-release": {
+        "bytes": 183816,
+        "sha256": "d805f11126da488442fea7043b9e8170c2358523979c37769c70715c3a094ae6"
+      },
+      "baseline-rally.adf": {
+        "bytes": 901120,
+        "sha256": "5f117929c19360e9ed5ed3441c596f6626930ee780bf900bfe1c1636154e65c6"
+      },
+      "CONTROLS-AND-LIMITATIONS.md": {
+        "bytes": 2265,
+        "sha256": "374f3fe68e0b5e6a09f8eea5b201ff846143b6cb4896513fa183957386c5f08d"
+      }
+    },
+    "raw_receipt_storage": "Original immutable receipts remain in source paths; delivery gzip receipts decode to identical bytes. Separate originalfa2delivery unchanged.",
+    "release_accepted": false,
+    "independent_review": {
+      "path": "build/tests/tutorial-playable-review/serve-delivery-independent-review.json",
+      "sha256": "910169cc7003fdf3ff6c4dcff5d6ea372f60de62f892a573bfc7c495146ca8c7"
+    },
+    "archive": {
+      "path": "build/delivery/tutorial-test-4baa6da.tar.gz",
+      "bytes": 472917738,
+      "sha256": "183f2bdb53e42d8af7870727e9ab67030f14a5938bd8a109f8ac40b23abc285d",
+      "contains": "Frozen candidate directory plus independently bound delivery audit at archive root.",
+      "independent_review": {
+        "path": "build/tests/tutorial-playable-review/serve-archive-independent-review.json",
+        "sha256": "9aeb9aa1ea2468a615957e9f91728f0e41c18333f81d29b52c591d899ac34284"
+      }
+    }
+  }
+}

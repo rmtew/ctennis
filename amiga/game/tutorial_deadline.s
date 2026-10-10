@@ -3,6 +3,9 @@
 TUTORIAL_BG_CHUNK_E equ 1000
 TUTORIAL_BG_PHYSICS_E equ 4000
 TUTORIAL_BG_FULL_E equ 10000
+; Separate complete-owner hypothesis for one exact returned serve stage.
+; Qualification is finite; this does not reduce the original full reservation.
+TUTORIAL_BG_SERVE_STAGE_E equ 4000
 TUTORIAL_BG_SERVICE_E equ 500
 TUTORIAL_BG_MARGIN_E equ 500
 TUTORIAL_BG_CALLBACK_E equ 11150
@@ -202,18 +205,20 @@ tutorial_background:
         cmpi.w  #TUTORIAL_JOB_PREVIEW,d0
         beq.s   .run_preview
         cmpi.w  #TUTORIAL_JOB_ENDPOINT,d0
-        beq.s   .run_endpoint
+        beq     .run_endpoint
         cmpi.w  #TUTORIAL_JOB_GEOMETRY,d0
-        beq.s   .run_geometry
+        beq     .run_geometry
         cmpi.w  #TUTORIAL_JOB_PRODUCER,d0
-        beq.s   .run_producer
+        beq     .run_producer
         cmpi.w  #TUTORIAL_JOB_FOOTER,d0
-        beq.s   .run_footer
+        beq     .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
         bra     .run_result
 .run_preview:
         move.l  tutorial_generation,d0
+        tst.w   tutorial_job_stage
+        bne.s   .run_serve_stage
         moveq   #0,d1
         move.w  tutorial_job_budget,d1
         moveq   #0,d2
@@ -225,6 +230,19 @@ tutorial_background:
         sub.w   game_preview_budget,d0
         add.w   d0,tutorial_progress_operations
         bsr     tutorial_progress_returned
+        move.w  #1,tutorial_residual_turn
+        bra     .completed
+.run_serve_stage:
+        moveq   #0,d1
+        move.w  tutorial_job_variant,d1
+        jsr     game_preview_dispatch_stage
+        tst.l   d0
+        beq     .done
+        tst.w   d1
+        beq.s   .serve_stage_returned
+        add.w   d1,tutorial_progress_operations
+        bsr     tutorial_progress_returned
+.serve_stage_returned:
         move.w  #1,tutorial_residual_turn
         bra     .completed
 .run_endpoint:
@@ -283,6 +301,7 @@ tutorial_background:
 ; peek each actual opcode. Never skip a body or its intermediate checks.
 tutorial_background_class:
         clr.w   tutorial_job_budget
+        clr.w   tutorial_job_stage
         clr.l   tutorial_job_cost
         cmpi.w  #PREVIEW_READY,game_preview_status
         bcc     .done
@@ -353,11 +372,11 @@ tutorial_background_class:
         cmpi.w  #7,d0
         beq.s   .poll
         cmpi.w  #3,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #4,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #5,d0
-        beq.s   .fit
+        beq     .fit
         cmpi.w  #9,d0
         bne.s   .rejection
         bra.s   .fit
@@ -376,10 +395,25 @@ tutorial_background_class:
         tst.b   game_entropy_policy-game_core_state(a3)
         bne.s   .full
         btst    #5,game_score_state+S_MODE-game_core_state(a3)
-        beq.s   .fit
+        beq     .fit
 .full:  move.l  #TUTORIAL_BG_FULL_E,d1
         bra.s   .fit
 .dispatch:
+        move.l  tutorial_generation,d0
+        move.w  d7,d1
+        bsr     game_preview_dispatch_stage_eligible
+        tst.l   d0
+        beq.s   .ordinary_dispatch
+        move.l  #TUTORIAL_BG_SERVE_STAGE_E,d1
+        cmp.l   d5,d1
+        bhi     .done
+        move.l  d1,tutorial_job_cost
+        move.w  #1,tutorial_job_budget
+        move.w  #1,tutorial_job_stage
+        moveq   #8,d0
+        bra     .done
+.ordinary_dispatch:
+        moveq   #8,d0
         lea     game_preview_predictor_routes,a0
         tst.b   (a0,d7.w)
         beq.s   .full

@@ -370,6 +370,18 @@ game_preview_step_owned:
         moveq   #0,d0
         move.b  (a0,d7.w),d0
         move.w  d0,game_preview_launch_before
+        ; Existing synchronous APIs complete a root-owned partial envelope.
+        move.w  d7,d6
+        add.w   d6,d6
+        lea     game_preview_dispatch_stages,a0
+        tst.w   (a0,d6.w)
+        beq.s   .ordinary_continue
+.finish_dispatch:
+        bsr     game_preview_dispatch_stage_one
+        tst.l   d0
+        beq.s   .finish_dispatch
+        st      game_preview_dispatch_commit
+.ordinary_continue:
         bsr     game_preview_continue_one
 .spent:
         subq.w  #1,game_preview_budget
@@ -454,6 +466,7 @@ game_preview_cancel:
         addq.l  #1,game_preview_generation
         move.w  #PREVIEW_CANCELED,game_preview_status
         clr.w   game_preview_cache_valid
+        clr.l   game_preview_dispatch_stages
         clr.l   game_preview_counts
         clr.l   game_preview_launch_saved
         clr.w   game_preview_endpoint_ready
@@ -780,6 +793,17 @@ game_preview_prime_one:
 .done:  rts
 
 game_preview_continue_one:
+        tst.w   game_preview_dispatch_commit
+        beq.s   .not_staged
+        clr.w   game_preview_dispatch_commit
+        moveq   #0,d7
+        move.b  game_preview_variant,d7
+        add.w   d7,d7
+        lea     game_preview_synthetic_phases,a0
+        clr.w   (a0,d7.w)
+        move.w  #8,game_preview_operation
+        bra     .after
+.not_staged:
         ; After human launch, only the exact original geometric ball phase runs.
         moveq   #0,d7
         move.b  game_preview_variant,d7
@@ -1172,30 +1196,55 @@ game_preview_launch:
         cmpi.w  #3,d6
         beq.s   .serve
         tst.b   game_preview_probe_seen
-        beq.s   .done
+        beq     .done
         bra.s   .found
 .serve: cmpi.w  #3,game_preview_kind
-        bne.s   .done
+        bne     .done
         lea     game_preview_cursor,a0
         lea     game_preview_origin,a1
         bsr     game_preview_compare_cursor
         tst.l   d0
-        bne.s   .done
+        bne     .done
 .found: move.b  d6,game_preview_action_kind
         bra.s   game_preview_found_action
 .alternative:
         moveq   #0,d0
         move.b  game_preview_variant,d0
+        ; A partial original dispatch owns its launch observations privately.
+        ; Restore D1 before the original owner comparison/condition codes.
+        move.l  d1,-(sp)
+        move.w  d0,d1
+        add.w   d1,d1
+        lea     game_preview_dispatch_stages,a0
+        tst.w   (a0,d1.w)
+        beq.s   .public_launch
+        lea     game_preview_dispatch_launches,a0
+        bra.s   .launch_owner
+.public_launch:
+        lea     game_preview_launches,a0
+.launch_owner:
+        move.l  (sp)+,d1
         cmp.w   game_preview_end,d7
         bne.s   .opponent
-        lea     game_preview_launches,a0
         st      (a0,d0.w)
         rts
 .opponent:
-        lea     game_preview_launches,a0
         tst.b   (a0,d0.w)
-        beq.s   .done
+        beq     .done
+        move.w  sr,-(sp)
+        move.l  d1,-(sp)
+        move.w  d0,d1
+        add.w   d1,d1
+        lea     game_preview_dispatch_stages,a0
+        tst.w   (a0,d1.w)
+        beq.s   .public_interception
+        lea     game_preview_dispatch_interceptions,a0
+        bra.s   .interception_owner
+.public_interception:
         lea     game_preview_interceptions,a0
+.interception_owner:
+        move.l  (sp)+,d1
+        move.w  (sp)+,ccr
         st      (a0,d0.w)
 .done:  rts
 
@@ -1272,6 +1321,7 @@ game_preview_invalidate:
         cmpi.b  #3,game_preview_active
         beq.s   .done
         clr.w   game_preview_cache_valid
+        clr.l   game_preview_dispatch_stages
         clr.l   game_preview_counts
         clr.l   game_preview_launch_saved
         clr.w   game_preview_endpoint_ready
@@ -1284,3 +1334,4 @@ game_preview_invalidate:
 .done:  rts
 
         include "amiga/game/preview_predictor.s"
+        include "amiga/game/preview_serve_stages.s"
