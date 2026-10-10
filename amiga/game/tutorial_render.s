@@ -1005,6 +1005,7 @@ tutorial_restore_build_planes:
 .done:  rts
 
 tutorial_publish:
+        clr.l   tutorial_neutral_copper
         move.w  tutorial_render_generation,d0
         cmp.w   tutorial_build_generation,d0
         bne     tutorial_redraw
@@ -1192,6 +1193,7 @@ tutorial_animate:
         move.w  d1,tutorial_animation_index
         move.w  simulation_started_updates,tutorial_animation_callback
 .sample:
+        clr.l   tutorial_neutral_copper
         move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
@@ -1226,6 +1228,7 @@ tutorial_animation_due:
         rts
 
 tutorial_restore_court:
+        clr.l   tutorial_neutral_copper
         lea     plane0,a0
         bsr     tutorial_patch_planes
         jsr     game_render_sprites

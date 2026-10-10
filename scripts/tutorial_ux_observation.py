@@ -6,6 +6,7 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
         super().__init__(symbols,read,**kwargs)
         self.footers={symbols[n]:bytearray(read(symbols[n],512)) for n in ('tutorial_footer0','tutorial_footer1')}
         self.markers=bytearray(read(symbols['tutorial_canvas_markers'],40))
+        self.controls_cache=bytes(read(symbols['tutorial_controls_cache'],1280))
         self.footer_writes=0
     def watches(self):
         return super().watches()+[dict(addr=a,len=512,access='write') for a in self.footers]+[dict(addr=self.symbols['tutorial_canvas_markers'],len=40,access='write')]
@@ -38,6 +39,11 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
                     row['landing']=self.queued['landing']
                     if retained:
                         assert not row['landing']['valid'],'Retained pose includes old landing cue'
+                        footer=bytes.fromhex(row['footer_bytes'])
+                        control_offset=0 if fields['tutorial_input_source'] else 256
+                        assert footer[:256]==self.controls_cache[control_offset:control_offset+256],'Retained pose has wrong controls'
+                        assert footer[256:]==self.controls_cache[768:1024],'Retained pose has non-calculating caption'
+                        assert bytes.fromhex(row['objects'])[48:64]==bytes.fromhex(row['original_objects'])[48:64],'Retained pose has non-frozen ball/shadow'
                 else:
                     offset=0 if row['surface']==self.symbols['tutorial_surface0'] else 20
                     meta=self.markers[offset:offset+20]
