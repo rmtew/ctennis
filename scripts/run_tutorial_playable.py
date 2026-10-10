@@ -34,7 +34,7 @@ def run(standard,serve=False):
         for n in ('baseline-rally','baseline-rally.compile.json','native.lst'):shutil.copy2(product/n,attempt/n)
         exe=attempt/'baseline-rally';report['executable_sha256']=digest(exe)
         listing=(attempt/'native.lst').read_text();cfg=emulator_config();hz=CLOCK[standard]
-        stage_snapshots=[];stage_protocols=[];photos=[];actions=[];restores=[];interrupted=None;frozen=None;metadata=None;first_resume=None;logical_samples=[];checkpoints=[]
+        menu_stage_samples=[];stage_snapshots=[];stage_protocols=[];photos=[];actions=[];restores=[];interrupted=None;frozen=None;metadata=None;first_resume=None;logical_samples=[];checkpoints=[]
         with CaptureSession(attempt) as session:
             session.inspect('session_launch',dict(binary=cfg['tools']['copperline'],run=str(exe),args=['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',cfg['inputs']['amiga_rom']]))
             stop=session.inspect('run_until',dict(seconds=30));assert stop['reason']=='loadseg'
@@ -71,12 +71,15 @@ def run(standard,serve=False):
             assert not subscription.get('dropped_notifications',0),'Dropped native write-watch notifications'
             session.inspect('break.add',dict(kind='pc',addr=s['simulation_update']))
             session.inspect('break.add',dict(kind='pc',addr=s['tutorial_resume_restored']))
+            if serve:session.inspect('break.add',dict(kind='pc',addr=s['tutorial_redraw']))
             beginning=stop['cck'];current=beginning;resume_pending=False;reconciled=0
             def advance(seconds,stop_partial=False):
                 nonlocal current,interrupted,frozen,metadata,resume_pending,first_resume,reconciled
                 goal=current+round(seconds*hz);assert goal-beginning<90*hz
                 for _ in range(200000):
                     result=session.inspect('run_until',dict(seconds=min(goal,current+hz//1000)/PROVIDER));current=result['cck']
+                    if serve and result.get('pc')==s['tutorial_redraw'] and num('tutorial_menu',1):
+                        menu_stage_samples.append(dict(position=result,generation=num('tutorial_generation',4),stages=raw(s['game_preview_dispatch_stages'],4).hex(),owners=raw(s['game_preview_dispatch_generations'],8).hex()))
                     if result.get('pc')==s['tutorial_resume_restored']:
                         assert interrupted is not None
                         assert block('game_history_buffer','game_history_buffer_end')==frozen['game_history_buffer'],'Frozen records changed before exact resume'
@@ -231,8 +234,11 @@ def run(standard,serve=False):
                 menu_start=current;key(0x24,True);key(0x24,False)
             assert num('tutorial_menu',1)
             if serve:
-                assert raw(s['game_preview_dispatch_stages'],4).hex()==pending_resume['stages'],'Menu advanced suspended serve operation'
-                stage_protocols.append(dict(kind='pending-original-resume',before=pending_resume,menu_cck=current))
+                accepted=menu_stage_samples[-1]
+                assert accepted['position']['cck']>=menu_start and int(accepted['stages'],16),'Menu did not accept a genuine partial serve'
+                assert accepted['generation']==pending_resume['generation']
+                assert raw(s['game_preview_dispatch_stages'],4).hex()==accepted['stages'],'Opened menu advanced suspended serve operation'
+                stage_protocols.append(dict(kind='pending-original-resume',before_physical_release=pending_resume,at_menu_accept=accepted,menu_cck=current))
             menu_checkpoint('options',0,menu_start)
             menu_start=current;key(0x4d,True);key(0x4d,False);assert num('tutorial_menu_selection',1)==1
             menu_checkpoint('options-resume',1,menu_start)
@@ -255,7 +261,7 @@ def run(standard,serve=False):
             tutorial_scenes=[p for p in publications if p.get('tutorial_fields',{}).get('tutorial_active')]
             assert tutorial_scenes,'No actual completed tutorial publication'
             # Export observed evidence before audits, including a failed audit.
-            report.update(stage_snapshots=stage_snapshots,stage_protocols=stage_protocols,actions=actions,photos=photos,checkpoints=checkpoints,restores=restores,first_resumed_boundary=first_resume,
+            report.update(menu_stage_samples=menu_stage_samples,stage_snapshots=stage_snapshots,stage_protocols=stage_protocols,actions=actions,photos=photos,checkpoints=checkpoints,restores=restores,first_resumed_boundary=first_resume,
                 reconciled_samples=logical_samples,ack=ack,memory=memory,stack_used_bytes=s['game_stack_top']-stack_low,
                 publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows)
             for p in tutorial_scenes:
@@ -276,7 +282,7 @@ def run(standard,serve=False):
         shutil.copy2(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
     except BaseException as error:
         # Keep already observed controls/publications even if an early visual gate fails.
-        for name in ('stage_snapshots','stage_protocols','actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):
+        for name in ('menu_stage_samples','stage_snapshots','stage_protocols','actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):
             if name in locals():report[name]=locals()[name]
         if 'callbacks' in locals():report.update(callbacks=callbacks.rows,publications=callbacks.surfaces.publications)
         if 'timing' in locals():report['stack_rows']=timing.rows
