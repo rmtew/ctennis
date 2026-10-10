@@ -51,7 +51,7 @@ def run(standard,serve=False):
                 game_preview_dispatch_stages=4,game_preview_dispatch_generations=8,game_preview_dispatch_launches=2,
                 game_preview_primed_mask=2,game_preview_synthetic_phases=4,game_preview_flight_phases=4,
                 simulation_interval=4,simulation_phase=4,keyboard_ack=1,keyboard_ack_timer=2)
-            watched=dict(FIELDS,**extra);by_address={s[n]:n for n in watched}
+            watched=dict(FIELDS,**extra);by_address={s[n]+offset:n for n,width in watched.items() for offset in range(width)}
             class Observer:
                 def observe(self,message):
                     nonlocal stack_low
@@ -224,8 +224,12 @@ def run(standard,serve=False):
             assert not num('tutorial_menu',1) and raw(s['tutorial_selected_cursor'],8)==selected_cursor
             if serve:
                 key(0x22,True,.02);key(0x22,False,.01)
+                key(0x24,True)
                 pending_resume=partial_checkpoint()
-            menu_start=current;key(0x24,True);key(0x24,False);assert num('tutorial_menu',1)
+                menu_start=current;key(0x24,False)
+            else:
+                menu_start=current;key(0x24,True);key(0x24,False)
+            assert num('tutorial_menu',1)
             if serve:
                 assert raw(s['game_preview_dispatch_stages'],4).hex()==pending_resume['stages'],'Menu advanced suspended serve operation'
                 stage_protocols.append(dict(kind='pending-original-resume',before=pending_resume,menu_cck=current))
