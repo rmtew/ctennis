@@ -6,10 +6,10 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
         super().__init__(symbols,read,**kwargs)
         self.footers={symbols[n]:bytearray(read(symbols[n],512)) for n in ('tutorial_footer0','tutorial_footer1')}
         self.markers=bytearray(read(symbols['tutorial_canvas_markers'],40))
-        self.controls_cache=bytes(read(symbols['tutorial_controls_cache'],1280))
+        self.controls_cache=bytearray(read(symbols['tutorial_controls_cache'],1280))
         self.footer_writes=0
     def watches(self):
-        return super().watches()+[dict(addr=a,len=512,access='write') for a in self.footers]+[dict(addr=self.symbols['tutorial_canvas_markers'],len=40,access='write')]
+        return super().watches()+[dict(addr=a,len=512,access='write') for a in self.footers]+[dict(addr=self.symbols['tutorial_canvas_markers'],len=40,access='write'),dict(addr=self.symbols['tutorial_controls_cache'],len=1280,access='write')]
     def footer(self,copper):
         bank=self.banks.get(copper)
         if bank is None:return None
@@ -63,6 +63,11 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
         return row
     def observe(self,row,state):
         a,n=row['addr'],row['size']
+        start=self.symbols['tutorial_controls_cache']
+        if max(a,start)<min(a+n,start+1280):
+            assert state['tutorial_preparing'],'Write to immutable controls cache after startup'
+            assert start<=a and a+n<=start+1280
+            self.controls_cache[a-start:a-start+n]=row['value'].to_bytes(n,'big')
         start=self.symbols['tutorial_canvas_markers']
         if max(a,start)<min(a+n,start+40):
             left,right=max(a,start),min(a+n,start+40)

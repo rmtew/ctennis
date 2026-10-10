@@ -12,10 +12,12 @@ class TutorialUXOwnershipTests(TestCase):
     def observer(self):
         observer = UXSurfaceObserver.__new__(UXSurfaceObserver)
         observer.symbols = dict(tutorial_surface0=1000, tutorial_surface1=2000,
-            tutorial_footer0=3000, tutorial_footer1=4000, tutorial_canvas_markers=5000)
+            tutorial_footer0=3000, tutorial_footer1=4000, tutorial_canvas_markers=5000,
+            tutorial_controls_cache=6000)
         observer.images = {1000: bytearray(24576), 2000: bytearray(24576)}
         observer.footers = {3000: bytearray(512), 4000: bytearray(512)}
         observer.markers = bytearray(40)
+        observer.controls_cache = bytearray(1280)
         observer.hardware_copper = 10
         observer.queued = None
         observer.footer_writes = 0
@@ -57,3 +59,16 @@ class TutorialUXOwnershipTests(TestCase):
                               return_value=dict(surface=1000, tutorial_fields=fields)):
                 with self.assertRaisesRegex(AssertionError, 'Stale prediction-bearing'):
                     observer.snapshot(20, dict(tutorial_generation=2), {}, actual=True)
+
+    def test_controls_cache_is_reconstructed_then_immutable(self):
+        observer = self.observer()
+        row = dict(addr=6010, size=2, value=0xabcd)
+        state = dict(tutorial_preparing=1, ready_copper=0, display_ready=0,
+                     ready_completed=0)
+        with patch.object(observer, 'footer', return_value=None), \
+             patch.object(CoherentSurfaceObserver, 'observe'):
+            observer.observe(row, state)
+            self.assertEqual(observer.controls_cache[10:12], b'\xab\xcd')
+            state['tutorial_preparing'] = 0
+            with self.assertRaisesRegex(AssertionError, 'immutable controls cache'):
+                observer.observe(row, state)
