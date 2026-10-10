@@ -84,7 +84,7 @@ The integrator owns source integration and evidence reconciliation. Colocated ar
 - [x] Complete current-product finite CPU routing and selected PAL/NTSC native reruns: closed campaign, nine trials/eight background contacts/one footer commit per region,351 reviewed bindings each. Preserve failed12705 tooling evidence, archived native failures4–7 and explicit raw loss1–3. This does not complete full acceptance or physical resume.
 - [x] Record corrected linked layout and finite CPU role-specific stack maxima, qualified by product and excluding chip-bus/IRQ effects.
 - [ ] Establish initialized target resource profiles and chip/IRQ stack coverage. Resource recording exits1/incomplete with all eight profiles unmeasured; the expected check failure is not a pass. Preserve appearance, physical resume, cold-release and full-release holds.
-- [ ] Publish reviewed source/docs/evidence as a draft with verified remote head; do not merge. Publication is separate from unresolved resource coverage.
+- [x] Publish reviewed source/docs/evidence as [draft PR47](https://github.com/rmtew/ctennis/pull/47), stacked on PR46, with verified remote head. The PR is open, draft and unmerged. Publication is separate from unresolved resource coverage; do not merge or release.
 
 ## Verification and policy decisions
 
