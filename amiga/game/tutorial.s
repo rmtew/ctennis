@@ -266,9 +266,18 @@ tutorial_request:
         jsr     game_preview_request_projected
         tst.l   d0
         beq     .missing
-        ; A completed waiting bank belongs to the old accepted placement.
-        ; Retire it before the new generation becomes visible to publication.
+        ; Prediction-bearing banks belong to the old accepted placement.
+        ; A neutral pending bank contains only frozen native objects, controls
+        ; and an already sampled actor pose. Keep that complete pose until its
+        ; replacement is ready: 60 Hz input can otherwise repeatedly cancel a
+        ; 50 Hz publication just before the beam reaches its opportunity.
+        ; Recheck the same conservative immutable-canvas identity used by the
+        ; producer. Menu, source, caption, ball and cue changes still retire.
+        bsr     tutorial_pending_canvas_eligible
+        tst.l   d0
+        bne.s   .retain_pending_pose
         bsr     discard_ready_scene
+.retain_pending_pose:
         move.l  game_preview_generation,tutorial_generation
         st      tutorial_pending
         st      tutorial_work_pending
