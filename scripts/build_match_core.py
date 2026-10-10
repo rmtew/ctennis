@@ -36,7 +36,7 @@ def build():
     return executable, listing
 
 
-def load_image(executable, base=0x10000):
+def load_image(executable, base=0x10000, hunk_addresses=None):
     """Return relocated ``[(address, bytes)]`` and debug symbol addresses.
 
     Supports the emitted CODE/DATA/BSS/RELOC32/SYMBOL/END subset only. Hunks
@@ -69,6 +69,11 @@ def load_image(executable, base=0x10000):
     for size in sizes:
         addresses.append(cursor)
         cursor += size
+    if hunk_addresses is not None:
+        assert len(hunk_addresses)==count and all(type(a) is int and a>=0 and a%4==0 for a in hunk_addresses)
+        assert all(a+size<=0x100000000 for a,size in zip(hunk_addresses,sizes))
+        assert all(a+size<=b or b+other<=a for i,(a,size) in enumerate(zip(hunk_addresses,sizes)) for b,other in list(zip(hunk_addresses,sizes))[i+1:])
+        addresses=list(hunk_addresses)
     if cursor > 0x100000000:
         raise ValueError('Image exceeds 32-bit address space')
     image, symbols = [], {}
