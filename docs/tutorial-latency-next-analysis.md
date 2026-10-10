@@ -124,11 +124,13 @@ observations, not reconstruction of an absent execution ledger.
 
 ## Prerequisites and holds
 
-This environment has pinned Python and native assets; an external kick13.rom
+At the transfer review this environment had pinned Python and native assets; an external kick13.rom
 attachment is present. The pinned assembler, Copperline, machine68k, amitools,
 local emulator configuration and preserved native development/listing products
-are absent. Validate the legitimate ROM and use supported repository setup
-when execution becomes justified. Available storage here is ample; the old
+were absent. Subsequent supported [tool setup](tutorial-latency-execution-setup.md)
+establishes the tools/configuration and validates the ROM against both retained
+bindings, without building or running the game. Preserved native products and
+raw traces remain absent. Available storage here is ample; the old
 proposal's small-storage observations do not describe this environment.
 
 The missing traces are an internal handover, coordinated by the parent. Do not
