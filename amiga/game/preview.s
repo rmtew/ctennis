@@ -261,7 +261,7 @@ game_preview_step:
         tst.l   d0
         beq.s   game_preview_step_return
         clr.w   game_preview_explicit
-        bra     game_preview_step_owned
+        bra.s   game_preview_step_owned
 
 ; D0 generation, D1 budget1..4, D2 variant0..1. No implicit branch switch
 ; or geometry scan. Every logical body/check/cursor boundary remains intact.
@@ -273,24 +273,7 @@ game_preview_step_variant:
         beq.s   game_preview_step_return
         move.w  #1,game_preview_explicit
         move.w  d2,game_preview_requested_variant
-        bra     game_preview_step_owned
-; Scheduler-owned entry; same explicit variant contract, with a single fresh
-; admission at a preparation-prefix boundary. Public calls retain their budget.
-        ifd ENHANCED_INTERFACE
-game_preview_step_coherent:
-        cmpi.l  #1,d2
-        bhi.s   game_preview_step_reject
-        bsr     game_preview_step_valid
-        tst.l   d0
-        beq.s   game_preview_step_return
-        move.w  #1,game_preview_explicit
-        tst.w   tutorial_batch_remaining
-        beq.s   .ordinary
-        move.w  #2,game_preview_explicit
-.ordinary:
-        move.w  d2,game_preview_requested_variant
-        bra     game_preview_step_owned
-        endc
+        bra.s   game_preview_step_owned
 game_preview_step_reject:
         moveq   #0,d0
 game_preview_step_return:
@@ -390,17 +373,7 @@ game_preview_step_owned:
         bsr     game_preview_continue_one
 .spent:
         subq.w  #1,game_preview_budget
-        ifd ENHANCED_INTERFACE
-        bne.s   .remaining
-        cmpi.w  #2,game_preview_explicit
-        bne     .yield
-        bsr     tutorial_preview_topup
-        tst.l   d0
-        beq     .yield
-.remaining:
-        else
         beq.s   .yield
-        endc
         cmpi.w  #PREVIEW_READY,game_preview_status
         bcc.s   .yield
         cmpi.b  #2,game_preview_active

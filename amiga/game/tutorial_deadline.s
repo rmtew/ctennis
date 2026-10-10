@@ -43,7 +43,6 @@ tutorial_background:
         movem.l d0-d7/a0-a6,-(sp)
         clr.w   tutorial_job_kind
         clr.w   tutorial_job_budget
-        clr.w   tutorial_batch_remaining
         cmpi.b  #1,tutorial_active_variant
         bhi     .done
         move.l  simulation_interval,d0
@@ -89,14 +88,14 @@ tutorial_background:
         jsr     game_preview_endpoint_pending
         tst.l   d0
         bne     .endpoint
-        bra     .selected_preview
+        bra     .preview
 .waterline:
         lea     game_preview_counts,a0
         move.w  (a0,d2.w),d0
         sub.w   tutorial_animation_index,d0
-        bcs     .selected_preview
+        bcs     .preview
         cmpi.w  #TUTORIAL_LOOKAHEAD,d0
-        bcs     .selected_preview
+        bcs     .preview
 .residual:
         tst.w   game_preview_outcomes
         beq.s   .other
@@ -157,8 +156,6 @@ tutorial_background:
         move.w  #TUTORIAL_JOB_RESULT,tutorial_job_kind
         move.l  #TUTORIAL_BG_CHUNK_E,tutorial_job_cost
         bra     .admit
-.selected_preview:
-        move.w  #4,tutorial_batch_remaining
 .preview:
         bsr     tutorial_background_class
         tst.w   tutorial_job_budget
@@ -192,53 +189,23 @@ tutorial_background:
         cmpi.w  #TUTORIAL_JOB_PREVIEW,d0
         beq.s   .run_preview
         cmpi.w  #TUTORIAL_JOB_ENDPOINT,d0
-        beq     .run_endpoint
+        beq.s   .run_endpoint
         cmpi.w  #TUTORIAL_JOB_GEOMETRY,d0
-        beq     .run_geometry
+        beq.s   .run_geometry
         cmpi.w  #TUTORIAL_JOB_PRODUCER,d0
-        beq     .run_producer
+        beq.s   .run_producer
         cmpi.w  #TUTORIAL_JOB_FOOTER,d0
-        beq     .run_footer
+        beq.s   .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
         bra     .run_result
 .run_preview:
-        ; A selected incoming preparation prefix may top up once to its next
-        ; dispatch, after actual elapsed-time admission. Four bodies total.
-        tst.w   tutorial_batch_remaining
-        beq.s   .preview_call
-        move.w  tutorial_job_budget,d0
-        sub.w   d0,tutorial_batch_remaining
-        move.w  tutorial_job_variant,d7
-        btst    d7,game_preview_primed_mask+1
-        beq.s   .no_topup
-        lea     game_preview_launches,a0
-        tst.b   (a0,d7.w)
-        bne.s   .no_topup
-        move.w  d7,d0
-        add.w   d0,d0
-        lea     game_preview_synthetic_phases,a0
-        move.w  (a0,d0.w),d0
-        add.w   tutorial_job_budget,d0
-        cmpi.w  #3,d0
-        bne.s   .no_topup ; only a preparation prefix ending before dispatch
-        move.w  d7,d0
-        lsl.w   #3,d0
-        lea     game_preview_stream_cursors,a0
-        adda.w  d0,a0
-        lea     game_history_cursor,a1
-        bsr     game_preview_compare_cursor
-        tst.l   d0
-        beq.s   .preview_call
-.no_topup:
-        clr.w   tutorial_batch_remaining
-.preview_call:
         move.l  tutorial_generation,d0
         moveq   #0,d1
         move.w  tutorial_job_budget,d1
         moveq   #0,d2
         move.w  tutorial_job_variant,d2
-        jsr     game_preview_step_coherent
+        jsr     game_preview_step_variant
         tst.l   d0
         beq     .done
         move.w  tutorial_job_budget,d0
@@ -298,95 +265,6 @@ tutorial_background:
         addq.l  #1,tutorial_jobs_completed
 .done:  movem.l (sp)+,d0-d7/a0-a6
 .return:rts
-
-; Root-owned single dispatch top-up. No service/callback while private history
-; is active. Read the immutable saved history metadata, not transient replay
-; scratch. The public worker API never enters this path. D0 accepted flag;
-; preserve every worker register, especially its private A5 owner.
-tutorial_preview_topup:
-        movem.l d1-d7/a0-a6,-(sp)
-        tst.w   tutorial_batch_remaining
-        beq     .no
-        cmpi.w  #8,game_preview_operation
-        beq     .no ; a completed dispatch is already a reevaluation boundary
-        cmpi.b  #2,game_preview_active
-        bne     .no
-        cmpi.w  #PREVIEW_PRIME,game_preview_status
-        bcs     .no
-        cmpi.w  #PREVIEW_RELEASED,game_preview_status
-        bhi     .no
-        tst.b   keyboard_ack
-        bne     .no
-        tst.b   tutorial_menu
-        bne     .no
-        move.l  tutorial_generation,d0
-        cmp.l   game_preview_generation,d0
-        bne     .no
-        cmp.l   tutorial_presentation_generation,d0
-        bne     .no
-        moveq   #0,d7
-        move.b  game_preview_variant,d7
-        cmp.w   tutorial_job_variant,d7
-        bne     .no
-        cmp.b   tutorial_active_variant,d7
-        bne     .no ; residual owner must return for footer/branch rotation
-        btst    d7,game_preview_primed_mask+1
-        beq     .no
-        lea     game_preview_launches,a0
-        tst.b   (a0,d7.w)
-        bne     .no ; launch/query/flight boundaries always yield
-        lea     game_preview_endpoint_ready,a0
-        tst.b   (a0,d7.w)
-        bne     .no
-        move.w  d7,d0
-        add.w   d0,d0
-        lea     game_preview_outcomes,a0
-        tst.w   (a0,d0.w)
-        bne     .no
-        tst.b   tutorial_placement_dirty
-        bne     .no
-        bsr     tutorial_animation_due
-        tst.l   d0
-        bne     .no
-        move.w  d7,d0
-        lsl.w   #3,d0
-        lea     game_preview_stream_cursors,a0
-        adda.w  d0,a0
-        lea     game_preview_history_saved+(game_history_cursor-game_history_state),a1
-        bsr     game_preview_compare_cursor
-        tst.l   d0
-        bne     .no
-        move.w  d7,d0
-        add.w   d0,d0
-        lea     game_preview_synthetic_phases,a0
-        cmpi.w  #3,(a0,d0.w)
-        bne     .no
-.dispatch:
-        move.l  #TUTORIAL_BG_FULL_E,d1
-        lea     game_preview_predictor_routes,a0
-        tst.b   (a0,d7.w)
-        beq.s   .admit
-        move.l  a5,a3
-        bsr     tutorial_dispatch_allowance
-.admit:
-        move.l  tutorial_job_cost,-(sp)
-        move.l  d1,tutorial_job_cost
-        bsr     tutorial_job_admitted ; fresh clock and coherent latch/beam fence
-        tst.l   d0
-        beq.s   .refused
-        move.l  (sp)+,d1
-        add.l   d1,tutorial_job_cost
-        addq.w  #1,tutorial_job_budget
-        clr.w   tutorial_batch_remaining ; exactly one possible extension
-        move.w  #1,game_preview_budget
-        move.w  #1,game_preview_explicit ; no second extension hook
-        moveq   #1,d0
-        bra.s   .done
-.refused:
-        move.l  (sp)+,tutorial_job_cost
-.no:    moveq   #0,d0
-.done:  movem.l (sp)+,d1-d7/a0-a6
-        rts
 
 ; Read-only bounded-prefix plan. Retained records may have irregular prefixes;
 ; peek each actual opcode. Never skip a body or its intermediate checks.

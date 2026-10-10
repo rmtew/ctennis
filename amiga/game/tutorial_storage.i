@@ -78,7 +78,7 @@ tutorial_paths: ds.l 2
 tutorial_counts: ds.w 2
 tutorial_outcomes: ds.w 2
 tutorial_coincident: ds.w 1
-tutorial_batch_remaining: ds.w 1
+        ds.w 1
 tutorial_scene_objects: ds.b 64
 tutorial_sprite_source: ds.l 1
 tutorial_scene_layer: ds.b 1
