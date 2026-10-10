@@ -31,6 +31,19 @@ ui_joystick_edges:
         lea     game_keyboard_matrix,a0
         lea     ui_previous_keys,a1
         moveq   #0,d1
+ui_input_key_groups:
+        ; Serial keyboard service cannot reenter this nominal sampler. Skip
+        ; four exactly unchanged bytes; changed groups retain the original
+        ; ascending scalar recognition and complete previous-key snapshot.
+        move.l  (a0),d0
+        cmp.l   (a1),d0
+        bne.s   ui_input_changed_group
+        addq.l  #4,a0
+        addq.l  #4,a1
+        addq.w  #4,d1
+        bra     ui_input_group_next
+ui_input_changed_group:
+        moveq   #3,d6
 ui_input_keys:
         move.b  (a0)+,d0
         move.b  (a1),d2
@@ -103,8 +116,10 @@ ui_input_escape: ori.b  #UI_ESCAPE,ui_edges
         bra     ui_input_next
 ui_input_pause: ori.b   #UI_PAUSE,ui_edges
 ui_input_next:  addq.w  #1,d1
+        dbra    d6,ui_input_keys
+ui_input_group_next:
         cmpi.w  #128,d1
-        bcs     ui_input_keys
+        bcs     ui_input_key_groups
         moveq   #0,d0
         tst.b   tutorial_active
         bne     ui_input_physical_pad_edges
