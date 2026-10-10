@@ -61,9 +61,13 @@ def run(standard):
                     if row.get('addr')==s['keyboard_ack'] and row.get('access')=='write':ack.append(row)
                     if row.get('addr') in by_address and row.get('access')=='write':
                         field_rows.append({k:row[k] for k in ('addr','size','value','pc','position')})
+                    if frozen is not None and callbacks.state.get('tutorial_active') and row.get('access')=='write':
+                        address=row.get('addr',0);size=row.get('size',0)
+                        assert address+size<=s['game_history_buffer'] or address>=s['game_history_buffer_end'],'Paused history record write'
                     callbacks.observe(message)
             session.observer=Observer()
-            session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=callbacks.watches(watched,raw)+callbacks.surfaces.watches()+[dict(addr=s['game_stack_bottom'],len=s['game_stack_top']-s['game_stack_bottom'],access='access')]))
+            subscription=session.inspect('events.subscribe',dict(events=['mmio','frame'],mmio=callbacks.watches(watched,raw)+callbacks.surfaces.watches()+[dict(addr=s['game_history_buffer'],len=s['game_history_buffer_end']-s['game_history_buffer'],access='write'),dict(addr=s['game_stack_bottom'],len=s['game_stack_top']-s['game_stack_bottom'],access='access')]))
+            assert not subscription.get('dropped_notifications',0),'Dropped native write-watch notifications'
             session.inspect('break.add',dict(kind='pc',addr=s['simulation_update']))
             session.inspect('break.add',dict(kind='pc',addr=s['tutorial_resume_restored']))
             beginning=stop['cck'];current=beginning;resume_pending=False;reconciled=0
@@ -74,6 +78,7 @@ def run(standard):
                     result=session.inspect('run_until',dict(seconds=min(goal,current+hz//1000)/PROVIDER));current=result['cck']
                     if result.get('pc')==s['tutorial_resume_restored']:
                         assert interrupted is not None
+                        assert block('game_history_buffer','game_history_buffer_end')==frozen['game_history_buffer'],'Frozen records changed before exact resume'
                         state=raw(s['game_core_state'],318);history=raw(s['game_history_state'],72)
                         assert state==raw(s['tutorial_interrupted_state'],318)==interrupted
                         expected=bytearray(metadata);origin=s['game_history_state']
@@ -90,7 +95,7 @@ def run(standard):
                                 interrupted=raw(s['tutorial_interrupted_state'],318);metadata=history
                                 assert not interrupted[s['game_input_bits']-s['game_core_state']]&0x10,'Interrupted logical F must be released'
                                 frozen={n:block(n,e) for n,e in (('game_core_state','game_core_state_end'),('game_history_buffer','game_history_buffer_end'))}
-                            assert all(block(n,('game_core_state_end' if n=='game_core_state' else 'game_history_buffer_end'))==v for n,v in frozen.items())
+                            assert block('game_core_state','game_core_state_end')==frozen['game_core_state']
                             assert history==metadata and raw(s['tutorial_interrupted_state'],318)==interrupted
                         elif resume_pending:
                             assert raw(s['game_core_state'],318)==interrupted,'Normal callback preceded exact restoration'
