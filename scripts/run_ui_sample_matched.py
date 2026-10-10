@@ -30,7 +30,7 @@ def run(standard):
             segments=session.inspect('segments.list')['current'];addresses=[h['start'] for h in segments]
             images,symbols=load_image(exe,hunk_addresses=addresses);original,rs=load_image(reference/'baseline-rally',hunk_addresses=addresses)
             loaded=loaded_hunks(exe,segments,lambda a,n:read(session,a,n))
-            def number(name,width=2):return int.from_bytes(read(session,symbols[name],width),'big')
+            def number(name,width=None):return int.from_bytes(read(session,symbols[name],FIELDS.get(name,2) if width is None else width),'big')
             def advance(delta):
                 goal=session.inspect('status')['cck']+int(delta*CLOCKS[standard])
                 for _ in range(20000):
