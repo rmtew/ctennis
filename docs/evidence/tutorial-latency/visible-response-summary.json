@@ -1,0 +1,767 @@
+{
+  "schema": 1,
+  "scope": "Finite lower-human initialized title/in-match physical UX qualification; selected cases only, no full-release acceptance",
+  "runtime_commit": "b8b04f834d399de813809c9e4f09a554f799419a",
+  "probe_commit": "7030ce6aed7edb12dbd134ac9c393f94704a880c",
+  "base_pr": 52,
+  "ux_campaign": "066e29453f5c4403ac1d33d5c36bbcb7",
+  "focused_input_startup_package_campaign": "02c9d008ad8c4256932327603e10a32d",
+  "product": {
+    "development_sha256": "6d454ad829dfe239826f6690838ed0a395c29fce3b135600f53e14afd99185a1",
+    "release_sha256": "a1ef7cdc37b33ac1f2e4672d761da5b1b7f91535e882b897e9fd9ef150b4e708",
+    "adf_sha256": "db0b02b9e26cbad4288dc55bf9698cdcb311017e88cbcb95d702728d9bec6095",
+    "loaded_payload_bytes": 344364
+  },
+  "routes": [
+    {
+      "standard": "PAL",
+      "origin": "title",
+      "report": "build/tests/tutorial-ux-candidate-title-pal/e6fca131733f47ef9e71fae3a9adc7c4/report.json",
+      "report_sha256": "31861c57d673a07164b74e06cdb487d08cad7c41318ada10ba22f7f0c8c8e8e3",
+      "reduction": "build/tests/tutorial-ux-reduction/current-pal-title-7030ce6.json",
+      "reduction_sha256": "1092819eba2cfd39bcbe25447b43c8c34ba9c33fe5856e0c2ced32eb26329855",
+      "passed": true,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 40.061236659106065,
+          "field_transitions": 2,
+          "first_pixel": "move-right-001",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 28,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 60.11060378161744,
+          "field_transitions": 3,
+          "first_pixel": "menu-open-002",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 60.119907693912566,
+          "field_transitions": 3,
+          "first_pixel": "menu-down-002",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 60.119061883703914,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "first_logical_motion_to_visible_handover": {
+        "physical_to_xy": 5.539774929903479,
+        "xy_to_copjmp": 9.864120589980814,
+        "copjmp_to_observation": 24.65734113922177,
+        "sum": 40.061236659106065
+      },
+      "keyboard_ack": {
+        "pairs": 22,
+        "max_hold_cck": 10093,
+        "max_hold_ms": 2.845587478625671,
+        "all_closed": true
+      },
+      "retained_neutral_publications": 13,
+      "callbacks": {
+        "completed_callbacks": 557,
+        "max_complete_callback_cck": 54654,
+        "minimum_absolute_headroom_cck": 3821.4090576171875,
+        "dropped_notifications": 0,
+        "stack_bytes": 258,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "actual_publications": 145,
+      "memory": {
+        "chip_used_bytes": 449920,
+        "chip_free_bytes": 74368,
+        "largest_chip_free_block_bytes": 73168,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "owner_classes": {
+        "4:3000": {
+          "samples": 28,
+          "max_owner_cck": 12429,
+          "max_through_next_keyboard_entry_cck": 12684,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.5041916944256877
+        },
+        "1:1000": {
+          "samples": 56,
+          "max_owner_cck": 4040,
+          "max_through_next_keyboard_entry_cck": 4289,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1390244143116726
+        },
+        "1:2000": {
+          "samples": 4,
+          "max_owner_cck": 5363,
+          "max_through_next_keyboard_entry_cck": 5609,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.5120267163251238
+        },
+        "1:4000": {
+          "samples": 781,
+          "max_owner_cck": 11372,
+          "max_through_next_keyboard_entry_cck": 11622,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.206184564245629
+        },
+        "4:2500": {
+          "samples": 48,
+          "max_owner_cck": 10032,
+          "max_through_next_keyboard_entry_cck": 10279,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.82838933771651
+        },
+        "1:3000": {
+          "samples": 105,
+          "max_owner_cck": 6999,
+          "max_through_next_keyboard_entry_cck": 7248,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.973275216774108
+        },
+        "2:4000": {
+          "samples": 3,
+          "max_owner_cck": 5974,
+          "max_through_next_keyboard_entry_cck": 6229,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.6842900621529535
+        },
+        "4:5000": {
+          "samples": 66,
+          "max_owner_cck": 22650,
+          "max_through_next_keyboard_entry_cck": 22898,
+          "work_allowance_cck": 25000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 6.385867075286976
+        },
+        "5:1000": {
+          "samples": 56,
+          "max_owner_cck": 3950,
+          "max_through_next_keyboard_entry_cck": 4199,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.113650108052254
+        },
+        "7:1000": {
+          "samples": 2,
+          "max_owner_cck": 1621,
+          "max_through_next_keyboard_entry_cck": 1869,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.45701944940574785
+        }
+      },
+      "animated_ball_pixels": {
+        "observations": 81,
+        "distinct_positions": 20
+      },
+      "landing_first": {
+        "photo": "held-preview-080",
+        "ground": [
+          109,
+          76
+        ],
+        "visible_cross_pixels": 3,
+        "index": 63
+      },
+      "exact_resume": true
+    },
+    {
+      "standard": "NTSC",
+      "origin": "title",
+      "report": "build/tests/tutorial-ux-candidate-title-ntsc/fdfa9f506b7e4959b59e755cac273a8a/report.json",
+      "report_sha256": "d2c7af3dfe35e7760e0267f18d8ae79b1c53d353ff3da127d46fe101b458ede8",
+      "reduction": "build/tests/tutorial-ux-reduction/current-ntsc-title.json",
+      "reduction_sha256": "1c4fc27192efcde140610879a9e99a4cf20abad93e1a2bbda3469be36e63c0d5",
+      "passed": true,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 50.07312381880937,
+          "field_transitions": 3,
+          "first_pixel": "move-right-002",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 28,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 33.040512132128526,
+          "field_transitions": 2,
+          "first_pixel": "menu-open-001",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 34.05432813388294,
+          "field_transitions": 2,
+          "first_pixel": "menu-down-001",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 34.07807416864434,
+          "field_transitions": 2,
+          "first_pixel": "menu-close-001",
+          "limit_fields": 3
+        }
+      },
+      "first_logical_motion_to_visible_handover": {
+        "physical_to_xy": 9.37661071449025,
+        "xy_to_copjmp": 22.949564818992357,
+        "copjmp_to_observation": 17.746948285326766,
+        "sum": 50.07312381880937
+      },
+      "keyboard_ack": {
+        "pairs": 22,
+        "max_hold_cck": 5973,
+        "max_hold_ms": 1.668647830939407,
+        "all_closed": true
+      },
+      "retained_neutral_publications": 34,
+      "callbacks": {
+        "completed_callbacks": 495,
+        "max_complete_callback_cck": 54867,
+        "minimum_absolute_headroom_cck": 4145.827575683594,
+        "dropped_notifications": 0,
+        "stack_bytes": 258,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "actual_publications": 149,
+      "memory": {
+        "chip_used_bytes": 440960,
+        "chip_free_bytes": 83328,
+        "largest_chip_free_block_bytes": 82128,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "owner_classes": {
+        "4:3000": {
+          "samples": 25,
+          "max_owner_cck": 12740,
+          "max_through_next_keyboard_entry_cck": 12990,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.5591115630617858
+        },
+        "1:1000": {
+          "samples": 82,
+          "max_owner_cck": 4574,
+          "max_through_next_keyboard_entry_cck": 4830,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.2778160352782266
+        },
+        "1:2000": {
+          "samples": 15,
+          "max_owner_cck": 5476,
+          "max_through_next_keyboard_entry_cck": 5992,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.5298033688639199
+        },
+        "1:4000": {
+          "samples": 695,
+          "max_owner_cck": 11361,
+          "max_through_next_keyboard_entry_cck": 11619,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.1738670696974056
+        },
+        "4:2500": {
+          "samples": 42,
+          "max_owner_cck": 10073,
+          "max_through_next_keyboard_entry_cck": 10322,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.8140448017834667
+        },
+        "1:3000": {
+          "samples": 57,
+          "max_owner_cck": 7397,
+          "max_through_next_keyboard_entry_cck": 7642,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.066463754471588
+        },
+        "2:4000": {
+          "samples": 3,
+          "max_owner_cck": 6027,
+          "max_through_next_keyboard_entry_cck": 6282,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.683733547140768
+        },
+        "4:5000": {
+          "samples": 73,
+          "max_owner_cck": 23083,
+          "max_through_next_keyboard_entry_cck": 23339,
+          "work_allowance_cck": 25000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 6.4485849458520565
+        },
+        "5:1000": {
+          "samples": 56,
+          "max_owner_cck": 3955,
+          "max_through_next_keyboard_entry_cck": 4204,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1048890291922577
+        },
+        "7:1000": {
+          "samples": 2,
+          "max_owner_cck": 2162,
+          "max_through_next_keyboard_entry_cck": 2408,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.6039873782841115
+        }
+      },
+      "animated_ball_pixels": {
+        "observations": 82,
+        "distinct_positions": 17
+      },
+      "landing_first": {
+        "photo": "held-preview-093",
+        "ground": [
+          109,
+          76
+        ],
+        "visible_cross_pixels": 3,
+        "index": 63
+      },
+      "exact_resume": true
+    },
+    {
+      "standard": "PAL",
+      "origin": "match",
+      "report": "build/tests/tutorial-ux-candidate-match-pal/021343b1cb1e488e993f171431ed00d1/report.json",
+      "report_sha256": "e5a298a3c9345f34e4288460e74ff6b40168fa3addaf624d599e456ef530d0e0",
+      "reduction": "build/tests/tutorial-ux-reduction/current-pal-match.json",
+      "reduction_sha256": "b265e4099b0c31df268958135be9e564d2b2ea9e0e3d78a7308206d4f4eca07e",
+      "passed": true,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 60.09622500807044,
+          "field_transitions": 3,
+          "first_pixel": "move-right-002",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 28,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 60.09678888154287,
+          "field_transitions": 3,
+          "first_pixel": "menu-open-002",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 40.07054057140118,
+          "field_transitions": 2,
+          "first_pixel": "menu-down-001",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 60.126956112317956,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "first_logical_motion_to_visible_handover": {
+        "physical_to_xy": 8.96192303409038,
+        "xy_to_copjmp": 27.044499484760614,
+        "copjmp_to_observation": 24.089802489219444,
+        "sum": 60.09622500807044
+      },
+      "keyboard_ack": {
+        "pairs": 24,
+        "max_hold_cck": 9873,
+        "max_hold_ms": 2.783561396658204,
+        "all_closed": true
+      },
+      "retained_neutral_publications": 14,
+      "callbacks": {
+        "completed_callbacks": 646,
+        "max_complete_callback_cck": 51734,
+        "minimum_absolute_headroom_cck": 6229.137237548828,
+        "dropped_notifications": 0,
+        "stack_bytes": 312,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "actual_publications": 194,
+      "memory": {
+        "chip_used_bytes": 449920,
+        "chip_free_bytes": 74368,
+        "largest_chip_free_block_bytes": 73168,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "owner_classes": {
+        "4:3000": {
+          "samples": 51,
+          "max_owner_cck": 12481,
+          "max_through_next_keyboard_entry_cck": 12734,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.5188524047089076
+        },
+        "1:1000": {
+          "samples": 70,
+          "max_owner_cck": 4144,
+          "max_through_next_keyboard_entry_cck": 4397,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1683458348781117
+        },
+        "1:2000": {
+          "samples": 18,
+          "max_owner_cck": 5480,
+          "max_through_next_keyboard_entry_cck": 5733,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.545013314462368
+        },
+        "1:4000": {
+          "samples": 1031,
+          "max_owner_cck": 11419,
+          "max_through_next_keyboard_entry_cck": 11667,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.2194355908477696
+        },
+        "4:2500": {
+          "samples": 48,
+          "max_owner_cck": 10035,
+          "max_through_next_keyboard_entry_cck": 10283,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.829235147925157
+        },
+        "1:3000": {
+          "samples": 116,
+          "max_owner_cck": 6939,
+          "max_through_next_keyboard_entry_cck": 7203,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.9563590126011625
+        },
+        "2:4000": {
+          "samples": 3,
+          "max_owner_cck": 6119,
+          "max_through_next_keyboard_entry_cck": 6369,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.7251708889042388
+        },
+        "4:5000": {
+          "samples": 68,
+          "max_owner_cck": 23050,
+          "max_through_next_keyboard_entry_cck": 23298,
+          "work_allowance_cck": 25000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 6.498641769773281
+        },
+        "5:1000": {
+          "samples": 56,
+          "max_owner_cck": 3953,
+          "max_through_next_keyboard_entry_cck": 4202,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1144959182609013
+        },
+        "7:1000": {
+          "samples": 2,
+          "max_owner_cck": 1616,
+          "max_through_next_keyboard_entry_cck": 1863,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.45560976572466905
+        }
+      },
+      "animated_ball_pixels": {
+        "observations": 134,
+        "distinct_positions": 29
+      },
+      "landing_first": {
+        "photo": "held-preview-079",
+        "ground": [
+          109,
+          76
+        ],
+        "visible_cross_pixels": 3,
+        "index": 63
+      },
+      "exact_resume": true
+    },
+    {
+      "standard": "NTSC",
+      "origin": "match",
+      "report": "build/tests/tutorial-ux-candidate-match-ntsc/16beddb24e3d4d819244b15ae02c6689/report.json",
+      "report_sha256": "1e6f8588a646e45382753fb7b39c16cdc1ce83cdef8640f80b9ab53a60bbf035",
+      "reduction": "build/tests/tutorial-ux-reduction/current-ntsc-match.json",
+      "reduction_sha256": "f703d1a28d4ead4ecdb9d715b83047bcc642c5d7efd4686a9ba7479d421c85f6",
+      "passed": true,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 34.04259479905966,
+          "field_transitions": 2,
+          "first_pixel": "move-right-001",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 29,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 34.07276623146238,
+          "field_transitions": 2,
+          "first_pixel": "menu-open-001",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 50.09603175822625,
+          "field_transitions": 3,
+          "first_pixel": "menu-down-002",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 50.07424127926873,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "first_logical_motion_to_visible_handover": {
+        "physical_to_xy": 7.85043909211925,
+        "xy_to_copjmp": 7.999340698328978,
+        "copjmp_to_observation": 18.19281500861143,
+        "sum": 34.04259479905966
+      },
+      "keyboard_ack": {
+        "pairs": 24,
+        "max_hold_cck": 10033,
+        "max_hold_ms": 2.802870197189866,
+        "all_closed": true
+      },
+      "retained_neutral_publications": 0,
+      "callbacks": {
+        "completed_callbacks": 570,
+        "max_complete_callback_cck": 51775,
+        "minimum_absolute_headroom_cck": 6694.005554199219,
+        "dropped_notifications": 0,
+        "stack_bytes": 308,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "actual_publications": 190,
+      "memory": {
+        "chip_used_bytes": 440960,
+        "chip_free_bytes": 83328,
+        "largest_chip_free_block_bytes": 82128,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "owner_classes": {
+        "4:3000": {
+          "samples": 50,
+          "max_owner_cck": 12413,
+          "max_through_next_keyboard_entry_cck": 12663,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.467759170509101
+        },
+        "1:1000": {
+          "samples": 46,
+          "max_owner_cck": 4530,
+          "max_through_next_keyboard_entry_cck": 4895,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.265523970225266
+        },
+        "1:2000": {
+          "samples": 7,
+          "max_owner_cck": 5487,
+          "max_through_next_keyboard_entry_cck": 5736,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.53287638512716
+        },
+        "1:4000": {
+          "samples": 960,
+          "max_owner_cck": 11341,
+          "max_through_next_keyboard_entry_cck": 11594,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.1682797674006054
+        },
+        "4:2500": {
+          "samples": 42,
+          "max_owner_cck": 9597,
+          "max_through_next_keyboard_entry_cck": 9849,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.68106700711962
+        },
+        "1:3000": {
+          "samples": 121,
+          "max_owner_cck": 7126,
+          "max_through_next_keyboard_entry_cck": 7378,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.990755808349944
+        },
+        "2:4000": {
+          "samples": 3,
+          "max_owner_cck": 6037,
+          "max_through_next_keyboard_entry_cck": 6288,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.686527198289168
+        },
+        "4:5000": {
+          "samples": 75,
+          "max_owner_cck": 23076,
+          "max_through_next_keyboard_entry_cck": 23326,
+          "work_allowance_cck": 25000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 6.446629390048177
+        },
+        "5:1000": {
+          "samples": 56,
+          "max_owner_cck": 3955,
+          "max_through_next_keyboard_entry_cck": 4209,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1048890291922577
+        },
+        "7:1000": {
+          "samples": 2,
+          "max_owner_cck": 2161,
+          "max_through_next_keyboard_entry_cck": 2407,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.6037080131692715
+        }
+      },
+      "animated_ball_pixels": {
+        "observations": 147,
+        "distinct_positions": 29
+      },
+      "landing_first": {
+        "photo": "held-preview-093",
+        "ground": [
+          109,
+          76
+        ],
+        "visible_cross_pixels": 3,
+        "index": 63
+      },
+      "exact_resume": true
+    }
+  ],
+  "independent_review": {
+    "path": "build/tests/tutorial-playable-review/ux-four-route-independent-review.json",
+    "sha256": "0c8c03733e239319549313035e0d0fac44a641c0f3cd8c24a95f2d6db16212d4"
+  },
+  "shared_core_byte_equality": {
+    "path": "build/tests/tutorial-ux-reduction/shared-core-byte-equality.json",
+    "sha256": "0b0dc6497f6dcd2d3b6accf32e8833a909ee92ca2ddaab2a943595d7d653f24e",
+    "result": {
+      "passed": true,
+      "matched_bytes": 17606,
+      "relocations_each": 7,
+      "verified_sink_branches_each": 14,
+      "normalized_sha256": "99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5",
+      "executable_sha256": {
+        "build/amiga/interfaces/enhanced/baseline-rally": "6d454ad829dfe239826f6690838ed0a395c29fce3b135600f53e14afd99185a1",
+        "build/standalone/match-core": "38c48b8953c495fd86f5ddd4a475ddb27d5a3f881c9397c8f50ed8814e60c390"
+      },
+      "scope": "Actual uninstrumented code/tables/alignment; only HUNK_RELOC32 and verified named synchronous-sink branch address fixups normalized; state bytes excluded"
+    }
+  },
+  "host_tests": {
+    "tests": 339,
+    "result": "pass",
+    "scope": "Parent-recorded actual tool result; not independent reviewer execution",
+    "receipt": "build/tests/tutorial-ux-reduction/host-unit-prior-tool-result.json"
+  },
+  "holds": [
+    "Human appearance/playability review and WinUAE execution",
+    "Matched deterministic before/after current prediction-latency qualification",
+    "Eight named runtime-resource profiles for this current product",
+    "Universal timing, transport/ACK, fairness, deadline/WCET bounds",
+    "Upper/robot/retained and broader rejected-request queue retirement",
+    "All physical resume combinations and full native/release acceptance"
+  ],
+  "timing_basis": "Actual CCK/PAL3546895/NTSC3579545, native COPJMP and most-recent-completed-field replay photos. Photo observation is an upper bound, not exact scanout-edge timing. Middle movement interval permits coalescing of earlier sampled poses. Outside-callback time is not presumed recoverable.",
+  "library_uploads": false,
+  "public_binary_uploads": false,
+  "merge_authorized": false
+}

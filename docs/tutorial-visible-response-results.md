@@ -40,7 +40,7 @@ original frozen ball/shadow are visible native objects, but the old renderer
 hides them while waiting. Held preview produces native samples in this route.
 This distinguishes the title initialization failure from the presentation gaps.
 
-## Causal findings and correction under qualification
+## Causal findings and correction
 
 Source inspection shows title selection enters PLAYING before score and serve
 initialization. The old tutorial immediately freezes this incomplete snapshot.
@@ -56,14 +56,14 @@ slice and renders labels synchronously. These are source-supported mechanisms;
 only the visible timings above are measured user-facing costs. Outside-callback
 time is not assumed idle or recoverable.
 
-The current unqualified correction prepares banner, three menu ROIs and control
+The current correction prepares banner, three menu ROIs and control
 lines before the timer starts; uses two paired private footers with the existing
 free-canvas ownership; retains actual original ball/shadow while prediction is
 pending; waits for the actual initialized visible serve boundary on title entry;
 and keeps actual prefix playback from consuming accumulated unavailable time.
 Generation retirement, original resume and selected/other-branch fairness remain
 requirements. Optional trails and deferred navigation/edited branching remain
-out of scope. Both routes and both standards require current-product proof.
+out of scope. Both routes and both standards now have the finite current-product proof below.
 
 ## Placement publication and bounded neutral retention
 
@@ -129,7 +129,7 @@ The banner, keyboard hints, original frozen ball, actual landing cross, menu
 labels and exact original resume all pass. An additional pixel reduction finds
 81 mode 2 ball observations at 20 distinct positions before any landing cue,
 using actual queued native headers/sample bytes and white image pixels rather
-than animation counters. The landing cue becomes visible at terminal sample63
+than animation counters. The landing cue becomes visible at terminal sample 63
 in these schedules. This proves a displayed computed landing point, not a cue
 that precedes the animated ball throughout its flight. Native sprite X equals the cropped pixel X; Y is
 native object Y+1. An inherited 31-pixel X assumption failed and remains in the
@@ -154,7 +154,7 @@ The initial NTSC observation failed at 60 fields while the original game remaine
 in score initialization with hidden native ball objects. Probe `7030ce6` uses 72
 NTSC fields, matching 60 PAL fields' approximately 1.2-second observation duration.
 This changes observation coverage, not runtime eligibility or gameplay timing.
-Both-standard and in-match qualification is still pending at this checkpoint.
+The four closed current-product routes pass; the failed shorter observation remains preserved.
 
 ## Scope and retained latency accounting
 
@@ -171,10 +171,77 @@ proof. New matched prediction-latency qualification remains a limitation.
 Campaign `1801d21b56ec4ce2990d5f876230d416` preserves all stronger capture
 failures. Transport overflow, buffered profile metadata, unsupported profile
 frame emission under run_until and canonical subregion-boundary observer errors
-are collection failures, never product passes. Fixes and the resumed attempt
-remain under qualification. Independent review is ongoing.
+are collection failures, never product passes. The four closed captures and focused checks have independent review; collection failures remain failures.
 
 PAL native visible cadence is 50 fields/s; NTSC is approximately 60. A nominal
-60 Hz simulation does not create 60 distinct PAL display frames. No corrected
-disk, universal deadline bound, resource clearance, full acceptance, WinUAE
-pass, merge or release is established by this investigation checkpoint.
+60 Hz simulation does not create 60 distinct PAL display frames. A corrected private disk candidate is qualified for these finite routes. Universal deadline bounds, full resource clearance, full acceptance, WinUAE, merge and release remain held.
+
+## Four-route qualification and focused resource checks
+
+Runtime `b8b04f8`, probe `7030ce6`, campaign
+`066e29453f5c4403ac1d33d5c36bbcb7` passed all four physical routes:
+
+| Route | First visible movement | Changed poses / 30 fields | Menu open / select / close (ms) |
+|---|---:|---:|---:|
+| PAL title | 40.061237 ms / 2 fields | 28 | 60.110604 / 60.119908 / 60.119062 |
+| NTSC title | 50.073124 ms / 3 fields | 28 | 33.040512 / 34.054328 / 34.078074 |
+| PAL in-match | 60.096225 ms / 3 fields | 28 | 60.096789 / 40.070541 / 60.126956 |
+| NTSC in-match | 34.042595 ms / 2 fields | 29 | 34.072766 / 50.096032 / 50.074241 |
+
+Every continuous-motion maximum gap is one field. The non-overlapping first
+movement intervals (physical input to XY, XY to the first displayed pose's
+COPJMP, COPJMP to completed-field observation) are:
+
+| Route | Input → XY | XY → COPJMP | COPJMP → observation | Total (ms) |
+|---|---:|---:|---:|---:|
+| PAL title | 5.539775 | 9.864121 | 24.657341 | 40.061237 |
+| NTSC title | 9.376611 | 22.949565 | 17.746948 | 50.073124 |
+| PAL in-match | 8.961923 | 27.044499 | 24.089802 | 60.096225 |
+| NTSC in-match | 7.850439 | 7.999341 | 18.192815 | 34.042595 |
+
+These are measured finite observation bounds, not exact scanout-edge latency.
+All four verify actual banner/hint/menu fonts, frozen ball/shadow, computed
+landing pixels, unchanged 318-byte original state and 72-byte history state,
+unchanged history records, and physical original resume back to ordinary pixels.
+There are 444 actual mode 2 ball photographs before any landing cue. The cue
+appears at terminal sample 63 in these schedules; an advance landing cue is not
+established. No edited-position commit or optional trajectory trail is added.
+
+The four runs total 2,268 complete callbacks, 678 publications, 61 positively
+qualified retained neutral publications, 92 complete keyboard ACK pairs and
+four exact original restores. There are no dropped events or measured callback
+deadline misses. The largest measured full root owner is 23,083 CCK; every class
+and its following keyboard-entry bracket fit the 12,500/15,000/25,000 CCK work
+allowances without consuming the separate 5,000 CCK service/margin reserve.
+PAL uses 449,920 B of the chip pool (74,368 B free); NTSC uses 440,960 B
+(83,328 B free), with no expansion pool. Finite measurements do not prove
+universal bounds or full workload acceptance.
+
+Campaign `02c9d008ad8c4256932327603e10a32d` independently passes 11 input checks,
+four exact-release PAL/NTSC cold boots with zero/512 KiB slow RAM, and package
+reproducibility. Only 36,396 bytes of HUNK_SYMBOL records are removed; the five
+loaded hunks match the development image. The current product has 344,364 B
+loaded payload, 15,412 B more than the delivered baseline. The fresh normalized
+shared-core check independently matches 17,606 bytes, seven relocations and 14
+sinks. The previously executed host suite passed 339 tests; its retained receipt
+explicitly identifies parent-recorded tool-output provenance.
+
+Independent receipts are `build/tests/tutorial-playable-review/ux-four-route-independent-review.json`
+and `ux-focused-independent-review.json`. The source review's clearance covers
+the qualified initialized lower-human routes. Outside that scope, rejected
+`tutorial_request .missing` requests can leave a previous queued bank; broader
+rejected-request retirement remains a hold, not a globally cleared invariant.
+
+`native_metrics.py --require-runtime --record` truthfully records incomplete
+current-product coverage in both `docs/metrics/current.json` and `current.md`:
+all eight full named resource profiles remain unmeasured. Human appearance and
+playability, WinUAE, matched deterministic current prediction latency, broad
+fairness/cancellation, universal WCET and all resume/full-release holds remain.
+No merge or public binary upload is authorized by these focused passes.
+
+The curated machine-readable record is
+`docs/evidence/tutorial-latency/visible-response-summary.json`; raw frames,
+transport traces, failed attempts, reviews and private delivery artifacts remain
+outside Git. Controls: WASD/pad move; hold F/button 1 for prediction; G/button 2
+opens the menu; choose Close to return, or Resume Original to restore the actual
+interrupted game. PAL presents 50 fields/s and NTSC approximately 60.
