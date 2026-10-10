@@ -80,14 +80,99 @@ before clock/MMIO: these are routing/mutation fixtures, not hardware timing,
 universal reachability or a native deadline proof. Phases3/4 test the exact
 eligibility boundary; actual progression is covered by matched native execution.
 
-Matched native campaign `8c12a251abf942eb8aa22d66cb4942e1` uses the same
+The first campaign `8c12a251abf942eb8aa22d66cb4942e1` failed before any latency
+result: its PAL20–32ms D hold fell between actual control samples at17.787953
+and34.613091ms. Physical press/release ACKs did retire. Immutable failure is
+`build/tests/next-operation-matched-pal/efdcefb84d864fe1a7f8ff718d1b4c1d/failure.json`.
+The fixed press was changed to28ms for both regions with the same12ms hold;
+no runtime or adaptive measured-pass scheduling changed.
+
+Matched native campaign `cea7ce21b5db473fae91b5928a60975b` uses the same
 complete saved machine, controls and deterministic input schedule for original
 baseline replay and candidate. Only the complete root-owner code range changes;
-padding is unreachable. Original and padded code match outside that range, with
-all symbols and hunk sizes equal. The frozen original, padded reference and
+padding is unreachable. Candidate and padded-original code match outside that
+range, with all other symbols and hunk sizes equal. The CPU proof separately
+qualifies frozen PR49 against padded-original behavior and cycles. The frozen original, padded reference and
 candidate products and raw receipts remain outside Git.
 
-Native timings, exhaustive disjoint accounting and the final retention decision
-will be recorded after the campaign closes. Existing unaffected receipts remain
-reused; no broad duplicate campaign is requested. Existing appearance, resource,
-deadline, physical-resume and full-release holds remain.
+The campaign closes with both selected cases passed, not full acceptance.
+Baseline1 and baseline2 replay objects agree exactly. All passes accept the same
+single new-generation `(98,152,variant0)` request, retain frozen canonical,
+history and records, retire physical press/release ACK and publish the same
+nonzero held endpoint through actual completed banks/native sprites at COPJMP.
+This is publication, not first scanout. The fixed observation window is1.2s with
+at most30ms owner-closure tail, with no adaptive latency stop.
+
+| Region | Original COPJMP ms | Candidate ms | Change |
+|---|---:|---:|---:|
+| PAL |511.533891|491.500312|−20.033579|
+| NTSC |484.964430|484.965547|+0.001117 (4 CCK)|
+
+The minimal gate is **retained**: this matched PAL workload demonstrates a useful
+publication improvement and NTSC is effectively neutral. Readiness advances
+5.004095ms PAL and1.190095ms NTSC. Publication phase absorbs NTSC's advance;
+PAL's shorter known-to-publication suffix contributes15.029484ms of its gain.
+The entire20ms cannot be assigned directly to removed wrapper execution.
+These are finite matched pairs, not a promise for other states/schedules.
+
+Both regions execute216 logical operations and48 actual dispatches before
+readiness. Public grants change110→89 PAL and85→84 NTSC as the clock schedule
+changes. Endpoint wrapper calls fall227→14 PAL and254→13 NTSC; their inclusive
+spans fall26.070972→1.949029ms and29.229972→1.803861ms. Exclusive wrapper spans
+fall22.230430→1.709382ms and24.951216→1.584838ms. These diagnostics already
+overlap support; they are never added as extra latency buckets. The gates also
+have a cost: positive CPU fixtures add118 cycles while negative routes save
+558–924 cycles. Unchanged early exclusions have zero cycle difference.
+
+## Non-overlapping elapsed accounting
+
+Every integer CCK from scheduled physical press through qualifying COPJMP is
+assigned once by the established nested-span priority. Endpoint-known is the
+actual new-generation held-ready store after request clear; point/outcome stores
+precede it in unchanged code. Its suffix is removed from all other buckets.
+Observed call spans include IRQ; instruction tails, outside-call gaps and missing
+contexts remain unclassified. Outside-callback time is not necessarily idle or
+recoverable. Cost classes are not universal bounds.
+
+| Exclusive elapsed partition, ms | PAL original | PAL candidate | NTSC original | NTSC candidate |
+|---|---:|---:|---:|---:|
+| Actual mathematics before known |60.048296|59.997265|59.870458|59.860122|
+| Scheduling/preview support before known |262.838342|248.549224|258.961125|246.263422|
+| Hardware service/display production before known |103.666728|111.654842|100.733752|110.973322|
+| Mandatory callback/controls/requests before known |43.967188|43.972545|42.810469|42.806278|
+| Unclassified before known |11.783264|13.125847|11.690033|12.972598|
+| Known-ready store to qualified COPJMP |29.230073|14.200590|10.898592|12.089805|
+| Total |511.533891|491.500312|484.964430|484.965547|
+
+The measured aggregate support reduction is14.289118ms PAL and12.697703ms
+NTSC. Hardware-service/display spans rise as the execution schedule changes;
+the causal conclusion is limited to this complete treatment and matched inputs,
+not independent subtraction of unchanged service maxima.
+
+Fresh immutable reports:
+`build/tests/next-operation-matched-pal/d25583bb5cfb488aa60cb3731b52dd05/report.json`
+and `build/tests/next-operation-matched-ntsc/497248162e2f4373b5326ab0723befb8/report.json`.
+The committed `docs/evidence/tutorial-latency/next-operation-summary.json`
+binds reports, exact product, raw traces, saved anchors and reproducible reducer.
+`next-operation-custody.json` binds retained private files, including failure.
+Raw artifacts/ROM stay outside Git; no Library uploads.
+
+Existing unaffected receipts remain reused; no broad duplicate campaign was run.
+The endpoint API, classifier, game/preview bodies, rendering and input code are
+unchanged. This does not newly certify all asynchronous fairness/ACK edges,
+normative transport/deadline bounds, physical exact resume or full release.
+Existing appearance, resource, deadline, physical-resume and full-release holds
+remain; no merge or release is authorized by these selected checks.
+
+Independent source, CPU, native and accounting review clears retaining the gate
+within this scope. It independently recomputed both partitions, checked all882
+CPU evidence bindings and327 per native region, and verified all799 retained
+custody files. It distinguishes declared phase4 routing from physical phase
+progression and notes unchanged active-owner exclusion was not an added fixture.
+
+`python3 scripts/native_metrics.py --require-runtime --record` records the
+current static product and exits1 for incomplete existing runtime coverage.
+Both tracked metric files are updated together; no resource or full gate pass is
+claimed. Compared with the actual PR49 product, this experiment adds44 code
+bytes, whereas the older tracked metric product comparison includes earlier
+changes as well. No duplicate resource collectors were started.
