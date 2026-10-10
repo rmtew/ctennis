@@ -37,7 +37,7 @@ def summarize(native,capture):
     background_contacts=sum(any(c['entry']['cck']<=r['entry']['cck']<=r['exit']['cck']<=c['exit']['cck'] for r in roots) for c in physics)
     contact_dispatches=[r for r in calls if r['callee']=='game_preview_dispatch' and any(r['entry']['cck']<=q['entry']['cck']<=q['exit']['cck']<=r['exit']['cck'] for q in roots)]
     return dict(background_physics_owners=len(physics),background_contact_owners=background_contacts,
-        maximum_contact_dispatch_cck=max((r['elapsed_bus_cck'] for r in contact_dispatches),default=None),(endpoints=rows,classes=native['deadline']['classes'],maximum_by_class_cck=native['deadline']['maximum_by_class_cck'],
+        maximum_contact_dispatch_cck=max((r['elapsed_bus_cck'] for r in contact_dispatches),default=None),endpoints=rows,classes=native['deadline']['classes'],maximum_by_class_cck=native['deadline']['maximum_by_class_cck'],
         accepted=native['deadline']['background_worker_calls'],declined=native['deadline']['declined_owner_calls'],
         maximum_declined_cck=native['deadline']['maximum_declined_owner_cck'],
         maximum_callback_cck=native['deadline']['maximum_callback_cck'],maximum_entry_lateness_cck=native['deadline']['maximum_entry_lateness_cck'],
