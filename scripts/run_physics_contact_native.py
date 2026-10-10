@@ -333,16 +333,18 @@ def run(standard='PAL'):
                 endpoint('contact-phase-'+str(trial),previous,request=actions[-2]['position'])
             advance(.03)
             # End on an actual upcoming callback boundary; never cut an owner.
+            simulation_return=calls[simulation_calls[0]]['return_pc']
+            session.inspect('break_add',dict(kind='pc',addr=simulation_return))
             final_goal=(stop['cck']+CLOCKS[standard])/PROVIDER_CLOCK
             for _ in range(8192):
                 stop=session.inspect('run_until',dict(seconds=final_goal))
-                if stop.get('pc')==symbols['simulation_update']:break
+                if stop.get('pc')==simulation_return:break
             else:raise AssertionError('No complete final callback boundary')
             actual_video=[number('presentation_last_line',2),number('simulation_interval_whole',4),number('simulation_interval_fraction',2)]
             assert actual_video==([311,11838,14906] if standard=='PAL' else [261,11947,13180])
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval);stack_result=timing.result()
-            assert len(stack_result['open_enclosing_calls'])==1 and stack_result['open_enclosing_calls'][0]['callee']=='simulation_update'
+            assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
             input_result=input_trace.result(actions,stack_result['calls'])
             assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
@@ -359,7 +361,10 @@ def run(standard='PAL'):
             dispatch_samples=dispatch_samples,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
         from deadline_extent import validate_capture,negative_controls
         from deadline_service_reduction import reduce_capture
-        captured['deadline']=validate_capture(captured)
+        try:captured['deadline']=validate_capture(captured)
+        except BaseException:
+            with gzip.open(directory/'calibration-unvalidated.json.gz','wt') as h:json.dump(captured,h,separators=(',',':'))
+            raise
         captured['deadline_negative_controls']=negative_controls(captured)
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
