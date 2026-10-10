@@ -18,6 +18,26 @@ from native_tools import ROOT
 LAST_TRIAL={}
 
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def qualified_manifest(role,directory):
+    """Reject copied stale compile metadata before executing either image."""
+    executable=directory/'match-core';listing=directory/'match-core.lst'
+    manifest=json.loads((directory/'match-core.compile.json').read_text())
+    declared=manifest['executable'];files=manifest['files']
+    assert manifest['executable_sha256']==digest(executable),role+' compile executable identity mismatch'
+    assert files[declared]==digest(executable),role+' compiled executable binding mismatch'
+    assert files[declared+'.lst']==digest(listing),role+' compiled listing binding mismatch'
+    checked=[]
+    if role=='candidate':
+        assert 'amiga/game/preview_serve_stages.s' in files,'Candidate compile omits serve stages'
+        for name,sha in files.items():
+            path=(ROOT/name).resolve()
+            if not path.is_relative_to((ROOT/'build').resolve()):
+                assert path.is_file() and digest(path)==sha,'Candidate compiled input changed: '+name
+                checked.append(name)
+    return dict(executable_sha256=digest(executable),listing_sha256=digest(listing),
+                current_candidate_inputs_checked=checked,
+                original_scope='Frozen original source bindings retained; not compared with changed current sources.')
+
 def setup(c,clock):
     s=c.symbols;c.call_logical('game_core_init',[]);attach(c);c.call_logical('game_core_select',[0,0xace1,0])
     for tick in range(150):
@@ -162,6 +182,7 @@ def main():
         cp,ci=cpu_tool_inputs();report['cpu']=ci
         paths=list(out.glob('*/*'))+[out/'serve_stages_cpu_proof.py']+[ROOT/'scripts'/n for n in ('match_core_cpu.py','match_core_capture.py','build_match_core.py','serve_stage_discovery.py','run_coherent_classifier_cpu.py','run_shared_match_core.py','history_proof.py')]+sorted(cp)
         report['bindings']={str(p):digest(p) for p in paths}
+        report['compile_identity_validation']={role:qualified_manifest(role,out/role) for role in ('original','candidate')}
         products={role:load_image(out/role/'match-core') for role in ('original','candidate')}
         report['original_dispatch_byte_identity']=dispatch_identity(products)
         with Core(*products['candidate'],readonly=READONLY) as table_cpu:

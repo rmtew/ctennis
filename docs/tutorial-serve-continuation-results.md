@@ -34,7 +34,7 @@ finite cases; its gameplay body costs 1452–12500 cycles. These exclude root
 ownership, Amiga contention and IRQ costs. The returned body boundaries support
 this first partition; no further gameplay split is justified by CPU data alone.
 
-Final comparison report `build/tests/serve-stages-cpu/70833bf985324292be71bae46bd70c0a/report.json`
+Preserved comparison report `build/tests/serve-stages-cpu/70833bf985324292be71bae46bd70c0a/report.json`
 (SHA256 `079e1562ec0f7efe69bb7dc7ccc1c8307565f5a8582705ecfd26d842dd49df61`)
 passes 58 cases: initial phase 40 plus timed clocks 1–16 for each alternative,
 and mixed synchronous completion, cancellation, replacement and seek at stages
@@ -42,6 +42,16 @@ and mixed synchronous completion, cancellation, replacement and seek at stages
 pass. All ten intermediate 318-byte states, 72-byte history states and ordered
 outputs equal the original actual preview API. Poisoned caller registers and CCR
 are replaced by the saved original continuation before the next body.
+
+That receipt has a compilation-custody gap: its copied candidate executable and
+listing are the staged image, but its copied compile manifest describes the old
+original executable. The execution observations remain bound to those actual
+copied images; the stale manifest cannot qualify candidate source identity.
+The receipt remains unchanged. A new guard rejects that exact stale candidate
+before fixture execution and checks both copied executable/listing identities,
+plus current candidate assembly/asset bindings. A fresh manifest-bound CPU
+comparison is pending; this gap does not affect the independently bound native
+serve receipts.
 
 Complete staged API CPU spans range 4562–17306 cycles. These are diagnostic CPU
 measurements, not native owner bounds. Failed attempts, including an initially
@@ -131,9 +141,47 @@ at actual menu acceptance. The transport opportunity is not assumed a bound. No 
 behavior changed for either observer correction. All raw traces, products and
 failed receipts are retained; none is relabeled a pass.
 
-Physical generation replacement was witnessed in those failed expanded attempts,
-but their incomplete menu/resume extent remains failed. Final PAL/NTSC pending
-replacement/resume and affected incoming checks are not inferred from first PAL.
+## Final physical serve checks
+
+The failed attempts above remain preserved. Campaign
+`18cf77b570bf491fa012b169ae9ca405` qualifies the final probe separately. PAL attempt
+`290b993141804e0d81e1398cb076b23d` and NTSC attempt
+`bb88dadf84ba4f68be2f688f6ac266ea` pass held endpoint, released waiting,
+physical generation replacement and cancellation of a genuinely partial envelope
+on exact original resume. Both bind the development executable and listing
+hashes above. Incoming checks and affected resource validation are still pending.
+
+| Final observation | PAL | NTSC |
+|---|---:|---:|
+| Actual stage owners, all ten bodies | 1751 | 1894 |
+| Largest enclosing owner bus span, CCK | 11254 | 11285 |
+| Largest complete accounting bracket, CCK | 11535 | 11665 |
+| Same complete bracket, ms | 3.252140 | 3.258794 |
+| Completed callbacks | 807 | 1130 |
+| Minimum observed absolute headroom, CCK | 6498 | 6871 |
+| Tutorial publications with current generation/variant and native sprites | 120 | 123 |
+
+Every observed complete-owner bracket fits the 20000-CCK stage reservation.
+The complete bracket includes full call/return plus surrounding accounting work;
+the bus span and nested bodies overlap it and must not be added. PAL and NTSC
+milliseconds use their respective 3546895 and 3579545 Hz clocks. No intrinsic
+CPU/wait split or universal owner bound is inferred.
+
+Physical A replacement retires generation 4's held stage 5 and both owner/index
+banks before generation 5 proceeds. At actual menu acceptance, PAL retains
+generation 13 stage 6 (3191 E remaining before release); NTSC retains generation
+12 stage 5 (4533 E). No stage API runs between menu acceptance and resume.
+Each restores the exact 318-byte original state and 72-byte history metadata,
+retires preview ownership and suppresses newly held F until reconciliation.
+
+Independent callback reconstruction reads the literal initial CIA-start and
+origin samples and sums actual observed integer intervals. Both finite captures
+have zero negative headroom. It does not infer the fractional accumulator; the
+5-CCK E-clock quantization and start/sampling-edge uncertainty remain. Counter
+store boundaries also do not establish whole callback instruction tails.
+Owner and protocol/deadline evidence is retained under
+`build/tests/tutorial-playable-review/serve-owner-{pal-290b993,ntsc-bb88dad}-summary.json`
+and `serve-protocol-deadlines-{pal-290b993,ntsc-bb88dad}.json`.
 
 The prior incoming latency account in `tutorial-next-operation-results.md`
 remains bound to its original matched products and schedules. This new kind-3
