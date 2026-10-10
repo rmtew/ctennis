@@ -59,6 +59,9 @@ def run(standard='PAL', coherent=False):
     origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
     directory = ROOT/'build/tests'/(('coherent-contact-native-' if coherent else 'physics-contact-native-')+standard.lower())
+    if coherent:
+        from coherent_capture_archive import archive_previous
+        archive_previous(directory)
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
