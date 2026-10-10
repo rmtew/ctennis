@@ -1,5 +1,8 @@
 # Post-PR47 latency investigation: reviewed transfer and next reduction
 
+This is the historical pre-correction analysis. The subsequent measured correction
+and remaining holds are in [input-scan results](tutorial-latency-ui-scan-results.md).
+
 This investigation continues from PR47 head `9a9aca59` and verified transfer
 `63ed6aac37892cea382ab83dd798d973892e2e06`. Runtime is unchanged from
 `6a0f7498`; native SHA256 remains
