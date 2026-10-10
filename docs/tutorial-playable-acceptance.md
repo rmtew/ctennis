@@ -132,3 +132,24 @@ needs its own complete native ownership/service cost evidence and matched
 original-reference equivalence before admission. No already-validated operation
 currently supplies that contract. Merely assigning the smaller incoming cost
 class or dropping score/scene/tail calls would weaken the required behavior.
+
+## Current campaign custody
+
+CPU campaign `c68e40a9562f42ca9ffbff893c1ed173` completed all 56 actual-68000
+coherent API cases. Its immutable raw directory is
+`build/tests/coherent-scheduler-cpu/raw-73a7a517634f428aa5ae21da62c431bd/`.
+The standalone compiled dependencies remain unchanged after the controller-only
+queue correction; qualified reuse and the current native shared-core 17,606-byte
+comparison are recorded under `build/tests/tutorial-playable-review/`. This
+supports that exact API/core extent, not a fresh native display or WCET pass.
+
+Corrected-product campaign `d1009d68227341bd976cfbbdac8a7d73` failed in observer
+code: `current_presentation` returns stable first-publication metadata, while
+`surfaces.displayed` contains the actual bank. The observer's mistaken surface
+lookup raised `KeyError` after a menu surface publication, before pixels/resume
+could be qualified. Attempt `ee16e9a07a794f829d5d5d3b1fd078be` is retained with
+its raw events and exact corrected product. No pass is inferred from that failure.
+Observer correction `8ada001` checks both objects separately and retains partial
+observations on future early failures. Independent source review cleared it.
+Campaign `f054a439df2b4e238e6fbfa9b242d30c` is the affected-check retry; its
+completion determines the final finite physical claims.
