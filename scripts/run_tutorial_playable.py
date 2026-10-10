@@ -117,10 +117,10 @@ def run(standard,serve=False):
                             reconciled+=1
                     if current>=goal or result.get('reason')=='target' and current>=goal-1:return
                 raise AssertionError('Finite complete-boundary cap')
-            def partial_checkpoint():
+            def partial_checkpoint(early=False):
                 for _ in range(200):
                     sample=advance(.01,stop_partial=True)
-                    if sample:return sample
+                    if sample and (not early or 1<=int(sample['stages'][:4],16)<=2):return sample
                 raise AssertionError('No genuine partial serve stage at callback boundary')
             def key(code,held,seconds=.06):
                 actions.append(dict(rawkey=code,held=held,cck=current))
@@ -228,7 +228,7 @@ def run(standard,serve=False):
             if serve:
                 key(0x22,True,.02);key(0x22,False,.01)
                 key(0x24,True)
-                pending_resume=partial_checkpoint()
+                pending_resume=partial_checkpoint(early=True)
                 menu_start=current;key(0x24,False)
             else:
                 menu_start=current;key(0x24,True);key(0x24,False)
