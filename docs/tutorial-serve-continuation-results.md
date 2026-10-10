@@ -12,7 +12,7 @@ private `GAME_PLAYING`, command-zero branch. Other entry lanes use their existin
 full route. A pending continuation keeps its original entry-selected playing
 lane even if score work changes lifecycle. Ten bodies execute once in original
 order: fields, input, score, gameplay, finish, pre-tail, clocks, audio, sound and
-scene service. Each yield saves all D/A registers and CCR, branch-local 72-byte
+scene service. Each yield saves D0–D7/A0–A6 and CCR, branch-local 72-byte
 history metadata and generation/variant ownership; the existing private
 318-byte context persists. The caller stack is released between stages.
 
@@ -49,9 +49,22 @@ original executable. The execution observations remain bound to those actual
 copied images; the stale manifest cannot qualify candidate source identity.
 The receipt remains unchanged. A new guard rejects that exact stale candidate
 before fixture execution and checks both copied executable/listing identities,
-plus current candidate assembly/asset bindings. A fresh manifest-bound CPU
-comparison is pending; this gap does not affect the independently bound native
-serve receipts.
+plus current candidate assembly/asset bindings. This gap does not affect the
+independently bound native serve receipts.
+
+Fresh guarded report `build/tests/serve-stages-cpu/171f8d3ee0154b71b05333e5cde3aee1/report.json`
+(SHA256 `80b704f5d0aea9f24525e811f6aaee95056360640ccaf485ccab22c76f7840fa`)
+passes the same 58 comparisons, interleaved alternatives and invalid-generation
+rejection. It qualifies both copied executable/listing identities and 55 current
+candidate assembly/asset inputs, including the stage source. Candidate standalone
+SHA256 is `38c48b8953c495fd86f5ddd4a475ddb27d5a3f881c9397c8f50ed8814e60c390`;
+the preserved original remains `6eb0bf72…`. This new receipt closes the gap for
+the fresh proof without retroactively upgrading the old receipt.
+
+The affected maintained 56-case coherent synchronous API proof also passes
+freshly in campaign `153e2fead6c148a5bb0dbf233f555f5d`, with formal report SHA256
+`be75669404d6bb4a92a13957c06203f4a37115526e8f59426e3f9d48dcfaa6af`.
+Its lower/upper reference cases do not establish broader physical serve coverage.
 
 Complete staged API CPU spans range 4562–17306 cycles. These are diagnostic CPU
 measurements, not native owner bounds. Failed attempts, including an initially
@@ -149,7 +162,8 @@ The failed attempts above remain preserved. Campaign
 `bb88dadf84ba4f68be2f688f6ac266ea` pass held endpoint, released waiting,
 physical generation replacement and cancellation of a genuinely partial envelope
 on exact original resume. Both bind the development executable and listing
-hashes above. Incoming checks and affected resource validation are still pending.
+hashes above. The campaign closes complete with all four selected cases passed;
+it does not cover the full native catalog or establish acceptance.
 
 | Final observation | PAL | NTSC |
 |---|---:|---:|
@@ -182,6 +196,117 @@ store boundaries also do not establish whole callback instruction tails.
 Owner and protocol/deadline evidence is retained under
 `build/tests/tutorial-playable-review/serve-owner-{pal-290b993,ntsc-bb88dad}-summary.json`
 and `serve-protocol-deadlines-{pal-290b993,ntsc-bb88dad}.json`.
+
+Affected incoming PAL attempt `3b511f4529294083b4f8a72a81abfaf6` and NTSC
+attempt `a921c50554d240a493ea0577185dc23f` also pass with the same product.
+Independent four-case review checks all 358 file bindings per receipt, menu
+pixels, alternating keyboard ACK pairs, current generation/variant and native
+sprites, exact original restoration and 17 newly held-F suppression samples
+per case. Actual resumed publications restore all 15 court/HUD operands across
+all three banks: 15 publications in each PAL case and 18 in each NTSC case.
+This operand check does not establish DMA or physical audio correctness.
+
+Across four cases, 1087 publications include 801 tutorial publications; 4203
+completed callbacks have zero negative reconstructed headroom. PAL minimum is
+6498 CCK; NTSC minimum is 6871 CCK. Initialized whole-machine chip usage is
+468240 bytes PAL and 459280 bytes NTSC, leaving 56048/65008 bytes free and
+55464/64424-byte largest blocks; no expansion pool is present. Observed stack
+high water is 304/308 bytes for serve PAL/NTSC and 278/316 for incoming.
+Neither the pool figures nor finite stack samples prove exclusive application
+ownership or a static stack maximum.
+
+Aggregate independent custody is
+`build/tests/tutorial-playable-review/staged-serve-four-case-review.json`, SHA256
+`1c73fd8025816f28fc211ce0d2bd9751a26ab2b7dab139119c4440f0b14f3ce1`.
+Final-product cold/resource qualification passes all seven selected cases in
+campaign `3441111edd3349c4a30ca28788a60959`: inputs, startup, fixed demo,
+cold one-player, two-player, setup and final packaging. All execute freshly on
+this product; no resource receipt from fa2dd98 is reused. The fixed demo reaches
+its original 10,958-tick trajectory. Its 13,503 completed callback metric sample
+excludes the separate later award/title/attract publication tail. Cold one-player
+has 14,108 completed callbacks, zero misses and minimum absolute headroom
+2538.465576 CCK. Named distributions omit unprofiled transitions; the ordinary
+all-callback deadline audit includes them.
+
+The controller later fails ENOSPC creating setup's directory, after two-player
+passes and before setup starts. The interruption report and controller traceback
+remain preserved. Full SHA256 comparison verifies two closed event streams and
+identical campaign objects before replacing duplicate object copies with
+read-only hardlinks, sharing 5,477,685,992 duplicate file bytes without changing any receipt
+content or the original delivery. The same campaign resumes between tests,
+validates its first five completed fresh attempts as reuse, then runs setup and
+packaging freshly. This storage interruption is not a native test failure.
+Custody and the required canonical-alias unlink before a future rerun are in
+`build/tests/tutorial-playable-review/resource-disk-recovery.json`.
+
+`python3 scripts/native_metrics.py --require-runtime --record` completes with
+all eight required finite profiles. Both tracked metric files bind development
+`49de1fc1…`: code 63464, data 112700, BSS 152788 and loaded payload 328952 bytes,
+1408 bytes above fa2dd98 (code +1112, BSS +296). Release is 183816 bytes,
+SHA256 `d805f11126da488442fea7043b9e8170c2358523979c37769c70715c3a094ae6`;
+ADF is SHA256 `5f117929c19360e9ed5ed3441c596f6626930ee780bf900bfe1c1636154e65c6`.
+Exactly 35496 symbol bytes are removed; loaded bytes/flags/relocations remain.
+All four PAL/NTSC cold boots with zero/512KB slow RAM pass, including the
+required unexpanded target. Cold one-player observed initialized allocator peak
+is 436048 bytes, versus resident peak 434504; pre-Exec bootstrap transients remain
+unmeasured. Reset to displayed title and successful input is 22.572773 seconds
+in that exact 100%-speed ADF workflow, including its input wait, not an isolated
+loader duration. Metric coverage remains separate from full acceptance.
+The first next-campaign launch was blocked while
+the workspace guard could not read opaque, live read-only monitor/reviewer
+sandbox processes. Those helpers exited; the guard was retained and no native
+case was restarted or bypassed. This preflight block is distinct from a failed
+test. Its record is `build/tests/tutorial-playable-review/cpu-launch-ownership-blocks.json`.
+
+Resource independent review is
+`build/tests/tutorial-playable-review/current-resource-independent-review.json`,
+SHA256 `a9e5351cdcb630c580ce134312f3169a47fb890fb9d873e8738b40b4e8d0701f`.
+This includes all source/receipt bindings, the resumed original fresh-attempt
+chains and the separate storage interruption. Setup has 2135 completed
+callbacks, zero reconstructed misses and 14 independent page rasters; callback
+2136 is partial and excluded. Metrics phase distributions remain the existing
+collector summaries; the independent raw deadline audit is a separate extent.
+
+New test-candidate directory is `build/delivery/tutorial-test-4baa6da/`.
+Its `build-identity.json` SHA256 is
+`d6b7d1bb8dffff845ef8c7e351ee63c07abd2105ded238e838eb336eb3353de3`.
+It retains the exact ADF, release/development binaries and listing, compile and
+package receipts, controls/limitations, four compressed physical reports and
+literal RPC streams, guarded CPU material, resources, independent reviews and
+interruption/custody-gap records. Compressed physical receipts decode to the
+original immutable report bytes. The separate fa2dd98 directory is unchanged;
+all 19 of its file bindings were rechecked. Final new-delivery independent audit
+passes all 270 authored files and 262 source bindings, including all four decoded
+physical report hashes/lengths and exact stripping/embedded ADF content. Audit is
+`build/tests/tutorial-playable-review/serve-delivery-independent-review.json`,
+SHA256 `910169cc7003fdf3ff6c4dcff5d6ea372f60de62f892a573bfc7c495146ca8c7`.
+The candidate is frozen read-only; its audit remains outside the candidate to
+avoid a self-referential identity. Release acceptance remains false.
+Download archive is `build/delivery/tutorial-test-4baa6da.tar.gz`, 472917738 bytes,
+SHA256 `183f2bdb53e42d8af7870727e9ab67030f14a5938bd8a109f8ac40b23abc285d`.
+It contains the frozen directory plus the independent delivery audit at its root.
+Independent archive verification streams all 272 file contents and checks exact
+inventory, lengths and hashes without extraction. Review is
+`build/tests/tutorial-playable-review/serve-archive-independent-review.json`,
+SHA256 `9aeb9aa1ea2468a615957e9f91728f0e41c18333f81d29b52c591d899ac34284`.
+
+Executed checks (focused scope; no full-catalog pass):
+
+```sh
+RUST_LOG=info PYTHONPATH=.tools/proof-python:scripts python3 scripts/native_acceptance.py --start --case tutorial-coherent-cpu
+PYTHONPATH=.tools/proof-python:scripts python3 scripts/serve_stages_cpu_proof.py
+RUST_LOG=info python3 scripts/native_acceptance.py --start --case inputs --case startup --case demo --case ordinary-one-cold --case ordinary-two --case setup --case package-after
+RUST_LOG=info python3 scripts/native_acceptance.py --resume --campaign 3441111edd3349c4a30ca28788a60959
+python3 scripts/native_metrics.py --require-runtime --record
+python3 scripts/native_metrics.py --check
+```
+
+The four-case physical campaign is `18cf77b570bf491fa012b169ae9ca405`; its
+original preserved controller completes all four selected cases without a
+restart. The earlier environment disconnect does not invalidate or interrupt
+that campaign. The later, separate resource disk interruption is accounted
+above. Ten focused latency host tests also pass; host tests do not establish
+native acceptance.
 
 The prior incoming latency account in `tutorial-next-operation-results.md`
 remains bound to its original matched products and schedules. This new kind-3
