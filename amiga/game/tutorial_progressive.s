@@ -246,6 +246,17 @@ tutorial_progress_fast_publish:
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
         bsr     tutorial_render_objects
+        ; Bind neutrality to this actual completed sprite/Copper bank, rather
+        ; than inferring queued content from later mutable presentation state.
+        ; An IRQ before complete_scene can only make the pointer comparison
+        ; conservative; no consumer uses this descriptor to mutate the bank.
+        clr.l   tutorial_neutral_copper
+        move.l  tutorial_render_surface,a1
+        bsr     tutorial_neutral_canvas_eligible
+        tst.l   d0
+        beq.s   .classified_bank
+        move.l  back_copper,tutorial_neutral_copper
+.classified_bank:
         jsr     complete_scene
         move.l  tutorial_render_surface,tutorial_visible_surface
         move.w  simulation_started_updates,tutorial_animation_callback

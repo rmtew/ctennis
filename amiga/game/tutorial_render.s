@@ -365,6 +365,8 @@ tutorial_choose_surface:
 ; avoids making mandatory actor input wait for a free canvas during prediction.
 ; Eligibility is re-read on every root attempt; no refused-time cache exists.
 tutorial_pending_canvas_eligible:
+        move.l  tutorial_visible_surface,a1
+tutorial_neutral_canvas_eligible:
         moveq   #0,d0
         tst.b   tutorial_menu
         bne     .done
@@ -374,7 +376,6 @@ tutorial_pending_canvas_eligible:
         bne     .done
         cmpi.w  #TUTORIAL_COMPUTING,tutorial_status
         bne     .done
-        move.l  tutorial_visible_surface,a1
         moveq   #0,d1
         cmpa.l  #tutorial_surface0,a1
         beq.s   .identity

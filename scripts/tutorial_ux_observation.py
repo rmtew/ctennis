@@ -19,6 +19,14 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
     def snapshot(self,copper,state,position,actual=False):
         row=super().snapshot(copper,state,position,actual=actual)
         if row is not None:
+            row['live_prediction_generation']=state.get('tutorial_generation')
+            fields=row['tutorial_fields']
+            retained=actual and fields.get('tutorial_generation')!=state.get('tutorial_generation')
+            row['retained_neutral_pose']=bool(retained)
+            if retained:
+                assert not fields['tutorial_ball_mode'] and not fields['tutorial_menu'] and not fields['tutorial_marker_ready'],'Stale prediction-bearing publication'
+                assert fields['tutorial_active_variant']==state['tutorial_active_variant'],'Retained pose crosses variant change'
+                assert fields['tutorial_input_source']==state['tutorial_input_source'],'Retained pose crosses control source change'
             address=self.footer(copper)
             row['footer_address']=address
             if state.get('tutorial_active') and row['surface'] in self.images:
@@ -28,6 +36,8 @@ class UXSurfaceObserver(CoherentSurfaceObserver):
                 if actual and self.queued and self.queued['copper']==copper:
                     assert row['footer_bytes']==self.queued['footer_bytes'],'Publication changes queued footer'
                     row['landing']=self.queued['landing']
+                    if retained:
+                        assert not row['landing']['valid'],'Retained pose includes old landing cue'
                 else:
                     offset=0 if row['surface']==self.symbols['tutorial_surface0'] else 20
                     meta=self.markers[offset:offset+20]

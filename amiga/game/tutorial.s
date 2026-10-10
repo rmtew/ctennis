@@ -181,6 +181,7 @@ tutorial_enter:
         beq     .done
         st      tutorial_active
         st      ui_paused
+        clr.l   tutorial_neutral_copper
         bsr     tutorial_footer_invalidate
         clr.b   tutorial_menu
         clr.b   tutorial_modifier_used
@@ -275,7 +276,12 @@ tutorial_request:
         ; producer. Menu, source, caption, ball and cue changes still retire.
         bsr     tutorial_pending_canvas_eligible
         tst.l   d0
-        bne.s   .retain_pending_pose
+        beq.s   .retire_pending_pose
+        move.l  ready_copper,d0
+        beq.s   .retain_pending_pose
+        cmp.l   tutorial_neutral_copper,d0
+        beq.s   .retain_pending_pose
+.retire_pending_pose:
         bsr     discard_ready_scene
 .retain_pending_pose:
         move.l  game_preview_generation,tutorial_generation
