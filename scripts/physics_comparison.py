@@ -25,7 +25,11 @@ def summarize(native,capture):
         start=relevant[-1]['entry']['cck'] if relevant else requests[0]['entry']['cck']
         APIs=[r for r in calls if r['callee'] in ('game_preview_step','game_preview_endpoint_try')]
         useful=union_span(APIs,start,marker)
-        rows.append(dict(label=endpoint['label'],x=endpoint['x'],y=endpoint['y'],end=endpoint['end'],generation=endpoint['generation'],
+        contact=endpoint['contact_timing'].get('contact_call')
+        contact_at=contact['entry']['cck'] if contact else None
+        assert contact_at is None or start<=contact_at<=marker,'Gesture contact marker predates final request'
+        rows.append(dict(actual_public_request_to_contact_cck=None if contact_at is None else contact_at-start,
+            contact_to_marker_cck=None if contact_at is None else marker-contact_at,label=endpoint['label'],x=endpoint['x'],y=endpoint['y'],end=endpoint['end'],generation=endpoint['generation'],
             public_request_to_marker_cck=marker-start,gesture_to_marker_cck=marker-gesture,
             preview_api_elapsed_cck=useful,outside_preview_api_elapsed_cck=marker-start-useful,
             contact_timing=endpoint['contact_timing'],incoming_sha256=endpoint['incoming_state_sha256'],
