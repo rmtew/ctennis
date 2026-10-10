@@ -8,11 +8,10 @@ TUTORIAL_WAITING equ 6
 
 ; Gesture thresholds are video-standard dependent and ready before sampling.
 tutorial_init:
+        bsr     tutorial_prepare_canvases
         move.l  simulation_interval_whole,d0
         mulu.w  #15,d0
         move.l  d0,tutorial_double_ticks
-        move.l  simulation_interval_whole,d0
-        move.l  d0,tutorial_repeat_ticks
         rts
 
 ; D0/D1 physical A/B packets. B2 belongs to the one-player UI before sampling.
@@ -64,6 +63,7 @@ tutorial_sample:
         tst.b   ui_previous_keys+$44
         bne     .enter_done
         move.b  #16,tutorial_enter_pressed
+        move.b  #1,tutorial_input_source
 .enter_done:
         btst     #7,game_mode
         bne     .done
@@ -135,6 +135,22 @@ tutorial_tick:
         beq     .entry
         cmpi.w  #GAME_PLAYING,game_lifecycle
         bne     .done
+        ; Title selection becomes PLAYING before its first active dispatcher.
+        ; Enter only at the actual initialized human serve-wait boundary, with
+        ; a native visible ball. This is state eligibility, never a time delay.
+        tst.b   game_score_initialized
+        beq     .done
+        lea     game_play_state,a0
+        tst.b   G_LOWER_AI(a0)
+        beq.s   .title_lower
+        adda.w  #P_SIZE,a0
+.title_lower:
+        cmpi.b  #$40,P_PHASE(a0)
+        bne     .done
+        tst.b   game_scene_objects+SC_BALL+O_VISIBLE
+        beq     .done
+        tst.b   game_scene_objects+SC_SHADOW+O_VISIBLE
+        beq     .done
         st      tutorial_enter_pending
         clr.b   tutorial_title_pending
 .entry:
@@ -165,6 +181,7 @@ tutorial_enter:
         beq     .done
         st      tutorial_active
         st      ui_paused
+        clr.l   tutorial_neutral_copper
         bsr     tutorial_footer_invalidate
         clr.b   tutorial_menu
         clr.b   tutorial_modifier_used
@@ -250,9 +267,23 @@ tutorial_request:
         jsr     game_preview_request_projected
         tst.l   d0
         beq     .missing
-        ; A completed waiting bank belongs to the old accepted placement.
-        ; Retire it before the new generation becomes visible to publication.
+        ; Prediction-bearing banks belong to the old accepted placement.
+        ; A neutral pending bank contains only frozen native objects, controls
+        ; and an already sampled actor pose. Keep that complete pose until its
+        ; replacement is ready: 60 Hz input can otherwise repeatedly cancel a
+        ; 50 Hz publication just before the beam reaches its opportunity.
+        ; Recheck the same conservative immutable-canvas identity used by the
+        ; producer. Menu, source, caption, ball and cue changes still retire.
+        bsr     tutorial_pending_canvas_eligible
+        tst.l   d0
+        beq.s   .retire_pending_pose
+        move.l  ready_copper,d0
+        beq.s   .retain_pending_pose
+        cmp.l   tutorial_neutral_copper,d0
+        beq.s   .retain_pending_pose
+.retire_pending_pose:
         bsr     discard_ready_scene
+.retain_pending_pose:
         move.l  game_preview_generation,tutorial_generation
         st      tutorial_pending
         st      tutorial_work_pending
@@ -336,11 +367,9 @@ tutorial_controls:
         move.b  tutorial_packet,d6
         andi.b  #15,d6
         beq     .done
-        move.l  tutorial_repeat_time,d0
-        sub.l   last_timer_count,d0
-        cmp.l   tutorial_repeat_ticks,d0
-        bcs     .done
-        move.l  last_timer_count,tutorial_repeat_time
+        ; This controller runs once per actual nominal callback. A second
+        ; wall-clock repeat gate can skip alternate callbacks under timer
+        ; quantization/entry jitter. Native sampling already supplies cadence.
         moveq   #0,d7
         move.b  tutorial_end,d7
         mulu.w  #10,d7

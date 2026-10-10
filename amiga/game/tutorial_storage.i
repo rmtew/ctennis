@@ -29,11 +29,9 @@ tutorial_resume_count: ds.w 1
 tutorial_generation: ds.l 1
 tutorial_selected_cursor: ds.l 2
 tutorial_tap_time: ds.l 1
-tutorial_repeat_time: ds.l 1
 ; Native callback cursor; word subtraction preserves counter wrap.
 tutorial_animation_callback: ds.w 1
 tutorial_double_ticks: ds.l 1
-tutorial_repeat_ticks: ds.l 1
 tutorial_render_surface: ds.l 1
 tutorial_visible_surface: ds.l 1
 tutorial_render_offset: ds.l 1
@@ -101,10 +99,28 @@ tutorial_footer_stage_second: ds.l 1
 tutorial_footer_cursor: ds.l 1
 tutorial_footer_destination: ds.l 1
 tutorial_footer_scratch: ds.b 512
+tutorial_caption_generation: ds.l 1
+tutorial_caption_first: ds.l 1
+tutorial_caption_second: ds.l 1
+tutorial_canvas_menus: ds.b 2
+tutorial_canvas_controls: ds.b 2
+tutorial_canvas_captions: ds.b 2
+tutorial_neutral_copper: ds.l 1
+; Per free canvas: X/Y words, validity, padding and nine saved palette values.
+; Saved underlying bits preserve banner/menu pixels during marker retirement.
+tutorial_canvas_markers: ds.b 2*20
+tutorial_preparing: ds.b 1
+        ds.b 1
 tutorial_state_end:
 tutorial_interrupted_state equ game_history_live_backup
         section tutorial_display,bss,chip
 tutorial_surface0: ds.b 4*6144
 tutorial_surface1: ds.b 4*6144
 tutorial_surfaces_end:
+; Footer storage follows the same two private-canvas ownership identities.
+tutorial_footer0: ds.b 512
+tutorial_footer1: ds.b 512
+; Startup-authored immutable menu ROIs and mandatory control lines.
+tutorial_menu_cache: ds.b 3*30*32*4
+tutorial_controls_cache: ds.b 5*256
         section code,code
