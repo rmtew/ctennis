@@ -89,7 +89,7 @@ def run(standard='PAL', coherent=False):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
-        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];overlay_writes=[];admission_writes=[];footer_commit_samples=[]
+        frozen_origin=None;origin_captures=[];deadline_operations=[];dispatch_samples=[];branch_boundaries=[];job_writes=[];endpoint_query_samples=[];endpoint_profiles=[];pending_endpoint=None;overlay_writes=[];admission_writes=[];footer_commit_samples=[]
         with (CoherentLatencySession if coherent else LatencySession)(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -109,7 +109,9 @@ def run(standard='PAL', coherent=False):
             loaded = loaded_hunks(executable,segments,read)
             calls, returns = instruction_map(listing,segments,read)
             step_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_step_variant'} if coherent else set()
-            endpoint_returns={c['return_pc'] for c in calls.values() if c['callee']=='game_preview_endpoint_try'} if coherent else set()
+            endpoint_apis={'game_preview_endpoint_try','game_preview_endpoint_step'}
+            endpoint_returns={c['return_pc']:c['callee'] for c in calls.values() if c['callee'] in endpoint_apis} if coherent else {}
+            endpoint_entries={symbols[name]:name for name in endpoint_apis if name in symbols} if coherent else {}
             simulation_calls=[pc for pc,c in calls.items() if c['callee']=='simulation_update']
             assert len(simulation_calls)==1
             probe_symbols=dict(title_copper=symbols['title_copper'],simulation_update_call_pc=simulation_calls[0],simulation_update=symbols['simulation_update'])
@@ -158,25 +160,50 @@ def run(standard='PAL', coherent=False):
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             session.inspect('break_add',dict(kind='pc',addr=symbols['game_preview_dispatch']))
             if coherent:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_footer_commit']))
-            for pc in step_returns|endpoint_returns:session.inspect('break_add',dict(kind='pc',addr=pc))
+            for pc in step_returns|set(endpoint_returns)|set(endpoint_entries):session.inspect('break_add',dict(kind='pc',addr=pc))
             origin = stop['cck']
             def position():
                 return dict(cck=stop['cck'], frame=stop['frame'],
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
             captured_private_positions=set()
+            def endpoint_snapshot(variant):
+                result=dict(attempted=block('game_preview_endpoint_attempted',2)[variant],ready=block('game_preview_endpoint_ready',2)[variant],
+                    reason=int.from_bytes(block('game_preview_endpoint_reasons',4)[variant*2:variant*2+2],'big'),
+                    endpoint_point=read(symbols['game_preview_endpoints']+variant*8,8).hex(),
+                    endpoint_outcome=int.from_bytes(block('game_preview_endpoint_outcomes',4)[variant*2:variant*2+2],'big'),
+                    endpoint_phases=int.from_bytes(block('game_preview_endpoint_phases',4)[variant*2:variant*2+2],'big'),
+                    compatibility_state=block('game_preview_endpoint_scratch',318).hex())
+                if 'game_preview_query_states' in symbols:
+                    state=read(symbols['game_preview_query_states']+variant*318,318)
+                    workspace=read(symbols['game_preview_query_workspaces']+variant*48,48)
+                    result.update(query_state=state.hex(),workspace=workspace.hex(),stage=int.from_bytes(workspace[36:38],'big'),cursor=int.from_bytes(workspace[38:40],'big'))
+                return result
             def capture_private_stop():
+                nonlocal pending_endpoint
                 marker=(stop['cck'],stop.get('pc'))
                 if marker in captured_private_positions:return
                 captured_private_positions.add(marker)
                 if coherent and stop.get('pc')==symbols['tutorial_footer_commit']:
                     footer_commit_samples.append(dict(position=position(),generation=number('tutorial_generation',4),
                         footer_generation=number('tutorial_footer_generation',4),staged=block('tutorial_footer_scratch',512).hex()))
+                if stop.get('pc') in endpoint_entries:
+                    assert pending_endpoint is None,'Nested cooperative endpoint observation'
+                    entry_registers=session.inspect('regs.get')
+                    variant=entry_registers['d'][1]
+                    assert variant in (0,1) and variant==number('tutorial_job_variant',2),'Endpoint API variant differs from admitted job'
+                    pending_endpoint=dict(entry_registers=entry_registers,api=endpoint_entries[stop['pc']],entry=position(),generation=number('game_preview_generation',4),
+                        variant=variant,before=endpoint_snapshot(variant))
                 if stop.get('pc') in endpoint_returns:
-                    variant=number('tutorial_job_variant',2)
-                    endpoint_query_samples.append(dict(position=position(),generation=number('game_preview_generation',4),variant=variant,
-                        reason=number('game_preview_endpoint_reasons',4)>>(16 if variant==0 else 0)&65535,
-                        state=block('game_preview_endpoint_scratch',318).hex()))
+                    assert pending_endpoint is not None and pending_endpoint['api']==endpoint_returns[stop['pc']],'Endpoint return without matching entry'
+                    after=endpoint_snapshot(pending_endpoint['variant'])
+                    result=session.inspect('regs.get')['d'][0]
+                    completed=bool(result) and bool(after['attempted']) and (pending_endpoint['api']=='game_preview_endpoint_try' or after.get('stage') in (3,4))
+                    profile=dict(pending_endpoint,exit=position(),after=after,completed=completed,result=result)
+                    endpoint_profiles.append(profile);pending_endpoint=None
+                    endpoint_query_samples.append(dict(position=position(),generation=profile['generation'],variant=profile['variant'],
+                        api=profile['api'],attempted=after['attempted'],ready=after['ready'],completed=completed,reason=after['reason'],
+                        state=after['compatibility_state']))
                 if stop.get('pc') in step_returns:
                     branch_boundaries.append(dict(position=position(),generation=number('game_preview_generation',4),
                         held_state=block('game_preview_held_state',318).hex(),released_state=block('game_preview_released_state',318).hex(),
@@ -283,7 +310,7 @@ def run(standard='PAL', coherent=False):
                             held_query_reason=number('game_preview_endpoint_reasons',2),
                             held_terminal_state=(block('game_preview_endpoint_scratch',318) if number('game_preview_endpoint_attempted',1) and not number('game_preview_endpoint_reasons',2) else block('game_preview_held_state',318)).hex())
                         if coherent and row['held_query_attempted'] and not row['held_query_reason']:
-                            query=next((r for r in reversed(endpoint_query_samples) if r['generation']==generation and r['variant']==0 and r['reason']==0),None)
+                            query=next((r for r in reversed(endpoint_query_samples) if r['generation']==generation and r['variant']==0 and r['completed'] and r['attempted'] and r['ready'] and r['reason']==0),None)
                             assert query,'Accepted held query lacks its own completed scratch sample'
                             row['held_terminal_state']=query['state']
                         if predictor:
@@ -408,7 +435,9 @@ def run(standard='PAL', coherent=False):
             interval=number('simulation_interval_whole',4)*65536+number('simulation_interval_fraction',2)
             callback_result=callbacks.result(interval);stack_result=timing.result()
             assert not stack_result['open_enclosing_calls'],'Final stop must be after complete callback RTS'
-            if coherent:coherent_writes.require_complete()
+            if coherent:
+                coherent_writes.require_complete()
+                assert pending_endpoint is None,'Capture ended inside endpoint query stage'
             input_result=input_trace.result(actions,stack_result['calls'])
             if not coherent:assert input_result['maximum_keyboard_poll_gap_cck']<=50000
             assert frozen is not None and frozen_records==block('game_history_buffer',len(frozen_records))
@@ -424,7 +453,7 @@ def run(standard='PAL', coherent=False):
             literal_rpc=dict(records=session.records,uncompressed_bytes=session.raw_bytes),
             footer_commit_samples=footer_commit_samples,initial_admission_state=initial_admission_state,admission_writes=admission_writes,overlay_writes=overlay_writes,overlay_base=symbols['ui_overlay_plane'],
             coherent_policy=(dict(policy=json.loads((ROOT/'docs/tutorial-coherent-cost-policy.json').read_text()),policy_sha256=digest(ROOT/'docs/tutorial-coherent-cost-policy.json'),scheduler_source_sha256=digest(ROOT/'amiga/game/tutorial_deadline.s'),executable_sha256=product_sha256) if coherent else None),
-            endpoint_query_samples=endpoint_query_samples,scheduler_job_writes=job_writes,dispatch_samples=dispatch_samples,branch_boundaries=branch_boundaries,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
+            endpoint_profiles=endpoint_profiles,endpoint_query_samples=endpoint_query_samples,scheduler_job_writes=job_writes,dispatch_samples=dispatch_samples,branch_boundaries=branch_boundaries,phase_delays_seconds=list(delays),no_simulation_state_injection=True)
         if coherent:
             from coherent_native_extent import validate_capture,negative_controls
         else:

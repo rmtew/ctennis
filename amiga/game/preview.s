@@ -457,6 +457,8 @@ game_preview_cancel:
         clr.l   game_preview_counts
         clr.l   game_preview_launch_saved
         clr.w   game_preview_endpoint_ready
+        clr.w   game_preview_query_workspaces+36
+        clr.w   game_preview_query_workspaces+48+36
         clr.b   game_preview_active
         moveq   #1,d0
         rts
@@ -587,6 +589,8 @@ game_preview_missing:
         clr.l   game_preview_counts
         clr.l   game_preview_launch_saved
         clr.w   game_preview_endpoint_ready
+        clr.w   game_preview_query_workspaces+36
+        clr.w   game_preview_query_workspaces+48+36
         rts
 
 game_preview_resolved:
@@ -1271,6 +1275,8 @@ game_preview_invalidate:
         clr.l   game_preview_counts
         clr.l   game_preview_launch_saved
         clr.w   game_preview_endpoint_ready
+        clr.w   game_preview_query_workspaces+36
+        clr.w   game_preview_query_workspaces+48+36
         move.w  #PREVIEW_CANCELED,game_preview_status
         cmpi.l  #$ffffffff,game_preview_generation
         beq.s   .done

@@ -54,6 +54,8 @@ game_preview_endpoint_reasons: ds.w 2
 game_preview_endpoint_phases: ds.w 2
 game_preview_endpoint_outcomes: ds.w 2
 game_preview_endpoints: ds.b 2*PREVIEW_POINT_BYTES
+; Per-variant cooperative query stages, reset with each request.
+game_preview_query_workspaces: ds.b 2*48
 game_preview_state_end:
 game_preview_history_saved: ds.b game_history_state_end-game_history_state
 game_preview_selected_state: ds.b GAME_CORE_STATE_SIZE
@@ -63,5 +65,7 @@ game_preview_held_state: ds.b GAME_CORE_STATE_SIZE
 game_preview_released_state: ds.b GAME_CORE_STATE_SIZE
 game_preview_launch_states: ds.b 2*GAME_CORE_STATE_SIZE
 game_preview_endpoint_scratch: ds.b GAME_CORE_STATE_SIZE
+; Independent query candidates; compatibility scratch holds last complete query.
+game_preview_query_states: ds.b 2*GAME_CORE_STATE_SIZE
 game_preview_paths: ds.b 2*PREVIEW_POINTS*PREVIEW_POINT_BYTES
 game_preview_storage_end:

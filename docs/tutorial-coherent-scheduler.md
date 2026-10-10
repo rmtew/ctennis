@@ -40,7 +40,8 @@ The working implementation now provides the coherent owner and explicit jobs bel
 | Guarded projected dispatch | Old causal one-root phase/geometry domain retained for the cheaper class | 4,000 |
 | Other projected/full dispatch or resolution | Actual shared dispatch; not excluded merely because physics/contact is expensive | 10,000 |
 | Outgoing ball step | Actual shared continuation | 4,000 |
-| Endpoint query | Separate selected-variant query | 9,000 |
+| Legacy endpoint query | Synchronous compatibility API; separate from the root stage job | 9,000 |
+| `game_preview_endpoint_step` | Per-variant prepare, validation or one candidate stage; publish only on terminal completion | 4,000 per complete stage |
 | `game_preview_complete` | At most eight original geometry-point comparisons; branch results remain available before pair READY | 1,000 |
 | Placement/animation producer | Generation-owned actual render and existing bank completion | 4,000 |
 | Menu renderer | One unit per root job | 9,000 |
@@ -52,7 +53,7 @@ Every admission additionally reserves500 E-ticks for root service and500 for res
 
 The root chooses selected endpoint prerequisites/query, then an eight-sample lookahead waterline. After readiness/lookahead, residual other-branch progress alternates with eligible footer stage/commit; only fitting eligible work progresses. This is a finite internal policy, not an approved wall-time fairness guarantee. One renderer unit per root job and explicit footer staging keep live overlay construction out of prediction tails. The actual byte output, DMA exclusion and generation retirement still require verification.
 
-Source-declaration attribution is10 additional preview metadata bytes,16 bytes of root job/residual/completion metadata,6 footer ready/generation bytes and512 bytes of footer scratch:544 additional declared mutable bytes. These counts are not linked-image RAM telemetry or target-fit evidence. Added executable bytes, stack peaks, memory placement, initialized chip free/largest block and full resource profiles remain to be measured and reviewed. Match state318, public release metadata72 and recording schema do not grow from worker grouping.
+Source-declaration attribution is10 additional preview metadata bytes,16 bytes of root job/residual/completion metadata,6 footer ready/generation bytes and512 bytes of footer scratch:544 additional declared mutable bytes. Cooperative endpoint continuation adds two318-byte private states and two48-byte workspaces (732 bytes), giving1,276 additional declared mutable bytes. These counts are not linked-image RAM telemetry or target-fit evidence. Added executable bytes, stack peaks, memory placement, initialized chip free/largest block and full resource profiles remain to be measured and reviewed. Match state318, public release metadata72 and recording schema do not grow from worker grouping.
 
 No stage1 implementation checkbox implies the expensive full/lifecycle classes, read/write ownership, IRQ entry/tail interference, coherent-read/beam bounds or resource gate passed. Unsupported or violated classes must remain explicitly blocked or experimental; retaining their failure evidence is mandatory.
 
@@ -82,3 +83,9 @@ Cost classes include complete ownership/release and mandatory deadline tails wit
 The remaining genuine product choices are an explicit supported input/transport response contract, terminal visible dwell policy if it changes existing behavior, and finite lookahead/residual fairness guarantees supported by capacity. Propose evidence-backed values; ask only if the choice changes user-visible behavior or the desired guarantee is unattainable. Continue independent implementation while such a decision is pending. Pure implementation staging, record grouping and reversible internal calibration do not require another scope approval.
 
 Historical PR46 negative evidence remains unchanged. This plan establishes no new runtime acceptance. Appearance, complete resource coverage, exact stripped-release cold boot, full native release catalog and independent merge review remain open. No asset/raw-evidence uploads or optional sprite/trail redesign are part of this work.
+
+## Cooperative endpoint continuation
+
+The root calls `game_preview_endpoint_step(generation, variant)`. Each branch retains a318-byte query state and48-byte workspace. Preparation copies the immutable launch and runs the original two eight-decision roots; validation retains the original ordered guards and at most three extrema; each candidate stage executes one actual ball advance and at most one bounce or seven-byte rollback. The old synchronous helper uses the same stage bodies and retains its result/register ABI. Its additional save frame is measured rather than omitted from stack accounting.
+
+Pending stages publish no endpoint metadata or compatibility scratch. Terminal completion mirrors the full state and uses the existing result publication path. Request, cancellation and invalidation clear stage identities; generation, seek and existing outcome guards reject retired jobs. Mixed legacy/cooperative calls must preserve this retirement contract. The4000E stage hypothesis includes initial318-byte copying,48-byte clearing, terminal318-byte mirroring and all public release/progress tails. It does not claim that the old complete query costs4000E.

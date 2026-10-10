@@ -37,10 +37,11 @@
     "menu_render_single_unit": 9000,
     "footer_stage_private": 9000,
     "footer_commit_512": 1000,
-    "result_metadata": 1000
+    "result_metadata": 1000,
+    "endpoint_stage": 4000
   },
   "cost_scope": "Each prefix conservatively sums per-operation complete-owner hypotheses. Every admission also reserves500E root service and500E residual margin; next nominal sample and full callback completion remain separate. Private318 persists;72metadata restores peryield. No inference of WCET from inherited allowances or finite maxima.",
-  "basis": "Cheap/one-root allowances retain prior experimental hypotheses, with prior phase/geometry guard. Explicit worker removes hidden terminal geometry and branch-switch continuation. Full/endpoint/footer and sprite reservations retain earlier nominal allowance magnitude; broadened root contexts/outgoing/8-point geometry/footer commit are new hypotheses requiring separate measurements. No threshold reduced to admit contact. Footer stage is private; its separate512-byte copy is admitted outside actual236..251 DMA.",
+  "basis": "Cheap/one-root allowances retain prior experimental hypotheses, with prior phase/geometry guard. Explicit worker removes hidden terminal geometry and branch-switch continuation. Full/endpoint/footer and sprite reservations retain earlier nominal allowance magnitude; broadened root contexts/outgoing/8-point geometry/footer commit are new hypotheses requiring separate measurements. No threshold reduced to admit contact. Footer stage is private; its separate512-byte copy is admitted outside actual236..251 DMA. Cooperative endpoint stages use a new complete-owner 4000E hypothesis: prepare performs two fixed eight-decision roots, validation uses at most three extrema, and candidate performs one actual advance plus at most one bounce or rollback. Seed copying, workspace clearing, terminal mirroring and metadata tails are included. Legacy whole-query 9000E remains historical; stage completion may require several grants. This is algorithm staging, not a reduced whole-query bound.",
   "unresolved": [
     "Conservative emitted complete-path CPU/OCS DMA/IRQ/coherent-read bounds, including bridge before/after observed stackspan",
     "Full dispatch/lifecycle and resolution ownership, expensive contact/serve tails",

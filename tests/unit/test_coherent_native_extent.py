@@ -3,7 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from coherent_native_extent import validate_capture,negative_controls,validate_witnesses,validate_footer
+from coherent_native_extent import validate_capture,negative_controls,validate_witnesses,validate_footer,validate_endpoint_profiles
 
 
 def span(name,start,end,caller=None,depth=0):
@@ -15,7 +15,7 @@ def capture():
     import json
     policy=json.loads((Path(__file__).resolve().parents[2]/'docs/tutorial-coherent-cost-policy.json').read_text())
     return dict(input_probe=dict(maximum_keyboard_poll_gap_cck=1000),coherent_policy=dict(policy=policy),initial_admission_state=dict(simulation_interval=12000,simulation_phase=0),admission_writes=[],
-        overlay_writes=[],footer_commit_samples=[],overlay_base=1000,stack_timing=dict(open_enclosing_calls=[],calls=[
+        endpoint_profiles=[],overlay_writes=[],footer_commit_samples=[],overlay_base=1000,stack_timing=dict(open_enclosing_calls=[],calls=[
         span('tutorial_background',20,80),
         span('game_preview_step_variant',30,70,'tutorial_background',1)]),
         timing=dict(callbacks=[dict(entry=dict(cck=0),completion=dict(cck=10),work_cck=10,entry_phase_cck=0,callback=1),
@@ -84,6 +84,48 @@ class CoherentExtentTests(unittest.TestCase):
     def test_keyboard_poll_gap_uses_finite_policy(self):
         c=capture();c['input_probe']['maximum_keyboard_poll_gap_cck']=50001
         with self.assertRaisesRegex(AssertionError,'Keyboard poll gap'):validate_capture(c)
+
+    def staged_endpoint_capture(self,completed=False):
+        c=capture();owner=c['stack_timing']['calls'][0]
+        call=span('game_preview_endpoint_step',30,60,'tutorial_background',1)
+        c['stack_timing']['calls'].append(call)
+        def sample(stage):
+            work=bytearray(48);work[36:38]=stage.to_bytes(2,'big')
+            return dict(stage=stage,cursor=0,workspace=work.hex(),query_state=bytes(318).hex(),
+                        compatibility_state=bytes(318).hex(),attempted=0,ready=0,reason=0,
+                        endpoint_point=bytes(8).hex(),endpoint_outcome=0,endpoint_phases=0)
+        c['endpoint_profiles']=[dict(api='game_preview_endpoint_step',entry=dict(cck=31),exit=dict(cck=61),
+            generation=7,variant=0,before=sample(0),after=sample(1),completed=completed,result=1)]
+        return c,[(0,owner)]
+
+    def test_partial_reason_zero_is_not_terminal_query(self):
+        c,owners=self.staged_endpoint_capture()
+        result=validate_endpoint_profiles(c,owners)[0]
+        self.assertFalse(result['completed']);self.assertEqual(result['after_stage'],1)
+
+    def test_partial_stage_cannot_claim_completion(self):
+        c,owners=self.staged_endpoint_capture(completed=True)
+        with self.assertRaisesRegex(AssertionError,'Partial reason-zero'):validate_endpoint_profiles(c,owners)
+
+    def test_partial_stage_cannot_replace_compatibility_scratch(self):
+        c,owners=self.staged_endpoint_capture()
+        c['endpoint_profiles'][0]['after']['compatibility_state']=(bytes([1])*318).hex()
+        with self.assertRaisesRegex(AssertionError,'compatibility scratch'):validate_endpoint_profiles(c,owners)
+
+    def test_partial_stage_cannot_publish_point_outcome_or_phases(self):
+        for name,value in (('endpoint_point',(bytes([1])*8).hex()),('endpoint_outcome',1),('endpoint_phases',17)):
+            with self.subTest(field=name):
+                c,owners=self.staged_endpoint_capture()
+                c['endpoint_profiles'][0]['after'][name]=value
+                with self.assertRaisesRegex(AssertionError,'point/outcome/phases'):validate_endpoint_profiles(c,owners)
+
+    def test_every_endpoint_call_needs_a_stage_profile(self):
+        c,owners=self.staged_endpoint_capture();c['endpoint_profiles']=[]
+        with self.assertRaisesRegex(AssertionError,'complete stage profile coverage'):validate_endpoint_profiles(c,owners)
+
+    def test_duplicate_stage_profile_cannot_hide_missing_calls(self):
+        c,owners=self.staged_endpoint_capture();c['endpoint_profiles']*=2
+        with self.assertRaisesRegex(AssertionError,'Repeated endpoint profile'):validate_endpoint_profiles(c,owners)
 
     def test_private_release_challenge(self):
         self.assertEqual(negative_controls(capture()),['retained-private-ownership-record-rejected'])

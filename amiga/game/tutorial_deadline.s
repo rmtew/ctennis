@@ -143,7 +143,7 @@ tutorial_background:
         bra     .admit
 .endpoint:
         move.w  #TUTORIAL_JOB_ENDPOINT,tutorial_job_kind
-        move.l  #TUTORIAL_BG_FULL_E-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        move.l  #TUTORIAL_BG_PHYSICS_E,tutorial_job_cost
         bra     .admit
 .result:
         move.w  #TUTORIAL_JOB_RESULT,tutorial_job_kind
@@ -211,7 +211,7 @@ tutorial_background:
         move.l  tutorial_generation,d0
         moveq   #0,d1
         move.w  tutorial_job_variant,d1
-        jsr     game_preview_endpoint_try
+        jsr     game_preview_endpoint_step
         bsr     tutorial_progress_returned
         bra     .completed
 .run_geometry:
