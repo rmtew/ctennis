@@ -294,6 +294,16 @@ ui_text:
 ui_text_draw:
         addq.l  #4,a2
 .char:
+        bsr     ui_text_character
+        tst.l   d0
+        bne.s   .char
+        movem.l (sp)+,d0-d3/d5/d7/a0-a2/a4
+        rts
+
+; Shared actual glyph body. A0 cursor, A2 column, D3 inversion, D4 stride.
+; Advances both cursors; D0=1 glyph, 0 terminator. Clobbers D1/D7/A1/A4.
+; Cooperative footer staging and synchronous text use this same font algorithm.
+ui_text_character:
         moveq   #0,d0
         move.b  (a0)+,d0
         beq.s   .done
@@ -319,9 +329,8 @@ ui_text_draw:
         adda.w  #32,a4
         dbra    d7,.row
         addq.l  #1,a2
-        bra.s   .char
-.done:  movem.l (sp)+,d0-d3/d5/d7/a0-a2/a4
-        rts
+        moveq   #1,d0
+.done:  rts
 
 ; Copy exactly116 rows without changing the caller's plane/loop registers.
 ; Register bursts reduce 68000 instruction-fetch overhead; no extra bitmap,
@@ -374,21 +383,10 @@ ui_footer_text:
         movem.l d0-d2/a1-a2,-(sp)
         moveq   #0,d2
 ui_footer_draw:
-        move.l  a0,a1
-        moveq   #0,d0
-.length:
-        tst.b   (a1)+
-        beq.s   .centre
-        addq.w  #1,d0
-        cmpi.w  #32,d0
-        bhi.s   .done
-        bra.s   .length
-.centre:
-        moveq   #32,d1
-        sub.w   d0,d1
-        lsr.w   #1,d1
-        subq.w  #4,d1
-        adda.w  d1,a2
+        bsr     ui_footer_layout
+        tst.l   d0
+        beq.s   .done
+        subq.l  #4,a2
         tst.b   d2
         bne.s   .selected
         bsr     ui_text
@@ -397,4 +395,27 @@ ui_footer_draw:
         bsr     ui_selected_text
 .done:
         movem.l (sp)+,d0-d2/a1-a2
+        rts
+
+; A0 ASCII, A2 origin: centre <=32 columns, return D0=1; overlong D0=0.
+; Shared by synchronous footer and cooperative glyph calls; clobbers D1/A1.
+ui_footer_layout:
+        move.l  a0,a1
+        moveq   #0,d0
+.length:
+        tst.b   (a1)+
+        beq.s   .centre
+        addq.w  #1,d0
+        cmpi.w  #32,d0
+        bhi.s   .invalid
+        bra.s   .length
+.centre:
+        moveq   #32,d1
+        sub.w   d0,d1
+        lsr.w   #1,d1
+        adda.w  d1,a2
+        moveq   #1,d0
+        rts
+.invalid:
+        moveq   #0,d0
         rts

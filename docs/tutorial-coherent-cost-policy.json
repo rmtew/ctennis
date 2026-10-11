@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "experimental-hypotheses-only",
+  "normative_s05_s18_g2_safety": false,
+  "units": "CCK unless specified",
+  "hypotheses": {
+    "accepted_owner": 5000,
+    "root_service": 2500,
+    "residual_margin": 2500,
+    "callback": 55750,
+    "entry_lateness": 2000,
+    "callback_completion_uncertainty": 1250,
+    "keyboard_poll_gap_finite_detector": 50000,
+    "beam_line_floor": 226,
+    "ready_line": 253,
+    "accepted_incoming_physics_owner": 20000
+  },
+  "scheduler": {
+    "max_prefix_envelopes": 4,
+    "geometry_points_per_job": 8,
+    "sample_lookahead": 8,
+    "residual_policy": "After selected readiness/lookahead, alternate other-branch progress with pending footer stage/commit; only eligible fitting work advances. No approved wall-time fairness bound.",
+    "footer_dma_lines": [
+      236,
+      251
+    ],
+    "record_format_changed": false
+  },
+  "job_hypotheses_e": {
+    "cheap_envelope_or_rejection": 1000,
+    "guarded_one_root_projected_dispatch": 4000,
+    "outgoing_ball_step": 4000,
+    "full_dispatch_or_resolution": 10000,
+    "endpoint_query": 9000,
+    "geometry_eight_points": 1000,
+    "placement_animation_producer": 4000,
+    "menu_render_single_unit": 9000,
+    "footer_stage_private": 9000,
+    "footer_commit_512": 1000,
+    "result_metadata": 1000,
+    "endpoint_stage": 4000,
+    "footer_stage_two_glyphs": 1000
+  },
+  "cost_scope": "Each prefix conservatively sums per-operation complete-owner hypotheses. Every admission also reserves500E root service and500E residual margin; next nominal sample and full callback completion remain separate. Private318 persists;72metadata restores peryield. No inference of WCET from inherited allowances or finite maxima.",
+  "basis": "Cheap/one-root allowances retain prior experimental hypotheses, with prior phase/geometry guard. Explicit worker removes hidden terminal geometry and branch-switch continuation. Full/endpoint/footer and sprite reservations retain earlier nominal allowance magnitude; broadened root contexts/outgoing/8-point geometry/footer commit are new hypotheses requiring separate measurements. No threshold reduced to admit contact. Footer stage is private; its separate512-byte copy is admitted outside actual236..251 DMA. Cooperative endpoint stages use a new complete-owner 4000E hypothesis: prepare performs two fixed eight-decision roots, validation uses at most three extrema, and candidate performs one actual advance plus at most one bounce or rollback. Seed copying, workspace clearing, terminal mirroring and metadata tails are included. Legacy whole-query 9000E remains historical; stage completion may require several grants. This is algorithm staging, not a reduced whole-query bound. Cooperative actual-font footer stages reserve a new complete-owner 1000E hypothesis for one clear/layout or at most two glyphs plus selection/cache tails. Legacy whole-footer 9000E remains historical; this does not reduce its bound. New stage measurements are required.",
+  "unresolved": [
+    "Conservative emitted complete-path CPU/OCS DMA/IRQ/coherent-read bounds, including bridge before/after observed stackspan",
+    "Full dispatch/lifecycle and resolution ownership, expensive contact/serve tails",
+    "Approved transport buffering/ACK maximum gap and logical response limits",
+    "Producer cutoff, visible rearm, exact publication and direct footer DMA trace coverage",
+    "Eligible residual service/capacity guarantees, resource/appearance/full release and cold boot"
+  ]
+}
