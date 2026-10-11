@@ -129,6 +129,9 @@ def dependencies(case, root=ROOT):
     """
     root=Path(root)
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
+    if case.id.startswith('guarded-landing-'):
+        paths.update((root/'scripts/fixtures').glob('*.s'))
+        paths.add(root/'scripts/landing_cases.py')
     if case.id in ('private-state-retained-pal','private-state-retained-ntsc'):
         paths.add(root/'scripts/preview_native_fixture.s')
         paths.update(root/'build/tests'/name/'report.json' for name in
