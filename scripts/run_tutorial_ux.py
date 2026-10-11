@@ -212,9 +212,14 @@ def run(standard, delivered, match):
                 check('continuous-movement',continuous)
             if not delivered:
                 automatic=frames('auto-preview',180)
-                def potential(rows,physical):
-                    scenes=[r.get('displayed_scene',{}) for r in rows]
-                    scenes=[r for r in scenes if r.get('tutorial_fields',{}).get('tutorial_ball_mode')==2]
+                def potential(rows,physical,after_generation=0):
+                    accepted=[r['state']['tutorial_generation'] for r in rows if r['state']['tutorial_active_variant']==physical and r['state']['tutorial_generation']>after_generation]
+                    assert accepted,'No witnessed accepted action generation'
+                    generation=min(accepted)
+                    observed=[r.get('displayed_scene',{}) for r in rows]
+                    # A previously displayed scene remains legitimate until
+                    # input is sampled and its replacement is actually shown.
+                    scenes=[r for r in observed if r.get('tutorial_fields',{}).get('tutorial_ball_mode')==2 and r['tutorial_fields']['tutorial_generation']>=generation]
                     assert scenes,'Automatic potential has no actual dense native ball'
                     assert all(r['tutorial_fields']['tutorial_active_variant']==physical for r in scenes),'Physical B1 identity changed'
                     assert all(r['tutorial_fields']['tutorial_potential_variant']==0 for r in scenes),'Prospective serve is not actual held branch'
@@ -223,11 +228,11 @@ def run(standard, delivered, match):
                         f=r['tutorial_fields'];groups.setdefault(f['tutorial_generation'],[]).append(f['tutorial_animation_index'])
                     wraps=[dict(generation=g,before=a,after=b) for g,indices in groups.items() for a,b in zip(indices,indices[1:]) if b<a]
                     assert wraps,'Completed unchanged potential did not repeat'
-                    return dict(samples=len(scenes),wraps=wraps)
+                    return dict(samples=len(scenes),wraps=wraps,accepted_generation=generation,prior_displayed_scenes=sum(r.get('tutorial_fields',{}).get('tutorial_generation',0)<generation for r in observed))
                 check('automatic-released-serve',lambda:potential(automatic,1))
             key(0x23,True);held=frames('held-preview',70 if delivered else 180)
             if not delivered:
-                check('automatic-held-serve',lambda:potential(held,0))
+                check('automatic-held-serve',lambda:potential(held,0,max(r['state']['tutorial_generation'] for r in automatic)))
                 check('held-controls',lambda:assert_native_text(held[-1]['path'],192,'AUTO WASD F ACTION G MENU',True))
                 def landing():
                     from PIL import Image
@@ -252,7 +257,7 @@ def run(standard, delivered, match):
                 check('landing-cue',landing)
             key(0x23,False);released=frames('released-preview',180 if not delivered else 10)
             if not delivered:
-                check('automatic-after-action-release',lambda:potential(released,1))
+                check('automatic-after-action-release',lambda:potential(released,1,max(r['state']['tutorial_generation'] for r in held)))
                 def action_restart():
                     groups=[max(r['state']['tutorial_generation'] for r in rows) for rows in (automatic,held,released)]
                     assert groups[0]<groups[1]<groups[2],groups
