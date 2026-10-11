@@ -40,14 +40,14 @@ plane pointers and no longer counts a terminal ball as proof of the cross.
 Independent source/design review clears runtime4fc9/probe6776:
 `build/tests/tutorial-playable-review/auto-potential-final-source-review-6776da0.json`,
 SHA256 `1ef9d419821c8823938dac963227448379197127aad7ee0e6e998a835e505226`.
-Focused tutorial host checks pass44; the current full host suite passes339
+Focused tutorial host checks pass44; the initial full host suite passed339
 (3.426 s), with actual root-execution tool provenance explicitly recorded in
 `build/tests/tutorial-serve-target-diagnosis/70ae133f915b4d0089ce862a17123e16/host-suite-result.json`.
 The comparison diagnostic does not establish full state/output equivalence.
 
 Campaign `730d24a1983649a88ed79acb1782f036` selects input, four cold starts,
 package, four PAL/NTSC title/in-match UX routes, and two incoming-return native
-routes. Its affected physical qualification is pending. The first PAL title attempt
+routes. Its initial qualification exposed the following retained failures. The first PAL title attempt
 `2a72436dc87044bd984e35469fafb48c` passed all18 interaction checks, but
 independent reduction rejected its timing qualification: combined menu ROI
 restore and cue redraw consumed28,526 CCK against25,000 CCK WORK. No callback
@@ -68,10 +68,10 @@ already restored ROI, preventing an IRQ ownership transition from choosing an
 unprepared alternative or repeatedly preparing a displayed menu canvas. No
 generation/admission/ownership lease or delay is retained. Ordinary production
 returns to25,000 CCK WORK; fresh timing and response qualification is required.
-The native
-observer now rejects any whole accepted owner exceeding WORK alone. No native pass,
+The native observer rejects any whole accepted owner exceeding WORK alone.
+The final finite qualification below supersedes these intermediate products.
 WinUAE/human appearance acceptance, full resource coverage, universal timing,
-broad cancellation/fairness/resume, merge or release is established here.
+broad cancellation/fairness/resume, merge and release remain held.
 Existing immutable delivered disks, campaigns, failures and audit receipts remain
 outside Git; no Library or public binary uploads.
 
@@ -259,7 +259,7 @@ child spans, peak at10,426 CCK, supporting the15,000 CCK prepared-menu hypothesi
 Cue-free poses remain15,000; completed-cue poses17,500; private new-cue draws
 15,000; ROI preparation20,000. Separate5,000 service/margin and every gate/window
 are unchanged. Fresh whole-owner and visible menu lifecycle qualification are
-required; no current product pass is claimed.
+required; this intermediate checkpoint makes no product-pass claim.
 
 ## Incoming observer surface transition
 
@@ -279,7 +279,8 @@ sprite equality with the selected completed menu scene, matching native
 sprites, and the existing menu/selection/generation checks before raster
 capture. The checkpoint retains both publications, the actual surface's first
 field and the capture frame. The bounded observation cap is unchanged. Fresh
-PAL/NTSC incoming qualification remains required; the failed receipt is retained.
+PAL/NTSC incoming qualification was required at this checkpoint; both later
+passed in the final selected qualification below. The failed receipt is retained.
 
 The next PAL incoming attempt `a857ff2ed2e04f1280194d3c1f969119` passed both
 menu raster checkpoints and exact Original restoration, then failed the older
@@ -301,3 +302,74 @@ Completed incoming reports retain an attempt-path hard link to the exact canonic
 report inode. The canonical writer uses an atomic path replacement, so later
 runs cannot mutate those attempt bytes. This avoids a redundant large allocation
 without removing evidence paths or changing any qualification gate.
+
+## Final selected qualification
+
+Runtime `ab7d8c84e03fdb1e63dc06469c51b886010cb6d8` passes all nine selected campaign cases,
+including four physical title/in-match routes and two incoming-return routes.
+All intermediate failures and interruptions remain immutable. Focused host
+checks pass 44 after the final classifier change; the initial 339-test host pass
+is reused for unaffected code. Independent route reviews bind the exact
+source, executable, disk, raw calls, photos and ownership replay.
+
+| Route | Accepted owners | Maximum preview-floor WORK (CCK) | Maximum footer WORK (CCK) | Physical move to observed pose (ms) | ACK maximum (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PAL title | 2995 | 4944 /7500 | 4283 /6000 | 60.126392 | 2.768337 |
+| NTSC title | 2580 | 4971 /7500 | 4257 /6000 | 33.061465 | 1.519467 |
+| PAL match | 3304 | 4943 /7500 | 4359 /6000 | 60.121881 | 2.790610 |
+| NTSC match | 2819 | 5370 /7500 | 4878 /6000 | 33.068169 | 1.896610 |
+
+New private cue owners peak at 8662/15000 CCK, prepared-cue publication
+at 14463/17500 CCK, and private retirement/ROI at 15504/20000 CCK.
+
+Every accepted owner fits WORK alone, including return/accounting through
+the next keyboard entry. The separate 5000 CCK service/margin is never added
+to WORK. Movement figures concern actor pose and completed-field observations;
+they do not measure prediction endpoint completion or prove a causal latency
+improvement. The disjoint physical-to-XY, XY-to-COPJMP and COPJMP-to-photo
+intervals are preserved in the bound summary.
+
+Each of the four UX routes proves an off-ball landing cross before terminal playback, actual
+completed-path repetition, physical action transitions, generation handling,
+closed keyboard ACK pairs, exact canonical/history restoration and matching
+publication arrays with no protected writes or losses. Each measured serve action phase repeats a completed path twice; the individual
+counts and witnesses are preserved in the bound summary.
+The incoming probes use the stronger shared footer/cue observer and independently
+replay exact publication arrays. Each restores the canonical 318-byte state and
+72-byte metadata, preserves the 80,318-byte record buffer, and suppresses newly
+held F in 17 observed
+logical-input samples, and checks menu pixels after two actual canvas fields.
+PAL witnesses 32 retained neutral calculating publications; NTSC witnesses zero
+in this alignment. These counts do not establish uniform behavior or broad fairness.
+
+| Incoming route | Accepted owners | Actual publications | ACK pairs / maximum (ms) | Chip free / largest block (bytes) | Stack (bytes) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PAL | 1965 | 611 | 27 / 3.269902 | 39664 / 39080 | 312 |
+| NTSC | 1927 | 703 | 27 / 4.031797 | 48624 / 48040 | 316 |
+
+These incoming owners also fit WORK alone. No protected surface/bank/footer
+writes or lost notifications occur in the bound replays. Incoming controls,
+restoration and cancellation evidence retains its exact finite extent; the
+incoming probes do not independently qualify the four UX serve-loop phases.
+
+Development SHA256 `3f02f4492a7642bc99c205737252b7e7ff69fce3c3c8ca5fb92445a86d689f07`; release SHA256
+`fdd033baf3a1619a2d3ce39b94a9b924c742488b42c4d5ccdcca155275e9a6bc`; ADF SHA256
+`0ed580abc86155a97464af39ca8b79477d781477b5a84f76a5257c0c3d9892c2`. Development/release files are
+224096/187004 bytes; loaded payload is
+345336 bytes. The shared standalone CPU worker remains
+byte-identical and the normalized dispatcher proof binds the current product.
+
+`docs/evidence/tutorial-latency/auto-potential-summary.json` contains exact
+reports, reductions, reviews, selected campaign and resource-report bindings.
+The recorded resource report is incomplete for the full eight-profile gate.
+Both `--require-runtime --record` and `--check` reject that incomplete coverage;
+no full refresh was requested or run.
+Finite Copperline results do not establish physical hardware timing, universal
+ACK/deadline bounds, human appearance/playability acceptance, broad cancellation
+and branch fairness, or full release. No merge or public binaries are authorized.
+
+Observer local commits `23facd2` and `5938e82` were published through the authorized
+GitHub connector as `d12cc57` and `56b9032` after shell Git authentication expired.
+Each published tree is byte-identical to its local counterpart. Receipt source
+commits retain their local identities; runtime/product identity remains `ab7d8c8`.
+Both histories are preserved, with no force update or rewrite.

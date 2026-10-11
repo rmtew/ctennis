@@ -1,0 +1,3267 @@
+{
+  "schema": 1,
+  "scope": "Finite selected physical tutorial routes; no full gate, universal timing, physical hardware or fresh matched prediction-latency claim",
+  "runtime_commit": "ab7d8c84e03fdb1e63dc06469c51b886010cb6d8",
+  "whole_owner_probe_commit": "db88f80",
+  "incoming_observer_local_commit": "5938e82ca71e734a8ef8525ffd39d60d26a45177",
+  "base_pr": 53,
+  "draft_pr": 54,
+  "campaign": "730d24a1983649a88ed79acb1782f036",
+  "routes": [
+    {
+      "standard": "PAL",
+      "origin": "title",
+      "report": "build/tests/tutorial-ux-candidate-title-pal/64a1820f93f14c30b7f67f33f8713214/report.json",
+      "report_sha256": "8032db593271b08f83b90a93468bfdf42821050c16f7623c1a9c1fd0445422a5",
+      "reduction": "build/tests/tutorial-auto-potential-reduction/pal-title-ab7d8c8.json",
+      "reduction_sha256": "67f54ae6d8c990dd7cd2d5a5cb84269510ba076afbd0771a58a233f296ef91d3",
+      "passed": true,
+      "owner_classes": {
+        "4:3000": {
+          "samples": 9,
+          "max_owner_cck": 13595,
+          "max_through_next_keyboard_entry_cck": 13854,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.8329299288532646
+        },
+        "1:1500": {
+          "samples": 68,
+          "max_owner_cck": 4687,
+          "max_through_next_keyboard_entry_cck": 4944,
+          "work_allowance_cck": 7500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.3214374826432698
+        },
+        "1:3000": {
+          "samples": 195,
+          "max_owner_cck": 7473,
+          "max_through_next_keyboard_entry_cck": 7776,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.1069132297403788
+        },
+        "1:4000": {
+          "samples": 1881,
+          "max_owner_cck": 11439,
+          "max_through_next_keyboard_entry_cck": 11688,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.225074325572085
+        },
+        "4:2500": {
+          "samples": 614,
+          "max_owner_cck": 10176,
+          "max_through_next_keyboard_entry_cck": 10423,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.8689882277315792
+        },
+        "1:2000": {
+          "samples": 23,
+          "max_owner_cck": 5331,
+          "max_through_next_keyboard_entry_cck": 5579,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.5030047407662195
+        },
+        "2:4000": {
+          "samples": 9,
+          "max_owner_cck": 6312,
+          "max_through_next_keyboard_entry_cck": 6558,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.7795846789938805
+        },
+        "9:3000": {
+          "samples": 8,
+          "max_owner_cck": 8285,
+          "max_through_next_keyboard_entry_cck": 8533,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.335845859547576
+        },
+        "4:3500": {
+          "samples": 8,
+          "max_owner_cck": 13585,
+          "max_through_next_keyboard_entry_cck": 13834,
+          "work_allowance_cck": 17500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.830110561491107
+        },
+        "5:1200": {
+          "samples": 162,
+          "max_owner_cck": 4038,
+          "max_through_next_keyboard_entry_cck": 4283,
+          "work_allowance_cck": 6000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.138460540839241
+        },
+        "7:1000": {
+          "samples": 6,
+          "max_owner_cck": 1620,
+          "max_through_next_keyboard_entry_cck": 1868,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.4567375126695321
+        },
+        "8:4000": {
+          "samples": 12,
+          "max_owner_cck": 15254,
+          "max_through_next_keyboard_entry_cck": 15504,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 4.300662974235212
+        }
+      },
+      "movement_nonoverlap_ms": {
+        "physical_to_xy": 14.13320664975986,
+        "xy_to_copjmp": 21.23180979420028,
+        "copjmp_to_observation": 24.761375794885385,
+        "sum": 60.126392238845526
+      },
+      "keyboard_ack": {
+        "pairs": 22,
+        "max_hold_cck": 9819,
+        "max_hold_ms": 2.768336812902553,
+        "all_closed": true
+      },
+      "callbacks": {
+        "completed_callbacks": 1026,
+        "max_complete_callback_cck": 54588,
+        "minimum_absolute_headroom_cck": 3649.5462951660156,
+        "dropped_notifications": 0,
+        "stack_bytes": 312,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "memory": {
+        "chip_used_bytes": 450888,
+        "chip_free_bytes": 73400,
+        "largest_chip_free_block_bytes": 72200,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "checks_passed": 19,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 60.126392238845526,
+          "field_transitions": 3,
+          "first_pixel": "move-right-002",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 29,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 60.06859520792129,
+          "field_transitions": 3,
+          "first_pixel": "menu-open-002",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 60.07818105695263,
+          "field_transitions": 3,
+          "first_pixel": "menu-down-002",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 60.083819791676945,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "automatic_repetition": {
+        "automatic-released-serve": {
+          "samples": 180,
+          "wraps": [
+            {
+              "generation": 47,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 47,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 47,
+          "prior_displayed_scenes": 0
+        },
+        "automatic-held-serve": {
+          "samples": 175,
+          "wraps": [
+            {
+              "generation": 48,
+              "before": 63,
+              "after": 1
+            },
+            {
+              "generation": 48,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 48,
+          "prior_displayed_scenes": 2
+        },
+        "automatic-after-action-release": {
+          "samples": 175,
+          "wraps": [
+            {
+              "generation": 49,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 49,
+              "before": 62,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 49,
+          "prior_displayed_scenes": 2
+        }
+      },
+      "landing_cue": {
+        "observations": 276,
+        "first_preterminal": {
+          "photo": "auto-preview-041",
+          "ground": [
+            109,
+            76
+          ],
+          "visible_cross_pixels": 9,
+          "index": 18,
+          "count": 22
+        }
+      },
+      "retained_neutral_publications": 7
+    },
+    {
+      "standard": "NTSC",
+      "origin": "title",
+      "report": "build/tests/tutorial-ux-candidate-title-ntsc/7f64417304c044849d549354eb895bce/report.json",
+      "report_sha256": "2aa15c516ff283af49ae2de67eeea96f6c8e1675e2e5e7c80e817f20c9b824ef",
+      "reduction": "build/tests/tutorial-auto-potential-reduction/ntsc-title-ab7d8c8.json",
+      "reduction_sha256": "41a15a44c4b63017d9599320a73a83dea8ce911edfc6e2d0ad85e27c96dd4719",
+      "passed": true,
+      "owner_classes": {
+        "4:3000": {
+          "samples": 9,
+          "max_owner_cck": 13654,
+          "max_through_next_keyboard_entry_cck": 13900,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.814451278025559
+        },
+        "1:1500": {
+          "samples": 60,
+          "max_owner_cck": 4690,
+          "max_through_next_keyboard_entry_cck": 4971,
+          "work_allowance_cck": 7500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.3102223885996684
+        },
+        "1:3000": {
+          "samples": 169,
+          "max_owner_cck": 7429,
+          "max_through_next_keyboard_entry_cck": 7677,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.0754034381464685
+        },
+        "1:4000": {
+          "samples": 1624,
+          "max_owner_cck": 11393,
+          "max_through_next_keyboard_entry_cck": 11758,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.182806753372286
+        },
+        "4:2500": {
+          "samples": 496,
+          "max_owner_cck": 9745,
+          "max_through_next_keyboard_entry_cck": 9999,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.722413044115942
+        },
+        "2:4000": {
+          "samples": 9,
+          "max_owner_cck": 6411,
+          "max_through_next_keyboard_entry_cck": 6663,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.7910097512393335
+        },
+        "9:3000": {
+          "samples": 8,
+          "max_owner_cck": 7753,
+          "max_through_next_keyboard_entry_cck": 8005,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.165917735354633
+        },
+        "4:3500": {
+          "samples": 8,
+          "max_owner_cck": 13850,
+          "max_through_next_keyboard_entry_cck": 14099,
+          "work_allowance_cck": 17500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.869206840534202
+        },
+        "5:1200": {
+          "samples": 162,
+          "max_owner_cck": 4005,
+          "max_through_next_keyboard_entry_cck": 4257,
+          "work_allowance_cck": 6000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.1188572849342584
+        },
+        "7:1000": {
+          "samples": 6,
+          "max_owner_cck": 2131,
+          "max_through_next_keyboard_entry_cck": 2377,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.5953270597240711
+        },
+        "1:2000": {
+          "samples": 17,
+          "max_owner_cck": 5294,
+          "max_through_next_keyboard_entry_cck": 5632,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.4789589179630371
+        },
+        "8:4000": {
+          "samples": 12,
+          "max_owner_cck": 14994,
+          "max_through_next_keyboard_entry_cck": 15244,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 4.188800531911179
+        }
+      },
+      "movement_nonoverlap_ms": {
+        "physical_to_xy": 6.876292936672119,
+        "xy_to_copjmp": 8.912026528511305,
+        "copjmp_to_observation": 17.273145050558103,
+        "sum": 33.06146451574153
+      },
+      "keyboard_ack": {
+        "pairs": 22,
+        "max_hold_cck": 5439,
+        "max_hold_ms": 1.5194668596148393,
+        "all_closed": true
+      },
+      "callbacks": {
+        "completed_callbacks": 885,
+        "max_complete_callback_cck": 54881,
+        "minimum_absolute_headroom_cck": 4429.822021484375,
+        "dropped_notifications": 0,
+        "stack_bytes": 308,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "memory": {
+        "chip_used_bytes": 441928,
+        "chip_free_bytes": 82360,
+        "largest_chip_free_block_bytes": 81160,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "checks_passed": 19,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 33.06146451574153,
+          "field_transitions": 2,
+          "first_pixel": "move-right-001",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 29,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 50.07563810484293,
+          "field_transitions": 3,
+          "first_pixel": "menu-open-002",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 50.087371439666214,
+          "field_transitions": 3,
+          "first_pixel": "menu-down-002",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 50.059714293297056,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "automatic_repetition": {
+        "automatic-released-serve": {
+          "samples": 180,
+          "wraps": [
+            {
+              "generation": 41,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 41,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 41,
+          "prior_displayed_scenes": 0
+        },
+        "automatic-held-serve": {
+          "samples": 174,
+          "wraps": [
+            {
+              "generation": 42,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 42,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 42,
+          "prior_displayed_scenes": 2
+        },
+        "automatic-after-action-release": {
+          "samples": 174,
+          "wraps": [
+            {
+              "generation": 43,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 43,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 43,
+          "prior_displayed_scenes": 2
+        }
+      },
+      "landing_cue": {
+        "observations": 268,
+        "first_preterminal": {
+          "photo": "auto-preview-042",
+          "ground": [
+            109,
+            76
+          ],
+          "visible_cross_pixels": 9,
+          "index": 17,
+          "count": 22
+        }
+      },
+      "retained_neutral_publications": 0
+    },
+    {
+      "standard": "PAL",
+      "origin": "match",
+      "report": "build/tests/tutorial-ux-candidate-match-pal/84214afc3f3043b59742bb49579a92a5/report.json",
+      "report_sha256": "15d665218cbcea35650f889118e82b64dc02328bc390e13eb016336cf5c6eab3",
+      "reduction": "build/tests/tutorial-auto-potential-reduction/pal-match-ab7d8c8.json",
+      "reduction_sha256": "a34947d939de7cc06a50f679e09c6eccf6f4ff49352df1a28ca4603694d6da61",
+      "passed": true,
+      "owner_classes": {
+        "4:3000": {
+          "samples": 10,
+          "max_owner_cck": 13729,
+          "max_through_next_keyboard_entry_cck": 13978,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.8707094515061766
+        },
+        "1:1500": {
+          "samples": 81,
+          "max_owner_cck": 4688,
+          "max_through_next_keyboard_entry_cck": 4943,
+          "work_allowance_cck": 7500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.3217194193794854
+        },
+        "1:3000": {
+          "samples": 199,
+          "max_owner_cck": 7476,
+          "max_through_next_keyboard_entry_cck": 7722,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.107759039949026
+        },
+        "1:4000": {
+          "samples": 2082,
+          "max_owner_cck": 12218,
+          "max_through_next_keyboard_entry_cck": 12464,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.4447030430841625
+        },
+        "4:2500": {
+          "samples": 655,
+          "max_owner_cck": 10106,
+          "max_through_next_keyboard_entry_cck": 10353,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.849252656196476
+        },
+        "2:4000": {
+          "samples": 12,
+          "max_owner_cck": 6636,
+          "max_through_next_keyboard_entry_cck": 6882,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.870932181527787
+        },
+        "9:3000": {
+          "samples": 10,
+          "max_owner_cck": 7752,
+          "max_through_next_keyboard_entry_cck": 8424,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.1855735791445756
+        },
+        "4:3500": {
+          "samples": 10,
+          "max_owner_cck": 14207,
+          "max_through_next_keyboard_entry_cck": 14463,
+          "work_allowance_cck": 17500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 4.00547521141731
+        },
+        "5:1200": {
+          "samples": 188,
+          "max_owner_cck": 3992,
+          "max_through_next_keyboard_entry_cck": 4359,
+          "work_allowance_cck": 6000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.125491450973316
+        },
+        "1:2000": {
+          "samples": 36,
+          "max_owner_cck": 5913,
+          "max_through_next_keyboard_entry_cck": 6158,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.667091921243792
+        },
+        "7:1000": {
+          "samples": 7,
+          "max_owner_cck": 1505,
+          "max_through_next_keyboard_entry_cck": 1758,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.4243147880047196
+        },
+        "8:4000": {
+          "samples": 14,
+          "max_owner_cck": 15070,
+          "max_through_next_keyboard_entry_cck": 15325,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 4.248786614771511
+        }
+      },
+      "movement_nonoverlap_ms": {
+        "physical_to_xy": 17.58749554187536,
+        "xy_to_copjmp": 18.203527310506797,
+        "copjmp_to_observation": 24.33085839868392,
+        "sum": 60.12188125106607
+      },
+      "keyboard_ack": {
+        "pairs": 24,
+        "max_hold_cck": 9898,
+        "max_hold_ms": 2.790609815063598,
+        "all_closed": true
+      },
+      "callbacks": {
+        "completed_callbacks": 1115,
+        "max_complete_callback_cck": 51696,
+        "minimum_absolute_headroom_cck": 6233.137237548828,
+        "dropped_notifications": 0,
+        "stack_bytes": 312,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "memory": {
+        "chip_used_bytes": 450888,
+        "chip_free_bytes": 73400,
+        "largest_chip_free_block_bytes": 72200,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "checks_passed": 19,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 60.12188125106607,
+          "field_transitions": 3,
+          "first_pixel": "move-right-002",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 29,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 40.08745677557413,
+          "field_transitions": 2,
+          "first_pixel": "menu-open-001",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 60.1385155185028,
+          "field_transitions": 3,
+          "first_pixel": "menu-down-002",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 60.091714020290986,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "automatic_repetition": {
+        "automatic-released-serve": {
+          "samples": 179,
+          "wraps": [
+            {
+              "generation": 47,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 47,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 47,
+          "prior_displayed_scenes": 0
+        },
+        "automatic-held-serve": {
+          "samples": 175,
+          "wraps": [
+            {
+              "generation": 48,
+              "before": 63,
+              "after": 1
+            },
+            {
+              "generation": 48,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 48,
+          "prior_displayed_scenes": 2
+        },
+        "automatic-after-action-release": {
+          "samples": 175,
+          "wraps": [
+            {
+              "generation": 49,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 49,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 49,
+          "prior_displayed_scenes": 2
+        }
+      },
+      "landing_cue": {
+        "observations": 273,
+        "first_preterminal": {
+          "photo": "auto-preview-041",
+          "ground": [
+            109,
+            76
+          ],
+          "visible_cross_pixels": 9,
+          "index": 18,
+          "count": 22
+        }
+      },
+      "retained_neutral_publications": 7
+    },
+    {
+      "standard": "NTSC",
+      "origin": "match",
+      "report": "build/tests/tutorial-ux-candidate-match-ntsc/fdfb4ba8dde14572b26022dfb3eea04a/report.json",
+      "report_sha256": "331b5bd4dfd387a09332b913ef224bcba56380895bd9a71590c9f7b6f726bdb2",
+      "reduction": "build/tests/tutorial-auto-potential-reduction/ntsc-match-ab7d8c8.json",
+      "reduction_sha256": "4fd9f93359162835daa6af84387283bb05a7e280934a00d4d3d5357f0164974e",
+      "passed": true,
+      "owner_classes": {
+        "4:3000": {
+          "samples": 10,
+          "max_owner_cck": 13792,
+          "max_through_next_keyboard_entry_cck": 14043,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.8530036638734813
+        },
+        "1:1500": {
+          "samples": 59,
+          "max_owner_cck": 5125,
+          "max_through_next_keyboard_entry_cck": 5370,
+          "work_allowance_cck": 7500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.4317462135550747
+        },
+        "1:3000": {
+          "samples": 182,
+          "max_owner_cck": 7537,
+          "max_through_next_keyboard_entry_cck": 7785,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.10557487054919
+        },
+        "1:4000": {
+          "samples": 1767,
+          "max_owner_cck": 11423,
+          "max_through_next_keyboard_entry_cck": 11675,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.1911877068174865
+        },
+        "4:2500": {
+          "samples": 545,
+          "max_owner_cck": 9801,
+          "max_through_next_keyboard_entry_cck": 10093,
+          "work_allowance_cck": 12500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.738057490546983
+        },
+        "2:4000": {
+          "samples": 12,
+          "max_owner_cck": 6038,
+          "max_through_next_keyboard_entry_cck": 6295,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.6868065634040081
+        },
+        "9:3000": {
+          "samples": 10,
+          "max_owner_cck": 7755,
+          "max_through_next_keyboard_entry_cck": 8662,
+          "work_allowance_cck": 15000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 2.166476465584313
+        },
+        "4:3500": {
+          "samples": 10,
+          "max_owner_cck": 13889,
+          "max_through_next_keyboard_entry_cck": 14140,
+          "work_allowance_cck": 17500,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 3.8801020800129624
+        },
+        "5:1200": {
+          "samples": 188,
+          "max_owner_cck": 4628,
+          "max_through_next_keyboard_entry_cck": 4878,
+          "work_allowance_cck": 6000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.2929017514795875
+        },
+        "1:2000": {
+          "samples": 15,
+          "max_owner_cck": 6306,
+          "max_through_next_keyboard_entry_cck": 6553,
+          "work_allowance_cck": 10000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 1.7616764141811319
+        },
+        "7:1000": {
+          "samples": 7,
+          "max_owner_cck": 1507,
+          "max_through_next_keyboard_entry_cck": 1760,
+          "work_allowance_cck": 5000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 0.421003228063902
+        },
+        "8:4000": {
+          "samples": 14,
+          "max_owner_cck": 15017,
+          "max_through_next_keyboard_entry_cck": 15272,
+          "work_allowance_cck": 20000,
+          "work_fits": true,
+          "separate_service_and_margin_cck": 5000,
+          "max_owner_ms": 4.195225929552499
+        }
+      },
+      "movement_nonoverlap_ms": {
+        "physical_to_xy": 4.6827180549483245,
+        "xy_to_copjmp": 11.060064896516177,
+        "copjmp_to_observation": 17.325386327033183,
+        "sum": 33.068169278497685
+      },
+      "keyboard_ack": {
+        "pairs": 24,
+        "max_hold_cck": 6789,
+        "max_hold_ms": 1.896609764648859,
+        "all_closed": true
+      },
+      "callbacks": {
+        "completed_callbacks": 959,
+        "max_complete_callback_cck": 51898,
+        "minimum_absolute_headroom_cck": 6581.005554199219,
+        "dropped_notifications": 0,
+        "stack_bytes": 260,
+        "pending_callback": null,
+        "scope": "Finite complete callback counter boundaries; all transitions retain deadlines."
+      },
+      "memory": {
+        "chip_used_bytes": 441928,
+        "chip_free_bytes": 82360,
+        "largest_chip_free_block_bytes": 81160,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "checks_passed": 19,
+      "responses": {
+        "movement-response": {
+          "observed_ms": 33.068169278497685,
+          "field_transitions": 2,
+          "first_pixel": "move-right-001",
+          "limit_fields": 3
+        },
+        "continuous-movement": {
+          "changed_fields": 29,
+          "total_fields": 30,
+          "maximum_change_gap_fields": 1
+        },
+        "menu-open-response": {
+          "observed_ms": 50.06809524674225,
+          "field_transitions": 3,
+          "first_pixel": "menu-open-002",
+          "limit_fields": 3
+        },
+        "menu-selection-response": {
+          "observed_ms": 33.068169278497685,
+          "field_transitions": 2,
+          "first_pixel": "menu-down-001",
+          "limit_fields": 3
+        },
+        "menu-close-response": {
+          "observed_ms": 50.07759366064681,
+          "field_transitions": 3,
+          "first_pixel": "menu-close-002",
+          "limit_fields": 3
+        }
+      },
+      "automatic_repetition": {
+        "automatic-released-serve": {
+          "samples": 180,
+          "wraps": [
+            {
+              "generation": 41,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 41,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 41,
+          "prior_displayed_scenes": 0
+        },
+        "automatic-held-serve": {
+          "samples": 174,
+          "wraps": [
+            {
+              "generation": 42,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 42,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 42,
+          "prior_displayed_scenes": 2
+        },
+        "automatic-after-action-release": {
+          "samples": 175,
+          "wraps": [
+            {
+              "generation": 43,
+              "before": 63,
+              "after": 0
+            },
+            {
+              "generation": 43,
+              "before": 63,
+              "after": 0
+            }
+          ],
+          "accepted_generation": 43,
+          "prior_displayed_scenes": 2
+        }
+      },
+      "landing_cue": {
+        "observations": 262,
+        "first_preterminal": {
+          "photo": "auto-preview-042",
+          "ground": [
+            109,
+            76
+          ],
+          "visible_cross_pixels": 9,
+          "index": 17,
+          "count": 22
+        }
+      },
+      "retained_neutral_publications": 0
+    }
+  ],
+  "incoming": [
+    {
+      "standard": "PAL",
+      "report": "build/tests/tutorial-playable-pal/report.json",
+      "report_sha256": "0fc89e6fededf7353484a7434f825fdca3501136ae15c2b39bcd50c5747fb4e1",
+      "passed": true,
+      "attempt": "/workspace/ctennis/build/tests/tutorial-playable-pal/8217e5b26ad54a7fb572d3dd80c78183",
+      "scope": "Finite physical lower-receiver incoming prototype, edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.",
+      "restores": 1,
+      "stage_protocols": 0,
+      "publications": 611,
+      "callbacks": 853,
+      "retained_neutral_publications": 32,
+      "reconciled_samples": 17,
+      "ack": [
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 24993425,
+            "frame": 351,
+            "hpos": 44,
+            "seconds": 7.046564671353395,
+            "vpos": 240
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 24994188,
+            "frame": 351,
+            "hpos": 126,
+            "seconds": 7.046779789083128,
+            "vpos": 243
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 25206355,
+            "frame": 354,
+            "hpos": 48,
+            "seconds": 7.106597460595817,
+            "vpos": 239
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 25207118,
+            "frame": 354,
+            "hpos": 130,
+            "seconds": 7.10681257832555,
+            "vpos": 242
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 30191670,
+            "frame": 424,
+            "hpos": 216,
+            "seconds": 8.512140900703292,
+            "vpos": 290
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 30192443,
+            "frame": 424,
+            "hpos": 81,
+            "seconds": 8.512358837800386,
+            "vpos": 294
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 30313941,
+            "frame": 426,
+            "hpos": 134,
+            "seconds": 8.546613587377129,
+            "vpos": 203
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 30314719,
+            "frame": 426,
+            "hpos": 4,
+            "seconds": 8.546832934157905,
+            "vpos": 207
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 34287090,
+            "frame": 482,
+            "hpos": 102,
+            "seconds": 9.66679024893604,
+            "vpos": 178
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 34287863,
+            "frame": 482,
+            "hpos": 194,
+            "seconds": 9.667008186033136,
+            "vpos": 181
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 34357836,
+            "frame": 483,
+            "hpos": 24,
+            "seconds": 9.686736145276361,
+            "vpos": 177
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 34358609,
+            "frame": 483,
+            "hpos": 116,
+            "seconds": 9.686954082373456,
+            "vpos": 180
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 34428411,
+            "frame": 484,
+            "hpos": 2,
+            "seconds": 9.70663383043479,
+            "vpos": 175
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 34429178,
+            "frame": 484,
+            "hpos": 88,
+            "seconds": 9.706850075911467,
+            "vpos": 178
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 34513746,
+            "frame": 485,
+            "hpos": 212,
+            "seconds": 9.730692901819761,
+            "vpos": 237
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 34514513,
+            "frame": 485,
+            "hpos": 71,
+            "seconds": 9.730909147296439,
+            "vpos": 241
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 34582236,
+            "frame": 486,
+            "hpos": 148,
+            "seconds": 9.750002748883178,
+            "vpos": 226
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 34584494,
+            "frame": 486,
+            "hpos": 136,
+            "seconds": 9.750639362033553,
+            "vpos": 236
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 41878440,
+            "frame": 589,
+            "hpos": 118,
+            "seconds": 11.807070691407555,
+            "vpos": 129
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 41880083,
+            "frame": 589,
+            "hpos": 172,
+            "seconds": 11.807533913465157,
+            "vpos": 136
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 47482656,
+            "frame": 668,
+            "hpos": 158,
+            "seconds": 13.387105059495699,
+            "vpos": 90
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 47491388,
+            "frame": 668,
+            "hpos": 37,
+            "seconds": 13.389566931076336,
+            "vpos": 129
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 58336625,
+            "frame": 821,
+            "hpos": 122,
+            "seconds": 16.447237654342743,
+            "vpos": 16
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 58337723,
+            "frame": 821,
+            "hpos": 85,
+            "seconds": 16.447547220879105,
+            "vpos": 21
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 58690886,
+            "frame": 826,
+            "hpos": 36,
+            "seconds": 16.547116844451274,
+            "vpos": 12
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 58691983,
+            "frame": 826,
+            "hpos": 225,
+            "seconds": 16.5474261290509,
+            "vpos": 16
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 58907960,
+            "frame": 829,
+            "hpos": 98,
+            "seconds": 16.608317979528575,
+            "vpos": 29
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 58915588,
+            "frame": 829,
+            "hpos": 8,
+            "seconds": 16.610468592952426,
+            "vpos": 63
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 59258255,
+            "frame": 834,
+            "hpos": 132,
+            "seconds": 16.707079008541275,
+            "vpos": 7
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 59262328,
+            "frame": 834,
+            "hpos": 119,
+            "seconds": 16.708227336867882,
+            "vpos": 25
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 63018161,
+            "frame": 886,
+            "hpos": 10,
+            "seconds": 17.767134634659328,
+            "vpos": 295
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 63019273,
+            "frame": 886,
+            "hpos": 214,
+            "seconds": 17.767448148310002,
+            "vpos": 299
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 66785290,
+            "frame": 939,
+            "hpos": 74,
+            "seconds": 18.82922668982307,
+            "vpos": 301
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 66786978,
+            "frame": 939,
+            "hpos": 173,
+            "seconds": 18.8297025990338,
+            "vpos": 308
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 70537226,
+            "frame": 992,
+            "hpos": 154,
+            "seconds": 19.887035280153487,
+            "vpos": 240
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 70538333,
+            "frame": 992,
+            "hpos": 126,
+            "seconds": 19.887347384120478,
+            "vpos": 245
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 70752051,
+            "frame": 995,
+            "hpos": 10,
+            "seconds": 19.947602339511036,
+            "vpos": 248
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 70755573,
+            "frame": 995,
+            "hpos": 127,
+            "seconds": 19.94859532069599,
+            "vpos": 263
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 70963905,
+            "frame": 998,
+            "hpos": 73,
+            "seconds": 20.00733176482529,
+            "vpos": 242
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 70965553,
+            "frame": 998,
+            "hpos": 132,
+            "seconds": 20.007796396566576,
+            "vpos": 249
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 71176480,
+            "frame": 1001,
+            "hpos": 176,
+            "seconds": 20.067264466526357,
+            "vpos": 239
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 71179298,
+            "frame": 1001,
+            "hpos": 43,
+            "seconds": 20.068058964249012,
+            "vpos": 252
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 71388910,
+            "frame": 1004,
+            "hpos": 134,
+            "seconds": 20.12715628740067,
+            "vpos": 236
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 71400508,
+            "frame": 1004,
+            "hpos": 155,
+            "seconds": 20.1304261896673,
+            "vpos": 287
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 71601820,
+            "frame": 1007,
+            "hpos": 118,
+            "seconds": 20.187183437908367,
+            "vpos": 235
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 71602929,
+            "frame": 1007,
+            "hpos": 92,
+            "seconds": 20.18749610574883,
+            "vpos": 240
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 71991770,
+            "frame": 1013,
+            "hpos": 82,
+            "seconds": 20.297124668195703,
+            "vpos": 75
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 71992963,
+            "frame": 1013,
+            "hpos": 140,
+            "seconds": 20.297461018722007,
+            "vpos": 80
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 72204891,
+            "frame": 1016,
+            "hpos": 50,
+            "seconds": 20.357211307354742,
+            "vpos": 75
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 72206084,
+            "frame": 1016,
+            "hpos": 108,
+            "seconds": 20.35754765788105,
+            "vpos": 80
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 72595125,
+            "frame": 1021,
+            "hpos": 71,
+            "seconds": 20.467232607675165,
+            "vpos": 229
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 72596313,
+            "frame": 1021,
+            "hpos": 124,
+            "seconds": 20.46756754851779,
+            "vpos": 234
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133188,
+          "position": {
+            "cck": 72810221,
+            "frame": 1024,
+            "hpos": 198,
+            "seconds": 20.52787607188823,
+            "vpos": 237
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 133198,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 133134,
+          "position": {
+            "cck": 72810988,
+            "frame": 1024,
+            "hpos": 57,
+            "seconds": 20.528092317364905,
+            "vpos": 241
+          },
+          "size": 1,
+          "value": 0
+        }
+      ],
+      "memory": {
+        "chip_used_bytes": 484624,
+        "chip_free_bytes": 39664,
+        "largest_chip_free_block_bytes": 39080,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "stack_used_bytes": 312
+    },
+    {
+      "standard": "NTSC",
+      "report": "build/tests/tutorial-playable-ntsc/report.json",
+      "report_sha256": "9dc17c4c0ac1b874734b8ab78b4e5dee4f014a34c96c97e306c1bf1475464be8",
+      "passed": true,
+      "attempt": "/workspace/ctennis/build/tests/tutorial-playable-ntsc/4975449327e546d6a177771fddbc589d",
+      "scope": "Finite physical lower-receiver incoming prototype, edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.",
+      "restores": 1,
+      "stage_protocols": 0,
+      "publications": 703,
+      "callbacks": 855,
+      "retained_neutral_publications": 0,
+      "reconciled_samples": 17,
+      "ack": [
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 25096325,
+            "frame": 419,
+            "hpos": 118,
+            "seconds": 7.075575961509997,
+            "vpos": 116
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 25097103,
+            "frame": 419,
+            "hpos": 213,
+            "seconds": 7.075795308290773,
+            "vpos": 119
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 25311170,
+            "frame": 423,
+            "hpos": 203,
+            "seconds": 7.136148659602272,
+            "vpos": 8
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 25311933,
+            "frame": 423,
+            "hpos": 56,
+            "seconds": 7.136363777332004,
+            "vpos": 12
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 30340245,
+            "frame": 507,
+            "hpos": 163,
+            "seconds": 8.554029651286548,
+            "vpos": 22
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 30341008,
+            "frame": 507,
+            "hpos": 16,
+            "seconds": 8.55424476901628,
+            "vpos": 26
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 30465705,
+            "frame": 509,
+            "hpos": 43,
+            "seconds": 8.589401434212178,
+            "vpos": 48
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 30466469,
+            "frame": 509,
+            "hpos": 124,
+            "seconds": 8.589616833878646,
+            "vpos": 51
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 34475001,
+            "frame": 576,
+            "hpos": 106,
+            "seconds": 9.719769262975081,
+            "vpos": 50
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 34475773,
+            "frame": 576,
+            "hpos": 196,
+            "seconds": 9.71998691813544,
+            "vpos": 53
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 34546581,
+            "frame": 577,
+            "hpos": 24,
+            "seconds": 9.739950294553406,
+            "vpos": 102
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 34547354,
+            "frame": 577,
+            "hpos": 114,
+            "seconds": 9.7401682316505,
+            "vpos": 105
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 34618090,
+            "frame": 578,
+            "hpos": 98,
+            "seconds": 9.760111308623458,
+            "vpos": 153
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 34618869,
+            "frame": 578,
+            "hpos": 194,
+            "seconds": 9.76033093734097,
+            "vpos": 156
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 34702275,
+            "frame": 579,
+            "hpos": 108,
+            "seconds": 9.783846152761782,
+            "vpos": 260
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 34703043,
+            "frame": 580,
+            "hpos": 193,
+            "seconds": 9.784062680175195,
+            "vpos": 0
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 34771112,
+            "frame": 581,
+            "hpos": 12,
+            "seconds": 9.803253831872667,
+            "vpos": 37
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 34785544,
+            "frame": 581,
+            "hpos": 112,
+            "seconds": 9.807322742849731,
+            "vpos": 100
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 42136111,
+            "frame": 704,
+            "hpos": 154,
+            "seconds": 11.879717612165006,
+            "vpos": 61
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 42137754,
+            "frame": 704,
+            "hpos": 204,
+            "seconds": 11.880180834222609,
+            "vpos": 68
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 47798995,
+            "frame": 798,
+            "hpos": 108,
+            "seconds": 13.476292644693457,
+            "vpos": 231
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 47801868,
+            "frame": 798,
+            "hpos": 23,
+            "seconds": 13.477102648936604,
+            "vpos": 244
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 58746285,
+            "frame": 981,
+            "hpos": 98,
+            "seconds": 16.56273585770089,
+            "vpos": 222
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 58747388,
+            "frame": 981,
+            "hpos": 63,
+            "seconds": 16.563046833920936,
+            "vpos": 227
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 59103185,
+            "frame": 987,
+            "hpos": 50,
+            "seconds": 16.663359078856296,
+            "vpos": 213
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 59104288,
+            "frame": 987,
+            "hpos": 16,
+            "seconds": 16.66367005507634,
+            "vpos": 218
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 59324125,
+            "frame": 991,
+            "hpos": 88,
+            "seconds": 16.725650181355807,
+            "vpos": 132
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 59327418,
+            "frame": 991,
+            "hpos": 196,
+            "seconds": 16.726578599028166,
+            "vpos": 146
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 59678800,
+            "frame": 997,
+            "hpos": 90,
+            "seconds": 16.825646093273132,
+            "vpos": 113
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 59687453,
+            "frame": 997,
+            "hpos": 98,
+            "seconds": 16.828085691851605,
+            "vpos": 151
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 63470846,
+            "frame": 1060,
+            "hpos": 166,
+            "seconds": 17.89476316609316,
+            "vpos": 212
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 63471953,
+            "frame": 1060,
+            "hpos": 136,
+            "seconds": 17.89507527006015,
+            "vpos": 217
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 67265705,
+            "frame": 1124,
+            "hpos": 98,
+            "seconds": 18.964673326952166,
+            "vpos": 61
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 67268938,
+            "frame": 1124,
+            "hpos": 146,
+            "seconds": 18.96558482842035,
+            "vpos": 75
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 71167165,
+            "frame": 1189,
+            "hpos": 160,
+            "seconds": 20.064638225828507,
+            "vpos": 115
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 71168753,
+            "frame": 1189,
+            "hpos": 156,
+            "seconds": 20.065085941365616,
+            "vpos": 122
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 71388060,
+            "frame": 1193,
+            "hpos": 153,
+            "seconds": 20.126916641174887,
+            "vpos": 34
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 71393418,
+            "frame": 1193,
+            "hpos": 51,
+            "seconds": 20.12842725820753,
+            "vpos": 58
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 71596645,
+            "frame": 1196,
+            "hpos": 120,
+            "seconds": 20.185724415298452,
+            "vpos": 162
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 71602783,
+            "frame": 1196,
+            "hpos": 116,
+            "seconds": 20.187454942985344,
+            "vpos": 189
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 71811965,
+            "frame": 1200,
+            "hpos": 225,
+            "seconds": 20.24643103334043,
+            "vpos": 56
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 71813668,
+            "frame": 1200,
+            "hpos": 108,
+            "seconds": 20.246911171602203,
+            "vpos": 64
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 72025570,
+            "frame": 1203,
+            "hpos": 208,
+            "seconds": 20.306654129879796,
+            "vpos": 206
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 72027444,
+            "frame": 1203,
+            "hpos": 34,
+            "seconds": 20.307182479323465,
+            "vpos": 215
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 72241775,
+            "frame": 1207,
+            "hpos": 60,
+            "seconds": 20.367610261933326,
+            "vpos": 105
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 72243368,
+            "frame": 1207,
+            "hpos": 61,
+            "seconds": 20.368059387154116,
+            "vpos": 112
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 72634260,
+            "frame": 1213,
+            "hpos": 108,
+            "seconds": 20.478266201846967,
+            "vpos": 252
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 72635818,
+            "frame": 1213,
+            "hpos": 73,
+            "seconds": 20.478705459281993,
+            "vpos": 259
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 72849505,
+            "frame": 1217,
+            "hpos": 138,
+            "seconds": 20.53895167463373,
+            "vpos": 146
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 72850619,
+            "frame": 1217,
+            "hpos": 114,
+            "seconds": 20.539265752157874,
+            "vpos": 151
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 73243010,
+            "frame": 1224,
+            "hpos": 68,
+            "seconds": 20.649895190018313,
+            "vpos": 35
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 73244178,
+            "frame": 1224,
+            "hpos": 98,
+            "seconds": 20.650224492126213,
+            "vpos": 40
+          },
+          "size": 1,
+          "value": 0
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124228,
+          "position": {
+            "cck": 73470485,
+            "frame": 1227,
+            "hpos": 43,
+            "seconds": 20.714028749088992,
+            "vpos": 246
+          },
+          "size": 1,
+          "value": 1
+        },
+        {
+          "access": "write",
+          "addr": 124238,
+          "dropped_events": 0,
+          "dropped_notifications": 0,
+          "pc": 124174,
+          "position": {
+            "cck": 73471249,
+            "frame": 1227,
+            "hpos": 124,
+            "seconds": 20.714244148755462,
+            "vpos": 249
+          },
+          "size": 1,
+          "value": 0
+        }
+      ],
+      "memory": {
+        "chip_used_bytes": 475664,
+        "chip_free_bytes": 48624,
+        "largest_chip_free_block_bytes": 48040,
+        "other_pool_bytes": 0,
+        "other_used_bytes": 0,
+        "other_free_bytes": 0,
+        "scope": "Whole initialized machine pool, including OS/application/stack and non-pool reservations; not exclusive application ownership."
+      },
+      "stack_used_bytes": 316
+    }
+  ],
+  "product": {
+    "development_sha256": "3f02f4492a7642bc99c205737252b7e7ff69fce3c3c8ca5fb92445a86d689f07",
+    "release_sha256": "fdd033baf3a1619a2d3ce39b94a9b924c742488b42c4d5ccdcca155275e9a6bc",
+    "adf_sha256": "0ed580abc86155a97464af39ca8b79477d781477b5a84f76a5257c0c3d9892c2",
+    "development_bytes": 224096,
+    "release_bytes": 187004,
+    "loaded_payload_bytes": 345336
+  },
+  "campaign_receipt": {
+    "path": "build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/report.json",
+    "sha256": "a8477e0b6eadc57e8e59afb6d6d765c7d546171df026486fb42a0c1b0efa309b"
+  },
+  "selected_cases": [
+    {
+      "id": "inputs",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/inputs/000011",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "startup",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/startup/000010",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "package-after",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/package-after/000010",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "tutorial-ux-title-pal",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-ux-title-pal/000010",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "tutorial-ux-title-ntsc",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-ux-title-ntsc/000009",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "tutorial-ux-match-pal",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-ux-match-pal/000007",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "tutorial-ux-match-ntsc",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-ux-match-ntsc/000006",
+      "exit_code": 0,
+      "classification": "reuse"
+    },
+    {
+      "id": "tutorial-playable-pal",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-playable-pal/000003",
+      "exit_code": 0,
+      "classification": "run"
+    },
+    {
+      "id": "tutorial-playable-ntsc",
+      "attempt": "/workspace/ctennis/build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/tutorial-playable-ntsc/000001",
+      "exit_code": 0,
+      "classification": "run"
+    }
+  ],
+  "independent_selected_campaign_review": {
+    "path": "build/tests/tutorial-playable-review/auto-potential-nine-selected-independent-review.json",
+    "sha256": "e1aa78644e67a7c8164f2b089310967b298398db98357c56c4677fab3441aef3"
+  },
+  "shared_core_proof": {
+    "path": "build/tests/tutorial-auto-potential-reduction/shared-core-ab7d8c8.json",
+    "sha256": "37fcb3430b37c759e6d3afe70c0c6a08dcaf6218999e3fda4c4e6f1e58e21056"
+  },
+  "independent_reviews": [
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-core-focused-bindings-ab7d8c8-independent-review.json",
+      "sha256": "ac0e07aa630d94b25c180b47b03f8f1bb885b3e213b61d2b079b6f258c479fcb"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-focused-origin-ab7d8c8-independent-review.json",
+      "sha256": "cdd92adf7a0fd5432fc8f82a9b97925fc5ef2cbbf7a6a92a61f45fabc98807ff"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-four-ux-routes-ab7d8c8-independent-review.json",
+      "sha256": "c3d1963a46256789e145b53f3a6e263d039ab1d77afba68a32ca192ba9e54c7a"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-generalized-menu-source-review-ab7d8c8.json",
+      "sha256": "ddd04a491e91584982dfd2fd5cd5de2bc82cd9952320e3038398951a0068364c"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-incoming-menu-observer-source-review-23facd2.json",
+      "sha256": "02d645707ffa69f180d5fc9085ef80e4aa10f0bed12da45e29d05649e0694cb5"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-incoming-neutral-custody-source-review-5938e82.json",
+      "sha256": "9ec263e496cb9b4d03a4f46b05d4f4a78985a5963788d9fc083e432d7b72bf06"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-cue-generation.json",
+      "sha256": "ac6a065017a0892d75b40b8bc1061666b984e519861bed5499ad538e72088cf3"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-frozen-records.json",
+      "sha256": "064928baeb1849bff136a271513b3e441de455657a08e6e605244d1465979d51"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-independent-closure.json",
+      "sha256": "dd78adf8d8efe57085d8428ef2b10919240ad9ac00d8150497766719ca521dbf"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-owner-costs.json",
+      "sha256": "a94e56ffb04941613ed284d64470e4b24b665570fe4afd7f84e7a527b5b33149"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-ownership-replay.json",
+      "sha256": "3d00c40503dfbb8ca88ee6976c3eeabeef06e2351a6537b1280fa86485f3c214"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-protocol-deadlines.json",
+      "sha256": "21ef41170010e438ce6f195681b9567150cf0351110938819158cceed99df349"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-raw-freeze.json",
+      "sha256": "05a83fad5571c4eb610978ff7bbf387aebbb2fd0ef547de5797d0497cb1ea83c"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-receipt-review.json",
+      "sha256": "914910b595402656ecbaf46f903b92e5d12c41d0d03d7792ee68b3ac2ffc0b0e"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-resume-rendering.json",
+      "sha256": "0caba70e8fdae545a92f681be43e777fe465c3103c9585cade8e8d1cbe558aa8"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-incoming-5938e82-storage-review.json",
+      "sha256": "e8befd42c3085a7f121dd59c780858932ad8f77c2e9077f4f4ed229a4a832387"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-ack-max.json",
+      "sha256": "ca0c2f71d5c99cbcb632c3a9713ffa020dd482925470c76c5d3c9eecc28a2a98"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-closure.json",
+      "sha256": "4ed726632d44e701c8ec08fe5387718b0eedd3f890a046611dd2168f9d23aa6f"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-cue-generation.json",
+      "sha256": "a93abf05d718260d12879b946b74bd3336c6afacf1e4bc6e888aecc6aaacf99c"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-frozen.json",
+      "sha256": "221da2e3b3746c5e6e65ebed722de005402f0424e25062f7e295f86bc38e4e5a"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-menu-paths.json",
+      "sha256": "6c13a9effaac6ecd4ae25514f6992bf266e01880c9cd0fab8cacc3c2846a4cd7"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-owner-paths.json",
+      "sha256": "d0b3165013c2511ad5a2d9de53d75616c39e40c2b6d0c39b8e3f898da25ac432"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-ownership-replay.json",
+      "sha256": "006688445f6bd1608621a3b10a9179b79c43980f167c1b5053a9ec3921af3480"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-preparation-paths.json",
+      "sha256": "44b87514a3034b5eba5062b740bb4b69cf22ef06c58f59d8b00833353f601433"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-match-ab7d8c8-primary.json",
+      "sha256": "5bbeb08bf26a2a09a0f8142ca5c08f4a3c2be3b3a280760b4c58b3d5c906e238"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-ack-max.json",
+      "sha256": "5c3b94fded8e5822abdb9754ce7dfa179ce2acc52dec4e4138a95564c575cc9d"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-closure.json",
+      "sha256": "5e7e93090f768494fcb30336da01d35bdae348355f54fb531e09c698ade1f665"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-cue-generation.json",
+      "sha256": "16a0c87584ca490deaaf7d629f46524158ea15184452144c555e61ee4d76fac5"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-frozen.json",
+      "sha256": "6dc3c465ea1971aa83f09c76532153990bfc81606179ad92ffaf13aa0c2ea4ef"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-menu-paths.json",
+      "sha256": "f5ad892a847d2a37d89af591e2ace1b69251ce243531cdfeda68fa3033a122a0"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-owner-paths.json",
+      "sha256": "71b603c51828a5ecd849fbd3cc6bfcecd600b0c5491dadc8f56d9b37df0e401d"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-ownership-replay.json",
+      "sha256": "8072a3621576c640a775e0da3c5d8c29dd76807381829d5ee1b1421696fb0c7c"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-preparation-paths.json",
+      "sha256": "37b0116aab3428d7eb736dc0c2dfbb36d6551f2f2024b9d401055594b4685aca"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-ntsc-title-ab7d8c8-primary.json",
+      "sha256": "977c5795cd088714cde558512251a1557eab6b856bd1fb8e950bfc2203ee4175"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-cue-generation.json",
+      "sha256": "665049f007dc180bfc4816ffe71737a594873b6f2a3004cc6feede4332356d84"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-frozen-records.json",
+      "sha256": "5b04ab0c29dca242cec4af77f18163b5254fe382092914690b3e81b91ac27e4e"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-independent-closure.json",
+      "sha256": "5d0845dbe4fdb297cc37b01531f31e85e69aa19ce36920920afae57e6c4dc03d"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-owner-costs.json",
+      "sha256": "9d2ae30601a61a498f6f44d174da125163a8602405b0d1ee0f15155782bfc2f3"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-ownership-replay.json",
+      "sha256": "4d9ae6cd0c9295f0f3b4e5b322ac620eb19c7069fe7ee42f55ff009b0a505a57"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-protocol-deadlines.json",
+      "sha256": "1aa79fa8724010f80be88127c6f24e5b7058a07bbd9dacf1a064058ee4dc6e25"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-raw-freeze.json",
+      "sha256": "164ae117dcb971620b3018304684f4679ffb31c0275190f13f7b12c8c6848a6a"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-receipt-review.json",
+      "sha256": "6f9a2b553b3a898fe267dba7f2a8d4145ffb5aa1a33b990b6a484c9e10c6e82c"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-resume-rendering.json",
+      "sha256": "ad448b03992cc4cf560aee54153e161ac22729f6e331cd1742c373a663ec07f9"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-review-helper-corrections.json",
+      "sha256": "6f16f2118c6c795d0ede2c7810a023959259bc7a6636826d517f923b3fa504a4"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-5938e82-storage-review.json",
+      "sha256": "0e09d9273c764c74f83e0d2c43fde8f424e539379f2708efe0558dd0b2b69d95"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-ab7d8c8-neutral-audit-failure-independent-review.json",
+      "sha256": "098e0b4ffc92f9af59cdba23a2b09bc20a3fa9334176d6158bd375c4ef99158a"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-incoming-ab7d8c8-observer-failure-independent-review.json",
+      "sha256": "a3b7c1b05847d777c34fd4dbd6cdda343062df46f385f6748fe5a3b8546e7683"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-ack-max.json",
+      "sha256": "203b9ded90d2c8659472e1ca3bf296b9a8e2f4e9326a11c67b6f35bbbfdee059"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-closure.json",
+      "sha256": "f7d2477afc4fe0abd85ed4413b60fe7172a8e1d3b61f8954ac10202a5cc0b323"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-cue-generation.json",
+      "sha256": "a6fed94b6c72e01e3d75d0bdc8e260dc09dad6b9eb400fcd3ce4111b477714c1"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-frozen.json",
+      "sha256": "256a064678bd7aa634be30eb562b94fd9dc4d6b108691e08b0e3ac6727beaf90"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-menu-paths.json",
+      "sha256": "1412f1ceb7b4ce3bdc78abf4ee842bc9f9632ef5766f00e30344951c445f6ef5"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-owner-paths.json",
+      "sha256": "f6b49f4c4007d6f10f168ce7de46d8778853c4f417e0eb4cf5cc1c9a1c16a4c0"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-ownership-replay.json",
+      "sha256": "05c644f5fc5f49468c36df3f63e637d6d94ae34dbf5e5d8269f56fc4ddf15353"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-preparation-paths.json",
+      "sha256": "10ea7e4a6f8202d801c84b51184d65223a350c65a9624f50ffe58a4cb085a4ab"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-match-ab7d8c8-primary.json",
+      "sha256": "49433615301db13ee43c3d81f56a12e5013101148f95cb4a92a1b31e00ebb57d"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-ack-max.json",
+      "sha256": "3dd1b11af79c572c669de7544fd0fc3b1d4abc90ca75ae5e0fcb6cea43ff4063"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-closure.json",
+      "sha256": "64de98ca5f2f2bc6ecca6d21163198abc5f2b9046025c915fea977cdd0a871e9"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-cue-generation.json",
+      "sha256": "086d0e00a9e380cf231d022f2b7acef3a6fae8b94fa96941aaf40c39e8bedf0d"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-frozen.json",
+      "sha256": "62b0748380556d69ed49d216bb175353d333eb60e405f456c71f8a0c919ffd42"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-menu-paths.json",
+      "sha256": "34eb4e16f7654743dd70520310d57533ba88244b4e33f65b78afcedcf6c81e63"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-owner-paths.json",
+      "sha256": "1b383d9369bcb8129cffb0cca1a775916101a688fb7fbbda56ef733bc96005fb"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-ownership-replay.json",
+      "sha256": "44513e887c0132764983c4262281b1b32fd28fdb64c1c60d0a04f16aef1f1537"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-preparation-paths.json",
+      "sha256": "3988807eb5affecdb32d296798eb810ceaa4df000532420e20827f1fe632e495"
+    },
+    {
+      "path": "build/tests/tutorial-playable-review/auto-potential-pal-title-ab7d8c8-primary.json",
+      "sha256": "5058f68ded815d86c0c168b823bd7a740b3caa4c6b64a05c33c46f065a41309f"
+    }
+  ],
+  "observer_publications": [
+    {
+      "path": "build/tests/tutorial-auto-potential-reduction/observer-publication-23facd2.json",
+      "sha256": "9a8e2bf27b33796fcc7408567cde25b1d5db2ecdff29734179117412306bbcc6"
+    },
+    {
+      "path": "build/tests/tutorial-auto-potential-reduction/observer-publication-5938e82.json",
+      "sha256": "4ad8299ae7fa6f042b8c784c96f07f6edfeeb909a12e837c6c01fddb0dd0fd60"
+    }
+  ],
+  "execution_checkpoints": [
+    {
+      "path": "build/tests/tutorial-auto-potential-reduction/disconnect-status-ab7d8c8-20261011T031419Z.json",
+      "sha256": "73ddbb368879d5290ea45a9654c0cbd96cd4abf85e6656479c88dbedddfeeeab"
+    }
+  ],
+  "historical_matched_prediction_accounting": {
+    "receipt": {
+      "path": "docs/evidence/tutorial-latency/next-operation-summary.json",
+      "sha256": "e496197f04f2fdc4849ce7c58a1e8684e9d6dbb4c0a8d0ec8007fe54c5a99d3d"
+    },
+    "report": {
+      "path": "docs/tutorial-next-operation-results.md",
+      "sha256": "ff7df869a419a3fdc7968c3f75b24c3bbea2258ba588dd8e2ce7be9d7b0ce56b"
+    },
+    "scope": "Earlier PR50 matched states and input schedules; not a current automatic-potential matched latency result"
+  },
+  "focused_host_result": {
+    "path": "build/tests/tutorial-auto-potential-reduction/fresh-focused-host-ab7d8c8.json",
+    "sha256": "2abf88afd589102ecb751a14675ed4608265fb7ab371d87cb2374a9064120d3c"
+  },
+  "resource_record_receipt": {
+    "path": "build/tests/tutorial-auto-potential-reduction/resource-record-ab7d8c8.json",
+    "sha256": "02dcb930ceaedc3cccfa7ebe2d1c1051fbe224db2fdf95d4cec0225bc8ad5aa7"
+  },
+  "metrics": {
+    "json": {
+      "path": "docs/metrics/current.json",
+      "sha256": "e884b49a066dafea78185a38df3185897e24816a470150a0cb24dfad222e68aa"
+    },
+    "md": {
+      "path": "docs/metrics/current.md",
+      "sha256": "e4f9ab5351250d30bab81b091dd0b1dfa6895840a4015634291fc22c3d05031c"
+    }
+  },
+  "preserved_failures": [
+    {
+      "runtime": "ab7d8c8",
+      "failure": "Incoming old unconditional generation observer rejected authorized retained neutral calculating poses; exactresume/menu captures had completed",
+      "failure_path": "build/tests/tutorial-playable-pal/a857ff2ed2e04f1280194d3c1f969119/failure.json",
+      "report_receipt": {
+        "path": "build/tests/tutorial-playable-pal/a857ff2ed2e04f1280194d3c1f969119/failure.json",
+        "sha256": "c2536f97d4323990c6d532a026a05abed0f67502ca48df6e9d71fba39c12731b"
+      }
+    },
+    {
+      "runtime": "ab7d8c8",
+      "failure": "Incoming options observer rejected equivalent private-surface switch before raster capture",
+      "failure_path": "build/tests/tutorial-playable-pal/22eaa0ad9318477fa9af83c57b5c9070/failure.json",
+      "report_receipt": {
+        "path": "build/tests/tutorial-playable-pal/22eaa0ad9318477fa9af83c57b5c9070/failure.json",
+        "sha256": "fe72558448e5019fb2d83e55608d649b533dce506acae2704422aed139fdf16b"
+      }
+    },
+    {
+      "runtime": "4fc9e2f",
+      "extent": "2a72436dc87044bd984e35469fafb48c",
+      "failure": "Whole owner exceeded25000CCK WORK; no callback overlap",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-title-pal/2a72436dc87044bd984e35469fafb48c/report.json",
+        "sha256": "4b42d75a44c91663a93d490fa18c5682c34532bc7b8faa2c23fbbb35d1988f08"
+      }
+    },
+    {
+      "runtime": "db88f80",
+      "extent": "5690db5d20a74595bb191ca197f1a961",
+      "failure": "Menu close80.105ms/4fields exceeded unchanged3field limit",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-title-pal/5690db5d20a74595bb191ca197f1a961/report.json",
+        "sha256": "e8198e41d7b4ac6a3499ec735889f922fabf9b7735c5a1d3b95a19f55aa9e9bf"
+      }
+    },
+    {
+      "runtime": "720d7f8",
+      "extent": "351b96b5d7f742e5b78d44a65736a527",
+      "failure": "NTSC held partialprefix stalled43/48; completedpath didnotrepeat",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-title-ntsc/351b96b5d7f742e5b78d44a65736a527/report.json",
+        "sha256": "5db2377f32412d6146a99dc475cdedbeeebbee27a3a216e680be368a85288bda"
+      }
+    },
+    {
+      "runtime": "cd76653",
+      "extent": "7970d26cdcef4afcb4a0e375abc61eed",
+      "failure": "Complete footer owner5074CCK exceeded5000CCK WORK",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-match-pal/7970d26cdcef4afcb4a0e375abc61eed/report.json",
+        "sha256": "ebf58906006e9a8e3b2d49099322cc81bda8f5d3eba93f6997947401cadbb21a"
+      }
+    },
+    {
+      "runtime": "d2b077c",
+      "extent": "2548f7f0a0e94b53a9eadf18cf3cc8bf",
+      "failure": "Complete preview owner5619CCK exceeded5000CCK WORK",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-match-ntsc/2548f7f0a0e94b53a9eadf18cf3cc8bf/report.json",
+        "sha256": "b2095390f46f43d9eb7ba2d243eb4fb08e9ab6d1c56f9652e1389016467819ff"
+      }
+    },
+    {
+      "runtime": "7b7dfec",
+      "extent": "21f01e972dea42e3be4b5ca7dd657ae1",
+      "failure": "NTSC movement/menuclose publication starvation; all accepted owners fitWORK",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-match-ntsc/21f01e972dea42e3be4b5ca7dd657ae1/report.json",
+        "sha256": "95d377f620f8648a53fd6bb2fff8f444ab36e33caf2c97d552ae76ce48f87034"
+      }
+    },
+    {
+      "runtime": "02e1328",
+      "extent": "928beb81fa2c4b36be42462a5eac5fbc",
+      "failure": "NTSC menuopen/selection publication starvation; all accepted owners fitWORK; closegate not visiblecycleproof",
+      "report_receipt": {
+        "path": "build/tests/tutorial-ux-candidate-match-ntsc/928beb81fa2c4b36be42462a5eac5fbc/report.json",
+        "sha256": "ea0d53e2d588eb579880e88805aef4179268fbe4002e77a7a4c7be63e055cb08"
+      }
+    },
+    {
+      "runtime": "fe941a5",
+      "failure": "Assembler shortbranch displacement; inputsattempt000003 retained",
+      "campaign_completion": {
+        "path": "build/acceptance/campaigns/730d24a1983649a88ed79acb1782f036/attempts/inputs/000003/completion.json",
+        "sha256": "c5ecbabdeb73f9243a90d1ce75f40b9fd830662be98004f5c84df4362a3f19fe"
+      }
+    }
+  ],
+  "limitations": [
+    "Selectedcase pass only; no complete8profile resource gate",
+    "Finite Copperline A50068000OCS512K noexpansion; no fresh WinUAE/physical hardware/human appearance acceptance",
+    "No fresh matched deterministic currentproduct prediction latency comparison",
+    "Closed ACKpairs do not establish universal transport/ACK bounds",
+    "Existing normative deadline/broad cancellation/branchfairness/fullrelease holds remain; no merge or public binaries"
+  ]
+}
