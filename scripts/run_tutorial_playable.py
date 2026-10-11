@@ -13,7 +13,7 @@ from native_tools import ROOT,emulator_config
 from native_evidence import ReportRun,atomic_json,digest,inputs_for,snapshot
 from native_hunk import loaded_hunks
 from tutorial_capture import CaptureSession,CallbackObserver,native_view,animation,assert_tutorial_menu
-from coherent_publication import CoherentSurfaceObserver
+from tutorial_ux_observation import UXSurfaceObserver
 from run_tutorial_capture import FIELDS
 from tutorial_latency import instruction_map,StackTiming
 from ordinary_cadence import chip_memory
@@ -44,13 +44,13 @@ def run(standard,serve=False):
             def num(n,width=None):return int.from_bytes(raw(s[n],FIELDS.get(n,2) if width is None else width),'big')
             loaded=loaded_hunks(exe,segments,raw)
             callbacks=CallbackObserver(0,s)
-            callbacks.surfaces=CoherentSurfaceObserver(s,raw,last_line=311 if standard=='PAL' else 261,verify_sprites=True)
+            callbacks.surfaces=UXSurfaceObserver(s,raw,last_line=311 if standard=='PAL' else 261,verify_sprites=True)
             calls,returns=instruction_map(listing,segments,raw);timing=StackTiming(calls,returns,s['game_stack_bottom'],s['game_stack_top'])
             stack_low=s['game_stack_top'];ack=[];field_rows=[]
             extra=dict(tutorial_job_cost=4,tutorial_job_budget=2,tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_stage=2,
                 game_preview_dispatch_stages=4,game_preview_dispatch_generations=8,game_preview_dispatch_launches=2,
                 game_preview_primed_mask=2,game_preview_synthetic_phases=4,game_preview_flight_phases=4,
-                simulation_interval=4,simulation_phase=4,keyboard_ack=1,keyboard_ack_timer=2)
+                simulation_interval=4,simulation_phase=4,keyboard_ack=1,keyboard_ack_timer=2,tutorial_preparing=1)
             watched=dict(FIELDS,**extra);by_address={s[n]+offset:n for n,width in watched.items() for offset in range(width)}
             class Observer:
                 def observe(self,message):
@@ -292,7 +292,13 @@ def run(standard,serve=False):
                 publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows)
             for p in tutorial_scenes:
                 bank=p['tutorial_fields'];live=p.get('publication_live_fields',{})
-                assert bank['tutorial_generation']==bank['tutorial_presentation_generation']==live['tutorial_generation'],'Stale published tutorial generation'
+                assert bank['tutorial_generation']==bank['tutorial_presentation_generation'],'Inconsistent published tutorial generation'
+                if p.get('retained_neutral_pose'):
+                    # The shared UX observer positively checks the immutable
+                    # calculating footer, frozen ball/shadow and absent cue.
+                    assert not bank['tutorial_animation_ready'] and not bank['tutorial_counts'] and not bank['tutorial_available_counts'],'Retained pose contains prediction samples'
+                else:
+                    assert bank['tutorial_generation']==live['tutorial_generation'],'Stale published tutorial generation'
                 assert bank['tutorial_active_variant']==live['tutorial_active_variant'],'Stale published tutorial alternative'
                 assert p['native_sprite_check']['matched'],'Actual native sprite mismatch'
                 if bank.get('tutorial_marker_ready'):assert bank['tutorial_marker_generation']==bank['tutorial_generation']
@@ -305,7 +311,10 @@ def run(standard,serve=False):
                 frozen_sha256={n:hashlib.sha256(v).hexdigest() for n,v in frozen.items()},
                 scope=('Finite physical lower initial-serve prototype' if serve else 'Finite physical lower-receiver incoming prototype')+', edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.')
         tx.finalize(output,report,compiled=[json.loads((attempt/'baseline-rally.compile.json').read_text())],artifacts=list(attempt.iterdir()))
-        shutil.copy2(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
+        # The canonical writer atomically replaces its path. Preserve these
+        # exact completed bytes without another large report allocation;
+        # later canonical updates cannot modify the attempt's inode.
+        os.link(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
     except BaseException as error:
         # Keep already observed controls/publications even if an early visual gate fails.
         for name in ('menu_stage_samples','stage_snapshots','stage_protocols','actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):

@@ -280,3 +280,24 @@ sprites, and the existing menu/selection/generation checks before raster
 capture. The checkpoint retains both publications, the actual surface's first
 field and the capture frame. The bounded observation cap is unchanged. Fresh
 PAL/NTSC incoming qualification remains required; the failed receipt is retained.
+
+The next PAL incoming attempt `a857ff2ed2e04f1280194d3c1f969119` passed both
+menu raster checkpoints and exact Original restoration, then failed the older
+unconditional live-generation assertion. Independent review identified 32
+completed retained neutral calculating poses: bank/presentation generations
+agree, the live generation is one newer, no sample/cue/animation is present,
+and actual ball/shadow match the frozen original. This is the authorized
+bounded neutral-publication policy, rather than stale prediction acceptance.
+
+The incoming probe now uses the existing stronger `UXSurfaceObserver`, including
+actual 512-byte footer, calculating-caption cache and 40-byte cue metadata watches.
+Only positively verified retained neutral poses may differ from the live generation;
+they additionally require zero animation readiness and prediction counts.
+All prediction/menu scenes retain strict generation checks, and action/potential/
+source identity, cue, native sprites and ownership checks remain enforced.
+The failed retry remains immutable; no runtime change is justified by it.
+
+Completed incoming reports retain an attempt-path hard link to the exact canonical
+report inode. The canonical writer uses an atomic path replacement, so later
+runs cannot mutate those attempt bytes. This avoids a redundant large allocation
+without removing evidence paths or changing any qualification gate.
