@@ -391,6 +391,11 @@ simulation_update:
         ; Compact observational counter: external bus timestamps distinguish
         ; update entry/completion without stopping or tracing each instruction.
         addq.w  #1,simulation_started_updates
+        tst.b   tutorial_running
+        beq.s   .ordinary_poll
+        bsr     tutorial_exploration_poll
+        bra.s   simulation_poll_done
+.ordinary_poll:
         tst.b   ui_paused
         bne.s   simulation_poll_done
         bsr     game_round_poll
@@ -399,6 +404,12 @@ simulation_poll_done:
         bsr     ui_sample
         bsr     game_native_commands
         jsr     tutorial_tick
+        tst.b   tutorial_running
+        beq.s   .ordinary_update
+        bsr     tutorial_exploration_update
+        bsr     complete_update
+        rts
+.ordinary_update:
         tst.b   tutorial_resume_defer
         bne     ui_frozen_update
         tst.b   ui_paused
@@ -468,6 +479,8 @@ game_scene_present_fields:
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_live
+        bsr     tutorial_live_owner
+        bne.s   .history_live
         move.w  (sp)+,sr
         rts
 .history_live:
@@ -485,6 +498,8 @@ game_core_status_present:
         core_trace_sink $103
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        bsr     tutorial_live_owner
         bne.s   .history_live
         move.w  (sp)+,sr
         rts
@@ -512,6 +527,8 @@ game_render_sprites:
         core_trace_sink $101
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
+        bne.s   .history_live
+        bsr     tutorial_live_owner
         bne.s   .history_live
         move.w  (sp)+,sr
         rts

@@ -260,6 +260,66 @@ game_history_resume_latest:
         moveq   #0,d0
         rts
 
+; Commit a complete edited canonical boundary at the interrupted live cursor.
+; Exploration updates were unrecorded. Earlier records remain unchanged; the
+; new checkpoint owns edited position, logical input edges and RNG together.
+game_history_commit_current:
+        cmpi.b  #2,game_history_mode
+        bne     .invalid
+        tst.b   game_history_replaying
+        bne     .invalid
+        tst.b   game_history_seek_active
+        bne     .invalid
+        tst.b   game_preview_active
+        bne     .invalid
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
+        movem.l d2-d7/a1-a6,-(sp)
+        tst.w   game_history_checkpoint_count
+        beq.s   .attempt
+        move.w  game_history_checkpoint_next,d0
+        subq.w  #1,d0
+        andi.w  #HISTORY_CHECKPOINTS-1,d0
+        move.w  d0,d6
+        bsr     game_history_checkpoint_address
+        move.l  (a0),d0
+        cmp.l   game_history_cursor,d0
+        bne.s   .attempt
+        move.l  4(a0),d0
+        cmp.l   game_history_cursor+4,d0
+        bne.s   .attempt
+        move.w  d6,game_history_checkpoint_next
+        subq.w  #1,game_history_checkpoint_count
+.attempt:
+        tst.b   game_history_probe_active
+        beq.s   .checkpoint
+        move.w  game_history_attempt_next,d0
+        subq.w  #1,d0
+        andi.w  #HISTORY_ATTEMPTS-1,d0
+        cmp.w   game_history_probe_index,d0
+        bne.s   .checkpoint
+        tst.w   game_history_attempt_count
+        beq.s   .checkpoint
+        move.w  d0,game_history_attempt_next
+        subq.w  #1,game_history_attempt_count
+.checkpoint:
+        clr.b   game_history_probe_active
+        bsr     game_history_checkpoint
+        move.l  game_history_cursor,game_history_position
+        move.l  game_history_cursor+4,game_history_position+4
+        bsr     game_history_incoming_reset
+        bsr     game_preview_invalidate
+        bsr     game_history_seek_job_invalidate
+        move.b  #1,game_history_mode
+        movem.l (sp)+,d2-d7/a1-a6
+        moveq   #1,d0
+        rts
+.invalid:
+        moveq   #0,d0
+        rts
+
 ; Seek D0.l high/D1.l low cursor. Frozen store never changes. D0=1 success.
 ; Validate envelope and every needed operation before touching canonical state.
 ; Replay emits the actual ordered semantic outputs; native sinks suppress their
@@ -541,6 +601,9 @@ game_history_contact:
         cmpi.b  #2,game_history_mode
         bne.s   .done
         moveq   #1,d6
+        ifd ENHANCED_INTERFACE
+        bsr     tutorial_exploration_launch
+        endif
         bsr     game_preview_launch
         bra.s   .done
 
@@ -564,6 +627,9 @@ game_history_serve:
         cmpi.b  #2,game_history_mode
         bne.s   .done
         moveq   #3,d6
+        ifd ENHANCED_INTERFACE
+        bsr     tutorial_exploration_launch
+        endif
         bsr     game_preview_launch
         bra.s   .done
 

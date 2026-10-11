@@ -113,6 +113,27 @@ tutorial_canvas_markers: ds.b 2*20
 tutorial_preparing: ds.b 1
 ; Physical B1 remains active_variant; this selects the demonstrated potential.
 tutorial_potential_variant: ds.b 1
+; Exploration canonical state advances only in complete nominal updates.
+; Original remains in the immutable live backup while history stays mode2.
+tutorial_explored: ds.b 1
+tutorial_running: ds.b 1
+tutorial_gesture: ds.b 1
+tutorial_gesture_variant: ds.b 1
+tutorial_gesture_ready: ds.b 1
+tutorial_advance_pending: ds.b 1
+tutorial_human_launched: ds.b 1
+tutorial_opponent_launched: ds.b 1
+tutorial_stop_reason: ds.b 1
+tutorial_exploration_polled: ds.b 1
+tutorial_refresh_pending: ds.b 1
+        ds.b 1
+tutorial_exploration_ticks: ds.w 1
+tutorial_exploration_cycles: ds.w 1
+tutorial_hold_ticks: ds.l 1
+tutorial_hold_time: ds.l 1
+tutorial_gesture_generation: ds.l 1
+; Complete press-time origin, never a reduced preview continuation.
+tutorial_gesture_state: ds.b GAME_CORE_STATE_SIZE
 tutorial_state_end:
 tutorial_interrupted_state equ game_history_live_backup
         section tutorial_display,bss,chip

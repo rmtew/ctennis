@@ -1,0 +1,56 @@
+{
+  "version": "1.1",
+  "runtime_version_commit": "0556b8cc6810a3bb6b268c6975486ac5ebfae9a3",
+  "observer_commit": "1c59f84",
+  "adf": "build/delivery/tutorial-1.1-0556b8c/tutorial-1.1-0556b8c.adf",
+  "adf_bytes": 901120,
+  "adf_sha256": "90466f45cf3d6ec14d24259583636b00e4c46acd960f30dde65c96dceb129ddc",
+  "development_sha256": "929bdbc163e610f13685a6cdb31ab15e9434016036c9788e06ffa32e4bd2f0a9",
+  "release_sha256": "7206a438475bc3057fa2451bc03d66efb889e027d5f1f052023c944c1e4f7d95",
+  "package_campaign": "87f6a9bb8c0148daa43ef7c37d693bee",
+  "reports": {
+    "package": {
+      "path": "build/acceptance/campaigns/87f6a9bb8c0148daa43ef7c37d693bee/report.json",
+      "sha256": "8003dc94f140abb46fffcc38358fb57f6791b76a77247d24ace02e04b617bb30"
+    },
+    "pal": {
+      "path": "build/tests/release-version-boot/a1bd1b0d181a4b35a009f0ed7b26c49a/report.json",
+      "sha256": "e09f84d8eb09d44a808336a5bf9fd08b96fb6714eac7a44ef31d81bf678afb96"
+    },
+    "ntsc": {
+      "path": "build/tests/release-version-boot/f902cb3de9094d4e8f1f599db6098c6a/report.json",
+      "sha256": "56b0a663af2ea6c6dc1c89050ed4e137e9f55028ce226a5b09d4886216a27886"
+    },
+    "initial_pal_invalid_binding": {
+      "path": "build/tests/release-version-boot/a5b8380b589d426fb7670caebb83b724/report.json",
+      "sha256": "8e624352403c36680e478ee74497f322986f124c00d5c92039715777155497c4"
+    },
+    "initial_ntsc_invalid_binding": {
+      "path": "build/tests/release-version-boot/3271e0122a154860b9d3867cc41e946a/report.json",
+      "sha256": "c233ca1c7f39e603ae506b7b4eb01f1b1857685c6c6611017d14c94854d20256"
+    },
+    "equality": {
+      "path": "build/delivery/tutorial-1.1-0556b8c/version-only-equality.json",
+      "sha256": "dada028baaae7f1ae68071c28d5acdd257e5941dc1a9a9ba332b73b8c333800a"
+    },
+    "independent_review": {
+      "path": "build/tests/tutorial-playable-review/release-version-1.1-independent-review.json",
+      "sha256": "0c4dcb9f554c95cd919fee184ef0df79d7d37795d1bef147724513c58fd71d2c"
+    },
+    "library_upload": {
+      "path": "build/delivery/tutorial-1.1-0556b8c/library-upload-receipt.json",
+      "sha256": "90cf8d7fe5ef95dec9e5ccc19b65e7a19867cb40f608b5e529ff1e8427dd1470"
+    }
+  },
+  "tag": {
+    "name": "1.1.0",
+    "status": "pending actual verified merge",
+    "existing_tag": "1.0.0",
+    "created": false
+  },
+  "limits": [
+    "No new gameplay campaign; prior PR55 scope reused via version-only product equality",
+    "Full resource and release holds unchanged",
+    "Initial self-binding receipts invalid and preserved"
+  ]
+}

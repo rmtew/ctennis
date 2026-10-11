@@ -1,0 +1,133 @@
+{
+  "runtime_commit": "1e3dbb356b9e061201d4c7c31b94282dd193baa7",
+  "development_sha256": "51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89",
+  "release_sha256": "f4e10d0784302c739b73f335ffbdc68d018713178379e3e63c10fceaa997c8b5",
+  "adf": "build/delivery/tutorial-exploration-1e3dbb3/tutorial-1e3dbb3.adf",
+  "adf_sha256": "da25745e978bd48acf4e933960aa5d656d02961e91a56b4f21a2a28307c2d13a",
+  "adf_bytes": 901120,
+  "campaigns": {
+    "cpu": "3af8114e884e474bb0e7c6d153d1fb58",
+    "native": "688060ab910b4624922b88b81e13e846",
+    "package": "93d1838f888b41a28705950dc716264d"
+  },
+  "reports": {
+    "cpu_native_origin": {
+      "path": "build/tests/tutorial-exploration-cpu/36787ebe13864a8894657a2070132f10/report.json",
+      "sha256": "70a0ce70199638712d556972d92d8cac2e8da2858f76a85ddc68fe8a6583b53a"
+    },
+    "flight_diagnosis": {
+      "path": "build/tests/tutorial-exploration-cpu/native-serve-flight-diagnosis-bound.json",
+      "sha256": "08e74b9b817bce2a29e4501ba929ae7242b7a24c004ea046dd763cd35f3a9be1"
+    },
+    "miss": {
+      "path": "build/tests/tutorial-exploration-cpu/missed-shot-proof-edge.json",
+      "sha256": "f49afa36c0a163057403a069b4d2b8d4e857e0660e86c47ea2ef58c0244ae6e0"
+    },
+    "miss_failed": {
+      "path": "build/tests/tutorial-exploration-cpu/missed-shot-proof.json",
+      "sha256": "5e28ae91e72139f67b850297e5afd51f360a0a625f26cd49193345588f45807c"
+    },
+    "boot": {
+      "path": "build/delivery/tutorial-exploration-1e3dbb3/boot-report.json",
+      "sha256": "e7bf48cad690f9a99d2b2b229ab7af3b13cc7ce686cbee13c79355e6a15f5d7e"
+    },
+    "package": {
+      "path": "build/delivery/tutorial-exploration-1e3dbb3/package-report.json",
+      "sha256": "9ef429b75862b4d0ee8ff5b6edd6ec95085f336418187d6f90f88987d648103f"
+    },
+    "review_initial": {
+      "path": "build/tests/tutorial-playable-review/exploration-independent-review.json",
+      "sha256": "3dd9fad196b69336b272037ca298c9ed56cc158fc9857bb3fe0da29a4c87087c"
+    },
+    "pal": {
+      "path": "build/tests/tutorial-exploration-pal/facc73f28d104e37930d4aba726be532/report.json",
+      "sha256": "c5497554f57aa99319b3c41a3154a0c1e5ee86322c5634010bf948cb6b5cd7ee"
+    },
+    "ntsc": {
+      "path": "build/tests/tutorial-exploration-ntsc/3ac0ad29845d4aaca8d4d47bdb383c65/report.json",
+      "sha256": "2232dd0af0b0dfe84abdeb19ced78d5f7597d90d5f3d28463df6310abfd21123"
+    },
+    "review_miss": {
+      "path": "build/tests/tutorial-playable-review/exploration-missed-shot-independent-review.json",
+      "sha256": "055886a14fd161fc968d4e58019ab939ade298ca74a84a14a3ea79a1165c9659"
+    },
+    "library_upload": {
+      "path": "build/delivery/tutorial-exploration-1e3dbb3/library-upload-receipt.json",
+      "sha256": "d34a42bd7d40600e168881a9b90b51ed98f942eac0a07e0ae9267db322000b9b"
+    }
+  },
+  "scope": "Finite emulator/actual-core qualification, not full native release; no matched prediction latency rerun.",
+  "pal": {
+    "checks": {
+      "boot_titleentry_initial_serve": true,
+      "direction_chord_consumed": true,
+      "running_native_sprite_scanout_samples": true,
+      "serve_stops_after_opponent_return": true,
+      "held_literal_press_snapshot": true,
+      "released_literal_press_snapshot": true,
+      "long_hold_release_consumed": true,
+      "exact_original318_all72_records": true,
+      "play_from_here_full_checkpoint_exit": true
+    },
+    "completed_callbacks": 1382,
+    "max_callback_ms": 15.407842634191313,
+    "minimum_absolute_headroom_ms": 1.058544528430082,
+    "keyboard_ack": {
+      "count": 38,
+      "minimum_us": 216.24547667748834,
+      "maximum_us": 2790.609815063598,
+      "scope": "Observed complete ACK pulses; no exhaustive hardware guarantee"
+    },
+    "raw_uncompressed_bytes": 5925821,
+    "raw_cap_bytes": 134217728,
+    "dropped_notifications": 0,
+    "pending_callback": null
+  },
+  "ntsc": {
+    "checks": {
+      "boot_titleentry_initial_serve": true,
+      "direction_chord_consumed": true,
+      "running_native_sprite_scanout_samples": true,
+      "serve_stops_after_opponent_return": true,
+      "held_literal_press_snapshot": true,
+      "released_literal_press_snapshot": true,
+      "long_hold_release_consumed": true,
+      "exact_original318_all72_records": true,
+      "play_from_here_full_checkpoint_exit": true
+    },
+    "completed_callbacks": 1376,
+    "max_callback_ms": 15.303341625821158,
+    "minimum_absolute_headroom_ms": 1.1484342309643667,
+    "keyboard_ack": {
+      "count": 38,
+      "minimum_us": 213.15558262293112,
+      "maximum_us": 2907.9114803697116,
+      "scope": "Observed complete ACK pulses; no exhaustive hardware guarantee"
+    },
+    "raw_uncompressed_bytes": 5858430,
+    "raw_cap_bytes": 134217728,
+    "dropped_notifications": 0,
+    "pending_callback": null
+  },
+  "failed_native_attempts": [
+    {
+      "path": "build/tests/tutorial-exploration-pal/268b0742ea0c4187af8de67a17fea551/report.json",
+      "sha256": "7e58a3e401c2d2f677610ce918044f4166ce38edc3d0efc09b625508511474c6"
+    },
+    {
+      "path": "build/tests/tutorial-exploration-pal/56d90a5403c84cda88efb93cda4dbe87/report.json",
+      "sha256": "e1d17011397e4a75465043a8aac3a04930284b82d771ef5da4f5d3ccdf36127b"
+    },
+    {
+      "path": "build/tests/tutorial-exploration-pal/0a48daf1817f4162bbf6a96f572c26eb/report.json",
+      "sha256": "fefcfbc58f15fc9fc9b7807db501e6dec3d8e023ee0ae3a5d27b6201733341f4"
+    }
+  ],
+  "resource_record": {
+    "state": "incomplete",
+    "required_profiles": "all eight unmeasured",
+    "record_exit_code": 1,
+    "check_exit_code": 1,
+    "check_reason": "Accepted metrics are incomplete"
+  }
+}

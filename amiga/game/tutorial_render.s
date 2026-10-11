@@ -1345,10 +1345,10 @@ tutorial_restore_court:
 tutorial_empty_text: dc.b 'UNAVAILABLE - RESUME FROM MENU',0
 tutorial_title_text: dc.b 'Tutorial',0
 tutorial_banner_text: dc.b 'TUTORIAL',0
-tutorial_keyboard_controls_text: dc.b 'AUTO WASD F ACTION G MENU',0
-tutorial_pad_controls_text: dc.b 'AUTO PAD B1 ACTION B2 MENU',0
+tutorial_keyboard_controls_text: dc.b 'WASD F ACT G TAP:TRY HOLD:MENU',0
+tutorial_pad_controls_text: dc.b 'PAD B1 ACT B2 TAP:TRY HOLD:MENU',0
 tutorial_computing_detail_text: dc.b 'CALCULATING PATHS',0
-tutorial_close_hint_text: dc.b 'G/B2 CLOSE  RESUME ORIGINAL',0
+tutorial_close_hint_text: dc.b 'TAP TRY SHOT  HOLD OPTIONS',0
         even
 tutorial_controls_texts:
         dc.l tutorial_keyboard_controls_text,tutorial_pad_controls_text
@@ -1363,8 +1363,8 @@ tutorial_menu_text: dc.b 'UP/DOWN SELECT - F/ENTER OK',0
 tutorial_wait_hint_text: dc.b 'AUTO SERVE: NEXT F/B1 PRESS',0
 tutorial_other_pending_text: dc.b 'TUTORIAL: OTHER PATH CALCULATING',0
 tutorial_count_text: dc.b '1/1  CURRENT SERVE',0
-tutorial_branch_text: dc.b 'PLAY FROM HERE (NOT READY)',0
-tutorial_resume_text: dc.b 'RESUME LATEST',0
+tutorial_branch_text: dc.b 'PLAY FROM HERE',0
+tutorial_resume_text: dc.b 'RESUME ORIGINAL',0
 tutorial_close_text: dc.b 'CLOSE MENU',0
 tutorial_landing_text: dc.b 'LANDING - ACTUAL GAME PATH',0
 tutorial_net_text: dc.b 'NET - ACTUAL GAME PATH',0

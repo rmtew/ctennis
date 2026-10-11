@@ -69,6 +69,9 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('tutorial-exploration-cpu', ('scripts/run_tutorial_exploration_cpu.py',), 'tests/tutorial-exploration-cpu/report.json', category='host'),
+        Case('tutorial-exploration-pal', ('scripts/run_tutorial_exploration.py',), 'tests/tutorial-exploration-pal/report.json'),
+        Case('tutorial-exploration-ntsc', ('scripts/run_tutorial_exploration.py','--ntsc'), 'tests/tutorial-exploration-ntsc/report.json'),
         Case('tutorial-ux-delivered-title-pal', ('scripts/run_tutorial_ux.py','--delivered'), 'tests/tutorial-ux-delivered-title-pal/report.json'),
         Case('tutorial-ux-delivered-match-pal', ('scripts/run_tutorial_ux.py','--delivered','--match'), 'tests/tutorial-ux-delivered-match-pal/report.json'),
         Case('tutorial-ux-title-pal', ('scripts/run_tutorial_ux.py',), 'tests/tutorial-ux-candidate-title-pal/report.json'),
