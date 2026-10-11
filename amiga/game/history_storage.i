@@ -8,3 +8,4 @@ game_history_attempts:
 game_history_live_backup:
         ds.b GAME_CORE_STATE_SIZE
 game_history_buffer_end:
+        include "amiga/game/history_incoming_storage.i"

@@ -33,6 +33,7 @@ game_history_attach:
         dbra    d2,.clear
         move.l  a0,game_history_store
         move.b  #1,game_history_mode
+        bsr     game_history_incoming_reset
         bsr     game_history_checkpoint
         bsr     game_preview_invalidate
         bsr     game_history_seek_job_invalidate
@@ -42,6 +43,7 @@ game_history_attach:
 .invalid:
         clr.b   game_history_mode
         clr.l   game_history_store
+        bsr     game_history_incoming_reset
         bsr     game_preview_invalidate
         bsr     game_history_seek_job_invalidate
         moveq   #0,d0
@@ -52,6 +54,15 @@ game_history_before:
         cmpi.b  #1,game_history_mode
         bne.s   .done
         move.w  d6,game_history_operation
+        cmpi.w  #1,d6
+        beq.s   .reset_incoming
+        cmpi.w  #2,d6
+        beq.s   .reset_incoming
+        cmpi.w  #6,d6
+        bne.s   .record
+.reset_incoming:
+        bsr     game_history_incoming_reset
+.record:
         move.l  game_history_cursor+4,d7
         andi.w  #HISTORY_RECORDS-1,d7
         mulu.w  #HISTORY_RECORD_BYTES,d7
@@ -98,6 +109,8 @@ game_history_after:
         bne.s   .clock_ok
         ; Do not alias ancient cursors if the 64-bit lifetime is exhausted.
         clr.b   game_history_mode
+        clr.b   game_history_incoming_valid
+        clr.b   game_history_incoming_pending
         rts
 .clock_ok:
         tst.b   game_history_probe_active
@@ -119,7 +132,7 @@ game_history_after:
         andi.w  #HISTORY_SPACING-1,d0
         bne.s   .done
         bsr     game_history_checkpoint
-.done:  rts
+.done:  bra     game_history_incoming_after
 
 ; Return A0 checkpoint address for slot D0.w; scratch D0.
 game_history_checkpoint_address:
@@ -510,6 +523,7 @@ game_history_contact:
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
         bne.s   .preview
+        bsr     game_history_incoming_launch
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         tst.b   game_history_probe_active
@@ -536,6 +550,7 @@ game_history_serve:
         movem.l d0-d7/a0-a6,-(sp)
         cmpi.b  #1,game_history_mode
         bne.s   .preview
+        bsr     game_history_incoming_launch
         tst.b   G_LOWER_AI(a4,d7.w)
         bne.s   .done
         move.w  d7,d5
@@ -576,6 +591,8 @@ game_history_attempt_address:
         adda.l  #HISTORY_ATTEMPT_OFFSET,a0
         adda.l  d0,a0
         rts
+
+        include "amiga/game/history_incoming.s"
 
         even
 game_history_state:

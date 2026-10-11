@@ -64,6 +64,8 @@ class Core:
         self.preview_event_groups = {}
         self.mutable_regions = [(symbols['game_history_state'], symbols['game_history_state_end']),
                                 (symbols['game_history_buffer'], symbols['game_history_buffer_end'])]
+        if 'game_history_incoming_storage' in symbols:
+            self.mutable_regions.append((symbols['game_history_incoming_storage'],symbols['game_history_incoming_storage_end']))
         if 'game_preview_storage' in symbols:
             self.mutable_regions.append((symbols['game_preview_storage'],symbols['game_preview_storage_end']))
         if 'game_history_seek_storage' in symbols:

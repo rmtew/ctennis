@@ -1,5 +1,6 @@
 """Fail-closed selective predictor evidence extent; never a release gate."""
 import json
+import gzip
 from native_evidence import digest
 from native_tools import ROOT
 
@@ -38,11 +39,12 @@ def cpu_extent(report):
         and predictor.get('passed') is True and isinstance(predictor.get('bytes'),int) and predictor['bytes']>0)
 
 
-def native_extent(report,standard):
-    relative='build/tests/predictor-native-'+standard.lower()+'/latency.json'
+def native_extent(report,standard,prefix='predictor-native-'):
+    relative='build/tests/'+prefix+standard.lower()+('/latency.json.gz' if prefix=='incoming-origin-native-' else '/latency.json')
     files=(report.get('evidence') or {}).get('files') or {}
     if report.get('capture')!=relative or files.get(relative)!=digest(ROOT/relative):return False
-    try:captured=json.loads((ROOT/relative).read_text())
+    try:
+        with (gzip.open(ROOT/relative,'rt') if relative.endswith('.gz') else (ROOT/relative).open()) as handle:captured=json.load(handle)
     except (OSError,ValueError):return False
     rows=report.get('endpoints') or [];probe=report.get('input_probe') or {}
     timing=report.get('timing') or {};resume=report.get('resume_latest') or {}

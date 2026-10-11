@@ -793,6 +793,19 @@ def required_extent(case,report):
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
                 and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
+    if case.id=='incoming-origin-cpu':
+        from incoming_origin_proof import required_extent as origin_extent
+        return origin_extent(report)
+    if case.id in ('incoming-origin-pal','incoming-origin-ntsc'):
+        from predictor_extent import native_extent
+        standard='NTSC' if case.id.endswith('-ntsc') else 'PAL'
+        original=type(case)(id='incoming-flight-'+standard.lower(),args=case.args,report=case.report)
+        origin=report.get('incoming_origin') or {}
+        return (required_extent(original,report) and native_extent(report,standard,'incoming-origin-native-')
+            and origin.get('passed') is True and origin.get('storage_bytes')==344
+            and origin.get('captures') and origin.get('capture_calls')
+            and origin.get('original_resolver_calls')==0 and origin.get('paused_immutable') is True
+            and origin.get('current_request_cache_equal') is True)
     if case.id=='predictor-boundaries-cpu':
         from predictor_boundary_proof import required_extent as boundary_extent
         return boundary_extent(report)

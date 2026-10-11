@@ -4,6 +4,7 @@ Runs the current manifest-bound product; initializes no intermediate state.
 Normal physical play supplies the opponent launch, then freezes via controls.
 """
 import argparse
+import gzip
 import hashlib
 import json
 import math
@@ -35,9 +36,10 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL', baseline=None, predictor=False):
+def run(standard='PAL', baseline=None, predictor=False, origin_cache=False):
     assert standard in CLOCKS
-    directory = ROOT/'build/tests'/(('predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
+    predictor = predictor or origin_cache
+    directory = ROOT/'build/tests'/(('incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
@@ -65,6 +67,7 @@ def run(standard='PAL', baseline=None, predictor=False):
         config = emulator_config()
         boundaries, actions, endpoints = [], [], []
         frozen = None;frozen_records=None;history_end=None;resume_readback=None;first_resumed_boundary=False;held_resume_samples=0
+        frozen_origin=None;origin_captures=[]
         with LatencySession(directory) as session:
             session.inspect('session_launch', dict(binary=config['tools']['copperline'],
                 run=str(executable), args=['--chipset','OCS','--video',standard,
@@ -110,6 +113,7 @@ def run(standard='PAL', baseline=None, predictor=False):
             assert subscribed.get('dropped_notifications',0)==0
             session.inspect('break_add',dict(kind='pc',addr=symbols['simulation_update']))
             if predictor:session.inspect('break_add',dict(kind='pc',addr=symbols['tutorial_resume_restored']))
+            if origin_cache:session.inspect('break_add',dict(kind='pc',addr=symbols['game_history_incoming_capture_complete']))
             drain_breaks=['tutorial_copy_court','ui_footer_draw'] if predictor else []
             for name in drain_breaks:session.inspect('break_add',dict(kind='pc',addr=symbols[name]))
             origin = stop['cck']
@@ -118,11 +122,16 @@ def run(standard='PAL', baseline=None, predictor=False):
                     provider_seconds=stop['seconds'],
                     physical_seconds=(stop['cck']-origin)/CLOCKS[standard])
             def advance(seconds):
-                nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary,held_resume_samples
+                nonlocal stop,frozen,frozen_records,history_end,resume_readback,first_resumed_boundary,held_resume_samples,frozen_origin
                 goal = stop['cck']+math.ceil(seconds*CLOCKS[standard])
                 assert (goal-origin)/CLOCKS[standard] <= CAPS['physical_seconds']
                 for _ in range(CAPS['boundary_stops']):
                     stop=session.inspect('run_until',dict(seconds=goal/PROVIDER_CLOCK))
+                    if origin_cache and stop.get('pc')==symbols['game_history_incoming_capture_complete']:
+                        cached=block('game_history_incoming_state',318)
+                        assert cached==block('game_core_state',318)
+                        assert number('game_history_incoming_cursor',8)==number('game_history_cursor',8)
+                        origin_captures.append(dict(position=position(),state=cached.hex(),cursor=number('game_history_cursor',8),end=number('game_history_incoming_end')))
                     if predictor and stop.get('pc')==symbols['tutorial_resume_restored']:
                         assert frozen is not None and resume_readback is None
                         restored=block('game_core_state',318);history=block('game_history_state',72)
@@ -143,11 +152,13 @@ def run(standard='PAL', baseline=None, predictor=False):
                         if fields['tutorial_active']:
                             if frozen is None:
                                 frozen=states
+                                if origin_cache:frozen_origin=block('game_history_incoming_storage',344)
                                 if predictor:
                                     records_bytes=symbols['game_history_checkpoints']-symbols['game_history_buffer']
                                     frozen_records=block('game_history_buffer',records_bytes)
                                     history_end=number('game_history_cursor',8)
                             assert states==frozen, 'Frozen selected318/history72/livebackup changed'
+                            if origin_cache:assert block('game_history_incoming_storage',344)==frozen_origin,'Paused origin cache changed'
                         elif predictor and resume_readback is not None and not first_resumed_boundary:
                             assert states[0]==frozen[2],'Resume dispatched before complete restored boundary'
                             first_resumed_boundary=True
@@ -241,11 +252,18 @@ def run(standard='PAL', baseline=None, predictor=False):
                 advance(.02)
             else:raise AssertionError('No genuine opponent incoming launch under physical play')
             incoming_live=dict(position=position(),state=block('game_core_state',318).hex())
+            if origin_cache:
+                assert number('game_history_incoming_valid',1) and origin_captures
+                incoming_live['origin_cache']=dict(state=block('game_history_incoming_state',318).hex(),cursor=number('game_history_incoming_cursor',8))
+                assert incoming_live['origin_cache']['state']==origin_captures[-1]['state']
             key(0x24,True,.02);key(0x24,False,.02)
             key(0x24,True,.02);key(0x24,False,.02)
             assert number('tutorial_active')
             assert number('game_preview_ordinal',2)==0xfffe
             assert number('game_preview_kind',2)==0
+            if origin_cache:
+                assert block('game_preview_incoming_state',318).hex()==incoming_live['origin_cache']['state']
+                assert number('game_preview_incoming',8)+1==incoming_live['origin_cache']['cursor']
             held_start=position()
             key(0x23,True) # F held; actual held alternative, not a supplied expected path.
             generation=endpoint('initial-held',request=held_start)
@@ -360,14 +378,14 @@ def run(standard='PAL', baseline=None, predictor=False):
             assert any(r['category']=='core-body' for r in stack_result['calls'])
             raw=dict(records=session.records,uncompressed_bytes=session.raw_bytes,
                      cap_uncompressed_bytes=session.MAX_RAW_BYTES)
-        capture=directory/'latency.json'
-        atomic_json(capture,dict(boundaries=boundaries,actions=actions,endpoints=endpoints,
+        capture=directory/('latency.json.gz' if origin_cache else 'latency.json')
+        captured=dict(boundaries=boundaries,actions=actions,endpoints=endpoints,
             timing=callback_result,stack_timing=stack_result, loaded_hunks=loaded,title_ready=title_ready,probe_symbols=probe_symbols,final_stop=final_stop,
             call_map=calls, return_pcs=sorted(returns),literal_rpc=raw,
             timer_reads=session.observer.timer_reads,
             incoming_live=incoming_live, loop_frames=loop_frames, repeat_witness=repeat_witness, outgoing_witness=outgoing_witness, native_memory=memory,
             timer_scope='Read-only literal cascaded CIA counter reads with actual saved phase/interval/epoch; '
-                        'admission declines require emitted control-flow interpretation, not inferred host decisions.'))
+                        'admission declines require emitted control-flow interpretation, not inferred host decisions.')
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
             if predictor:row['original_incoming_reference']=original_reference(cpu_image,cpu_symbols,row,
@@ -390,7 +408,7 @@ def run(standard='PAL', baseline=None, predictor=False):
                 outcome_equal=True,phases=phases,outcome=outcome,endpoint=sample.hex(),
                 expected_full_state=final.hex(),seed_sha256=hashlib.sha256(bytes.fromhex(row['held_launch_state'])).hexdigest())
             if predictor:row['original_outgoing_reference']['scope']='Complete equality relative to captured reduced preview launch seed; not a full edited-match checkpoint'
-        captured=json.loads(capture.read_text());captured['endpoints']=endpoints;atomic_json(capture,captured)
+        captured['endpoints']=endpoints
         report=dict(passed=True,subject='maintained-native',target=dict(TARGET,video=standard),
             executable_sha256=product_sha256, incoming_flight=True, endpoints=endpoints, native_memory=memory,
             repeated_sequence=True, loop_publications=len(loop_frames), repeat_witness=repeat_witness,
@@ -412,9 +430,28 @@ def run(standard='PAL', baseline=None, predictor=False):
                 emitted_kernel_calls=len(kernel_calls),cancelled_active_job=True,held_resume_samples=held_resume_samples,
                 observer_drain_breaks=drain_breaks,
                 drain_scope='Read-only helper entry stops drain event bursts; no guest writes, clock advancement or callback regime selection')
-            captured=json.loads(capture.read_text());captured.update(input_probe=input_result,resume_latest=resume_readback,
+            captured.update(input_probe=input_result,resume_latest=resume_readback,
                 first_resumed_boundary_equal=first_resumed_boundary,kernel_calls=kernel_calls,
-                records=frozen_records.hex(),history_end=history_end);atomic_json(capture,captured)
+                records=frozen_records.hex(),history_end=history_end)
+        if origin_cache:
+            requests=[r for r in stack_result['calls'] if r['callee']=='game_preview_request_projected']
+            assert requests and not any(r['callee']=='game_preview_resolve_one' for r in stack_result['calls'])
+            origin_result=dict(passed=True,storage_bytes=344,captures=origin_captures,paused_immutable=True,
+                current_request_cache_equal=True,original_resolver_calls=0,initial_request=requests[0],
+                capture_calls=[r for r in stack_result['calls'] if r['callee']=='game_history_after' and any(r['entry_store_complete']['cck']<=c['position']['cck']<=r['exit']['cck'] for c in origin_captures)])
+            assert origin_result['capture_calls']
+            origin_result['initial_request_to_first_held_endpoint_cck']=endpoints[0]['first_actual_publication']['position']['cck']-requests[0]['entry']['cck']
+            origin_result['initial_request_to_first_held_endpoint_seconds']=origin_result['initial_request_to_first_held_endpoint_cck']/CLOCKS[standard]
+            placements=[p for p in callbacks.surfaces.publications if p['position']['cck']>=requests[0]['entry']['cck']
+                and p.get('tutorial_fields',{}).get('tutorial_generation')==endpoints[0]['generation']
+                and p['tutorial_fields'].get('tutorial_presentation_generation')==endpoints[0]['generation']
+                and p['tutorial_fields'].get('tutorial_placement_ready') and not p['tutorial_fields'].get('tutorial_placement_dirty')]
+            assert placements
+            origin_result['initial_request_to_first_placement_cck']=placements[0]['position']['cck']-requests[0]['entry']['cck']
+            report['incoming_origin']=origin_result;captured['incoming_origin']=origin_result
+        if origin_cache:
+            with gzip.open(capture,'wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
+        else:atomic_json(capture,captured)
         atomic_json(directory/'results-unvalidated.json',report)
         artifacts=[p for p in directory.iterdir() if p.is_file() and p!=output]
         transaction.finalize(output,report,[manifest],artifacts)
@@ -428,5 +465,6 @@ if __name__=='__main__':
     parser.add_argument('--ntsc',action='store_true')
     parser.add_argument('--baseline',type=Path)
     parser.add_argument('--predictor',action='store_true')
+    parser.add_argument('--origin-cache',action='store_true')
     args=parser.parse_args()
-    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor)
+    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache)
