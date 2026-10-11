@@ -733,10 +733,10 @@ def required_extent(case,report):
                 and all(validation.get(n) is True for n in (
                     'canonical_and_other_owner_untouched','canary_untouched',
                     'public_a5_preserved','body_a5_preserved','full_state_and_ordered_events_equal'))
-                and audit.get('passed') is True and audit.get('matched_bytes')==17524
+                and audit.get('passed') is True and audit.get('matched_bytes')==17606
                 and audit.get('relocations_each')==7
                 and audit.get('verified_sink_branches_each')==14
-                and audit.get('normalized_sha256')=='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
+                and audit.get('normalized_sha256')=='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
     if case.id=='tutorial-hotspots-pal':
         from tutorial_hotspots import required_hotspots_extent
         return required_hotspots_extent(report, 'PAL')

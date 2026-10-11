@@ -70,6 +70,12 @@ class ClassicPlayers(unittest.TestCase):
                 hooked = b'        bsr     game_random_launch\n        bsr     game_history_serve\n        rts'
                 self.assertEqual(data.count(hooked),1)
                 data = data.replace(hooked,b'        bra     game_random_launch')
+            if path == 'amiga/game/gameplay_ball.s':
+                # The reviewed exact divisor-32 specialization changes only
+                # this call site; emitted equivalence is a separate CPU gate.
+                shortcut = b'        bsr     game_ratio32\n'
+                self.assertEqual(data.count(shortcut),1)
+                data = data.replace(shortcut,b'        moveq   #32,d2\n        bsr     game_ratio\n')
             self.assertEqual(hashlib.sha256(data).hexdigest(), digest, path)
 
     def test_a_b_labels_fit_font_and_court_bounds(self):

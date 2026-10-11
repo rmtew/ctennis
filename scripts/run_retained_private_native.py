@@ -19,7 +19,7 @@ from run_preview_native import (Native,ObservedSession,overlay,retained_candidat
 from run_shared_match_core import READONLY
 
 from retained_private_extent import CPU_RECEIPTS
-CORE_SHA='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c'
+CORE_SHA='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5'
 
 
 def seek_once(native,target):
@@ -128,7 +128,7 @@ def run(standard):
         executable,listing,fixture_manifest,overlay_identity=overlay(directory)
         expected=normalized(standalone,core_listing)
         assert normalized(product,product.parent/'native.lst')==normalized(executable,listing)==expected
-        assert (len(expected[0]),expected[1],expected[2],hashlib.sha256(expected[0]).hexdigest())==(17524,7,14,CORE_SHA)
+        assert (len(expected[0]),expected[1],expected[2],hashlib.sha256(expected[0]).hexdigest())==(17606,7,14,CORE_SHA)
         manifests=[compile_manifest(product,product.parent/'native.lst'),compile_manifest(standalone,core_listing),fixture_manifest]
         image,symbols=load_image(standalone)
         with Core(image,symbols,readonly=READONLY) as cpu:

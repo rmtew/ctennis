@@ -94,8 +94,8 @@ def required_retained_extent(report,standard):
                     or frame['state']!=frame['after']):return False
         except (KeyError,TypeError,ValueError):return False
     core=v.get('normalized_core') or {}
-    if core!=dict(bytes=17524,relocations=7,sinks=14,
-            sha256='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c'):return False
+    if core!=dict(bytes=17606,relocations=7,sinks=14,
+            sha256='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5'):return False
     for job,name,budget in zip(jobs,('retained-cold-budget4','retained-cached-budget2'),(4,2)):
         c=job.get('costs') or {}
         if not (job.get('name')==name and job.get('passed') is True
