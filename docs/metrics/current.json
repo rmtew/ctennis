@@ -2,40 +2,40 @@
   "schema": 1,
   "state": "incomplete",
   "static": {
-    "executable_sha256": "3f02f4492a7642bc99c205737252b7e7ff69fce3c3c8ca5fb92445a86d689f07",
+    "executable_sha256": "51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89",
     "layout": {
-      "executable_bytes": 224096,
+      "executable_bytes": 228052,
       "hunks": [
         {
           "file_offset": 48,
           "index": 0,
           "kind": "code",
-          "bytes": 65968,
+          "bytes": 68184,
           "memory": "any"
         },
         {
-          "file_offset": 100592,
+          "file_offset": 103984,
           "index": 1,
           "kind": "data",
           "bytes": 112700,
           "memory": "chip"
         },
         {
-          "file_offset": 217072,
+          "file_offset": 220464,
           "index": 2,
           "kind": "bss",
           "bytes": 9424,
           "memory": "chip"
         },
         {
-          "file_offset": 217196,
+          "file_offset": 220588,
           "index": 3,
           "kind": "bss",
-          "bytes": 94268,
+          "bytes": 94616,
           "memory": "any"
         },
         {
-          "file_offset": 223888,
+          "file_offset": 227844,
           "index": 4,
           "kind": "bss",
           "bytes": 62976,
@@ -45,24 +45,24 @@
       "file_format": {
         "header_table_bytes": 40,
         "hunk_headers_and_end_bytes": 60,
-        "relocation_bytes": 8236,
-        "relocations": 2047,
-        "symbol_bytes": 37092,
-        "symbols": 1301,
-        "symbol_name_bytes": 24850,
-        "symbol_name_padding_bytes": 1794,
-        "symbol_framing_bytes": 10448,
+        "relocation_bytes": 9104,
+        "relocations": 2264,
+        "symbol_bytes": 37964,
+        "symbols": 1328,
+        "symbol_name_bytes": 25473,
+        "symbol_name_padding_bytes": 1827,
+        "symbol_framing_bytes": 10664,
         "debug_bytes": 0
       },
-      "code_bytes": 65968,
+      "code_bytes": 68184,
       "data_bytes": 112700,
-      "bss_bytes": 166668,
-      "loaded_payload_bytes": 345336
+      "bss_bytes": 167016,
+      "loaded_payload_bytes": 347900
     },
     "attribution": {
       "schema": 1,
-      "executable_sha256": "3f02f4492a7642bc99c205737252b7e7ff69fce3c3c8ca5fb92445a86d689f07",
-      "accounted_file_bytes": 224096,
+      "executable_sha256": "51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89",
+      "accounted_file_bytes": 228052,
       "reconciled": true,
       "categories": [
         {
@@ -155,12 +155,12 @@
         },
         {
           "category": "cpu_instructions",
-          "bytes": 33992,
+          "bytes": 36206,
           "by_hunk": {
-            "0": 33992
+            "0": 36206
           },
           "by_source": {
-            "amiga/main.s": 2066,
+            "amiga/main.s": 2126,
             "amiga/score_copper_patch.i": 450,
             "amiga/square_score_banks.i": 346,
             "amiga/game/controls.s": 196,
@@ -188,28 +188,29 @@
             "amiga/game/result_audio.s": 82,
             "amiga/game/audio.s": 788,
             "amiga/game/core.s": 160,
-            "amiga/game/history.s": 1636,
+            "amiga/game/history.s": 1870,
             "amiga/game/history_incoming.s": 494,
             "amiga/game/history_seek_job.s": 800,
-            "amiga/game/preview.s": 4220,
+            "amiga/game/preview.s": 4660,
             "amiga/game/preview_predictor.s": 272,
-            "amiga/game/preview_serve_stages.s": 776,
+            "amiga/game/preview_serve_stages.s": 784,
             "amiga/game/preview_endpoint.s": 640,
             "amiga/game/landing_try.s": 1034,
             "amiga/game/core_trace.s": 666,
             "amiga/game/native_core_adapter.s": 294,
             "amiga/game/interface_input.s": 824,
             "amiga/game/interface_pause.s": 46,
-            "amiga/game/interface_menu.s": 516,
+            "amiga/game/interface_menu.s": 518,
             "amiga/game/interface_render.s": 1152,
             "amiga/game/interface_demo.s": 60,
             "amiga/game/interface_feedback.s": 266,
-            "amiga/game/tutorial.s": 1698,
-            "amiga/game/tutorial_deadline.s": 2518,
+            "amiga/game/tutorial.s": 2116,
+            "amiga/game/tutorial_exploration.s": 1034,
+            "amiga/game/tutorial_deadline.s": 2536,
             "amiga/game/tutorial_render.s": 4328,
             "amiga/game/tutorial_progressive.s": 1064
           },
-          "instances": 8940
+          "instances": 9427
         },
         {
           "category": "font",
@@ -239,6 +240,15 @@
           "category": "hunk_header_table",
           "bytes": 40,
           "by_hunk": {},
+          "by_source": {},
+          "instances": 1
+        },
+        {
+          "category": "hunk_payload_alignment_padding",
+          "bytes": 2,
+          "by_hunk": {
+            "0": 2
+          },
           "by_source": {},
           "instances": 1
         },
@@ -284,9 +294,9 @@
         },
         {
           "category": "other_initialized_tables_and_scalars",
-          "bytes": 2287,
+          "bytes": 2286,
           "by_hunk": {
-            "0": 2287
+            "0": 2286
           },
           "by_source": {
             "amiga/main.s": 417,
@@ -304,7 +314,7 @@
             "amiga/game/preview_serve_stages.s": 40,
             "amiga/game/native_core_adapter.s": 3,
             "amiga/game/tutorial_deadline.s": 2,
-            "amiga/game/tutorial_render.s": 1241
+            "amiga/game/tutorial_render.s": 1240
           },
           "instances": 287
         },
@@ -376,7 +386,7 @@
         },
         {
           "category": "relocation_offsets",
-          "bytes": 8188,
+          "bytes": 9056,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -545,12 +555,12 @@
         },
         {
           "category": "source_alignment_padding",
-          "bytes": 15,
+          "bytes": 16,
           "by_hunk": {
-            "0": 15
+            "0": 16
           },
           "by_source": {},
-          "instances": 15
+          "instances": 16
         },
         {
           "category": "square_led_construction_definitions",
@@ -576,21 +586,21 @@
         },
         {
           "category": "symbol_name_padding",
-          "bytes": 1794,
+          "bytes": 1827,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_names",
-          "bytes": 24850,
+          "bytes": 25473,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
         },
         {
           "category": "symbol_record_framing",
-          "bytes": 10448,
+          "bytes": 10664,
           "by_hunk": {},
           "by_source": {},
           "instances": 1
@@ -622,112 +632,112 @@
         {
           "path": "assets/native/court/square-led-definitions.bin",
           "hunk": 0,
-          "offset": 2456,
+          "offset": 2508,
           "bytes": 48,
           "sha256": "722e33cce4eade3c2ad26b9c2386104ce5ebd3f1f02a1922aa5506a2482291f5"
         },
         {
           "path": "assets/native/scene/poses.bin",
           "hunk": 0,
-          "offset": 8152,
+          "offset": 8212,
           "bytes": 112,
           "sha256": "a74ffa26b795daa49056d894b226b7772b8b27de78e2df57df85ce5dca1da376"
         },
         {
           "path": "assets/native/scene/robot-poses.bin",
           "hunk": 0,
-          "offset": 8264,
+          "offset": 8324,
           "bytes": 112,
           "sha256": "044bb1c5b8b96182a5844d09fc2e8537b896f747d097a71144ce7ef12cf62363"
         },
         {
           "path": "assets/native/scene/animations.bin",
           "hunk": 0,
-          "offset": 8376,
+          "offset": 8436,
           "bytes": 36,
           "sha256": "f6b53394194c0a0673ec8b2f349cb85dd11fa3669bd6bc9c7cc6ac192c3632ad"
         },
         {
           "path": "assets/native/audio/score-0.bin",
           "hunk": 0,
-          "offset": 11302,
+          "offset": 11362,
           "bytes": 704,
           "sha256": "8404e543633970007c7c2469731c2749b93cbc80641ffd9d1c964ca45c07c7b8"
         },
         {
           "path": "assets/native/audio/score-1.bin",
           "hunk": 0,
-          "offset": 12006,
+          "offset": 12066,
           "bytes": 656,
           "sha256": "178ee6d2e6f8f764effc9e5b60bba6c26c45420acdf77b14647d437e144f8007"
         },
         {
           "path": "assets/native/audio/score-4.bin",
           "hunk": 0,
-          "offset": 12662,
+          "offset": 12722,
           "bytes": 128,
           "sha256": "e4d7ab01aa14a0409f947b9d74c5083438064890ba8717a6afcd41810a213c4d"
         },
         {
           "path": "assets/native/audio/score-5.bin",
           "hunk": 0,
-          "offset": 12790,
+          "offset": 12850,
           "bytes": 16,
           "sha256": "1d6c930ae370d2f3f7ea4825d166ca3e37126c0537d78a24abc6bd624f4c7666"
         },
         {
           "path": "assets/native/audio/periods.bin",
           "hunk": 0,
-          "offset": 12806,
+          "offset": 12866,
           "bytes": 3072,
           "sha256": "4f8d74ca988ce6389a20b11ec98c2ae99b0e36426b27f8c3f1cc6894e7515dbc"
         },
         {
           "path": "assets/native/audio/envelopes.bin",
           "hunk": 0,
-          "offset": 15878,
+          "offset": 15938,
           "bytes": 128,
           "sha256": "ee33519205cfaa341de2588f17329e40cec0ea3d7014cbe58b2d54c957bd6bf4"
         },
         {
           "path": "assets/native/audio/battle-hymn/melody.bin",
           "hunk": 0,
-          "offset": 16006,
+          "offset": 16066,
           "bytes": 544,
           "sha256": "213adac7d272354ee85df9016712e60606dfff61f63a1a3eb94c9fa5aed2db09"
         },
         {
           "path": "assets/native/audio/battle-hymn/bass.bin",
           "hunk": 0,
-          "offset": 16550,
+          "offset": 16610,
           "bytes": 528,
           "sha256": "bf672e20ff1770500ae39139767c3dc4394b96537fab6fb926076cf0e1e5a983"
         },
         {
           "path": "assets/native/audio/battle-hymn/arpeggio.bin",
           "hunk": 0,
-          "offset": 17078,
+          "offset": 17138,
           "bytes": 1040,
           "sha256": "1c32ecd5946e2084c467c76d242444c8b20e6c895d2ff67dc7d1896105936ce3"
         },
         {
           "path": "assets/native/audio/battle-hymn/periods.bin",
           "hunk": 0,
-          "offset": 18118,
+          "offset": 18178,
           "bytes": 3072,
           "sha256": "0000dc668c0629fc1b7e7324efa43530627a2606161e4a736e7b5861b1011043"
         },
         {
           "path": "build/native/version.bin",
           "hunk": 0,
-          "offset": 37448,
+          "offset": 38192,
           "bytes": 14,
-          "sha256": "ec6a236feaf6490b17ea0a1cbf0223e56beac917ce9e85a2337766c7ce53eb91"
+          "sha256": "9665904279a395eb1c492bc819a3af56eb1dafa2d8ad363d97470b96c360eea4"
         },
         {
           "path": "assets/native/scene/sprite-images.bin",
           "hunk": 0,
-          "offset": 54704,
+          "offset": 56918,
           "bytes": 11264,
           "sha256": "cf1b94f8a8f804df28cc928472e600cfe5d57579967e36344a58fd104a4606ef"
         },
@@ -750,7 +760,7 @@
           "hunk": 1,
           "offset": 44544,
           "bytes": 512,
-          "sha256": "8cdf4eab53280e09822855d9da6c94ce46061ae966f1f858f5af2562500f3096"
+          "sha256": "00105026f3f844bb147235177c329b48ae9710b34ae2267fb795e993830a2b60"
         },
         {
           "path": "assets/native/title/font-mac.bin",
@@ -1190,93 +1200,105 @@
       "padding_instances": [
         {
           "hunk": 0,
-          "offset": 1633,
+          "offset": 1685,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 3519,
+          "offset": 3579,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 3691,
+          "offset": 3751,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 3821,
+          "offset": 3881,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 6159,
+          "offset": 6219,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 9491,
+          "offset": 9551,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 21743,
+          "offset": 21803,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 21985,
+          "offset": 22045,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 23983,
+          "offset": 24277,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 32831,
+          "offset": 33573,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 38485,
+          "offset": 39229,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 38577,
+          "offset": 39321,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 48229,
+          "offset": 49879,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 53853,
+          "offset": 50443,
           "bytes": 1,
           "hex": "00"
         },
         {
           "hunk": 0,
-          "offset": 53857,
+          "offset": 56067,
           "bytes": 1,
           "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 56071,
+          "bytes": 1,
+          "hex": "00"
+        },
+        {
+          "hunk": 0,
+          "offset": 68182,
+          "bytes": 2,
+          "hex": "0000"
         }
       ],
       "identical_incbin_payload_groups": [
@@ -1597,6 +1619,14 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80690,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80692,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -1604,7 +1634,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80698,
+          "offset": 80700,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -1612,7 +1642,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80706,
+          "offset": 80708,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -1620,7 +1650,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80714,
+          "offset": 80716,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -1628,24 +1658,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80722,
+          "offset": 80724,
           "bytes": 8,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80730,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80731,
-          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -1685,7 +1699,15 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80736,
-          "bytes": 2,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80737,
+          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -1733,23 +1755,23 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80748,
-          "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80752,
-          "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80756,
           "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80750,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80754,
+          "bytes": 4,
           "file_bytes": 0
         },
         {
@@ -1765,6 +1787,14 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80760,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80762,
           "bytes": 16,
           "file_bytes": 0
         },
@@ -1772,7 +1802,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80776,
+          "offset": 80778,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1780,7 +1810,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80780,
+          "offset": 80782,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1788,16 +1818,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80784,
+          "offset": 80786,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80788,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -1853,6 +1875,14 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80802,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80804,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1860,7 +1890,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80806,
+          "offset": 80808,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1868,7 +1898,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80810,
+          "offset": 80812,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1876,7 +1906,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80814,
+          "offset": 80816,
           "bytes": 16,
           "file_bytes": 0
         },
@@ -1884,7 +1914,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80830,
+          "offset": 80832,
           "bytes": 96,
           "file_bytes": 0
         },
@@ -1892,7 +1922,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80926,
+          "offset": 80928,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -1900,16 +1930,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 80930,
+          "offset": 80932,
           "bytes": 8,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/preview_storage.i",
-          "hunk": 3,
-          "offset": 80938,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -1949,6 +1971,14 @@
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
           "offset": 80948,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/preview_storage.i",
+          "hunk": 3,
+          "offset": 80950,
           "bytes": 128,
           "file_bytes": 0
         },
@@ -1956,7 +1986,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 81076,
+          "offset": 81078,
           "bytes": 144,
           "file_bytes": 0
         },
@@ -1964,7 +1994,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 81220,
+          "offset": 81222,
           "bytes": 72,
           "file_bytes": 0
         },
@@ -1972,7 +2002,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 81292,
+          "offset": 81294,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -1980,7 +2010,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 81610,
+          "offset": 81612,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -1988,7 +2018,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 81928,
+          "offset": 81930,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -1996,7 +2026,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 82246,
+          "offset": 82248,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -2004,7 +2034,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 82564,
+          "offset": 82566,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -2012,7 +2042,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 82882,
+          "offset": 82884,
           "bytes": 636,
           "file_bytes": 0
         },
@@ -2020,7 +2050,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 83518,
+          "offset": 83520,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -2028,7 +2058,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 83836,
+          "offset": 83838,
           "bytes": 636,
           "file_bytes": 0
         },
@@ -2036,7 +2066,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/preview_storage.i",
           "hunk": 3,
-          "offset": 84472,
+          "offset": 84474,
           "bytes": 8208,
           "file_bytes": 0
         },
@@ -2044,16 +2074,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
-          "offset": 92680,
+          "offset": 92682,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/history_seek_storage.i",
-          "hunk": 3,
-          "offset": 92684,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2069,15 +2091,7 @@
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
           "offset": 92688,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/history_seek_storage.i",
-          "hunk": 3,
-          "offset": 92689,
-          "bytes": 1,
+          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2085,6 +2099,22 @@
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
           "offset": 92690,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 92691,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/history_seek_storage.i",
+          "hunk": 3,
+          "offset": 92692,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -2092,7 +2122,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
-          "offset": 92698,
+          "offset": 92700,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -2100,7 +2130,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
-          "offset": 92706,
+          "offset": 92708,
           "bytes": 72,
           "file_bytes": 0
         },
@@ -2108,7 +2138,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
-          "offset": 92778,
+          "offset": 92780,
           "bytes": 318,
           "file_bytes": 0
         },
@@ -2116,24 +2146,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/history_seek_storage.i",
           "hunk": 3,
-          "offset": 93096,
+          "offset": 93098,
           "bytes": 318,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93414,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93415,
-          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -2285,7 +2299,15 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93434,
-          "bytes": 2,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93435,
+          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -2333,30 +2355,6 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93446,
-          "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93450,
-          "bytes": 8,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93458,
-          "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93462,
           "bytes": 2,
           "file_bytes": 0
         },
@@ -2364,7 +2362,39 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
+          "offset": 93448,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93452,
+          "bytes": 8,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93460,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
           "offset": 93464,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93466,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2372,7 +2402,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93468,
+          "offset": 93470,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2380,7 +2410,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93472,
+          "offset": 93474,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2388,7 +2418,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93476,
+          "offset": 93478,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2396,7 +2426,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93480,
+          "offset": 93482,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2404,7 +2434,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93484,
+          "offset": 93486,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2412,7 +2442,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93488,
+          "offset": 93490,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2420,7 +2450,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93492,
+          "offset": 93494,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2428,24 +2458,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93496,
+          "offset": 93498,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93500,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93501,
-          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -2501,6 +2515,22 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93508,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93509,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93510,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2508,16 +2538,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93512,
+          "offset": 93514,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93516,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2557,15 +2579,7 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93526,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93527,
-          "bytes": 1,
+          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2573,7 +2587,15 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93528,
-          "bytes": 2,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93529,
+          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -2677,6 +2699,14 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93554,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93556,
           "bytes": 8,
           "file_bytes": 0
         },
@@ -2684,7 +2714,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93562,
+          "offset": 93564,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2692,16 +2722,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93566,
+          "offset": 93568,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93570,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2717,6 +2739,14 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93574,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93576,
           "bytes": 64,
           "file_bytes": 0
         },
@@ -2724,7 +2754,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93638,
+          "offset": 93640,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2732,24 +2762,16 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93642,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 93643,
-          "bytes": 1,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
           "offset": 93644,
-          "bytes": 2,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93645,
+          "bytes": 1,
           "file_bytes": 0
         },
         {
@@ -2773,15 +2795,15 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93650,
-          "bytes": 4,
+          "bytes": 2,
           "file_bytes": 0
         },
         {
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93654,
-          "bytes": 2,
+          "offset": 93652,
+          "bytes": 4,
           "file_bytes": 0
         },
         {
@@ -2797,15 +2819,15 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93658,
-          "bytes": 4,
+          "bytes": 2,
           "file_bytes": 0
         },
         {
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93662,
-          "bytes": 2,
+          "offset": 93660,
+          "bytes": 4,
           "file_bytes": 0
         },
         {
@@ -2813,15 +2835,15 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93664,
-          "bytes": 4,
+          "bytes": 2,
           "file_bytes": 0
         },
         {
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93668,
-          "bytes": 2,
+          "offset": 93666,
+          "bytes": 4,
           "file_bytes": 0
         },
         {
@@ -2829,6 +2851,14 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 93670,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 93672,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2836,7 +2866,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93674,
+          "offset": 93676,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2844,7 +2874,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93678,
+          "offset": 93680,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2852,7 +2882,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93682,
+          "offset": 93684,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2860,7 +2890,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93686,
+          "offset": 93688,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2868,7 +2898,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 93690,
+          "offset": 93692,
           "bytes": 512,
           "file_bytes": 0
         },
@@ -2876,7 +2906,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94202,
+          "offset": 94204,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2884,7 +2914,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94206,
+          "offset": 94208,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2892,16 +2922,8 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94210,
+          "offset": 94212,
           "bytes": 4,
-          "file_bytes": 0
-        },
-        {
-          "category": "reserved_bss",
-          "source": "amiga/game/tutorial_storage.i",
-          "hunk": 3,
-          "offset": 94214,
-          "bytes": 2,
           "file_bytes": 0
         },
         {
@@ -2925,6 +2947,14 @@
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
           "offset": 94220,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94222,
           "bytes": 4,
           "file_bytes": 0
         },
@@ -2932,7 +2962,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94224,
+          "offset": 94226,
           "bytes": 40,
           "file_bytes": 0
         },
@@ -2940,7 +2970,7 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94264,
+          "offset": 94266,
           "bytes": 1,
           "file_bytes": 0
         },
@@ -2948,15 +2978,159 @@
           "category": "reserved_bss",
           "source": "amiga/game/tutorial_storage.i",
           "hunk": 3,
-          "offset": 94265,
+          "offset": 94267,
           "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94268,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94269,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94270,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94271,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94272,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94273,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94274,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94275,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94276,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94277,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94278,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94279,
+          "bytes": 1,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94280,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94282,
+          "bytes": 2,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94284,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94288,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94292,
+          "bytes": 4,
+          "file_bytes": 0
+        },
+        {
+          "category": "reserved_bss",
+          "source": "amiga/game/tutorial_storage.i",
+          "hunk": 3,
+          "offset": 94296,
+          "bytes": 318,
           "file_bytes": 0
         },
         {
           "category": "hunk_bss_alignment_padding",
           "source": null,
           "hunk": 3,
-          "offset": 94266,
+          "offset": 94614,
           "bytes": 2,
           "file_bytes": 0
         },
@@ -3009,8 +3183,8 @@
           "file_bytes": 0
         }
       ],
-      "bss_ram_bytes": 166668,
-      "bss_declared_ram_bytes": 166666,
+      "bss_ram_bytes": 167016,
+      "bss_declared_ram_bytes": 167014,
       "bss_alignment_ram_bytes": 2,
       "scope": "Mutually exclusive file-byte categories; code/data hunk sizes are a separate containing view, not added again. CPU instructions use actual emitted listing lengths, including operand extensions. Reserved dcb storage is file-backed, not HUNK_BSS. Zero debug means no emitted HUNK_DEBUG record; symbols are counted separately."
     },
@@ -3018,10 +3192,10 @@
       "celebration": true
     },
     "release": {
-      "executable_sha256": "fdd033baf3a1619a2d3ce39b94a9b924c742488b42c4d5ccdcca155275e9a6bc",
-      "executable_bytes": 187004,
-      "removed_symbol_bytes": 37092,
-      "loaded_payload_bytes": 345336,
+      "executable_sha256": "f4e10d0784302c739b73f335ffbdc68d018713178379e3e63c10fceaa997c8b5",
+      "executable_bytes": 190088,
+      "removed_symbol_bytes": 37964,
+      "loaded_payload_bytes": 347900,
       "policy": "Release ADF omits HUNK_SYMBOL only; development retains symbols."
     },
     "executable_budget_bytes": null,
@@ -3510,7 +3684,7 @@
       "amiga/game/gameplay_math.s": "8c67dd53d3625daf6a18a5333025a2333acf3c4789e1a13c61180b8230b0f338",
       "amiga/game/gameplay_players.s": "8b076a2e2c18ea5dd7e8b3c6c472c6de9046032df371f7a56c3a66e284743409",
       "amiga/game/gameplay_state.i": "b689400b724cd1d39c024d82d5ea4ccd7d31448b7180a86cafafbfb140ba1d07",
-      "amiga/game/history.s": "cd70f0ad4965ba1cb21144e3c1c9996430943248996b498b68bc7f407bb99f28",
+      "amiga/game/history.s": "98490a0b947a38d3ffc6c5f5945a030f8b2eee6885b227bb3bc08f6c90af4e4e",
       "amiga/game/history_incoming.s": "4495874fe495b2270a97a9bf2a83a038c3db7f889e6137725890e59647016871",
       "amiga/game/history_incoming_storage.i": "b0302bc667d39305e6775acde9f2bd1f5a03c35769d423d994c045313e469679",
       "amiga/game/history_seek_job.s": "bc0e6a04e5b325cc1cdb5af4ab2d80417e0c295fe5d63ff40cf902b52598e985",
@@ -3531,11 +3705,11 @@
       "amiga/game/menu.s": "836e87cc35ec0d1b88f223869a62e8e0f419116e8550fc4da3ca873b5f3c0420",
       "amiga/game/native_core_adapter.s": "59006008660ad7b0883da3060dd34c77307faee692511e1a22a7d9abfea8f1e9",
       "amiga/game/paula_output.s": "15f7439f2350384395b221b11df27ad797f2c530776e0eeab476d4cd587449d0",
-      "amiga/game/preview.s": "e3b3f22576de9c79efe1f3c585ccb27601fddbb1395d8f57c45e7e0c5abd0262",
+      "amiga/game/preview.s": "bda6b3a4cc541ea58607a5f0bad759bdb4e86ca568f17a10b4720d78bd43e73c",
       "amiga/game/preview_endpoint.s": "679f0ea210d7fd1e0a4fa0aa04edea5a6f69764da97eb70c4758ce455473bb5c",
       "amiga/game/preview_predictor.s": "3fb8a4db488ff2cdbcaa5587c760d813acb57281f8000dee32efd352ce4789ca",
-      "amiga/game/preview_serve_stages.s": "745862d12947c5b8d238f6c5acfe30ef33e5e8b90165584d134257eb65d0dc8e",
-      "amiga/game/preview_storage.i": "64c9d2229642b04e85f5b2252a1cbc99ed2cbafc5ff054af2f7e8254a0bff9c8",
+      "amiga/game/preview_serve_stages.s": "5fe9d802272e230a3c9226dc5d019892ca9ae95580174b1ad64e4d319b8e143a",
+      "amiga/game/preview_storage.i": "3ab660c545cd774795c19873ad541f56ae68013b57fcd87a88a9bcfd1f1a13ff",
       "amiga/game/result.s": "014d65e76cd642ab6e97a161c6d4c1e0761dbaed8ae92f7442d35f43f1183714",
       "amiga/game/result_audio.s": "cbccf72a67da7faf2c51afb131c2a1aae2ea8d24e8342c53d92abeea532067dc",
       "amiga/game/round.s": "513d6e40f46dae9de5823a0114819b82df68f067125681fc114b0096968e43c6",
@@ -3547,12 +3721,13 @@
       "amiga/game/scoring_state.i": "41706c1b6accaa9735e0e875d0f1b22f64e28f548c86104cadebb6a9db8e78e9",
       "amiga/game/state.i": "b9eef0b6290a1a61548ce74ffaa0d555a6ddaad6a923d40f62c97c1ce26498ab",
       "amiga/game/tick.s": "7abc879f026d175b89d72a777ac0418230feeb52323142da7d313285f9c0c7f5",
-      "amiga/game/tutorial.s": "93ca167236069473c21164a134c4636ee2c2651eee19ee9809ae28690d1e27ea",
-      "amiga/game/tutorial_deadline.s": "e61693c1eb9ca7aa2b47dd9ef8b057271da4854e639f286b56f594fa51907d0a",
+      "amiga/game/tutorial.s": "97dc4a1a1dd892d4114cf5fbdcb9d1e1157a2c69c0564aeb432bf0d532d5650e",
+      "amiga/game/tutorial_deadline.s": "faa925ee41d107872dca5f0527a0e67b0bac18b6fb461b04de07513dadda05c1",
+      "amiga/game/tutorial_exploration.s": "ca75680069f4caa65f3340f37070ff090cb7cba18322a2bf91557863d3a71442",
       "amiga/game/tutorial_progressive.s": "05a590b74611cc8662c7924bab9aa6a340b23a93cd043393ed44b7e0d40948f8",
-      "amiga/game/tutorial_render.s": "1b263df398b45a7997986ac68ae373c43b0066312a6ae0ae853c7448b6dfb32c",
-      "amiga/game/tutorial_storage.i": "60a67a4bdbf42d85c40dfd44c648cfdd16f35cee69d5c5808c3e2f4ccb434aee",
-      "amiga/main.s": "a79536a3967ea4020809e59cfaa6b0ddb65938f079844873313c0d5bbf8b2e2c",
+      "amiga/game/tutorial_render.s": "3e85c343b76b2fbd359dd27141604534920f9f7e8aa35df17f08b73670b4619f",
+      "amiga/game/tutorial_storage.i": "9a291324fdb3e19d4a755092c3debaa79da9e55c5094d7e249d82e3b5c1c5de2",
+      "amiga/main.s": "33852af6697c4cae85f783079ef64a64e9200ac2bea50b68638ff3becb7a2d22",
       "amiga/score_copper_patch.i": "d31a223b068268bcd68c34613090c096fcc764e0e866bc095c25162e24d65fec",
       "amiga/square_score_banks.i": "700bd4da2cb7ec9954c383c7d3a17439de62b6311b87f48ecdf49f1694f47589",
       "amiga/square_score_storage.i": "c9cffada92c9c11fb72dec2b33449a97c53772ac52cd23e05295fa96a79b2926",
@@ -3642,11 +3817,11 @@
       "build/native/ui-help-options.bin": "b7ee2276560910fcf5b496fe4ae8a598612f0ac6a9c82b93edc1c6009c094713",
       "build/native/ui-menu-options.bin": "42a1aeb53991565d14f1d978b75d87c54ea27e94ba491d92c47d3f1f63073128",
       "build/native/ui-pages.bin": "9758d3b32e421a85555868ec08fd2abf694cc228cf10f75274df1b5bb76ac948",
-      "build/native/ui-title-identities.bin": "8cdf4eab53280e09822855d9da6c94ce46061ae966f1f858f5af2562500f3096",
+      "build/native/ui-title-identities.bin": "00105026f3f844bb147235177c329b48ae9710b34ae2267fb795e993830a2b60",
       "build/native/ui-title-pages.bin": "84050866da7c0bc34638f1ae567470514c781cd0c439fd03e8ae9455043fda81",
-      "build/native/version.bin": "ec6a236feaf6490b17ea0a1cbf0223e56beac917ce9e85a2337766c7ce53eb91"
+      "build/native/version.bin": "9665904279a395eb1c492bc819a3af56eb1dafa2d8ad363d97470b96c360eea4"
     },
-    "build_receipt_sha256": "7f182b2a892a0d6bbe79299d3b7b5344c23b71ae3704812f8c03cfc1cd96c7da"
+    "build_receipt_sha256": "d9bd901327f2cf285a8b41c64bca395d23571feb4ba847ff7257f68ff5b7f1f7"
   },
   "runtime": {
     "cold-one": {
@@ -3655,15 +3830,24 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/game/history.s",
           "amiga/game/interface_render.s",
+          "amiga/game/preview.s",
+          "amiga/game/preview_serve_stages.s",
+          "amiga/game/preview_storage.i",
           "amiga/game/tutorial.s",
           "amiga/game/tutorial_deadline.s",
           "amiga/game/tutorial_progressive.s",
           "amiga/game/tutorial_render.s",
           "amiga/game/tutorial_storage.i",
+          "amiga/main.s",
           "build/amiga/interfaces/enhanced/delivery/baseline-rally.adf",
           "build/native/ui-title-identities.bin",
-          "build/native/version.bin"
+          "build/native/version.bin",
+          "build/tests/ct10-adf-one-cadence-enhanced/events.jsonl",
+          "build/tests/ct10-adf-one-cadence-enhanced/measurement.json",
+          "build/tests/ct10-adf-one-cadence-enhanced/native.lst",
+          "build/tests/ct10-adf-one-cadence-enhanced/native.wav"
         ]
       },
       "receipt_sha256": "33ca6504201368108179ab9c5789e89e5d91eb5607fa83c6ce7eae7409c40b1d"
@@ -3674,14 +3858,23 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/game/history.s",
           "amiga/game/interface_render.s",
+          "amiga/game/preview.s",
+          "amiga/game/preview_serve_stages.s",
+          "amiga/game/preview_storage.i",
           "amiga/game/tutorial.s",
           "amiga/game/tutorial_deadline.s",
           "amiga/game/tutorial_progressive.s",
           "amiga/game/tutorial_render.s",
           "amiga/game/tutorial_storage.i",
+          "amiga/main.s",
           "build/native/ui-title-identities.bin",
-          "build/native/version.bin"
+          "build/native/version.bin",
+          "build/tests/ct09-ordinary-two-cadence-enhanced/events.jsonl",
+          "build/tests/ct09-ordinary-two-cadence-enhanced/measurement.json",
+          "build/tests/ct09-ordinary-two-cadence-enhanced/native.lst",
+          "build/tests/ct09-ordinary-two-cadence-enhanced/native.wav"
         ]
       },
       "receipt_sha256": "3858f2417177f7daf3959305fa647fd1d4bdd0aca87a7e4fcdcea064846b77f3"
@@ -3692,16 +3885,23 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/game/history.s",
           "amiga/game/interface_render.s",
+          "amiga/game/preview.s",
+          "amiga/game/preview_serve_stages.s",
+          "amiga/game/preview_storage.i",
           "amiga/game/tutorial.s",
           "amiga/game/tutorial_deadline.s",
           "amiga/game/tutorial_progressive.s",
           "amiga/game/tutorial_render.s",
           "amiga/game/tutorial_storage.i",
+          "amiga/main.s",
           "build/amiga/interfaces/enhanced/baseline-rally",
           "build/amiga/interfaces/enhanced/native.lst",
           "build/native/ui-title-identities.bin",
-          "build/native/version.bin"
+          "build/native/version.bin",
+          "build/tests/native-setup-lost-wrap/native.lst",
+          "build/tests/native-setup-ui-overrun/native.lst"
         ]
       },
       "receipt_sha256": "a80bc862f1d5e40bba0743418b796a32811ca55362c2f763eb1697015ae761d9"
@@ -3712,12 +3912,17 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/game/history.s",
           "amiga/game/interface_render.s",
+          "amiga/game/preview.s",
+          "amiga/game/preview_serve_stages.s",
+          "amiga/game/preview_storage.i",
           "amiga/game/tutorial.s",
           "amiga/game/tutorial_deadline.s",
           "amiga/game/tutorial_progressive.s",
           "amiga/game/tutorial_render.s",
           "amiga/game/tutorial_storage.i",
+          "amiga/main.s",
           "build/amiga/interfaces/enhanced/baseline-rally",
           "build/amiga/interfaces/enhanced/native.lst",
           "build/native/ui-title-identities.bin",
@@ -3747,17 +3952,17 @@
     "Missing/invalid cold milestone: input_responsive",
     "Continuous loaded-title selection evidence missing/invalid"
   ],
-  "identity": "375e0858b723e74e0b2bf865eecd8855809225d0195c8eeb60a1270e3d73360f",
+  "identity": "bea906bc401bbef8ba04847712d4a9d338ba86629e889c810feca9dbfa120a6f",
   "report_generator_sha256": "3b661fe59c95c4092bd14ce53507da9e4124f3ceb2733114c93fafeaf960fb0c",
   "deltas": {
     "state": "historical reviewed baseline; master has no accepted metrics report",
     "previous_identity": "ea32fefef08509b2817ddc05827848878c2fcfe606d30284cb811fac71096884",
     "static_bytes": {
-      "executable_bytes": -24384,
-      "code_bytes": 16404,
+      "executable_bytes": -20428,
+      "code_bytes": 18620,
       "data_bytes": -39840,
-      "bss_bytes": 166668,
-      "loaded_payload_bytes": 143232
+      "bss_bytes": 167016,
+      "loaded_payload_bytes": 145796
     },
     "runtime": {
       "cold-one": {
@@ -3776,5 +3981,5 @@
     "previous_report": "docs/metrics/baselines/pre-title-score-current.json",
     "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede"
   },
-  "product_identity": "1fa00b0bfab8aeb5f75aaff43480422006feaf92f83c2050dd549fe700723d3d"
+  "product_identity": "a8933cf1355e55feeee27552faa2bf1d9abd62987b0c7def24286dc3a3858571"
 }

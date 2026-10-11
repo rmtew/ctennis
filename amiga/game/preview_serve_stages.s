@@ -57,10 +57,13 @@ game_preview_dispatch_stage_eligible:
         lsl.w   #2,d6
         lea     game_preview_stream_cursors,a0
         adda.w  d6,a0
+        tst.w   game_preview_full_origin
+        bne.s   .current_context
         lea     game_history_cursor,a1
         bsr     game_preview_compare_cursor
         tst.l   d0
         bne     .no
+.current_context:
         bsr     game_preview_context_address
         cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a0)
         bne     .no

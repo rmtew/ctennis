@@ -33,6 +33,8 @@ TUTORIAL_JOB_LANDING_PREPARE equ 9
 tutorial_background:
         tst.b   tutorial_active
         beq     .return
+        tst.b   tutorial_running
+        bne     .return
         tst.b   ui_paused
         beq     .return
         tst.b   tutorial_enter_pending
@@ -412,6 +414,8 @@ tutorial_background_class:
         lsl.w   #3,d4
         lea     game_preview_stream_cursors,a0
         adda.w  d4,a0
+        tst.w   game_preview_full_origin
+        bne.s   .synthetic
         lea     game_history_cursor,a1
         bsr     game_preview_compare_cursor
         tst.l   d0
