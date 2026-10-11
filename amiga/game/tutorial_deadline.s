@@ -1,6 +1,9 @@
 ; One root deadline owner. Complete elapsed allowances remain hypotheses.
 ; Record envelopes are semantic boundaries, not compulsory scheduling yields.
 TUTORIAL_BG_CHUNK_E equ 1000
+; Footer clear/layout includes the root admission/accounting return path.
+; Its measured complete owner exceeds the generic small-operation allowance.
+TUTORIAL_BG_FOOTER_E equ 1200
 TUTORIAL_BG_PHYSICS_E equ 4000
 TUTORIAL_BG_FULL_E equ 10000
 ; Separate complete-owner hypothesis for one exact returned serve stage.
@@ -223,7 +226,7 @@ tutorial_background:
         bra     .admit
 .footer:
         move.w  #TUTORIAL_JOB_FOOTER,tutorial_job_kind
-        move.l  #TUTORIAL_BG_CHUNK_E,tutorial_job_cost
+        move.l  #TUTORIAL_BG_FOOTER_E,tutorial_job_cost
         bra     .admit
 .endpoint:
         move.w  #TUTORIAL_JOB_ENDPOINT,tutorial_job_kind
