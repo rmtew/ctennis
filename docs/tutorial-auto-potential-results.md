@@ -159,3 +159,34 @@ No footer scratch/layout/glyph/pixel body, caption identity, generation,
 publication, controls or physical input schedule changes. Classification and
 final admission remain fresh; the residual smaller-prefix fallback remains.
 The observer, window and whole-owner work gate remain unchanged.
+
+## Small preview complete-owner floor
+
+Runtimed2b077c passed fresh PAL/NTSC title and PAL in-match routes, but its
+first NTSC in-match extent `2548f7f0a0e94b53a9eadf18cf3cc8bf` failed one
+preview job1 at1,000E/5,000 CCK WORK while passing the interaction checks.
+At CCK116,610,902 (line251), a one-envelope synthetic sample-result owner
+consumed5,367 CCK bus elapsed and5,619 through the next keyboard entry.
+The actual sample-result body was55 CCK. Exact independent owner partition:
+root exclusive865, animation-due/live-presentation check728, classification
+1,085, admission575, preview step1,345 and returned-progress769; main
+return/accounting adds252. No callback overlapped. Presentation and planning
+costs belong to this complete owner; reserve is not work-budget credit.
+The failed receipt remains immutable and supersedes qualification ofd2b077c.
+
+The correction reserves a complete preview-owner minimum1,500E/7,500 CCK
+WORK once, retaining the1,000E per-envelope grouping cost. Grouped costs
+at least2,000E, serve/flight4,000E, cold10,000E, footer1,200E and commit
+1,000E remain unchanged. Both ordinary and smaller-prefix paths share the
+common classifier finalizer; only a nonzero budget below the floor is raised.
+Current available WORK below1,500E returns zero budget before opcode peeking,
+avoiding necessarily futile planning without retaining refusal/slack/lease.
+This leaves1,881 CCK above the failed bracket before the added classifier
+instructions, a finite hypothesis requiring fresh validation.
+
+The existing final live admission still adds separate500E service+500E
+margin and rechecks beam and timer. No operation, sample, seed, canonical
+state, ordered-output body, generation cancellation or physical schedule is
+changed. A refusal returns to normal mandatory service and immediate current
+state reconsideration; there is no fixed delay or cached eligibility. The
+observer and whole-owner WORK gate remain unchanged.

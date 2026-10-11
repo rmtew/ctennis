@@ -1,6 +1,9 @@
 ; One root deadline owner. Complete elapsed allowances remain hypotheses.
 ; Record envelopes are semantic boundaries, not compulsory scheduling yields.
 TUTORIAL_BG_CHUNK_E equ 1000
+; A small preview owner also pays live planning, release and progress tails.
+; Keep per-envelope costs for grouping; reserve this floor only once per owner.
+TUTORIAL_BG_PREVIEW_OWNER_E equ 1500
 ; Footer clear/layout includes the root admission/accounting return path.
 ; Its measured complete owner exceeds the generic small-operation allowance.
 TUTORIAL_BG_FOOTER_E equ 1200
@@ -389,6 +392,10 @@ tutorial_background_class:
         bcs     .done
         subi.l  #TUTORIAL_BG_SERVICE_E+TUTORIAL_BG_MARGIN_E,d5
         bcs     .done
+        ; No useful prefix can fit below the complete-owner floor. Avoid
+        ; peeking/classifying a next envelope in such a gap; retain no refusal.
+        cmpi.l  #TUTORIAL_BG_PREVIEW_OWNER_E,d5
+        bcs     .done
         cmpi.w  #PREVIEW_RESOLVE,game_preview_status
         beq     .cold
         move.w  tutorial_job_variant,d7
@@ -544,7 +551,12 @@ tutorial_background_class:
         bhi     .done
         move.l  d1,tutorial_job_cost
         move.w  #1,tutorial_job_budget
-.done:  rts
+.done:  tst.w   tutorial_job_budget
+        beq.s   .return
+        cmpi.l  #TUTORIAL_BG_PREVIEW_OWNER_E,tutorial_job_cost
+        bcc.s   .return
+        move.l  #TUTORIAL_BG_PREVIEW_OWNER_E,tutorial_job_cost
+.return:rts
 
 ; Admission includes complete return/progress and the next root mandatory path.
 ; A producer targets the current unconsumed opportunity or the next field.
