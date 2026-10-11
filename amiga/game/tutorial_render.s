@@ -335,7 +335,7 @@ tutorial_choose_surface:
 .done:  rts
 
 ; Pure current ownership query shared by classification and actual acquisition.
-; Closed-menu cue producers prefer an already restored free ROI. No pointer,
+; Closed-menu producers prefer the most prepared currently free canvas. No pointer,
 ; content identity, generation or refusal/admission state is changed here.
 tutorial_free_surface:
         ; An IRQ can move ready to presentation and clear ready. Select from
@@ -365,9 +365,9 @@ tutorial_free_surface:
         beq.s   .second
         tst.b   tutorial_menu
         bne.s   .found
-        tst.b   tutorial_marker_ready
-        beq.s   .found
-        cmpi.b  #$ff,tutorial_canvas_menus
+        bsr     tutorial_closed_canvas_rank
+        move.l  d0,d3
+        cmpi.l  #2,d3
         beq.s   .found
         lea     tutorial_surface1,a1
         move.l  a1,d0
@@ -375,8 +375,9 @@ tutorial_free_surface:
         beq.s   .first_free
         cmp.l   d0,d5
         beq.s   .first_free
-        cmpi.b  #$ff,tutorial_canvas_menus+1
-        beq.s   .found
+        bsr     tutorial_closed_canvas_rank
+        cmp.l   d3,d0
+        bhi.s   .found
 .first_free:
         lea     tutorial_surface0,a1
         bra.s   .found
@@ -393,6 +394,64 @@ tutorial_free_surface:
 .busy:  move.w  (sp)+,sr
         moveq   #0,d0
         rts
+
+; Pure current closed-canvas identity, A1=actual candidate. D0 ranks 0=needs
+; old cue/ROI retirement, 1=closed and cue-free, 2=current qualified cue.
+; Keep ownership snapshot D4/D5 and first-candidate rank D3 unchanged.
+; Validate the completed canvas generation and live endpoint owners before
+; comparing the stored cross coordinates. No bitmap or cache is written.
+tutorial_closed_canvas_rank:
+        moveq   #0,d0
+        tst.b   tutorial_menu
+        bne     .done
+        moveq   #0,d2
+        cmpa.l  #tutorial_surface0,a1
+        beq.s   .identity
+        cmpa.l  #tutorial_surface1,a1
+        bne     .done
+        moveq   #1,d2
+.identity:
+        lea     tutorial_canvas_menus,a0
+        cmpi.b  #$ff,(a0,d2.w)
+        bne     .done
+        mulu.w  #20,d2
+        lea     tutorial_canvas_markers,a3
+        adda.w  d2,a3
+        tst.b   4(a3)
+        bne.s   .current_cue
+        moveq   #1,d0
+        rts
+.current_cue:
+        tst.b   tutorial_waiting_ready
+        bne.s   .done
+        tst.b   tutorial_marker_ready
+        beq.s   .done
+        move.l  tutorial_generation,d1
+        cmp.l   tutorial_marker_generation,d1
+        bne.s   .done
+        cmp.l   game_preview_generation,d1
+        bne.s   .done
+        cmp.l   16(a3),d1
+        bne.s   .done
+        moveq   #0,d2
+        move.b  tutorial_potential_variant,d2
+        cmpi.w  #1,d2
+        bhi.s   .done
+        lsl.w   #3,d2
+        lea     game_preview_endpoints,a0
+        adda.w  d2,a0
+        moveq   #0,d1
+        move.b  (a0),d1
+        addi.w  #TUTORIAL_X_ORIGIN,d1
+        cmp.w   (a3),d1
+        bne.s   .done
+        moveq   #0,d1
+        move.b  1(a0),d1
+        addi.w  #TUTORIAL_Y_ORIGIN,d1
+        cmp.w   2(a3),d1
+        bne.s   .done
+        moveq   #2,d0
+.done:  rts
 
 ; A placement can borrow an immutable already completed pending canvas. Only
 ; its new sprite bank is built: no court, cue or footer byte is changed. This
@@ -577,6 +636,7 @@ tutorial_draw_landing:
         bsr     tutorial_plot
 .next_pixel:
         dbra    d7,.pixel
+        move.l  tutorial_generation,16(a3)
         st      4(a3)
 .done:  movem.l (sp)+,d0-d7/a0-a6
         rts

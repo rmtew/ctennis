@@ -237,9 +237,13 @@ tutorial_progress_fast_publish:
         bsr     tutorial_choose_surface
         tst.l   d0
         beq     .done
+        bsr     tutorial_closed_canvas_rank
+        cmpi.l  #2,d0
+        beq.s   .prepared_landing
         bsr     tutorial_restore_landing
         bsr     tutorial_prepare_menu_roi
         bsr     tutorial_draw_landing
+.prepared_landing:
         bsr     tutorial_prepare_private_footer
 .complete_objects:
         move.l  tutorial_render_surface,a0

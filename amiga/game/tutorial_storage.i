@@ -108,6 +108,7 @@ tutorial_canvas_captions: ds.b 2
 tutorial_neutral_copper: ds.l 1
 ; Per free canvas: X/Y words, validity, padding and nine saved palette values.
 ; Saved underlying bits preserve banner/menu pixels during marker retirement.
+; XY, valid, nine underlying palette bytes; completed generation at16.
 tutorial_canvas_markers: ds.b 2*20
 tutorial_preparing: ds.b 1
 ; Physical B1 remains active_variant; this selects the demonstrated potential.

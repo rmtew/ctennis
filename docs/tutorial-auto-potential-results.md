@@ -190,3 +190,38 @@ state, ordered-output body, generation cancellation or physical schedule is
 changed. A refusal returns to normal mandatory service and immediate current
 state reconsideration; there is no fixed delay or cached eligibility. The
 observer and whole-owner WORK gate remain unchanged.
+
+## Closed-canvas preparation and publication starvation
+
+Runtime7b7dfec passed title PAL/NTSC and PAL in-match, but NTSC in-match
+`21f01e972dea42e3be4b5ca7dd657ae1` failed movement/continuous-movement and
+menu-close response while fitting every accepted owner's WORK. Across50
+movement photos, X/generation changed while the displayed generation4 pose
+stayed unchanged. Physical movement CCK98,963,871 through102,137,117 contained
+1,270 declined producer4:5000 attempts and476 no-job roots, no accepted owner.
+Both stale canvas cues forced the full25,000 CCK reservation. Closing the menu
+was a distinct live-cue case: job8 restored the private ROI in11,931 CCK, then
+186 full producers were declined and86 roots chose no job; all8 photos still
+showed the old menu. This is publication starvation, not late input sampling
+or a reason to weaken the unchanged pixel-response gate. This failure supersedes
+qualification of7b7dfec; its three finite passes remain historical receipts.
+
+The next correction ranks the actual coherently free closed canvas: retirement
+required, closed/cue-free, or current completed cue. Old cue retirement and ROI
+restoration remain private job8/20,000 CCK WORK. New job9 draws only the new cue
+on a freshly reacquired closed/cue-free canvas, reserving15,000 CCK WORK.
+Both retain placement dirty and publish nothing. A prepared pose then uses the
+existing15,000 CCK pose reservation, copying its footer and producing objects
+through the unchanged publication body. Only an exact qualified prepared cue
+skips restore/ROI/draw; the canvas descriptor now records completed generation
+in previously unused bytes16..19, after allnine pixels and before validity.
+Current tutorial/marker/preview generations and selected endpoint coordinates
+must match. Canonical/history schemas and allocated BSS are unchanged.
+
+The pure free query prefers the most prepared currently unowned candidate;
+classification and execution reacquire it freshly. The rank reads no retained
+refusal, slack or lease, preserves the coherent ownership snapshot, and writes
+no canvas. Both private jobs retain the existing final live timer/beam guards
+and separate5,000 CCK service/margin. Old captured draw_landing max5,667 CCK
+and pose-owner13,054 CCK support these finite hypotheses; fresh complete-owner
+measurements including the new queries and unchanged response limits are required.
