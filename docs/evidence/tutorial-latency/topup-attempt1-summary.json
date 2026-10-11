@@ -1,0 +1,656 @@
+{
+  "schema": 1,
+  "reducer_sha256": "160450316f9e2b8537f79d11f138d7ea92ff20ab4e2018d10142005541b9434c",
+  "regions": [
+    {
+      "standard": "PAL",
+      "native_run_id": "24135588f7c548fb91dbe3a87a4311c6",
+      "native_commit": "e08ba24251f17f9b481c4a3d1528c4896693706b",
+      "native_product_sha256": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8",
+      "symbol_executable_path": "build/tests/topup-candidate-54cae13/baseline-rally",
+      "symbol_executable_sha256": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8",
+      "report_path": "build/tests/topup-matched-pal/7cdb17f6f4744eeeb46cb53a04dd39f7/report.json",
+      "report_sha256": "9e0966dfcb2a76b851e89e805fffc3abb556aff8f6c6168f6cc9d9f6eb3b84fd",
+      "raw_path": "/workspace/ctennis/build/tests/topup-matched-pal/7cdb17f6f4744eeeb46cb53a04dd39f7/literal-rpc.jsonl.gz",
+      "raw_sha256": "07874ba7b357f7f6f85c42a097622a871573c70570d659b7e63f8a7fbb112795",
+      "binary": {
+        "build/amiga/interfaces/enhanced/baseline-rally": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8"
+      },
+      "anchor_sha256": "4f39064be18c4a5ed6fb5de583b9c72975b0eee38dca3566521c179de780d8bb",
+      "accepted_requests": [
+        [
+          1,
+          98,
+          152,
+          0
+        ]
+      ],
+      "baseline_replay_equal": true,
+      "passes": [
+        {
+          "grouping": {
+            "grants": 104,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "baseline-1",
+          "physical_input_cck": 57851145,
+          "endpoint_ready_store_cck": 59546525,
+          "endpoint_step_return_cck": 59546601,
+          "copjmp_cck": 59669580,
+          "latency_ms": 512.6836289205065,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 213572,
+              "scheduling_and_preview_support_before_known": 915604,
+              "measured_hardware_service_and_display_production_before_known": 367315,
+              "mandatory_callback_controls_requests_before_known": 156763,
+              "unclassified_before_known": 42126,
+              "endpoint_ready_store_to_qualifying_copjmp": 123055
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.21379262707241,
+              "scheduling_and_preview_support_before_known": 258.1424034260952,
+              "measured_hardware_service_and_display_production_before_known": 103.55959226309209,
+              "mandatory_callback_controls_requests_before_known": 44.19724857939127,
+              "unclassified_before_known": 11.876866949825128,
+              "endpoint_ready_store_to_qualifying_copjmp": 34.693725075030414
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4429,
+              "shared_preview_dispatch": 203157,
+              "hardware_service": 360703,
+              "actual_outgoing_ball": 5986,
+              "preview_envelopes_state_support": 270794,
+              "display_producer_footer": 6612,
+              "controls_and_requests": 43419,
+              "endpoint_eligibility": 89161,
+              "scheduler_classification": 210649,
+              "scheduler_admission": 28039,
+              "scheduler_owner_other": 316961,
+              "remaining_mandatory_callback": 113344,
+              "unclassified": 42126
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4429,
+            "shared_preview_dispatch": 203157,
+            "hardware_service": 398970,
+            "actual_outgoing_ball": 6698,
+            "preview_envelopes_state_support": 283956,
+            "display_producer_footer": 20954,
+            "controls_and_requests": 45880,
+            "endpoint_eligibility": 89161,
+            "scheduler_classification": 215120,
+            "scheduler_admission": 33910,
+            "scheduler_owner_other": 348070,
+            "remaining_mandatory_callback": 121216,
+            "unclassified": 46914
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 38267,
+            "actual_outgoing_ball": 712,
+            "preview_envelopes_state_support": 13162,
+            "display_producer_footer": 14342,
+            "controls_and_requests": 2461,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4471,
+            "scheduler_admission": 5871,
+            "scheduler_owner_other": 31109,
+            "remaining_mandatory_callback": 7872,
+            "unclassified": 4788
+          },
+          "ui_sample_before_known_cck": 49122,
+          "ui_sample_before_known_ms": 13.849296356390589,
+          "ui_sample_full_window_ms": 34.0548564307655,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.310363007644714
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.32236279901153
+            }
+          ],
+          "ready_store_pc": 159520
+        },
+        {
+          "grouping": {
+            "grants": 104,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "baseline-2",
+          "physical_input_cck": 57851145,
+          "endpoint_ready_store_cck": 59546525,
+          "endpoint_step_return_cck": 59546601,
+          "copjmp_cck": 59669580,
+          "latency_ms": 512.6836289205065,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 213572,
+              "scheduling_and_preview_support_before_known": 915604,
+              "measured_hardware_service_and_display_production_before_known": 367315,
+              "mandatory_callback_controls_requests_before_known": 156763,
+              "unclassified_before_known": 42126,
+              "endpoint_ready_store_to_qualifying_copjmp": 123055
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.21379262707241,
+              "scheduling_and_preview_support_before_known": 258.1424034260952,
+              "measured_hardware_service_and_display_production_before_known": 103.55959226309209,
+              "mandatory_callback_controls_requests_before_known": 44.19724857939127,
+              "unclassified_before_known": 11.876866949825128,
+              "endpoint_ready_store_to_qualifying_copjmp": 34.693725075030414
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4429,
+              "shared_preview_dispatch": 203157,
+              "hardware_service": 360703,
+              "actual_outgoing_ball": 5986,
+              "preview_envelopes_state_support": 270794,
+              "display_producer_footer": 6612,
+              "controls_and_requests": 43419,
+              "endpoint_eligibility": 89161,
+              "scheduler_classification": 210649,
+              "scheduler_admission": 28039,
+              "scheduler_owner_other": 316961,
+              "remaining_mandatory_callback": 113344,
+              "unclassified": 42126
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4429,
+            "shared_preview_dispatch": 203157,
+            "hardware_service": 398970,
+            "actual_outgoing_ball": 6698,
+            "preview_envelopes_state_support": 283956,
+            "display_producer_footer": 20954,
+            "controls_and_requests": 45880,
+            "endpoint_eligibility": 89161,
+            "scheduler_classification": 215120,
+            "scheduler_admission": 33910,
+            "scheduler_owner_other": 348070,
+            "remaining_mandatory_callback": 121216,
+            "unclassified": 46914
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 38267,
+            "actual_outgoing_ball": 712,
+            "preview_envelopes_state_support": 13162,
+            "display_producer_footer": 14342,
+            "controls_and_requests": 2461,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4471,
+            "scheduler_admission": 5871,
+            "scheduler_owner_other": 31109,
+            "remaining_mandatory_callback": 7872,
+            "unclassified": 4788
+          },
+          "ui_sample_before_known_cck": 49122,
+          "ui_sample_before_known_ms": 13.849296356390589,
+          "ui_sample_full_window_ms": 34.0548564307655,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.310363007644714
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.32236279901153
+            }
+          ],
+          "ready_store_pc": 159520
+        },
+        {
+          "grouping": {
+            "grants": 87,
+            "topup_attempts": 87,
+            "accepted_topups": 13,
+            "refused_topups": 74,
+            "topup_observed_ms": 17.38591077548109,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "candidate",
+          "physical_input_cck": 57851145,
+          "endpoint_ready_store_cck": 59547415,
+          "endpoint_step_return_cck": 59547491,
+          "copjmp_cck": 59669584,
+          "latency_ms": 512.6847566674514,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 213739,
+              "scheduling_and_preview_support_before_known": 935976,
+              "measured_hardware_service_and_display_production_before_known": 349979,
+              "mandatory_callback_controls_requests_before_known": 156800,
+              "unclassified_before_known": 39776,
+              "endpoint_ready_store_to_qualifying_copjmp": 122169
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.260876062020444,
+              "scheduling_and_preview_support_before_known": 263.8860186162827,
+              "measured_hardware_service_and_display_production_before_known": 98.67193700405566,
+              "mandatory_callback_controls_requests_before_known": 44.207680238631255,
+              "unclassified_before_known": 11.214315619718091,
+              "endpoint_ready_store_to_qualifying_copjmp": 34.44392912674325
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4438,
+              "shared_preview_dispatch": 203501,
+              "hardware_service": 343359,
+              "actual_outgoing_ball": 5800,
+              "preview_envelopes_state_support": 319969,
+              "display_producer_footer": 6620,
+              "controls_and_requests": 43805,
+              "endpoint_eligibility": 82646,
+              "scheduler_classification": 201432,
+              "scheduler_admission": 24155,
+              "scheduler_owner_other": 307774,
+              "remaining_mandatory_callback": 112995,
+              "unclassified": 39776
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4438,
+            "shared_preview_dispatch": 203501,
+            "hardware_service": 381492,
+            "actual_outgoing_ball": 6521,
+            "preview_envelopes_state_support": 333639,
+            "display_producer_footer": 20958,
+            "controls_and_requests": 46276,
+            "endpoint_eligibility": 82646,
+            "scheduler_classification": 205610,
+            "scheduler_admission": 29964,
+            "scheduler_owner_other": 338294,
+            "remaining_mandatory_callback": 120841,
+            "unclassified": 44259
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 38133,
+            "actual_outgoing_ball": 721,
+            "preview_envelopes_state_support": 13670,
+            "display_producer_footer": 14338,
+            "controls_and_requests": 2471,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4178,
+            "scheduler_admission": 5809,
+            "scheduler_owner_other": 30520,
+            "remaining_mandatory_callback": 7846,
+            "unclassified": 4483
+          },
+          "ui_sample_before_known_cck": 49141,
+          "ui_sample_before_known_ms": 13.854653154378688,
+          "ui_sample_full_window_ms": 33.97591414462509,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.310363007644714
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.32236279901153
+            }
+          ],
+          "ready_store_pc": 159520
+        }
+      ],
+      "scope": "Observed emitted-call spans include IRQ; instruction tails/gaps stay unclassified. Endpoint-ready is actual held-ready store after new-request clear; point/outcome stores precede it in unchanged source. This is not WCET or first scanout."
+    },
+    {
+      "standard": "NTSC",
+      "native_run_id": "3f43046fcdb74dc28751021c9b3b299e",
+      "native_commit": "e08ba24251f17f9b481c4a3d1528c4896693706b",
+      "native_product_sha256": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8",
+      "symbol_executable_path": "build/tests/topup-candidate-54cae13/baseline-rally",
+      "symbol_executable_sha256": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8",
+      "report_path": "build/tests/topup-matched-ntsc/2d1a971fccd54ee295ad867f14fe93cb/report.json",
+      "report_sha256": "734cc4a5c237ad6017358950bbd1bf92bf3610c9007f464e1437fea40616e82d",
+      "raw_path": "/workspace/ctennis/build/tests/topup-matched-ntsc/2d1a971fccd54ee295ad867f14fe93cb/literal-rpc.jsonl.gz",
+      "raw_sha256": "def30300ff27e2271bc300992293c7d907b603a5c5aaef74597d43590e8dfc58",
+      "binary": {
+        "build/amiga/interfaces/enhanced/baseline-rally": "ad78cc5faba82a293f53296aeacb35927ee3be2b174e7d3967ec93073f7b1af8"
+      },
+      "anchor_sha256": "6d40fdb07aa45839bf7cf53ddbf6c865b2750d037db9174af0093872c6617baa",
+      "accepted_requests": [
+        [
+          1,
+          98,
+          152,
+          0
+        ]
+      ],
+      "baseline_replay_equal": true,
+      "passes": [
+        {
+          "grouping": {
+            "grants": 110,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "baseline-1",
+          "physical_input_cck": 58416726,
+          "endpoint_ready_store_cck": 60130779,
+          "endpoint_step_return_cck": 60130855,
+          "copjmp_cck": 60189582,
+          "latency_ms": 495.2741200348089,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 217515,
+              "scheduling_and_preview_support_before_known": 930323,
+              "measured_hardware_service_and_display_production_before_known": 365832,
+              "mandatory_callback_controls_requests_before_known": 157850,
+              "unclassified_before_known": 42533,
+              "endpoint_ready_store_to_qualifying_copjmp": 58803
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.76610295442577,
+              "scheduling_and_preview_support_before_known": 259.89979173330687,
+              "measured_hardware_service_and_display_production_before_known": 102.20069869215222,
+              "mandatory_callback_controls_requests_before_known": 44.0977833774963,
+              "unclassified_before_known": 11.88223642949034,
+              "endpoint_ready_store_to_qualifying_copjmp": 16.427506847937376
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4499,
+              "shared_preview_dispatch": 206986,
+              "hardware_service": 359355,
+              "actual_outgoing_ball": 6030,
+              "preview_envelopes_state_support": 277017,
+              "display_producer_footer": 6477,
+              "controls_and_requests": 43605,
+              "endpoint_eligibility": 90960,
+              "scheduler_classification": 215345,
+              "scheduler_admission": 23588,
+              "scheduler_owner_other": 323413,
+              "remaining_mandatory_callback": 114245,
+              "unclassified": 42533
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4499,
+            "shared_preview_dispatch": 206986,
+            "hardware_service": 373859,
+            "actual_outgoing_ball": 6030,
+            "preview_envelopes_state_support": 283155,
+            "display_producer_footer": 19741,
+            "controls_and_requests": 44838,
+            "endpoint_eligibility": 90960,
+            "scheduler_classification": 218982,
+            "scheduler_admission": 25157,
+            "scheduler_owner_other": 336336,
+            "remaining_mandatory_callback": 118183,
+            "unclassified": 44130
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 14504,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 6138,
+            "display_producer_footer": 13264,
+            "controls_and_requests": 1233,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 3637,
+            "scheduler_admission": 1569,
+            "scheduler_owner_other": 12923,
+            "remaining_mandatory_callback": 3938,
+            "unclassified": 1597
+          },
+          "ui_sample_before_known_cck": 49848,
+          "ui_sample_before_known_ms": 13.925792244545047,
+          "ui_sample_full_window_ms": 33.41681694181803,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.46982106885036
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.481931379417773
+            }
+          ],
+          "ready_store_pc": 150560
+        },
+        {
+          "grouping": {
+            "grants": 110,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "baseline-2",
+          "physical_input_cck": 58416726,
+          "endpoint_ready_store_cck": 60130779,
+          "endpoint_step_return_cck": 60130855,
+          "copjmp_cck": 60189582,
+          "latency_ms": 495.2741200348089,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 217515,
+              "scheduling_and_preview_support_before_known": 930323,
+              "measured_hardware_service_and_display_production_before_known": 365832,
+              "mandatory_callback_controls_requests_before_known": 157850,
+              "unclassified_before_known": 42533,
+              "endpoint_ready_store_to_qualifying_copjmp": 58803
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.76610295442577,
+              "scheduling_and_preview_support_before_known": 259.89979173330687,
+              "measured_hardware_service_and_display_production_before_known": 102.20069869215222,
+              "mandatory_callback_controls_requests_before_known": 44.0977833774963,
+              "unclassified_before_known": 11.88223642949034,
+              "endpoint_ready_store_to_qualifying_copjmp": 16.427506847937376
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4499,
+              "shared_preview_dispatch": 206986,
+              "hardware_service": 359355,
+              "actual_outgoing_ball": 6030,
+              "preview_envelopes_state_support": 277017,
+              "display_producer_footer": 6477,
+              "controls_and_requests": 43605,
+              "endpoint_eligibility": 90960,
+              "scheduler_classification": 215345,
+              "scheduler_admission": 23588,
+              "scheduler_owner_other": 323413,
+              "remaining_mandatory_callback": 114245,
+              "unclassified": 42533
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4499,
+            "shared_preview_dispatch": 206986,
+            "hardware_service": 373859,
+            "actual_outgoing_ball": 6030,
+            "preview_envelopes_state_support": 283155,
+            "display_producer_footer": 19741,
+            "controls_and_requests": 44838,
+            "endpoint_eligibility": 90960,
+            "scheduler_classification": 218982,
+            "scheduler_admission": 25157,
+            "scheduler_owner_other": 336336,
+            "remaining_mandatory_callback": 118183,
+            "unclassified": 44130
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 14504,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 6138,
+            "display_producer_footer": 13264,
+            "controls_and_requests": 1233,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 3637,
+            "scheduler_admission": 1569,
+            "scheduler_owner_other": 12923,
+            "remaining_mandatory_callback": 3938,
+            "unclassified": 1597
+          },
+          "ui_sample_before_known_cck": 49848,
+          "ui_sample_before_known_ms": 13.925792244545047,
+          "ui_sample_full_window_ms": 33.41681694181803,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.46982106885036
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.481931379417773
+            }
+          ],
+          "ready_store_pc": 150560
+        },
+        {
+          "grouping": {
+            "grants": 88,
+            "topup_attempts": 88,
+            "accepted_topups": 19,
+            "refused_topups": 69,
+            "topup_observed_ms": 19.014707176470754,
+            "operations": 216,
+            "dispatches": 48
+          },
+          "label": "candidate",
+          "physical_input_cck": 58416726,
+          "endpoint_ready_store_cck": 60148184,
+          "endpoint_step_return_cck": 60148260,
+          "copjmp_cck": 60249417,
+          "latency_ms": 511.98993168126117,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 219159,
+              "scheduling_and_preview_support_before_known": 960368,
+              "measured_hardware_service_and_display_production_before_known": 353132,
+              "mandatory_callback_controls_requests_before_known": 157832,
+              "unclassified_before_known": 40967,
+              "endpoint_ready_store_to_qualifying_copjmp": 101233
+            },
+            "partition_ms": {
+              "actual_math_before_known": 61.22537920322276,
+              "scheduling_and_preview_support_before_known": 268.2933166086751,
+              "measured_hardware_service_and_display_production_before_known": 98.65276173368403,
+              "mandatory_callback_controls_requests_before_known": 44.09275480542918,
+              "unclassified_before_known": 11.444750659650877,
+              "endpoint_ready_store_to_qualifying_copjmp": 28.280968670599197
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4457,
+              "shared_preview_dispatch": 208862,
+              "hardware_service": 346663,
+              "actual_outgoing_ball": 5840,
+              "preview_envelopes_state_support": 327106,
+              "display_producer_footer": 6469,
+              "controls_and_requests": 43582,
+              "endpoint_eligibility": 85308,
+              "scheduler_classification": 214280,
+              "scheduler_admission": 18834,
+              "scheduler_owner_other": 314840,
+              "remaining_mandatory_callback": 114250,
+              "unclassified": 40967
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4457,
+            "shared_preview_dispatch": 208862,
+            "hardware_service": 378926,
+            "actual_outgoing_ball": 6552,
+            "preview_envelopes_state_support": 335678,
+            "display_producer_footer": 19653,
+            "controls_and_requests": 46050,
+            "endpoint_eligibility": 85308,
+            "scheduler_classification": 217693,
+            "scheduler_admission": 22338,
+            "scheduler_owner_other": 340248,
+            "remaining_mandatory_callback": 122120,
+            "unclassified": 44806
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 32263,
+            "actual_outgoing_ball": 712,
+            "preview_envelopes_state_support": 8572,
+            "display_producer_footer": 13184,
+            "controls_and_requests": 2468,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 3413,
+            "scheduler_admission": 3504,
+            "scheduler_owner_other": 25408,
+            "remaining_mandatory_callback": 7870,
+            "unclassified": 3839
+          },
+          "ui_sample_before_known_cck": 49841,
+          "ui_sample_before_known_ms": 13.923836688741167,
+          "ui_sample_full_window_ms": 33.401731225616665,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.46982106885036
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.481931379417773
+            }
+          ],
+          "ready_store_pc": 150560
+        }
+      ],
+      "scope": "Observed emitted-call spans include IRQ; instruction tails/gaps stay unclassified. Endpoint-ready is actual held-ready store after new-request clear; point/outcome stores precede it in unchanged source. This is not WCET or first scanout."
+    }
+  ]
+}

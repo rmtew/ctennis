@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "runtime_source_equal_to": "8b99f1798801c2e4834cd548afa42ec8a8b917e0",
+  "restoration_commit": "037d606",
+  "original_sha256": "32a2a2d76c40aea9cd9244e89285082d32eebf44d0eb0a423888e92966c06de8",
+  "restored_sha256": "0d41b1c0a0b2cbffe96f2efe62a57859cf6efc05dfd1788db33c5fb079e3bc99",
+  "hunk_sizes": [
+    62236,
+    112700,
+    9424,
+    93916,
+    49152
+  ],
+  "all_symbols_equal": true,
+  "loaded_bytes_equal_except_build_identity": true,
+  "build_identity_ranges": [
+    [
+      102014,
+      102028
+    ],
+    [
+      172316,
+      172828
+    ]
+  ],
+  "different_bytes": 97
+}
