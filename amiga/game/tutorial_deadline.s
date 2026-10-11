@@ -27,7 +27,7 @@ TUTORIAL_JOB_PRODUCER equ 4
 TUTORIAL_JOB_FOOTER equ 5
 TUTORIAL_JOB_RESULT equ 6
 TUTORIAL_JOB_FOOTER_COMMIT equ 7
-TUTORIAL_JOB_CLOSED_MENU_ROI equ 8
+TUTORIAL_JOB_MENU_ROI equ 8
 TUTORIAL_JOB_LANDING_PREPARE equ 9
 
 tutorial_background:
@@ -183,54 +183,34 @@ tutorial_background:
         ; Retire old cues/ROI privately before pose production. A current cue
         ; is drawn in a second bounded private owner; neither owner publishes.
         ; Read the actual free candidate again at execution, never a lease.
-        tst.b   tutorial_menu
-        bne     .ordinary_canvas_cost
+        ; Open/highlight ROI preparation follows the same private transaction.
         bsr     tutorial_free_surface
         tst.l   d0
         beq     .done
-        bsr     tutorial_closed_canvas_rank
+        bsr     tutorial_canvas_rank
         tst.l   d0
         beq.s   .closed_canvas_cost
         cmpi.l  #2,d0
-        beq.s   .prepared_cue_cost
+        beq.s   .prepared_pose_cost
+        tst.b   tutorial_menu
+        bne.s   .closed_pose_cost
         tst.b   tutorial_marker_ready
         beq.s   .closed_pose_cost
         move.w  #TUTORIAL_JOB_LANDING_PREPARE,tutorial_job_kind
         move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
 .closed_canvas_cost:
-        move.w  #TUTORIAL_JOB_CLOSED_MENU_ROI,tutorial_job_kind
+        move.w  #TUTORIAL_JOB_MENU_ROI,tutorial_job_kind
         move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
 .closed_pose_cost:
         move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
-.prepared_cue_cost:
+.prepared_pose_cost:
         ; Completed cue reuse pays the fresh generation/endpoint rank queries
-        ; in both classification and acquisition, beyond the old pose-only path.
+        ; in both classification and acquisition, beyond the plain pose path.
         move.l  #4500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
-.ordinary_canvas_cost:
-        ; The measured pose-only owner needs no menu ROI or landing retirement.
-        ; Both canvas identities must agree, since either can become free.
-        ; Any uncertain/new ROI or cross retains the larger reservation.
-        tst.b   tutorial_marker_ready
-        bne.s   .producer_admit
-        tst.b   tutorial_canvas_markers+4
-        bne.s   .producer_admit
-        tst.b   tutorial_canvas_markers+24
-        bne.s   .producer_admit
-        moveq   #-1,d0
-        tst.b   tutorial_menu
-        beq.s   .producer_identity
-        moveq   #0,d0
-        move.b  tutorial_menu_selection,d0
-.producer_identity:
-        cmp.b   tutorial_canvas_menus,d0
-        bne.s   .producer_admit
-        cmp.b   tutorial_canvas_menus+1,d0
-        bne.s   .producer_admit
-        move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
 .producer_admit:
         bra     .admit
 .footer_commit:
@@ -291,8 +271,8 @@ tutorial_background:
         beq     .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
-        cmpi.w  #TUTORIAL_JOB_CLOSED_MENU_ROI,d0
-        beq     .run_closed_menu_roi
+        cmpi.w  #TUTORIAL_JOB_MENU_ROI,d0
+        beq     .run_menu_roi
         cmpi.w  #TUTORIAL_JOB_LANDING_PREPARE,d0
         beq     .run_landing_prepare
         bra     .run_result
@@ -340,7 +320,7 @@ tutorial_background:
 .run_producer:
         bsr     tutorial_progress_slice
         bra     .completed
-.run_closed_menu_roi:
+.run_menu_roi:
         ; Reacquire ownership after admission. A ready/display IRQ may have
         ; changed the free candidate; no refused or prior grant is retained.
         bsr     tutorial_free_surface
@@ -354,7 +334,7 @@ tutorial_background:
         bsr     tutorial_free_surface
         tst.l   d0
         beq     .done
-        bsr     tutorial_closed_canvas_rank
+        bsr     tutorial_canvas_rank
         cmpi.l  #1,d0
         bne     .done
         move.l  a1,tutorial_render_surface

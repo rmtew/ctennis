@@ -335,7 +335,7 @@ tutorial_choose_surface:
 .done:  rts
 
 ; Pure current ownership query shared by classification and actual acquisition.
-; Closed-menu producers prefer the most prepared currently free canvas. No pointer,
+; Producers prefer the most prepared currently free canvas. No pointer,
 ; content identity, generation or refusal/admission state is changed here.
 tutorial_free_surface:
         ; An IRQ can move ready to presentation and clear ready. Select from
@@ -363,9 +363,7 @@ tutorial_free_surface:
         beq     .second
         cmp.l   d0,d5
         beq.s   .second
-        tst.b   tutorial_menu
-        bne.s   .found
-        bsr     tutorial_closed_canvas_rank
+        bsr     tutorial_canvas_rank
         move.l  d0,d3
         cmpi.l  #2,d3
         beq.s   .found
@@ -375,7 +373,7 @@ tutorial_free_surface:
         beq.s   .first_free
         cmp.l   d0,d5
         beq.s   .first_free
-        bsr     tutorial_closed_canvas_rank
+        bsr     tutorial_canvas_rank
         cmp.l   d3,d0
         bhi.s   .found
 .first_free:
@@ -395,15 +393,13 @@ tutorial_free_surface:
         moveq   #0,d0
         rts
 
-; Pure current closed-canvas identity, A1=actual candidate. D0 ranks 0=needs
-; old cue/ROI retirement, 1=closed and cue-free, 2=current qualified cue.
+; Pure current canvas identity, A1=actual candidate. D0 ranks 0=needs
+; old cue/ROI retirement, 1=requested ROI and cue-free, 2=current qualified cue.
 ; Keep ownership snapshot D4/D5 and first-candidate rank D3 unchanged.
 ; Validate the completed canvas generation and live endpoint owners before
 ; comparing the stored cross coordinates. No bitmap or cache is written.
-tutorial_closed_canvas_rank:
+tutorial_canvas_rank:
         moveq   #0,d0
-        tst.b   tutorial_menu
-        bne     .done
         moveq   #0,d2
         cmpa.l  #tutorial_surface0,a1
         beq.s   .identity
@@ -411,8 +407,14 @@ tutorial_closed_canvas_rank:
         bne     .done
         moveq   #1,d2
 .identity:
+        moveq   #-1,d1
+        tst.b   tutorial_menu
+        beq.s   .menu_identity
+        moveq   #0,d1
+        move.b  tutorial_menu_selection,d1
+.menu_identity:
         lea     tutorial_canvas_menus,a0
-        cmpi.b  #$ff,(a0,d2.w)
+        cmp.b   (a0,d2.w),d1
         bne     .done
         mulu.w  #20,d2
         lea     tutorial_canvas_markers,a3
@@ -422,6 +424,8 @@ tutorial_closed_canvas_rank:
         moveq   #1,d0
         rts
 .current_cue:
+        tst.b   tutorial_menu
+        bne.s   .done
         tst.b   tutorial_waiting_ready
         bne.s   .done
         tst.b   tutorial_marker_ready

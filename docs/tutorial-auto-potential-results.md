@@ -230,3 +230,33 @@ is13,633 CCK; the additional completed-cue query costs make15,000 CCK tight,
 so only that new prepared-cue owner receives the17,500 CCK allowance.
 Fresh complete-owner
 measurements including the new queries and unchanged response limits are required.
+
+## Requested menu ROI preparation
+
+Runtime02e1328 passed both title routes and PAL in-match with full independent
+cost, descriptor, pixel, exact-resume and ownership audits. Its NTSC in-match
+`928beb81fa2c4b36be42462a5eac5fbc` passed movement at51.053416 ms/3fields
+with29/30 changes, but never published the requested menu opening or selection.
+The opening interval contained234 declined full producers and78 no-job roots;
+selection contained334 declined full producers and101 no-job roots. Both had
+zero accepted owners and zero publications while native menu/selection writes
+proved input acceptance. The passing1field close check cannot prove a visible
+menu cycle because the menu never appeared. This failure supersedes02e1328
+qualification and remains immutable.
+
+The targeted extension applies the existing private ROI job8 to the actual
+requested menu selection as well as closure. The pure canvas rank now requires
+that exact ROI identity and no valid cue for rank1; rank2 still requires a closed
+menu and the complete current cue identity. The coherently free-canvas query
+prefers prepared pixels for all menu states. Classification and execution
+reacquire current ownership and menu selection; neither stores a lease or
+refusal. Old cue retirement still precedes copying the selected four-plane ROI.
+Menu generation/queue retirement, footer/objects/publication, controls and
+physics bodies remain unchanged.
+
+Retained actual menu-active full-owner brackets, minus disjoint cue/ROI pixel
+child spans, peak at10,426 CCK, supporting the15,000 CCK prepared-menu hypothesis.
+Cue-free poses remain15,000; completed-cue poses17,500; private new-cue draws
+15,000; ROI preparation20,000. Separate5,000 service/margin and every gate/window
+are unchanged. Fresh whole-owner and visible menu lifecycle qualification are
+required; no current product pass is claimed.

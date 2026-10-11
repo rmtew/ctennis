@@ -237,7 +237,7 @@ tutorial_progress_fast_publish:
         bsr     tutorial_choose_surface
         tst.l   d0
         beq     .done
-        bsr     tutorial_closed_canvas_rank
+        bsr     tutorial_canvas_rank
         cmpi.l  #2,d0
         beq.s   .prepared_landing
         bsr     tutorial_restore_landing
