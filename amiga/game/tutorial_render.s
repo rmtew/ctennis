@@ -709,7 +709,7 @@ tutorial_prepare_objects:
         clr.b   tutorial_scene_objects+SC_BALL+O_VISIBLE
         clr.b   tutorial_scene_objects+SC_SHADOW+O_VISIBLE
         tst.b   tutorial_menu
-        bne     .done
+        bne     tutorial_menu_objects
         tst.b   tutorial_ball_mode
         beq     .done
         move.l  tutorial_presentation_generation,d0
@@ -764,6 +764,32 @@ tutorial_prepare_objects:
         st      tutorial_scene_objects+SC_SHADOW+O_VISIBLE
         move.b  #COLOUR_BLACK,tutorial_scene_objects+SC_SHADOW+O_COLOUR
 .done:  rts
+
+; Modal labels occupy viewport rows132..161. A native actor part spans
+; O_Y+1..O_Y+16; hide the whole private group if a visible part intersects.
+; Canonical objects and every pose/XY/frame remain unchanged.
+tutorial_menu_objects:
+        lea     tutorial_scene_objects,a1
+        moveq   #1,d6
+.group: move.l  a1,a0
+        moveq   #2,d7
+.part:  tst.b   O_VISIBLE(a0)
+        beq.s   .next_part
+        cmpi.b  #116,O_Y(a0)
+        bcs.s   .next_part
+        cmpi.b  #161,O_Y(a0)
+        bcc.s   .next_part
+        clr.b   O_VISIBLE(a1)
+        clr.b   O_SIZE+O_VISIBLE(a1)
+        clr.b   2*O_SIZE+O_VISIBLE(a1)
+        bra.s   .next_group
+.next_part:
+        adda.w  #O_SIZE,a0
+        dbra    d7,.part
+.next_group:
+        adda.w  #3*O_SIZE,a1
+        dbra    d6,.group
+        rts
 
 tutorial_render_objects:
         movem.l d0-d7/a0-a4,-(sp)

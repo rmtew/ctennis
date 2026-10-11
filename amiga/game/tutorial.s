@@ -250,6 +250,9 @@ tutorial_request:
         jsr     game_preview_request_projected
         tst.l   d0
         beq     .missing
+        ; A completed waiting bank belongs to the old accepted placement.
+        ; Retire it before the new generation becomes visible to publication.
+        bsr     discard_ready_scene
         move.l  game_preview_generation,tutorial_generation
         st      tutorial_pending
         st      tutorial_work_pending
@@ -285,6 +288,8 @@ tutorial_controls:
 .variant:
         cmp.b   tutorial_active_variant,d1
         beq     .menu
+        ; Variant changes also retire an obsolete completed waiting bank.
+        bsr     discard_ready_scene
         move.b  d1,tutorial_active_variant
         clr.w   tutorial_animation_index
         bsr     tutorial_progress_variant_changed

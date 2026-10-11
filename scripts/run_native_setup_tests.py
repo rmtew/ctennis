@@ -127,7 +127,7 @@ def run(baseline=None, control=None, fault_controls=None):
             def lifecycle():
                 return int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['game_lifecycle'],'len':2})['data']),'big')
             key(0x01);advance(1.2);check('start after UI reaches active lifecycle',lifecycle(),1)
-            key(0x24);advance(.3)
+            key(0x23);advance(.3)
             check('fresh action advances flight after UI',bool(read('game_flight') and read('game_step')),True)
             key(0x19);check('pause after UI',read('ui_paused'),255)
             advance(.5)
@@ -135,7 +135,7 @@ def run(baseline=None, control=None, fault_controls=None):
             key(0x4e);key(0x44);check('return after UI reaches title',lifecycle(),2)
             advance(.3);raster('returned-title')
             key(0x01);advance(1.2);check('restart after UI reaches active lifecycle',lifecycle(),1)
-            key(0x24);advance(.3)
+            key(0x23);advance(.3)
             check('fresh action advances flight after UI',bool(read('game_flight') and read('game_step')),True)
         s.inspect('events.unsubscribe')
         missed_publications=int.from_bytes(bytes.fromhex(s.inspect('mem_read',{'addr':base+symbols['missed_presentation_deadlines'],'len':2})['data']),'big')
