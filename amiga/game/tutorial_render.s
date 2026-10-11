@@ -123,7 +123,7 @@ tutorial_footer_select:
         bra     .count_ready
 .selected_outcome:
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         add.w   d0,d0
         lea     tutorial_outcomes,a1
         move.w  (a1,d0.w),d1
@@ -145,6 +145,14 @@ tutorial_footer_select:
         subq.w  #1,d1
         lsl.w   #2,d1
         lea     tutorial_outcome_texts,a1
+        cmpi.w  #3,game_preview_kind
+        bne.s   .outcome_table
+        ; Preserve the observed result while naming the prospective action.
+        lea     tutorial_serve_press_outcomes,a1
+        tst.b   tutorial_active_variant
+        bne.s   .outcome_table
+        lea     tutorial_serve_held_outcomes,a1
+.outcome_table:
         move.l  (a1,d1.w),a0
         cmpi.w  #TUTORIAL_UNAVAILABLE,tutorial_status
         bne     .count_ready
@@ -262,7 +270,7 @@ tutorial_footer_step:
 ; Describe that observed attached-ball state, never a completed outgoing shot.
 tutorial_released_wait:
         moveq   #0,d0
-        tst.b   tutorial_active_variant
+        tst.b   tutorial_potential_variant
         beq     .done
         cmpi.w  #$ffff,game_preview_ordinal
         bne     .done
@@ -503,7 +511,7 @@ tutorial_draw_landing:
         cmp.l   game_preview_generation,d0
         bne     .done
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         lsl.w   #3,d0
         lea     game_preview_endpoints,a0
         adda.w  d0,a0
@@ -741,7 +749,7 @@ tutorial_draw_ghost:
         cmpi.w  #3,tutorial_ghost_actor
         bne     .done
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         eori.w  #1,d0
         move.w  d0,tutorial_render_path
         clr.w   tutorial_render_point
@@ -822,7 +830,7 @@ tutorial_draw_paths:
 .line:
 .pixel: moveq   #6,d2
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         cmp.w   tutorial_render_path,d0
         bne     .dash
         moveq   #15,d2
@@ -865,7 +873,7 @@ tutorial_draw_paths:
         rts
 .next_path:
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         cmp.w   tutorial_render_path,d0
         beq     .finished
         move.w  d0,tutorial_render_path
@@ -1076,7 +1084,7 @@ tutorial_prepare_objects:
         cmp.l   game_preview_generation,d0
         bne     .done
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         cmpi.b  #1,tutorial_ball_mode
         bne.s   .dense_sample
         tst.b   tutorial_marker_ready
@@ -1162,7 +1170,7 @@ tutorial_animate:
         tst.l   d0
         beq     .done
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         add.w   d0,d0
         lea     tutorial_counts,a0
         move.w  (a0,d0.w),d1
@@ -1172,13 +1180,19 @@ tutorial_animate:
         bhi.s   .advance
         ; Last available sample is not terminal while the dense worker runs.
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         add.w   d0,d0
         lea     tutorial_available_outcomes,a0
         tst.w   (a0,d0.w)
         beq     .done
-        ; Retain the actual final sample. Repetition would invent a fresh shot.
-        bra     .done
+        cmpi.w  #PREVIEW_NO_CONTACT,(a0,d0.w)
+        bhi     .done ; incomplete limits and lifecycle waits do not loop
+        ; Replay the completed immutable potential, without new simulation,
+        ; input consumption or RNG. A partial prefix never wraps.
+        clr.w   tutorial_animation_index
+        move.w  simulation_started_updates,tutorial_animation_callback
+        move.b  #2,tutorial_ball_mode
+        bra     .sample
 .advance:
         ; Advance the nominal cursor, rather than adopting late callback entry
         ; time. A delayed publication catches up without accumulating drift.
@@ -1213,7 +1227,7 @@ tutorial_animation_due:
         cmpi.w  #1,d0
         bcs     .no
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         add.w   d0,d0
         lea     tutorial_counts,a0
         move.w  (a0,d0.w),d1
@@ -1221,7 +1235,11 @@ tutorial_animation_due:
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
         bhi.s   .yes
-        bra.s   .no
+        lea     tutorial_available_outcomes,a0
+        move.w  (a0,d0.w),d1
+        beq.s   .no
+        cmpi.w  #PREVIEW_NO_CONTACT,d1
+        bhi.s   .no
 .yes:   moveq   #1,d0
         rts
 .no:    moveq   #0,d0
@@ -1237,8 +1255,8 @@ tutorial_restore_court:
 tutorial_empty_text: dc.b 'UNAVAILABLE - RESUME FROM MENU',0
 tutorial_title_text: dc.b 'Tutorial',0
 tutorial_banner_text: dc.b 'TUTORIAL',0
-tutorial_keyboard_controls_text: dc.b 'WASD MOVE  HOLD F  G MENU',0
-tutorial_pad_controls_text: dc.b 'PAD MOVE  HOLD B1  B2 MENU',0
+tutorial_keyboard_controls_text: dc.b 'AUTO WASD F ACTION G MENU',0
+tutorial_pad_controls_text: dc.b 'AUTO PAD B1 ACTION B2 MENU',0
 tutorial_computing_detail_text: dc.b 'CALCULATING PATHS',0
 tutorial_close_hint_text: dc.b 'G/B2 CLOSE  RESUME ORIGINAL',0
         even
@@ -1252,7 +1270,7 @@ tutorial_joystick_hint_text: dc.b 'TUTORIAL B1 RELEASED / B2 MENU',0
 tutorial_joystick_held_hint_text: dc.b 'TUTORIAL B1 HELD / MOVE / B2',0
 tutorial_unavailable_text: dc.b 'NO CURRENT HUMAN SERVE CONTEXT',0
 tutorial_menu_text: dc.b 'UP/DOWN SELECT - F/ENTER OK',0
-tutorial_wait_hint_text: dc.b 'TUTORIAL - HOLD F/B1 TO SERVE',0
+tutorial_wait_hint_text: dc.b 'AUTO SERVE: NEXT F/B1 PRESS',0
 tutorial_other_pending_text: dc.b 'TUTORIAL: OTHER PATH CALCULATING',0
 tutorial_count_text: dc.b '1/1  CURRENT SERVE',0
 tutorial_branch_text: dc.b 'PLAY FROM HERE (NOT READY)',0
@@ -1272,3 +1290,28 @@ tutorial_outcome_texts:
         dc.l tutorial_intercept_text,tutorial_miss_text,tutorial_limit_text
         dc.l tutorial_lifecycle_text
 
+
+; Current actual result plus the future serve action represented by autoplay.
+tutorial_serve_press_landing: dc.b 'NEXT F/B1 PRESS: LANDING',0
+tutorial_serve_press_net: dc.b 'NEXT F/B1 PRESS: NET',0
+tutorial_serve_press_out: dc.b 'NEXT F/B1 PRESS: OUT',0
+tutorial_serve_press_contact: dc.b 'NEXT F/B1 PRESS: CONTACT',0
+tutorial_serve_press_miss: dc.b 'NEXT F/B1 PRESS: NO CONTACT',0
+tutorial_serve_press_limit: dc.b 'NEXT F/B1 PRESS: INCOMPLETE',0
+tutorial_serve_press_lifecycle: dc.b 'NEXT F/B1 PRESS: TRANSITION',0
+tutorial_serve_held_landing: dc.b 'F/B1 HELD SERVE: LANDING',0
+tutorial_serve_held_net: dc.b 'F/B1 HELD SERVE: NET',0
+tutorial_serve_held_out: dc.b 'F/B1 HELD SERVE: OUT',0
+tutorial_serve_held_contact: dc.b 'F/B1 HELD SERVE: CONTACT',0
+tutorial_serve_held_miss: dc.b 'F/B1 HELD SERVE: NO CONTACT',0
+tutorial_serve_held_limit: dc.b 'F/B1 HELD SERVE: INCOMPLETE',0
+tutorial_serve_held_lifecycle: dc.b 'F/B1 HELD SERVE: TRANSITION',0
+        even
+tutorial_serve_press_outcomes:
+        dc.l tutorial_serve_press_landing,tutorial_serve_press_net,tutorial_serve_press_out
+        dc.l tutorial_serve_press_contact,tutorial_serve_press_miss,tutorial_serve_press_limit
+        dc.l tutorial_serve_press_lifecycle
+tutorial_serve_held_outcomes:
+        dc.l tutorial_serve_held_landing,tutorial_serve_held_net,tutorial_serve_held_out
+        dc.l tutorial_serve_held_contact,tutorial_serve_held_miss,tutorial_serve_held_limit
+        dc.l tutorial_serve_held_lifecycle

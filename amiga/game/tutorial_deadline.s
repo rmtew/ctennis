@@ -46,7 +46,7 @@ tutorial_background:
         movem.l d0-d7/a0-a6,-(sp)
         clr.w   tutorial_job_kind
         clr.w   tutorial_job_budget
-        cmpi.b  #1,tutorial_active_variant
+        cmpi.b  #1,tutorial_potential_variant
         bhi     .done
         move.l  simulation_interval,d0
         sub.l   simulation_phase,d0
@@ -73,7 +73,7 @@ tutorial_background:
         tst.w   game_preview_status
         beq     .unavailable
         moveq   #0,d2
-        move.b  tutorial_active_variant,d2
+        move.b  tutorial_potential_variant,d2
         move.w  d2,tutorial_job_variant
         ; Terminal/ready branches cannot have a pending endpoint. Test those
         ; cheap immutable fields before entering the full eligibility wrapper.

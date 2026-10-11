@@ -19,7 +19,7 @@ tutorial_resume_defer: ds.b 1
 tutorial_enter_pressed: ds.b 1
 tutorial_previous_menu_packet: ds.b 1
 tutorial_work_pending: ds.b 1
-        ds.b 1
+tutorial_action_dirty: ds.b 1
 tutorial_status: ds.w 1
 tutorial_animation_index: ds.w 1
 tutorial_progress_operations: ds.w 1
@@ -110,7 +110,8 @@ tutorial_neutral_copper: ds.l 1
 ; Saved underlying bits preserve banner/menu pixels during marker retirement.
 tutorial_canvas_markers: ds.b 2*20
 tutorial_preparing: ds.b 1
-        ds.b 1
+; Physical B1 remains active_variant; this selects the demonstrated potential.
+tutorial_potential_variant: ds.b 1
 tutorial_state_end:
 tutorial_interrupted_state equ game_history_live_backup
         section tutorial_display,bss,chip

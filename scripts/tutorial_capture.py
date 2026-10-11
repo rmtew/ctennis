@@ -14,7 +14,7 @@ from fractions import Fraction
 from copperline_test_session import NativeControlSession
 
 PRESENTATION_KEYS = ('tutorial_presentation_generation','tutorial_render_generation','tutorial_x','tutorial_y',
-    'tutorial_active_variant','tutorial_marker_ready','tutorial_waiting_ready',
+    'tutorial_active_variant','tutorial_potential_variant','tutorial_marker_ready','tutorial_waiting_ready',
     'tutorial_placement_ready','tutorial_ball_mode','tutorial_menu','tutorial_menu_selection')
 
 
@@ -97,7 +97,7 @@ def check_native_presentation(snapshot, paths):
         point = None
     else:
         assert fields['tutorial_presentation_generation'] == fields['tutorial_generation']
-        variant = fields['tutorial_active_variant']
+        variant = fields.get('tutorial_potential_variant', fields['tutorial_active_variant'])
         count = (fields['tutorial_counts']>>(16 if variant == 0 else 0))&65535
         assert len(paths) % 16 == 0
         capacity = len(paths)//16

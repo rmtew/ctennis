@@ -76,6 +76,7 @@ def run(standard, delivered, match):
                         game_preview_status=2,game_preview_kind=2,game_preview_primed_mask=2,
                         game_preview_active=1,
                         game_preview_counts=4,game_preview_dispatch_stages=4,game_preview_synthetic_phases=4)
+            if not delivered:fields['tutorial_potential_variant']=1
             callbacks=None;timing=None;frame_events=[];owners=[];control_writes=[];restores=[];frozen=None
             if not delivered:
                 callbacks=CallbackObserver(0,symbols)
@@ -177,7 +178,7 @@ def run(standard, delivered, match):
                 except AssertionError as e:report['checks'][name]=dict(passed=False,error=str(e))
             check('initial-banner',lambda:assert_native_text(stable[-1]['path'],4,'TUTORIAL',True))
             if not delivered:
-                check('initial-controls',lambda:assert_native_text(stable[-1]['path'],192,'WASD MOVE  HOLD F  G MENU',True))
+                check('initial-controls',lambda:assert_native_text(stable[-1]['path'],192,'AUTO WASD F ACTION G MENU',True))
                 metadata=raw(symbols['game_preview_history_saved'],72) if stable[-1]['state']['game_preview_active'] else bytes.fromhex(stable[-1]['history'])
                 frozen=dict(core=bytes.fromhex(stable[-1]['core']),history=metadata,interrupted=raw(symbols['tutorial_interrupted_state'],318),records=raw(symbols['game_history_buffer'],symbols['game_history_buffer_end']-symbols['game_history_buffer']))
                 def frozen_ball():
@@ -209,25 +210,54 @@ def run(standard, delivered, match):
                     assert changes[0]<=2 and len(boxes)-1-changes[-1]<=2,changes
                     return dict(changed_fields=len(changes),total_fields=len(boxes),maximum_change_gap_fields=max(b-a for a,b in zip(changes,changes[1:])))
                 check('continuous-movement',continuous)
-            key(0x23,True);held=frames('held-preview',70 if delivered else 140)
             if not delivered:
-                check('held-controls',lambda:assert_native_text(held[-1]['path'],192,'WASD MOVE  HOLD F  G MENU',True))
+                automatic=frames('auto-preview',180)
+                def potential(rows,physical):
+                    scenes=[r.get('displayed_scene',{}) for r in rows]
+                    scenes=[r for r in scenes if r.get('tutorial_fields',{}).get('tutorial_ball_mode')==2]
+                    assert scenes,'Automatic potential has no actual dense native ball'
+                    assert all(r['tutorial_fields']['tutorial_active_variant']==physical for r in scenes),'Physical B1 identity changed'
+                    assert all(r['tutorial_fields']['tutorial_potential_variant']==0 for r in scenes),'Prospective serve is not actual held branch'
+                    groups={}
+                    for r in scenes:
+                        f=r['tutorial_fields'];groups.setdefault(f['tutorial_generation'],[]).append(f['tutorial_animation_index'])
+                    wraps=[dict(generation=g,before=a,after=b) for g,indices in groups.items() for a,b in zip(indices,indices[1:]) if b<a]
+                    assert wraps,'Completed unchanged potential did not repeat'
+                    return dict(samples=len(scenes),wraps=wraps)
+                check('automatic-released-serve',lambda:potential(automatic,1))
+            key(0x23,True);held=frames('held-preview',70 if delivered else 180)
+            if not delivered:
+                check('automatic-held-serve',lambda:potential(held,0))
+                check('held-controls',lambda:assert_native_text(held[-1]['path'],192,'AUTO WASD F ACTION G MENU',True))
                 def landing():
                     from PIL import Image
                     seen=[]
-                    for photo in held:
+                    for photo in (held if delivered else automatic+held):
                         scene=photo.get('displayed_scene',{});cue=scene.get('landing',{})
                         if not cue.get('valid'):continue
                         coords=[(cue['x']+dx,cue['y']+dy) for dx,dy in ((-2,0),(-1,0),(0,0),(1,0),(2,0),(0,-2),(0,-1),(0,1),(0,2))]
                         coords=[(x,y) for x,y in coords if 0<=x<256 and 0<=y<192 and not (96<=x<160 and 4<=y<12)]
+                        objects=bytes.fromhex(scene['objects']);bx,by=objects[49],objects[48]+1
+                        offball=[p for p in coords if not objects[53] or not (bx<=p[0]<bx+16 and by<=p[1]<by+16)]
                         with Image.open(photo['path']) as image:
-                            white=sum(image.convert('RGB').getpixel(p)==(255,255,255) for p in coords)
-                        if white:seen.append(dict(photo=photo['name'],ground=[cue['x'],cue['y']],visible_cross_pixels=white,index=scene['tutorial_fields']['tutorial_animation_index']))
-                    assert seen,'No current native landing cross pixels observed'
+                            # Native HUD plane1 can make private palette15 appear
+                            # as13 red. Require cross pixels outside the ball.
+                            raster=image.convert('RGB')
+                            visible=sum(raster.getpixel(p) in ((255,255,255),(238,51,51)) for p in offball)
+                        if visible>=5:seen.append(dict(photo=photo['name'],ground=[cue['x'],cue['y']],visible_cross_pixels=visible,index=scene['tutorial_fields']['tutorial_animation_index'],count=scene['tutorial_fields']['tutorial_counts']>>16))
+                    assert seen,'No current native landing cross pixels outside ball observed'
+                    assert any(r['index']<r['count']-1 for r in seen),'No computed cross before terminal playback'
                     assert len(seen)>=3,'Landing cue was not persistent across completed fields'
                     return seen
                 check('landing-cue',landing)
-            key(0x23,False);frames('released-preview',10)
+            key(0x23,False);released=frames('released-preview',180 if not delivered else 10)
+            if not delivered:
+                check('automatic-after-action-release',lambda:potential(released,1))
+                def action_restart():
+                    groups=[max(r['state']['tutorial_generation'] for r in rows) for rows in (automatic,held,released)]
+                    assert groups[0]<groups[1]<groups[2],groups
+                    return dict(generations=groups)
+                check('action-generation-restart',action_restart)
             key(0x24,True);frames('menu-press',2);open_action=key(0x24,False)
             menu=frames('menu-open',160 if delivered else 8)
             check('menu-open',lambda:assert_tutorial_menu(menu[-1]['path'],0))
@@ -238,7 +268,7 @@ def run(standard, delivered, match):
                 check('menu-selection-response',lambda:pixel_response(down+selection,down_action,CLOCK[standard],lambda r:assert_tutorial_menu(r['path'],1)))
                 key(0x24,True);frames('close-press',2);close_action=key(0x24,False);closed=frames('menu-close',8)
                 def closed_pixels(row):
-                    assert_native_text(row['path'],192,'WASD MOVE  HOLD F  G MENU',True)
+                    assert_native_text(row['path'],192,'AUTO WASD F ACTION G MENU',True)
                     assert not row.get('displayed_scene',{}).get('tutorial_fields',{}).get('tutorial_menu',1),'Menu bank still displayed'
                 check('menu-close-response',lambda:pixel_response(closed,close_action,CLOCK[standard],closed_pixels))
                 key(0x24,True);frames('reopen-press',2);key(0x24,False);frames('menu-reopen',8)
