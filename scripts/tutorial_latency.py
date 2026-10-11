@@ -24,8 +24,13 @@ def instruction_map(listing, segments, read):
 
 
 def category(callee):
-    if callee in ('game_preview_request','game_preview_step','game_preview_result','game_preview_cancel'):
+    if callee in ('game_preview_request','game_preview_request_projected',
+                  'game_preview_step','game_preview_result','game_preview_cancel'):
         return 'public-preview'
+    if callee in ('game_preview_predictor_tick','game_preview_dispatch'):
+        return 'preview-dispatch'
+    if callee=='game_preview_request_body':
+        return 'request-policy'
     if callee.endswith('_body'):
         return 'core-body'
     if any(word in callee for word in ('copy', 'restore', 'release_current', 'save_working')):

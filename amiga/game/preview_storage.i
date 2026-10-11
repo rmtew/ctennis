@@ -11,6 +11,7 @@ game_preview_end: ds.w 1
 game_preview_kind: ds.w 1
 game_preview_ordinal: ds.w 1
 game_preview_cache_valid: ds.w 1
+game_preview_projection_requested: ds.w 1
 game_preview_x: ds.w 1
 game_preview_y: ds.w 1
 game_preview_selected: ds.l 2
@@ -26,6 +27,9 @@ game_preview_incoming_pending: ds.b 1
 ; Explicit word alignment, included in resource attribution.
         ds.b 1
 game_preview_prefix_count: ds.w 1
+; Route0 keeps original full state; route1 owns observational private state.
+game_preview_predictor_routes: ds.b 2
+game_preview_predictor_reason: ds.w 1
 game_preview_counts: ds.w 2
 game_preview_outcomes: ds.w 2
 game_preview_launches: ds.b 2

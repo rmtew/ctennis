@@ -469,8 +469,8 @@ def required_preview_native_extent(case_id,report):
             or not exact_mapping(evidence.get('actual_target'),target)
             or not isinstance(stage,dict) or stage.get('passed') is not True
             or any(type(stage.get(key)) is not int or stage[key]!=value for key,value in dict(canonical_bytes=318,
-                history_metadata_bytes=72,preview_storage_bytes=10974,
-                preview_metadata_bytes=150,seek_storage_bytes=734).items())):return False
+                history_metadata_bytes=72,preview_storage_bytes=10980,
+                preview_metadata_bytes=156,seek_storage_bytes=734).items())):return False
     acquisition=stage.get('acquisition')
     if (not isinstance(acquisition,dict) or type(acquisition.get('seed')) is not int
             or acquisition['seed']!=44257

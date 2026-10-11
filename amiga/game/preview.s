@@ -23,7 +23,25 @@ PREVIEW_LIFECYCLE equ 7
 ; $fffe current incoming episode),
 ; D2/D3 requested byte X/Y. Current history_position is the selected boundary.
 ; Invalid/stale requests make no changes. D0=1 accepted, D0=0 rejected.
+; Original entry retains complete edited-state/output equivalence.
 game_preview_request:
+        move.l  a6,-(sp)
+        suba.l  a6,a6
+        bsr     game_preview_request_body
+        move.l  (sp)+,a6
+        rts
+
+; Same arguments; preview observations only, with origin-qualified full fallback.
+; A reduced private context is never a playable checkpoint.
+game_preview_request_projected:
+        move.l  a6,-(sp)
+        movea.l #1,a6
+        bsr     game_preview_request_body
+        move.l  (sp)+,a6
+        rts
+
+; A6 carries request policy until all request guards have accepted it.
+game_preview_request_body:
         cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
         beq     .invalid
         cmpi.w  #SEEK_JOB_READY,game_history_seek_status
@@ -150,6 +168,7 @@ game_preview_request:
         tst.l   d0
         bne.s   .cold
 .reuse: addq.l  #1,game_preview_generation
+        move.w  a6,game_preview_projection_requested
         move.w  d4,game_preview_x
         move.w  d5,game_preview_y
         bsr     game_preview_prepare
@@ -161,6 +180,7 @@ game_preview_request:
 .clear: clr.w   (a0)+
         dbra    d0,.clear
         addq.l  #1,game_preview_generation
+        move.w  a6,game_preview_projection_requested
         move.w  d7,game_preview_end
         move.w  d6,game_preview_kind
         move.w  d2,game_preview_ordinal
@@ -564,6 +584,10 @@ game_preview_prepare:
 .second:
         move.l  game_preview_stream_cursors,game_preview_stream_cursors+8
         move.l  game_preview_stream_cursors+4,game_preview_stream_cursors+12
+        bsr     game_preview_predictor_eligible
+        move.b  d0,game_preview_predictor_routes
+        move.b  d0,game_preview_predictor_routes+1
+        move.w  d1,game_preview_predictor_reason
         move.w  #PREVIEW_PRIME,game_preview_status
         rts
 
@@ -608,7 +632,7 @@ game_preview_operations:
         dc.l game_core_init_body,game_core_select_body
         dc.l game_core_sample_pads_body,game_core_sample_result_body
         dc.l game_core_clear_inputs_body,game_core_return_title_body
-        dc.l game_round_poll_body,game_tick_dispatch_body
+        dc.l game_round_poll_body,game_preview_dispatch
         dc.l game_core_latch_actions_body
 
 game_preview_override_pads:
@@ -720,7 +744,7 @@ game_preview_continue_one:
         bsr     game_core_sample_result_body
         bra.s   .after
 .tick:  move.w  #8,game_preview_operation
-        bsr     game_tick_dispatch_body
+        bsr     game_preview_dispatch
 .after: cmpi.w  #GAME_PLAYING,game_lifecycle-game_core_state(a5)
         beq.s   .sample
         cmpi.w  #GAME_PLAYING,game_preview_selected_state+(game_lifecycle-game_core_state)
@@ -1059,3 +1083,5 @@ game_preview_invalidate:
         beq.s   .done
         addq.l  #1,game_preview_generation
 .done:  rts
+
+        include "amiga/game/preview_predictor.s"

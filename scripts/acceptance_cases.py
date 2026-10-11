@@ -69,6 +69,14 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('predictor-boundaries-cpu', ('scripts/run_predictor_boundaries.py',),
+             'tests/predictor-boundaries-cpu/report.json', category='host'),
+        Case('predictor-cpu', ('scripts/run_predictor_proof.py',),
+             'tests/predictor-cpu/report.json', category='host'),
+        Case('predictor-pal', ('scripts/run_incoming_native.py','--predictor'),
+             'tests/predictor-native-pal/report.json'),
+        Case('predictor-ntsc', ('scripts/run_incoming_native.py','--predictor','--ntsc'),
+             'tests/predictor-native-ntsc/report.json'),
         Case('incoming-flight-cpu', ('scripts/run_incoming_proof.py',),
              'tests/incoming-flight-cpu/report.json', category='host'),
         Case('incoming-flight-pal', ('scripts/run_incoming_native.py',),

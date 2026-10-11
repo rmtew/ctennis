@@ -421,7 +421,7 @@ tutorial_request:
         moveq   #0,d3
         move.b  tutorial_x,d2
         move.b  tutorial_y,d3
-        jsr     game_preview_request
+        jsr     game_preview_request_projected
         tst.l   d0
         beq     .missing
         move.l  game_preview_generation,tutorial_generation
