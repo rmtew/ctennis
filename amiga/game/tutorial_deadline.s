@@ -192,7 +192,7 @@ tutorial_background:
         tst.l   d0
         beq.s   .closed_canvas_cost
         cmpi.l  #2,d0
-        beq.s   .closed_pose_cost
+        beq.s   .prepared_cue_cost
         tst.b   tutorial_marker_ready
         beq.s   .closed_pose_cost
         move.w  #TUTORIAL_JOB_LANDING_PREPARE,tutorial_job_kind
@@ -204,6 +204,11 @@ tutorial_background:
         bra.s   .producer_admit
 .closed_pose_cost:
         move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.prepared_cue_cost:
+        ; Completed cue reuse pays the fresh generation/endpoint rank queries
+        ; in both classification and acquisition, beyond the old pose-only path.
+        move.l  #4500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
 .ordinary_canvas_cost:
         ; The measured pose-only owner needs no menu ROI or landing retirement.

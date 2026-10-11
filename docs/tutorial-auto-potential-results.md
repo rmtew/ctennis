@@ -210,8 +210,9 @@ The next correction ranks the actual coherently free closed canvas: retirement
 required, closed/cue-free, or current completed cue. Old cue retirement and ROI
 restoration remain private job8/20,000 CCK WORK. New job9 draws only the new cue
 on a freshly reacquired closed/cue-free canvas, reserving15,000 CCK WORK.
-Both retain placement dirty and publish nothing. A prepared pose then uses the
-existing15,000 CCK pose reservation, copying its footer and producing objects
+Both retain placement dirty and publish nothing. A cue-free pose retains the
+existing15,000 CCK pose reservation; a completed-cue pose reserves17,500 CCK,
+copying its footer and producing objects
 through the unchanged publication body. Only an exact qualified prepared cue
 skips restore/ROI/draw; the canvas descriptor now records completed generation
 in previously unused bytes16..19, after allnine pixels and before validity.
@@ -223,5 +224,9 @@ classification and execution reacquire it freshly. The rank reads no retained
 refusal, slack or lease, preserves the coherent ownership snapshot, and writes
 no canvas. Both private jobs retain the existing final live timer/beam guards
 and separate5,000 CCK service/margin. Old captured draw_landing max5,667 CCK
-and pose-owner13,054 CCK support these finite hypotheses; fresh complete-owner
+and pose-owner13,054 CCK support these finite hypotheses. The largest retained
+complete producer bracket after subtracting disjoint old-cue/ROI/new-cue spans
+is13,633 CCK; the additional completed-cue query costs make15,000 CCK tight,
+so only that new prepared-cue owner receives the17,500 CCK allowance.
+Fresh complete-owner
 measurements including the new queries and unchanged response limits are required.
