@@ -5,17 +5,17 @@
 ; is separately duration/level-aware via game_audio_phrase_complete.
 game_audio_reset:
         movem.l d0-d7/a0-a3,-(sp)
-        lea     game_audio_voices,a0
+        lea     game_audio_voices-game_core_state(a5),a0
         ; All three even-aligned 32-byte voices; same final A0 and D0.
         moveq   #3*AV_SIZE/4-1,d0
 .clear:
         clr.l   (a0)+
         dbra    d0,.clear
-        move.b  #2,game_audio_rate
-        move.b  #2,game_audio_wait
-        clr.b   game_audio_transpose
-        clr.b   game_audio_due
-        lea     game_audio_voices,a0
+        move.b  #2,game_audio_rate-game_core_state(a5)
+        move.b  #2,game_audio_wait-game_core_state(a5)
+        clr.b   game_audio_transpose-game_core_state(a5)
+        clr.b   game_audio_due-game_core_state(a5)
+        lea     game_audio_voices-game_core_state(a5),a0
         moveq   #0,d7
 .voice:
         move.b  #-1,AV_CLIP(a0)
@@ -37,7 +37,7 @@ game_audio_queue:
         movem.l d0-d2/a0-a1,-(sp)
         move.w  d1,d2
         lsl.w   #5,d2
-        lea     game_audio_voices,a0
+        lea     game_audio_voices-game_core_state(a5),a0
         adda.w  d2,a0
         move.b  d0,AV_CLIP(a0)
         lsl.w   #2,d0
@@ -66,18 +66,18 @@ game_audio_request_hit:
         rts
 game_audio_cue_complete:
         moveq   #0,d0
-        move.b  game_audio_voices+2*AV_SIZE+AV_DONE,d0
+        move.b  game_audio_voices+2*AV_SIZE+AV_DONE-game_core_state(a5),d0
         rts
 ; Own countdown: one decrement per shared native tick in play AND service waits.
 game_audio_tick:
         movem.l d0-d7/a0-a3,-(sp)
-        clr.b   game_audio_due
-        subq.b  #1,game_audio_wait
+        clr.b   game_audio_due-game_core_state(a5)
+        subq.b  #1,game_audio_wait-game_core_state(a5)
         bne     .done
-        st      game_audio_due
+        st      game_audio_due-game_core_state(a5)
 .voices:
         moveq   #2,d7
-        lea     game_audio_voices+2*AV_SIZE,a0
+        lea     game_audio_voices+2*AV_SIZE-game_core_state(a5),a0
 .voice:
         tst.b   AV_DURATION(a0)
         beq.s   .load
@@ -113,11 +113,11 @@ game_audio_tick:
 .transpose:
         btst    #5,d6
         beq.s   .cadence
-        move.b  10(a1),game_audio_transpose
+        move.b  10(a1),game_audio_transpose-game_core_state(a5)
 .cadence:
         btst    #6,d6
         beq.s   .advance
-        move.b  11(a1),game_audio_rate
+        move.b  11(a1),game_audio_rate-game_core_state(a5)
 .advance:
         addq.b  #1,AV_CURSOR(a0)
         addi.l  #16,AV_NEXT(a0)
@@ -141,7 +141,7 @@ game_audio_tick:
         andi.w  #7,d2
         mulu.w  #384,d2
         moveq   #0,d0
-        move.b  game_audio_transpose,d0
+        move.b  game_audio_transpose-game_core_state(a5),d0
         mulu.w  #24,d0
         add.w   d0,d2
         moveq   #0,d0
@@ -149,7 +149,7 @@ game_audio_tick:
         add.w   d0,d0
         add.w   d0,d2
         lea     native_audio_periods,a2
-        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle-game_core_state(a5)
         bne.s   .period_table
         lea     native_victory_periods,a2
 .period_table:
@@ -216,34 +216,34 @@ game_audio_tick:
 .next:
         suba.w  #AV_SIZE,a0
         dbra    d7,.voice
-        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle-game_core_state(a5)
         bne.s   .rearm
         bsr     game_audio_phrase_complete
         tst.b   d0
         beq.s   .rearm
         ; Notify only after every final duration actually expires. Reload the
         ; next downbeat in THIS sequencer step, avoiding an extra empty step.
-        st      game_celebration_first_play
-        addq.w  #1,game_celebration_loops
+        st      game_celebration_first_play-game_core_state(a5)
+        addq.w  #1,game_celebration_loops-game_core_state(a5)
         bsr     game_result_sound
         bra     .voices
 .rearm:
-        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
+        cmpi.w  #GAME_RESULT_SOUND,game_lifecycle-game_core_state(a5)
         bne.s   .ordinary_rate
         ; Game updates are ~59.923Hz, NOT the PAL50 video rate assumed by
         ; authored .04s score units. A bounded2/3-tick cadence averages2.4
         ; native ticks/unit (~40.052ms), retaining the intended125BPM pacing.
         moveq   #2,d0
-        addq.b  #2,game_celebration_audio_fraction
-        cmpi.b  #5,game_celebration_audio_fraction
+        addq.b  #2,game_celebration_audio_fraction-game_core_state(a5)
+        cmpi.b  #5,game_celebration_audio_fraction-game_core_state(a5)
         bcs.s   .victory_rate
-        subq.b  #5,game_celebration_audio_fraction
+        subq.b  #5,game_celebration_audio_fraction-game_core_state(a5)
         moveq   #3,d0
 .victory_rate:
-        move.b  d0,game_audio_wait
+        move.b  d0,game_audio_wait-game_core_state(a5)
         bra.s   .done
 .ordinary_rate:
-        move.b  game_audio_rate,game_audio_wait
+        move.b  game_audio_rate-game_core_state(a5),game_audio_wait-game_core_state(a5)
 .done:
         movem.l (sp)+,d0-d7/a0-a3
         rts
@@ -271,7 +271,7 @@ game_audio_voice_complete:
 .done:  rts
 game_audio_phrase_complete:
         movem.l d1/a0,-(sp)
-        lea     game_audio_voices,a0
+        lea     game_audio_voices-game_core_state(a5),a0
         moveq   #2,d1
 .voice: bsr     game_audio_voice_complete
         tst.b   d0

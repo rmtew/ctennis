@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from preview_native_observation import Observer, BodyFrames
 from native_longword_observer import LongwordObserver
@@ -23,6 +24,7 @@ class NativePreviewGuards(unittest.TestCase):
         observer.rules={};observer.irq_writes=[];observer.irq_inside=0
         observer.irq_entry_pc=0x400;observer.irq_exit_pc=0x420;observer.audio_writes=[]
         observer.publication={};observer.stack_min=0x25000
+        observer.body_frames=SimpleNamespace(stack=[])
         return observer
 
     def event(self,address,size=2,pc=0x400,value=0):

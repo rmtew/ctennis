@@ -24,9 +24,9 @@ game_start_sound:
         rts
 game_pair_sound_complete:
         moveq   #0,d0
-        tst.b   game_audio_voices+AV_DONE
+        tst.b   game_audio_voices+AV_DONE-game_core_state(a5)
         beq.s   .done
-        tst.b   game_audio_voices+AV_SIZE+AV_DONE
+        tst.b   game_audio_voices+AV_SIZE+AV_DONE-game_core_state(a5)
         beq.s   .done
         moveq   #1,d0
 .done:

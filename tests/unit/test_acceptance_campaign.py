@@ -182,7 +182,7 @@ def preview_a3_report(a2):
     wrap=dict(proof,operations=4161,register_sr_equivalence_operations=4161,record_capacity=4096,
         buffer_bytes=80318,metadata_bytes=72,low_longword_wrap=True,tick_wraps=4,latest=(1<<32)+3649,
         retained_operations=4033,boundaries_checked=4034,seeks=8068)
-    return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=18020,relocations_each=257,
+    return dict(passed=True,shared_byte_audit=dict(passed=True,matched_bytes=17524,relocations_each=7,
         verified_sink_branches_each=14,normalized_sha256='a'*64),seed=0xace1,dispatch_cap=512,ordinary_operation_cap=2049,
         descriptors=[[0,'low',-16],[1,'regular',-16],[1,'regular',16]],images=images,
         history_regressions=dict(image='standalone',base=65536,
@@ -237,7 +237,7 @@ class CampaignTests(unittest.TestCase):
         with patch.object(campaign,'tagged_processes',return_value=[]):
             return campaign.worker(self.directory,[self.case],self.root)
     def test_catalog_stable_complete(self):
-        self.assertEqual(len(cases()),47)
+        self.assertEqual(len(cases()),50)
         self.assertIn('takeover-tail',{c.id for c in cases()})
         self.assertIn('takeover-sound',{c.id for c in cases()})
     def test_preview_extent_requires_isolation_budget_and_continuous_replay(self):
@@ -276,13 +276,24 @@ class CampaignTests(unittest.TestCase):
                            'cancel','eviction','exhaustion','stale-generation'],
                        after_cancel_resolver_operations=1,different_attempt_resolver_operations=1,
                        oldest_after_eviction=64,evicted_incoming_origin=1))
+        cache['generation_guard_validation']=dict(passed=True,diagnostic_corrupt_bytes=390,
+            final_issued_token=0xfffffffe,terminal_generation=0xffffffff,
+            full_preserved_image=True,corruption_does_not_advance_generation=True,
+            final_token_completed_and_published=True,saturated_invalidation=True,
+            owned_entry_rejections=[dict(cache=cache,owner=name,value=value)
+                for cache in ('cold','warm') for name,value in
+                (('game_preview_active',1),('game_preview_active',2),('game_preview_active',3),
+                 ('game_history_replaying',255),('game_history_seek_active',1))])
         report['preview_validation']['cache_validation']=cache
         report['preview_validation']['stage_a1_validation']=preview_a1_report()
         report['preview_validation']['stage_a2_validation']=preview_a2_report()
         report['preview_validation']['stage_a3_validation']=preview_a3_report(report['preview_validation']['stage_a2_validation'])
         report['preview_validation']['batch_validation']=preview_batch_report()
         self.assertTrue(campaign.required_extent(case,report))
-        for area,key,value in (('cold_warm','state_path_output_equal',False),
+        for area,key,value in (('generation_guard_validation','diagnostic_corrupt_bytes',389),
+                               ('generation_guard_validation','final_token_completed_and_published',False),
+                               ('generation_guard_validation','final_issued_token',0xffffffff),
+                               ('cold_warm','state_path_output_equal',False),
                                ('invalidation','generation_exhausted',False),
                                ('invalidation','oldest_after_eviction',1)):
             partial=json.loads(json.dumps(report));partial['preview_validation']['cache_validation'][area][key]=value

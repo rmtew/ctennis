@@ -65,13 +65,13 @@ def execute(cpu,ordinal,selection,x,y,stream,seed,name,budget=4,extra_observer=N
         variant=field(cpu,'game_preview_variant',1)
         if pc in bodies:
             op,arity=bodies[pc]
-            traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.state()))
+            traces[variant].append((op,[cpu.cpu.r_reg(r)&0xffff for r in range(arity)],cpu.working_state()))
         if pc in (cpu.symbols['game_history_contact'],cpu.symbols['game_history_serve']):
             launches[variant].append(dict(end=cpu.cpu.r_reg(7)&0xffff,
                 kind=1 if pc==cpu.symbols['game_history_contact'] else 3,
-                dispatch=len(boundaries[variant]),serve_clock=field(cpu,'game_serve_clock',1)))
+                dispatch=len(boundaries[variant]),serve_clock=value(cpu.working_state(),cpu.symbols,'game_serve_clock')))
         if pc==cpu.symbols['game_preview_write_point']:
-            state=cpu.state()
+            state=cpu.working_state()
             boundaries[variant].append(dict(contact=value(state,cpu.symbols,'game_contact'),
                 flight=value(state,cpu.symbols,'game_flight'),lifecycle=value(state,cpu.symbols,'game_lifecycle',2)))
     costs,result=job(cpu,ordinal,x,y,observer=observe,budget=budget)

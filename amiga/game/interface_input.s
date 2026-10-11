@@ -105,8 +105,13 @@ ui_input_pause: ori.b   #UI_PAUSE,ui_edges
 ui_input_next:  addq.w  #1,d1
         cmpi.w  #128,d1
         bcs     ui_input_keys
+        moveq   #0,d0
+        tst.b   tutorial_active
+        bne     ui_input_physical_pad_edges
         move.b  game_input_pressed,d0
         or.b    game_input_pressed+1,d0
+ui_input_physical_pad_edges:
+        ; Frozen logical pressed bits are not fresh physical tutorial intent.
         or.b    ui_joystick_pressed,d0
         or.b    ui_joystick_pressed+1,d0
         btst    #1,d0
@@ -129,6 +134,8 @@ ui_input_pad_action:
         beq.s   ui_input_dispatch
         ori.b   #UI_ACTION,ui_edges
 ui_input_dispatch:
+        tst.b   tutorial_active
+        bne     ui_input_tutorial_done
         cmpi.w  #GAME_RESULT_SOUND,game_lifecycle
         beq     ui_demo_input_done
         tst.b   ui_demo
@@ -216,6 +223,7 @@ ui_input_pause_accept:
         clr.b   ui_selection
 ui_input_draw:  bsr     ui_feedback
         bsr     ui_render
+ui_input_tutorial_done:
         movem.l (sp)+,d0-d7/a0-a4
         rts
 

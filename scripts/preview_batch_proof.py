@@ -20,6 +20,9 @@ def batching(executable,progress):
         assert candidate is not None, 'Batching fixture has no actual completed return'
         original_trace=cpu.trace
         def guard(mode,width,address,value):
+            if (mode=='W' and field(cpu,'game_preview_active',1) in (1,2)
+                    and address<cpu.stop and address+(1<<width)>cpu.start):
+                raise AssertionError('Private preview worker writes canonical state')
             if (mode=='W' and field(cpu,'game_history_mode',1)==2
                     and address<symbols['game_history_buffer_end']
                     and address+(1<<width)>symbols['game_history_buffer']):

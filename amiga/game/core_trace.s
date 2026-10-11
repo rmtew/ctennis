@@ -1,13 +1,16 @@
 ; Public logical boundaries. History and optional trace preserve caller context.
 game_core_init:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #1,d6
         bsr     game_history_before
@@ -31,16 +34,20 @@ game_core_init:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_select:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #2,d6
         bsr     game_history_before
@@ -64,16 +71,20 @@ game_core_select:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_sample_pads:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #3,d6
         bsr     game_history_before
@@ -97,16 +108,20 @@ game_core_sample_pads:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_sample_result:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #4,d6
         bsr     game_history_before
@@ -130,16 +145,20 @@ game_core_sample_result:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_clear_inputs:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #5,d6
         bsr     game_history_before
@@ -163,16 +182,20 @@ game_core_clear_inputs:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_return_title:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #6,d6
         bsr     game_history_before
@@ -196,16 +219,20 @@ game_core_return_title:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_round_poll:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #7,d6
         bsr     game_history_before
@@ -229,16 +256,20 @@ game_round_poll:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_tick_dispatch:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #8,d6
         bsr     game_history_before
@@ -262,16 +293,20 @@ game_tick_dispatch:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 game_core_latch_actions:
+        movem.l a5,-(sp)
         move.w  sr,-(sp)
         cmpi.b  #2,game_history_mode
         bne.s   .history_allowed
         tst.b   game_history_replaying
         bne.s   .history_allowed
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
 .history_allowed:
+        lea     game_core_state,a5
         movem.l d6-d7/a0-a1,-(sp)
         moveq   #9,d6
         bsr     game_history_before
@@ -295,6 +330,7 @@ game_core_latch_actions:
         clr.w   core_trace_marker
         endif
         move.w  (sp)+,sr
+        move.l  (sp)+,a5
         rts
         ifd CORE_TRACE
 core_trace_marker: dc.w 0

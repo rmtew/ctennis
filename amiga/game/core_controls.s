@@ -18,21 +18,21 @@ game_store_pad:
 ; update by the temporary state adapter until native rounds own these values.
 game_assign_players:
         andi.b  #1,d1
-        move.b  d1,game_lower_owner
+        move.b  d1,game_lower_owner-game_core_state(a5)
         eori.b  #1,d1
-        move.b  d1,game_upper_owner
-        move.b  game_input_bits,game_player_controls
-        clr.b   game_player_controls+1
+        move.b  d1,game_upper_owner-game_core_state(a5)
+        move.b  game_input_bits-game_core_state(a5),game_player_controls-game_core_state(a5)
+        clr.b   game_player_controls+1-game_core_state(a5)
         tst.b   d0
         beq.s   game_filter_old_actions
-        move.b  game_input_bits+1,game_player_controls+1
+        move.b  game_input_bits+1-game_core_state(a5),game_player_controls+1-game_core_state(a5)
 ; A new match must not treat an action carried across its menu as a new serve.
 ; Suppress only those action bits held at selection, independently per player;
 ; each becomes eligible after its physical release. Normal rally holds survive.
 game_filter_old_actions:
-        lea     game_input_bits,a0
-        lea     game_old_action_latches,a1
-        lea     game_player_controls,a2
+        lea     game_input_bits-game_core_state(a5),a0
+        lea     game_old_action_latches-game_core_state(a5),a1
+        lea     game_player_controls-game_core_state(a5),a2
         moveq   #1,d2
 game_filter_old_action:
         move.b  (a0)+,d0
@@ -46,20 +46,20 @@ game_assignment_done:
 
 ; Compatibility reader names also provide observation boundaries.
 read_game_input:
-        move.b  game_player_controls,d0
+        move.b  game_player_controls-game_core_state(a5),d0
         rts
 sample_second_input_group:
-        move.b  game_player_controls+1,d0
+        move.b  game_player_controls+1-game_core_state(a5),d0
         rts
 
         even
 
 game_latch_old_actions:
-        move.b  game_input_bits,d0
+        move.b  game_input_bits-game_core_state(a5),d0
         andi.b  #$30,d0
-        move.b  d0,game_old_action_latches
-        move.b  game_input_bits+1,d0
+        move.b  d0,game_old_action_latches-game_core_state(a5)
+        move.b  game_input_bits+1-game_core_state(a5),d0
         andi.b  #$30,d0
-        move.b  d0,game_old_action_latches+1
+        move.b  d0,game_old_action_latches+1-game_core_state(a5)
         rts
         even

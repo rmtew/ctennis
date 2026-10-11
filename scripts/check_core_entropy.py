@@ -37,8 +37,10 @@ def check(executable):
         policy = core.state()[symbols['game_entropy_policy']-core.start]
         low_bit = word(core,'game_entropy_state') & 1
         core.cpu.w_sr(0x2700 | (index & 31))
-        core.call('native_entropy_bit',{register:(index*65537 ^ register*0x1010101 ^ 0xa55a965a)
-                                       & 0xffffffff for register in range(15)})
+        registers={register:(index*65537 ^ register*0x1010101 ^ 0xa55a965a)
+                   & 0xffffffff for register in range(15)}
+        registers[13]=core.start
+        core.call('native_entropy_bit',registers)
         observed_cycles['legacy' if policy else 'modern'][str(low_bit)] = core.last_cycles
         return word(core,'game_entropy_state'),core.cpu.r_reg(0)
     for seed,expected in ((1,(0xb400,1)),(2,(1,0)),(0xace1,ANSWERS[0])):

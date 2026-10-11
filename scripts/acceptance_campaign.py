@@ -20,7 +20,7 @@ import uuid
 
 from native_evidence import atomic_json, digest, now, python_inputs, snapshot, status, changed
 from native_tools import ROOT
-from acceptance_cases import cases
+from acceptance_cases import cases, diagnostic_cases
 from progress import acceptance
 
 def read(path):
@@ -129,6 +129,10 @@ def dependencies(case, root=ROOT):
     """
     root=Path(root)
     paths = python_inputs(root/case.args[0]) if case.args[0]!='-m' else set()
+    if case.id in ('private-state-retained-pal','private-state-retained-ntsc'):
+        paths.add(root/'scripts/preview_native_fixture.s')
+        paths.update(root/'build/tests'/name/'report.json' for name in
+            ('preview-cpu','seek-sliced-cpu','private-state-cpu'))
     if case.id in ('preview-native-pal','preview-native-ntsc'):
         paths.add(root/'scripts/preview_native_fixture.s')
         paths.add(root/'build/tests/preview-cpu/report.json')
@@ -714,6 +718,36 @@ def preview_batch_extent(stage):
 def required_extent(case,report):
     if report.get('passed') is not True:return False
     if case.extent and not acceptance(case.extent,report):return False
+    if case.id in ('private-state-retained-pal','private-state-retained-ntsc'):
+        from retained_private_extent import required_retained_extent
+        return required_retained_extent(report,'NTSC' if case.id.endswith('-ntsc') else 'PAL')
+    if case.id=='private-state-cpu':
+        validation=report.get('private_state_validation') or {}
+        audit=report.get('shared_byte_audit') or {}
+        return (report.get('execution')=='actual-68000-cpu-only'
+                and validation.get('passed') is True
+                and validation.get('operations')==[2056,2056]
+                and validation.get('state_bytes')==318
+                and validation.get('public_a5_checks')==4112
+                and validation.get('blocked_a5_and_ccr_checks')==9
+                and all(validation.get(n) is True for n in (
+                    'canonical_and_other_owner_untouched','canary_untouched',
+                    'public_a5_preserved','body_a5_preserved','full_state_and_ordered_events_equal'))
+                and audit.get('passed') is True and audit.get('matched_bytes')==17524
+                and audit.get('relocations_each')==7
+                and audit.get('verified_sink_branches_each')==14
+                and audit.get('normalized_sha256')=='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
+    if case.id=='tutorial-hotspots-pal':
+        from tutorial_hotspots import required_hotspots_extent
+        return required_hotspots_extent(report, 'PAL')
+    if case.id in ('tutorial-latency-pal','tutorial-latency-ntsc'):
+        from tutorial_latency import required_latency_extent
+        return required_latency_extent(report, 'NTSC' if case.id.endswith('-ntsc') else 'PAL')
+    if case.id in ('tutorial-court-pal','tutorial-court-ntsc'):
+        from tutorial_capture import required_capture_extent
+        standard = 'NTSC' if case.id.endswith('-ntsc') else 'PAL'
+        return ((report.get('target') or {}).get('video') == standard
+                and required_capture_extent(report))
     if case.id=='seek-sliced-cpu':
         from seek_sliced_extent import required_seek_sliced_extent
         return required_seek_sliced_extent(report)
@@ -775,6 +809,18 @@ def required_extent(case,report):
                 if type(row.get(field)) is not int or row[field]<0:return False
         cache=validation.get('cache_validation') or {}
         paired=cache.get('cold_warm') or {}
+        guard=cache.get('generation_guard_validation') or {}
+        if (guard.get('passed') is not True or guard.get('diagnostic_corrupt_bytes')!=390
+                or guard.get('final_issued_token')!=0xfffffffe
+                or guard.get('terminal_generation')!=0xffffffff
+                or any(guard.get(k) is not True for k in ('full_preserved_image',
+                    'corruption_does_not_advance_generation','final_token_completed_and_published',
+                    'saturated_invalidation'))
+                or {(r.get('cache'),r.get('owner'),r.get('value')) for r in
+                    guard.get('owned_entry_rejections',[])}!={
+                    (cache,name,value) for cache in ('cold','warm') for name,value in
+                    (('game_preview_active',1),('game_preview_active',2),('game_preview_active',3),
+                     ('game_history_replaying',255),('game_history_seek_active',1))}):return False
         failures=cache.get('failed_seek_controls')
         invalidation=cache.get('invalidation') or {}
         if (cache.get('passed') is not True
@@ -1180,7 +1226,7 @@ def monitor(directory, child=None):
                 if ((child is not None and child.returncode!=0) or not report
                         or report.get('state')!='complete' or not report.get('passed')):
                     print(json.dumps({'campaign':directory.name,'state':'failed-or-interrupted','report':report}),flush=True);return 1
-                catalog=cases()
+                catalog=cases()+diagnostic_cases()
                 from campaign_core_evidence import core_cases
                 catalog+=core_cases()
                 selected=[c for c in catalog if c.id in report.get('case_ids',[])]
@@ -1209,12 +1255,14 @@ def main():
     except ModuleNotFoundError as error:
         if error.name!='campaign_core_evidence':raise
     if args.case:
+        case_list += diagnostic_cases()
         unknown=set(args.case)-{c.id for c in case_list}
         if unknown:parser.error('Unknown stable case IDs: '+str(sorted(unknown)))
         case_list=[c for c in case_list if c.id in args.case]
     directory=ROOT/'build/acceptance/campaigns'/(args.campaign or uuid.uuid4().hex)
     if args.resume and not args.case:
         saved=read(directory/'campaign.json')
+        if saved:case_list += diagnostic_cases()
         if saved:case_list=[c for c in case_list if c.id in saved['case_ids']]
     if args.worker:return worker(directory,case_list,lock_fd=args.lock_fd)
     owner=read(directory/'owner.json')

@@ -6,7 +6,7 @@ import re
 INPUT_PATH='build/acceptance/campaigns/e61e095609b8412e95275345f78e9421/attempts/preview-native-pal/000003/actual-prefix-835.json'
 INPUT_SHA='c46ef840c63608511f941fdab06b3c3a8586f0dcc79ee039e3532f1138621348'
 SLICE_SHA='b99b6c3e2f87f86266d97e4eacabc0ebc12af6a18adb79149593c70f3b3a840a'
-CORE_SHA='9a457929bc223b843132bb53af7d604ed574441e32c4651eb69897aa0b48689d'
+CORE_SHA='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c'
 IMAGES={'standalone':('build/standalone/match-core',65536),
     'relocated':('build/standalone/match-core',196608),
     'native':('build/amiga/interfaces/enhanced/baseline-rally',65536)}
@@ -170,7 +170,7 @@ def required_seek_sliced_extent(report):
             or not isinstance(files,dict) or files.get(INPUT_PATH)!=INPUT_SHA
             or not isinstance(core,dict) or core.get('matched') is not True or core.get('sha256')!=CORE_SHA
             or any(type(core.get(k)) is not int or core[k]!=v for k,v in
-                dict(bytes=18020,relocations=257,sink_branches=14).items())):return False
+                dict(bytes=17524,relocations=7,sink_branches=14).items())):return False
     proofs=stage.get('proofs')
     if not isinstance(proofs,dict) or set(proofs)!={'standalone','relocated','native'}:return False
     compiled=evidence.get('compiled_executables')

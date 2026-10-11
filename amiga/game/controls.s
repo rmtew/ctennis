@@ -39,6 +39,7 @@ game_p2_store:
         move.b  d0,game_native_pad_bits+1
         move.b  d0,d1
         move.b  game_native_pad_bits,d0
+        jsr     tutorial_sample
         bsr     game_core_sample_pads
 input_ready:
         rts

@@ -59,4 +59,26 @@ def cases():
              'tests/preview-native-pal/report.json'),
         Case('preview-native-ntsc', ('scripts/run_preview_native.py','--ntsc'),
              'tests/preview-native-ntsc/report.json'),
+        Case('tutorial-court-pal', ('scripts/run_tutorial_capture.py',),
+             'tests/tutorial-court-pal/report.json'),
+        Case('tutorial-court-ntsc', ('scripts/run_tutorial_capture.py','--ntsc'),
+             'tests/tutorial-court-ntsc/report.json'),
+    ]
+
+
+def diagnostic_cases():
+    """Explicitly selected probes; never expand the mandatory release catalog."""
+    return [
+        Case('private-state-retained-pal', ('scripts/run_retained_private_native.py',),
+             'tests/private-state-retained-pal/report.json'),
+        Case('private-state-retained-ntsc', ('scripts/run_retained_private_native.py','--ntsc'),
+             'tests/private-state-retained-ntsc/report.json'),
+        Case('private-state-cpu', ('scripts/run_private_state_proof.py',),
+             'tests/private-state-cpu/report.json', category='host'),
+        Case('tutorial-hotspots-pal', ('scripts/run_tutorial_hotspots.py',),
+             'tests/tutorial-hotspots-pal/report.json'),
+        Case('tutorial-latency-pal', ('scripts/run_tutorial_latency.py',),
+             'tests/tutorial-latency-pal/report.json'),
+        Case('tutorial-latency-ntsc', ('scripts/run_tutorial_latency.py','--ntsc'),
+             'tests/tutorial-latency-ntsc/report.json'),
     ]

@@ -30,11 +30,11 @@ ui_menu_tick:
         subq.b  #1,ui_selection
         cmpi.b  #$ff,ui_selection
         bne.s   .down
-        move.b  #2,ui_selection
+        move.b  #3,ui_selection
 .down:  btst    #1,ui_edges
         beq.s   .toggle
         addq.b  #1,ui_selection
-        cmpi.b  #3,ui_selection
+        cmpi.b  #4,ui_selection
         bcs.s   .toggle
         clr.b   ui_selection
 .toggle:
@@ -50,6 +50,8 @@ ui_menu_tick:
         moveq   #0,d0
         move.b  ui_selection,d0
         beq.s   .start
+        cmpi.b  #3,d0
+        beq.s   .tutorial
         cmpi.b  #1,d0
         bne.s   .open
         eori.b  #1,ui_player_count
@@ -58,6 +60,11 @@ ui_menu_tick:
         move.b  d0,ui_page
         move.b  #2,ui_help_choice
         bra     .done
+.tutorial:
+        st      tutorial_title_pending
+        clr.b   ui_player_count
+        moveq   #0,d0
+        bra     game_latch_choice
 .start: move.b  ui_player_count,d0
         bra     game_latch_choice
 .pages:

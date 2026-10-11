@@ -3,9 +3,15 @@
 Status: implementation roadmap authorized on 7 October 2026. The shared core
 is merged. Bounded history/seek merged in PR #36 after selective native acceptance
 and independent review; see [bounded history](bounded-history.md). Isolated
-previews are under implementation with partial CPU acceptance; see
-[isolated previews](isolated-shot-previews.md). Tutorial UI and branching remain
-later increments.
+previews and bounded native seek scheduling merged in PR #37 after independent
+source and completed selective CPU/PAL/NTSC evidence review; see
+[isolated previews](isolated-shot-previews.md). The court prototype is the active
+increment; visual tuning awaits native screenshots and animation review.
+The current proof prioritizes immediate player placement, the latest shot result
+and normal-speed native ball/shadow animation on the existing court. Trails and
+sprite echoes are optional; neither gates placement readiness. Echo implementation
+requires Richard's future go-ahead, separate from approval of this roadmap entry.
+Branching and the full target/release gate remain later work.
 
 ## Purpose and scope
 
@@ -66,7 +72,8 @@ stop permanently when the recording buffer fills.
   shot and up/down for time within the selected shot. These axes are prototype
   defaults, not a further design approval requirement.
 - Button 1 selects the held-action alternative while held, and the released
-  alternative while released. Both possible return paths remain visible.
+  alternative while released. Both alternatives remain selectable. In an
+  optional trail-enabled view, both possible return paths remain visible.
 - A single button-2 tap opens a small options menu. It offers Play from here,
   Resume latest and a way to close the menu without leaving the view. In a fresh
   title-menu tutorial, Resume latest returns to its saved initial serve state.
@@ -93,7 +100,8 @@ shot, not the stored original shot. Legal positions follow the game's serve and
 return rules. Do not claim that every legal test position could have been reached
 from the original position in the available time.
 
-Show the incoming path and both outgoing alternatives computed by the game:
+Optional paths can show the incoming path and both outgoing alternatives computed
+by the game:
 button 1 held and button 1 released. Use a solid active path and a dashed
 inactive path as the first prototype. Test whether a slightly thicker active
 path improves clarity at native resolution. Style must distinguish paths without
@@ -107,9 +115,11 @@ from actual simulation events, not a second set of trajectory rules.
 
 Animate a preview ball along the incoming path and the active outgoing path.
 Use the game's height projection and shadow where useful so that height and
-landing are clear. The animation is a display loop over a computed preview; it
+landing are clear. Advance dense actual samples at normal game speed and retain
+the final sample without wrapping in the simple baseline. Animation displays a
+computed preview; it
 does not advance the selected simulation moment. Repositioning, time selection
-or changing button 1 invalidates the preview and restarts the display loop when
+or changing button 1 invalidates the preview and restarts playback when
 the new result is ready. Never show an old path as the result of a new position.
 
 At the bottom, show `< n/m >`, where n is the selected retained shot and m is
@@ -124,6 +134,69 @@ source. Ignore idle samples and key-repeat noise for source selection. Avoid
 rapid label changes when devices are mixed. Context feedback takes priority over
 general hints; do not rotate away an important result before it can be read.
 Hint timing is presentation state, separate from simulation time.
+
+### Optional ball sprite echoes
+
+Purpose: make direction and height easier to read by showing a few earlier ball
+positions alongside the primary ball. This is a separate opt-in milestone after
+the simple placement and normal-ball-animation baseline has passed focused review.
+Defining it does not authorize implementation: obtain Richard's future explicit
+go-ahead before any echo runtime changes. It is not a prerequisite for retained
+navigation, branching or the tutorial release gate.
+
+Consume existing completed preview samples as they arrive; add no simulation,
+trajectory model or filled-trail requirement. Use a bounded number of prebuilt
+compact ball sprite records. First evaluate available vertical gaps on the
+ball/shadow channels; optionally reuse player/AI channel gaps outside their native
+vertical spans if that remains cheap. Preserve primary player, AI, ball and shadow
+intervals and priority. Skip clashes and unavailable slots rather than shifting
+objects or postponing placement. Prefer bounded DMA chaining where supported;
+do not introduce a general sprite allocator or repeated Copper-pointer scheduling
+without measured need and further review. Palette feasibility, including any
+unused sprite pixel code, remains to be verified against all native palette pairs
+before choosing a dim echo style.
+
+Exit: fresh focused PAL/NTSC evidence on the unexpanded A500 binds the exact build
+and demonstrates actual published/fetched echo headers, payloads, pixels and
+vertical intervals, including clashes, skipped echoes and input supersession.
+Primary objects, scoreboards and native colors must remain correct. Compare
+placement/result latency and normal-speed animation with the no-echo baseline;
+every complete callback, including input, IRQ/DMA and publication tails, must
+retain its deadline. Record added code/RAM/stack and worst observed contended
+work. Richard reviews native screenshots/animation before appearance is accepted.
+
+### Optional static sprite trail fragments
+
+This independent opt-in prototype follows the basic placement/ball-animation
+baseline. It uses spare sprite bitmap area to show fragments of a static predicted
+path, rather than extra moving ball samples. Richard must separately opt in before
+implementation, even if moving echoes have been approved; neither optional
+milestone depends on the other or gates the main tutorial roadmap.
+
+Build a bounded number of fragments incrementally over consecutive frames while
+the selected moment, player position and action remain unchanged. Consume actual
+completed path samples and keep all work subordinate to fresh input, latest
+placement and primary ball animation. Invalidate and clear fragments on movement,
+action, selected moment/shot or preview-generation changes; an old path must never
+describe the new request. Missing fragments and gaps are acceptable.
+
+First assess how much useful local path fits within a sprite's 16-pixel width and
+chosen height, including horizontal range, court/height projection and clipping.
+Evaluate ball-channel space first, then other channels only in safe vertical gaps.
+Preserve player, AI, ball and shadow intervals, palette and priority. Audit sprite
+DMA and chip RAM, compact bitmap/record construction cost, and immutable queued
+and displayed publication ownership. Reuse bounded prepared storage; avoid a
+general allocator or a complete filled trail requirement.
+
+Feasibility and exit evidence must show native-resolution static fragments,
+incremental construction over unchanged frames, immediate stale-fragment removal,
+clipped/gapped paths and primary-object preservation. Use focused PAL/NTSC timing
+and actual native sprite/DMA/publication checks against the simple no-fragment
+baseline; record code/RAM/stack, construction work and every complete callback's
+headroom. Richard reviews screenshots/animation for usefulness. Stop or narrow the
+prototype if local width, clipping, conflicts or gaps make the path misleading,
+if measured latency/deadlines or memory regress, or if a general allocator or
+display redesign becomes necessary. Further scope needs discussion and approval.
 
 ## Resume rules
 
@@ -209,13 +282,25 @@ committed foundation. Do not build the UI on an unproved state boundary.
    coincident-path cases. Exit: replaying a chosen alternative produces the same
    trajectory/outcome, and preview leaves live state/history unchanged.
 4. **Integrate the court UI and branching.** Add title entry, one-player
-   double-tap, modifier navigation, menu, banner, trails, animation and hints.
+   double-tap, modifier navigation, menu, banner, animation and hints. Prove the
+   simple static-court placement/normal-ball-animation baseline first; trails are
+   optional and never a READY or usability prerequisite.
    Show native-resolution screenshots and a short animation before locking
    visual tuning. Test tap/hold discrimination, input-source switching, both
    resume commands and repeated enter/leave cycles. Exit: the committed branch
    replays from its edited checkpoint; Resume latest remains byte-equivalent at
    the canonical interruption boundary; two-human play cannot enter tutorial.
-5. **Prove the target build and release.** Run the applicable existing tests and
+5. **Optional: add opportunistic ball sprite echoes.** After the simple baseline,
+   and only after Richard's explicit future go-ahead, implement the bounded
+   existing-sample presentation described above. Preserve primary-object priority,
+   skip clashes and prove focused PAL/NTSC timing and actual native visual output.
+   This opt-in milestone may be skipped without blocking the main roadmap.
+6. **Optional: prototype static sprite trail fragments.** Only after Richard's
+   separate future opt-in, evaluate the independent bounded prototype above.
+   Build fragments over unchanged frames, invalidate on relevant changes, preserve
+   primary objects and accept gaps. Stop if usefulness or measured budgets fail.
+   Moving-echo approval does not authorize this milestone, and it may be skipped.
+7. **Prove the target build and release.** Run the applicable existing tests and
    new tutorial checks, then the finite native acceptance gate. Exercise PAL and
    NTSC on A500, 68000, OCS, 512 KB chip RAM, no expansion. Check actual scanout,
    sprite/HUD publication and cold-loaded release bytes. Exit: reviewed evidence
@@ -224,8 +309,9 @@ committed foundation. Do not build the UI on an unproved state boundary.
 
 Measure executable/code/data size, total and added RAM, stack high-water use,
 history capacity, checkpoint/seek work, preview cost and worst observed frame
-time/spare time. Include ordinary play and the busiest tutorial view, with both
-paths and animation visible. Separate standalone CPU cycles from contended
+time/spare time. Include ordinary play and the busiest tutorial view with native
+ball animation. For optional trail-enabled variants, also measure both paths
+and animation visible together. Separate standalone CPU cycles from contended
 native timing. Use the existing [resource workflow](metrics/README.md); establish
 budgets from the measured baseline before allocating the buffers. A large host
 test or a short rally does not prove a native worst-case bound.
