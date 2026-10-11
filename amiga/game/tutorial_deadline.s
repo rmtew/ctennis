@@ -1,6 +1,12 @@
 ; One root deadline owner. Complete elapsed allowances remain hypotheses.
 ; Record envelopes are semantic boundaries, not compulsory scheduling yields.
 TUTORIAL_BG_CHUNK_E equ 1000
+; A small preview owner also pays live planning, release and progress tails.
+; Keep per-envelope costs for grouping; reserve this floor only once per owner.
+TUTORIAL_BG_PREVIEW_OWNER_E equ 1500
+; Footer clear/layout includes the root admission/accounting return path.
+; Its measured complete owner exceeds the generic small-operation allowance.
+TUTORIAL_BG_FOOTER_E equ 1200
 TUTORIAL_BG_PHYSICS_E equ 4000
 TUTORIAL_BG_FULL_E equ 10000
 ; Separate complete-owner hypothesis for one exact returned serve stage.
@@ -21,6 +27,8 @@ TUTORIAL_JOB_PRODUCER equ 4
 TUTORIAL_JOB_FOOTER equ 5
 TUTORIAL_JOB_RESULT equ 6
 TUTORIAL_JOB_FOOTER_COMMIT equ 7
+TUTORIAL_JOB_MENU_ROI equ 8
+TUTORIAL_JOB_LANDING_PREPARE equ 9
 
 tutorial_background:
         tst.b   tutorial_active
@@ -46,7 +54,7 @@ tutorial_background:
         movem.l d0-d7/a0-a6,-(sp)
         clr.w   tutorial_job_kind
         clr.w   tutorial_job_budget
-        cmpi.b  #1,tutorial_active_variant
+        cmpi.b  #1,tutorial_potential_variant
         bhi     .done
         move.l  simulation_interval,d0
         sub.l   simulation_phase,d0
@@ -73,7 +81,7 @@ tutorial_background:
         tst.w   game_preview_status
         beq     .unavailable
         moveq   #0,d2
-        move.b  tutorial_active_variant,d2
+        move.b  tutorial_potential_variant,d2
         move.w  d2,tutorial_job_variant
         ; Terminal/ready branches cannot have a pending endpoint. Test those
         ; cheap immutable fields before entering the full eligibility wrapper.
@@ -154,33 +162,55 @@ tutorial_background:
         bra.s   .producer
 .producer:
         move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
+        ; A clean closed-menu producer is immutable playback, reached only
+        ; after animation_due. progress_slice rechecks due and updates sprites
+        ; on the visible canvas; it does not restore ROI, cue or footer pixels.
+        ; Movement/action/reset makes placement dirty and restores full costing.
+        tst.b   tutorial_menu
+        bne.s   .placement_producer
+        tst.b   tutorial_placement_dirty
+        bne.s   .placement_producer
+        move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra     .producer_admit
+.placement_producer:
         move.l  #6000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bsr     tutorial_pending_canvas_eligible
         tst.l   d0
         beq.s   .canvas_cost
         move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
-        bra.s   .producer_admit
+        bra     .producer_admit
 .canvas_cost:
-        ; The measured pose-only owner needs no menu ROI or landing retirement.
-        ; Both canvas identities must agree, since either can become free.
-        ; Any uncertain/new ROI or cross retains the larger reservation.
-        tst.b   tutorial_marker_ready
-        bne.s   .producer_admit
-        tst.b   tutorial_canvas_markers+4
-        bne.s   .producer_admit
-        tst.b   tutorial_canvas_markers+24
-        bne.s   .producer_admit
-        moveq   #-1,d0
+        ; Retire old cues/ROI privately before pose production. A current cue
+        ; is drawn in a second bounded private owner; neither owner publishes.
+        ; Read the actual free candidate again at execution, never a lease.
+        ; Open/highlight ROI preparation follows the same private transaction.
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_canvas_rank
+        tst.l   d0
+        beq.s   .closed_canvas_cost
+        cmpi.l  #2,d0
+        beq.s   .prepared_pose_cost
         tst.b   tutorial_menu
-        beq.s   .producer_identity
-        moveq   #0,d0
-        move.b  tutorial_menu_selection,d0
-.producer_identity:
-        cmp.b   tutorial_canvas_menus,d0
-        bne.s   .producer_admit
-        cmp.b   tutorial_canvas_menus+1,d0
-        bne.s   .producer_admit
+        bne.s   .closed_pose_cost
+        tst.b   tutorial_marker_ready
+        beq.s   .closed_pose_cost
+        move.w  #TUTORIAL_JOB_LANDING_PREPARE,tutorial_job_kind
         move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.closed_canvas_cost:
+        move.w  #TUTORIAL_JOB_MENU_ROI,tutorial_job_kind
+        move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.closed_pose_cost:
+        move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.prepared_pose_cost:
+        ; Completed cue reuse pays the fresh generation/endpoint rank queries
+        ; in both classification and acquisition, beyond the plain pose path.
+        move.l  #4500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
 .producer_admit:
         bra     .admit
 .footer_commit:
@@ -189,7 +219,7 @@ tutorial_background:
         bra     .admit
 .footer:
         move.w  #TUTORIAL_JOB_FOOTER,tutorial_job_kind
-        move.l  #TUTORIAL_BG_CHUNK_E,tutorial_job_cost
+        move.l  #TUTORIAL_BG_FOOTER_E,tutorial_job_cost
         bra     .admit
 .endpoint:
         move.w  #TUTORIAL_JOB_ENDPOINT,tutorial_job_kind
@@ -241,6 +271,10 @@ tutorial_background:
         beq     .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
+        cmpi.w  #TUTORIAL_JOB_MENU_ROI,d0
+        beq     .run_menu_roi
+        cmpi.w  #TUTORIAL_JOB_LANDING_PREPARE,d0
+        beq     .run_landing_prepare
         bra     .run_result
 .run_preview:
         move.l  tutorial_generation,d0
@@ -285,6 +319,26 @@ tutorial_background:
         bra     .completed
 .run_producer:
         bsr     tutorial_progress_slice
+        bra     .completed
+.run_menu_roi:
+        ; Reacquire ownership after admission. A ready/display IRQ may have
+        ; changed the free candidate; no refused or prior grant is retained.
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq     .done
+        move.l  a1,tutorial_render_surface
+        bsr     tutorial_restore_landing
+        bsr     tutorial_prepare_menu_roi
+        bra     .completed
+.run_landing_prepare:
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_canvas_rank
+        cmpi.l  #1,d0
+        bne     .done
+        move.l  a1,tutorial_render_surface
+        bsr     tutorial_draw_landing
         bra     .completed
 .run_footer:
         bsr     tutorial_footer_step
@@ -339,6 +393,10 @@ tutorial_background_class:
         sub.l   simulation_phase,d5
         bcs     .done
         subi.l  #TUTORIAL_BG_SERVICE_E+TUTORIAL_BG_MARGIN_E,d5
+        bcs     .done
+        ; No useful prefix can fit below the complete-owner floor. Avoid
+        ; peeking/classifying a next envelope in such a gap; retain no refusal.
+        cmpi.l  #TUTORIAL_BG_PREVIEW_OWNER_E,d5
         bcs     .done
         cmpi.w  #PREVIEW_RESOLVE,game_preview_status
         beq     .cold
@@ -495,7 +553,12 @@ tutorial_background_class:
         bhi     .done
         move.l  d1,tutorial_job_cost
         move.w  #1,tutorial_job_budget
-.done:  rts
+.done:  tst.w   tutorial_job_budget
+        beq.s   .return
+        cmpi.l  #TUTORIAL_BG_PREVIEW_OWNER_E,tutorial_job_cost
+        bcc.s   .return
+        move.l  #TUTORIAL_BG_PREVIEW_OWNER_E,tutorial_job_cost
+.return:rts
 
 ; Admission includes complete return/progress and the next root mandatory path.
 ; A producer targets the current unconsumed opportunity or the next field.

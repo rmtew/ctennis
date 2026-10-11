@@ -50,7 +50,7 @@ tutorial_progress_returned:
         ; Playback pauses at an exhausted immutable prefix. Newly appended
         ; samples start from this return, without accumulating unseen wait time.
         moveq   #0,d2
-        move.b  tutorial_active_variant,d2
+        move.b  tutorial_potential_variant,d2
         add.w   d2,d2
         lea     tutorial_available_counts,a0
         move.w  (a0,d2.w),d3
@@ -97,13 +97,13 @@ tutorial_progress_variant_changed:
 tutorial_progress_qualify:
         move.b  tutorial_waiting_ready,d3
         moveq   #0,d0
-        move.b  tutorial_active_variant,d0
+        move.b  tutorial_potential_variant,d0
         add.w   d0,d0
         lea     tutorial_available_outcomes,a0
         move.w  (a0,d0.w),d1
         bne.s   .qualified_outcome
         moveq   #0,d2
-        move.b  tutorial_active_variant,d2
+        move.b  tutorial_potential_variant,d2
         lea     game_preview_endpoint_ready,a0
         tst.b   (a0,d2.w)
         beq.s   .qualified_outcome
@@ -144,7 +144,7 @@ tutorial_progress_qualify:
         cmpi.w  #PREVIEW_INTERCEPTION,d1
         bhi     .hide
         moveq   #0,d2
-        move.b  tutorial_active_variant,d2
+        move.b  tutorial_potential_variant,d2
         lea     game_preview_launches,a0
         tst.b   (a0,d2.w)
         beq     .hide
@@ -237,9 +237,13 @@ tutorial_progress_fast_publish:
         bsr     tutorial_choose_surface
         tst.l   d0
         beq     .done
+        bsr     tutorial_canvas_rank
+        cmpi.l  #2,d0
+        beq.s   .prepared_landing
         bsr     tutorial_restore_landing
         bsr     tutorial_prepare_menu_roi
         bsr     tutorial_draw_landing
+.prepared_landing:
         bsr     tutorial_prepare_private_footer
 .complete_objects:
         move.l  tutorial_render_surface,a0

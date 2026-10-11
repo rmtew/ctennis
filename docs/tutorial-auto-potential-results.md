@@ -1,0 +1,375 @@
+# Automatic current shot potential
+
+The explicit follow-up request changes tutorial interaction: show the current
+shot/return potential without requiring F merely to reveal it, repeat while
+unchanged, and restart after movement or action changes. The fixed serve target
+diagnosis is separate; see `tutorial-serve-target-diagnosis.md`.
+
+Runtime `4fc9e2f` keeps physical `tutorial_active_variant` separate from
+`tutorial_potential_variant`. Serve kind3 demonstrates the existing actual
+held-action branch automatically, representing pressing and holding F/B1 at the
+selected boundary. The literal released branch remains actual serve waiting;
+it is still computed and is not relabeled as an outgoing shot. Return potential
+uses the literal selected held/released branch. This changes presentation/query
+selection, not core rules, seed, RNG, 318-byte canonical schema or history.
+
+A legal XY change or a physical B1 transition accepts a fresh request and resets
+playback/generation. Simultaneous B1 and XY changes coalesce into one request.
+Menu confirmation does not edit the selected action. Immutable completed neutral
+poses retain their bounded publication treatment; prediction-bearing queues
+retire on new requests. Both physical and potential identities are captured.
+
+Playback repeats the already completed selected path without simulation, new
+inputs or random draws. A partial prefix pauses at its end and rebases when
+extended; only actual completed outcomes1..5 loop. LIMIT/lifecycle waits do not
+loop or masquerade as completed shots. Selected completion suffices even while
+the other branch is still computing. Normal callback cadence remains the speed
+basis, independently of PAL/NTSC display cadence.
+
+The first footer line says AUTO and explains F/B1 ACTION and menu/movement.
+Current serve result captions retain LANDING/NET/OUT/contact/incomplete feedback
+while stating NEXT F/B1 PRESS or F/B1 HELD SERVE. Computing captions remain
+immutable calculating captions, preserving bounded neutral canvas reuse.
+
+The marker renderer already publishes a generation-qualified computed endpoint
+while the dense ball is still moving. The corrected pixel check accepts native
+palette13 red or15 white, requires cross pixels outside the ball footprint and
+at least one preterminal playback sample. It preserves the original HUD/score
+plane pointers and no longer counts a terminal ball as proof of the cross.
+
+Independent source/design review clears runtime4fc9/probe6776:
+`build/tests/tutorial-playable-review/auto-potential-final-source-review-6776da0.json`,
+SHA256 `1ef9d419821c8823938dac963227448379197127aad7ee0e6e998a835e505226`.
+Focused tutorial host checks pass44; the initial full host suite passed339
+(3.426 s), with actual root-execution tool provenance explicitly recorded in
+`build/tests/tutorial-serve-target-diagnosis/70ae133f915b4d0089ce862a17123e16/host-suite-result.json`.
+The comparison diagnostic does not establish full state/output equivalence.
+
+Campaign `730d24a1983649a88ed79acb1782f036` selects input, four cold starts,
+package, four PAL/NTSC title/in-match UX routes, and two incoming-return native
+routes. Its initial qualification exposed the following retained failures. The first PAL title attempt
+`2a72436dc87044bd984e35469fafb48c` passed all18 interaction checks, but
+independent reduction rejected its timing qualification: combined menu ROI
+restore and cue redraw consumed28,526 CCK against25,000 CCK WORK. No callback
+overlapped this owner. The next keyboard entry bracket was28,778 CCK; separate
+service/margin is not work-budget credit. This failed extent and the interrupted
+NTSC attempt remain immutable. An intermediate closed-menu/cue reservation used
+30,000 CCK WORK plus the unchanged separate5,000 CCK service/margin. Its next
+PAL attempt `5690db5d20a74595bb191ca197f1a961` fit all2,658 complete owner
+brackets (combined maximum29,034 CCK), but failed menu-close response at80.105 ms
+and4fields against the unchanged3field limit. That failure is also preserved.
+The subsequent correction separates closed-menu ROI restoration into private
+job8 with20,000 CCK WORK and unchanged5,000 CCK service/margin. It publishes
+nothing, restores old cue pixels before copying, updates the canvas ROI identity
+only after allfourplanes, and retains placement dirty. Classification reads the
+actual coherently free candidate; execution and final production reacquire it
+freshly. With a closed menu and live cue, two-free-canvas selection prefers an
+already restored ROI, preventing an IRQ ownership transition from choosing an
+unprepared alternative or repeatedly preparing a displayed menu canvas. No
+generation/admission/ownership lease or delay is retained. Ordinary production
+returns to25,000 CCK WORK; fresh timing and response qualification is required.
+The native observer rejects any whole accepted owner exceeding WORK alone.
+The final finite qualification below supersedes these intermediate products.
+WinUAE/human appearance acceptance, full resource coverage, universal timing,
+broad cancellation/fairness/resume, merge and release remain held.
+Existing immutable delivered disks, campaigns, failures and audit receipts remain
+outside Git; no Library or public binary uploads.
+
+## Immutable animation admission correction
+
+Runtime720d7f8 passed the fresh PAL title route, including menu close at
+60.117 ms/3 fields, but the NTSC title receipt
+`351b96b5d7f742e5b78d44a65736a527` failed automatic held-serve repetition.
+The selected generation42 remained at sample43 of a48-sample partial prefix.
+Across the inspected2,333,748 CCK plateau,940 producer requests were declined
+and359 root calls chose no job; no owner executed. This is a real stall, not
+a need to lengthen the observation window. The observer requires any actual
+completed-path wrap and is unchanged. The failed capture remains immutable.
+
+Source and actual call-tree review show immutable playback does not redraw the
+landing cross, restore the menu ROI or copy footer pixels. It patches plane
+pointers, prepares/renders sprites and calls complete_scene on the existing
+visible canvas. The generic producer nevertheless reserved25,000 CCK WORK
+when the live marker was ready. Animation priority then prevented the pending
+preview from receiving work whenever that unnecessary reservation failed.
+Accepted immutable-animation owners in the same captured PAL/NTSC routes
+peaked at10,077/10,155 CCK bus elapsed and10,323/10,405 CCK through the following
+keyboard entry. These finite measurements justify testing12,500 CCK WORK
+for this exact path, retaining5,000 CCK separate service/margin.
+
+The narrower classification requires menu closed and placement clean. The
+existing animation_due query precedes classification; execution repeats the
+query. Accepted XY/B1 requests and resets, the first qualified current cue, and
+menu redraw set placement dirty and restore full production. Resume/deactivation
+disables tutorial scheduling. No refusal, timer slack, bank lease
+or canvas identity is cached. Each eligible classification uses current due/count/outcome and menu/dirty
+state; admission uses current timer/beam guards and a fresh final timer check.
+Callbacks,
+new prefixes, completion, input and publication can therefore change eligibility
+immediately. An admission refusal has no retained authority to invalidate.
+It returns to mandatory service and fresh reconsideration on the next root,
+without an arbitrary delay. Both branches retain their existing residual turn.
+Fresh qualification must establish whole-owner WORK fit and resumed prediction,
+repetition, physical controls, exact resume and publication on the new product.
+
+## Prediction latency remains separately accounted
+
+The earlier PR50 matched incoming-state/input experiment is preserved in
+`tutorial-next-operation-results.md` and its bound `next-operation-summary.json`.
+Its non-overlapping physical-input-to-endpoint-COPJMP partition is historical
+evidence on that product, not a fresh automatic-preview latency measurement:
+
+| Measured interval/category (ms) | PAL | NTSC |
+| --- | ---: | ---: |
+| Actual math before endpoint ready store |59.997265|59.860122|
+| Scheduling and preview support before ready |248.549224|246.263422|
+| Hardware service/display production before ready |111.654842|110.973322|
+| Mandatory callbacks/controls/requests before ready |43.972545|42.806278|
+| Unclassified before ready |13.125847|12.972598|
+| Ready store to qualifying endpoint COPJMP |14.200590|12.089805|
+| Physical input to endpoint COPJMP |491.500312|484.965547|
+
+Repeated declined owners are included in support, not an extra time bucket.
+Support is the largest measured category, but the whole category is not known
+to be avoidable. Outside-callback elapsed time is not necessarily idle or
+recoverable. The matched before/after total improved PAL by20.033579 ms; NTSC
+was effectively unchanged (+0.001117 ms), despite fewer repeated wrappers.
+The current animation correction addresses the independently identified held
+playback/prediction blockade; these historical latency numbers must not be
+relabeled as its causal before/after result.
+
+## Footer complete-owner correction
+
+Runtimecd76653 passed fresh PAL/NTSC title qualification and independent audits,
+but its first PAL in-match route `7970d26cdcef4afcb4a0e375abc61eed` failed
+whole-owner WORK while passing all18 interaction checks. At CCK119,990,797
+(line249), footer construction job5 consumed4,826 CCK bus elapsed; the next
+keyboard entry bracket was5,074 against5,000 WORK. No callback overlapped.
+Independent exact partition: root exclusive797, due query60, admission1,331,
+footer clear/layout2,638; root/main return/accounting tail adds248. Admission
+crossed visible-to-blank and included existing presentation/clock service.
+Separate service reserve does not rescue a work overrun. The failure remains
+immutable and supersedes native qualification of that product.
+
+The targeted correction gives footer construction its own1,200E/6,000 CCK WORK
+allowance, with unchanged1,000E/5,000 CCK separate service/margin. This is926 CCK
+above the largest retained complete bracket, a finite hypothesis requiring
+fresh validation. Generic1,000E chunks and footer commit job7 stay unchanged.
+No footer scratch/layout/glyph/pixel body, caption identity, generation,
+publication, controls or physical input schedule changes. Classification and
+final admission remain fresh; the residual smaller-prefix fallback remains.
+The observer, window and whole-owner work gate remain unchanged.
+
+## Small preview complete-owner floor
+
+Runtimed2b077c passed fresh PAL/NTSC title and PAL in-match routes, but its
+first NTSC in-match extent `2548f7f0a0e94b53a9eadf18cf3cc8bf` failed one
+preview job1 at1,000E/5,000 CCK WORK while passing the interaction checks.
+At CCK116,610,902 (line251), a one-envelope synthetic sample-result owner
+consumed5,367 CCK bus elapsed and5,619 through the next keyboard entry.
+The actual sample-result body was55 CCK. Exact independent owner partition:
+root exclusive865, animation-due/live-presentation check728, classification
+1,085, admission575, preview step1,345 and returned-progress769; main
+return/accounting adds252. No callback overlapped. Presentation and planning
+costs belong to this complete owner; reserve is not work-budget credit.
+The failed receipt remains immutable and supersedes qualification ofd2b077c.
+
+The correction reserves a complete preview-owner minimum1,500E/7,500 CCK
+WORK once, retaining the1,000E per-envelope grouping cost. Grouped costs
+at least2,000E, serve/flight4,000E, cold10,000E, footer1,200E and commit
+1,000E remain unchanged. Both ordinary and smaller-prefix paths share the
+common classifier finalizer; only a nonzero budget below the floor is raised.
+Current available WORK below1,500E returns zero budget before opcode peeking,
+avoiding necessarily futile planning without retaining refusal/slack/lease.
+This leaves1,881 CCK above the failed bracket before the added classifier
+instructions, a finite hypothesis requiring fresh validation.
+
+The existing final live admission still adds separate500E service+500E
+margin and rechecks beam and timer. No operation, sample, seed, canonical
+state, ordered-output body, generation cancellation or physical schedule is
+changed. A refusal returns to normal mandatory service and immediate current
+state reconsideration; there is no fixed delay or cached eligibility. The
+observer and whole-owner WORK gate remain unchanged.
+
+## Closed-canvas preparation and publication starvation
+
+Runtime7b7dfec passed title PAL/NTSC and PAL in-match, but NTSC in-match
+`21f01e972dea42e3be4b5ca7dd657ae1` failed movement/continuous-movement and
+menu-close response while fitting every accepted owner's WORK. Across50
+movement photos, X/generation changed while the displayed generation4 pose
+stayed unchanged. Physical movement CCK98,963,871 through102,137,117 contained
+1,270 declined producer4:5000 attempts and476 no-job roots, no accepted owner.
+Both stale canvas cues forced the full25,000 CCK reservation. Closing the menu
+was a distinct live-cue case: job8 restored the private ROI in11,931 CCK, then
+186 full producers were declined and86 roots chose no job; all8 photos still
+showed the old menu. This is publication starvation, not late input sampling
+or a reason to weaken the unchanged pixel-response gate. This failure supersedes
+qualification of7b7dfec; its three finite passes remain historical receipts.
+
+The next correction ranks the actual coherently free closed canvas: retirement
+required, closed/cue-free, or current completed cue. Old cue retirement and ROI
+restoration remain private job8/20,000 CCK WORK. New job9 draws only the new cue
+on a freshly reacquired closed/cue-free canvas, reserving15,000 CCK WORK.
+Both retain placement dirty and publish nothing. A cue-free pose retains the
+existing15,000 CCK pose reservation; a completed-cue pose reserves17,500 CCK,
+copying its footer and producing objects
+through the unchanged publication body. Only an exact qualified prepared cue
+skips restore/ROI/draw; the canvas descriptor now records completed generation
+in previously unused bytes16..19, after allnine pixels and before validity.
+Current tutorial/marker/preview generations and selected endpoint coordinates
+must match. Canonical/history schemas and allocated BSS are unchanged.
+
+The pure free query prefers the most prepared currently unowned candidate;
+classification and execution reacquire it freshly. The rank reads no retained
+refusal, slack or lease, preserves the coherent ownership snapshot, and writes
+no canvas. Both private jobs retain the existing final live timer/beam guards
+and separate5,000 CCK service/margin. Old captured draw_landing max5,667 CCK
+and pose-owner13,054 CCK support these finite hypotheses. The largest retained
+complete producer bracket after subtracting disjoint old-cue/ROI/new-cue spans
+is13,633 CCK; the additional completed-cue query costs make15,000 CCK tight,
+so only that new prepared-cue owner receives the17,500 CCK allowance.
+Fresh complete-owner
+measurements including the new queries and unchanged response limits are required.
+
+## Requested menu ROI preparation
+
+Runtime02e1328 passed both title routes and PAL in-match with full independent
+cost, descriptor, pixel, exact-resume and ownership audits. Its NTSC in-match
+`928beb81fa2c4b36be42462a5eac5fbc` passed movement at51.053416 ms/3fields
+with29/30 changes, but never published the requested menu opening or selection.
+The opening interval contained234 declined full producers and78 no-job roots;
+selection contained334 declined full producers and101 no-job roots. Both had
+zero accepted owners and zero publications while native menu/selection writes
+proved input acceptance. The passing1field close check cannot prove a visible
+menu cycle because the menu never appeared. This failure supersedes02e1328
+qualification and remains immutable.
+
+The targeted extension applies the existing private ROI job8 to the actual
+requested menu selection as well as closure. The pure canvas rank now requires
+that exact ROI identity and no valid cue for rank1; rank2 still requires a closed
+menu and the complete current cue identity. The coherently free-canvas query
+prefers prepared pixels for all menu states. Classification and execution
+reacquire current ownership and menu selection; neither stores a lease or
+refusal. Old cue retirement still precedes copying the selected four-plane ROI.
+Menu generation/queue retirement, footer/objects/publication, controls and
+physics bodies remain unchanged.
+
+Retained actual menu-active full-owner brackets, minus disjoint cue/ROI pixel
+child spans, peak at10,426 CCK, supporting the15,000 CCK prepared-menu hypothesis.
+Cue-free poses remain15,000; completed-cue poses17,500; private new-cue draws
+15,000; ROI preparation20,000. Separate5,000 service/margin and every gate/window
+are unchanged. Fresh whole-owner and visible menu lifecycle qualification are
+required; this intermediate checkpoint makes no product-pass claim.
+
+## Incoming observer surface transition
+
+All four current `ab7d8c8` title/in-match routes pass independent complete
+trace, pixel, owner-budget, ACK, restoration and ownership review. The PAL
+incoming attempt `22eaa0ad9318477fa9af83c57b5c9070` then failed at the options
+capture, before its menu raster check. Its immutable failure and literal trace
+show menu publications at frames 1008 and 1011 on different private surfaces.
+Both have exactly the same surface and sprite hashes, presentation identity,
+generation 114, render generation 113 and selection 0. The observer required
+the address selected before a 50 ms wait to remain the capture address.
+This does not establish an incoming route pass or justify a runtime change.
+
+The observer now waits for both semantic stability and two completed fields
+on the actual capture surface/render identity. It requires exact pixel and
+sprite equality with the selected completed menu scene, matching native
+sprites, and the existing menu/selection/generation checks before raster
+capture. The checkpoint retains both publications, the actual surface's first
+field and the capture frame. The bounded observation cap is unchanged. Fresh
+PAL/NTSC incoming qualification was required at this checkpoint; both later
+passed in the final selected qualification below. The failed receipt is retained.
+
+The next PAL incoming attempt `a857ff2ed2e04f1280194d3c1f969119` passed both
+menu raster checkpoints and exact Original restoration, then failed the older
+unconditional live-generation assertion. Independent review identified 32
+completed retained neutral calculating poses: bank/presentation generations
+agree, the live generation is one newer, no sample/cue/animation is present,
+and actual ball/shadow match the frozen original. This is the authorized
+bounded neutral-publication policy, rather than stale prediction acceptance.
+
+The incoming probe now uses the existing stronger `UXSurfaceObserver`, including
+actual 512-byte footer, calculating-caption cache and 40-byte cue metadata watches.
+Only positively verified retained neutral poses may differ from the live generation;
+they additionally require zero animation readiness and prediction counts.
+All prediction/menu scenes retain strict generation checks, and action/potential/
+source identity, cue, native sprites and ownership checks remain enforced.
+The failed retry remains immutable; no runtime change is justified by it.
+
+Completed incoming reports retain an attempt-path hard link to the exact canonical
+report inode. The canonical writer uses an atomic path replacement, so later
+runs cannot mutate those attempt bytes. This avoids a redundant large allocation
+without removing evidence paths or changing any qualification gate.
+
+## Final selected qualification
+
+Runtime `ab7d8c84e03fdb1e63dc06469c51b886010cb6d8` passes all nine selected campaign cases,
+including four physical title/in-match routes and two incoming-return routes.
+All intermediate failures and interruptions remain immutable. Focused host
+checks pass 44 after the final classifier change; the initial 339-test host pass
+is reused for unaffected code. Independent route reviews bind the exact
+source, executable, disk, raw calls, photos and ownership replay.
+
+| Route | Accepted owners | Maximum preview-floor WORK (CCK) | Maximum footer WORK (CCK) | Physical move to observed pose (ms) | ACK maximum (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PAL title | 2995 | 4944 /7500 | 4283 /6000 | 60.126392 | 2.768337 |
+| NTSC title | 2580 | 4971 /7500 | 4257 /6000 | 33.061465 | 1.519467 |
+| PAL match | 3304 | 4943 /7500 | 4359 /6000 | 60.121881 | 2.790610 |
+| NTSC match | 2819 | 5370 /7500 | 4878 /6000 | 33.068169 | 1.896610 |
+
+New private cue owners peak at 8662/15000 CCK, prepared-cue publication
+at 14463/17500 CCK, and private retirement/ROI at 15504/20000 CCK.
+
+Every accepted owner fits WORK alone, including return/accounting through
+the next keyboard entry. The separate 5000 CCK service/margin is never added
+to WORK. Movement figures concern actor pose and completed-field observations;
+they do not measure prediction endpoint completion or prove a causal latency
+improvement. The disjoint physical-to-XY, XY-to-COPJMP and COPJMP-to-photo
+intervals are preserved in the bound summary.
+
+Each of the four UX routes proves an off-ball landing cross before terminal playback, actual
+completed-path repetition, physical action transitions, generation handling,
+closed keyboard ACK pairs, exact canonical/history restoration and matching
+publication arrays with no protected writes or losses. Each measured serve action phase repeats a completed path twice; the individual
+counts and witnesses are preserved in the bound summary.
+The incoming probes use the stronger shared footer/cue observer and independently
+replay exact publication arrays. Each restores the canonical 318-byte state and
+72-byte metadata, preserves the 80,318-byte record buffer, and suppresses newly
+held F in 17 observed
+logical-input samples, and checks menu pixels after two actual canvas fields.
+PAL witnesses 32 retained neutral calculating publications; NTSC witnesses zero
+in this alignment. These counts do not establish uniform behavior or broad fairness.
+
+| Incoming route | Accepted owners | Actual publications | ACK pairs / maximum (ms) | Chip free / largest block (bytes) | Stack (bytes) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PAL | 1965 | 611 | 27 / 3.269902 | 39664 / 39080 | 312 |
+| NTSC | 1927 | 703 | 27 / 4.031797 | 48624 / 48040 | 316 |
+
+These incoming owners also fit WORK alone. No protected surface/bank/footer
+writes or lost notifications occur in the bound replays. Incoming controls,
+restoration and cancellation evidence retains its exact finite extent; the
+incoming probes do not independently qualify the four UX serve-loop phases.
+
+Development SHA256 `3f02f4492a7642bc99c205737252b7e7ff69fce3c3c8ca5fb92445a86d689f07`; release SHA256
+`fdd033baf3a1619a2d3ce39b94a9b924c742488b42c4d5ccdcca155275e9a6bc`; ADF SHA256
+`0ed580abc86155a97464af39ca8b79477d781477b5a84f76a5257c0c3d9892c2`. Development/release files are
+224096/187004 bytes; loaded payload is
+345336 bytes. The shared standalone CPU worker remains
+byte-identical and the normalized dispatcher proof binds the current product.
+
+`docs/evidence/tutorial-latency/auto-potential-summary.json` contains exact
+reports, reductions, reviews, selected campaign and resource-report bindings.
+The recorded resource report is incomplete for the full eight-profile gate.
+Both `--require-runtime --record` and `--check` reject that incomplete coverage;
+no full refresh was requested or run.
+Finite Copperline results do not establish physical hardware timing, universal
+ACK/deadline bounds, human appearance/playability acceptance, broad cancellation
+and branch fairness, or full release. No merge or public binaries are authorized.
+
+Observer local commits `23facd2` and `5938e82` were published through the authorized
+GitHub connector as `d12cc57` and `56b9032` after shell Git authentication expired.
+Each published tree is byte-identical to its local counterpart. Receipt source
+commits retain their local identities; runtime/product identity remains `ab7d8c8`.
+Both histories are preserved, with no force update or rewrite.

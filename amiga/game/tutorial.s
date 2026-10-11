@@ -285,6 +285,15 @@ tutorial_request:
         bsr     discard_ready_scene
 .retain_pending_pose:
         move.l  game_preview_generation,tutorial_generation
+        ; A waiting serve demonstrates the prospective actual held-button
+        ; launch. Keep physical held/released identity separate; returns still
+        ; select that literal alternative. Neither edits the frozen game.
+        move.b  tutorial_active_variant,tutorial_potential_variant
+        cmpi.w  #3,game_preview_kind
+        bne.s   .potential_selected
+        clr.b   tutorial_potential_variant
+.potential_selected:
+        clr.b   tutorial_action_dirty
         st      tutorial_pending
         st      tutorial_work_pending
         move.w  #TUTORIAL_COMPUTING,tutorial_status
@@ -296,6 +305,7 @@ tutorial_request:
         st      tutorial_footer_dirty
         rts
 .missing:
+        clr.b   tutorial_action_dirty
         clr.b   tutorial_work_pending
         move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
         clr.b   tutorial_pending
@@ -322,8 +332,7 @@ tutorial_controls:
         ; Variant changes also retire an obsolete completed waiting bank.
         bsr     discard_ready_scene
         move.b  d1,tutorial_active_variant
-        clr.w   tutorial_animation_index
-        bsr     tutorial_progress_variant_changed
+        st      tutorial_action_dirty
 .menu:
         tst.b   tutorial_menu
         beq     .movement
@@ -426,7 +435,11 @@ tutorial_controls:
         move.b  d4,tutorial_x
         move.b  d5,tutorial_y
         bra     tutorial_request
-.done:  rts
+.done:  tst.b   tutorial_action_dirty
+        beq.s   .controls_return
+        bra     tutorial_request
+.controls_return:
+        rts
 
 tutorial_resume_latest:
         jsr     game_history_resume_latest
