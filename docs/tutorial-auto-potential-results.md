@@ -74,3 +74,38 @@ WinUAE/human appearance acceptance, full resource coverage, universal timing,
 broad cancellation/fairness/resume, merge or release is established here.
 Existing immutable delivered disks, campaigns, failures and audit receipts remain
 outside Git; no Library or public binary uploads.
+
+## Immutable animation admission correction
+
+Runtime720d7f8 passed the fresh PAL title route, including menu close at
+60.117 ms/3 fields, but the NTSC title receipt
+`351b96b5d7f742e5b78d44a65736a527` failed automatic held-serve repetition.
+The selected generation42 remained at sample43 of a48-sample partial prefix.
+Across the inspected2,333,748 CCK plateau,940 producer requests were declined
+and359 root calls chose no job; no owner executed. This is a real stall, not
+a need to lengthen the observation window. The observer requires any actual
+completed-path wrap and is unchanged. The failed capture remains immutable.
+
+Source and actual call-tree review show immutable playback does not redraw the
+landing cross, restore the menu ROI or copy footer pixels. It patches plane
+pointers, prepares/renders sprites and calls complete_scene on the existing
+visible canvas. The generic producer nevertheless reserved25,000 CCK WORK
+when the live marker was ready. Animation priority then prevented the pending
+preview from receiving work whenever that unnecessary reservation failed.
+Accepted immutable-animation owners in the same captured PAL/NTSC routes
+peaked at10,077/10,155 CCK bus elapsed and10,323/10,405 CCK through the following
+keyboard entry. These finite measurements justify testing12,500 CCK WORK
+for this exact path, retaining5,000 CCK separate service/margin.
+
+The narrower classification requires menu closed and placement clean. The
+existing animation_due query precedes classification; execution repeats the
+query. Movement, action changes, reset/cancellation, new cue/geometry and menu
+transitions restore dirty/full production. No refusal, timer slack, bank lease
+or canvas identity is cached. Every root attempt rereads due/count/outcome,
+menu/dirty state, timer phase, beam window and final timer admission; callbacks,
+new prefixes, completion, input and publication can therefore change eligibility
+immediately. An admission refusal has no retained authority to invalidate.
+It returns to mandatory service and fresh reconsideration on the next root,
+without an arbitrary delay. Both branches retain their existing residual turn.
+Fresh qualification must establish whole-owner WORK fit and resumed prediction,
+repetition, physical controls, exact resume and publication on the new product.

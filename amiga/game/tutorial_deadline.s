@@ -155,6 +155,17 @@ tutorial_background:
         bra.s   .producer
 .producer:
         move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
+        ; A clean closed-menu producer is immutable playback, reached only
+        ; after animation_due. progress_slice rechecks due and updates sprites
+        ; on the visible canvas; it does not restore ROI, cue or footer pixels.
+        ; Movement/action/reset makes placement dirty and restores full costing.
+        tst.b   tutorial_menu
+        bne.s   .placement_producer
+        tst.b   tutorial_placement_dirty
+        bne.s   .placement_producer
+        move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra     .producer_admit
+.placement_producer:
         move.l  #6000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bsr     tutorial_pending_canvas_eligible
         tst.l   d0
