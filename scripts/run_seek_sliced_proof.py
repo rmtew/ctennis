@@ -45,7 +45,7 @@ def run():
         left,relocations,branches=normalized(standalone,listing)
         assert normalized(native,native.parent/'native.lst')==(left,relocations,branches)
         audit=dict(matched=True,bytes=len(left),relocations=relocations,sink_branches=branches,sha256=hashlib.sha256(left).hexdigest())
-        assert audit==dict(matched=True,bytes=17524,relocations=7,sink_branches=14,sha256='951935ce4ec1538f5ff2fa83898c36af7a75de60f4c0fe025e74181543f1544c')
+        assert audit==dict(matched=True,bytes=17606,relocations=7,sink_branches=14,sha256='99c543c170c036137be81d07ebd30b522ef3abdff04bd7b1af38f00047bb99d5')
         validation=dict(passed=False,schema=1,canonical_bytes=318,history_metadata_bytes=72,seek_storage_bytes=734,
             normalized_shared_core=audit,input_stream=dict(path=str(INPUT.relative_to(ROOT)),sha256=INPUT_SHA,
                 operations=835,target_probe=569,source_files=document['source_files']),proofs={})

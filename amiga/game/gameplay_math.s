@@ -33,6 +33,47 @@ game_ratio:
         andi.l  #255,d0
         rts
 
+; Exact byte-factor specialization of game_ratio for divisor 32.
+; Preserve legacy overflow rather than truncating ordinary division.
+; D0,D1 byte factors -> D0 full-long byte quotient. Clobbers D1-D4.
+; D2=32, D3=quotient bit0, D4=$0000ffff; final CCR matches game_ratio.
+; See docs/ball-query-math-proof.md for the rolling three-bit derivation.
+game_ratio32:
+        andi.l  #255,d0
+        andi.l  #255,d1
+        moveq   #32,d2
+        mulu.w  d1,d0
+        lsr.w   #5,d0           ; N=product/32, at most 2047
+        cmpi.w  #256,d0
+        bcs   .game_ratio32_done
+        move.w  d0,d1
+        subi.w  #256,d1         ; seed h-1 followed by low eight bits
+        move.w  d1,d3
+        lsr.w   #1,d3
+        and.w   d3,d1
+        lsr.w   #1,d3
+        and.w   d3,d1           ; ends of runs of three ones
+        move.w  d1,d3
+        lsr.w   #1,d3
+        or.w    d3,d1
+        move.w  d1,d3
+        lsr.w   #2,d3
+        or.w    d3,d1
+        move.w  d1,d3
+        lsr.w   #4,d3
+        or.w    d3,d1           ; smear highest marker downwards
+        not.b   d1
+        or.b    d1,d0
+.game_ratio32_done:
+        moveq   #0,d3
+        add.w   d3,d0           ; bounded N clears X regardless of caller CCR
+        move.b  d0,d3
+        andi.w  #1,d3
+        moveq   #0,d4
+        move.w  #-1,d4
+        andi.l  #255,d0
+        rts
+
 ; D0 unsigned word -> least k with k*(k+1) >= D0. No carry chain
 ; survives a register-pack macro: this is the resumed-serve CT-04 fix.
 game_launch_root:
@@ -124,8 +165,7 @@ game_derive_launch:
 game_displacement:
         move.w  d0,-(sp)
         andi.b  #127,d0
-        moveq   #32,d2
-        bsr     game_ratio
+        bsr     game_ratio32
         move.w  (sp)+,d1
         btst    #7,d1
         beq   .game_displacement_done

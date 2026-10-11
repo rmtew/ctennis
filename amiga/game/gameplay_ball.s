@@ -34,8 +34,7 @@ game_advance_ball:
         neg.b   d0
 .game_height_magnitude:
         move.w  d5,d1
-        moveq   #32,d2
-        bsr     game_ratio
+        bsr     game_ratio32
         tst.w   d6
         bpl   .game_falling_height
         tst.b   d0
