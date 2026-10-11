@@ -40,7 +40,7 @@ def cpu_extent(report):
 
 
 def native_extent(report,standard,prefix='predictor-native-'):
-    relative='build/tests/'+prefix+standard.lower()+('/latency.json.gz' if prefix=='incoming-origin-native-' else '/latency.json')
+    relative='build/tests/'+prefix+standard.lower()+('/latency.json.gz' if prefix!='predictor-native-' else '/latency.json')
     files=(report.get('evidence') or {}).get('files') or {}
     if report.get('capture')!=relative or files.get(relative)!=digest(ROOT/relative):return False
     try:

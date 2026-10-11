@@ -33,6 +33,8 @@ Each standard used real physical selection/serve, actual incoming flight, tutori
 | Maximum observed keyboard poll gap, CCK |41229|40700|
 | Initialized chip free/largest block, bytes |61640/61056|70600/70016|
 
+The retained pre-cache cold initial-entry capture (`f24bb18c1a8b1443a67d951be7bdc77cca8f6578be65cfb7ea4b08d017e95a66`) measured first projected request to held-outcome COPJMP1.999093s PAL /1.943729s NTSC. Physical gesture-to-publication was1.988185s /1.932765s. These are initial-entry boundaries, distinct from later warm edits; the independent live-seed captures cannot establish paired speedup.
+
 History-after capture spans include cursor handling and capture ownership through the emitted return-stack read. They are inclusive spans, not incremental copy overhead, whole-dispatch cost or a WCET. The report's first-placement measurement means **qualified outcome-ready placement**, not the first waiting/player-only draw. All latency values describe their physical inputs and actual publications. Independent previous live CIA-seed captures do not establish paired speedup. No fresh WinUAE or hardware test was run.
 
 PAL receipt run `0185e4906302479d847643065aecb493`, SHA256 `58909e513672dc93bfd2f3acfff87744f85f32a5b8ec7fcba472d1d8a9d6794e`; NTSC run `e0e69f02f4024264a168ee8c4e5e786e`, SHA256 `3bdd663e1ca073aff9907a11850b488e82b91001c52c3a4552d368e315f0ac56`. Raw gzip captures/literal RPC are ignored private evidence. New directory names prevent overwriting the previous predictor evidence.

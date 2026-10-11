@@ -69,6 +69,9 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('deadline-class-cpu', ('scripts/run_deadline_class_proof.py',), 'tests/deadline-class-cpu/report.json', category='host'),
+        Case('deadline-pal', ('scripts/run_incoming_native.py','--deadline'), 'tests/deadline-native-pal/report.json'),
+        Case('deadline-ntsc', ('scripts/run_incoming_native.py','--deadline','--ntsc'), 'tests/deadline-native-ntsc/report.json'),
         Case('incoming-origin-cpu', ('scripts/run_incoming_origin_proof.py',), 'tests/incoming-origin-cpu/report.json', category='host'),
         Case('incoming-origin-pal', ('scripts/run_incoming_native.py','--origin-cache'), 'tests/incoming-origin-native-pal/report.json'),
         Case('incoming-origin-ntsc', ('scripts/run_incoming_native.py','--origin-cache','--ntsc'), 'tests/incoming-origin-native-ntsc/report.json'),
