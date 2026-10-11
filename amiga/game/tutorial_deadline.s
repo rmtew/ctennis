@@ -161,6 +161,22 @@ tutorial_background:
         move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
 .canvas_cost:
+        ; Closing a menu with a live cue combines ROI copy and cross redraw.
+        ; Its measured whole owner exceeds the ordinary full reservation.
+        ; Either canvas may become free; reserve the combined work if either
+        ; still holds a menu. Service and margin remain separate allowances.
+        tst.b   tutorial_marker_ready
+        beq.s   .ordinary_canvas_cost
+        tst.b   tutorial_menu
+        bne.s   .ordinary_canvas_cost
+        cmp.b   #-1,tutorial_canvas_menus
+        bne.s   .combined_canvas_cost
+        cmp.b   #-1,tutorial_canvas_menus+1
+        beq.s   .ordinary_canvas_cost
+.combined_canvas_cost:
+        move.l  #7000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.ordinary_canvas_cost:
         ; The measured pose-only owner needs no menu ROI or landing retirement.
         ; Both canvas identities must agree, since either can become free.
         ; Any uncertain/new ROI or cross retains the larger reservation.

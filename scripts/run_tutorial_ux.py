@@ -1,5 +1,5 @@
 """Physical ADF entry and complete scanout evidence; never edits guest state."""
-import argparse, gzip, json, os, shutil, subprocess, traceback
+import argparse, bisect, gzip, json, os, shutil, subprocess, traceback
 from pathlib import Path
 from uuid import uuid4
 from build_match_core import load_image
@@ -288,7 +288,6 @@ def run(standard, delivered, match):
                     raise AssertionError('Tutorial banner remained after resume')
                 check('resume-banner-cleared',resumed_pixels)
             report['animation']=animation([Path(r['path']) for r in report['frames'] if r['name'].startswith(('tutorial-initial','move-right','held-preview','menu-open','menu-select'))],attempt/'scanout.gif',20 if standard=='PAL' else 17)
-            report['passed']=all(c['passed'] for c in report['checks'].values())
             report['frame_events']=frame_events
             report.update(control_writes=control_writes,restores=restores)
             if callbacks is not None:
@@ -301,9 +300,30 @@ def run(standard, delivered, match):
                 with gzip.open(attempt/'calls.jsonl.gz','wt') as stream:
                     for call in timing.rows:stream.write(json.dumps(call,separators=(',',':'))+'\n')
                 report['owner_samples']=owners
+                def owner_work_budget():
+                    assert owners,'No complete accepted root owners observed'
+                    keyboards=sorted(r['entry']['cck'] for r in timing.rows
+                                     if r.get('depth')==0 and r['callee']=='game_poll_keyboard')
+                    overruns=[]
+                    for r in owners:
+                        index=bisect.bisect_left(keyboards,r['exit']['cck'])
+                        assert index<len(keyboards),'Owner has no following keyboard entry'
+                        # This conservative bracket includes return/admission tails
+                        # and following mandatory service; none is reserve credit.
+                        complete=keyboards[index]-r['entry']['cck']
+                        if complete>r['job_cost']*5:
+                            overruns.append(dict(kind=r['job_kind'],cost_e=r['job_cost'],
+                                elapsed_bus_cck=r['elapsed_bus_cck'],complete_bracket_cck=complete,
+                                entry=r['entry']))
+                    assert not overruns,dict(work_budget_overruns=overruns)
+                    return dict(samples=len(owners),all_fit_work_alone=True,
+                                basis='Owner entry through following root keyboard entry',
+                                separate_service_and_margin_cck=5000)
+                check('whole-owner-work-budget',owner_work_budget)
                 # Actual fixed-point interval is adjacent whole/fraction words.
                 interval=int.from_bytes(raw(symbols['simulation_interval_whole'],4),'big')*65536+int.from_bytes(raw(symbols['simulation_interval_fraction'],2),'big')
                 report['callback_timing']=callbacks.result(interval)
+            report['passed']=all(c['passed'] for c in report['checks'].values())
         tx.finalize(output,report,compiled=[json.loads(manifest.read_text())],artifacts=[p for p in attempt.rglob('*') if p.is_file()])
         shutil.copy2(output,attempt/'report.json')
         print(json.dumps(dict(passed=report['passed'],attempt=str(attempt),checks=report['checks'])),flush=True)
