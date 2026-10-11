@@ -37,17 +37,18 @@ class LatencySession(CaptureSession):
     MAX_RAW_BYTES = CAPS['uncompressed_transcript_bytes']
 
 
-def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, deadline=False):
+def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, deadline=False, physics=False, physics_control=False):
     assert standard in CLOCKS
+    deadline = deadline or physics
     origin_cache = origin_cache or deadline
     predictor = predictor or origin_cache
-    directory = ROOT/'build/tests'/(('deadline-native-' if deadline else 'incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
+    directory = ROOT/'build/tests'/(('physics-control-native-' if physics and physics_control else 'physics-native-' if physics else 'deadline-native-' if deadline else 'incoming-origin-native-' if origin_cache else 'predictor-native-' if predictor else 'incoming-flight-native-')+standard.lower())
     directory.mkdir(parents=True, exist_ok=True)
     output = directory/'report.json'
     transaction = ReportRun([output], 'native-feedback', 'maintained-native',
                             'Current native product; fixed incoming, physical edit/publication and looping normal sprites')
     try:
-        baseline = Path(baseline) if baseline else ROOT/'build/amiga/interfaces/enhanced'
+        baseline = Path(baseline) if baseline else ROOT/('build/amiga/interfaces/physics-control' if physics_control else 'build/amiga/interfaces/enhanced')
         executable, listing_path, manifest_path = [baseline/n for n in (
             'baseline-rally','native.lst','baseline-rally.compile.json')]
         product_sha256 = digest(executable)
@@ -396,8 +397,10 @@ def run(standard='PAL', baseline=None, predictor=False, origin_cache=False, dead
             from deadline_extent import validate_capture,negative_controls
             captured['publications']=callbacks.surfaces.publications
             captured['deadline_operations']=deadline_operations
-            with gzip.open(directory/'deadline-calibration-unvalidated.json.gz','wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
-            captured['deadline']=validate_capture(captured)
+            try: captured['deadline']=validate_capture(captured)
+            except BaseException:
+                with gzip.open(directory/'deadline-calibration-unvalidated.json.gz','wt',encoding='utf-8') as handle:json.dump(captured,handle,separators=(',',':'))
+                raise
             captured['deadline_negative_controls']=negative_controls(captured)
         cpu_image,cpu_symbols=load_image(executable)
         for row in endpoints:
@@ -483,5 +486,7 @@ if __name__=='__main__':
     parser.add_argument('--predictor',action='store_true')
     parser.add_argument('--origin-cache',action='store_true')
     parser.add_argument('--deadline',action='store_true')
+    parser.add_argument('--physics',action='store_true')
+    parser.add_argument('--physics-control',action='store_true')
     args=parser.parse_args()
-    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache,args.deadline)
+    run('NTSC' if args.ntsc else 'PAL',args.baseline,args.predictor,args.origin_cache,args.deadline,args.physics,args.physics_control)
