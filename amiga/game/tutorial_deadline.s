@@ -160,7 +160,7 @@ tutorial_background:
         tst.l   d0
         beq.s   .canvas_cost
         move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
-        bra.s   .producer_admit
+        bra     .producer_admit
 .canvas_cost:
         ; Closing a menu with a live cue combines ROI copy and cross redraw.
         ; Restore the actual free canvas separately before cue production.
