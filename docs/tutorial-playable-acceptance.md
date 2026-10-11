@@ -1,5 +1,14 @@
 # Playable tutorial acceptance campaign
 
+PR52 follow-up: [initial-serve continuation qualification](tutorial-serve-continuation-results.md)
+records the new `4baa6da` product. Fresh lower-human initial-serve and incoming
+PAL/NTSC physical captures pass, including held/released alternatives, generation
+replacement, pending-stage menu cancellation and exact original resume. The
+historical `fa2dd98` delivery below remains immutable and scoped to its original
+incoming-only product. All seven selected final-product cold/resource checks
+pass, and current metrics have complete finite coverage. The separate new
+test-candidate package has passed independent audit; complete acceptance remains held.
+
 Starting product: PR50 head `b4ec75e962c830f5f6169a01a7742a2bc50777e5`,
 runtime commit `72388799d459786b0df9ad3dfc945afd6f4742bd`, development SHA256
 `44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf`.

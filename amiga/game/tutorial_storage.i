@@ -86,6 +86,7 @@ tutorial_scene_layer: ds.b 1
 ; Root deadline owner jobs; never serialized into history or simulation state.
 tutorial_job_variant: ds.w 1
 tutorial_job_budget: ds.w 1
+tutorial_job_stage: ds.w 1
 tutorial_job_cost: ds.l 1
 tutorial_job_kind: ds.w 1
 tutorial_residual_turn: ds.w 1

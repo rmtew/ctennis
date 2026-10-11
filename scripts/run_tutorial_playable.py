@@ -1,8 +1,8 @@
 """Finite physical prototype controls/resume capture; no full acceptance claim.
 
-No world writes or callback injection. The initial-serve failure remains a
-separate failed court receipt. This case exercises the supported incoming path
-after an ordinary title start, without claiming title Tutorial completion.
+No world writes or callback injection. The original initial-serve failure remains an immutable failed court receipt.
+The optional serve probe qualifies the staged lower initial-serve route; neither
+probe claims title Tutorial or complete playable acceptance.
 """
 import argparse,hashlib,json,os,shutil,subprocess,traceback
 from pathlib import Path
@@ -21,11 +21,11 @@ from native_metrics import memory_summary
 
 CLOCK={'PAL':3546895,'NTSC':3579545};PROVIDER=3546895
 
-def run(standard):
-    directory=ROOT/'build/tests'/('tutorial-playable-'+standard.lower())
+def run(standard,serve=False):
+    directory=ROOT/'build/tests'/(('tutorial-serve-' if serve else 'tutorial-playable-')+standard.lower())
     directory.mkdir(exist_ok=True);attempt=directory/uuid4().hex;attempt.mkdir()
     output=directory/'report.json';tx=ReportRun([output],'native-feedback','maintained-native','Physical current prototype incoming, controls and exact original resume')
-    report={'passed':False,'attempt':str(attempt),'standard':standard}
+    report={'passed':False,'attempt':str(attempt),'standard':standard,'origin':'initial-serve' if serve else 'incoming'}
     try:
         paths,tools=inputs_for('native-feedback','scripts/run_tutorial_playable.py')
         tx.meta.update(files=snapshot(paths),tools=tools,actual_target=dict(tx.meta['target'],video=standard),commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),environment={'RUST_LOG':os.environ.get('RUST_LOG'),'PYTHONPATH':os.environ.get('PYTHONPATH')})
@@ -34,7 +34,7 @@ def run(standard):
         for n in ('baseline-rally','baseline-rally.compile.json','native.lst'):shutil.copy2(product/n,attempt/n)
         exe=attempt/'baseline-rally';report['executable_sha256']=digest(exe)
         listing=(attempt/'native.lst').read_text();cfg=emulator_config();hz=CLOCK[standard]
-        photos=[];actions=[];restores=[];interrupted=None;frozen=None;metadata=None;first_resume=None;logical_samples=[];checkpoints=[]
+        menu_stage_samples=[];stage_snapshots=[];stage_protocols=[];photos=[];actions=[];restores=[];interrupted=None;frozen=None;metadata=None;first_resume=None;logical_samples=[];checkpoints=[]
         with CaptureSession(attempt) as session:
             session.inspect('session_launch',dict(binary=cfg['tools']['copperline'],run=str(exe),args=['--chipset','OCS','--video',standard,'--cpu','68000','--chip','512K','--slow','0','--fast','0','--noaudio',cfg['inputs']['amiga_rom']]))
             stop=session.inspect('run_until',dict(seconds=30));assert stop['reason']=='loadseg'
@@ -47,10 +47,11 @@ def run(standard):
             callbacks.surfaces=CoherentSurfaceObserver(s,raw,last_line=311 if standard=='PAL' else 261,verify_sprites=True)
             calls,returns=instruction_map(listing,segments,raw);timing=StackTiming(calls,returns,s['game_stack_bottom'],s['game_stack_top'])
             stack_low=s['game_stack_top'];ack=[];field_rows=[]
-            extra=dict(tutorial_job_cost=4,tutorial_job_budget=2,tutorial_job_kind=2,tutorial_job_variant=2,
+            extra=dict(tutorial_job_cost=4,tutorial_job_budget=2,tutorial_job_kind=2,tutorial_job_variant=2,tutorial_job_stage=2,
+                game_preview_dispatch_stages=4,game_preview_dispatch_generations=8,game_preview_dispatch_launches=2,
                 game_preview_primed_mask=2,game_preview_synthetic_phases=4,game_preview_flight_phases=4,
                 simulation_interval=4,simulation_phase=4,keyboard_ack=1,keyboard_ack_timer=2)
-            watched=dict(FIELDS,**extra);by_address={s[n]:n for n in watched}
+            watched=dict(FIELDS,**extra);by_address={s[n]+offset:n for n,width in watched.items() for offset in range(width)}
             class Observer:
                 def observe(self,message):
                     nonlocal stack_low
@@ -70,12 +71,22 @@ def run(standard):
             assert not subscription.get('dropped_notifications',0),'Dropped native write-watch notifications'
             session.inspect('break.add',dict(kind='pc',addr=s['simulation_update']))
             session.inspect('break.add',dict(kind='pc',addr=s['tutorial_resume_restored']))
+            if serve:session.inspect('break.add',dict(kind='pc',addr=s['tutorial_redraw']))
             beginning=stop['cck'];current=beginning;resume_pending=False;reconciled=0
-            def advance(seconds):
+            def advance(seconds,stop_partial=False,stop_declined=False):
                 nonlocal current,interrupted,frozen,metadata,resume_pending,first_resume,reconciled
                 goal=current+round(seconds*hz);assert goal-beginning<90*hz
                 for _ in range(200000):
                     result=session.inspect('run_until',dict(seconds=min(goal,current+hz//1000)/PROVIDER));current=result['cck']
+                    if stop_declined and result.get('pc')==s['main_background']:
+                        stages=raw(s['game_preview_dispatch_stages'],4);owners=raw(s['game_preview_dispatch_generations'],8)
+                        generation=num('tutorial_generation',4);remaining=num('simulation_interval',4)-num('simulation_phase',4)
+                        variants=[v for v in (0,1) if int.from_bytes(stages[2*v:2*v+2],'big') and int.from_bytes(owners[4*v:4*v+4],'big')==generation]
+                        if variants and generation==num('game_preview_generation',4) and 2000<=remaining<5000:
+                            sample=dict(position=result,generation=generation,preview_generation=generation,stages=stages.hex(),owners=owners.hex(),remaining_e=remaining,trigger_variants=variants,trigger='pending-stage-with-insufficient-stage-reserve')
+                            stage_snapshots.append(sample);return sample
+                    if serve and result.get('pc')==s['tutorial_redraw'] and num('tutorial_menu',1):
+                        menu_stage_samples.append(dict(position=result,generation=num('tutorial_generation',4),stages=raw(s['game_preview_dispatch_stages'],4).hex(),owners=raw(s['game_preview_dispatch_generations'],8).hex()))
                     if result.get('pc')==s['tutorial_resume_restored']:
                         assert interrupted is not None
                         assert block('game_history_buffer','game_history_buffer_end')==frozen['game_history_buffer'],'Frozen records changed before exact resume'
@@ -97,6 +108,12 @@ def run(standard):
                                 frozen={n:block(n,e) for n,e in (('game_core_state','game_core_state_end'),('game_history_buffer','game_history_buffer_end'))}
                             assert block('game_core_state','game_core_state_end')==frozen['game_core_state']
                             assert history==metadata and raw(s['tutorial_interrupted_state'],318)==interrupted
+                            if serve:
+                                stages=raw(s['game_preview_dispatch_stages'],4)
+                                if int.from_bytes(stages,'big'):
+                                    sample=dict(position=result,generation=num('tutorial_generation',4),preview_generation=num('game_preview_generation',4),stages=stages.hex(),owners=raw(s['game_preview_dispatch_generations'],8).hex(),launches=raw(s['game_preview_launches'],2).hex(),counts=raw(s['game_preview_counts'],4).hex(),phases=raw(s['game_preview_synthetic_phases'],4).hex())
+                                    stage_snapshots.append(sample)
+                                    if stop_partial and sample['generation']==sample['preview_generation']:return sample
                         elif resume_pending:
                             assert raw(s['game_core_state'],318)==interrupted,'Normal callback preceded exact restoration'
                             first_resume=result;resume_pending=False
@@ -107,6 +124,19 @@ def run(standard):
                             reconciled+=1
                     if current>=goal or result.get('reason')=='target' and current>=goal-1:return
                 raise AssertionError('Finite complete-boundary cap')
+            def partial_checkpoint():
+                for _ in range(200):
+                    sample=advance(.01,stop_partial=True)
+                    if sample:return sample
+                raise AssertionError('No genuine partial serve stage at callback boundary')
+            def menu_partial_checkpoint():
+                catch=session.inspect('break.add',dict(kind='pc',addr=s['main_background']))
+                try:
+                    for _ in range(200):
+                        sample=advance(.01,stop_declined=True)
+                        if sample:return sample
+                    raise AssertionError('No pending serve with an actual insufficient stage gap')
+                finally:session.inspect('break.remove',dict(id=catch['id']))
             def key(code,held,seconds=.06):
                 actions.append(dict(rawkey=code,held=held,cck=current))
                 session.inspect('input.key',dict(rawkey=code,action='press' if held else 'release'));advance(seconds)
@@ -114,7 +144,7 @@ def run(standard):
                 viewport=attempt/(name+'-viewport.png');native=attempt/(name+'.png')
                 session.inspect('capture_screenshot',dict(path=str(viewport)));native_view(viewport,native)
                 photos.append(dict(name=name,path=str(native),sha256=digest(native)));return native
-            def scene_checkpoint(name,after,variant,endpoint=False):
+            def scene_checkpoint(name,after,variant,endpoint=False,waiting=False):
                 generation=num('tutorial_generation',4)
                 for _ in range(200):
                     scenes=[p for p in callbacks.surfaces.publications if p['position']['cck']>=after
@@ -122,6 +152,8 @@ def run(standard):
                         and p.get('tutorial_fields',{}).get('tutorial_generation')==generation
                         and p.get('publication_live_fields',{}).get('tutorial_generation')==generation
                         and p.get('native_sprite_check',{}).get('matched')]
+                    if waiting:
+                        scenes=[p for p in scenes if p['tutorial_fields'].get('tutorial_waiting_ready')]
                     if endpoint:
                         scenes=[p for p in scenes if p['tutorial_fields'].get('tutorial_ball_mode') in (1,2)
                             and (p.get('endpoint_ready',0)>>8 if variant==0 else p.get('endpoint_ready',0)&255)
@@ -154,14 +186,24 @@ def run(standard):
                 raise AssertionError('No completed visible menu '+name)
             advance(.7);photo('title')
             key(1,True);key(1,False,1.4);assert num('game_lifecycle',2)==1
-            key(0x23,True,.04);key(0x23,False,.02)
-            for _ in range(200):
-                if num('game_contact',1)&0x40 and num('game_flight',1)&0x40 and not num('game_contact',1)&0x8d:break
-                advance(.02)
-            else:raise AssertionError('No actual physical incoming flight')
+            if not serve:
+                key(0x23,True,.04);key(0x23,False,.02)
+                for _ in range(200):
+                    if num('game_contact',1)&0x40 and num('game_flight',1)&0x40 and not num('game_contact',1)&0x8d:break
+                    advance(.02)
+                else:raise AssertionError('No actual physical incoming flight')
             key(0x24,True,.02);key(0x24,False,.02);key(0x24,True,.02);key(0x24,False,.02)
-            assert num('tutorial_active',1);key(0x23,True);advance(2)
-            if not num('game_preview_launches',1):
+            assert num('tutorial_active',1)
+            if serve:
+                advance(1);assert num('game_preview_kind',2)==3
+                scene_checkpoint('initial-released-wait',beginning,1,waiting=True)
+            key(0x23,True);advance(2)
+            if serve:
+                for _ in range(200):
+                    if num('game_preview_launches',1) and num('game_preview_endpoint_ready',1):break
+                    advance(.05)
+                else:raise AssertionError('No finite initial-serve held endpoint')
+            elif not num('game_preview_launches',1):
                 count=num('game_preview_counts');path=raw(s['game_preview_paths'],count*8);assert count
                 sample=min((path[i:i+8] for i in range(0,len(path),8)),key=lambda p:abs(p[1]-(num('tutorial_y',1)+27)))
                 target=max(40,min(199,sample[0]-8));direction=0x20 if target<num('tutorial_x',1) else 0x22
@@ -178,19 +220,40 @@ def run(standard):
             frames=[]
             for i in range(10):advance(.1);frames.append(photo('animation-%02d'%i))
             animation_info=animation(frames,attempt/'incoming-animation.gif',100)
+            if serve:
+                key(0x22,True,.02);key(0x22,False,.01)
+                pending=partial_checkpoint();old=pending['generation']
+                key(0x20,True,.02);key(0x20,False,.01)
+                assert num('tutorial_generation',4)>old,'Physical edit did not replace partial generation'
+                stages=raw(s['game_preview_dispatch_stages'],4);owners=raw(s['game_preview_dispatch_generations'],8)
+                assert all(not int.from_bytes(stages[2*v:2*v+2],'big') or int.from_bytes(owners[4*v:4*v+4],'big')!=old for v in (0,1)),'Retired partial generation remains owned'
+                stage_protocols.append(dict(kind='physical-replacement',before=pending,after_generation=num('tutorial_generation',4),after_stages=stages.hex(),after_owners=owners.hex(),cck=current))
             start_generation=num('tutorial_generation',4);edit_start=current
             key(0x22,True,.1);key(0x22,False);key(0x20,True,.1);key(0x20,False);advance(1)
             assert num('tutorial_generation',4)>start_generation,'Continuous physical edits did not invalidate prediction'
             scene_checkpoint('after-edits',edit_start,0,True)
             photo('after-edits');release_start=current;key(0x23,False);advance(1)
-            assert num('tutorial_active_variant',1)==1;scene_checkpoint('released-alternative',release_start,1);photo('released-alternative')
+            assert num('tutorial_active_variant',1)==1;scene_checkpoint('released-alternative',release_start,1,waiting=serve);photo('released-alternative')
             held_start=current;key(0x23,True);advance(1);assert num('tutorial_active_variant',1)==0
             scene_checkpoint('held-reselected',held_start,0,True)
             # Modifier consumes direction and release; navigation is absent.
             selected_cursor=raw(s['tutorial_selected_cursor'],8)
             key(0x24,True);key(0x22,True);key(0x22,False);key(0x24,False)
             assert not num('tutorial_menu',1) and raw(s['tutorial_selected_cursor'],8)==selected_cursor
-            menu_start=current;key(0x24,True);key(0x24,False);assert num('tutorial_menu',1)
+            if serve:
+                key(0x22,True,.02);key(0x22,False,.01)
+                key(0x24,True)
+                pending_resume=menu_partial_checkpoint()
+                menu_start=current;key(0x24,False)
+            else:
+                menu_start=current;key(0x24,True);key(0x24,False)
+            assert num('tutorial_menu',1)
+            if serve:
+                accepted=menu_stage_samples[-1]
+                assert accepted['position']['cck']>=menu_start and int(accepted['stages'],16),'Menu did not accept a genuine partial serve'
+                assert accepted['generation']==pending_resume['generation']
+                assert raw(s['game_preview_dispatch_stages'],4).hex()==accepted['stages'],'Opened menu advanced suspended serve operation'
+                stage_protocols.append(dict(kind='pending-original-resume',before_physical_release=pending_resume,at_menu_accept=accepted,menu_cck=current))
             menu_checkpoint('options',0,menu_start)
             menu_start=current;key(0x4d,True);key(0x4d,False);assert num('tutorial_menu_selection',1)==1
             menu_checkpoint('options-resume',1,menu_start)
@@ -198,6 +261,7 @@ def run(standard):
             key(0x44,True);key(0x44,False);advance(.2)
             assert not num('tutorial_active',1) and len(restores)==1 and first_resume and reconciled>=2
             assert num('game_preview_generation',4)!=preview_before_resume and num('game_preview_status',2)==7,'Resume did not retire preview generation'
+            assert num('game_preview_dispatch_stages',4)==0,'Canceled continuation remains eligible'
             assert num('game_preview_endpoint_ready',2)==0 and num('game_preview_launch_saved',2)==0,'Canceled preview still eligible'
             assert num('keyboard_ack',1)==0 and raw(s['game_keyboard_matrix']+0x24,1)==b'\0'
             assert any(r['value'] for r in ack) and any(not r['value'] for r in ack),'No complete physical keyboard ACK'
@@ -212,7 +276,7 @@ def run(standard):
             tutorial_scenes=[p for p in publications if p.get('tutorial_fields',{}).get('tutorial_active')]
             assert tutorial_scenes,'No actual completed tutorial publication'
             # Export observed evidence before audits, including a failed audit.
-            report.update(actions=actions,photos=photos,checkpoints=checkpoints,restores=restores,first_resumed_boundary=first_resume,
+            report.update(menu_stage_samples=menu_stage_samples,stage_snapshots=stage_snapshots,stage_protocols=stage_protocols,actions=actions,photos=photos,checkpoints=checkpoints,restores=restores,first_resumed_boundary=first_resume,
                 reconciled_samples=logical_samples,ack=ack,memory=memory,stack_used_bytes=s['game_stack_top']-stack_low,
                 publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows)
             for p in tutorial_scenes:
@@ -228,16 +292,16 @@ def run(standard):
                 reconciled_samples=logical_samples,ack=ack,memory=memory,stack_used_bytes=s['game_stack_top']-stack_low,
                 publications=publications,callbacks=callbacks.rows,stack_rows=timing.rows,field_rows=field_rows,
                 frozen_sha256={n:hashlib.sha256(v).hexdigest() for n,v in frozen.items()},
-                scope='Finite physical lower-receiver incoming prototype, edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.')
+                scope=('Finite physical lower initial-serve prototype' if serve else 'Finite physical lower-receiver incoming prototype')+', edits, alternatives, modifier discrimination, menu and newly held F exact original resume. No retained navigation, branching, title tutorial completion, all reconciliation combinations, WCET or full acceptance.')
         tx.finalize(output,report,compiled=[json.loads((attempt/'baseline-rally.compile.json').read_text())],artifacts=list(attempt.iterdir()))
         shutil.copy2(output,attempt/'report.json');print(json.dumps(dict(passed=True,attempt=str(attempt),restores=len(restores),publications=len(publications))),flush=True)
     except BaseException as error:
         # Keep already observed controls/publications even if an early visual gate fails.
-        for name in ('actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):
+        for name in ('menu_stage_samples','stage_snapshots','stage_protocols','actions','photos','checkpoints','restores','first_resume','logical_samples','ack','field_rows'):
             if name in locals():report[name]=locals()[name]
         if 'callbacks' in locals():report.update(callbacks=callbacks.rows,publications=callbacks.surfaces.publications)
         if 'timing' in locals():report['stack_rows']=timing.rows
         atomic_json(attempt/'failure.json',dict(error=str(error),traceback=traceback.format_exc(),partial=report));tx.abort(error);raise
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL')
+    parser=argparse.ArgumentParser();parser.add_argument('--ntsc',action='store_true');parser.add_argument('--serve',action='store_true');args=parser.parse_args();run('NTSC' if args.ntsc else 'PAL',args.serve)
