@@ -24,6 +24,7 @@ from tutorial_capture import (CaptureSession, CallbackObserver, SurfaceObserver,
 
 FIELDS = dict(tutorial_active=1, tutorial_pending=1, tutorial_menu=1,
               tutorial_x=1, tutorial_y=1, tutorial_end=1, tutorial_active_variant=1,
+              tutorial_potential_variant=1,
               tutorial_input_source=1, tutorial_status=2, tutorial_animation_index=2,
               tutorial_progress_operations=2, tutorial_render_generation=2,
               tutorial_published_generation=2, tutorial_resume_count=2,

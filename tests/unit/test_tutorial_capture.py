@@ -27,6 +27,13 @@ class TutorialCaptureTests(unittest.TestCase):
                 tutorial_presentation_generation=7,tutorial_generation=7,
                 tutorial_active_variant=0,tutorial_marker_ready=1,tutorial_counts=2<<16,tutorial_animation_index=0))
         self.assertTrue(check_native_presentation(snapshot,paths)['matched'])
+        # A prospective serve is branch0 even while physical B1 is released.
+        prospective=copy.deepcopy(snapshot)
+        prospective['tutorial_fields'].update(tutorial_active_variant=1,tutorial_potential_variant=0)
+        self.assertTrue(check_native_presentation(prospective,paths)['matched'])
+        prospective['tutorial_fields']['tutorial_potential_variant']=1
+        with self.assertRaises(AssertionError):
+            check_native_presentation(prospective,paths)
         broken = copy.deepcopy(snapshot)
         broken['sprite_bytes'] = '37'+broken['sprite_bytes'][2:]
         with self.assertRaises(AssertionError):

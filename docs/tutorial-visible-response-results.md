@@ -129,9 +129,11 @@ The banner, keyboard hints, original frozen ball, actual landing cross, menu
 labels and exact original resume all pass. An additional pixel reduction finds
 81 mode 2 ball observations at 20 distinct positions before any landing cue,
 using actual queued native headers/sample bytes and white image pixels rather
-than animation counters. The landing cue becomes visible at terminal sample 63
-in these schedules. This proves a displayed computed landing point, not a cue
-that precedes the animated ball throughout its flight. Native sprite X equals the cropped pixel X; Y is
+than animation counters. The old white-only cue check first passed at terminal sample 63, where it
+could count the white ball. Subsequent exact image review verifies the actual
+advance cross at sample 21, in native palette13 red and wholly outside the ball.
+See `tutorial-serve-target-diagnosis.md` for the corrected pixel evidence;
+terminal-only visibility is withdrawn. Native sprite X equals the cropped pixel X; Y is
 native object Y+1. An inherited 31-pixel X assumption failed and remains in the
 earlier receipts; the current cue and frozen-ball checks use the measured origin.
 
@@ -203,9 +205,9 @@ These are measured finite observation bounds, not exact scanout-edge latency.
 All four verify actual banner/hint/menu fonts, frozen ball/shadow, computed
 landing pixels, unchanged 318-byte original state and 72-byte history state,
 unchanged history records, and physical original resume back to ordinary pixels.
-There are 444 actual mode 2 ball photographs before any landing cue. The cue
-appears at terminal sample 63 in these schedules; an advance landing cue is not
-established. No edited-position commit or optional trajectory trail is added.
+There are 444 actual mode 2 ball photographs before any landing cue. The original white-only cue check passed at terminal sample 63; the later
+cross-shaped/off-ball review verifies advance visibility at sample 21. See
+`tutorial-serve-target-diagnosis.md`; terminal-only visibility is withdrawn. No edited-position commit or optional trajectory trail is added.
 
 The four runs total 2,268 complete callbacks, 678 publications, 61 positively
 qualified retained neutral publications, 92 complete keyboard ACK pairs and
