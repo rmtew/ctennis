@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "results_sha256": "5c7b1d80e87c7e596f02ee93987bdd03b68aaaa468a4f0a94b15e2c1f352fe33",
+  "reducer_sha256": "52746b14428a8656080c24c59ea3f57c1450f4aaab43eef5df1c30555ac6575e",
+  "instruction_commit": "866999df0037879dce4a935020cb5f61c5acde87",
+  "analysis_python_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "analysis_python_path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "analysis_python_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+  "command": "python scripts/tutorial_latency_queries.py",
+  "host_tests": "env -u PYTHONPATH /tmp/ctennis-shared-core-python/bin/python -m unittest discover -s tests/unit -p test_tutorial_latency_queries.py",
+  "host_tests_passed": 5,
+  "new_native_execution": false,
+  "runtime_changed": false
+}

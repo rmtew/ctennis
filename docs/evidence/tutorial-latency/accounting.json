@@ -1,0 +1,3625 @@
+{
+  "schema": 1,
+  "execution": "offline-existing-capture-latency-accounting",
+  "accounting_commit": "9a9aca59e7f6b04cf756d5bb9b9d973a18996ee3",
+  "reducer_sha256": "932b55338e08141e805d6e626e8156f0bbfe4f9f6d1b05c05a2278c58845fd29",
+  "interval_categories": [
+    "landing_algorithm",
+    "shared_preview_dispatch",
+    "hardware_service",
+    "actual_outgoing_ball",
+    "preview_envelopes_state_support",
+    "display_producer_footer",
+    "controls_and_requests",
+    "endpoint_eligibility",
+    "scheduler_classification",
+    "scheduler_admission",
+    "scheduler_owner_other",
+    "remaining_mandatory_callback",
+    "unclassified"
+  ],
+  "category_call_names": {
+    "landing_algorithm": [
+      "landing_try_prepare",
+      "landing_try_step"
+    ],
+    "shared_preview_dispatch": [
+      "game_preview_dispatch"
+    ],
+    "hardware_service": [
+      "account_sim_timer",
+      "game_poll_keyboard",
+      "poll_presentation",
+      "read_sim_timer"
+    ],
+    "actual_outgoing_ball": [
+      "game_ball_tick"
+    ],
+    "preview_envelopes_state_support": [
+      "game_preview_complete",
+      "game_preview_endpoint_step",
+      "game_preview_result",
+      "game_preview_step_variant"
+    ],
+    "display_producer_footer": [
+      "tutorial_animate",
+      "tutorial_footer_commit",
+      "tutorial_footer_step",
+      "tutorial_progress_slice",
+      "tutorial_render"
+    ],
+    "controls_and_requests": [
+      "game_preview_request_body",
+      "game_preview_request_projected",
+      "tutorial_sample",
+      "tutorial_tick"
+    ],
+    "endpoint_eligibility": [
+      "game_preview_endpoint_pending"
+    ],
+    "scheduler_classification": [
+      "tutorial_background_class"
+    ],
+    "scheduler_admission": [
+      "tutorial_job_admitted"
+    ],
+    "scheduler_owner_other": [
+      "tutorial_background"
+    ],
+    "remaining_mandatory_callback": [
+      "simulation_update"
+    ]
+  },
+  "attribution_priority": "Earlier category wins; nested parents lose that interval. All totals form one exhaustive partition; secondary milestones overlap it and are not added.",
+  "actual_outgoing_ball_scope": "Only emitted game_ball_tick calls whose captured caller is game_preview_continue_one (tail branch to flight_one) or game_preview_flight_one. Incoming dispatch and landing-stage ball calls remain in their measured parents.",
+  "measurement_scope": "Emitted call stack-store through final RTS-read bus spans; IRQ elapsed included once, not isolated CPU time. Instruction tails/gaps remain unclassified. Callbacks contain work and are never treated as idle. No new native execution.",
+  "comparison_requirements": "Improvement needs paired identical accepted-generation causal state, physical input trace/phasing, native source/policy/target, incoming/outgoing original-core outputs, same publication qualification and retained complete timing extent. Same seed or endpoint label alone does not establish pairing.",
+  "regions": [
+    {
+      "standard": "PAL",
+      "physical_clock_hz": 3546895,
+      "original_run_id": "f52a873403c7415fa21dde09ea011373",
+      "report_sha256": "84a9de8441a5e9e6d47127dcdee264e43a152d6b6d2ecfa78470221398d1e6a3",
+      "capture_sha256": "57fd24c48e01d1e9f3d1845c707e6a3761c61126bbf279f220bf574b0d1cb742",
+      "verified_original_binding_count": 351,
+      "original_source_commit": "d51f2b3b31d761ca98561f3005eaa28e8e98c531",
+      "native_product_commit": "d51f2b3b31d761ca98561f3005eaa28e8e98c531",
+      "native_sha256": "ad4ec12c1aba9bd125a42074c468ed106f8eaeb197c84d0ad0581dffcc709c45",
+      "coherent_policy": {
+        "policy": {
+          "schema": 1,
+          "status": "experimental-hypotheses-only",
+          "normative_s05_s18_g2_safety": false,
+          "units": "CCK unless specified",
+          "hypotheses": {
+            "accepted_owner": 5000,
+            "root_service": 2500,
+            "residual_margin": 2500,
+            "callback": 55750,
+            "entry_lateness": 2000,
+            "callback_completion_uncertainty": 1250,
+            "keyboard_poll_gap_finite_detector": 50000,
+            "beam_line_floor": 226,
+            "ready_line": 253,
+            "accepted_incoming_physics_owner": 20000
+          },
+          "scheduler": {
+            "max_prefix_envelopes": 4,
+            "geometry_points_per_job": 8,
+            "sample_lookahead": 8,
+            "residual_policy": "After selected readiness/lookahead, alternate other-branch progress with pending footer stage/commit; only eligible fitting work advances. No approved wall-time fairness bound.",
+            "footer_dma_lines": [
+              236,
+              251
+            ],
+            "record_format_changed": false
+          },
+          "job_hypotheses_e": {
+            "cheap_envelope_or_rejection": 1000,
+            "guarded_one_root_projected_dispatch": 4000,
+            "outgoing_ball_step": 4000,
+            "full_dispatch_or_resolution": 10000,
+            "endpoint_query": 9000,
+            "geometry_eight_points": 1000,
+            "placement_animation_producer": 4000,
+            "menu_render_single_unit": 9000,
+            "footer_stage_private": 9000,
+            "footer_commit_512": 1000,
+            "result_metadata": 1000,
+            "endpoint_stage": 4000,
+            "footer_stage_two_glyphs": 1000
+          },
+          "cost_scope": "Each prefix conservatively sums per-operation complete-owner hypotheses. Every admission also reserves500E root service and500E residual margin; next nominal sample and full callback completion remain separate. Private318 persists;72metadata restores peryield. No inference of WCET from inherited allowances or finite maxima.",
+          "basis": "Cheap/one-root allowances retain prior experimental hypotheses, with prior phase/geometry guard. Explicit worker removes hidden terminal geometry and branch-switch continuation. Full/endpoint/footer and sprite reservations retain earlier nominal allowance magnitude; broadened root contexts/outgoing/8-point geometry/footer commit are new hypotheses requiring separate measurements. No threshold reduced to admit contact. Footer stage is private; its separate512-byte copy is admitted outside actual236..251 DMA. Cooperative endpoint stages use a new complete-owner 4000E hypothesis: prepare performs two fixed eight-decision roots, validation uses at most three extrema, and candidate performs one actual advance plus at most one bounce or rollback. Seed copying, workspace clearing, terminal mirroring and metadata tails are included. Legacy whole-query 9000E remains historical; stage completion may require several grants. This is algorithm staging, not a reduced whole-query bound. Cooperative actual-font footer stages reserve a new complete-owner 1000E hypothesis for one clear/layout or at most two glyphs plus selection/cache tails. Legacy whole-footer 9000E remains historical; this does not reduce its bound. New stage measurements are required.",
+          "unresolved": [
+            "Conservative emitted complete-path CPU/OCS DMA/IRQ/coherent-read bounds, including bridge before/after observed stackspan",
+            "Full dispatch/lifecycle and resolution ownership, expensive contact/serve tails",
+            "Approved transport buffering/ACK maximum gap and logical response limits",
+            "Producer cutoff, visible rearm, exact publication and direct footer DMA trace coverage",
+            "Eligible residual service/capacity guarantees, resource/appearance/full release and cold boot"
+          ]
+        },
+        "policy_sha256": "c83cf59c0583d91a263c69d328ddbe049756324c5bed8c9e67404a7b68e0a19d",
+        "scheduler_source_sha256": "0cf66b967a95be08208e79f1a315327951c0d0203d791d1eb975e744327da8c5",
+        "executable_sha256": "ad4ec12c1aba9bd125a42074c468ed106f8eaeb197c84d0ad0581dffcc709c45"
+      },
+      "raw_bindings": {
+        "build/tests/coherent-contact-native-pal/literal-rpc.jsonl.gz": "e6364df2f8ec6e81a26c269f69b7ad6aa9e240b81d2af220fafbfa3e7f208071"
+      },
+      "trials": [
+        {
+          "label": "initial-held",
+          "generation": 3,
+          "interval": {
+            "request_cck": 31460424,
+            "first_qualifying_copjmp_cck": 33735967,
+            "total_cck": 2275543,
+            "milliseconds": 641.5591665386204
+          },
+          "partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 246161,
+            "hardware_service": 457294,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 356989,
+            "display_producer_footer": 36953,
+            "controls_and_requests": 47674,
+            "endpoint_eligibility": 95430,
+            "scheduler_classification": 242482,
+            "scheduler_admission": 39011,
+            "scheduler_owner_other": 407527,
+            "remaining_mandatory_callback": 293028,
+            "unclassified": 52994
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.0,
+            "shared_preview_dispatch": 69.40182892360784,
+            "hardware_service": 128.92797785105,
+            "actual_outgoing_ball": 0.0,
+            "preview_envelopes_state_support": 100.64831352492814,
+            "display_producer_footer": 10.418408213381,
+            "controls_and_requests": 13.441051962350167,
+            "endpoint_eligibility": 26.90522273707003,
+            "scheduler_classification": 68.36458367107005,
+            "scheduler_admission": 10.998634016513035,
+            "scheduler_owner_other": 114.89683229980025,
+            "remaining_mandatory_callback": 82.61535793983188,
+            "unclassified": 14.940955399018014
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 340319,
+          "request_api_calls": 0,
+          "request_api_union_cck": 0,
+          "latest_request_api_entry_cck": null,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 168,
+          "declined_owners": 427,
+          "declined_owner_union_cck": 325113,
+          "background_contact_owner_witnesses": 0,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 33529107,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 206860,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 52533,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 24044,
+            "display_producer_footer": 30338,
+            "controls_and_requests": 4542,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 14077,
+            "scheduler_admission": 4231,
+            "scheduler_owner_other": 41503,
+            "remaining_mandatory_callback": 29376,
+            "unclassified": 6216
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 246161,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 332945,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 24044,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": null,
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 666,
+              "primary_exclusive_union_cck": 95425
+            },
+            "game_poll_keyboard": {
+              "calls": 633,
+              "primary_exclusive_union_cck": 26998
+            },
+            "account_sim_timer": {
+              "calls": 1457,
+              "primary_exclusive_union_cck": 334871
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 246161,
+              "scheduling_and_preview_support_before_known": 1057584,
+              "measured_hardware_service_and_display_production_before_known": 411376,
+              "mandatory_callback_controls_requests_before_known": 306784,
+              "unclassified_before_known": 46778,
+              "known_upper_bound_to_qualifying_copjmp": 206860
+            },
+            "partition_ms": {
+              "actual_math_before_known": 69.40182892360784,
+              "scheduling_and_preview_support_before_known": 298.1717812340089,
+              "measured_hardware_service_and_display_production_before_known": 115.9820067974947,
+              "mandatory_callback_controls_requests_before_known": 86.49367968321589,
+              "unclassified_before_known": 13.188436646700847,
+              "known_upper_bound_to_qualifying_copjmp": 58.321433253592225
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 0,
+              "shared_preview_dispatch": 246161,
+              "hardware_service": 404761,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 332945,
+              "display_producer_footer": 6615,
+              "controls_and_requests": 43132,
+              "endpoint_eligibility": 95430,
+              "scheduler_classification": 228405,
+              "scheduler_admission": 34780,
+              "scheduler_owner_other": 366024,
+              "remaining_mandatory_callback": 263652,
+              "unclassified": 46778
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 236,
+              "pending_union_cck": 96225,
+              "nested_selection_valid_union_cck": 14196,
+              "pending_excluding_selection_cck": 82029
+            },
+            "pre_selected_contact": null,
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": null,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 56,
+            "classifier_union_cck": 50965,
+            "repeated_after_first_same_callback_generation_no_optional_job": 42,
+            "repeated_classifier_union_cck": 38025,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "d7531bcdafeffde36be21504ddebb3ae25ca632eb171c6fb55b18fe592d2a677",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "aligned-held",
+          "generation": 98,
+          "interval": {
+            "request_cck": 33801424,
+            "first_qualifying_copjmp_cck": 44322420,
+            "total_cck": 10520996,
+            "milliseconds": 2966.2552739790717
+          },
+          "partition_cck": {
+            "landing_algorithm": 4860,
+            "shared_preview_dispatch": 202769,
+            "hardware_service": 2217448,
+            "actual_outgoing_ball": 2983,
+            "preview_envelopes_state_support": 1594826,
+            "display_producer_footer": 611583,
+            "controls_and_requests": 941245,
+            "endpoint_eligibility": 384719,
+            "scheduler_classification": 980075,
+            "scheduler_admission": 208731,
+            "scheduler_owner_other": 1783327,
+            "remaining_mandatory_callback": 1329978,
+            "unclassified": 258452
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.3702125380085963,
+            "shared_preview_dispatch": 57.16803006573355,
+            "hardware_service": 625.1800518481658,
+            "actual_outgoing_ball": 0.8410172841316137,
+            "preview_envelopes_state_support": 449.6400372720365,
+            "display_producer_footer": 172.42771494504348,
+            "controls_and_requests": 265.3715432794035,
+            "endpoint_eligibility": 108.46641922019118,
+            "scheduler_classification": 276.31914674666154,
+            "scheduler_admission": 58.84893688705191,
+            "scheduler_owner_other": 502.7853939854436,
+            "remaining_mandatory_callback": 374.96965655876477,
+            "unclassified": 72.86711334843575
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 2267711,
+          "request_api_calls": 95,
+          "request_api_union_cck": 647633,
+          "latest_request_api_entry_cck": 42555930,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 603,
+          "declined_owners": 2321,
+          "declined_owner_union_cck": 1808006,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 44224035,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 98385,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 33364,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4968,
+            "display_producer_footer": 13395,
+            "controls_and_requests": 1199,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4052,
+            "scheduler_admission": 4007,
+            "scheduler_owner_other": 26123,
+            "remaining_mandatory_callback": 7367,
+            "unclassified": 3910
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 202769,
+              "landing_algorithm": 4860,
+              "actual_outgoing_ball": 2983,
+              "preview_envelopes_state_support": 1584128,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 10698,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 192678,
+            "first_selected_contact_owner_dispatch_cck": 10091,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 3249,
+              "primary_exclusive_union_cck": 490497
+            },
+            "game_poll_keyboard": {
+              "calls": 3101,
+              "primary_exclusive_union_cck": 132139
+            },
+            "account_sim_timer": {
+              "calls": 6929,
+              "primary_exclusive_union_cck": 1594812
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 210612,
+              "scheduling_and_preview_support_before_known": 4912528,
+              "measured_hardware_service_and_display_production_before_known": 2782272,
+              "mandatory_callback_controls_requests_before_known": 2262657,
+              "unclassified_before_known": 254542,
+              "known_upper_bound_to_qualifying_copjmp": 98385
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.37925988787376,
+              "scheduling_and_preview_support_before_known": 1385.0221108885378,
+              "measured_hardware_service_and_display_production_before_known": 784.4246869444966,
+              "mandatory_callback_controls_requests_before_known": 637.9261297557441,
+              "unclassified_before_known": 71.76474070983213,
+              "known_upper_bound_to_qualifying_copjmp": 27.7383457925876
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4860,
+              "shared_preview_dispatch": 202769,
+              "hardware_service": 2184084,
+              "actual_outgoing_ball": 2983,
+              "preview_envelopes_state_support": 1589858,
+              "display_producer_footer": 598188,
+              "controls_and_requests": 940046,
+              "endpoint_eligibility": 384719,
+              "scheduler_classification": 976023,
+              "scheduler_admission": 204724,
+              "scheduler_owner_other": 1757204,
+              "remaining_mandatory_callback": 1322611,
+              "unclassified": 254542
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 985,
+              "pending_union_cck": 388286,
+              "nested_selection_valid_union_cck": 53984,
+              "pending_excluding_selection_cck": 334302
+            },
+            "pre_selected_contact": {
+              "pending_calls": 965,
+              "pending_union_cck": 378647,
+              "nested_selection_valid_union_cck": 52770,
+              "pending_excluding_selection_cck": 325877
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 44112657,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 318,
+            "classifier_union_cck": 313317,
+            "repeated_after_first_same_callback_generation_no_optional_job": 239,
+            "repeated_classifier_union_cck": 237286,
+            "maximum_attempts_same_callback_generation_no_optional_job": 5,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "7b88f444a1d2606df6ac6e1548641d755659223fd737691e387539b195bc7655",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "fresh-D-edit",
+          "generation": 99,
+          "interval": {
+            "request_cck": 44442887,
+            "first_qualifying_copjmp_cck": 46311994,
+            "total_cck": 1869107,
+            "milliseconds": 526.9699272180316
+          },
+          "partition_cck": {
+            "landing_algorithm": 4477,
+            "shared_preview_dispatch": 202643,
+            "hardware_service": 374795,
+            "actual_outgoing_ball": 3134,
+            "preview_envelopes_state_support": 309763,
+            "display_producer_footer": 25791,
+            "controls_and_requests": 46548,
+            "endpoint_eligibility": 75110,
+            "scheduler_classification": 171603,
+            "scheduler_admission": 35598,
+            "scheduler_owner_other": 338008,
+            "remaining_mandatory_callback": 238461,
+            "unclassified": 43176
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2622307680379599,
+            "shared_preview_dispatch": 57.13250603697036,
+            "hardware_service": 105.66847904998598,
+            "actual_outgoing_ball": 0.8835897313001936,
+            "preview_envelopes_state_support": 87.33356922040264,
+            "display_producer_footer": 7.27143036374068,
+            "controls_and_requests": 13.123591197371223,
+            "endpoint_eligibility": 21.176268257165773,
+            "scheduler_classification": 48.38118974483316,
+            "scheduler_admission": 10.036383935808644,
+            "scheduler_owner_other": 95.2968723348168,
+            "remaining_mandatory_callback": 67.23091605474647,
+            "unclassified": 12.172900522851677
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 283460,
+          "request_api_calls": 1,
+          "request_api_union_cck": 6821,
+          "latest_request_api_entry_cck": 44509238,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 143,
+          "declined_owners": 344,
+          "declined_owner_union_cck": 229377,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 46236095,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 75899,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 16326,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 13810,
+            "display_producer_footer": 13083,
+            "controls_and_requests": 1236,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4176,
+            "scheduler_admission": 2250,
+            "scheduler_owner_other": 15606,
+            "remaining_mandatory_callback": 7581,
+            "unclassified": 1831
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 202643,
+              "landing_algorithm": 4477,
+              "actual_outgoing_ball": 3134,
+              "preview_envelopes_state_support": 286509,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 23254,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 192279,
+            "first_selected_contact_owner_dispatch_cck": 10364,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 545,
+              "primary_exclusive_union_cck": 79188
+            },
+            "game_poll_keyboard": {
+              "calls": 518,
+              "primary_exclusive_union_cck": 22361
+            },
+            "account_sim_timer": {
+              "calls": 1190,
+              "primary_exclusive_union_cck": 273246
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 210254,
+              "scheduling_and_preview_support_before_known": 894240,
+              "measured_hardware_service_and_display_production_before_known": 371177,
+              "mandatory_callback_controls_requests_before_known": 276192,
+              "unclassified_before_known": 41345,
+              "known_upper_bound_to_qualifying_copjmp": 75899
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.27832653630852,
+              "scheduling_and_preview_support_before_known": 252.1191069935817,
+              "measured_hardware_service_and_display_production_before_known": 104.64843193835735,
+              "mandatory_callback_controls_requests_before_known": 77.86867104890334,
+              "unclassified_before_known": 11.65667435884062,
+              "known_upper_bound_to_qualifying_copjmp": 21.39871634204001
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4477,
+              "shared_preview_dispatch": 202643,
+              "hardware_service": 358469,
+              "actual_outgoing_ball": 3134,
+              "preview_envelopes_state_support": 295953,
+              "display_producer_footer": 12708,
+              "controls_and_requests": 45312,
+              "endpoint_eligibility": 75110,
+              "scheduler_classification": 167427,
+              "scheduler_admission": 33348,
+              "scheduler_owner_other": 322402,
+              "remaining_mandatory_callback": 230880,
+              "unclassified": 41345
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 187,
+              "pending_union_cck": 76591,
+              "nested_selection_valid_union_cck": 11222,
+              "pending_excluding_selection_cck": 65369
+            },
+            "pre_selected_contact": {
+              "pending_calls": 167,
+              "pending_union_cck": 66940,
+              "nested_selection_valid_union_cck": 10016,
+              "pending_excluding_selection_cck": 56924
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 46125498,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 36,
+            "classifier_union_cck": 31163,
+            "repeated_after_first_same_callback_generation_no_optional_job": 24,
+            "repeated_classifier_union_cck": 21148,
+            "maximum_attempts_same_callback_generation_no_optional_job": 5,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "7b88f444a1d2606df6ac6e1548641d755659223fd737691e387539b195bc7655",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-0",
+          "generation": 101,
+          "interval": {
+            "request_cck": 46478848,
+            "first_qualifying_copjmp_cck": 48301422,
+            "total_cck": 1822574,
+            "milliseconds": 513.8505650717036
+          },
+          "partition_cck": {
+            "landing_algorithm": 4501,
+            "shared_preview_dispatch": 198524,
+            "hardware_service": 359257,
+            "actual_outgoing_ball": 2991,
+            "preview_envelopes_state_support": 296182,
+            "display_producer_footer": 29447,
+            "controls_and_requests": 53347,
+            "endpoint_eligibility": 77409,
+            "scheduler_classification": 170455,
+            "scheduler_admission": 31525,
+            "scheduler_owner_other": 324184,
+            "remaining_mandatory_callback": 233314,
+            "unclassified": 41438
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2689972497071382,
+            "shared_preview_dispatch": 55.97120862049765,
+            "hardware_service": 101.28774604266549,
+            "actual_outgoing_ball": 0.8432727780213398,
+            "preview_envelopes_state_support": 83.50458640585639,
+            "display_producer_footer": 8.3021910713455,
+            "controls_and_requests": 15.040479066902178,
+            "endpoint_eligibility": 21.824440813725808,
+            "scheduler_classification": 48.05752637165747,
+            "scheduler_admission": 8.888055609201851,
+            "scheduler_owner_other": 91.39937889337011,
+            "remaining_mandatory_callback": 65.77978767344396,
+            "unclassified": 11.682894475308686
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 286389,
+          "request_api_calls": 2,
+          "request_api_union_cck": 14252,
+          "latest_request_api_entry_cck": 46581550,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 140,
+          "declined_owners": 324,
+          "declined_owner_union_cck": 221808,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 48249057,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 52365,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 13339,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 1278,
+            "display_producer_footer": 13402,
+            "controls_and_requests": 1238,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 1759,
+            "scheduler_admission": 1377,
+            "scheduler_owner_other": 10934,
+            "remaining_mandatory_callback": 7587,
+            "unclassified": 1451
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 198524,
+              "landing_algorithm": 4501,
+              "actual_outgoing_ball": 2991,
+              "preview_envelopes_state_support": 287740,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 8442,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 188224,
+            "first_selected_contact_owner_dispatch_cck": 10300,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 520,
+              "primary_exclusive_union_cck": 75425
+            },
+            "game_poll_keyboard": {
+              "calls": 495,
+              "primary_exclusive_union_cck": 21423
+            },
+            "account_sim_timer": {
+              "calls": 1143,
+              "primary_exclusive_union_cck": 262409
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 206016,
+              "scheduling_and_preview_support_before_known": 884407,
+              "measured_hardware_service_and_display_production_before_known": 361963,
+              "mandatory_callback_controls_requests_before_known": 277836,
+              "unclassified_before_known": 39987,
+              "known_upper_bound_to_qualifying_copjmp": 52365
+            },
+            "partition_ms": {
+              "actual_math_before_known": 58.08347864822613,
+              "scheduling_and_preview_support_before_known": 249.34682306637214,
+              "measured_hardware_service_and_display_production_before_known": 102.05066685086534,
+              "mandatory_callback_controls_requests_before_known": 78.33217504324205,
+              "unclassified_before_known": 11.273804271059618,
+              "known_upper_bound_to_qualifying_copjmp": 14.763617191938302
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4501,
+              "shared_preview_dispatch": 198524,
+              "hardware_service": 345918,
+              "actual_outgoing_ball": 2991,
+              "preview_envelopes_state_support": 294904,
+              "display_producer_footer": 16045,
+              "controls_and_requests": 52109,
+              "endpoint_eligibility": 77409,
+              "scheduler_classification": 168696,
+              "scheduler_admission": 30148,
+              "scheduler_owner_other": 313250,
+              "remaining_mandatory_callback": 225727,
+              "unclassified": 39987
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 192,
+              "pending_union_cck": 79276,
+              "nested_selection_valid_union_cck": 11445,
+              "pending_excluding_selection_cck": 67831
+            },
+            "pre_selected_contact": {
+              "pending_calls": 172,
+              "pending_union_cck": 69245,
+              "nested_selection_valid_union_cck": 10243,
+              "pending_excluding_selection_cck": 59002
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 48137459,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 39,
+            "classifier_union_cck": 32980,
+            "repeated_after_first_same_callback_generation_no_optional_job": 27,
+            "repeated_classifier_union_cck": 22915,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "b02915cee98497a3b84f664f5441789bf49065629ffab0b0bb1ee9626b3412bc",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-1",
+          "generation": 103,
+          "interval": {
+            "request_cck": 48497119,
+            "first_qualifying_copjmp_cck": 50290850,
+            "total_cck": 1793731,
+            "milliseconds": 505.7186637890324
+          },
+          "partition_cck": {
+            "landing_algorithm": 4553,
+            "shared_preview_dispatch": 195728,
+            "hardware_service": 353105,
+            "actual_outgoing_ball": 2970,
+            "preview_envelopes_state_support": 287047,
+            "display_producer_footer": 27937,
+            "controls_and_requests": 51703,
+            "endpoint_eligibility": 80946,
+            "scheduler_classification": 174280,
+            "scheduler_admission": 29580,
+            "scheduler_owner_other": 319407,
+            "remaining_mandatory_callback": 225980,
+            "unclassified": 40495
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2836579599903577,
+            "shared_preview_dispatch": 55.18291350603838,
+            "hardware_service": 99.55327124146612,
+            "actual_outgoing_ball": 0.8373521065608088,
+            "preview_envelopes_state_support": 80.92909432052542,
+            "display_producer_footer": 7.876466599659702,
+            "controls_and_requests": 14.576975072563467,
+            "endpoint_eligibility": 22.821651049720952,
+            "scheduler_classification": 49.135934387682745,
+            "scheduler_admission": 8.339688657262197,
+            "scheduler_owner_other": 90.05256710446743,
+            "remaining_mandatory_callback": 63.71206365003757,
+            "unclassified": 11.417028133057224
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 277495,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13447,
+          "latest_request_api_entry_cck": 48594377,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 134,
+          "declined_owners": 323,
+          "declined_owner_union_cck": 238172,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 50261215,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 29635,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 6175,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 1280,
+            "display_producer_footer": 12230,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 1214,
+            "scheduler_admission": 1082,
+            "scheduler_owner_other": 7089,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 565
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 195728,
+              "landing_algorithm": 4553,
+              "actual_outgoing_ball": 2970,
+              "preview_envelopes_state_support": 282085,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 4962,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 185398,
+            "first_selected_contact_owner_dispatch_cck": 10330,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 512,
+              "primary_exclusive_union_cck": 73705
+            },
+            "game_poll_keyboard": {
+              "calls": 486,
+              "primary_exclusive_union_cck": 21001
+            },
+            "account_sim_timer": {
+              "calls": 1123,
+              "primary_exclusive_union_cck": 258399
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 203251,
+              "scheduling_and_preview_support_before_known": 880595,
+              "measured_hardware_service_and_display_production_before_known": 362637,
+              "mandatory_callback_controls_requests_before_known": 277683,
+              "unclassified_before_known": 39930,
+              "known_upper_bound_to_qualifying_copjmp": 29635
+            },
+            "partition_ms": {
+              "actual_math_before_known": 57.30392357258955,
+              "scheduling_and_preview_support_before_known": 248.27208022791766,
+              "measured_hardware_service_and_display_production_before_known": 102.24069221107476,
+              "mandatory_callback_controls_requests_before_known": 78.28903872260103,
+              "unclassified_before_known": 11.257733877095319,
+              "known_upper_bound_to_qualifying_copjmp": 8.355195177754064
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4553,
+              "shared_preview_dispatch": 195728,
+              "hardware_service": 346930,
+              "actual_outgoing_ball": 2970,
+              "preview_envelopes_state_support": 285767,
+              "display_producer_footer": 15707,
+              "controls_and_requests": 51703,
+              "endpoint_eligibility": 80946,
+              "scheduler_classification": 173066,
+              "scheduler_admission": 28498,
+              "scheduler_owner_other": 312318,
+              "remaining_mandatory_callback": 225980,
+              "unclassified": 39930
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 200,
+              "pending_union_cck": 82635,
+              "nested_selection_valid_union_cck": 11937,
+              "pending_excluding_selection_cck": 70698
+            },
+            "pre_selected_contact": {
+              "pending_calls": 173,
+              "pending_union_cck": 69677,
+              "nested_selection_valid_union_cck": 10312,
+              "pending_excluding_selection_cck": 59365
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 50133383,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 48,
+            "classifier_union_cck": 38592,
+            "repeated_after_first_same_callback_generation_no_optional_job": 35,
+            "repeated_classifier_union_cck": 27536,
+            "maximum_attempts_same_callback_generation_no_optional_job": 7,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "9d11147cde24fe7c88e7a6b9c287f3f005c434e1275053645e6b6a61f8c59192",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-2",
+          "generation": 105,
+          "interval": {
+            "request_cck": 50359271,
+            "first_qualifying_copjmp_cck": 52138176,
+            "total_cck": 1778905,
+            "milliseconds": 501.5386697378975
+          },
+          "partition_cck": {
+            "landing_algorithm": 4499,
+            "shared_preview_dispatch": 191928,
+            "hardware_service": 349076,
+            "actual_outgoing_ball": 2994,
+            "preview_envelopes_state_support": 292452,
+            "display_producer_footer": 37292,
+            "controls_and_requests": 52581,
+            "endpoint_eligibility": 74531,
+            "scheduler_classification": 155392,
+            "scheduler_admission": 33292,
+            "scheduler_owner_other": 317087,
+            "remaining_mandatory_callback": 227664,
+            "unclassified": 40117
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2684333762347066,
+            "shared_preview_dispatch": 54.11155390841849,
+            "hardware_service": 98.41734813125282,
+            "actual_outgoing_ball": 0.8441185882299871,
+            "preview_envelopes_state_support": 82.4529623797716,
+            "display_producer_footer": 10.513984766958142,
+            "controls_and_requests": 14.824515526960905,
+            "endpoint_eligibility": 21.01302688689685,
+            "scheduler_classification": 43.81071331403946,
+            "scheduler_admission": 9.3862378220951,
+            "scheduler_owner_other": 89.39847387644686,
+            "remaining_mandatory_callback": 64.18684511382492,
+            "unclassified": 11.310456046767666
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 280478,
+          "request_api_calls": 2,
+          "request_api_union_cck": 14265,
+          "latest_request_api_entry_cck": 50487301,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 140,
+          "declined_owners": 309,
+          "declined_owner_union_cck": 203998,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 52090985,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 47191,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 12688,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 3016,
+            "display_producer_footer": 13153,
+            "controls_and_requests": 560,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2039,
+            "scheduler_admission": 1244,
+            "scheduler_owner_other": 11275,
+            "remaining_mandatory_callback": 1784,
+            "unclassified": 1432
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 191928,
+              "landing_algorithm": 4499,
+              "actual_outgoing_ball": 2994,
+              "preview_envelopes_state_support": 279904,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 12548,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 181663,
+            "first_selected_contact_owner_dispatch_cck": 10265,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 505,
+              "primary_exclusive_union_cck": 72541
+            },
+            "game_poll_keyboard": {
+              "calls": 479,
+              "primary_exclusive_union_cck": 20664
+            },
+            "account_sim_timer": {
+              "calls": 1115,
+              "primary_exclusive_union_cck": 255871
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 199421,
+              "scheduling_and_preview_support_before_known": 855180,
+              "measured_hardware_service_and_display_production_before_known": 360527,
+              "mandatory_callback_controls_requests_before_known": 277901,
+              "unclassified_before_known": 38685,
+              "known_upper_bound_to_qualifying_copjmp": 47191
+            },
+            "partition_ms": {
+              "actual_math_before_known": 56.224105872883186,
+              "scheduling_and_preview_support_before_known": 241.1066580769941,
+              "measured_hardware_service_and_display_production_before_known": 101.6458056976595,
+              "mandatory_callback_controls_requests_before_known": 78.35050093109606,
+              "unclassified_before_known": 10.906722640506697,
+              "known_upper_bound_to_qualifying_copjmp": 13.304876518757956
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4499,
+              "shared_preview_dispatch": 191928,
+              "hardware_service": 336388,
+              "actual_outgoing_ball": 2994,
+              "preview_envelopes_state_support": 289436,
+              "display_producer_footer": 24139,
+              "controls_and_requests": 52021,
+              "endpoint_eligibility": 74531,
+              "scheduler_classification": 153353,
+              "scheduler_admission": 32048,
+              "scheduler_owner_other": 305812,
+              "remaining_mandatory_callback": 225880,
+              "unclassified": 38685
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 184,
+              "pending_union_cck": 76399,
+              "nested_selection_valid_union_cck": 11319,
+              "pending_excluding_selection_cck": 65080
+            },
+            "pre_selected_contact": {
+              "pending_calls": 158,
+              "pending_union_cck": 63464,
+              "nested_selection_valid_union_cck": 9355,
+              "pending_excluding_selection_cck": 54109
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 51968112,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 25,
+            "classifier_union_cck": 19350,
+            "repeated_after_first_same_callback_generation_no_optional_job": 18,
+            "repeated_classifier_union_cck": 13710,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "b8551d9d0b47cfdbfb624d9507343c18dbe8107ed3ce2679722696cf0d7777cb",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-3",
+          "generation": 107,
+          "interval": {
+            "request_cck": 52242770,
+            "first_qualifying_copjmp_cck": 54411808,
+            "total_cck": 2169038,
+            "milliseconds": 611.5314944479608
+          },
+          "partition_cck": {
+            "landing_algorithm": 567,
+            "shared_preview_dispatch": 187796,
+            "hardware_service": 449609,
+            "actual_outgoing_ball": 31432,
+            "preview_envelopes_state_support": 349797,
+            "display_producer_footer": 25987,
+            "controls_and_requests": 61224,
+            "endpoint_eligibility": 98457,
+            "scheduler_classification": 183890,
+            "scheduler_admission": 40114,
+            "scheduler_owner_other": 410162,
+            "remaining_mandatory_callback": 278052,
+            "unclassified": 51951
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.15985812943433622,
+            "shared_preview_dispatch": 52.94659131437497,
+            "hardware_service": 126.76129403323188,
+            "actual_outgoing_ball": 8.861835492733785,
+            "preview_envelopes_state_support": 98.62062451806439,
+            "display_producer_footer": 7.3266899640389695,
+            "controls_and_requests": 17.261294738073722,
+            "endpoint_eligibility": 27.758645237595136,
+            "scheduler_classification": 51.845346422716204,
+            "scheduler_admission": 11.309610236559019,
+            "scheduler_owner_other": 115.63973559972878,
+            "remaining_mandatory_callback": 78.39307337826465,
+            "unclassified": 14.646895383144976
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 338648,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13639,
+          "latest_request_api_entry_cck": 52382196,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 170,
+          "declined_owners": 415,
+          "declined_owner_union_cck": 287539,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 54356323,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 55485,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 10915,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 10171,
+            "display_producer_footer": 11692,
+            "controls_and_requests": 1228,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2119,
+            "scheduler_admission": 934,
+            "scheduler_owner_other": 9545,
+            "remaining_mandatory_callback": 7601,
+            "unclassified": 1280
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 187796,
+              "landing_algorithm": 567,
+              "actual_outgoing_ball": 31432,
+              "preview_envelopes_state_support": 339626,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 10171,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 177338,
+            "first_selected_contact_owner_dispatch_cck": 10458,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 652,
+              "primary_exclusive_union_cck": 94079
+            },
+            "game_poll_keyboard": {
+              "calls": 621,
+              "primary_exclusive_union_cck": 26748
+            },
+            "account_sim_timer": {
+              "calls": 1430,
+              "primary_exclusive_union_cck": 328782
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 219795,
+              "scheduling_and_preview_support_before_known": 1059651,
+              "measured_hardware_service_and_display_production_before_known": 452989,
+              "mandatory_callback_controls_requests_before_known": 330447,
+              "unclassified_before_known": 50671,
+              "known_upper_bound_to_qualifying_copjmp": 55485
+            },
+            "partition_ms": {
+              "actual_math_before_known": 61.96828493654309,
+              "scheduling_and_preview_support_before_known": 298.7545444677669,
+              "measured_hardware_service_and_display_production_before_known": 127.71424020164115,
+              "mandatory_callback_controls_requests_before_known": 93.16514867228942,
+              "unclassified_before_known": 14.286016360788803,
+              "known_upper_bound_to_qualifying_copjmp": 15.643259808931473
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 567,
+              "shared_preview_dispatch": 187796,
+              "hardware_service": 438694,
+              "actual_outgoing_ball": 31432,
+              "preview_envelopes_state_support": 339626,
+              "display_producer_footer": 14295,
+              "controls_and_requests": 59996,
+              "endpoint_eligibility": 98457,
+              "scheduler_classification": 181771,
+              "scheduler_admission": 39180,
+              "scheduler_owner_other": 400617,
+              "remaining_mandatory_callback": 270451,
+              "unclassified": 50671
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 264,
+              "pending_union_cck": 98943,
+              "nested_selection_valid_union_cck": 10735,
+              "pending_excluding_selection_cck": 88208
+            },
+            "pre_selected_contact": {
+              "pending_calls": 166,
+              "pending_union_cck": 66417,
+              "nested_selection_valid_union_cck": 9892,
+              "pending_excluding_selection_cck": 56525
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 53862042,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 77,
+            "classifier_union_cck": 33351,
+            "repeated_after_first_same_callback_generation_no_optional_job": 62,
+            "repeated_classifier_union_cck": 25243,
+            "maximum_attempts_same_callback_generation_no_optional_job": 8,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "4a9fe2a4c84330a3701b3c850b312a8dd10bbe818d96fad910358b2d8c8e898b",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-4",
+          "generation": 108,
+          "interval": {
+            "request_cck": 54679566,
+            "first_qualifying_copjmp_cck": 56827540,
+            "total_cck": 2147974,
+            "milliseconds": 605.5927790363121
+          },
+          "partition_cck": {
+            "landing_algorithm": 567,
+            "shared_preview_dispatch": 191972,
+            "hardware_service": 458159,
+            "actual_outgoing_ball": 31533,
+            "preview_envelopes_state_support": 321288,
+            "display_producer_footer": 32809,
+            "controls_and_requests": 53390,
+            "endpoint_eligibility": 95749,
+            "scheduler_classification": 177737,
+            "scheduler_admission": 40847,
+            "scheduler_owner_other": 412666,
+            "remaining_mandatory_callback": 278267,
+            "unclassified": 52990
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.15985812943433622,
+            "shared_preview_dispatch": 54.12395912481198,
+            "hardware_service": 129.17185312787663,
+            "actual_outgoing_ball": 8.890311103091577,
+            "preview_envelopes_state_support": 90.58289010528928,
+            "display_producer_footer": 9.250062378502887,
+            "controls_and_requests": 15.052602346559455,
+            "endpoint_eligibility": 26.99516055592286,
+            "scheduler_classification": 50.110589684780635,
+            "scheduler_admission": 11.51626986420517,
+            "scheduler_owner_other": 116.34570518721304,
+            "remaining_mandatory_callback": 78.45368977655104,
+            "unclassified": 14.939827652073152
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 331030,
+          "request_api_calls": 1,
+          "request_api_union_cck": 6810,
+          "latest_request_api_entry_cck": 54749752,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 164,
+          "declined_owners": 434,
+          "declined_owner_union_cck": 304597,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 56728310,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 99230,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 28413,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 5591,
+            "display_producer_footer": 15209,
+            "controls_and_requests": 2447,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 5064,
+            "scheduler_admission": 2196,
+            "scheduler_owner_other": 21773,
+            "remaining_mandatory_callback": 15205,
+            "unclassified": 3332
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 188124,
+              "landing_algorithm": 567,
+              "actual_outgoing_ball": 31533,
+              "preview_envelopes_state_support": 314039,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 3848,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 7249,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 181474,
+            "first_selected_contact_owner_dispatch_cck": 10498,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 666,
+              "primary_exclusive_union_cck": 95641
+            },
+            "game_poll_keyboard": {
+              "calls": 635,
+              "primary_exclusive_union_cck": 27308
+            },
+            "account_sim_timer": {
+              "calls": 1460,
+              "primary_exclusive_union_cck": 335210
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 224072,
+              "scheduling_and_preview_support_before_known": 1013663,
+              "measured_hardware_service_and_display_production_before_known": 447346,
+              "mandatory_callback_controls_requests_before_known": 314005,
+              "unclassified_before_known": 49658,
+              "known_upper_bound_to_qualifying_copjmp": 99230
+            },
+            "partition_ms": {
+              "actual_math_before_known": 63.1741283573379,
+              "scheduling_and_preview_support_before_known": 285.78883784267646,
+              "measured_hardware_service_and_display_production_before_known": 126.12327119917562,
+              "mandatory_callback_controls_requests_before_known": 88.52954485542989,
+              "unclassified_before_known": 14.000414447002237,
+              "known_upper_bound_to_qualifying_copjmp": 27.97658233468992
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 567,
+              "shared_preview_dispatch": 191972,
+              "hardware_service": 429746,
+              "actual_outgoing_ball": 31533,
+              "preview_envelopes_state_support": 315697,
+              "display_producer_footer": 17600,
+              "controls_and_requests": 50943,
+              "endpoint_eligibility": 95749,
+              "scheduler_classification": 172673,
+              "scheduler_admission": 38651,
+              "scheduler_owner_other": 390893,
+              "remaining_mandatory_callback": 263062,
+              "unclassified": 49658
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 257,
+              "pending_union_cck": 96439,
+              "nested_selection_valid_union_cck": 10184,
+              "pending_excluding_selection_cck": 86255
+            },
+            "pre_selected_contact": {
+              "pending_calls": 155,
+              "pending_union_cck": 62512,
+              "nested_selection_valid_union_cck": 9280,
+              "pending_excluding_selection_cck": 53232
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 56229792,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 76,
+            "classifier_union_cck": 29264,
+            "repeated_after_first_same_callback_generation_no_optional_job": 63,
+            "repeated_classifier_union_cck": 23050,
+            "maximum_attempts_same_callback_generation_no_optional_job": 8,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "b8551d9d0b47cfdbfb624d9507343c18dbe8107ed3ce2679722696cf0d7777cb",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-5",
+          "generation": 110,
+          "interval": {
+            "request_cck": 56960284,
+            "first_qualifying_copjmp_cck": 59030125,
+            "total_cck": 2069841,
+            "milliseconds": 583.564216025566
+          },
+          "partition_cck": {
+            "landing_algorithm": 566,
+            "shared_preview_dispatch": 183825,
+            "hardware_service": 433589,
+            "actual_outgoing_ball": 29879,
+            "preview_envelopes_state_support": 322850,
+            "display_producer_footer": 29814,
+            "controls_and_requests": 57902,
+            "endpoint_eligibility": 93668,
+            "scheduler_classification": 178328,
+            "scheduler_admission": 37032,
+            "scheduler_owner_other": 388671,
+            "remaining_mandatory_callback": 263697,
+            "unclassified": 50020
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.15957619269812046,
+            "shared_preview_dispatch": 51.827020534862186,
+            "hardware_service": 122.2446675190554,
+            "actual_outgoing_ball": 8.42398774139071,
+            "preview_envelopes_state_support": 91.02327528725829,
+            "display_producer_footer": 8.405661853536685,
+            "controls_and_requests": 16.324700900364967,
+            "endpoint_eligibility": 26.408450207857857,
+            "scheduler_classification": 50.27721429588415,
+            "scheduler_admission": 10.440681215542044,
+            "scheduler_owner_other": 109.58063320171587,
+            "remaining_mandatory_callback": 74.3458715298874,
+            "unclassified": 14.102475545512343
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 321381,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13555,
+          "latest_request_api_entry_cck": 57057893,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 158,
+          "declined_owners": 405,
+          "declined_owner_union_cck": 288438,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 58968228,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 61897,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 13100,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 10148,
+            "display_producer_footer": 13000,
+            "controls_and_requests": 1230,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2767,
+            "scheduler_admission": 1421,
+            "scheduler_owner_other": 11220,
+            "remaining_mandatory_callback": 7591,
+            "unclassified": 1420
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 183825,
+              "landing_algorithm": 566,
+              "actual_outgoing_ball": 29879,
+              "preview_envelopes_state_support": 310065,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 12785,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 173455,
+            "first_selected_contact_owner_dispatch_cck": 10370,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 627,
+              "primary_exclusive_union_cck": 90533
+            },
+            "game_poll_keyboard": {
+              "calls": 597,
+              "primary_exclusive_union_cck": 25654
+            },
+            "account_sim_timer": {
+              "calls": 1379,
+              "primary_exclusive_union_cck": 317402
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 214270,
+              "scheduling_and_preview_support_before_known": 994993,
+              "measured_hardware_service_and_display_production_before_known": 437303,
+              "mandatory_callback_controls_requests_before_known": 312778,
+              "unclassified_before_known": 48600,
+              "known_upper_bound_to_qualifying_copjmp": 61897
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.410584468951015,
+              "scheduling_and_preview_support_before_known": 280.5250789775282,
+              "measured_hardware_service_and_display_production_before_known": 123.29178055736074,
+              "mandatory_callback_controls_requests_before_known": 88.18360848009316,
+              "unclassified_before_known": 13.702125380085963,
+              "known_upper_bound_to_qualifying_copjmp": 17.45103816154693
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 566,
+              "shared_preview_dispatch": 183825,
+              "hardware_service": 420489,
+              "actual_outgoing_ball": 29879,
+              "preview_envelopes_state_support": 312702,
+              "display_producer_footer": 16814,
+              "controls_and_requests": 56672,
+              "endpoint_eligibility": 93668,
+              "scheduler_classification": 175561,
+              "scheduler_admission": 35611,
+              "scheduler_owner_other": 377451,
+              "remaining_mandatory_callback": 256106,
+              "unclassified": 48600
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 250,
+              "pending_union_cck": 95164,
+              "nested_selection_valid_union_cck": 9996,
+              "pending_excluding_selection_cck": 85168
+            },
+            "pre_selected_contact": {
+              "pending_calls": 158,
+              "pending_union_cck": 64747,
+              "nested_selection_valid_union_cck": 9394,
+              "pending_excluding_selection_cck": 55353
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 58495388,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 72,
+            "classifier_union_cck": 30426,
+            "repeated_after_first_same_callback_generation_no_optional_job": 59,
+            "repeated_classifier_union_cck": 24021,
+            "maximum_attempts_same_callback_generation_no_optional_job": 8,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "4a9fe2a4c84330a3701b3c850b312a8dd10bbe818d96fad910358b2d8c8e898b",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        }
+      ],
+      "final_caption": {
+        "passed": true,
+        "generation": 110,
+        "bytes_committed": 512,
+        "settle_elapsed_cck": 283768,
+        "caption_commit_latency_cck": 2433266,
+        "commit_entry": {
+          "cck": 59391556,
+          "frame": 835,
+          "hpos": 184,
+          "seconds": 16.74466145741557,
+          "vpos": 281
+        },
+        "commit_exit": {
+          "cck": 59393546,
+          "frame": 835,
+          "hpos": 131,
+          "seconds": 16.74522251152064,
+          "vpos": 290
+        },
+        "commit_readback": {
+          "cck": 59393550,
+          "frame": 835,
+          "provider_seconds": 16.745223639267586,
+          "physical_seconds": 10.535498231551822
+        },
+        "scope": "Finite stable final caption commit/readback; no first-scanout witness. Endpoint latencies unchanged"
+      },
+      "input_extrema": {
+        "passed": true,
+        "minimum_ack_hold_cck": 775,
+        "maximum_ack_hold_cck": 10400,
+        "maximum_receive_ready_icr_gap_cck": 33320,
+        "maximum_keyboard_poll_gap_cck": 33316,
+        "maximum_input_to_matrix_cck": 19554,
+        "incomplete_ack": null,
+        "scope": "Finite CIA serial/matrix/poll/ACK observations; no approved universal maximum inferred"
+      },
+      "retained_holds": {
+        "full_admission_predicate_independently_recomputed": false,
+        "prefix_cost_classification_independently_recomputed": false,
+        "normative_deadline_safety": false,
+        "causal_paired_improvement_claim": false
+      }
+    },
+    {
+      "standard": "NTSC",
+      "physical_clock_hz": 3579545,
+      "original_run_id": "c58919c303434c13acf6fcd32941e370",
+      "report_sha256": "6a82f1e91ec02e6f8233bc97c82fcdaa1f3f2ff71b87f64682aa929ac0634dfa",
+      "capture_sha256": "96b3e3942dc46461cf1e0fe880f61ca72e3fed7f09e80a8d174982dfbb9173e0",
+      "verified_original_binding_count": 351,
+      "original_source_commit": "d51f2b3b31d761ca98561f3005eaa28e8e98c531",
+      "native_product_commit": "d51f2b3b31d761ca98561f3005eaa28e8e98c531",
+      "native_sha256": "ad4ec12c1aba9bd125a42074c468ed106f8eaeb197c84d0ad0581dffcc709c45",
+      "coherent_policy": {
+        "policy": {
+          "schema": 1,
+          "status": "experimental-hypotheses-only",
+          "normative_s05_s18_g2_safety": false,
+          "units": "CCK unless specified",
+          "hypotheses": {
+            "accepted_owner": 5000,
+            "root_service": 2500,
+            "residual_margin": 2500,
+            "callback": 55750,
+            "entry_lateness": 2000,
+            "callback_completion_uncertainty": 1250,
+            "keyboard_poll_gap_finite_detector": 50000,
+            "beam_line_floor": 226,
+            "ready_line": 253,
+            "accepted_incoming_physics_owner": 20000
+          },
+          "scheduler": {
+            "max_prefix_envelopes": 4,
+            "geometry_points_per_job": 8,
+            "sample_lookahead": 8,
+            "residual_policy": "After selected readiness/lookahead, alternate other-branch progress with pending footer stage/commit; only eligible fitting work advances. No approved wall-time fairness bound.",
+            "footer_dma_lines": [
+              236,
+              251
+            ],
+            "record_format_changed": false
+          },
+          "job_hypotheses_e": {
+            "cheap_envelope_or_rejection": 1000,
+            "guarded_one_root_projected_dispatch": 4000,
+            "outgoing_ball_step": 4000,
+            "full_dispatch_or_resolution": 10000,
+            "endpoint_query": 9000,
+            "geometry_eight_points": 1000,
+            "placement_animation_producer": 4000,
+            "menu_render_single_unit": 9000,
+            "footer_stage_private": 9000,
+            "footer_commit_512": 1000,
+            "result_metadata": 1000,
+            "endpoint_stage": 4000,
+            "footer_stage_two_glyphs": 1000
+          },
+          "cost_scope": "Each prefix conservatively sums per-operation complete-owner hypotheses. Every admission also reserves500E root service and500E residual margin; next nominal sample and full callback completion remain separate. Private318 persists;72metadata restores peryield. No inference of WCET from inherited allowances or finite maxima.",
+          "basis": "Cheap/one-root allowances retain prior experimental hypotheses, with prior phase/geometry guard. Explicit worker removes hidden terminal geometry and branch-switch continuation. Full/endpoint/footer and sprite reservations retain earlier nominal allowance magnitude; broadened root contexts/outgoing/8-point geometry/footer commit are new hypotheses requiring separate measurements. No threshold reduced to admit contact. Footer stage is private; its separate512-byte copy is admitted outside actual236..251 DMA. Cooperative endpoint stages use a new complete-owner 4000E hypothesis: prepare performs two fixed eight-decision roots, validation uses at most three extrema, and candidate performs one actual advance plus at most one bounce or rollback. Seed copying, workspace clearing, terminal mirroring and metadata tails are included. Legacy whole-query 9000E remains historical; stage completion may require several grants. This is algorithm staging, not a reduced whole-query bound. Cooperative actual-font footer stages reserve a new complete-owner 1000E hypothesis for one clear/layout or at most two glyphs plus selection/cache tails. Legacy whole-footer 9000E remains historical; this does not reduce its bound. New stage measurements are required.",
+          "unresolved": [
+            "Conservative emitted complete-path CPU/OCS DMA/IRQ/coherent-read bounds, including bridge before/after observed stackspan",
+            "Full dispatch/lifecycle and resolution ownership, expensive contact/serve tails",
+            "Approved transport buffering/ACK maximum gap and logical response limits",
+            "Producer cutoff, visible rearm, exact publication and direct footer DMA trace coverage",
+            "Eligible residual service/capacity guarantees, resource/appearance/full release and cold boot"
+          ]
+        },
+        "policy_sha256": "c83cf59c0583d91a263c69d328ddbe049756324c5bed8c9e67404a7b68e0a19d",
+        "scheduler_source_sha256": "0cf66b967a95be08208e79f1a315327951c0d0203d791d1eb975e744327da8c5",
+        "executable_sha256": "ad4ec12c1aba9bd125a42074c468ed106f8eaeb197c84d0ad0581dffcc709c45"
+      },
+      "raw_bindings": {
+        "build/tests/coherent-contact-native-ntsc/literal-rpc.jsonl.gz": "e57a3805785f45ef8e00d9948420d9f6ee7a1f69480db42e2743cc82c9b142ff"
+      },
+      "trials": [
+        {
+          "label": "initial-held",
+          "generation": 3,
+          "interval": {
+            "request_cck": 31625430,
+            "first_qualifying_copjmp_cck": 33803454,
+            "total_cck": 2178024,
+            "milliseconds": 608.463924884308
+          },
+          "partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 252277,
+            "hardware_service": 425725,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 356259,
+            "display_producer_footer": 35454,
+            "controls_and_requests": 45964,
+            "endpoint_eligibility": 87757,
+            "scheduler_classification": 226970,
+            "scheduler_admission": 32403,
+            "scheduler_owner_other": 384463,
+            "remaining_mandatory_callback": 280942,
+            "unclassified": 49810
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.0,
+            "shared_preview_dispatch": 70.47739307649437,
+            "hardware_service": 118.9327135152652,
+            "actual_outgoing_ball": 0.0,
+            "preview_envelopes_state_support": 99.52633644778875,
+            "display_producer_footer": 9.904610781537878,
+            "controls_and_requests": 12.84073813850643,
+            "endpoint_eligibility": 24.51624438301516,
+            "scheduler_classification": 63.40750011523811,
+            "scheduler_admission": 9.052267816160992,
+            "scheduler_owner_other": 107.40555014673653,
+            "remaining_mandatory_callback": 78.48539409338338,
+            "unclassified": 13.915176370181126
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 325047,
+          "request_api_calls": 0,
+          "request_api_union_cck": 0,
+          "latest_request_api_entry_cck": null,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 164,
+          "declined_owners": 390,
+          "declined_owner_union_cck": 280200,
+          "background_contact_owner_witnesses": 0,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 33623359,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 180095,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 43408,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 23577,
+            "display_producer_footer": 29026,
+            "controls_and_requests": 3677,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 12620,
+            "scheduler_admission": 4774,
+            "scheduler_owner_other": 35392,
+            "remaining_mandatory_callback": 22771,
+            "unclassified": 4850
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 252277,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 332682,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 23577,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": null,
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 628,
+              "primary_exclusive_union_cck": 87399
+            },
+            "game_poll_keyboard": {
+              "calls": 591,
+              "primary_exclusive_union_cck": 25734
+            },
+            "account_sim_timer": {
+              "calls": 1353,
+              "primary_exclusive_union_cck": 312592
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 252277,
+              "scheduling_and_preview_support_before_known": 1011489,
+              "measured_hardware_service_and_display_production_before_known": 388745,
+              "mandatory_callback_controls_requests_before_known": 300458,
+              "unclassified_before_known": 44960,
+              "known_upper_bound_to_qualifying_copjmp": 180095
+            },
+            "partition_ms": {
+              "actual_math_before_known": 70.47739307649437,
+              "scheduling_and_preview_support_before_known": 282.5747406444115,
+              "measured_hardware_service_and_display_production_before_known": 108.60179156848147,
+              "mandatory_callback_controls_requests_before_known": 83.9374836746011,
+              "unclassified_before_known": 12.560255563207056,
+              "known_upper_bound_to_qualifying_copjmp": 50.31226035711243
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 0,
+              "shared_preview_dispatch": 252277,
+              "hardware_service": 382317,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 332682,
+              "display_producer_footer": 6428,
+              "controls_and_requests": 42287,
+              "endpoint_eligibility": 87757,
+              "scheduler_classification": 214350,
+              "scheduler_admission": 27629,
+              "scheduler_owner_other": 349071,
+              "remaining_mandatory_callback": 258171,
+              "unclassified": 44960
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 218,
+              "pending_union_cck": 87757,
+              "nested_selection_valid_union_cck": 13113,
+              "pending_excluding_selection_cck": 74644
+            },
+            "pre_selected_contact": null,
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": null,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 56,
+            "classifier_union_cck": 50338,
+            "repeated_after_first_same_callback_generation_no_optional_job": 38,
+            "repeated_classifier_union_cck": 34194,
+            "maximum_attempts_same_callback_generation_no_optional_job": 5,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "2b447cec62d5d386dce4f22638e59d079ad12709bfa74720683e07d4a9f779ba",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "aligned-held",
+          "generation": 98,
+          "interval": {
+            "request_cck": 33809070,
+            "first_qualifying_copjmp_cck": 44752799,
+            "total_cck": 10943729,
+            "milliseconds": 3057.296108862998
+          },
+          "partition_cck": {
+            "landing_algorithm": 4889,
+            "shared_preview_dispatch": 208744,
+            "hardware_service": 2446201,
+            "actual_outgoing_ball": 2987,
+            "preview_envelopes_state_support": 1520497,
+            "display_producer_footer": 623995,
+            "controls_and_requests": 953366,
+            "endpoint_eligibility": 362711,
+            "scheduler_classification": 897629,
+            "scheduler_admission": 295988,
+            "scheduler_owner_other": 1948807,
+            "remaining_mandatory_callback": 1390195,
+            "unclassified": 287720
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.3658160464528313,
+            "shared_preview_dispatch": 58.315791532164006,
+            "hardware_service": 683.3832232867585,
+            "actual_outgoing_ball": 0.8344635980271236,
+            "preview_envelopes_state_support": 424.77381901889765,
+            "display_producer_footer": 174.3224348345949,
+            "controls_and_requests": 266.33720207456537,
+            "endpoint_eligibility": 101.32880016873654,
+            "scheduler_classification": 250.76622866872745,
+            "scheduler_admission": 82.68872161126623,
+            "scheduler_owner_other": 544.4286913560243,
+            "remaining_mandatory_callback": 388.37198582501406,
+            "unclassified": 80.37893084176899
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 2332887,
+          "request_api_calls": 95,
+          "request_api_union_cck": 648348,
+          "latest_request_api_entry_cck": 42753687,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 617,
+          "declined_owners": 2626,
+          "declined_owner_union_cck": 1978945,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 44675478,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 77321,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 25124,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4110,
+            "display_producer_footer": 11007,
+            "controls_and_requests": 1233,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2075,
+            "scheduler_admission": 3927,
+            "scheduler_owner_other": 19312,
+            "remaining_mandatory_callback": 7584,
+            "unclassified": 2949
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 208744,
+              "landing_algorithm": 4889,
+              "actual_outgoing_ball": 2987,
+              "preview_envelopes_state_support": 1512703,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 7794,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 198087,
+            "first_selected_contact_owner_dispatch_cck": 10657,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 3609,
+              "primary_exclusive_union_cck": 539186
+            },
+            "game_poll_keyboard": {
+              "calls": 3425,
+              "primary_exclusive_union_cck": 148932
+            },
+            "account_sim_timer": {
+              "calls": 7598,
+              "primary_exclusive_union_cck": 1758083
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 216620,
+              "scheduling_and_preview_support_before_known": 4996208,
+              "measured_hardware_service_and_display_production_before_known": 3034065,
+              "mandatory_callback_controls_requests_before_known": 2334744,
+              "unclassified_before_known": 284771,
+              "known_upper_bound_to_qualifying_copjmp": 77321
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.51607117664396,
+              "scheduling_and_preview_support_before_known": 1395.7662216845995,
+              "measured_hardware_service_and_display_production_before_known": 847.6119171570689,
+              "mandatory_callback_controls_requests_before_known": 652.246025682035,
+              "unclassified_before_known": 79.5550831181058,
+              "known_upper_bound_to_qualifying_copjmp": 21.600790044544766
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4889,
+              "shared_preview_dispatch": 208744,
+              "hardware_service": 2421077,
+              "actual_outgoing_ball": 2987,
+              "preview_envelopes_state_support": 1516387,
+              "display_producer_footer": 612988,
+              "controls_and_requests": 952133,
+              "endpoint_eligibility": 362711,
+              "scheduler_classification": 895554,
+              "scheduler_admission": 292061,
+              "scheduler_owner_other": 1929495,
+              "remaining_mandatory_callback": 1382611,
+              "unclassified": 284771
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 930,
+              "pending_union_cck": 366568,
+              "nested_selection_valid_union_cck": 51262,
+              "pending_excluding_selection_cck": 315306
+            },
+            "pre_selected_contact": {
+              "pending_calls": 910,
+              "pending_union_cck": 356891,
+              "nested_selection_valid_union_cck": 50049,
+              "pending_excluding_selection_cck": 306842
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 44563542,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 244,
+            "classifier_union_cck": 236854,
+            "repeated_after_first_same_callback_generation_no_optional_job": 184,
+            "repeated_classifier_union_cck": 178804,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "462faa68f7f14bbef2c7ae9a9b33bf6b21a4810ba411dd74b26a67be71de14f2",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "fresh-D-edit",
+          "generation": 99,
+          "interval": {
+            "request_cck": 44799076,
+            "first_qualifying_copjmp_cck": 46667435,
+            "total_cck": 1868359,
+            "milliseconds": 521.9543265973748
+          },
+          "partition_cck": {
+            "landing_algorithm": 4501,
+            "shared_preview_dispatch": 205377,
+            "hardware_service": 387390,
+            "actual_outgoing_ball": 2984,
+            "preview_envelopes_state_support": 295108,
+            "display_producer_footer": 22463,
+            "controls_and_requests": 45912,
+            "endpoint_eligibility": 75009,
+            "scheduler_classification": 168539,
+            "scheduler_admission": 37759,
+            "scheduler_owner_other": 342868,
+            "remaining_mandatory_callback": 235751,
+            "unclassified": 44698
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2574223818949057,
+            "shared_preview_dispatch": 57.37516919049767,
+            "hardware_service": 108.22325183787325,
+            "actual_outgoing_ball": 0.8336255026826035,
+            "preview_envelopes_state_support": 82.44288031020703,
+            "display_producer_footer": 6.275378574651247,
+            "controls_and_requests": 12.82621115253475,
+            "endpoint_eligibility": 20.954897899034655,
+            "scheduler_classification": 47.08391709002122,
+            "scheduler_admission": 10.54854737124411,
+            "scheduler_owner_other": 95.78535819496612,
+            "remaining_mandatory_callback": 65.86060518864828,
+            "unclassified": 12.487061903118972
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 280167,
+          "request_api_calls": 1,
+          "request_api_union_cck": 6817,
+          "latest_request_api_entry_cck": 44844992,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 137,
+          "declined_owners": 366,
+          "declined_owner_union_cck": 256346,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 46587099,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 80336,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 25396,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4976,
+            "display_producer_footer": 10954,
+            "controls_and_requests": 1241,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2081,
+            "scheduler_admission": 3926,
+            "scheduler_owner_other": 21140,
+            "remaining_mandatory_callback": 7606,
+            "unclassified": 3016
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 205377,
+              "landing_algorithm": 4501,
+              "actual_outgoing_ball": 2984,
+              "preview_envelopes_state_support": 286446,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 8662,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 194706,
+            "first_selected_contact_owner_dispatch_cck": 10671,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 565,
+              "primary_exclusive_union_cck": 80187
+            },
+            "game_poll_keyboard": {
+              "calls": 533,
+              "primary_exclusive_union_cck": 23311
+            },
+            "account_sim_timer": {
+              "calls": 1234,
+              "primary_exclusive_union_cck": 283892
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 212862,
+              "scheduling_and_preview_support_before_known": 887160,
+              "measured_hardware_service_and_display_production_before_known": 373503,
+              "mandatory_callback_controls_requests_before_known": 272816,
+              "unclassified_before_known": 41682,
+              "known_upper_bound_to_qualifying_copjmp": 80336
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.466217075075186,
+              "scheduling_and_preview_support_before_known": 247.84155528146735,
+              "measured_hardware_service_and_display_production_before_known": 104.34370848808997,
+              "mandatory_callback_controls_requests_before_known": 76.21527317019341,
+              "unclassified_before_known": 11.644496716761488,
+              "known_upper_bound_to_qualifying_copjmp": 22.44307586578741
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4501,
+              "shared_preview_dispatch": 205377,
+              "hardware_service": 361994,
+              "actual_outgoing_ball": 2984,
+              "preview_envelopes_state_support": 290132,
+              "display_producer_footer": 11509,
+              "controls_and_requests": 44671,
+              "endpoint_eligibility": 75009,
+              "scheduler_classification": 166458,
+              "scheduler_admission": 33833,
+              "scheduler_owner_other": 321728,
+              "remaining_mandatory_callback": 228145,
+              "unclassified": 41682
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 186,
+              "pending_union_cck": 76898,
+              "nested_selection_valid_union_cck": 11167,
+              "pending_excluding_selection_cck": 65731
+            },
+            "pre_selected_contact": {
+              "pending_calls": 167,
+              "pending_union_cck": 67714,
+              "nested_selection_valid_union_cck": 10019,
+              "pending_excluding_selection_cck": 57695
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 46477282,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 8,
+            "classifier_union_cck": 5735,
+            "repeated_after_first_same_callback_generation_no_optional_job": 6,
+            "repeated_classifier_union_cck": 4623,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "84f670f8472c756bf89c0c26cd78396b0328d4022d11314a168ce1a3304dcfea",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-0",
+          "generation": 101,
+          "interval": {
+            "request_cck": 46853854,
+            "first_qualifying_copjmp_cck": 48761577,
+            "total_cck": 1907723,
+            "milliseconds": 532.9512549779372
+          },
+          "partition_cck": {
+            "landing_algorithm": 4543,
+            "shared_preview_dispatch": 199749,
+            "hardware_service": 397802,
+            "actual_outgoing_ball": 2988,
+            "preview_envelopes_state_support": 294888,
+            "display_producer_footer": 27355,
+            "controls_and_requests": 54997,
+            "endpoint_eligibility": 78003,
+            "scheduler_classification": 176525,
+            "scheduler_admission": 35107,
+            "scheduler_owner_other": 345793,
+            "remaining_mandatory_callback": 243620,
+            "unclassified": 46353
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2691557167181862,
+            "shared_preview_dispatch": 55.80290232417807,
+            "hardware_service": 111.13200141358747,
+            "actual_outgoing_ball": 0.8347429631419636,
+            "preview_envelopes_state_support": 82.38141998494223,
+            "display_producer_footer": 7.642032716448599,
+            "controls_and_requests": 15.364243220856283,
+            "endpoint_eligibility": 21.791317052865658,
+            "scheduler_classification": 49.314926897133574,
+            "scheduler_admission": 9.807671086688392,
+            "scheduler_owner_other": 96.60250115587316,
+            "remaining_mandatory_callback": 68.05892927732435,
+            "unclassified": 12.949411168179196
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 297080,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13667,
+          "latest_request_api_entry_cck": 46995018,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 128,
+          "declined_owners": 395,
+          "declined_owner_union_cck": 280018,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 48695475,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 66102,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 18259,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4964,
+            "display_producer_footer": 12229,
+            "controls_and_requests": 1233,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2084,
+            "scheduler_admission": 1641,
+            "scheduler_owner_other": 15967,
+            "remaining_mandatory_callback": 7606,
+            "unclassified": 2119
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 199749,
+              "landing_algorithm": 4543,
+              "actual_outgoing_ball": 2988,
+              "preview_envelopes_state_support": 289924,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 4964,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 189424,
+            "first_selected_contact_owner_dispatch_cck": 10325,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 586,
+              "primary_exclusive_union_cck": 84141
+            },
+            "game_poll_keyboard": {
+              "calls": 554,
+              "primary_exclusive_union_cck": 24121
+            },
+            "account_sim_timer": {
+              "calls": 1258,
+              "primary_exclusive_union_cck": 289540
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 207280,
+              "scheduling_and_preview_support_before_known": 905660,
+              "measured_hardware_service_and_display_production_before_known": 394669,
+              "mandatory_callback_controls_requests_before_known": 289778,
+              "unclassified_before_known": 44234,
+              "known_upper_bound_to_qualifying_copjmp": 66102
+            },
+            "partition_ms": {
+              "actual_math_before_known": 57.90680100403822,
+              "scheduling_and_preview_support_before_known": 253.0098099060076,
+              "measured_hardware_service_and_display_production_before_known": 110.25675050879371,
+              "mandatory_callback_controls_requests_before_known": 80.95386424810975,
+              "unclassified_before_known": 12.357436489833205,
+              "known_upper_bound_to_qualifying_copjmp": 18.466592821154645
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4543,
+              "shared_preview_dispatch": 199749,
+              "hardware_service": 379543,
+              "actual_outgoing_ball": 2988,
+              "preview_envelopes_state_support": 289924,
+              "display_producer_footer": 15126,
+              "controls_and_requests": 53764,
+              "endpoint_eligibility": 78003,
+              "scheduler_classification": 174441,
+              "scheduler_admission": 33466,
+              "scheduler_owner_other": 329826,
+              "remaining_mandatory_callback": 236014,
+              "unclassified": 44234
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 194,
+              "pending_union_cck": 79902,
+              "nested_selection_valid_union_cck": 11603,
+              "pending_excluding_selection_cck": 68299
+            },
+            "pre_selected_contact": {
+              "pending_calls": 177,
+              "pending_union_cck": 71347,
+              "nested_selection_valid_union_cck": 10571,
+              "pending_excluding_selection_cck": 60776
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 48608839,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 38,
+            "classifier_union_cck": 29428,
+            "repeated_after_first_same_callback_generation_no_optional_job": 27,
+            "repeated_classifier_union_cck": 20382,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "462faa68f7f14bbef2c7ae9a9b33bf6b21a4810ba411dd74b26a67be71de14f2",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-1",
+          "generation": 103,
+          "interval": {
+            "request_cck": 48890738,
+            "first_qualifying_copjmp_cck": 50736045,
+            "total_cck": 1845307,
+            "milliseconds": 515.5144019700828
+          },
+          "partition_cck": {
+            "landing_algorithm": 4549,
+            "shared_preview_dispatch": 195584,
+            "hardware_service": 388536,
+            "actual_outgoing_ball": 2985,
+            "preview_envelopes_state_support": 278293,
+            "display_producer_footer": 19259,
+            "controls_and_requests": 53542,
+            "endpoint_eligibility": 76946,
+            "scheduler_classification": 171723,
+            "scheduler_admission": 33255,
+            "scheduler_owner_other": 339375,
+            "remaining_mandatory_callback": 235814,
+            "unclassified": 45446
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.2708319074072263,
+            "shared_preview_dispatch": 54.63934662086941,
+            "hardware_service": 108.5434042594799,
+            "actual_outgoing_ball": 0.8339048677974435,
+            "preview_envelopes_state_support": 77.74535590417217,
+            "display_producer_footer": 5.380292746703841,
+            "controls_and_requests": 14.957766978764061,
+            "endpoint_eligibility": 21.49602812647976,
+            "scheduler_classification": 47.973415615671826,
+            "scheduler_admission": 9.290286894004685,
+            "scheduler_owner_other": 94.80953584882995,
+            "remaining_mandatory_callback": 65.8782051908832,
+            "unclassified": 12.696027009019303
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 287863,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13667,
+          "latest_request_api_entry_cck": 48966941,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 120,
+          "declined_owners": 398,
+          "declined_owner_union_cck": 286203,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 50649239,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 86806,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 27036,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4973,
+            "display_producer_footer": 12658,
+            "controls_and_requests": 1231,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 3072,
+            "scheduler_admission": 4253,
+            "scheduler_owner_other": 22796,
+            "remaining_mandatory_callback": 7591,
+            "unclassified": 3196
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 195584,
+              "landing_algorithm": 4549,
+              "actual_outgoing_ball": 2985,
+              "preview_envelopes_state_support": 273320,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 4973,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 185241,
+            "first_selected_contact_owner_dispatch_cck": 10343,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 580,
+              "primary_exclusive_union_cck": 82595
+            },
+            "game_poll_keyboard": {
+              "calls": 548,
+              "primary_exclusive_union_cck": 23778
+            },
+            "account_sim_timer": {
+              "calls": 1232,
+              "primary_exclusive_union_cck": 282163
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 203118,
+              "scheduling_and_preview_support_before_known": 864498,
+              "measured_hardware_service_and_display_production_before_known": 368101,
+              "mandatory_callback_controls_requests_before_known": 280534,
+              "unclassified_before_known": 42250,
+              "known_upper_bound_to_qualifying_copjmp": 86806
+            },
+            "partition_ms": {
+              "actual_math_before_known": 56.74408339607408,
+              "scheduling_and_preview_support_before_known": 241.51058304896293,
+              "measured_hardware_service_and_display_production_before_known": 102.83457813772421,
+              "mandatory_callback_controls_requests_before_known": 78.37141312652865,
+              "unclassified_before_known": 11.803176101990616,
+              "known_upper_bound_to_qualifying_copjmp": 24.250568158802306
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4549,
+              "shared_preview_dispatch": 195584,
+              "hardware_service": 361500,
+              "actual_outgoing_ball": 2985,
+              "preview_envelopes_state_support": 273320,
+              "display_producer_footer": 6601,
+              "controls_and_requests": 52311,
+              "endpoint_eligibility": 76946,
+              "scheduler_classification": 168651,
+              "scheduler_admission": 29002,
+              "scheduler_owner_other": 316579,
+              "remaining_mandatory_callback": 228223,
+              "unclassified": 42250
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 190,
+              "pending_union_cck": 78840,
+              "nested_selection_valid_union_cck": 11425,
+              "pending_excluding_selection_cck": 67415
+            },
+            "pre_selected_contact": {
+              "pending_calls": 170,
+              "pending_union_cck": 69165,
+              "nested_selection_valid_union_cck": 10220,
+              "pending_excluding_selection_cck": 58945
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 50537463,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 49,
+            "classifier_union_cck": 43948,
+            "repeated_after_first_same_callback_generation_no_optional_job": 33,
+            "repeated_classifier_union_cck": 27726,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "462faa68f7f14bbef2c7ae9a9b33bf6b21a4810ba411dd74b26a67be71de14f2",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-2",
+          "generation": 105,
+          "interval": {
+            "request_cck": 50949094,
+            "first_qualifying_copjmp_cck": 52710518,
+            "total_cck": 1761424,
+            "milliseconds": 492.08041804195784
+          },
+          "partition_cck": {
+            "landing_algorithm": 4525,
+            "shared_preview_dispatch": 191638,
+            "hardware_service": 346050,
+            "actual_outgoing_ball": 3001,
+            "preview_envelopes_state_support": 285347,
+            "display_producer_footer": 30100,
+            "controls_and_requests": 51104,
+            "endpoint_eligibility": 77175,
+            "scheduler_classification": 178967,
+            "scheduler_admission": 25041,
+            "scheduler_owner_other": 309507,
+            "remaining_mandatory_callback": 219500,
+            "unclassified": 39469
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.264127144651066,
+            "shared_preview_dispatch": 53.53697187771071,
+            "hardware_service": 96.67429799038705,
+            "actual_outgoing_ball": 0.8383747096348838,
+            "preview_envelopes_state_support": 79.71599742425364,
+            "display_producer_footer": 8.408889956684439,
+            "controls_and_requests": 14.276674828784106,
+            "endpoint_eligibility": 21.560002737778124,
+            "scheduler_classification": 49.99713650757289,
+            "scheduler_admission": 6.995581840708805,
+            "scheduler_owner_other": 86.46545859878839,
+            "remaining_mandatory_callback": 61.3206427073832,
+            "unclassified": 11.026261717620535
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 269208,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13719,
+          "latest_request_api_entry_cck": 51057630,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 127,
+          "declined_owners": 322,
+          "declined_owner_union_cck": 240992,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 52680569,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 29949,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 6189,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 1285,
+            "display_producer_footer": 13141,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 1111,
+            "scheduler_admission": 1084,
+            "scheduler_owner_other": 6573,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 566
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 191638,
+              "landing_algorithm": 4525,
+              "actual_outgoing_ball": 3001,
+              "preview_envelopes_state_support": 274531,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 10816,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 181361,
+            "first_selected_contact_owner_dispatch_cck": 10277,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 507,
+              "primary_exclusive_union_cck": 73318
+            },
+            "game_poll_keyboard": {
+              "calls": 477,
+              "primary_exclusive_union_cck": 20696
+            },
+            "account_sim_timer": {
+              "calls": 1095,
+              "primary_exclusive_union_cck": 252036
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 199164,
+              "scheduling_and_preview_support_before_known": 865984,
+              "measured_hardware_service_and_display_production_before_known": 356820,
+              "mandatory_callback_controls_requests_before_known": 270604,
+              "unclassified_before_known": 38903,
+              "known_upper_bound_to_qualifying_copjmp": 29949
+            },
+            "partition_ms": {
+              "actual_math_before_known": 55.63947373199667,
+              "scheduling_and_preview_support_before_known": 241.9257196096152,
+              "measured_hardware_service_and_display_production_before_known": 99.683060277214,
+              "mandatory_callback_controls_requests_before_known": 75.59731753616731,
+              "unclassified_before_known": 10.868141062621087,
+              "known_upper_bound_to_qualifying_copjmp": 8.366705824343597
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4525,
+              "shared_preview_dispatch": 191638,
+              "hardware_service": 339861,
+              "actual_outgoing_ball": 3001,
+              "preview_envelopes_state_support": 284062,
+              "display_producer_footer": 16959,
+              "controls_and_requests": 51104,
+              "endpoint_eligibility": 77175,
+              "scheduler_classification": 177856,
+              "scheduler_admission": 23957,
+              "scheduler_owner_other": 302934,
+              "remaining_mandatory_callback": 219500,
+              "unclassified": 38903
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 191,
+              "pending_union_cck": 78864,
+              "nested_selection_valid_union_cck": 11445,
+              "pending_excluding_selection_cck": 67419
+            },
+            "pre_selected_contact": {
+              "pending_calls": 171,
+              "pending_union_cck": 68761,
+              "nested_selection_valid_union_cck": 10233,
+              "pending_excluding_selection_cck": 58528
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 52568523,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 52,
+            "classifier_union_cck": 46960,
+            "repeated_after_first_same_callback_generation_no_optional_job": 35,
+            "repeated_classifier_union_cck": 32277,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "61e0cdc5f9b5f399cfc96a8a12bedc69782947837317cc69a422003e68f4afc8",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-3",
+          "generation": 106,
+          "interval": {
+            "request_cck": 52849914,
+            "first_qualifying_copjmp_cck": 54565333,
+            "total_cck": 1715419,
+            "milliseconds": 479.228225933743
+          },
+          "partition_cck": {
+            "landing_algorithm": 4526,
+            "shared_preview_dispatch": 191908,
+            "hardware_service": 333811,
+            "actual_outgoing_ball": 2993,
+            "preview_envelopes_state_support": 282729,
+            "display_producer_footer": 25972,
+            "controls_and_requests": 41625,
+            "endpoint_eligibility": 75373,
+            "scheduler_classification": 178503,
+            "scheduler_admission": 24227,
+            "scheduler_owner_other": 305965,
+            "remaining_mandatory_callback": 209950,
+            "unclassified": 37837
+          },
+          "partition_ms": {
+            "landing_algorithm": 1.264406509765906,
+            "shared_preview_dispatch": 53.61240045871752,
+            "hardware_service": 93.25514834986011,
+            "actual_outgoing_ball": 0.8361397887161637,
+            "preview_envelopes_state_support": 78.98461955360249,
+            "display_producer_footer": 7.255670762624859,
+            "controls_and_requests": 11.628572905215607,
+            "endpoint_eligibility": 21.05658680083642,
+            "scheduler_classification": 49.867511094287124,
+            "scheduler_admission": 6.768178637229033,
+            "scheduler_owner_other": 85.47594736202507,
+            "remaining_mandatory_callback": 58.652705860661065,
+            "unclassified": 10.570337850201632
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 250231,
+          "request_api_calls": 1,
+          "request_api_union_cck": 6851,
+          "latest_request_api_entry_cck": 52909593,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 130,
+          "declined_owners": 298,
+          "declined_owner_union_cck": 232394,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": true,
+          "endpoint_known_return_upper_bound_cck": 54532040,
+          "endpoint_known_basis": "matching selected endpoint API ready-return upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 33293,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 7585,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 1281,
+            "display_producer_footer": 13143,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 1760,
+            "scheduler_admission": 1225,
+            "scheduler_owner_other": 7614,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 685
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 191908,
+              "landing_algorithm": 4526,
+              "actual_outgoing_ball": 2993,
+              "preview_envelopes_state_support": 271893,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 10836,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 181608,
+            "first_selected_contact_owner_dispatch_cck": 10300,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 485,
+              "primary_exclusive_union_cck": 69269
+            },
+            "game_poll_keyboard": {
+              "calls": 456,
+              "primary_exclusive_union_cck": 19812
+            },
+            "account_sim_timer": {
+              "calls": 1058,
+              "primary_exclusive_union_cck": 244730
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 199427,
+              "scheduling_and_preview_support_before_known": 854917,
+              "measured_hardware_service_and_display_production_before_known": 339055,
+              "mandatory_callback_controls_requests_before_known": 251575,
+              "unclassified_before_known": 37152,
+              "known_upper_bound_to_qualifying_copjmp": 33293
+            },
+            "partition_ms": {
+              "actual_math_before_known": 55.71294675719959,
+              "scheduling_and_preview_support_before_known": 238.83398588368075,
+              "measured_hardware_service_and_display_production_before_known": 94.72013901208115,
+              "mandatory_callback_controls_requests_before_known": 70.28127876587666,
+              "unclassified_before_known": 10.378972746536222,
+              "known_upper_bound_to_qualifying_copjmp": 9.300902768368605
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4526,
+              "shared_preview_dispatch": 191908,
+              "hardware_service": 326226,
+              "actual_outgoing_ball": 2993,
+              "preview_envelopes_state_support": 281448,
+              "display_producer_footer": 12829,
+              "controls_and_requests": 41625,
+              "endpoint_eligibility": 75373,
+              "scheduler_classification": 176743,
+              "scheduler_admission": 23002,
+              "scheduler_owner_other": 298351,
+              "remaining_mandatory_callback": 209950,
+              "unclassified": 37152
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 186,
+              "pending_union_cck": 77061,
+              "nested_selection_valid_union_cck": 11187,
+              "pending_excluding_selection_cck": 65874
+            },
+            "pre_selected_contact": {
+              "pending_calls": 166,
+              "pending_union_cck": 67362,
+              "nested_selection_valid_union_cck": 9977,
+              "pending_excluding_selection_cck": 57385
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 54420207,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 46,
+            "classifier_union_cck": 40445,
+            "repeated_after_first_same_callback_generation_no_optional_job": 32,
+            "repeated_classifier_union_cck": 28567,
+            "maximum_attempts_same_callback_generation_no_optional_job": 6,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "61e0cdc5f9b5f399cfc96a8a12bedc69782947837317cc69a422003e68f4afc8",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-4",
+          "generation": 107,
+          "interval": {
+            "request_cck": 54772182,
+            "first_qualifying_copjmp_cck": 56898793,
+            "total_cck": 2126611,
+            "milliseconds": 594.1009262350383
+          },
+          "partition_cck": {
+            "landing_algorithm": 570,
+            "shared_preview_dispatch": 188195,
+            "hardware_service": 453896,
+            "actual_outgoing_ball": 31778,
+            "preview_envelopes_state_support": 329875,
+            "display_producer_footer": 25260,
+            "controls_and_requests": 50027,
+            "endpoint_eligibility": 99869,
+            "scheduler_classification": 196040,
+            "scheduler_admission": 31177,
+            "scheduler_owner_other": 408866,
+            "remaining_mandatory_callback": 259212,
+            "unclassified": 51846
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.1592381154588083,
+            "shared_preview_dispatch": 52.57511778731654,
+            "hardware_service": 126.80270816542325,
+            "actual_outgoing_ball": 8.877664619385984,
+            "preview_envelopes_state_support": 92.15556725784981,
+            "display_producer_footer": 7.056762800858769,
+            "controls_and_requests": 13.97579860010141,
+            "endpoint_eligibility": 27.899914653957417,
+            "scheduler_classification": 54.76673711323646,
+            "scheduler_admission": 8.709766185367135,
+            "scheduler_owner_other": 114.2228970441774,
+            "remaining_mandatory_callback": 72.41479014790986,
+            "unclassified": 14.483963743995396
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 307562,
+          "request_api_calls": 1,
+          "request_api_union_cck": 6855,
+          "latest_request_api_entry_cck": 54821010,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 159,
+          "declined_owners": 427,
+          "declined_owner_union_cck": 325091,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 56812581,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 86212,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 27168,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 4987,
+            "display_producer_footer": 14321,
+            "controls_and_requests": 1203,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 4055,
+            "scheduler_admission": 2455,
+            "scheduler_owner_other": 21465,
+            "remaining_mandatory_callback": 7363,
+            "unclassified": 3195
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 188195,
+              "landing_algorithm": 570,
+              "actual_outgoing_ball": 31778,
+              "preview_envelopes_state_support": 313850,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 16025,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 177623,
+            "first_selected_contact_owner_dispatch_cck": 10572,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 656,
+              "primary_exclusive_union_cck": 95170
+            },
+            "game_poll_keyboard": {
+              "calls": 620,
+              "primary_exclusive_union_cck": 27465
+            },
+            "account_sim_timer": {
+              "calls": 1426,
+              "primary_exclusive_union_cck": 331261
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 220543,
+              "scheduling_and_preview_support_before_known": 1032865,
+              "measured_hardware_service_and_display_production_before_known": 437667,
+              "mandatory_callback_controls_requests_before_known": 300673,
+              "unclassified_before_known": 48651,
+              "known_upper_bound_to_qualifying_copjmp": 86212
+            },
+            "partition_ms": {
+              "actual_math_before_known": 61.61202052216134,
+              "scheduling_and_preview_support_before_known": 288.5464493392317,
+              "measured_hardware_service_and_display_production_before_known": 122.26889171668466,
+              "mandatory_callback_controls_requests_before_known": 83.99754717429171,
+              "unclassified_before_known": 13.591392202081549,
+              "known_upper_bound_to_qualifying_copjmp": 24.084625280587336
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 570,
+              "shared_preview_dispatch": 188195,
+              "hardware_service": 426728,
+              "actual_outgoing_ball": 31778,
+              "preview_envelopes_state_support": 324888,
+              "display_producer_footer": 10939,
+              "controls_and_requests": 48824,
+              "endpoint_eligibility": 99869,
+              "scheduler_classification": 191985,
+              "scheduler_admission": 28722,
+              "scheduler_owner_other": 387401,
+              "remaining_mandatory_callback": 251849,
+              "unclassified": 48651
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 266,
+              "pending_union_cck": 100364,
+              "nested_selection_valid_union_cck": 10827,
+              "pending_excluding_selection_cck": 89537
+            },
+            "pre_selected_contact": {
+              "pending_calls": 165,
+              "pending_union_cck": 66553,
+              "nested_selection_valid_union_cck": 9919,
+              "pending_excluding_selection_cck": 56634
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 56314713,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 92,
+            "classifier_union_cck": 43678,
+            "repeated_after_first_same_callback_generation_no_optional_job": 74,
+            "repeated_classifier_union_cck": 32885,
+            "maximum_attempts_same_callback_generation_no_optional_job": 8,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "09ac32c5a5819c79e4d4ad11f27022ce32934490a23d599e9e72db4d465af9fd",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        },
+        {
+          "label": "contact-phase-5",
+          "generation": 109,
+          "interval": {
+            "request_cck": 57073945,
+            "first_qualifying_copjmp_cck": 59112599,
+            "total_cck": 2038654,
+            "milliseconds": 569.528808829055
+          },
+          "partition_cck": {
+            "landing_algorithm": 573,
+            "shared_preview_dispatch": 183538,
+            "hardware_service": 428875,
+            "actual_outgoing_ball": 30153,
+            "preview_envelopes_state_support": 314428,
+            "display_producer_footer": 25189,
+            "controls_and_requests": 56237,
+            "endpoint_eligibility": 95962,
+            "scheduler_classification": 188953,
+            "scheduler_admission": 28086,
+            "scheduler_owner_other": 386674,
+            "remaining_mandatory_callback": 250712,
+            "unclassified": 49274
+          },
+          "partition_ms": {
+            "landing_algorithm": 0.16007621080332834,
+            "shared_preview_dispatch": 51.2741144475066,
+            "hardware_service": 119.81271362701125,
+            "actual_outgoing_ball": 8.42369630777096,
+            "preview_envelopes_state_support": 87.8402143289161,
+            "display_producer_footer": 7.036927877705128,
+            "controls_and_requests": 15.7106559632579,
+            "endpoint_eligibility": 26.80843515027748,
+            "scheduler_classification": 52.78687654436528,
+            "scheduler_admission": 7.846248615396649,
+            "scheduler_owner_other": 108.0232264156478,
+            "remaining_mandatory_callback": 70.04018667176973,
+            "unclassified": 13.76543666862688
+          },
+          "partition_sum_verified": true,
+          "callback_union_cck": 305338,
+          "request_api_calls": 2,
+          "request_api_union_cck": 13643,
+          "latest_request_api_entry_cck": 57150381,
+          "latest_request_generation_verified": false,
+          "accepted_owners": 152,
+          "declined_owners": 400,
+          "declined_owner_union_cck": 301292,
+          "background_contact_owner_witnesses": 1,
+          "endpoint_ready_before_dense": false,
+          "endpoint_known_return_upper_bound_cck": 59077851,
+          "endpoint_known_basis": "matching selected dense-outcome released-boundary sample upper bound",
+          "endpoint_known_upper_bound_to_publication_cck": 34748,
+          "endpoint_known_to_publication_partition_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 10495,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 1288,
+            "display_producer_footer": 11920,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 835,
+            "scheduler_admission": 922,
+            "scheduler_owner_other": 8192,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 1096
+          },
+          "branch_work_exclusive_cck": {
+            "selected": {
+              "shared_preview_dispatch": 183538,
+              "landing_algorithm": 573,
+              "actual_outgoing_ball": 30153,
+              "preview_envelopes_state_support": 313140,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            },
+            "competing": {
+              "shared_preview_dispatch": 0,
+              "landing_algorithm": 0,
+              "actual_outgoing_ball": 0,
+              "preview_envelopes_state_support": 1288,
+              "scope": "Exclusive primary category segments within emitted owner telemetry variant; secondary subset diagnostics are not added to the primary partition."
+            }
+          },
+          "dispatch_phase_diagnostics": {
+            "before_first_selected_contact_owner_cck": 173139,
+            "first_selected_contact_owner_dispatch_cck": 10399,
+            "after_first_selected_contact_owner_cck": 0,
+            "scope": "Primary dispatch partition subdivided by actual selected-contact owner. Does not identify superseded-generation work in held alignment."
+          },
+          "hardware_service_diagnostics": {
+            "poll_presentation": {
+              "calls": 621,
+              "primary_exclusive_union_cck": 89976
+            },
+            "game_poll_keyboard": {
+              "calls": 586,
+              "primary_exclusive_union_cck": 25838
+            },
+            "account_sim_timer": {
+              "calls": 1346,
+              "primary_exclusive_union_cck": 313061
+            },
+            "other_service": {
+              "primary_exclusive_union_cck": 0
+            }
+          },
+          "hardware_service_priority": "Nested presenter first, keyboard second, timer accounting third; hardware-service primary-mask intersection. Secondary service amounts are disjoint and sum to the primary hardware-service category including explicit other_service.",
+          "collapsed_nonoverlapping_breakdown": {
+            "partition_cck": {
+              "actual_math_before_known": 214264,
+              "scheduling_and_preview_support_before_known": 1002866,
+              "measured_hardware_service_and_display_production_before_known": 431649,
+              "mandatory_callback_controls_requests_before_known": 306949,
+              "unclassified_before_known": 48178,
+              "known_upper_bound_to_qualifying_copjmp": 34748
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.85788696608088,
+              "scheduling_and_preview_support_before_known": 280.1657752591461,
+              "measured_hardware_service_and_display_production_before_known": 120.58767245557746,
+              "mandatory_callback_controls_requests_before_known": 85.75084263502764,
+              "unclassified_before_known": 13.459252502762222,
+              "known_upper_bound_to_qualifying_copjmp": 9.707379010460826
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 573,
+              "shared_preview_dispatch": 183538,
+              "hardware_service": 418380,
+              "actual_outgoing_ball": 30153,
+              "preview_envelopes_state_support": 313140,
+              "display_producer_footer": 13269,
+              "controls_and_requests": 56237,
+              "endpoint_eligibility": 95962,
+              "scheduler_classification": 188118,
+              "scheduler_admission": 27164,
+              "scheduler_owner_other": 378482,
+              "remaining_mandatory_callback": 250712,
+              "unclassified": 48178
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "endpoint_eligibility_diagnostics": {
+            "total": {
+              "pending_calls": 257,
+              "pending_union_cck": 96461,
+              "nested_selection_valid_union_cck": 10467,
+              "pending_excluding_selection_cck": 85994
+            },
+            "pre_selected_contact": {
+              "pending_calls": 166,
+              "pending_union_cck": 66764,
+              "nested_selection_valid_union_cck": 9920,
+              "pending_excluding_selection_cck": 56844
+            },
+            "after_known": {
+              "pending_calls": 0,
+              "pending_union_cck": 0,
+              "nested_selection_valid_union_cck": 0,
+              "pending_excluding_selection_cck": 0
+            },
+            "pre_contact_cutoff_cck": 58604852,
+            "scope": "Conservative cutoff at containing selected-contact owner entry, before launch. Does not assert every pending call belongs to the accepted generation; request fencing and exact launch_saved stores need stronger evidence. After-known uses the matching-generation sampled upper bound."
+          },
+          "selected_classifier_zero_diagnostics": {
+            "owners": 90,
+            "classifier_union_cck": 47015,
+            "repeated_after_first_same_callback_generation_no_optional_job": 71,
+            "repeated_classifier_union_cck": 35245,
+            "maximum_attempts_same_callback_generation_no_optional_job": 8,
+            "criteria": "Declined enclosing root; exactly one emitted background_class; no job_admitted; exactly one root-local variant store0; final root-local budget store0; next-callback-entry observed activevariant0. Callback/generation/variant and any optional job fence repeats. Identifies selected classifier-zero path, not its refusal reason.",
+            "scope": "Measured classifier wall span only, including IRQ elapsed. Cache/flag overhead and wall-latency improvement are not measured; source guards/clock reason not reconstructed."
+          },
+          "queued_bank_sha256": "2b447cec62d5d386dce4f22638e59d079ad12709bfa74720683e07d4a9f779ba",
+          "native_sprite_matched": true,
+          "waiting_attribution": {
+            "input_wait_per_trial": null,
+            "display_wait_per_trial": null,
+            "deadline_reservation_wait_per_trial": null,
+            "reason": "No complete per-trial consumed-input/failed-branch/ready-publication deadline ledger. Declined owner spans measure work; their adjacent gaps are not attributed to waiting."
+          },
+          "scope": "Physical action boundary to first qualifying actual COPJMP. Live-clean qualification can exclude an earlier valid completed bank. Aligned-held includes ongoing placement edits and superseded requests. Endpoint-known uses matching ready API return, an upper bound on its write; no first-scanout or physical-resume inference."
+        }
+      ],
+      "final_caption": {
+        "passed": true,
+        "generation": 109,
+        "bytes_committed": 512,
+        "settle_elapsed_cck": 286373,
+        "caption_commit_latency_cck": 2436130,
+        "commit_entry": {
+          "cck": 59507999,
+          "frame": 994,
+          "hpos": 142,
+          "seconds": 16.77749101679074,
+          "vpos": 151
+        },
+        "commit_exit": {
+          "cck": 59510071,
+          "frame": 994,
+          "hpos": 166,
+          "seconds": 16.778075189708183,
+          "vpos": 160
+        },
+        "commit_readback": {
+          "cck": 59510075,
+          "frame": 994,
+          "provider_seconds": 16.778076317455128,
+          "physical_seconds": 10.45009044445593
+        },
+        "scope": "Finite stable final caption commit/readback; no first-scanout witness. Endpoint latencies unchanged"
+      },
+      "input_extrema": {
+        "passed": true,
+        "minimum_ack_hold_cck": 775,
+        "maximum_ack_hold_cck": 9725,
+        "maximum_receive_ready_icr_gap_cck": 33875,
+        "maximum_keyboard_poll_gap_cck": 33875,
+        "maximum_input_to_matrix_cck": 22295,
+        "incomplete_ack": null,
+        "scope": "Finite CIA serial/matrix/poll/ACK observations; no approved universal maximum inferred"
+      },
+      "retained_holds": {
+        "full_admission_predicate_independently_recomputed": false,
+        "prefix_cost_classification_independently_recomputed": false,
+        "normative_deadline_safety": false,
+        "causal_paired_improvement_claim": false
+      }
+    }
+  ]
+}
