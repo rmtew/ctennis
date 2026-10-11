@@ -12,6 +12,8 @@ game_preview_kind: ds.w 1
 game_preview_ordinal: ds.w 1
 game_preview_cache_valid: ds.w 1
 game_preview_projection_requested: ds.w 1
+; Explicit full current origin, with no retained-record cursor interpretation.
+game_preview_full_origin: ds.w 1
 game_preview_x: ds.w 1
 game_preview_y: ds.w 1
 game_preview_selected: ds.l 2

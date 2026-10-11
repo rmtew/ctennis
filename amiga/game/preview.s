@@ -19,6 +19,111 @@ PREVIEW_NO_CONTACT equ 5
 PREVIEW_LIMIT equ 6
 PREVIEW_LIFECYCLE equ 7
 
+; D0 expected generation, D2/D3 legal X/Y. Frozen canonical state is a
+; complete current origin, not a retained operation or a projected continuation.
+; Used after an exploratory whole dispatch. Every request has a fresh identity.
+game_preview_request_full_current:
+        cmpi.w  #SEEK_JOB_PENDING,game_history_seek_status
+        beq     .invalid
+        cmpi.w  #SEEK_JOB_READY,game_history_seek_status
+        beq     .invalid
+        cmp.l   game_preview_generation,d0
+        bne     .invalid
+        cmpi.l  #$fffffffe,d0
+        bcc     .invalid
+        bsr     game_preview_selection_valid
+        tst.l   d0
+        beq     .invalid
+        cmpi.w  #GAME_PLAYING,game_lifecycle
+        bne     .invalid
+        btst    #7,game_mode
+        bne     .invalid
+        cmpi.w  #255,d2
+        bhi     .invalid
+        cmpi.w  #255,d3
+        bhi     .invalid
+        movem.l d2-d7/a2-a6,-(sp)
+        moveq   #0,d7
+        tst.b   game_play_state+G_LOWER_AI
+        beq.s   .end
+        moveq   #1,d7
+.end:   moveq   #0,d6
+        lea     game_play_state+G_LOWER_AI,a0
+        tst.b   (a0,d7.w)
+        bne     .invalid_saved
+        lea     game_play_state+G_LOWER,a3
+        lea     game_lower_limits,a0
+        tst.w   d7
+        beq.s   .phase
+        adda.w  #P_SIZE,a3
+        lea     game_upper_limits,a0
+.phase: move.b  P_PHASE(a3),d0
+        andi.b  #$e0,d0
+        beq.s   .incoming
+        cmpi.b  #$20,d0
+        bne.s   .serve
+        cmpi.b  #$10,game_serve_clock
+        bhi     .invalid_saved
+.serve:
+        moveq   #3,d6
+        bra.s   .bounds
+.incoming:
+        move.w  d7,d0
+        eori.w  #1,d0
+        lsl.b   #6,d0
+        cmp.b   game_contact,d0
+        bne     .invalid_saved
+        btst    #6,game_flight
+        beq     .invalid_saved
+        btst    #7,game_flight
+        bne     .invalid_saved
+.bounds:
+        moveq   #0,d0
+        move.b  P_ANIMATION(a3),d0
+        lsr.w   #3,d0
+        andi.w  #12,d0
+        adda.w  d0,a0
+        cmp.b   2(a0),d2
+        bcc     .invalid_saved
+        cmp.b   3(a0),d2
+        bcs     .invalid_saved
+        cmp.b   (a0),d3
+        bcc     .invalid_saved
+        cmp.b   1(a0),d3
+        bcs     .invalid_saved
+        move.w  d2,d4
+        move.w  d3,d5
+        lea     game_preview_state+4,a0
+        move.w  #(game_preview_state_end-game_preview_state-4)/2-1,d0
+.clear: clr.w   (a0)+
+        dbra    d0,.clear
+        addq.l  #1,game_preview_generation
+        move.w  #1,game_preview_full_origin
+        move.w  #1,game_preview_projection_requested
+        move.w  d7,game_preview_end
+        move.w  d6,game_preview_kind
+        move.w  d4,game_preview_x
+        move.w  d5,game_preview_y
+        lea     game_preview_selected_state,a0
+        lea     game_core_state,a1
+        bsr     game_history_copy_state
+        lea     game_preview_incoming_state,a0
+        lea     game_core_state,a1
+        bsr     game_history_copy_state
+        lea     game_preview_history_saved,a0
+        lea     game_history_state,a1
+        bsr     game_preview_copy_history
+        st      game_preview_incoming_valid
+        bsr     game_preview_prepare
+        movem.l (sp)+,d2-d7/a2-a6
+        moveq   #1,d0
+        rts
+.invalid_saved:
+        movem.l (sp)+,d2-d7/a2-a6
+.invalid:
+        moveq   #0,d0
+        rts
+
 ; D0 expected generation, D1 retained index ordinal ($ffff current serve,
 ; $fffe current incoming episode),
 ; D2/D3 requested byte X/Y. Current history_position is the selected boundary.
@@ -146,6 +251,8 @@ game_preview_request_body:
         cmp.b   1(a0),d5
         bcs     .invalid_saved
 .incoming_bounds:
+        tst.w   game_preview_full_origin
+        bne.s   .cold
         ; The incoming/selected cache is immutable once PRIME begins, even
         ; while another variant is computing. Every public yield retired A5.
         cmpi.w  #PREVIEW_PRIME,game_preview_status
@@ -168,6 +275,7 @@ game_preview_request_body:
         tst.l   d0
         bne.s   .cold
 .reuse: addq.l  #1,game_preview_generation
+        clr.w   game_preview_full_origin
         move.w  a6,game_preview_projection_requested
         move.w  d4,game_preview_x
         move.w  d5,game_preview_y
@@ -697,6 +805,8 @@ game_preview_prepare:
         beq.s   .cursors
         lea     game_preview_incoming,a0
 .cursors:
+        tst.w   game_preview_full_origin
+        bne.s   .full_origin
         move.l  (a0),game_preview_stream_cursors
         move.l  4(a0),game_preview_stream_cursors+4
         cmpi.w  #3,game_preview_kind
@@ -713,6 +823,14 @@ game_preview_prepare:
         move.w  d1,game_preview_predictor_reason
         move.w  #PREVIEW_PRIME,game_preview_status
         rts
+.full_origin:
+        ; Synthetic logical bodies start at this full current boundary. No
+        ; fabricated history cursor claims that exploratory updates were recorded.
+        clr.l   game_preview_stream_cursors
+        clr.l   game_preview_stream_cursors+4
+        clr.l   game_preview_stream_cursors+8
+        clr.l   game_preview_stream_cursors+12
+        bra.s   .second
 
 ; A0 envelope. Preserve every recorded logical argument except explicit pads.
 game_preview_execute_record:
@@ -810,6 +928,8 @@ game_preview_continue_one:
         lea     game_preview_launches,a0
         tst.b   (a0,d7.w)
         bne     game_preview_flight_one
+        tst.w   game_preview_full_origin
+        bne     .synthetic
         moveq   #0,d7
         move.b  game_preview_variant,d7
         move.w  d7,d6

@@ -12,6 +12,9 @@ tutorial_init:
         move.l  simulation_interval_whole,d0
         mulu.w  #15,d0
         move.l  d0,tutorial_double_ticks
+        move.l  simulation_interval_whole,d0
+        mulu.w  #24,d0
+        move.l  d0,tutorial_hold_ticks
         rts
 
 ; D0/D1 physical A/B packets. B2 belongs to the one-player UI before sampling.
@@ -97,26 +100,70 @@ tutorial_sample:
         move.l  last_timer_count,tutorial_tap_time
         bra     .done
 .active:
+        ; A press owns the full shot origin and literal B1 before any release.
+        ; Direction chords consume the gesture; they never fire on release.
+        btst    #5,d2
+        beq.s   .held_gesture
+        btst    #5,tutorial_packet
+        beq     .released
+        move.b  #1,tutorial_gesture
+        clr.b   tutorial_gesture_ready
+        clr.b   tutorial_modifier_used
+        move.l  last_timer_count,tutorial_hold_time
+        tst.b   tutorial_menu
+        bne.s   .held_gesture
+        tst.b   tutorial_running
+        bne.s   .held_gesture
+        movem.l d0-d1,-(sp)
+        bsr     tutorial_capture_shot
+        movem.l (sp)+,d0-d1
+.held_gesture:
         btst     #5,tutorial_packet
         beq     .released
         move.b  tutorial_packet,d3
         andi.b  #15,d3
-        beq     .done
+        beq.s   .hold_menu
         st      tutorial_modifier_used
+        bra     .done
+.hold_menu:
+        tst.b   tutorial_modifier_used
+        bne     .done
+        cmpi.b  #1,tutorial_gesture
+        bne     .done
+        move.l  tutorial_hold_time,d3
+        sub.l   last_timer_count,d3
+        cmp.l   tutorial_hold_ticks,d3
+        bcs     .done
+        move.b  #2,tutorial_gesture
+        clr.b   tutorial_gesture_ready
+        ; Running stops only at its next complete dispatcher boundary.
+        tst.b   tutorial_running
+        beq.s   .open_menu
+        move.b  #1,tutorial_stop_reason
+        bra     .done
+.open_menu:
+        st      tutorial_menu
+        clr.b   tutorial_menu_selection
+        move.b  tutorial_packet,tutorial_previous_menu_packet
+        movem.l d0-d1,-(sp)
+        bsr     tutorial_redraw
+        movem.l (sp)+,d0-d1
         bra     .done
 .released:
         btst     #5,d2
         beq     .done
         tst.b   tutorial_modifier_used
         bne     .consume_modifier
-        eori.b  #1,tutorial_menu
-        move.b  #0,tutorial_menu_selection
-        move.b  tutorial_packet,tutorial_previous_menu_packet
-        movem.l d0-d1,-(sp)
-        bsr     tutorial_redraw
-        movem.l (sp)+,d0-d1
+        cmpi.b  #1,tutorial_gesture
+        bne.s   .consume_modifier
+        tst.b   tutorial_menu
+        bne.s   .consume_modifier
+        tst.b   tutorial_gesture_ready
+        beq.s   .consume_modifier
+        st      tutorial_advance_pending
 .consume_modifier:
         clr.b   tutorial_modifier_used
+        clr.b   tutorial_gesture
 .done:
         movem.l (sp)+,d2-d7/a0-a2
         rts
@@ -161,6 +208,11 @@ tutorial_tick:
 .running:
         tst.b   tutorial_active
         beq     .done
+        tst.b   tutorial_refresh_pending
+        beq.s   .controls
+        clr.b   tutorial_refresh_pending
+        bsr     tutorial_request
+.controls:
         bsr     tutorial_controls
         tst.b   tutorial_active
         beq     .done
@@ -186,6 +238,13 @@ tutorial_enter:
         clr.b   tutorial_menu
         clr.b   tutorial_modifier_used
         clr.b   tutorial_tap_pending
+        clr.b   tutorial_explored
+        clr.b   tutorial_running
+        clr.b   tutorial_gesture
+        clr.b   tutorial_advance_pending
+        clr.b   tutorial_refresh_pending
+        clr.b   tutorial_gesture_ready
+        clr.w   tutorial_exploration_cycles
         move.l  game_history_position,tutorial_selected_cursor
         move.l  game_history_position+4,tutorial_selected_cursor+4
         moveq   #0,d7
@@ -213,6 +272,16 @@ tutorial_enter:
 .done:  rts
 
 tutorial_request:
+        tst.b   tutorial_explored
+        beq.s   .retained
+        move.l  game_preview_generation,d0
+        moveq   #0,d2
+        moveq   #0,d3
+        move.b  tutorial_x,d2
+        move.b  tutorial_y,d3
+        jsr     game_preview_request_full_current
+        bra     .requested
+.retained:
         move.w  #$fffe,d1
         moveq   #0,d7
         move.b  tutorial_end,d7
@@ -265,6 +334,7 @@ tutorial_request:
         move.b  tutorial_x,d2
         move.b  tutorial_y,d3
         jsr     game_preview_request_projected
+.requested:
         tst.l   d0
         beq     .missing
         ; Prediction-bearing banks belong to the old accepted placement.
@@ -305,6 +375,15 @@ tutorial_request:
         st      tutorial_footer_dirty
         rts
 .missing:
+        ; Unavailable full origins (miss, net, point end, stopped flight) retire
+        ; every prior prediction and queued private-canvas bank. The displayed
+        ; completed native scene remains visible until a neutral bank is ready.
+        bsr     discard_ready_scene
+        clr.l   tutorial_neutral_copper
+        clr.l   tutorial_visible_surface
+        bsr     game_preview_invalidate
+        move.l  game_preview_generation,tutorial_generation
+        clr.b   tutorial_ball_mode
         clr.b   tutorial_action_dirty
         clr.b   tutorial_work_pending
         move.w  #TUTORIAL_UNAVAILABLE,tutorial_status
@@ -317,6 +396,14 @@ tutorial_request:
 
 ; Native key/direction intent only. Legal positions are read from actual tables.
 tutorial_controls:
+        tst.b   tutorial_advance_pending
+        beq.s   .running
+        clr.b   tutorial_advance_pending
+        bsr     tutorial_start_shot
+        rts
+.running:
+        tst.b   tutorial_running
+        bne     .controls_return
         ; Menu confirmation owns F/B1; preserve the chosen shot alternative
         ; while the menu is open instead of turning its confirm into an edit.
         tst.b   tutorial_menu
@@ -361,6 +448,10 @@ tutorial_controls:
         btst     #4,d0
         beq     .save_menu
 .activate:
+        tst.b   tutorial_gesture
+        bne     .save_menu
+        tst.b   tutorial_menu_selection
+        beq     tutorial_play_from_here
         cmpi.b  #1,tutorial_menu_selection
         beq     tutorial_resume_latest
         cmpi.b  #2,tutorial_menu_selection
@@ -449,6 +540,11 @@ tutorial_resume_restored:
         ; Exact interrupted canonical boundary, before physical reconciliation.
         bsr     tutorial_footer_invalidate
         clr.b   tutorial_active
+        clr.b   tutorial_running
+        clr.b   tutorial_explored
+        clr.b   tutorial_refresh_pending
+        clr.b   tutorial_gesture_ready
+        clr.b   tutorial_advance_pending
         clr.b   tutorial_pending
         clr.b   tutorial_menu
         clr.b   tutorial_work_pending
@@ -499,4 +595,5 @@ tutorial_reconcile_inputs:
         move.b  game_keyboard_matrix+$44,ui_keyboard_entry_keys+$44
 .done:  rts
 
+        include "amiga/game/tutorial_exploration.s"
         include "amiga/game/tutorial_deadline.s"
