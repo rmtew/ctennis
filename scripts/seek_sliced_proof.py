@@ -66,7 +66,8 @@ def proof(executable,stream,base=0x10000,native=False,role='standalone'):
                 if api and api.startswith('game_preview_'):
                     original_trace(mode,width,address,value);return
                 permitted=[(symbols[n],length) for n,length in (('game_preview_generation',4),
-                    ('game_preview_cache_valid',2),('game_preview_counts',4),('game_preview_status',2))]
+                    ('game_preview_cache_valid',2),('game_preview_counts',4),('game_preview_status',2),
+                    ('game_preview_launch_saved',4),('game_preview_endpoint_ready',2))]
                 assert getattr(cpu,'seek_fixture_api',None) in ('game_history_seek_begin','game_history_seek_commit','game_history_seek'), 'Seek slice writes preview-owned buffers'
                 assert any(low<=address and address+(1<<width)<=low+length for low,length in permitted), 'Seek writes preview data beyond explicit retirement fields'
             if (mode=='W' and str(getattr(cpu,'seek_fixture_api',None)).startswith('game_preview_')

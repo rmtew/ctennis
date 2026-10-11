@@ -82,6 +82,15 @@ tutorial_progress_qualify:
         add.w   d0,d0
         lea     tutorial_available_outcomes,a0
         move.w  (a0,d0.w),d1
+        bne.s   .qualified_outcome
+        moveq   #0,d2
+        move.b  tutorial_active_variant,d2
+        lea     game_preview_endpoint_ready,a0
+        tst.b   (a0,d2.w)
+        beq.s   .qualified_outcome
+        lea     game_preview_endpoint_outcomes,a0
+        move.w  (a0,d0.w),d1
+.qualified_outcome:
         tst.b   tutorial_placement_ready
         bne     .observed
         tst.w   d1
@@ -96,8 +105,8 @@ tutorial_progress_qualify:
         clr.l   tutorial_animation_generation
         tst.w   d1
         beq     .hide
-        ; Nonzero outcome means this alternative stopped. LIMIT remains
-        ; incomplete, NO_CONTACT has no fabricated outgoing landing marker.
+        ; A queried endpoint can be ready while dense work continues. LIMIT
+        ; remains incomplete; NO_CONTACT has no outgoing landing marker.
         st      tutorial_placement_ready
         lea     tutorial_available_counts,a0
         cmpi.w  #2,(a0,d0.w)
@@ -112,8 +121,8 @@ tutorial_progress_qualify:
         lea     game_preview_launches,a0
         tst.b   (a0,d2.w)
         beq     .hide
-        lea     tutorial_available_counts,a0
-        tst.w   (a0,d0.w)
+        lea     game_preview_endpoint_ready,a0
+        tst.b   (a0,d2.w)
         beq     .hide
         st      tutorial_marker_ready
         move.l  tutorial_presentation_generation,tutorial_marker_generation

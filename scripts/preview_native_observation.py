@@ -169,18 +169,21 @@ class Observer(TraceCollector):
                 match=re.fullmatch(r'move\.w\s+\$(dff004|dff006),d[012]',row['statement'].strip())
                 if match:self.beam_reads[pc]=int(match[1],16)
         assert len(self.beam_reads)==3
-        self.meta=bytearray(read(symbols['game_preview_state'],110))
+        self.storage_bytes=symbols['game_preview_storage_end']-symbols['game_preview_storage']
+        self.meta=bytearray(read(symbols['game_preview_state'],symbols['game_preview_state_end']-symbols['game_preview_state']))
         self.history=bytearray(read(symbols['game_history_state'],72))
         self.slot=symbols['game_stack_top']-74 # callback+hook+SR+15 registers+JSR
         self.return_store=LongwordObserver();self.return_reads=LongwordObserver()
         body_map={symbols[name+'_body']:dict(operation=name,arity=arity,
             label=name+'_body',entry_bytes=read(symbols[name+'_body'],4).hex())
             for name,arity in self.operations.values()}
-        assert len(body_map)==9,'Emitted core body map must have nine distinct entries'
+        body_map[symbols['game_ball_tick']]=dict(operation='game_ball_tick',arity=0,
+            label='game_ball_tick',entry_bytes=read(symbols['game_ball_tick'],4).hex())
+        assert len(body_map)==10,'Emitted logical/outgoing body map must have ten distinct entries'
         self.body_frames=BodyFrames(body_map,symbols['game_stack_bottom'],symbols['game_stack_top'],return_pcs)
         self.body_sink_events=[]
         self.contexts={symbols[n]:bytearray(read(symbols[n],318)) for n in
-            ('game_preview_selected_state','game_preview_edited_state',
+            ('game_preview_selected_state','game_preview_incoming_state','game_preview_edited_state',
              'game_preview_held_state','game_preview_released_state')}
 
     def field(self,name,size):
@@ -224,7 +227,7 @@ class Observer(TraceCollector):
 
     def watches(self,inside=False):
         ranges=super().watches()+[{'addr':self.symbols[n],'len':length,'access':'write'}
-            for n,length in [('game_preview_storage',5550),('game_history_state',72),
+            for n,length in [('game_preview_storage',self.storage_bytes),('game_history_state',72),
                              ('game_history_buffer',80318),('game_history_seek_storage',734),*INPUTS]]
         ranges += [{'addr':self.symbols['simulation_started_updates'],'len':2,'access':'write'},
             {'addr':self.symbols['simulation_timer_origin'],'len':2,'access':'write'},
@@ -308,7 +311,7 @@ class Observer(TraceCollector):
             if not publication_write and rule and rule['address']<=a<a+size<=rule['address']+rule['bytes']:
                 self.irq_write(r,rule)
             if self.frozen and overlap('game_history_seek_storage',734):self.problems.append('External caller writes frozen seek context')
-            if self.frozen and overlap('game_preview_storage',5550):self.problems.append('External caller writes frozen preview context')
+            if self.frozen and overlap('game_preview_storage',self.storage_bytes):self.problems.append('External caller writes frozen preview context')
             if self.frozen and audio:self.problems.append('External native caller writes frozen audio/config hardware')
             if self.frozen and a<0xdff098 and a+size>0xdff096:
                 rule=self.rules.get(pc)
@@ -325,7 +328,7 @@ class Observer(TraceCollector):
             if not base<=a<a+size<=base+318:
                 self.problems.append('Actual core writes outside supplied native context')
                 return
-        if contained('game_preview_storage',5550):return
+        if contained('game_preview_storage',self.storage_bytes):return
         if contained('preview_native_mailbox',82):return
         if contained('game_history_seek_storage',734):
             if self.pending['name'] in ('game_history_freeze','game_history_resume_latest','game_history_seek_begin',

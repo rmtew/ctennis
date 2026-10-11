@@ -1,5 +1,7 @@
 # Tutorial mode: design and roadmap
 
+The normative timing, input-service, prediction-priority and verification contract is [the tutorial scheduling specification](tutorial-deadline-scheduling-design.md). This roadmap continues to define product and UI scope.
+
 Status: implementation roadmap authorized on 7 October 2026. The shared core
 is merged. Bounded history/seek merged in PR #36 after selective native acceptance
 and independent review; see [bounded history](bounded-history.md). Isolated

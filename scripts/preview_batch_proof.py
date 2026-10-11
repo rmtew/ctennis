@@ -35,6 +35,7 @@ def batching(executable,progress):
             assert cpu.state()==states[selection]
             saved=protected(cpu);roles=[];body_trace=[];restores=0;last_body_restore_count=0
             bodies={symbols[name+'_body']:name for name in OPERATIONS}
+            bodies[symbols['game_preview_flight_one']]='game_ball_tick'
             def observe(pc):
                 nonlocal restores,last_body_restore_count
                 if pc==symbols['game_preview_context_released']:

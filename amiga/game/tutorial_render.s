@@ -85,6 +85,12 @@ tutorial_footer:
         add.w   d0,d0
         lea     tutorial_outcomes,a1
         move.w  (a1,d0.w),d1
+        bne.s   .caption_outcome
+        tst.b   tutorial_marker_ready
+        beq     .count_ready
+        lea     game_preview_endpoint_outcomes,a1
+        move.w  (a1,d0.w),d1
+.caption_outcome:
         beq     .count_ready
         cmpi.w  #PREVIEW_LIFECYCLE,d1
         bhi     .count_ready
@@ -648,16 +654,23 @@ tutorial_prepare_objects:
         bne     .done
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
+        cmpi.b  #1,tutorial_ball_mode
+        bne.s   .dense_sample
+        tst.b   tutorial_marker_ready
+        beq     .done
+        lea     game_preview_endpoint_ready,a0
+        tst.b   (a0,d0.w)
+        beq     .done
+        lsl.w   #3,d0
+        lea     game_preview_endpoints,a0
+        adda.w  d0,a0
+        bra.s   .point
+.dense_sample:
         add.w   d0,d0
         lea     tutorial_counts,a0
         move.w  (a0,d0.w),d1
         beq     .done
         move.w  tutorial_animation_index,d2
-        cmpi.b  #1,tutorial_ball_mode
-        bne     .animate_index
-        move.w  d1,d2
-        subq.w  #1,d2
-.animate_index:
         cmp.w   d1,d2
         bcs     .index
         move.w  d1,d2
@@ -668,7 +681,7 @@ tutorial_prepare_objects:
         move.l  (a0,d0.w),a0
         lsl.w   #3,d2
         adda.w  d2,a0
-        move.b  2(a0),tutorial_scene_objects+SC_BALL+O_X
+.point: move.b  2(a0),tutorial_scene_objects+SC_BALL+O_X
         move.b  3(a0),tutorial_scene_objects+SC_BALL+O_Y
         move.b  (a0),tutorial_scene_objects+SC_SHADOW+O_X
         move.b  1(a0),tutorial_scene_objects+SC_SHADOW+O_Y
@@ -707,15 +720,33 @@ tutorial_animate:
         beq     .done
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
-        bls     .done ; retain the actual terminal sample, without wrapping
+        bhi.s   .advance
+        ; Last available sample is not terminal while the dense worker runs.
+        moveq   #0,d0
+        move.b  tutorial_active_variant,d0
+        add.w   d0,d0
+        lea     tutorial_available_outcomes,a0
+        tst.w   (a0,d0.w)
+        beq     .done
+        ; Hold the real terminal sample before repeating the complete sequence.
+        move.w  simulation_started_updates,d0
+        sub.w   tutorial_animation_callback,d0
+        cmpi.w  #30,d0
+        bcs     .done
+        move.w  simulation_started_updates,tutorial_animation_callback
+        clr.w   tutorial_animation_index
+        move.b  #2,tutorial_ball_mode
+        bra.s   .sample
+.advance:
         ; Advance the nominal cursor, rather than adopting late callback entry
         ; time. A delayed publication catches up without accumulating drift.
         addq.w  #2,tutorial_animation_callback
         move.b  #2,tutorial_ball_mode
         addq.w  #2,tutorial_animation_index
         cmp.w   tutorial_animation_index,d1
-        bcc     .sample
+        bhi     .sample
         move.w  d1,tutorial_animation_index
+        move.w  simulation_started_updates,tutorial_animation_callback
 .sample:
         move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
@@ -743,8 +774,15 @@ tutorial_animation_due:
         beq     .no
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
-        bls     .no
-        moveq   #1,d0
+        bhi.s   .yes
+        lea     tutorial_available_outcomes,a0
+        tst.w   (a0,d0.w)
+        beq.s   .no
+        move.w  simulation_started_updates,d0
+        sub.w   tutorial_animation_callback,d0
+        cmpi.w  #30,d0
+        bcs.s   .no
+.yes:   moveq   #1,d0
         rts
 .no:    moveq   #0,d0
         rts

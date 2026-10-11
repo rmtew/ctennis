@@ -48,7 +48,8 @@ class Tests(unittest.TestCase):
   ordinary={c.id for c in cases()}
   diagnostic={c.id for c in diagnostic_cases()}
   self.assertFalse(ordinary & diagnostic)
-  self.assertEqual(diagnostic,{'tutorial-latency-pal','tutorial-latency-ntsc',
+  self.assertEqual(diagnostic,{'incoming-flight-cpu','incoming-flight-pal','incoming-flight-ntsc',
+                                     'tutorial-latency-pal','tutorial-latency-ntsc',
                               'tutorial-hotspots-pal','private-state-cpu',
                               'private-state-retained-pal','private-state-retained-ntsc',
                               'guarded-landing-cpu','guarded-landing-pal','guarded-landing-ntsc',

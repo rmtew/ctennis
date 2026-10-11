@@ -3,18 +3,19 @@ from copy import deepcopy
 from build_match_core import load_image
 from history_proof import attempts, cursor, field, seek
 from match_core_cpu import Core
-from preview_proof import fixture, protected, call_checked, block, ARITY, OPERATIONS
+from preview_proof import fixture, protected, call_checked, block, ARITY, OPERATIONS, PATH_BYTES
 from run_shared_match_core import READONLY
 
 
 def result(cpu):
     counts=[cpu.mem.r16(cpu.symbols['game_preview_counts']+2*v) for v in (0,1)]
     prefix=field(cpu,'game_preview_prefix_count')
-    return dict(paths=[bytes(cpu.mem.r_block(cpu.symbols['game_preview_paths']+v*2048,counts[v]*8)) for v in (0,1)],
+    return dict(paths=[bytes(cpu.mem.r_block(cpu.symbols['game_preview_paths']+v*PATH_BYTES,counts[v]*8)) for v in (0,1)],
         contexts=[bytes(cpu.mem.r_block(cpu.symbols[n],318)) for n in ('game_preview_held_state','game_preview_released_state')],
         outputs=[deepcopy(cpu.preview_event_groups.get((2,v),[])) for v in (0,1)],
         outcomes=[cpu.mem.r16(cpu.symbols['game_preview_outcomes']+2*v) for v in (0,1)],
         edited=block(cpu,'game_preview_edited_state','game_preview_held_state'),prefix=prefix,
+        kind=field(cpu,'game_preview_kind'), incoming_state=bytes(cpu.mem.r_block(cpu.symbols['game_preview_incoming_state'],318)),
         incoming=cursor(cpu,'game_preview_incoming'),action=cursor(cpu,'game_preview_action'))
 
 
@@ -22,10 +23,10 @@ def job(cpu,ordinal,x,y,expected_status=5,observer=None,budget=4):
     assert budget in (1,2,3,4)
     saved=protected(cpu)
     expected=bytearray(cpu.state())
-    end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else attempts(cpu)[ordinal][2]
+    end=(1 if field(cpu,'game_score_flags',1)&2 else 0) if ordinal==0xffff else (1 if cpu.mem.r8(cpu.symbols['game_play_state']+54) else 0) if ordinal==0xfffe else attempts(cpu)[ordinal][2]
     player=cpu.symbols['game_play_state']-cpu.symbols['game_core_state']+end*10
     expected[player+3]=x;expected[player+2]=y
-    bodies={cpu.symbols[n+'_body'] for n in OPERATIONS}
+    bodies={cpu.symbols[n+'_body'] for n in OPERATIONS}|{cpu.symbols['game_preview_flight_one']}
     resolver=0
     def observe(pc):
         nonlocal resolver
@@ -36,7 +37,7 @@ def job(cpu,ordinal,x,y,expected_status=5,observer=None,budget=4):
     generation=field(cpu,'game_preview_generation',4)
     cpu.preview_events.clear();cpu.preview_event_groups.clear()
     was_cache_valid=(bool(field(cpu,'game_preview_cache_valid'))
-        and field(cpu,'game_preview_status')==5 and field(cpu,'game_preview_ordinal')==ordinal)
+        and 2<=field(cpu,'game_preview_status')<=5 and field(cpu,'game_preview_ordinal')==ordinal)
     request_cycles=call_checked(cpu,'game_preview_request',{0:generation,1:ordinal,2:x,3:y},saved)
     assert cpu.cpu.r_reg(0)==1
     generation+=1
@@ -52,6 +53,9 @@ def job(cpu,ordinal,x,y,expected_status=5,observer=None,budget=4):
     else:raise AssertionError('Cache proof worker did not terminate')
     assert field(cpu,'game_preview_status')==expected_status
     if expected_status==5:
+        if field(cpu,'game_preview_kind')!=3:
+            expected=bytearray(cpu.mem.r_block(cpu.symbols['game_preview_incoming_state'],318))
+            expected[player+3]=x;expected[player+2]=y
         assert block(cpu,'game_preview_edited_state','game_preview_held_state')==bytes(expected), 'Preview changes bytes beyond requested human X/Y (including RNG)'
     cpu.cpu.set_instr_hook_callback(cpu.instruction)
     return dict(generation=generation,edited_only_position_changed=expected_status==5,cache_hit=cache_hit,resolver_operations=resolver,
