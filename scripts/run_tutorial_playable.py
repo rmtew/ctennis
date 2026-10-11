@@ -164,7 +164,9 @@ def run(standard,serve=False):
                 raise AssertionError('No current-generation published '+name)
             def menu_checkpoint(name,selection,after):
                 generation=num('tutorial_generation',4);render=num('tutorial_render_generation',2)
+                deadline=current+10*hz
                 for _ in range(1000):
+                    if current>=deadline:break
                     scenes=[p for p in callbacks.surfaces.publications if p['position']['cck']>=after
                         and p.get('tutorial_fields',{}).get('tutorial_menu')
                         and p['tutorial_fields'].get('tutorial_menu_selection')==selection
@@ -173,16 +175,25 @@ def run(standard,serve=False):
                         and p.get('surface') in (s['tutorial_surface0'],s['tutorial_surface1'])
                         and p.get('native_sprite_check',{}).get('matched')]
                     if scenes:
-                        advance(.05) # Two complete fields after actual COPJMP, for raster capture.
+                        advance(min(.05,(deadline-current)/hz)) # Two complete fields after actual COPJMP, for raster capture.
                         stable=callbacks.surfaces.current_presentation(callbacks.state)
                         displayed=callbacks.surfaces.displayed
-                        assert stable and displayed and displayed['surface']==scenes[-1]['surface']
+                        # Preparation can publish an equivalent menu on the
+                        # other free canvas while we wait for scanout. Require
+                        # two fields on the actual capture canvas, then bind its
+                        # pixels and sprites instead of a former address.
+                        if not stable or not displayed or not callbacks.surfaces.current(displayed['generation']):
+                            continue
+                        assert displayed['surface_sha256']==scenes[-1]['surface_sha256']
+                        assert displayed['sprite_sha256']==scenes[-1]['sprite_sha256']
+                        assert displayed.get('native_sprite_check',{}).get('matched')
                         bank=displayed['tutorial_fields']
                         assert bank['tutorial_menu'] and bank['tutorial_menu_selection']==selection
                         assert bank['tutorial_render_generation']==render and bank['tutorial_generation']==generation
                         raster=assert_tutorial_menu(photo(name),selection)
-                        checkpoints.append(dict(name=name,generation=generation,render_generation=render,selection=selection,scene=scenes[-1],capture_scene=displayed,capture_cck=current,raster=raster));return
-                    advance(.01)
+                        first_field=callbacks.surfaces.first_fields[(displayed['surface'],displayed['generation'])]
+                        checkpoints.append(dict(name=name,generation=generation,render_generation=render,selection=selection,scene=scenes[-1],capture_scene=displayed,capture_surface_first_field=first_field,capture_frame=callbacks.surfaces.last_frame,capture_cck=current,raster=raster));return
+                    advance(min(.01,(deadline-current)/hz))
                 raise AssertionError('No completed visible menu '+name)
             advance(.7);photo('title')
             key(1,True);key(1,False,1.4);assert num('game_lifecycle',2)==1

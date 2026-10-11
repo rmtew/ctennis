@@ -260,3 +260,23 @@ Cue-free poses remain15,000; completed-cue poses17,500; private new-cue draws
 15,000; ROI preparation20,000. Separate5,000 service/margin and every gate/window
 are unchanged. Fresh whole-owner and visible menu lifecycle qualification are
 required; no current product pass is claimed.
+
+## Incoming observer surface transition
+
+All four current `ab7d8c8` title/in-match routes pass independent complete
+trace, pixel, owner-budget, ACK, restoration and ownership review. The PAL
+incoming attempt `22eaa0ad9318477fa9af83c57b5c9070` then failed at the options
+capture, before its menu raster check. Its immutable failure and literal trace
+show menu publications at frames 1008 and 1011 on different private surfaces.
+Both have exactly the same surface and sprite hashes, presentation identity,
+generation 114, render generation 113 and selection 0. The observer required
+the address selected before a 50 ms wait to remain the capture address.
+This does not establish an incoming route pass or justify a runtime change.
+
+The observer now waits for both semantic stability and two completed fields
+on the actual capture surface/render identity. It requires exact pixel and
+sprite equality with the selected completed menu scene, matching native
+sprites, and the existing menu/selection/generation checks before raster
+capture. The checkpoint retains both publications, the actual surface's first
+field and the capture frame. The bounded observation cap is unchanged. Fresh
+PAL/NTSC incoming qualification remains required; the failed receipt is retained.
