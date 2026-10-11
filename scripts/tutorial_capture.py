@@ -88,8 +88,12 @@ def check_native_presentation(snapshot, paths):
         assert stream[4:68] in (image[frame:frame+64],image[frame+64:frame+128]), 'Sprite image is not the retained native frame'
         assert stream[68:72] == bytes(4), 'Native sprite terminator missing'
     ball = fields['tutorial_ball_mode']
-    if fields['tutorial_menu'] or not ball:
-        assert not objects[53] and not objects[61], 'Old ball/shadow shown during menu or pending generation'
+    if fields['tutorial_menu']:
+        assert not objects[53] and not objects[61], 'Ball/shadow overprinted menu'
+        point = None
+    elif not ball:
+        original = bytes.fromhex(snapshot['original_objects'])
+        assert objects[48:64] == original[48:64], 'Pending generation did not retain actual frozen ball/shadow'
         point = None
     else:
         assert fields['tutorial_presentation_generation'] == fields['tutorial_generation']
@@ -298,6 +302,7 @@ class SurfaceObserver:
                                for n in ('sprite0','sprite_back','sprite_third')}
                               if verify_sprites else {})
         self.objects = bytearray(read(symbols['tutorial_scene_objects'],64)) if verify_sprites else bytearray()
+        self.original_objects = bytearray(read(symbols['game_scene_objects'],64)) if verify_sprites else bytearray()
         self.path_bytes = bytearray(read(symbols['game_preview_paths'],symbols['game_preview_storage_end']-symbols['game_preview_paths'])) if verify_sprites else bytearray()
         self.endpoint_bytes = bytearray(read(symbols['game_preview_endpoints'],16)) if verify_sprites else bytearray()
         self.sprite_checks = []
@@ -323,6 +328,7 @@ class SurfaceObserver:
                     dict(addr=0xdff088,len=2,access='write')]
         if self.verify_sprites:
             watches += [dict(addr=self.symbols['tutorial_scene_objects'],len=64,access='write'),
+                        dict(addr=self.symbols['game_scene_objects'],len=64,access='write'),
                         dict(addr=self.symbols['game_preview_paths'],len=len(self.path_bytes),access='write'),
                         dict(addr=self.symbols['game_preview_endpoints'],len=16,access='write')]
         return watches
@@ -372,6 +378,7 @@ class SurfaceObserver:
             result.update(sprite_base=base, sprite_bytes=bytes(self.sprite_images[base]).hex(),
                           sprite_sha256=hashlib.sha256(self.sprite_images[base]).hexdigest(),
                           objects=queued['objects'] if queued else bytes(self.objects).hex(),
+                          original_objects=queued['original_objects'] if queued else bytes(self.original_objects).hex(),
                           endpoint_points=queued['endpoint_points'] if queued else bytes(self.endpoint_bytes).hex(),
                           endpoint_outcomes=queued['endpoint_outcomes'] if queued else state.get('game_preview_endpoint_outcomes',0),
                           endpoint_ready=queued['endpoint_ready'] if queued else state.get('game_preview_endpoint_ready',0),
@@ -400,11 +407,13 @@ class SurfaceObserver:
                     assert start not in (displayed_sprites,queued_sprites), 'Write to displayed or eligible queued sprites'
                     assert start <= a and a+size <= start+len(shadow)
                     shadow[a-start:a-start+size] = data
-            for name, shadow in (('tutorial_scene_objects',self.objects),('game_preview_paths',self.path_bytes),('game_preview_endpoints',self.endpoint_bytes)):
+            for name, shadow in (('tutorial_scene_objects',self.objects),('game_scene_objects',self.original_objects),('game_preview_paths',self.path_bytes),('game_preview_endpoints',self.endpoint_bytes)):
                 start = self.symbols[name]
                 if max(a,start) < min(a+size,start+len(shadow)):
-                    assert start <= a and a+size <= start+len(shadow)
-                    shadow[a-start:a-start+size] = data
+                    # Canonical freeze/restore copies can straddle a subregion
+                    # boundary. Reconstruct only the actual overlapping bytes.
+                    left, right = max(a,start), min(a+size,start+len(shadow))
+                    shadow[left-start:right-start] = data[left-a:right-a]
         for start, shadow in self.images.items():
             if max(a,start) < min(a+size,start+len(shadow)):
                 assert start not in (displayed_image,queued_image), 'Write to displayed or eligible queued tutorial surface'

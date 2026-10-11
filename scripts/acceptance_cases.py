@@ -69,6 +69,12 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('tutorial-ux-delivered-title-pal', ('scripts/run_tutorial_ux.py','--delivered'), 'tests/tutorial-ux-delivered-title-pal/report.json'),
+        Case('tutorial-ux-delivered-match-pal', ('scripts/run_tutorial_ux.py','--delivered','--match'), 'tests/tutorial-ux-delivered-match-pal/report.json'),
+        Case('tutorial-ux-title-pal', ('scripts/run_tutorial_ux.py',), 'tests/tutorial-ux-candidate-title-pal/report.json'),
+        Case('tutorial-ux-title-ntsc', ('scripts/run_tutorial_ux.py','--ntsc'), 'tests/tutorial-ux-candidate-title-ntsc/report.json'),
+        Case('tutorial-ux-match-pal', ('scripts/run_tutorial_ux.py','--match'), 'tests/tutorial-ux-candidate-match-pal/report.json'),
+        Case('tutorial-ux-match-ntsc', ('scripts/run_tutorial_ux.py','--match','--ntsc'), 'tests/tutorial-ux-candidate-match-ntsc/report.json'),
         Case('tutorial-coherent-cpu', ('scripts/run_playable_coherent_cpu.py',), 'tests/coherent-scheduler-cpu/report.json', category='host'),
         Case('tutorial-serve-pal', ('scripts/run_tutorial_playable.py','--serve'), 'tests/tutorial-serve-pal/report.json'),
         Case('tutorial-serve-ntsc', ('scripts/run_tutorial_playable.py','--serve','--ntsc'), 'tests/tutorial-serve-ntsc/report.json'),

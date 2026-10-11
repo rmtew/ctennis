@@ -1,9 +1,84 @@
 ; Two private court surfaces. Displayed/queued surfaces are never writable.
-; XY offsets are the existing sprite origins minus the native display origins.
-TUTORIAL_X_ORIGIN equ $a0-$81
+; Completed native pixels place sprite O_X at court X, and O_Y at court Y+1.
+; The authored sprite/Copper origins alone do not define the cropped pixel X.
+TUTORIAL_X_ORIGIN equ 0
 TUTORIAL_Y_ORIGIN equ $2d-$2c
 
+; Prepare immutable court/banner and menu/control rasters before the timer is
+; started. Neither private canvas is consumer-owned during this initialization.
+tutorial_prepare_canvases:
+        movem.l d0-d7/a0-a6,-(sp)
+        st      tutorial_preparing
+        move.l  #tutorial_surface0,tutorial_render_surface
+        moveq   #0,d6
+.selection:
+        lea     plane0,a0
+        lea     tutorial_surface0,a1
+        move.w  #4*6144/4-1,d7
+.court: move.l  (a0)+,(a1)+
+        dbra    d7,.court
+        move.b  d6,tutorial_menu_selection
+        st      tutorial_menu
+        clr.w   tutorial_text_row
+.text:  bsr     tutorial_draw_text
+        cmpi.w  #4,tutorial_text_row
+        bcs.s   .text
+        move.w  d6,d0
+        mulu.w  #30*32*4,d0
+        lea     tutorial_menu_cache,a1
+        adda.l  d0,a1
+        lea     tutorial_surface0+132*32,a0
+        moveq   #3,d5
+.roi:   move.w  #30*32/4-1,d7
+.copy:  move.l  (a0)+,(a1)+
+        dbra    d7,.copy
+        adda.w  #6144-30*32,a0
+        dbra    d5,.roi
+        addq.w  #1,d6
+        cmpi.w  #3,d6
+        bcs.s   .selection
+        clr.b   tutorial_menu
+        clr.b   tutorial_menu_selection
+        lea     plane0,a0
+        lea     tutorial_surface0,a1
+        move.w  #4*6144/4-1,d7
+.baseline:
+        move.l  (a0)+,(a1)+
+        dbra    d7,.baseline
+        clr.w   tutorial_text_row
+        bsr     tutorial_draw_text
+        lea     tutorial_surface0,a0
+        lea     tutorial_surface1,a1
+        move.l  a1,tutorial_render_surface
+        move.w  #4*6144/4-1,d7
+.second:move.l  (a0)+,(a1)+
+        dbra    d7,.second
+        moveq   #0,d4
+        lea     tutorial_controls_texts,a5
+        lea     tutorial_controls_cache,a6
+        moveq   #4,d6
+.hint:  move.l  (a5)+,a0
+        move.l  a6,a2
+        cmpi.w  #2,d6
+        bcs.s   .plain_hint
+        bsr     ui_footer_selected
+        bra.s   .next_hint
+.plain_hint:
+        bsr     ui_footer_text
+.next_hint:
+        adda.w  #256,a6
+        dbra    d6,.hint
+        clr.w   tutorial_render_phase
+        move.w  #$ffff,tutorial_canvas_menus
+        move.w  #$ffff,tutorial_canvas_controls
+        move.w  #$ffff,tutorial_canvas_captions
+        clr.b   tutorial_preparing
+        movem.l (sp)+,d0-d7/a0-a6
+        rts
+
 tutorial_redraw:
+        ; A superseded completed bank must not display an older menu identity.
+        bsr     discard_ready_scene
         addq.w  #1,tutorial_render_generation
         st      tutorial_placement_dirty
         clr.w   tutorial_render_phase
@@ -21,56 +96,18 @@ tutorial_redraw:
         rts
 
 tutorial_footer_select:
-        tst.b   tutorial_menu
-        beq     .context
-        lea     tutorial_branch_text,a0
-        tst.b   tutorial_menu_selection
-        beq     .text
-        lea     tutorial_resume_text,a0
-        cmpi.b  #1,tutorial_menu_selection
-        beq     .text
-        lea     tutorial_close_text,a0
-        bra     .text
-.context:
-        lea     tutorial_unavailable_text,a0
-        cmpi.w  #TUTORIAL_UNAVAILABLE,tutorial_status
-        beq     .text
-        lea     tutorial_wait_hint_text,a0
-        tst.b   tutorial_waiting_ready
-        bne     .text
-        lea     tutorial_computing_text,a0
-        tst.b   tutorial_placement_ready
-        beq     .text
-        moveq   #0,d0
-        move.b  tutorial_active_variant,d0
-        eori.w  #1,d0
-        add.w   d0,d0
-        lea     tutorial_available_outcomes,a1
-        tst.w   (a1,d0.w)
-        bne     .ready_hint
-        lea     tutorial_other_pending_text,a0
-        bra     .text
-.ready_hint:
-        lea     tutorial_hint_text,a0
-        tst.b   tutorial_active_variant
-        bne     .keyboard_hint
-        lea     tutorial_held_hint_text,a0
-.keyboard_hint:
+        ; Control instructions remain available during every generation.
+        lea     tutorial_keyboard_controls_text,a0
         tst.b   tutorial_input_source
-        bne     .hint_ready
-        lea     tutorial_joystick_hint_text,a0
-        tst.b   tutorial_active_variant
-        bne     .hint_ready
-        lea     tutorial_joystick_held_hint_text,a0
-.hint_ready:
-        cmpi.w  #TUTORIAL_UNAVAILABLE,tutorial_status
-        bne     .menu
-        lea     tutorial_unavailable_text,a0
-.menu:  tst.b   tutorial_menu
+        bne.s   .control_source
+        lea     tutorial_pad_controls_text,a0
+.control_source:
+        tst.b   tutorial_menu
         beq     .text
         lea     tutorial_menu_text,a0
+        bra     .text
 .text:  move.l  a0,d6
-        lea     tutorial_menu_text,a0
+        lea     tutorial_close_hint_text,a0
         tst.b   tutorial_menu
         bne     .count_ready
         lea     tutorial_empty_text,a0
@@ -81,7 +118,10 @@ tutorial_footer_select:
         bne     .count_ready
         lea     tutorial_count_text,a0
         tst.b   tutorial_placement_ready
-        beq     .count_ready
+        bne.s   .selected_outcome
+        lea     tutorial_computing_detail_text,a0
+        bra     .count_ready
+.selected_outcome:
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
         add.w   d0,d0
@@ -252,6 +292,9 @@ tutorial_released_wait:
 .done:  rts
 
 tutorial_render:
+        ; Mandatory menu production is now one complete cached ROI transaction.
+        bra     tutorial_progress_fast_publish
+        ; Optional legacy ghost/path bodies remain disabled by the prototype.
         ; One complete unit per root grant; no recursive admission or loop.
         move.w  tutorial_render_phase,d0
         beq     tutorial_animate
@@ -315,6 +358,287 @@ tutorial_choose_surface:
         rts
 .busy:  move.w  (sp)+,sr
         moveq   #0,d0
+        rts
+
+; A placement can borrow an immutable already completed pending canvas. Only
+; its new sprite bank is built: no court, cue or footer byte is changed. This
+; avoids making mandatory actor input wait for a free canvas during prediction.
+; Eligibility is re-read on every root attempt; no refused-time cache exists.
+tutorial_pending_canvas_eligible:
+        move.l  tutorial_visible_surface,a1
+tutorial_neutral_canvas_eligible:
+        moveq   #0,d0
+        tst.b   tutorial_menu
+        bne     .done
+        tst.b   tutorial_ball_mode
+        bne     .done
+        tst.b   tutorial_marker_ready
+        bne     .done
+        cmpi.w  #TUTORIAL_COMPUTING,tutorial_status
+        bne     .done
+        moveq   #0,d1
+        cmpa.l  #tutorial_surface0,a1
+        beq.s   .identity
+        cmpa.l  #tutorial_surface1,a1
+        bne     .done
+        moveq   #1,d1
+.identity:
+        lea     tutorial_canvas_menus,a0
+        cmpi.b  #$ff,(a0,d1.w)
+        bne     .done
+        lea     tutorial_canvas_controls,a0
+        move.b  tutorial_input_source,d2
+        cmp.b   (a0,d1.w),d2
+        bne     .done
+        lea     tutorial_canvas_captions,a0
+        tst.b   (a0,d1.w)
+        bne     .done
+        move.w  d1,d2
+        mulu.w  #20,d2
+        lea     tutorial_canvas_markers,a0
+        tst.b   4(a0,d2.w)
+        bne     .done
+        moveq   #1,d0
+.done:  rts
+
+; Change only the menu's30 rows on a free canvas. Closed scenes restore the
+; original ROI; opening/highlighting uses the startup-authored selection cache.
+; Each of four960-byte planes is copied in bounded48-byte register bursts.
+tutorial_prepare_menu_roi:
+        movem.l d0-d7/a0-a6,-(sp)
+        moveq   #-1,d4
+        tst.b   tutorial_menu
+        beq.s   .identity
+        moveq   #0,d4
+        move.b  tutorial_menu_selection,d4
+.identity:
+        lea     tutorial_canvas_menus,a2
+        cmpi.l  #tutorial_surface0,tutorial_render_surface
+        beq.s   .cached
+        addq.l  #1,a2
+.cached:
+        cmp.b   (a2),d4
+        beq.s   .done
+        move.l  a2,a5
+        lea     plane0+132*32,a0
+        tst.b   tutorial_menu
+        beq.s   .destination
+        moveq   #0,d0
+        move.b  tutorial_menu_selection,d0
+        mulu.w  #30*32*4,d0
+        lea     tutorial_menu_cache,a0
+        adda.l  d0,a0
+.destination:
+        move.l  tutorial_render_surface,a1
+        adda.w  #132*32,a1
+        moveq   #3,d6
+.plane: bsr     tutorial_copy_960
+        adda.w  #6144-30*32,a1
+        tst.b   tutorial_menu
+        bne.s   .next
+        adda.w  #6144-30*32,a0
+.next:  dbra    d6,.plane
+        move.b  d4,(a5)
+.done:
+        movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+tutorial_copy_960:
+        movem.l d0-d7/a2-a6,-(sp)
+        moveq   #19,d7
+.burst: movem.l (a0)+,d0-d6/a2-a6
+        movem.l d0-d6/a2-a6,(a1)
+        lea     48(a1),a1
+        dbra    d7,.burst
+        movem.l (sp)+,d0-d7/a2-a6
+        rts
+
+; A single current endpoint cue, never a path trail. Retire the previous cue
+; only on the chosen free canvas and restore the exact underlying palette bits.
+; This preserves banner and menu pixels even when the endpoint overlaps them.
+tutorial_landing_owner:
+        lea     tutorial_canvas_markers,a3
+        cmpi.l  #tutorial_surface0,tutorial_render_surface
+        beq.s   .done
+        adda.w  #20,a3
+.done:  rts
+
+tutorial_restore_landing:
+        movem.l d0-d7/a0-a6,-(sp)
+        bsr     tutorial_landing_owner
+        tst.b   4(a3)
+        beq.s   .done
+        move.w  (a3),d4
+        move.w  2(a3),d5
+        lea     6(a3),a4
+        lea     tutorial_landing_offsets,a5
+        moveq   #8,d7
+.pixel: moveq   #0,d0
+        moveq   #0,d1
+        move.b  (a5)+,d0
+        move.b  (a5)+,d1
+        ext.w   d0
+        ext.w   d1
+        add.w   d4,d0
+        add.w   d5,d1
+        moveq   #0,d2
+        move.b  (a4)+,d2
+        bsr     tutorial_plot
+        dbra    d7,.pixel
+        clr.b   4(a3)
+.done:  movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+tutorial_draw_landing:
+        movem.l d0-d7/a0-a6,-(sp)
+        tst.b   tutorial_menu
+        bne     .done
+        tst.b   tutorial_waiting_ready
+        bne     .done
+        tst.b   tutorial_marker_ready
+        beq     .done
+        move.l  tutorial_generation,d0
+        cmp.l   tutorial_marker_generation,d0
+        bne     .done
+        cmp.l   game_preview_generation,d0
+        bne     .done
+        moveq   #0,d0
+        move.b  tutorial_active_variant,d0
+        lsl.w   #3,d0
+        lea     game_preview_endpoints,a0
+        adda.w  d0,a0
+        moveq   #0,d4
+        moveq   #0,d5
+        move.b  (a0),d4
+        move.b  1(a0),d5
+        addi.w  #TUTORIAL_X_ORIGIN,d4
+        addi.w  #TUTORIAL_Y_ORIGIN,d5
+        bsr     tutorial_landing_owner
+        move.w  d4,(a3)
+        move.w  d5,2(a3)
+        lea     6(a3),a4
+        lea     tutorial_landing_offsets,a5
+        moveq   #8,d7
+.pixel: moveq   #0,d0
+        moveq   #0,d1
+        move.b  (a5)+,d0
+        move.b  (a5)+,d1
+        ext.w   d0
+        ext.w   d1
+        add.w   d4,d0
+        add.w   d5,d1
+        bsr     tutorial_read_landing_pixel
+        move.b  d2,(a4)+
+        ; The authored heading remains legible even for clipped/out endpoints.
+        cmpi.w  #4,d1
+        bcs.s   .draw
+        cmpi.w  #12,d1
+        bcc.s   .draw
+        cmpi.w  #96,d0
+        bcs.s   .draw
+        cmpi.w  #160,d0
+        bcs.s   .next_pixel
+.draw:
+        moveq   #15,d2
+        bsr     tutorial_plot
+.next_pixel:
+        dbra    d7,.pixel
+        st      4(a3)
+.done:  movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+; D0/D1 actual canvas coordinates; return four native plane bits in D2.
+tutorial_read_landing_pixel:
+        movem.l d0-d1/d3-d6/a0,-(sp)
+        moveq   #0,d2
+        cmpi.w  #256,d0
+        bcc.s   .done
+        cmpi.w  #192,d1
+        bcc.s   .done
+        lsl.w   #5,d1
+        move.w  d0,d3
+        lsr.w   #3,d3
+        add.w   d3,d1
+        move.l  tutorial_render_surface,a0
+        adda.w  d1,a0
+        andi.w  #7,d0
+        moveq   #7,d3
+        sub.w   d0,d3
+        moveq   #0,d6
+.plane: btst    d3,(a0)
+        beq.s   .next
+        bset    d6,d2
+.next:  adda.w  #6144,a0
+        addq.w  #1,d6
+        cmpi.w  #4,d6
+        bcs.s   .plane
+.done:  movem.l (sp)+,d0-d1/d3-d6/a0
+        rts
+
+tutorial_landing_offsets:
+        dc.b -2,0,-1,0,0,0,1,0,2,0,0,-2,0,-1,0,1,0,2
+        even
+
+; Mandatory controls are cached independently of prediction. Current completed
+; contextual text is copied only with matching generation and caption identity.
+; Every destination byte belongs to the selected free canvas, never live DMA.
+tutorial_prepare_private_footer:
+        movem.l d0-d7/a0-a6,-(sp)
+        lea     tutorial_footer0,a1
+        cmpi.l  #tutorial_surface0,tutorial_render_surface
+        beq.s   .source
+        lea     tutorial_footer1,a1
+.source:
+        lea     tutorial_controls_cache,a0
+        tst.b   tutorial_input_source
+        bne.s   .menu
+        adda.w  #256,a0
+.menu:  tst.b   tutorial_menu
+        beq.s   .first
+        lea     tutorial_controls_cache+512,a0
+.first: moveq   #256/4-1,d7
+.copy_first:
+        move.l  (a0)+,(a1)+
+        dbra    d7,.copy_first
+        move.l  a1,a6
+        bsr     tutorial_footer_select
+        moveq   #1,d4
+        cmpa.l  #tutorial_computing_detail_text,a0
+        bne.s   .caption_identity
+        moveq   #0,d4
+.caption_identity:
+        move.l  tutorial_generation,d0
+        cmp.l   tutorial_caption_generation,d0
+        bne.s   .pending
+        cmp.l   tutorial_footer_first,d6
+        bne.s   .pending
+        cmpa.l  tutorial_footer_second,a0
+        bne.s   .pending
+        lea     tutorial_footer_scratch+256,a0
+        bra.s   .second
+.pending:
+        lea     tutorial_controls_cache+768,a0
+        moveq   #0,d4
+        tst.b   tutorial_menu
+        beq.s   .second
+        moveq   #1,d4
+        lea     tutorial_controls_cache+1024,a0
+.second:
+        move.l  a6,a1
+        moveq   #256/4-1,d7
+.copy_second:
+        move.l  (a0)+,(a1)+
+        dbra    d7,.copy_second
+        moveq   #0,d0
+        cmpi.l  #tutorial_surface0,tutorial_render_surface
+        beq.s   .record_identity
+        moveq   #1,d0
+.record_identity:
+        lea     tutorial_canvas_captions,a0
+        move.b  d4,(a0,d0.w)
+        lea     tutorial_canvas_controls,a0
+        move.b  tutorial_input_source,(a0,d0.w)
+        movem.l (sp)+,d0-d7/a0-a6
         rts
 
 tutorial_copy_court:
@@ -629,6 +953,29 @@ tutorial_patch_planes:
         move.w  d1,(a2,d2.w)
         move.w  d0,(a2,d3.w)
         dbra    d7,.restore
+        ; Bind the complete private footer to this same canvas identity.
+        move.l  a1,d0
+        lea     ui_overlay_plane,a0
+        cmpi.l  #tutorial_surface0,d0
+        bne.s   .footer_second
+        lea     tutorial_footer0,a0
+        bra.s   .footer_pointer
+.footer_second:
+        cmpi.l  #tutorial_surface1,d0
+        bne.s   .footer_pointer
+        lea     tutorial_footer1,a0
+.footer_pointer:
+        move.l  a0,d0
+        move.l  d0,d1
+        swap    d1
+        move.l  back_copper,a2
+        adda.w  #ui_overlay_pointer0-copperlist,a2
+        moveq   #3,d7
+.footer_planes:
+        move.w  d1,2(a2)
+        move.w  d0,6(a2)
+        adda.w  #8,a2
+        dbra    d7,.footer_planes
         movem.l (sp)+,d2-d3/a1-a3
         rts
 
@@ -658,6 +1005,7 @@ tutorial_restore_build_planes:
 .done:  rts
 
 tutorial_publish:
+        clr.l   tutorial_neutral_copper
         move.w  tutorial_render_generation,d0
         cmp.w   tutorial_build_generation,d0
         bne     tutorial_redraw
@@ -712,12 +1060,18 @@ tutorial_prepare_objects:
         add.b   d5,O_Y(a1)
         adda.w  #O_SIZE,a1
         dbra    d7,.actor
+        tst.b   tutorial_menu
+        beq.s   .normal_ball
         clr.b   tutorial_scene_objects+SC_BALL+O_VISIBLE
         clr.b   tutorial_scene_objects+SC_SHADOW+O_VISIBLE
-        tst.b   tutorial_menu
-        bne     tutorial_menu_objects
+        bra     tutorial_menu_objects
+.normal_ball:
+        ; Until a current sample exists, retain the actual frozen ball, never
+        ; an invented edited attachment or an old-generation prediction.
         tst.b   tutorial_ball_mode
         beq     .done
+        clr.b   tutorial_scene_objects+SC_BALL+O_VISIBLE
+        clr.b   tutorial_scene_objects+SC_SHADOW+O_VISIBLE
         move.l  tutorial_presentation_generation,d0
         cmp.l   game_preview_generation,d0
         bne     .done
@@ -823,26 +1177,23 @@ tutorial_animate:
         lea     tutorial_available_outcomes,a0
         tst.w   (a0,d0.w)
         beq     .done
-        ; Hold the real terminal sample before repeating the complete sequence.
-        move.w  simulation_started_updates,d0
-        sub.w   tutorial_animation_callback,d0
-        cmpi.w  #30,d0
-        bcs     .done
-        move.w  simulation_started_updates,tutorial_animation_callback
-        clr.w   tutorial_animation_index
-        move.b  #2,tutorial_ball_mode
-        bra.s   .sample
+        ; Retain the actual final sample. Repetition would invent a fresh shot.
+        bra     .done
 .advance:
         ; Advance the nominal cursor, rather than adopting late callback entry
         ; time. A delayed publication catches up without accumulating drift.
-        addq.w  #2,tutorial_animation_callback
+        move.w  simulation_started_updates,d2
+        move.w  d2,d3
+        sub.w   tutorial_animation_callback,d3
+        move.w  d2,tutorial_animation_callback
         move.b  #2,tutorial_ball_mode
-        addq.w  #2,tutorial_animation_index
+        add.w   d3,tutorial_animation_index
         cmp.w   tutorial_animation_index,d1
         bhi     .sample
         move.w  d1,tutorial_animation_index
         move.w  simulation_started_updates,tutorial_animation_callback
 .sample:
+        clr.l   tutorial_neutral_copper
         move.l  tutorial_visible_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
@@ -859,7 +1210,7 @@ tutorial_animation_due:
         moveq   #0,d0
         move.w  simulation_started_updates,d0
         sub.w   tutorial_animation_callback,d0
-        cmpi.w  #2,d0
+        cmpi.w  #1,d0
         bcs     .no
         moveq   #0,d0
         move.b  tutorial_active_variant,d0
@@ -870,19 +1221,14 @@ tutorial_animation_due:
         subq.w  #1,d1
         cmp.w   tutorial_animation_index,d1
         bhi.s   .yes
-        lea     tutorial_available_outcomes,a0
-        tst.w   (a0,d0.w)
-        beq.s   .no
-        move.w  simulation_started_updates,d0
-        sub.w   tutorial_animation_callback,d0
-        cmpi.w  #30,d0
-        bcs.s   .no
+        bra.s   .no
 .yes:   moveq   #1,d0
         rts
 .no:    moveq   #0,d0
         rts
 
 tutorial_restore_court:
+        clr.l   tutorial_neutral_copper
         lea     plane0,a0
         bsr     tutorial_patch_planes
         jsr     game_render_sprites
@@ -891,6 +1237,14 @@ tutorial_restore_court:
 tutorial_empty_text: dc.b 'UNAVAILABLE - RESUME FROM MENU',0
 tutorial_title_text: dc.b 'Tutorial',0
 tutorial_banner_text: dc.b 'TUTORIAL',0
+tutorial_keyboard_controls_text: dc.b 'WASD MOVE  HOLD F  G MENU',0
+tutorial_pad_controls_text: dc.b 'PAD MOVE  HOLD B1  B2 MENU',0
+tutorial_computing_detail_text: dc.b 'CALCULATING PATHS',0
+tutorial_close_hint_text: dc.b 'G/B2 CLOSE  RESUME ORIGINAL',0
+        even
+tutorial_controls_texts:
+        dc.l tutorial_keyboard_controls_text,tutorial_pad_controls_text
+        dc.l tutorial_menu_text,tutorial_computing_detail_text,tutorial_close_hint_text
 tutorial_computing_text: dc.b 'TUTORIAL - CALCULATING PATHS',0
 tutorial_hint_text: dc.b 'TUTORIAL F RELEASED / WASD / G',0
 tutorial_held_hint_text: dc.b 'TUTORIAL F HELD / WASD / G MENU',0

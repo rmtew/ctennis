@@ -47,6 +47,24 @@ tutorial_progress_returned:
         move.l  game_preview_counts,d0
         cmp.l   tutorial_available_counts,d0
         beq     .outcomes
+        ; Playback pauses at an exhausted immutable prefix. Newly appended
+        ; samples start from this return, without accumulating unseen wait time.
+        moveq   #0,d2
+        move.b  tutorial_active_variant,d2
+        add.w   d2,d2
+        lea     tutorial_available_counts,a0
+        move.w  (a0,d2.w),d3
+        lea     game_preview_counts,a0
+        cmp.w   (a0,d2.w),d3
+        bcc.s   .counts
+        tst.w   d3
+        beq.s   .rebase
+        subq.w  #1,d3
+        cmp.w   tutorial_animation_index,d3
+        bne.s   .counts
+.rebase:
+        move.w  simulation_started_updates,tutorial_animation_callback
+.counts:
         move.l  d0,tutorial_available_counts
         move.l  d0,tutorial_counts
 .outcomes:
@@ -104,6 +122,14 @@ tutorial_progress_qualify:
         clr.b   tutorial_animation_ready
         clr.l   tutorial_marker_generation
         clr.l   tutorial_animation_generation
+        ; Actual available samples qualify playback independently of a terminal
+        ; outcome. Waiting/computing still cannot qualify a landing marker.
+        lea     tutorial_available_counts,a0
+        cmpi.w  #2,(a0,d0.w)
+        bcs.s   .no_samples
+        st      tutorial_animation_ready
+        move.l  tutorial_presentation_generation,tutorial_animation_generation
+.no_samples:
         tst.w   d1
         beq     .hide
         ; A queried endpoint can be ready while dense work continues. LIMIT
@@ -140,9 +166,6 @@ tutorial_progress_qualify:
         tst.l   d0
         beq     .not_waiting
         st      tutorial_waiting_ready
-        clr.b   tutorial_ball_mode
-        clr.b   tutorial_animation_ready
-        clr.l   tutorial_animation_generation
         tst.b   d3
         bne     .not_waiting
         st      tutorial_placement_dirty
@@ -204,17 +227,54 @@ tutorial_progress_fast_publish:
         clr.l   tutorial_animation_generation
         clr.l   tutorial_counts
 .publish:
-        lea     plane0,a0
+        bsr     tutorial_pending_canvas_eligible
+        tst.l   d0
+        beq.s   .private_canvas
+        move.l  a1,tutorial_render_surface
+        move.w  tutorial_render_generation,tutorial_build_generation
+        bra.s   .complete_objects
+.private_canvas:
+        bsr     tutorial_choose_surface
+        tst.l   d0
+        beq     .done
+        bsr     tutorial_restore_landing
+        bsr     tutorial_prepare_menu_roi
+        bsr     tutorial_draw_landing
+        bsr     tutorial_prepare_private_footer
+.complete_objects:
+        move.l  tutorial_render_surface,a0
         bsr     tutorial_patch_planes
         bsr     tutorial_prepare_objects
         bsr     tutorial_render_objects
+        ; Bind neutrality to this actual completed sprite/Copper bank, rather
+        ; than inferring queued content from later mutable presentation state.
+        ; An IRQ before complete_scene can only make the pointer comparison
+        ; conservative; no consumer uses this descriptor to mutate the bank.
+        clr.l   tutorial_neutral_copper
+        move.l  tutorial_render_surface,a1
+        bsr     tutorial_neutral_canvas_eligible
+        tst.l   d0
+        beq.s   .classified_bank
+        move.l  back_copper,tutorial_neutral_copper
+.classified_bank:
         jsr     complete_scene
-        move.l  #plane0,tutorial_visible_surface
+        move.l  tutorial_render_surface,tutorial_visible_surface
         move.w  simulation_started_updates,tutorial_animation_callback
         move.w  tutorial_render_generation,tutorial_published_generation
         clr.b   tutorial_placement_dirty
+        clr.w   tutorial_render_phase
         bsr     tutorial_progress_status
-        clr.w   tutorial_footer_ready
+        bsr     tutorial_footer_select
+        move.l  tutorial_generation,d0
+        cmp.l   tutorial_footer_stage_generation,d0
+        bne.s   .footer_changed
+        cmp.l   tutorial_footer_first,d6
+        bne.s   .footer_changed
+        cmpa.l  tutorial_footer_second,a0
+        bne.s   .footer_changed
+        clr.b   tutorial_footer_dirty
+        bra.s   .done
+.footer_changed:
         st      tutorial_footer_dirty
 .done:  rts
 

@@ -49,6 +49,8 @@ class Tests(unittest.TestCase):
   diagnostic={c.id for c in diagnostic_cases()}
   self.assertFalse(ordinary & diagnostic)
   self.assertEqual(diagnostic,{'tutorial-coherent-cpu','tutorial-playable-pal','tutorial-playable-ntsc',
+                              'tutorial-ux-delivered-title-pal','tutorial-ux-delivered-match-pal',
+                              'tutorial-ux-title-pal','tutorial-ux-title-ntsc','tutorial-ux-match-pal','tutorial-ux-match-ntsc',
                               'tutorial-serve-pal','tutorial-serve-ntsc',
                               'next-operation-matched-pal','next-operation-matched-ntsc',
                               'topup-matched-pal','topup-matched-ntsc','ui-scan-matched-pal','ui-scan-matched-ntsc',

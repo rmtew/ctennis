@@ -147,14 +147,41 @@ tutorial_background:
         tst.b   tutorial_footer_dirty
         bne     .footer
         bra     .done
-.menu:  tst.w   tutorial_render_phase
+.menu:  tst.b   tutorial_placement_dirty
+        bne.s   .producer
+        tst.w   tutorial_render_phase
         beq     .residual_footer
-        move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
-        move.l  #TUTORIAL_BG_FULL_E-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
-        bra     .admit
+        bra.s   .producer
 .producer:
         move.w  #TUTORIAL_JOB_PRODUCER,tutorial_job_kind
-        move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        move.l  #6000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bsr     tutorial_pending_canvas_eligible
+        tst.l   d0
+        beq.s   .canvas_cost
+        move.l  #3500-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+        bra.s   .producer_admit
+.canvas_cost:
+        ; The measured pose-only owner needs no menu ROI or landing retirement.
+        ; Both canvas identities must agree, since either can become free.
+        ; Any uncertain/new ROI or cross retains the larger reservation.
+        tst.b   tutorial_marker_ready
+        bne.s   .producer_admit
+        tst.b   tutorial_canvas_markers+4
+        bne.s   .producer_admit
+        tst.b   tutorial_canvas_markers+24
+        bne.s   .producer_admit
+        moveq   #-1,d0
+        tst.b   tutorial_menu
+        beq.s   .producer_identity
+        moveq   #0,d0
+        move.b  tutorial_menu_selection,d0
+.producer_identity:
+        cmp.b   tutorial_canvas_menus,d0
+        bne.s   .producer_admit
+        cmp.b   tutorial_canvas_menus+1,d0
+        bne.s   .producer_admit
+        move.l  #4000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+.producer_admit:
         bra     .admit
 .footer_commit:
         move.w  #TUTORIAL_JOB_FOOTER_COMMIT,tutorial_job_kind
@@ -637,11 +664,21 @@ tutorial_footer_commit:
         move.l  tutorial_footer_generation,d0
         cmp.l   tutorial_generation,d0
         bne.s   .discard
-        lea     tutorial_footer_scratch,a0
-        lea     ui_overlay_plane,a1
-        move.w  #512/4-1,d0
-.copy:  move.l  (a0)+,(a1)+
-        dbra    d0,.copy
+        ; Raster bytes remain private. The next complete scene copies them only
+        ; into its free canvas's footer and atomically binds that pointer.
+        cmp.l   tutorial_caption_generation,d0
+        bne.s   .changed
+        move.l  tutorial_footer_first,d1
+        cmp.l   tutorial_caption_first,d1
+        bne.s   .changed
+        move.l  tutorial_footer_second,d1
+        cmp.l   tutorial_caption_second,d1
+        beq.s   .discard
+.changed:
+        move.l  d0,tutorial_caption_generation
+        move.l  tutorial_footer_first,tutorial_caption_first
+        move.l  tutorial_footer_second,tutorial_caption_second
+        st      tutorial_placement_dirty
 .discard:
         clr.w   tutorial_footer_ready
         rts
