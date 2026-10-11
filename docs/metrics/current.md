@@ -1,7 +1,7 @@
 # Native resource and loading metrics
 
 Completion: **incomplete**. Acceptance is separate from metric coverage.
-Product SHA256: `51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89`.
+Product SHA256: `929bdbc163e610f13685a6cdb31ab15e9434016036c9788e06ffa32e4bd2f0a9`.
 Identity excludes generated report files and Git report commits; timestamps are not freshness evidence.
 
 | Executable | Code | Data | BSS | Loaded payload |

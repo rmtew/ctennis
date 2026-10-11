@@ -2,7 +2,7 @@
   "schema": 1,
   "state": "incomplete",
   "static": {
-    "executable_sha256": "51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89",
+    "executable_sha256": "929bdbc163e610f13685a6cdb31ab15e9434016036c9788e06ffa32e4bd2f0a9",
     "layout": {
       "executable_bytes": 228052,
       "hunks": [
@@ -61,7 +61,7 @@
     },
     "attribution": {
       "schema": 1,
-      "executable_sha256": "51118ed46f219035cc70cdd846762bf9f3ba67f355165ad8711f9cf394cead89",
+      "executable_sha256": "929bdbc163e610f13685a6cdb31ab15e9434016036c9788e06ffa32e4bd2f0a9",
       "accounted_file_bytes": 228052,
       "reconciled": true,
       "categories": [
@@ -732,7 +732,7 @@
           "hunk": 0,
           "offset": 38192,
           "bytes": 14,
-          "sha256": "9665904279a395eb1c492bc819a3af56eb1dafa2d8ad363d97470b96c360eea4"
+          "sha256": "f4a4abbd5e112fd4b085544e8279937ca7b93e3ba0d5b7788ddd26a7d44b7665"
         },
         {
           "path": "assets/native/scene/sprite-images.bin",
@@ -760,7 +760,7 @@
           "hunk": 1,
           "offset": 44544,
           "bytes": 512,
-          "sha256": "00105026f3f844bb147235177c329b48ae9710b34ae2267fb795e993830a2b60"
+          "sha256": "dd2190cd0763109b3353c045c3ea151effd80cd6c528a2026299379ccabc8a98"
         },
         {
           "path": "assets/native/title/font-mac.bin",
@@ -3192,7 +3192,7 @@
       "celebration": true
     },
     "release": {
-      "executable_sha256": "f4e10d0784302c739b73f335ffbdc68d018713178379e3e63c10fceaa997c8b5",
+      "executable_sha256": "7206a438475bc3057fa2451bc03d66efb889e027d5f1f052023c944c1e4f7d95",
       "executable_bytes": 190088,
       "removed_symbol_bytes": 37964,
       "loaded_payload_bytes": 347900,
@@ -3817,11 +3817,11 @@
       "build/native/ui-help-options.bin": "b7ee2276560910fcf5b496fe4ae8a598612f0ac6a9c82b93edc1c6009c094713",
       "build/native/ui-menu-options.bin": "42a1aeb53991565d14f1d978b75d87c54ea27e94ba491d92c47d3f1f63073128",
       "build/native/ui-pages.bin": "9758d3b32e421a85555868ec08fd2abf694cc228cf10f75274df1b5bb76ac948",
-      "build/native/ui-title-identities.bin": "00105026f3f844bb147235177c329b48ae9710b34ae2267fb795e993830a2b60",
+      "build/native/ui-title-identities.bin": "dd2190cd0763109b3353c045c3ea151effd80cd6c528a2026299379ccabc8a98",
       "build/native/ui-title-pages.bin": "84050866da7c0bc34638f1ae567470514c781cd0c439fd03e8ae9455043fda81",
-      "build/native/version.bin": "9665904279a395eb1c492bc819a3af56eb1dafa2d8ad363d97470b96c360eea4"
+      "build/native/version.bin": "f4a4abbd5e112fd4b085544e8279937ca7b93e3ba0d5b7788ddd26a7d44b7665"
     },
-    "build_receipt_sha256": "d9bd901327f2cf285a8b41c64bca395d23571feb4ba847ff7257f68ff5b7f1f7"
+    "build_receipt_sha256": "1f7c4812db952e57c623b83fafcef356b6e96b7c9e8646a491730204f1420299"
   },
   "runtime": {
     "cold-one": {
@@ -3830,6 +3830,7 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/VERSION",
           "amiga/game/history.s",
           "amiga/game/interface_render.s",
           "amiga/game/preview.s",
@@ -3858,6 +3859,7 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/VERSION",
           "amiga/game/history.s",
           "amiga/game/interface_render.s",
           "amiga/game/preview.s",
@@ -3885,6 +3887,7 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/VERSION",
           "amiga/game/history.s",
           "amiga/game/interface_render.s",
           "amiga/game/preview.s",
@@ -3912,6 +3915,7 @@
         "status": "stale",
         "freshness": "invalidated",
         "changed_dependencies": [
+          "amiga/VERSION",
           "amiga/game/history.s",
           "amiga/game/interface_render.s",
           "amiga/game/preview.s",
@@ -3952,7 +3956,7 @@
     "Missing/invalid cold milestone: input_responsive",
     "Continuous loaded-title selection evidence missing/invalid"
   ],
-  "identity": "bea906bc401bbef8ba04847712d4a9d338ba86629e889c810feca9dbfa120a6f",
+  "identity": "c91af9ae426fd833544b1f57b3d8e039b040cc20007edcc0f72311f3a4871569",
   "report_generator_sha256": "3b661fe59c95c4092bd14ce53507da9e4124f3ceb2733114c93fafeaf960fb0c",
   "deltas": {
     "state": "historical reviewed baseline; master has no accepted metrics report",
@@ -3981,5 +3985,5 @@
     "previous_report": "docs/metrics/baselines/pre-title-score-current.json",
     "previous_report_sha256": "3f201f2af4bf6bf03f50d2a9685442e57b61bb207d2ab024e62d931fb7dbdede"
   },
-  "product_identity": "a8933cf1355e55feeee27552faa2bf1d9abd62987b0c7def24286dc3a3858571"
+  "product_identity": "85278e5d481dae1d71397f6a3f24630bad644d948ac84040939197af59a9b99a"
 }
