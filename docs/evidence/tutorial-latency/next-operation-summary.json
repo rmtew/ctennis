@@ -1,0 +1,674 @@
+{
+  "schema": 1,
+  "reducer_sha256": "7ae21f089e3e918075052111620389a0e461906ab14abb62810a96fdc2c3ac5e",
+  "regions": [
+    {
+      "standard": "PAL",
+      "native_run_id": "dfc1b51dd3d44ea3a7a4d2e549460ba3",
+      "native_commit": "36572323f35b6805d904815a36ec565f7446da0e",
+      "native_product_sha256": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf",
+      "symbol_executable_path": "build/tests/next-operation-candidate-7238879/baseline-rally",
+      "symbol_executable_sha256": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf",
+      "report_path": "build/tests/next-operation-matched-pal/d25583bb5cfb488aa60cb3731b52dd05/report.json",
+      "report_sha256": "9be53e3aeedb395d4b1c542c66ca104f033291b0e34bbeee9ff66dcd47d3211d",
+      "raw_path": "/workspace/ctennis/build/tests/next-operation-matched-pal/d25583bb5cfb488aa60cb3731b52dd05/literal-rpc.jsonl.gz",
+      "raw_sha256": "178b5acc658706e48b048350de609d34b461746ed8b523750169413e86797c9c",
+      "binary": {
+        "build/amiga/interfaces/enhanced/baseline-rally": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf"
+      },
+      "anchor_sha256": "7b4cfc51c4195d35b9fd414f1b1660e8e4e0d043d63f97534a47e547ac594e74",
+      "accepted_requests": [
+        [
+          1,
+          98,
+          152,
+          0
+        ]
+      ],
+      "baseline_replay_equal": true,
+      "passes": [
+        {
+          "grouping": {
+            "grants": 110,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 227,
+            "endpoint_check_inclusive_ms": 26.070971934607595,
+            "endpoint_check_exclusive_ms": 22.230429713876504
+          },
+          "label": "baseline-1",
+          "physical_input_cck": 57215772,
+          "endpoint_ready_store_cck": 58926453,
+          "endpoint_step_return_cck": 58926530,
+          "copjmp_cck": 59030129,
+          "latency_ms": 511.53389091021864,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 212985,
+              "scheduling_and_preview_support_before_known": 932260,
+              "measured_hardware_service_and_display_production_before_known": 367695,
+              "mandatory_callback_controls_requests_before_known": 155947,
+              "unclassified_before_known": 41794,
+              "endpoint_ready_store_to_qualifying_copjmp": 103676
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.04829576291376,
+              "scheduling_and_preview_support_before_known": 262.8383417045049,
+              "measured_hardware_service_and_display_production_before_known": 103.66672822285408,
+              "mandatory_callback_controls_requests_before_known": 43.96718820263921,
+              "unclassified_before_known": 11.783263953401496,
+              "endpoint_ready_store_to_qualifying_copjmp": 29.23007306390519
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4501,
+              "shared_preview_dispatch": 202689,
+              "hardware_service": 361229,
+              "actual_outgoing_ball": 5795,
+              "preview_envelopes_state_support": 273791,
+              "display_producer_footer": 6466,
+              "controls_and_requests": 43001,
+              "endpoint_eligibility": 90984,
+              "scheduler_classification": 217452,
+              "scheduler_admission": 30422,
+              "scheduler_owner_other": 319611,
+              "remaining_mandatory_callback": 112946,
+              "unclassified": 41794
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4501,
+            "shared_preview_dispatch": 202689,
+            "hardware_service": 391779,
+            "actual_outgoing_ball": 6507,
+            "preview_envelopes_state_support": 283916,
+            "display_producer_footer": 22056,
+            "controls_and_requests": 45457,
+            "endpoint_eligibility": 90984,
+            "scheduler_classification": 222501,
+            "scheduler_admission": 33067,
+            "scheduler_owner_other": 344742,
+            "remaining_mandatory_callback": 120782,
+            "unclassified": 45376
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 30550,
+            "actual_outgoing_ball": 712,
+            "preview_envelopes_state_support": 10125,
+            "display_producer_footer": 15590,
+            "controls_and_requests": 2456,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 5049,
+            "scheduler_admission": 2645,
+            "scheduler_owner_other": 25131,
+            "remaining_mandatory_callback": 7836,
+            "unclassified": 3582
+          },
+          "ui_sample_before_known_cck": 49117,
+          "ui_sample_before_known_ms": 13.84788667270951,
+          "ui_sample_full_window_ms": 33.270508430613255,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.131228017745098
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.143227809111913
+            }
+          ],
+          "ready_store_pc": 159470
+        },
+        {
+          "grouping": {
+            "grants": 110,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 227,
+            "endpoint_check_inclusive_ms": 26.070971934607595,
+            "endpoint_check_exclusive_ms": 22.230429713876504
+          },
+          "label": "baseline-2",
+          "physical_input_cck": 57215772,
+          "endpoint_ready_store_cck": 58926453,
+          "endpoint_step_return_cck": 58926530,
+          "copjmp_cck": 59030129,
+          "latency_ms": 511.53389091021864,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 212985,
+              "scheduling_and_preview_support_before_known": 932260,
+              "measured_hardware_service_and_display_production_before_known": 367695,
+              "mandatory_callback_controls_requests_before_known": 155947,
+              "unclassified_before_known": 41794,
+              "endpoint_ready_store_to_qualifying_copjmp": 103676
+            },
+            "partition_ms": {
+              "actual_math_before_known": 60.04829576291376,
+              "scheduling_and_preview_support_before_known": 262.8383417045049,
+              "measured_hardware_service_and_display_production_before_known": 103.66672822285408,
+              "mandatory_callback_controls_requests_before_known": 43.96718820263921,
+              "unclassified_before_known": 11.783263953401496,
+              "endpoint_ready_store_to_qualifying_copjmp": 29.23007306390519
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4501,
+              "shared_preview_dispatch": 202689,
+              "hardware_service": 361229,
+              "actual_outgoing_ball": 5795,
+              "preview_envelopes_state_support": 273791,
+              "display_producer_footer": 6466,
+              "controls_and_requests": 43001,
+              "endpoint_eligibility": 90984,
+              "scheduler_classification": 217452,
+              "scheduler_admission": 30422,
+              "scheduler_owner_other": 319611,
+              "remaining_mandatory_callback": 112946,
+              "unclassified": 41794
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4501,
+            "shared_preview_dispatch": 202689,
+            "hardware_service": 391779,
+            "actual_outgoing_ball": 6507,
+            "preview_envelopes_state_support": 283916,
+            "display_producer_footer": 22056,
+            "controls_and_requests": 45457,
+            "endpoint_eligibility": 90984,
+            "scheduler_classification": 222501,
+            "scheduler_admission": 33067,
+            "scheduler_owner_other": 344742,
+            "remaining_mandatory_callback": 120782,
+            "unclassified": 45376
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 30550,
+            "actual_outgoing_ball": 712,
+            "preview_envelopes_state_support": 10125,
+            "display_producer_footer": 15590,
+            "controls_and_requests": 2456,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 5049,
+            "scheduler_admission": 2645,
+            "scheduler_owner_other": 25131,
+            "remaining_mandatory_callback": 7836,
+            "unclassified": 3582
+          },
+          "ui_sample_before_known_cck": 49117,
+          "ui_sample_before_known_ms": 13.84788667270951,
+          "ui_sample_full_window_ms": 33.270508430613255,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.131228017745098
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.143227809111913
+            }
+          ],
+          "ready_store_pc": 159470
+        },
+        {
+          "grouping": {
+            "grants": 89,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 14,
+            "endpoint_check_inclusive_ms": 1.9490286574595526,
+            "endpoint_check_exclusive_ms": 1.7093824316761561
+          },
+          "label": "candidate",
+          "physical_input_cck": 57215772,
+          "endpoint_ready_store_cck": 58908704,
+          "endpoint_step_return_cck": 58908780,
+          "copjmp_cck": 58959072,
+          "latency_ms": 491.50031224493534,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 212804,
+              "scheduling_and_preview_support_before_known": 881578,
+              "measured_hardware_service_and_display_production_before_known": 396028,
+              "mandatory_callback_controls_requests_before_known": 155966,
+              "unclassified_before_known": 46556,
+              "endpoint_ready_store_to_qualifying_copjmp": 50368
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.99726521365871,
+              "scheduling_and_preview_support_before_known": 248.54922403961774,
+              "measured_hardware_service_and_display_production_before_known": 111.65484177005521,
+              "mandatory_callback_controls_requests_before_known": 43.972545000627306,
+              "unclassified_before_known": 13.125846691260948,
+              "endpoint_ready_store_to_qualifying_copjmp": 14.200589529715428
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4473,
+              "shared_preview_dispatch": 202482,
+              "hardware_service": 389562,
+              "actual_outgoing_ball": 5849,
+              "preview_envelopes_state_support": 260927,
+              "display_producer_footer": 6466,
+              "controls_and_requests": 43027,
+              "endpoint_eligibility": 5435,
+              "scheduler_classification": 257443,
+              "scheduler_admission": 21491,
+              "scheduler_owner_other": 336282,
+              "remaining_mandatory_callback": 112939,
+              "unclassified": 46556
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4473,
+            "shared_preview_dispatch": 202482,
+            "hardware_service": 402943,
+            "actual_outgoing_ball": 5849,
+            "preview_envelopes_state_support": 264015,
+            "display_producer_footer": 18685,
+            "controls_and_requests": 44254,
+            "endpoint_eligibility": 5435,
+            "scheduler_classification": 259491,
+            "scheduler_admission": 22727,
+            "scheduler_owner_other": 348030,
+            "remaining_mandatory_callback": 116858,
+            "unclassified": 48058
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 13381,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 3088,
+            "display_producer_footer": 12219,
+            "controls_and_requests": 1227,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2048,
+            "scheduler_admission": 1236,
+            "scheduler_owner_other": 11748,
+            "remaining_mandatory_callback": 3919,
+            "unclassified": 1502
+          },
+          "ui_sample_before_known_cck": 49116,
+          "ui_sample_before_known_ms": 13.847604735973295,
+          "ui_sample_full_window_ms": 33.27022649387704,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.131228017745098
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.143227809111913
+            }
+          ],
+          "ready_store_pc": 159470
+        }
+      ],
+      "scope": "Observed emitted-call spans include IRQ; instruction tails/gaps stay unclassified. Endpoint-ready is actual held-ready store after new-request clear; point/outcome stores precede it in unchanged source. This is not WCET or first scanout."
+    },
+    {
+      "standard": "NTSC",
+      "native_run_id": "1781b5a3b2d94760be3f5de1817ed664",
+      "native_commit": "36572323f35b6805d904815a36ec565f7446da0e",
+      "native_product_sha256": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf",
+      "symbol_executable_path": "build/tests/next-operation-candidate-7238879/baseline-rally",
+      "symbol_executable_sha256": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf",
+      "report_path": "build/tests/next-operation-matched-ntsc/497248162e2f4373b5326ab0723befb8/report.json",
+      "report_sha256": "becb4ead67e625c44c38e4f91ed3bbcca7e25427c55556a2f5ef06d6ea344fde",
+      "raw_path": "/workspace/ctennis/build/tests/next-operation-matched-ntsc/497248162e2f4373b5326ab0723befb8/literal-rpc.jsonl.gz",
+      "raw_sha256": "03f517fb745b691f44d41f8b6966ba7e5a9f4d64543187fd1791b4129cacf92b",
+      "binary": {
+        "build/amiga/interfaces/enhanced/baseline-rally": "44886e1d5f18ebe55151a9b43cc288f2c231c22420c3493ee956c641a05351cf"
+      },
+      "anchor_sha256": "51bf03afa002433a41edb779f49311bc4dce1970adc8479ef137759d5122a209",
+      "accepted_requests": [
+        [
+          1,
+          98,
+          152,
+          0
+        ]
+      ],
+      "baseline_replay_equal": true,
+      "passes": [
+        {
+          "grouping": {
+            "grants": 85,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 254,
+            "endpoint_check_inclusive_ms": 29.229971965710725,
+            "endpoint_check_exclusive_ms": 24.951215866821062
+          },
+          "label": "baseline-1",
+          "physical_input_cck": 58812627,
+          "endpoint_ready_store_cck": 60509567,
+          "endpoint_step_return_cck": 60509644,
+          "copjmp_cck": 60548579,
+          "latency_ms": 484.96442983675297,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 214309,
+              "scheduling_and_preview_support_before_known": 926963,
+              "measured_hardware_service_and_display_production_before_known": 360581,
+              "mandatory_callback_controls_requests_before_known": 153242,
+              "unclassified_before_known": 41845,
+              "endpoint_ready_store_to_qualifying_copjmp": 39012
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.87045839624869,
+              "scheduling_and_preview_support_before_known": 258.96112494744443,
+              "measured_hardware_service_and_display_production_before_known": 100.7337524741273,
+              "mandatory_callback_controls_requests_before_known": 42.81046892831351,
+              "unclassified_before_known": 11.69003323048041,
+              "endpoint_ready_store_to_qualifying_copjmp": 10.89859186013865
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4493,
+              "shared_preview_dispatch": 203962,
+              "hardware_service": 353940,
+              "actual_outgoing_ball": 5854,
+              "preview_envelopes_state_support": 260227,
+              "display_producer_footer": 6641,
+              "controls_and_requests": 42593,
+              "endpoint_eligibility": 103144,
+              "scheduler_classification": 239383,
+              "scheduler_admission": 15295,
+              "scheduler_owner_other": 308914,
+              "remaining_mandatory_callback": 110649,
+              "unclassified": 41845
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4493,
+            "shared_preview_dispatch": 203962,
+            "hardware_service": 363660,
+            "actual_outgoing_ball": 5854,
+            "preview_envelopes_state_support": 263323,
+            "display_producer_footer": 18897,
+            "controls_and_requests": 42593,
+            "endpoint_eligibility": 103144,
+            "scheduler_classification": 241435,
+            "scheduler_admission": 16546,
+            "scheduler_owner_other": 318594,
+            "remaining_mandatory_callback": 110649,
+            "unclassified": 42802
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 9720,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 3096,
+            "display_producer_footer": 12256,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2052,
+            "scheduler_admission": 1251,
+            "scheduler_owner_other": 9680,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 957
+          },
+          "ui_sample_before_known_cck": 48134,
+          "ui_sample_before_known_ms": 13.446960437709262,
+          "ui_sample_full_window_ms": 32.58123588333154,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.581440104654916
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.593550415222328
+            }
+          ],
+          "ready_store_pc": 150510
+        },
+        {
+          "grouping": {
+            "grants": 85,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 254,
+            "endpoint_check_inclusive_ms": 29.229971965710725,
+            "endpoint_check_exclusive_ms": 24.951215866821062
+          },
+          "label": "baseline-2",
+          "physical_input_cck": 58812627,
+          "endpoint_ready_store_cck": 60509567,
+          "endpoint_step_return_cck": 60509644,
+          "copjmp_cck": 60548579,
+          "latency_ms": 484.96442983675297,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 214309,
+              "scheduling_and_preview_support_before_known": 926963,
+              "measured_hardware_service_and_display_production_before_known": 360581,
+              "mandatory_callback_controls_requests_before_known": 153242,
+              "unclassified_before_known": 41845,
+              "endpoint_ready_store_to_qualifying_copjmp": 39012
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.87045839624869,
+              "scheduling_and_preview_support_before_known": 258.96112494744443,
+              "measured_hardware_service_and_display_production_before_known": 100.7337524741273,
+              "mandatory_callback_controls_requests_before_known": 42.81046892831351,
+              "unclassified_before_known": 11.69003323048041,
+              "endpoint_ready_store_to_qualifying_copjmp": 10.89859186013865
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4493,
+              "shared_preview_dispatch": 203962,
+              "hardware_service": 353940,
+              "actual_outgoing_ball": 5854,
+              "preview_envelopes_state_support": 260227,
+              "display_producer_footer": 6641,
+              "controls_and_requests": 42593,
+              "endpoint_eligibility": 103144,
+              "scheduler_classification": 239383,
+              "scheduler_admission": 15295,
+              "scheduler_owner_other": 308914,
+              "remaining_mandatory_callback": 110649,
+              "unclassified": 41845
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4493,
+            "shared_preview_dispatch": 203962,
+            "hardware_service": 363660,
+            "actual_outgoing_ball": 5854,
+            "preview_envelopes_state_support": 263323,
+            "display_producer_footer": 18897,
+            "controls_and_requests": 42593,
+            "endpoint_eligibility": 103144,
+            "scheduler_classification": 241435,
+            "scheduler_admission": 16546,
+            "scheduler_owner_other": 318594,
+            "remaining_mandatory_callback": 110649,
+            "unclassified": 42802
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 9720,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 3096,
+            "display_producer_footer": 12256,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 2052,
+            "scheduler_admission": 1251,
+            "scheduler_owner_other": 9680,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 957
+          },
+          "ui_sample_before_known_cck": 48134,
+          "ui_sample_before_known_ms": 13.446960437709262,
+          "ui_sample_full_window_ms": 32.58123588333154,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.581440104654916
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.593550415222328
+            }
+          ],
+          "ready_store_pc": 150510
+        },
+        {
+          "grouping": {
+            "grants": 84,
+            "topup_attempts": 0,
+            "accepted_topups": 0,
+            "refused_topups": 0,
+            "topup_observed_ms": 0.0,
+            "operations": 216,
+            "dispatches": 48,
+            "endpoint_checks": 13,
+            "endpoint_check_inclusive_ms": 1.8038605465219741,
+            "endpoint_check_exclusive_ms": 1.5848382964874028
+          },
+          "label": "candidate",
+          "physical_input_cck": 58812627,
+          "endpoint_ready_store_cck": 60505307,
+          "endpoint_step_return_cck": 60505383,
+          "copjmp_cck": 60548583,
+          "latency_ms": 484.96554729721237,
+          "accounting": {
+            "partition_cck": {
+              "actual_math_before_known": 214272,
+              "scheduling_and_preview_support_before_known": 881511,
+              "measured_hardware_service_and_display_production_before_known": 397234,
+              "mandatory_callback_controls_requests_before_known": 153227,
+              "unclassified_before_known": 46436,
+              "endpoint_ready_store_to_qualifying_copjmp": 43276
+            },
+            "partition_ms": {
+              "actual_math_before_known": 59.86012188699961,
+              "scheduling_and_preview_support_before_known": 246.2634217477361,
+              "measured_hardware_service_and_display_production_before_known": 110.97332202835835,
+              "mandatory_callback_controls_requests_before_known": 42.80627845159091,
+              "unclassified_before_known": 12.972598472710917,
+              "endpoint_ready_store_to_qualifying_copjmp": 12.089804709816471
+            },
+            "pre_known_partition_cck": {
+              "landing_algorithm": 4503,
+              "shared_preview_dispatch": 203903,
+              "hardware_service": 390593,
+              "actual_outgoing_ball": 5866,
+              "preview_envelopes_state_support": 259500,
+              "display_producer_footer": 6641,
+              "controls_and_requests": 42618,
+              "endpoint_eligibility": 4965,
+              "scheduler_classification": 267193,
+              "scheduler_admission": 16594,
+              "scheduler_owner_other": 333259,
+              "remaining_mandatory_callback": 110609,
+              "unclassified": 46436
+            },
+            "sum_verified": true,
+            "known_cutoff_observed": true,
+            "waiting_cause_attributed": false
+          },
+          "primary_cck": {
+            "landing_algorithm": 4503,
+            "shared_preview_dispatch": 203903,
+            "hardware_service": 400146,
+            "actual_outgoing_ball": 5866,
+            "preview_envelopes_state_support": 264543,
+            "display_producer_footer": 20137,
+            "controls_and_requests": 42618,
+            "endpoint_eligibility": 4965,
+            "scheduler_classification": 270258,
+            "scheduler_admission": 17857,
+            "scheduler_owner_other": 343212,
+            "remaining_mandatory_callback": 110609,
+            "unclassified": 47339
+          },
+          "suffix_cck": {
+            "landing_algorithm": 0,
+            "shared_preview_dispatch": 0,
+            "hardware_service": 9553,
+            "actual_outgoing_ball": 0,
+            "preview_envelopes_state_support": 5043,
+            "display_producer_footer": 13496,
+            "controls_and_requests": 0,
+            "endpoint_eligibility": 0,
+            "scheduler_classification": 3065,
+            "scheduler_admission": 1263,
+            "scheduler_owner_other": 9953,
+            "remaining_mandatory_callback": 0,
+            "unclassified": 903
+          },
+          "ui_sample_before_known_cck": 48084,
+          "ui_sample_before_known_ms": 13.432992181967261,
+          "ui_sample_full_window_ms": 32.56922318339342,
+          "inputs": [
+            {
+              "rawkey": 34,
+              "action": "press",
+              "at_seconds": 16.581440104654916
+            },
+            {
+              "rawkey": 34,
+              "action": "release",
+              "at_seconds": 16.593550415222328
+            }
+          ],
+          "ready_store_pc": 150510
+        }
+      ],
+      "scope": "Observed emitted-call spans include IRQ; instruction tails/gaps stay unclassified. Endpoint-ready is actual held-ready store after new-request clear; point/outcome stores precede it in unchanged source. This is not WCET or first scanout."
+    }
+  ]
+}

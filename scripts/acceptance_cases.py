@@ -69,6 +69,8 @@ def cases():
 def diagnostic_cases():
     """Explicitly selected probes; never expand the mandatory release catalog."""
     return [
+        Case('next-operation-matched-pal', ('scripts/run_next_operation_matched.py',), 'tests/next-operation-matched-pal/report.json'),
+        Case('next-operation-matched-ntsc', ('scripts/run_next_operation_matched.py','--ntsc'), 'tests/next-operation-matched-ntsc/report.json'),
         Case('topup-matched-pal', ('scripts/run_topup_matched.py',), 'tests/topup-matched-pal/report.json'),
         Case('topup-matched-ntsc', ('scripts/run_topup_matched.py','--ntsc'), 'tests/topup-matched-ntsc/report.json'),
         Case('ui-scan-matched-pal', ('scripts/run_ui_sample_matched.py',), 'tests/ui-scan-matched-pal/report.json'),

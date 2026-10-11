@@ -84,6 +84,19 @@ tutorial_background:
         lea     game_preview_endpoint_ready,a0
         tst.b   (a0,d1.w)
         bne.s   .waterline
+        ; The branch already retains its next-query prerequisites at actual
+        ; launch/flight/query transitions. Impossible queries need no repeated
+        ; public eligibility frame. A possible query still validates all live
+        ; API conditions and receives fresh deadline admission below.
+        lea     game_preview_launch_saved,a0
+        tst.b   (a0,d1.w)
+        beq     .preview
+        lea     game_preview_flight_phases,a0
+        cmpi.w  #4,(a0,d2.w)
+        bcs     .preview
+        lea     game_preview_endpoint_attempted,a0
+        tst.b   (a0,d1.w)
+        bne     .preview
         move.l  tutorial_generation,d0
         jsr     game_preview_endpoint_pending
         tst.l   d0
