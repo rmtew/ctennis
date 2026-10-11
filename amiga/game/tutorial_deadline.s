@@ -21,6 +21,7 @@ TUTORIAL_JOB_PRODUCER equ 4
 TUTORIAL_JOB_FOOTER equ 5
 TUTORIAL_JOB_RESULT equ 6
 TUTORIAL_JOB_FOOTER_COMMIT equ 7
+TUTORIAL_JOB_CLOSED_MENU_ROI equ 8
 
 tutorial_background:
         tst.b   tutorial_active
@@ -162,19 +163,25 @@ tutorial_background:
         bra.s   .producer_admit
 .canvas_cost:
         ; Closing a menu with a live cue combines ROI copy and cross redraw.
-        ; Its measured whole owner exceeds the ordinary full reservation.
-        ; Either canvas may become free; reserve the combined work if either
-        ; still holds a menu. Service and margin remain separate allowances.
+        ; Restore the actual free canvas separately before cue production.
+        ; This private work publishes nothing and keeps placement dirty.
         tst.b   tutorial_marker_ready
         beq.s   .ordinary_canvas_cost
         tst.b   tutorial_menu
         bne.s   .ordinary_canvas_cost
-        cmp.b   #-1,tutorial_canvas_menus
-        bne.s   .combined_canvas_cost
-        cmp.b   #-1,tutorial_canvas_menus+1
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq     .done
+        lea     tutorial_canvas_menus,a0
+        cmpa.l  #tutorial_surface0,a1
+        beq.s   .closed_canvas_identity
+        addq.l  #1,a0
+.closed_canvas_identity:
+        cmpi.b  #$ff,(a0)
         beq.s   .ordinary_canvas_cost
-.combined_canvas_cost:
-        move.l  #7000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
+.closed_canvas_cost:
+        move.w  #TUTORIAL_JOB_CLOSED_MENU_ROI,tutorial_job_kind
+        move.l  #5000-TUTORIAL_BG_SERVICE_E-TUTORIAL_BG_MARGIN_E,tutorial_job_cost
         bra.s   .producer_admit
 .ordinary_canvas_cost:
         ; The measured pose-only owner needs no menu ROI or landing retirement.
@@ -257,6 +264,8 @@ tutorial_background:
         beq     .run_footer
         cmpi.w  #TUTORIAL_JOB_FOOTER_COMMIT,d0
         beq     .run_footer_commit
+        cmpi.w  #TUTORIAL_JOB_CLOSED_MENU_ROI,d0
+        beq     .run_closed_menu_roi
         bra     .run_result
 .run_preview:
         move.l  tutorial_generation,d0
@@ -301,6 +310,16 @@ tutorial_background:
         bra     .completed
 .run_producer:
         bsr     tutorial_progress_slice
+        bra     .completed
+.run_closed_menu_roi:
+        ; Reacquire ownership after admission. A ready/display IRQ may have
+        ; changed the free candidate; no refused or prior grant is retained.
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq     .done
+        move.l  a1,tutorial_render_surface
+        bsr     tutorial_restore_landing
+        bsr     tutorial_prepare_menu_roi
         bra     .completed
 .run_footer:
         bsr     tutorial_footer_step

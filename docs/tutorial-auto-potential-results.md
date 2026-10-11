@@ -54,8 +54,21 @@ restore and cue redraw consumed28,526 CCK against25,000 CCK WORK. No callback
 overlapped this owner. The next keyboard entry bracket was28,778 CCK; separate
 service/margin is not work-budget credit. This failed extent and the interrupted
 NTSC attempt remain immutable. A targeted closed-menu/cue reservation now uses
-30,000 CCK WORK plus the unchanged separate5,000 CCK service/margin; all other
-classes retain their allowances. Fresh qualification is required. The native
+30,000 CCK WORK plus the unchanged separate5,000 CCK service/margin. Its next
+PAL attempt `5690db5d20a74595bb191ca197f1a961` fit all2,658 complete owner
+brackets (combined maximum29,034 CCK), but failed menu-close response at80.105 ms
+and4fields against the unchanged3field limit. That failure is also preserved.
+The subsequent correction separates closed-menu ROI restoration into private
+job8 with20,000 CCK WORK and unchanged5,000 CCK service/margin. It publishes
+nothing, restores old cue pixels before copying, updates the canvas ROI identity
+only after allfourplanes, and retains placement dirty. Classification reads the
+actual coherently free candidate; execution and final production reacquire it
+freshly. With a closed menu and live cue, two-free-canvas selection prefers an
+already restored ROI, preventing an IRQ ownership transition from choosing an
+unprepared alternative or repeatedly preparing a displayed menu canvas. No
+generation/admission/ownership lease or delay is retained. Ordinary production
+returns to25,000 CCK WORK; fresh timing and response qualification is required.
+The native
 observer now rejects any whole accepted owner exceeding WORK alone. No native pass,
 WinUAE/human appearance acceptance, full resource coverage, universal timing,
 broad cancellation/fairness/resume, merge or release is established here.

@@ -327,6 +327,17 @@ tutorial_copper_plane:
         rts
 
 tutorial_choose_surface:
+        bsr     tutorial_free_surface
+        tst.l   d0
+        beq.s   .done
+        move.l  a1,tutorial_render_surface
+        move.w  tutorial_render_generation,tutorial_build_generation
+.done:  rts
+
+; Pure current ownership query shared by classification and actual acquisition.
+; Closed-menu cue producers prefer an already restored free ROI. No pointer,
+; content identity, generation or refusal/admission state is changed here.
+tutorial_free_surface:
         ; An IRQ can move ready to presentation and clear ready. Select from
         ; one coherent ownership snapshot; bulk rendering remains interruptible.
         move.w  sr,-(sp)
@@ -351,7 +362,24 @@ tutorial_choose_surface:
         cmp.l   d0,d4
         beq     .second
         cmp.l   d0,d5
-        bne     .found
+        beq.s   .second
+        tst.b   tutorial_menu
+        bne.s   .found
+        tst.b   tutorial_marker_ready
+        beq.s   .found
+        cmpi.b  #$ff,tutorial_canvas_menus
+        beq.s   .found
+        lea     tutorial_surface1,a1
+        move.l  a1,d0
+        cmp.l   d0,d4
+        beq.s   .first_free
+        cmp.l   d0,d5
+        beq.s   .first_free
+        cmpi.b  #$ff,tutorial_canvas_menus+1
+        beq.s   .found
+.first_free:
+        lea     tutorial_surface0,a1
+        bra.s   .found
 .second:
         lea     tutorial_surface1,a1
         move.l  a1,d0
@@ -359,9 +387,7 @@ tutorial_choose_surface:
         beq     .busy
         cmp.l   d0,d5
         beq     .busy
-.found: move.l  a1,tutorial_render_surface
-        move.w  tutorial_render_generation,tutorial_build_generation
-        move.w  (sp)+,sr
+.found: move.w  (sp)+,sr
         moveq   #1,d0
         rts
 .busy:  move.w  (sp)+,sr
